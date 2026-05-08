@@ -173,6 +173,48 @@ export type Database = {
         }
         Relationships: []
       }
+      portals: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          jokes: Json
+          language: string
+          name: string
+          niche: string
+          slug: string
+          theme: string
+          updated_at: string
+          vibe: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          jokes?: Json
+          language?: string
+          name: string
+          niche: string
+          slug: string
+          theme?: string
+          updated_at?: string
+          vibe?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          jokes?: Json
+          language?: string
+          name?: string
+          niche?: string
+          slug?: string
+          theme?: string
+          updated_at?: string
+          vibe?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
