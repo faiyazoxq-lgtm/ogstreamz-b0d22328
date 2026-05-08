@@ -782,6 +782,7 @@ export type Database = {
           free_clicks_used: number
           id: string
           rank: Database["public"]["Enums"]["syndicate_rank"]
+          referred_by_reseller: string | null
           status: Database["public"]["Enums"]["account_status"]
           subscription_plan: Database["public"]["Enums"]["subscription_plan"]
           updated_at: string
@@ -795,6 +796,7 @@ export type Database = {
           free_clicks_used?: number
           id: string
           rank?: Database["public"]["Enums"]["syndicate_rank"]
+          referred_by_reseller?: string | null
           status?: Database["public"]["Enums"]["account_status"]
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
           updated_at?: string
@@ -808,6 +810,7 @@ export type Database = {
           free_clicks_used?: number
           id?: string
           rank?: Database["public"]["Enums"]["syndicate_rank"]
+          referred_by_reseller?: string | null
           status?: Database["public"]["Enums"]["account_status"]
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
           updated_at?: string
@@ -824,6 +827,8 @@ export type Database = {
           grant_rank: Database["public"]["Enums"]["syndicate_rank"] | null
           id: string
           max_uses: number
+          price_cents: number
+          reseller_id: string | null
           uses: number
         }
         Insert: {
@@ -835,6 +840,8 @@ export type Database = {
           grant_rank?: Database["public"]["Enums"]["syndicate_rank"] | null
           id?: string
           max_uses?: number
+          price_cents?: number
+          reseller_id?: string | null
           uses?: number
         }
         Update: {
@@ -846,6 +853,8 @@ export type Database = {
           grant_rank?: Database["public"]["Enums"]["syndicate_rank"] | null
           id?: string
           max_uses?: number
+          price_cents?: number
+          reseller_id?: string | null
           uses?: number
         }
         Relationships: []
@@ -884,6 +893,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      reseller_accounts: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          credits: number
+          display_name: string | null
+          id: string
+          markup_cents: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          credits?: number
+          display_name?: string | null
+          id?: string
+          markup_cents?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          credits?: number
+          display_name?: string | null
+          id?: string
+          markup_cents?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reseller_credit_ledger: {
+        Row: {
+          created_at: string
+          delta: number
+          id: string
+          reason: string
+          reseller_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delta: number
+          id?: string
+          reason: string
+          reseller_user_id: string
+        }
+        Update: {
+          created_at?: string
+          delta?: number
+          id?: string
+          reason?: string
+          reseller_user_id?: string
+        }
+        Relationships: []
       }
       signal_bundles: {
         Row: {
@@ -1286,6 +1355,19 @@ export type Database = {
         }
         Returns: Json
       }
+      boss_create_reseller: {
+        Args: {
+          _display_name: string
+          _initial_credits: number
+          _markup_cents: number
+          _user_id: string
+        }
+        Returns: string
+      }
+      boss_topup_reseller: {
+        Args: { _delta: number; _reason: string; _user_id: string }
+        Returns: number
+      }
       has_active_vip: {
         Args: { _env?: string; _user?: string }
         Returns: boolean
@@ -1298,6 +1380,7 @@ export type Database = {
         Returns: boolean
       }
       increment_portal_view: { Args: { _slug: string }; Returns: number }
+      is_boss: { Args: { _uid: string }; Returns: boolean }
       plan_includes_tier: {
         Args: {
           _plan: Database["public"]["Enums"]["subscription_plan"]
@@ -1310,6 +1393,15 @@ export type Database = {
         Args: { _meta: Json; _slug: string }
         Returns: undefined
       }
+      reseller_mint_code: {
+        Args: {
+          _code: string
+          _credits: number
+          _max_uses: number
+          _price_cents: number
+        }
+        Returns: Json
+      }
       spend_credits: {
         Args: { _amount: number; _reason: string }
         Returns: number
@@ -1317,7 +1409,7 @@ export type Database = {
     }
     Enums: {
       account_status: "free" | "vip"
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "reseller"
       subscription_plan: "free" | "metal" | "energy" | "syndicate"
       syndicate_rank: "prospect" | "enforcer" | "vip" | "boss"
     }
@@ -1448,7 +1540,7 @@ export const Constants = {
   public: {
     Enums: {
       account_status: ["free", "vip"],
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "reseller"],
       subscription_plan: ["free", "metal", "energy", "syndicate"],
       syndicate_rank: ["prospect", "enforcer", "vip", "boss"],
     },
