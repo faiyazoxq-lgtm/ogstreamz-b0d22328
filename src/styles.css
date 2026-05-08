@@ -319,4 +319,33 @@
     .animate-pulse-gold,
     .animate-glitch { animation: none !important; }
   }
+
+  /* Mobile perf: kill the heaviest GPU/paint animations on small screens.
+     The TV-static overlay (60+ fps noise repaint) and scanline sweep are
+     the worst offenders on low-end phones. */
+  @media (max-width: 768px) {
+    .tv-static-overlay {
+      animation: none !important;
+      opacity: 0.08;
+    }
+    .scan-overlay::before {
+      animation-duration: 12s;
+      box-shadow: 0 0 12px oklch(0.72 0.22 245 / 0.6);
+    }
+    .electric-border {
+      animation-duration: 5s;
+    }
+    .animate-glitch {
+      animation-duration: 10s;
+    }
+  }
+
+  /* Promote animated layers to their own GPU layer to avoid main-thread paint. */
+  .scan-overlay::before,
+  .tv-static-overlay,
+  .electric-border {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
 }
