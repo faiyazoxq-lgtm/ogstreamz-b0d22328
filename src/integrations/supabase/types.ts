@@ -226,6 +226,7 @@ export type Database = {
           scout_meta: Json
           slug: string
           style: string | null
+          telegram_config: Json
           theme: string
           theme_config: Json
           updated_at: string
@@ -245,6 +246,7 @@ export type Database = {
           scout_meta?: Json
           slug: string
           style?: string | null
+          telegram_config?: Json
           theme?: string
           theme_config?: Json
           updated_at?: string
@@ -264,6 +266,7 @@ export type Database = {
           scout_meta?: Json
           slug?: string
           style?: string | null
+          telegram_config?: Json
           theme?: string
           theme_config?: Json
           updated_at?: string
