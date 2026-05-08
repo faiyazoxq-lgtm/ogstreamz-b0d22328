@@ -93,43 +93,58 @@ export const spawnPortal = createServerFn({ method: "POST" })
     const jokes = (parsed.jokes ?? []).filter((s) => typeof s === "string" && s.trim()).slice(0, 5);
     if (jokes.length === 0) throw new Error("No jokes generated");
 
-    // ───── Designer: AI-designed Tailwind theme matching the vibe ─────
+    // ───── Creative Director: Perplexity-generated Style Dictionary ─────
     let themeConfig: any = null;
-    if (LOVABLE) {
-      try {
-        const designerPrompt = `You are a brand designer. Vibe: "${data.vibe || data.niche}". Niche: "${data.niche}".
-Return STRICT JSON only:
+    try {
+      const directorPrompt = `You are 0G-PORTAL's Creative Director. Expand this short brief into a complete visual identity for a web page.
+Brief: name="${data.name}", niche="${data.niche}", vibe="${data.vibe || "n/a"}".
+Examples of mapping:
+- "Nasheed" => glowing blue mosaic background, elegant Amiri/Cormorant serif, gold accents, vibe "Sacred Geometry".
+- "Drill" => deep purple/black gradient, Bebas Neue + Inter, neon magenta accents, vibe "Cyber-Street".
+- "Kids math" => playful pastel gradient, Fredoka + Nunito, candy accents, vibe "Saturday Cartoon".
+
+Return STRICT JSON ONLY (no prose, no markdown), exactly this shape:
 {
+  "vibeLabel": "2-3 word visual vibe e.g. Retro-Futurism / Cyber-Street / Minimalist Zen",
+  "palette": { "bg1": "#hex", "bg2": "#hex", "accent": "#hex", "secondary": "#hex", "text": "#hex" },
   "bgGradient": "linear-gradient(180deg, #hex 0%, #hex 100%)",
   "accent": "#hex",
   "secondary": "#hex",
   "text": "#hex",
-  "fontFamily": "css font stack quoted",
+  "fontPair": { "heading": "Google Font name", "body": "Google Font name" },
+  "fontFamily": "'Heading Font', serif",
   "ornament": "single emoji or unicode glyph",
   "label": "ALL-CAPS 1-3 word tagline",
   "animation": "shake | pulse | explode | glow",
-  "hitButton": "ALL-CAPS 1-2 word battle cry"
+  "hitButton": "ALL-CAPS 1-2 word battle cry",
+  "particleColors": ["#hex", "#hex", "#hex"]
 }
-High contrast. Match the mood (angry=red/black, calm=blue, mystic=gold/purple).`;
-        const dr = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${LOVABLE}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
-            messages: [
-              { role: "system", content: "Output strict JSON only." },
-              { role: "user", content: designerPrompt },
-            ],
-          }),
-        });
-        if (dr.ok) {
-          const dj = await dr.json();
-          const drw: string = dj?.choices?.[0]?.message?.content ?? "{}";
-          const dm = drw.match(/\{[\s\S]*\}/);
-          themeConfig = JSON.parse(dm ? dm[0] : drw);
+Use HIGH CONTRAST hex colors. Heading & body MUST be real Google Fonts. Match mood to niche.`;
+      const dr = await fetch("https://api.perplexity.ai/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${PERPLEXITY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "sonar",
+          messages: [
+            { role: "system", content: "You output strict JSON only. No markdown, no prose." },
+            { role: "user", content: directorPrompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 700,
+        }),
+      });
+      if (dr.ok) {
+        const dj = await dr.json();
+        const drw: string = dj?.choices?.[0]?.message?.content ?? "{}";
+        const dm = drw.match(/\{[\s\S]*\}/);
+        themeConfig = JSON.parse(dm ? dm[0] : drw);
+        // Derive fontFamily from heading if Perplexity returned only fontPair
+        if (themeConfig?.fontPair?.heading && !themeConfig.fontFamily) {
+          themeConfig.fontFamily = `'${themeConfig.fontPair.heading}', serif`;
         }
-      } catch { /* non-fatal */ }
-    }
+      }
+    } catch { /* non-fatal */ }
+    void LOVABLE; // legacy reference removed
 
     const baseSlug = slugify(data.name);
     let slug = baseSlug;
