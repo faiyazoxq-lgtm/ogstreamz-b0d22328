@@ -684,10 +684,6 @@ function RoleRow({ row, busy, onSave }: { row: Row; busy: boolean; onSave: (p: P
   );
 }
 
-function ScoutPanel() {
-  // (defined below)
-}
-
 function LeadTrackingPanel() {
   const [rows, setRows] = useState<{ slug: string; name: string; niche: string; view_count: number; vip: boolean; created_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -761,7 +757,7 @@ function LeadTrackingPanel() {
   );
 }
 
-function ScoutPanelImpl() {
+function ScoutPanel() {
   const scout = useServerFn(scoutUrl);
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
