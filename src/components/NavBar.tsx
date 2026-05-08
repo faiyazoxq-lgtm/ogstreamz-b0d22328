@@ -6,6 +6,7 @@ import { TVStaticLogo } from "@/components/TVStaticLogo";
 const links = [
   { to: "/music", label: "MusicHUB" },
   { to: "/jokes", label: "JokesHUB" },
+  { to: "/trade", label: "TradeHUB" },
   { to: "/tools", label: "ToolHUB" },
   { to: "/store", label: "Store" },
 ] as const;
