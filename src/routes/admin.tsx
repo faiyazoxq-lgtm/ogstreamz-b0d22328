@@ -1282,12 +1282,12 @@ function FleetCommanderPanel() {
           </div>
           <div className="rounded-lg border border-border bg-black/30 p-3">
             <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Active bots</div>
-            <div className="text-2xl font-black text-white mt-1">{s.bots.filter((b: any) => b.active).length}</div>
+            <div className="text-2xl font-black text-white mt-1">{(s.bots ?? []).filter((b: any) => b.active).length}</div>
           </div>
           <div className="rounded-lg border border-border bg-black/30 p-3">
             <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Plans</div>
             <div className="text-xs text-white mt-1 leading-relaxed">
-              M: <b>{s.planCounts.metal || 0}</b> · E: <b>{s.planCounts.energy || 0}</b> · S: <b>{s.planCounts.syndicate || 0}</b>
+          M: <b>{s.planCounts?.metal || 0}</b> · E: <b>{s.planCounts?.energy || 0}</b> · S: <b>{s.planCounts?.syndicate || 0}</b>
             </div>
           </div>
         </div>
@@ -1386,12 +1386,12 @@ function FleetCommanderPanel() {
       </div>
 
       {/* Subscriber Management */}
-      {s && s.recentProfiles.length > 0 && (
+      {s && (s.recentProfiles ?? []).length > 0 && (
         <div className="rounded-xl border border-border overflow-hidden">
           <div className="px-4 py-2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground border-b border-border bg-black/40 flex items-center gap-2">
             <Users className="h-3 w-3" /> Subscriber Management · Recent 50
           </div>
-          {s.recentProfiles.map((p) => (
+          {(s.recentProfiles ?? []).map((p) => (
             <div key={p.id} className="grid grid-cols-12 gap-2 px-4 py-2 border-b border-border/50 text-sm items-center">
               <div className="col-span-7 truncate text-white">{p.email}</div>
               <div className="col-span-5 flex justify-end gap-1">
