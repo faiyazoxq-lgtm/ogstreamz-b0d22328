@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Lock, Loader2, Radio, BadgeCheck, Send, Crown } from "lucide-react";
+import { ArrowLeft, Lock, Loader2, Radio, BadgeCheck, Send, Crown, Satellite, RefreshCw, ExternalLink, Gauge } from "lucide-react";
 import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { createPortalUnlockCheckout, getPortalUnlockStatus } from "@/lib/portals.functions";
+import { refreshNewsScout, type NewsScoutMeta, type NewsArticle } from "@/lib/news.functions";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { TVStaticLogo } from "@/components/TVStaticLogo";
@@ -143,6 +144,7 @@ const HIT_ANIMS: Record<string, any> = {
 
 function PortalPage() {
   const { portal } = Route.useLoaderData();
+  if (portal.kind === "news") return <NewsHubView portal={portal} />;
   const T = useMemo(() => mergeTheme(portal), [portal]);
   const fontPair = portal.theme_config?.fontPair;
   const bodyFont = fontPair?.body || "Inter";
