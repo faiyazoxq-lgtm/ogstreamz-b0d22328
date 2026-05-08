@@ -23,7 +23,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Row = { id: string; email: string; status: "free" | "vip"; credits: number; rank?: string };
+type Row = { id: string; email: string; status: "free" | "vip"; credits: number; rank?: "boss" | "enforcer" | "prospect" | "vip" };
 
 function AdminPage() {
   const { user, isAdmin, loading } = useAuth();
