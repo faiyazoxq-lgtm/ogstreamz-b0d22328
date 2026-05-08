@@ -21,23 +21,17 @@ export const Route = createFileRoute("/jokes/portal")({
 });
 
 const JOKE_LIBRARY: Record<string, string[]> = {
-  dark: [
-    "I told my therapist about my fear of elevators. She said I need to take steps to deal with it.",
-    "I have a stepladder. It's a great ladder, but I never knew my real ladder.",
-    "My grandfather has the heart of a lion — and a lifetime ban from the zoo.",
-    "I bought the world's worst thesaurus yesterday. Not only is it terrible, it's also terrible.",
-  ],
   street: [
     "My playlist hits harder than my landlord's eviction notice.",
     "Y'all act like Wi-Fi is free. Out here loading memes on hope and prayer.",
     "I don't chase, I attract. Mostly mosquitoes, but still.",
     "Real ones know: the snack aisle is a personality test.",
   ],
-  dad: [
-    "I'm reading a book on anti-gravity. Can't put it down.",
-    "I used to hate facial hair, but then it grew on me.",
-    "Why don't skeletons fight each other? They don't have the guts.",
-    "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+  dark: [
+    "I told my therapist about my fear of elevators. She said I need to take steps to deal with it.",
+    "I have a stepladder. It's a great ladder, but I never knew my real ladder.",
+    "My grandfather has the heart of a lion — and a lifetime ban from the zoo.",
+    "I bought the world's worst thesaurus yesterday. Not only is it terrible, it's also terrible.",
   ],
   sarcastic: [
     "Oh, you woke up early? Want a parade?",
@@ -45,11 +39,17 @@ const JOKE_LIBRARY: Record<string, string[]> = {
     "I'd agree with you, but then we'd both be wrong.",
     "Wow, what a totally original opinion. Never heard that one before. From everyone. Ever.",
   ],
-  absurd: [
-    "My toaster filed a restraining order against my bagel. Court date is Tuesday.",
-    "I tried to organize a hide-and-seek tournament, but good players are hard to find.",
-    "A clown held the door for me. I thought it was a nice jester.",
-    "My pet rock ran away. He's a rolling stone now.",
+  legendary: [
+    "They asked if I'm a legend. I said no — legends fade. I'm folklore.",
+    "Built different. Tested in traffic. Certified by the streetlights.",
+    "I don't enter rooms. The room politely rearranges itself.",
+    "History books got drafts. I got footnotes in three of them.",
+  ],
+  gritty: [
+    "My morning coffee tastes like a Tuesday I'd rather forget.",
+    "Concrete raised me. Concrete don't apologize.",
+    "Sleep is a luxury. The grind is unionized.",
+    "I don't have bad days. I have research material.",
   ],
 };
 
@@ -63,10 +63,13 @@ function pickFor(styles: string[], custom: string): string {
 
 function JokePortal() {
   const { styles, custom } = Route.useSearch();
-  const styleIds = useMemo(() => styles.split(",").map((s) => s.trim()).filter(Boolean), [styles]);
+  const styleIds = useMemo(
+    () => styles.split(",").map((s: string) => s.trim()).filter(Boolean),
+    [styles],
+  );
   const labels = useMemo(() => {
     const preset = styleIds
-      .map((id) => STYLE_PRESETS.find((p) => p.id === id)?.label)
+      .map((id: string) => STYLE_PRESETS.find((p) => p.id === id)?.label)
       .filter(Boolean) as string[];
     return custom ? [...preset, custom] : preset;
   }, [styleIds, custom]);
@@ -91,7 +94,7 @@ function JokePortal() {
           className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] font-bold text-muted-foreground hover:text-white transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Hub
+          Back to Command Center
         </Link>
 
         <div className="mt-8 text-center">
@@ -133,7 +136,7 @@ function JokePortal() {
             className="btn-glass-blue text-white font-bold uppercase tracking-[0.25em] px-10 py-6 text-base"
           >
             <RotateCw className="h-4 w-4 mr-2" />
-            Next Punchline
+            Next Joke
           </Button>
           <Link
             to="/jokes"
