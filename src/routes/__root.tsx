@@ -4,9 +4,11 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
 import { NavBar } from "../components/NavBar";
@@ -127,9 +129,49 @@ function RootComponent() {
           <PaymentTestModeBanner />
           <NavBar />
           <Outlet />
+          <TeleportOverlay />
         </div>
         <Toaster />
       </AuthProvider>
     </QueryClientProvider>
+  );
+}
+
+function TeleportOverlay() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [show, setShow] = useState(false);
+  const [pulseKey, setPulseKey] = useState(0);
+
+  useEffect(() => {
+    setPulseKey((k) => k + 1);
+    setShow(true);
+    const t = setTimeout(() => setShow(false), 520);
+    return () => clearTimeout(t);
+  }, [pathname]);
+
+  if (!show) return null;
+  return (
+    <div
+      key={pulseKey}
+      aria-hidden
+      className="pointer-events-none fixed inset-0 z-[60]"
+      style={{ animation: "tp-flash 520ms ease-out forwards" }}
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "repeating-linear-gradient(0deg, rgba(255,255,255,0.08) 0 1px, transparent 1px 3px), radial-gradient(ellipse at center, rgba(0,170,255,0.35), transparent 70%)",
+          mixBlendMode: "screen",
+        }}
+      />
+      <style>{`
+        @keyframes tp-flash {
+          0% { opacity: 0; transform: scale(1.02); }
+          25% { opacity: 1; }
+          100% { opacity: 0; transform: scale(1); }
+        }
+      `}</style>
+    </div>
   );
 }
