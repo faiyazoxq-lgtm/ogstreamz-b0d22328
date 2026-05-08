@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Route as ProfileRoute } from "./profile";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/dashboard")({
-  head: ProfileRoute.options.head,
-  component: ProfileRoute.options.component!,
+  beforeLoad: () => {
+    throw redirect({ to: "/profile" });
+  },
 });
