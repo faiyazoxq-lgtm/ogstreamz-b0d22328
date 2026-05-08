@@ -1,0 +1,248 @@
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useState } from "react";
+import { Music, Wand2, Loader2, ArrowLeft, Disc3 } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { useServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { formatLyrics, requestStudioTrack } from "@/lib/music-portals.functions";
+
+type MusicPortal = {
+  id: string;
+  slug: string;
+  name: string;
+  language: string;
+  style: string | null;
+  vibe: string | null;
+  theme: string;
+};
+
+export const Route = createFileRoute("/m/$slug")({
+  loader: async ({ params }) => {
+    const { data, error } = await supabase
+      .from("portals")
+      .select("id, slug, name, language, style, vibe, theme, kind")
+      .eq("slug", params.slug)
+      .eq("kind", "music")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data) throw notFound();
+    return { portal: data as MusicPortal };
+  },
+  head: ({ loaderData }) => ({
+    meta: loaderData?.portal
+      ? [
+          { title: `${loaderData.portal.name} · 0G-Studio` },
+          { name: "description", content: `${loaderData.portal.style ?? ""} · ${loaderData.portal.language}` },
+        ]
+      : [],
+  }),
+  component: MusicPortalPage,
+  errorComponent: ({ error }) => (
+    <main className="min-h-screen flex items-center justify-center p-8 text-center">
+      <h1 className="text-2xl font-bold">{error.message}</h1>
+    </main>
+  ),
+  notFoundComponent: () => (
+    <main className="min-h-screen flex items-center justify-center p-8 text-center">
+      <div>
+        <h1 className="text-3xl font-bold">Music portal not found</h1>
+        <Link to="/" className="text-sm underline mt-3 inline-block">Back to 0G-PORTAL</Link>
+      </div>
+    </main>
+  ),
+});
+
+const THEMES: Record<string, { bg: string; accent: string; secondary: string; font: string; ornament: string; pattern: string; label: string }> = {
+  "spiritual-blue": {
+    bg: "radial-gradient(ellipse at top, #0a1f4a 0%, #020816 70%)",
+    accent: "#5eb4ff",
+    secondary: "#a8d4ff",
+    font: "'Amiri', 'Scheherazade New', serif",
+    ornament: "✦",
+    pattern: "repeating-linear-gradient(45deg, transparent 0 24px, rgba(94,180,255,0.04) 24px 25px), repeating-linear-gradient(-45deg, transparent 0 24px, rgba(94,180,255,0.04) 24px 25px)",
+    label: "نشيد · Spiritual Frequency",
+  },
+  "street-neon": {
+    bg: "linear-gradient(180deg, #050810 0%, #0a1428 100%)",
+    accent: "#00d4ff",
+    secondary: "#ff3366",
+    font: "'Bebas Neue', 'Impact', sans-serif",
+    ornament: "▮",
+    pattern: "repeating-linear-gradient(90deg, transparent 0 60px, rgba(0,212,255,0.06) 60px 61px)",
+    label: "// STREET FREQUENCY",
+  },
+  "lofi-haze": {
+    bg: "linear-gradient(180deg, #1a1530 0%, #0a0820 100%)",
+    accent: "#b8a4ff",
+    secondary: "#ffb3d9",
+    font: "'Quicksand', sans-serif",
+    ornament: "◐",
+    pattern: "radial-gradient(circle at 20% 30%, rgba(184,164,255,0.1) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(255,179,217,0.08) 0%, transparent 40%)",
+    label: "lofi haze",
+  },
+  cyber: {
+    bg: "linear-gradient(180deg, #050018 0%, #1a0033 100%)",
+    accent: "#00ffea",
+    secondary: "#ff00aa",
+    font: "'Orbitron', sans-serif",
+    ornament: "◆",
+    pattern: "repeating-linear-gradient(0deg, transparent 0 3px, rgba(0,255,234,0.05) 3px 4px)",
+    label: "// SYNTH GRID",
+  },
+  "warm-folk": {
+    bg: "linear-gradient(180deg, #2a1810 0%, #4a2a1a 100%)",
+    accent: "#ffb874",
+    secondary: "#e8884a",
+    font: "'Lora', serif",
+    ornament: "❦",
+    pattern: "none",
+    label: "Folk Roots",
+  },
+  "studio-blue": {
+    bg: "linear-gradient(180deg, #050d20 0%, #0a1840 100%)",
+    accent: "#3b82f6",
+    secondary: "#60a5fa",
+    font: "'Montserrat', sans-serif",
+    ornament: "◈",
+    pattern: "repeating-linear-gradient(135deg, transparent 0 40px, rgba(59,130,246,0.05) 40px 41px)",
+    label: "0G-STUDIO",
+  },
+};
+
+function MusicPortalPage() {
+  const { portal } = Route.useLoaderData();
+  const theme = THEMES[portal.theme] ?? THEMES["studio-blue"];
+  const { user } = useAuth();
+  const formatFn = useServerFn(formatLyrics);
+  const requestFn = useServerFn(requestStudioTrack);
+
+  const [raw, setRaw] = useState("");
+  const [lyrics, setLyrics] = useState("");
+  const [formatting, setFormatting] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [submitted, setSubmitted] = useState<string | null>(null);
+
+  const onFormat = async () => {
+    if (!user) return toast.error("Sign in to compose");
+    if (!raw.trim()) return toast.error("Type your story first");
+    setFormatting(true);
+    try {
+      const r = await formatFn({ data: { slug: portal.slug, raw } });
+      setLyrics(r.lyrics);
+      toast.success("Lyrics formatted");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Format failed");
+    } finally {
+      setFormatting(false);
+    }
+  };
+
+  const onGenerate = async () => {
+    if (!user) return toast.error("Sign in to request a track");
+    if (!lyrics.trim()) return toast.error("Format your lyrics first");
+    setGenerating(true);
+    try {
+      const r = await requestFn({ data: { slug: portal.slug, lyrics } });
+      setSubmitted(r.request.id);
+      toast.success("Studio request sent");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Request failed");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <div style={{ background: theme.bg, color: "#fff", minHeight: "100vh" }} className="relative flex flex-col">
+      <div className="absolute inset-0 pointer-events-none" style={{ background: theme.pattern }} />
+      <div className="relative flex-1 px-5 sm:px-8 py-12 max-w-3xl mx-auto w-full">
+        <Link to="/" className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.3em] opacity-60 hover:opacity-100 mb-8">
+          <ArrowLeft className="h-3.5 w-3.5" /> 0G
+        </Link>
+
+        <header className="text-center mb-12">
+          <p className="text-xs uppercase tracking-[0.5em]" style={{ color: theme.accent }}>{theme.label}</p>
+          <h1
+            className="mt-3 text-4xl sm:text-6xl font-black leading-tight"
+            style={{ fontFamily: theme.font, textShadow: `0 0 50px ${theme.accent}aa` }}
+          >
+            <span className="mr-3" style={{ color: theme.accent }}>{theme.ornament}</span>
+            {portal.name}
+            <span className="ml-3" style={{ color: theme.accent }}>{theme.ornament}</span>
+          </h1>
+          <p className="mt-3 text-sm opacity-70">{portal.style} · {portal.language}</p>
+        </header>
+
+        <section
+          className="rounded-2xl border p-6 sm:p-8 mb-8"
+          style={{ borderColor: `${theme.accent}55`, background: `${theme.accent}08`, boxShadow: `0 0 60px ${theme.accent}22` }}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Music className="h-4 w-4" style={{ color: theme.accent }} />
+            <h2 className="text-sm uppercase tracking-[0.3em] font-bold" style={{ color: theme.accent }}>Compose Your Vision</h2>
+          </div>
+          <textarea
+            value={raw}
+            onChange={(e) => setRaw(e.target.value)}
+            placeholder={`Tell your story in any language. We'll shape it into ${portal.style} verses...`}
+            rows={6}
+            className="w-full bg-black/40 border rounded-md px-4 py-3 text-sm resize-y focus:outline-none focus:ring-2"
+            style={{ borderColor: `${theme.accent}40`, color: "#fff" }}
+          />
+          <Button
+            onClick={onFormat}
+            disabled={formatting}
+            className="mt-4 h-11 px-6 text-xs uppercase tracking-[0.25em] font-bold border"
+            style={{ background: `${theme.accent}20`, color: theme.accent, borderColor: theme.accent }}
+          >
+            {formatting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Crafting...</> : <><Wand2 className="h-4 w-4 mr-2" />Format for Song</>}
+          </Button>
+
+          {lyrics && (
+            <div className="mt-6">
+              <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 mb-2">Suno-Ready Lyrics</p>
+              <pre
+                className="whitespace-pre-wrap text-sm leading-relaxed bg-black/50 border rounded-md p-4 max-h-96 overflow-auto"
+                style={{ borderColor: `${theme.accent}40`, fontFamily: "ui-monospace, monospace" }}
+              >{lyrics}</pre>
+            </div>
+          )}
+        </section>
+
+        <Button
+          onClick={onGenerate}
+          disabled={generating || !lyrics}
+          className="w-full h-20 text-base sm:text-lg uppercase tracking-[0.4em] font-black border-2 rounded-2xl"
+          style={{
+            background: `linear-gradient(135deg, ${theme.accent}, ${theme.secondary})`,
+            color: "#000",
+            borderColor: theme.accent,
+            boxShadow: `0 0 80px ${theme.accent}99, inset 0 0 30px rgba(255,255,255,0.2)`,
+          }}
+        >
+          {generating ? <><Loader2 className="h-6 w-6 mr-3 animate-spin" />Sending to Studio...</> : <><Disc3 className="h-6 w-6 mr-3" />Generate Studio Track</>}
+        </Button>
+
+        {submitted && (
+          <div
+            className="mt-6 p-5 rounded-xl border text-center"
+            style={{ borderColor: `${theme.accent}55`, background: `${theme.accent}10` }}
+          >
+            <p className="text-sm font-semibold" style={{ color: theme.accent }}>
+              Requesting High-Quality 0G-Studio Generation...
+            </p>
+            <p className="text-xs opacity-60 mt-2">Request ID: {submitted.slice(0, 8)}</p>
+          </div>
+        )}
+      </div>
+
+      <footer className="relative border-t py-6 text-center text-xs uppercase tracking-[0.4em] opacity-60" style={{ borderColor: `${theme.accent}33` }}>
+        <Link to="/" className="hover:opacity-100">
+          <span style={{ color: theme.accent }}>▣</span> Powered by 0G-PORTAL
+        </Link>
+      </footer>
+    </div>
+  );
+}
