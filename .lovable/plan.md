@@ -1,72 +1,84 @@
-# 0G-Syndicate Mesh — Build Plan
+## Goal
 
-## Reality check (read first)
+Every portal you spawn becomes a marketable, monetizable asset:
+- Visitors hear a **60-second preview** of the song.
+- Full download is gated behind a **VIP unlock-all subscription**.
+- The moment a portal spawns, the agent expands the prompt, picks an audience, and ships marketing to **Telegram VIP channel + public SEO landing + Apollo cold outreach** — no manual approval.
 
-Two pieces of the brief can't be built as described. I'll flag them now so we don't burn cycles:
+## What gets built
 
-- **Wix GUI Agent / "browse my Wix dashboard"** — Lovable's server runtime is a Cloudflare Worker. It has no headless browser, no Puppeteer, no `child_process`. There is no way for an agent to "browse" Wix and click around. The realistic alternative: if your portals already live on Lovable, we update **their own** SEO meta tags (title/description/og:image) automatically when Trade signals change — no Wix needed. If you must update Wix, you need the **Wix REST API** with a Wix API token (separate integration), not a GUI agent.
-- **Stripe Treasury → virtual debit cards** — Treasury is invite-only, US-only, and requires you to be an approved Stripe Connect Platform with a signed Treasury agreement. We can build a `/wallet` route that shows 0G-Credits, top-up via the existing Stripe checkout, and a "Card coming soon — join waitlist" CTA. Real card issuance is a months-long compliance process, not a feature toggle.
+### 1. VIP subscription (Stripe)
 
-Everything else is buildable. Proposed scope below.
+- `enable_stripe_payments` (built-in Stripe, embedded checkout — no BYOK).
+- One product: **0G-Syndicate VIP** with two prices: `vip_monthly` ($19) and `vip_yearly` ($149).
+- New route `/vip` with `<StripeEmbeddedCheckout />`, plan toggle, and `<PaymentTestModeBanner />`.
+- Standard `subscriptions` table + `payments-webhook` route (per Stripe knowledge).
+- `useSubscription` hook + `isVip = subscription.status in (active, trialing) || profile.status='vip' || isAdmin`.
 
-## Phase 1 — Power Pack Orchestrator (the core ask)
+### 2. 60-second preview + paywalled download
 
-New server function `runPowerPack({ asset, bias, command })` in `src/lib/orchestrator.functions.ts`. Sequence:
+- New server fn `prepareTrackAssets` triggered from the existing `suno-webhook` once the MP3 lands:
+  - Fetches the full MP3, uses `ffmpeg`-free pure-JS trim via byte-range + a tiny WebAudio-less re-encode is not viable in Worker — so we trim by **time-window playback enforcement client-side** (HTML5 `<audio>` with `currentTime` cap at 60s + locked seek bar) AND store full file in private `tracks` bucket. Preview public URL = same MP3, the player enforces the cap. Acceptable trade-off: file is private; only the player streams it via signed URL with `Range` clipping enforced on a server fn.
+  - Cleaner option: store full file private; expose `getPreviewStream` server fn that pipes only the first ~60s worth of bytes (approximate via bitrate from MP3 header) via a Response stream. Non-VIP gets preview stream, VIP gets a signed URL to full file.
+- New table `portal_assets` is unnecessary — extend `tracks` (already has `preview_path`, `full_path`, `price_cents`). Make `tracks` rows the canonical asset, link to `portals.slug`.
+- Portal page (`p.$slug.tsx` / `m.$slug.tsx`) gets a `<TrackPlayer>` that:
+  - Streams via `/api/public/track-stream/$id?mode=preview|full`.
+  - `mode=full` returns 402 unless caller has active VIP sub.
+  - "Download MP3" button calls a server fn that returns a one-time signed URL — VIP only.
 
-1. **Scout** — Perplexity `sonar` with `search_recency_filter: 'day'`, asset-specific query. Returns 5 headlines + citations.
-2. **Reason** — Gemini 2.5-flash with high thinking, fed the headlines, returns a structured JSON: `{ summary, bullCase, bearCase, anthemPrompt, videoPrompt, telegramCaption }`.
-3. **Produce in parallel**:
-   - Veo: `videogen--generate_video` using `videoPrompt` (1080p, 16:9, 5s).
-   - Suno: existing `spawnMusic` with `anthemPrompt` + asset-tagged style.
-4. **Persist** — insert a `power_packs` row (asset, bias, summary, headlines, video_url, suno_task_id, telegram_status).
-5. **Broadcast** — Telegram gateway `sendMessage` (caption) + `sendVideo` (when Veo finishes) + `sendAudio` (when Suno webhook lands) to the VIP channel from `bot_configs.channel_chat_id`.
+### 3. Auto-marketing on spawn (the "expanded prompt + audience" engine)
 
-New tables (one migration):
-- `power_packs` — id, user_id, asset, bias, command, summary, headlines (jsonb), video_url, suno_task_id, suno_audio_url, telegram_message_id, status, created_at.
-- Extend existing `suno_jobs` with `power_pack_id` FK so the suno-webhook can chain the Telegram broadcast.
+Wire into the existing portal spawn path (music-spawn / jokes spawn / power-pack):
 
-UI: new `/syndicate` route — single big input "Boss, give the order…", recent Power Packs feed, status pills (Scouting → Reasoning → Producing → Broadcast).
+**Step A — Expand prompt + pick audience (Gemini 2.5-flash, structured JSON):**
+```
+Input: { originalPrompt, niche, vibe, kind }
+Output: {
+  expandedPitch: string,        // 2-paragraph marketing pitch
+  audienceICP: string,          // "indie hip-hop fans 18-30, NYC/ATL"
+  apolloFilters: { titles[], industries[], locations[], keywords[] },
+  emailSubject: string,
+  emailBody: string,            // cold email referencing the song
+  telegramCaption: string,      // <500 chars, Telegram-flavored
+  seoTitle: string,             // <60 chars
+  seoDescription: string,       // <160 chars
+  hashtags: string[]
+}
+```
 
-## Phase 2 — TradeHUB live news on portal spawn
+**Step B — Persist:** write `seo_title/seo_description/seo_image_url/seo_refreshed_at` onto `portals`. Mirror in `head()` of portal route.
 
-Extend `td.$slug` (Trade portal) loader / a `getLiveTradeNews(asset)` server fn:
-- Perplexity `sonar`, `search_recency_filter: 'hour'`, returns top 5 with citations.
-- Cache in `portals.scout_meta` for 5 min to avoid burning credits.
-- Render a "Live Wire" panel on the trade portal that auto-refreshes every 60s via `useQuery`.
+**Step C — Telegram broadcast:** post `telegramCaption` + portal URL + audio preview to `bot_configs.channel_chat_id` (existing VIP channel) via `tgSend("/sendAudio")`.
 
-## Phase 3 — Live Sync glow (the unified pulse)
+**Step D — Apollo cold outreach:** insert a `connect_campaigns` row with `icp`, `offer`, `target_url`, `scout_summary`. Existing connect machinery picks it up. (Apollo lead pull + Instantly send already exist in `src/lib/`; we just queue the campaign.)
 
-- New table `market_pulse` — single row per asset: `asset`, `price`, `direction` ('up' | 'down' | 'flat'), `delta_pct`, `updated_at`. Updated by a cron (existing bot infra) or on-demand from TradeHUB.
-- New `<MarketPulseProvider>` mounted in `__root.tsx`. Subscribes to `market_pulse` realtime channel for the user's "watched asset" (default Gold).
-- Sets a CSS variable `--pulse-hue` on `<html>`: green oklch when up, red when down, neutral when flat. Existing tokens (gold accents, borders) blend with `color-mix(in oklab, var(--pulse-hue) 20%, ...)`.
-- Subtle animated breathing border on hub cards driven by the same hue.
+All four steps run in parallel inside a single `runPortalMarketing(portalId)` server fn, called from `spawnPortal`/`runPowerPack`. Failures log but never block portal creation.
 
-## Phase 4 — /wallet route (scoped honestly)
+### 4. Schema changes (one migration)
 
-- Route `/wallet` shows: current 0G-Credits (from `profiles.credits`), credit ledger history (from `credit_ledger`), top-up CTA → existing Stripe checkout, recent purchases.
-- A dimmed "Syndicate Card" placeholder section: "Virtual debit card — apply for early access" with an email-capture button into a new `card_waitlist` table.
-- **No Treasury integration.** I'll add a code comment + memory note explaining why and what would be required to revisit.
+- New table `portal_marketing` — one row per portal:
+  `portal_id`, `expanded_pitch`, `audience_icp`, `apollo_filters jsonb`, `email_subject`, `email_body`, `telegram_caption`, `hashtags text[]`, `status` (`pending`/`shipped`/`failed`), `telegram_message_id`, `campaign_id`, `created_at`, `updated_at`.
+- Make `tracks` bucket policies: public can read **preview_path** only; full_path requires VIP sub (enforced via signed URL server-side, not RLS).
+- Add `subscriptions` table per Stripe knowledge.
 
-## Phase 5 — Auto-SEO on Lovable portals (replacement for the Wix piece)
+### 5. UI surfaces
 
-When a portal is spawned or its `scout_meta` refreshes, regenerate its `head()` meta:
-- Pull current trending headline from `scout_meta`.
-- Update the portal's stored `theme_config.seoTitle` / `seoDescription` / `seoImage`.
-- `head()` reads from those fields so each portal's social cards reflect today's trending angle.
+- `/vip` — pricing page + embedded checkout.
+- `/dashboard` — add VIP status pill + "Manage subscription" → portal session.
+- Each portal page — replace plain `<audio>` with `<TrackPlayer mode={isVip ? "full" : "preview"} />` + "Unlock with VIP" CTA.
+- `/syndicate` — show `portal_marketing.status` next to each spawned pack.
 
-This is the actual "autonomous SEO" — and it works because we own the portals.
+## Technical details
 
-## Technical notes
+- **Server runtime:** byte-window streaming uses `ReadableStream` + `fetch(..., { headers: { Range } })` against Supabase storage signed URL. Worker-safe.
+- **Preview duration enforcement:** server reads first 12 frames of MP3 to estimate bitrate, then byte-clips the response to `~bitrate * 60s`. Imperfect but no native deps. If bitrate unknown, fall back to 1 MB cap.
+- **Subscription gate:** server fn `requireActiveVip` middleware reads `subscriptions` joined with `profiles.status='vip'` for the calling user.
+- **Apollo + Instantly:** already wired (`connect_campaigns`, `connect_leads`, `connect_sending_domains`). The marketing fn only writes the campaign row; the existing flow handles fanout.
+- **Telegram:** uses the connector gateway pattern already used in `power-pack.functions.ts`.
 
-- All API calls server-side via `createServerFn` (Perplexity, Gemini, Telegram gateway). No keys in client.
-- Veo via `videogen--generate_video` (Lovable AI). Suno already wired.
-- Telegram via existing connector gateway (`TELEGRAM_API_KEY`).
-- Power Pack chaining: suno-webhook checks `power_pack_id`, if present and video is ready, fires the final Telegram broadcast.
+## Open question before I start
 
-## What I need from you before I build
+The build will need me to call `enable_stripe_payments` (sets up Stripe sandbox + webhook secret automatically — you don't paste any keys). After it runs you'll see a "claim Stripe sandbox" link in Cloud → Payments to claim it later for live mode.
 
-This is 5+ days of work in one prompt. Please pick the priority order — I'll execute Phase 1 first by default unless you say otherwise. Also confirm:
-
-1. Should the Telegram broadcast go to the existing `bot_configs.channel_chat_id` (Gold bot), or a new dedicated VIP channel ID?
-2. For Live Sync, which asset is the "master pulse" by default — Gold, or per-user pick?
-3. /wallet — confirm you accept "no real Treasury card yet, waitlist only"?
+**Reply "go" and I'll execute the whole plan in sequence:**
+migration → enable_stripe_payments → products/prices → checkout & subscription → preview streaming → marketing chain → wire into spawns.
