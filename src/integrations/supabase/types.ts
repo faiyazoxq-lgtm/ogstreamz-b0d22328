@@ -179,6 +179,39 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_unlocks: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          environment: string
+          id: string
+          portal_id: string
+          stripe_session_id: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          currency?: string
+          environment?: string
+          id?: string
+          portal_id: string
+          stripe_session_id: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          environment?: string
+          id?: string
+          portal_id?: string
+          stripe_session_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       portals: {
         Row: {
           created_at: string
@@ -189,11 +222,15 @@ export type Database = {
           language: string
           name: string
           niche: string
+          price_cents: number
+          scout_meta: Json
           slug: string
           style: string | null
           theme: string
+          theme_config: Json
           updated_at: string
           vibe: string | null
+          vip: boolean
         }
         Insert: {
           created_at?: string
@@ -204,11 +241,15 @@ export type Database = {
           language?: string
           name: string
           niche: string
+          price_cents?: number
+          scout_meta?: Json
           slug: string
           style?: string | null
           theme?: string
+          theme_config?: Json
           updated_at?: string
           vibe?: string | null
+          vip?: boolean
         }
         Update: {
           created_at?: string
@@ -219,11 +260,15 @@ export type Database = {
           language?: string
           name?: string
           niche?: string
+          price_cents?: number
+          scout_meta?: Json
           slug?: string
           style?: string | null
           theme?: string
+          theme_config?: Json
           updated_at?: string
           vibe?: string | null
+          vip?: boolean
         }
         Relationships: []
       }

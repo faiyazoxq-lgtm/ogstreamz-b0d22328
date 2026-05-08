@@ -55,6 +55,23 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
     return;
   }
 
+  // VIP portal unlock — uses inline price_data, no lookup_key.
+  if (session.metadata?.kind === "portal_vip" && session.metadata?.portalId) {
+    const portalId = session.metadata.portalId as string;
+    const amount = Number(session.amount_total ?? 0);
+    const { error } = await getSupabase().from("portal_unlocks").upsert({
+      user_id: userId,
+      portal_id: portalId,
+      stripe_session_id: session.id,
+      amount_cents: amount,
+      currency: (session.currency || "usd").toLowerCase(),
+      environment: env,
+    }, { onConflict: "stripe_session_id" });
+    if (error) console.error("portal_unlocks upsert failed", error);
+    else console.log("Portal VIP unlocked", { userId, portalId, amount });
+    return;
+  }
+
   // Re-fetch the session with line items expanded so we can read lookup_key.
   const stripe = createStripeClient(env);
   const full = await stripe.checkout.sessions.retrieve(session.id, {
