@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { runDeepSearch, runPeerReview } from "./orchestrator.functions";
+import { tgSendMessage } from "./syndicate.functions";
 
 function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48) || "trade";
@@ -168,7 +169,13 @@ Return STRICT JSON only:
   "topMove": { "ticker": "string", "direction": "LONG|SHORT|FLAT", "edge": "1 sentence" },
   "sentiment": "BULLISH|BEARISH|MIXED",
   "whaleActivity": "1 sentence on large wallet flows",
-  "riskFlags": ["short flag", "short flag"]
+  "riskFlags": ["short flag", "short flag"],
+  "price": { "value": number, "currency": "USD", "change24hPct": number, "primaryTicker": "string" },
+  "levels": { "resistance": number, "support": number, "target": number, "stop": number },
+  "volatilityIndex": "LOW|MEDIUM|HIGH",
+  "volatilityCatalyst": "≤8 word phrase (e.g. Iran Conflict Factor)",
+  "biasScore": -100,
+  "factCards": [ { "headline": "≤14 word punchy fact" }, { "headline": "..." }, { "headline": "..." } ]
 }`;
     const r = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
@@ -231,6 +238,12 @@ Return STRICT JSON only:
       sentiment: signal.sentiment || "MIXED",
       whaleActivity: isVip ? (signal.whaleActivity || null) : "🔒 Whale flows are VIP-only.",
       riskFlags: Array.isArray(signal.riskFlags) ? signal.riskFlags.slice(0,4) : [],
+      price: signal.price && Number.isFinite(Number(signal.price.value)) ? signal.price : null,
+      levels: signal.levels || null,
+      volatilityIndex: signal.volatilityIndex || "MEDIUM",
+      volatilityCatalyst: signal.volatilityCatalyst || null,
+      biasScore: Math.max(-100, Math.min(100, Number(signal.biasScore ?? (sig === "BUY" ? 60 : sig === "SELL" ? -60 : 0)))),
+      factCards: Array.isArray(signal.factCards) ? signal.factCards.slice(0, 4) : [],
       headlines, sources,
       citations: deep?.citations ?? [],
       verifiedSources: deep?.verified_sources ?? [],
