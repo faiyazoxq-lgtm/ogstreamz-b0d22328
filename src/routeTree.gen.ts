@@ -26,6 +26,7 @@ import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as TdRouteImport } from './routes/td.'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicHooksSyndicateTickRouteImport } from './routes/api/public/hooks/syndicate-tick'
 
@@ -114,6 +115,11 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   path: '/checkout/return',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TdRoute = TdRouteImport.update({
+  id: '/td/',
+  path: '/td/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/store': typeof StoreRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
+  '/td/': typeof TdRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/store': typeof StoreRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
+  '/td': typeof TdRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/store': typeof StoreRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
+  '/td/': typeof TdRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/store'
     | '/syndicate-overlord'
     | '/tools'
+    | '/td/'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -226,6 +236,7 @@ export interface FileRouteTypes {
     | '/store'
     | '/syndicate-overlord'
     | '/tools'
+    | '/td'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/store'
     | '/syndicate-overlord'
     | '/tools'
+    | '/td/'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -269,6 +281,7 @@ export interface RootRouteChildren {
   StoreRoute: typeof StoreRoute
   SyndicateOverlordRoute: typeof SyndicateOverlordRoute
   ToolsRoute: typeof ToolsRoute
+  TdRoute: typeof TdRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   MSlugRoute: typeof MSlugRoute
   PSlugRoute: typeof PSlugRoute
@@ -399,6 +412,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/td/': {
+      id: '/td/'
+      path: '/td'
+      fullPath: '/td/'
+      preLoaderRoute: typeof TdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -438,6 +458,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoreRoute: StoreRoute,
   SyndicateOverlordRoute: SyndicateOverlordRoute,
   ToolsRoute: ToolsRoute,
+  TdRoute: TdRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   MSlugRoute: MSlugRoute,
   PSlugRoute: PSlugRoute,
@@ -449,3 +470,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
