@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ToolsRouteImport } from './routes/tools'
+import { Route as SyndicateOverlordRouteImport } from './routes/syndicate-overlord'
 import { Route as StoreRouteImport } from './routes/store'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MusicRouteImport } from './routes/music'
@@ -28,6 +29,11 @@ import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/publi
 const ToolsRoute = ToolsRouteImport.update({
   id: '/tools',
   path: '/tools',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SyndicateOverlordRoute = SyndicateOverlordRouteImport.update({
+  id: '/syndicate-overlord',
+  path: '/syndicate-overlord',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StoreRoute = StoreRouteImport.update({
@@ -111,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
   '/store': typeof StoreRoute
+  '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -128,6 +135,7 @@ export interface FileRoutesByTo {
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
   '/store': typeof StoreRoute
+  '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -146,6 +154,7 @@ export interface FileRoutesById {
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
   '/store': typeof StoreRoute
+  '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -165,6 +174,7 @@ export interface FileRouteTypes {
     | '/music'
     | '/profile'
     | '/store'
+    | '/syndicate-overlord'
     | '/tools'
     | '/checkout/return'
     | '/jokes/portal'
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/music'
     | '/profile'
     | '/store'
+    | '/syndicate-overlord'
     | '/tools'
     | '/checkout/return'
     | '/jokes/portal'
@@ -199,6 +210,7 @@ export interface FileRouteTypes {
     | '/music'
     | '/profile'
     | '/store'
+    | '/syndicate-overlord'
     | '/tools'
     | '/checkout/return'
     | '/jokes/portal'
@@ -217,6 +229,7 @@ export interface RootRouteChildren {
   MusicRoute: typeof MusicRoute
   ProfileRoute: typeof ProfileRoute
   StoreRoute: typeof StoreRoute
+  SyndicateOverlordRoute: typeof SyndicateOverlordRoute
   ToolsRoute: typeof ToolsRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   MSlugRoute: typeof MSlugRoute
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       path: '/tools'
       fullPath: '/tools'
       preLoaderRoute: typeof ToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/syndicate-overlord': {
+      id: '/syndicate-overlord'
+      path: '/syndicate-overlord'
+      fullPath: '/syndicate-overlord'
+      preLoaderRoute: typeof SyndicateOverlordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/store': {
@@ -354,6 +374,7 @@ const rootRouteChildren: RootRouteChildren = {
   MusicRoute: MusicRoute,
   ProfileRoute: ProfileRoute,
   StoreRoute: StoreRoute,
+  SyndicateOverlordRoute: SyndicateOverlordRoute,
   ToolsRoute: ToolsRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   MSlugRoute: MSlugRoute,
@@ -364,3 +385,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
