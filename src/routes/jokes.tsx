@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Sparkles, Shuffle, Power, Skull, SprayCan, Crown, Drama, Flame, Radio } from "lucide-react";
-import { useState } from "react";
+import { Sparkles, Shuffle, Power, Skull, SprayCan, Crown, Drama, Flame, Radio, X, Plus, Dice5 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { VaultLockedDialog } from "@/components/VaultLockedDialog";
 
@@ -14,6 +15,52 @@ export const STYLE_PRESETS: StylePreset[] = [
   { id: "sarcastic", label: "Sarcastic", Icon: Drama },
   { id: "legendary", label: "Legendary", Icon: Crown },
   { id: "gritty", label: "Gritty", Icon: Flame },
+];
+
+// Joke-only flavor chips. These get folded into the "custom" prompt string
+// so the portal can read them without changing STYLE_PRESETS.
+const FLAVOR_GROUPS: { name: string; chips: string[] }[] = [
+  {
+    name: "Tone",
+    chips: ["deadpan", "absurd", "wholesome", "self-deprecating", "observational", "roast-mode", "punny", "dry wit"],
+  },
+  {
+    name: "Delivery",
+    chips: ["one-liner", "long setup", "rule of three", "callback gag", "mic-drop punchline", "story joke", "knock-knock"],
+  },
+  {
+    name: "Audience",
+    chips: ["family-friendly", "late-night club", "office water-cooler", "stand-up crowd", "group chat", "kids party"],
+  },
+  {
+    name: "Setting",
+    chips: ["bar joke", "elevator joke", "tech bro meeting", "dad at BBQ", "subway rant", "wedding speech"],
+  },
+  {
+    name: "Pace",
+    chips: ["snappy", "slow burn", "rapid fire", "build-and-twist", "shaggy dog"],
+  },
+  {
+    name: "Era",
+    chips: ["classic vaudeville", "90s sitcom", "internet meme", "TikTok punchline", "boomer humor", "Gen-Z chaos"],
+  },
+];
+
+// A pool of joke-style keyword bursts for the "Random" button. All terms
+// are kept strictly joke / comedy related.
+const RANDOM_JOKE_PROMPTS: string[] = [
+  "deadpan one-liner with a callback gag",
+  "absurd dad joke at a wedding speech",
+  "self-deprecating roast with a mic-drop punchline",
+  "observational rant from the subway, rapid fire",
+  "rule of three setup, family-friendly twist",
+  "shaggy dog story that lands on a pun",
+  "sarcastic group chat one-liner",
+  "tech bro meeting joke, slow burn punchline",
+  "wholesome knock-knock with a Gen-Z twist",
+  "late-night club roast, snappy delivery",
+  "punny elevator joke with a build-and-twist",
+  "boomer humor reimagined as a TikTok punchline",
 ];
 
 export const Route = createFileRoute("/jokes")({
@@ -30,7 +77,11 @@ function JokesSetup() {
   const navigate = useNavigate();
   const { user, profile, isAdmin } = useAuth();
   const [selected, setSelected] = useState<string[]>(["street"]);
-  const [custom, setCustom] = useState("");
+  const [flavors, setFlavors] = useState<string[]>([]);
+  const [keywords, setKeywords] = useState<string[]>([]);
+  const [draft, setDraft] = useState("");
+  const [brief, setBrief] = useState("");
+  const [briefDirty, setBriefDirty] = useState(false);
   const [locked, setLocked] = useState(false);
   const [liveRoast, setLiveRoast] = useState(false);
   const isVip = profile?.status === "vip" || isAdmin;
@@ -38,14 +89,53 @@ function JokesSetup() {
   const toggle = (id: string) =>
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
+  const toggleFlavor = (chip: string) =>
+    setFlavors((f) => (f.includes(chip) ? f.filter((x) => x !== chip) : [...f, chip]));
+
+  const addKeyword = (raw: string) => {
+    const v = raw.trim().replace(/,+$/, "").trim();
+    if (!v) return;
+    setKeywords((k) => (k.includes(v) ? k : [...k, v]));
+    setDraft("");
+  };
+
+  const removeKeyword = (k: string) =>
+    setKeywords((arr) => arr.filter((x) => x !== k));
+
+  const onDraftKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addKeyword(draft);
+    }
+  };
+
+  const compiledCustom = useMemo(
+    () => [...flavors, ...keywords].join(", "),
+    [flavors, keywords],
+  );
+
+  const effectiveBrief = briefDirty ? brief : compiledCustom;
+
   const surprise = () => {
     const ids = STYLE_PRESETS.map((s) => s.id);
     const count = 1 + Math.floor(Math.random() * 3);
     const shuffled = [...ids].sort(() => Math.random() - 0.5).slice(0, count);
     setSelected(shuffled);
+    // Drop in a random joke-style burst as keywords too.
+    const burst = RANDOM_JOKE_PROMPTS[Math.floor(Math.random() * RANDOM_JOKE_PROMPTS.length)];
+    const tokens = burst.split(/,\s*|\s+with\s+/g).map((t) => t.trim()).filter(Boolean);
+    setKeywords((k) => Array.from(new Set([...k, ...tokens])));
+    setBriefDirty(false);
   };
 
-  const canLaunch = selected.length > 0 || custom.trim().length > 0;
+  const randomKeyword = () => {
+    const all = FLAVOR_GROUPS.flatMap((g) => g.chips);
+    const pick = all[Math.floor(Math.random() * all.length)];
+    addKeyword(pick);
+  };
+
+  const canLaunch =
+    selected.length > 0 || flavors.length > 0 || keywords.length > 0 || effectiveBrief.trim().length > 0;
 
   const launch = () => {
     if (!canLaunch) return;
@@ -59,12 +149,12 @@ function JokesSetup() {
     }
     navigate({
       to: "/jokes/portal",
-      search: { styles: selected.join(","), custom: custom.trim(), live: liveRoast ? 1 : 0 },
+      search: { styles: selected.join(","), custom: effectiveBrief.trim(), live: liveRoast ? 1 : 0 },
     });
   };
 
   return (
-    <main className="max-w-4xl mx-auto px-5 sm:px-8 py-12 sm:py-16">
+    <main className="max-w-6xl mx-auto px-4 sm:px-8 py-10 sm:py-14">
       <header className="text-center mb-12">
         <p className="text-xs tracking-[0.4em] uppercase font-semibold mb-3" style={{ color: "var(--neon-blue-bright)" }}>
           JokesHUB · Style Mixer
@@ -73,16 +163,17 @@ function JokesSetup() {
           Build Your Mix
         </h1>
         <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-          Tag the joke styles you want. Add your own flavor. Then launch the portal.
+          Tap chips to throw joke styles into the mix. Write your own or roll the dice. Nothing fires until you press Activate.
         </p>
       </header>
 
-      <section className="rounded-2xl border border-border bg-card p-6 sm:p-10 space-y-10">
-        {/* Style tags */}
+      <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] gap-6 lg:gap-8 items-start">
+        <section className="rounded-2xl border border-border bg-card p-5 sm:p-8 space-y-8 min-w-0">
+        {/* Core style tags */}
         <div>
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-semibold">
-              Joke Styles
+              Core Styles
             </h2>
             <span className="text-xs text-muted-foreground">{selected.length} selected</span>
           </div>
@@ -95,13 +186,13 @@ function JokesSetup() {
                   type="button"
                   onClick={() => toggle(id)}
                   className={
-                    "inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold uppercase tracking-wider border transition-all " +
+                    "inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-xs sm:text-sm font-semibold uppercase tracking-wider border transition-all " +
                     (active
                       ? "btn-glass-blue text-white border-transparent"
                       : "bg-secondary text-muted-foreground border-border hover:text-foreground hover:border-[oklch(0.72_0.22_245/0.5)]")
                   }
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-3.5 w-3.5" />
                   {label}
                 </button>
               );
@@ -109,26 +200,80 @@ function JokesSetup() {
           </div>
         </div>
 
-        {/* Custom input */}
+        {/* Flavor groups */}
+        {FLAVOR_GROUPS.map((group) => (
+          <div key={group.name}>
+            <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-semibold mb-3">
+              {group.name}
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {group.chips.map((chip) => {
+                const active = flavors.includes(chip);
+                return (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => toggleFlavor(chip)}
+                    className={
+                      "px-2.5 py-1 rounded-full text-xs sm:text-sm border transition-all " +
+                      (active
+                        ? "btn-glass-blue text-white border-transparent"
+                        : "bg-secondary/60 text-muted-foreground border-border hover:text-foreground hover:border-[oklch(0.72_0.22_245/0.5)]")
+                    }
+                  >
+                    {chip}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+
+        {/* Custom keywords */}
         <div>
           <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-semibold mb-4">
-            Custom Style Keywords
+            Your Own Keywords
           </h2>
           <div className="relative">
             <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "var(--neon-blue-bright)" }} />
             <Input
-              value={custom}
-              onChange={(e) => setCustom(e.target.value)}
-              placeholder="Mix in your own style keywords..."
-              className="pl-11 h-12 bg-background border-border text-base"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={onDraftKey}
+              onBlur={() => addKeyword(draft)}
+              placeholder="Type a joke flavor and hit Enter..."
+              className="pl-11 pr-24 h-12 bg-background border-border text-base"
             />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+              <Button type="button" size="sm" variant="ghost" onClick={randomKeyword} className="h-8 px-2">
+                <Dice5 className="h-4 w-4 mr-1" /> Random
+              </Button>
+              <Button type="button" size="sm" variant="ghost" onClick={() => addKeyword(draft)} className="h-8 px-2">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
+          {keywords.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {keywords.map((k) => (
+                <span
+                  key={k}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs bg-[oklch(0.72_0.22_245/0.15)] text-foreground border border-[oklch(0.72_0.22_245/0.4)]"
+                >
+                  {k}
+                  <button type="button" onClick={() => removeKeyword(k)} className="opacity-60 hover:opacity-100">
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
           <p className="mt-2 text-xs text-muted-foreground">
-            Try: "deadpan", "wholesome", "tech bro", "90s hip-hop"...
+            Press Enter or comma to lock a chip in. Hit Random to roll a joke flavor.
           </p>
         </div>
 
-        {/* Randomizer */}
+        {/* Randomizer — joke-style only */}
         <div>
           <Button
             type="button"
@@ -137,7 +282,7 @@ function JokesSetup() {
             className="w-full h-12 border-[oklch(0.72_0.22_245/0.4)] text-foreground hover:bg-[oklch(0.72_0.22_245/0.1)] uppercase tracking-wider font-bold"
           >
             <Shuffle className="h-4 w-4 mr-2" />
-            Surprise Me
+            Surprise Me — Roll a Joke Prompt
           </Button>
         </div>
 
@@ -187,10 +332,65 @@ function JokesSetup() {
             </span>
           </button>
         </div>
-      </section>
+        </section>
 
-      {/* Activate portal */}
-      <div className="relative mt-12 flex flex-col items-center">
+        {/* Live brief panel */}
+        <aside className="rounded-2xl border border-border bg-card p-5 sm:p-6 lg:sticky lg:top-4 lg:self-start space-y-4">
+          <div>
+            <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-semibold">
+              Joke Brief
+            </h2>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Auto-built from your chips. Edit freely — nothing generates until you press Activate.
+            </p>
+          </div>
+
+          <div className="text-xs text-muted-foreground">
+            <span className="text-foreground font-semibold">{selected.length}</span> core ·{" "}
+            <span className="text-foreground font-semibold">{flavors.length}</span> flavors ·{" "}
+            <span className="text-foreground font-semibold">{keywords.length}</span> keywords
+          </div>
+
+          <Textarea
+            value={effectiveBrief}
+            onChange={(e) => {
+              setBrief(e.target.value);
+              setBriefDirty(true);
+            }}
+            placeholder="Your compiled joke prompt will appear here..."
+            className="min-h-32 max-h-60 resize-y bg-background border-border text-sm"
+          />
+
+          {briefDirty && (
+            <button
+              type="button"
+              onClick={() => {
+                setBriefDirty(false);
+                setBrief("");
+              }}
+              className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground hover:text-foreground"
+            >
+              Reset to auto-built
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={launch}
+            disabled={!canLaunch}
+            className="relative w-full btn-glass-blue rounded-xl py-4 text-white font-black text-sm tracking-[0.3em] uppercase disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-3 shadow-[0_0_40px_-5px_oklch(0.72_0.22_245/0.7)] hover:shadow-[0_0_70px_-5px_oklch(0.72_0.22_245/0.95)] transition-shadow"
+          >
+            <Power className="h-5 w-5" />
+            Generate Portal
+          </button>
+          <p className="text-center text-[10px] text-muted-foreground uppercase tracking-[0.3em]">
+            {canLaunch ? "Ready · Frequency locked" : "Pick at least one chip"}
+          </p>
+        </aside>
+      </div>
+
+      {/* Big activate — secondary, mirrors brief CTA */}
+      <div className="relative mt-10 flex flex-col items-center">
         <div
           aria-hidden
           className={
@@ -210,7 +410,7 @@ function JokesSetup() {
           Activate Portal
         </button>
         <p className="mt-4 text-xs text-muted-foreground uppercase tracking-[0.3em]">
-          {canLaunch ? "Ready · Frequency locked" : "Pick at least one style"}
+          {canLaunch ? "Ready · Frequency locked" : "Pick at least one chip"}
         </p>
       </div>
       <VaultLockedDialog
