@@ -33,10 +33,6 @@ export const spawnMusic = createServerFn({ method: "POST" })
     }
 
     // Build webhook URL — sunoapi.com posts results here when finished
-    const origin =
-      process.env.PUBLIC_SITE_URL ??
-      (process.env.SUPABASE_URL ? "" : "") ??
-      "";
     const webhookBase =
       process.env.PUBLIC_SITE_URL ||
       "https://project--ae4b10fa-6c9c-44d9-bbd5-85d320d62dff.lovable.app";
