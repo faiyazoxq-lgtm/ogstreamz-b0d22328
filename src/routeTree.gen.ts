@@ -13,7 +13,9 @@ import { Route as ToolsRouteImport } from './routes/tools'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MusicRouteImport } from './routes/music'
 import { Route as JokesRouteImport } from './routes/jokes'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminSyndicateRouteImport } from './routes/admin-syndicate'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
@@ -38,9 +40,19 @@ const JokesRoute = JokesRouteImport.update({
   path: '/jokes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSyndicateRoute = AdminSyndicateRouteImport.update({
+  id: '/admin-syndicate',
+  path: '/admin-syndicate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -62,7 +74,9 @@ const JokesPortalRoute = JokesPortalRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-syndicate': typeof AdminSyndicateRoute
   '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
@@ -72,7 +86,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-syndicate': typeof AdminSyndicateRoute
   '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
@@ -83,7 +99,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-syndicate': typeof AdminSyndicateRoute
   '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
@@ -95,7 +113,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/admin-syndicate'
     | '/auth'
+    | '/dashboard'
     | '/jokes'
     | '/music'
     | '/profile'
@@ -105,7 +125,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/admin-syndicate'
     | '/auth'
+    | '/dashboard'
     | '/jokes'
     | '/music'
     | '/profile'
@@ -115,7 +137,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/admin-syndicate'
     | '/auth'
+    | '/dashboard'
     | '/jokes'
     | '/music'
     | '/profile'
@@ -126,7 +150,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AdminSyndicateRoute: typeof AdminSyndicateRoute
   AuthRoute: typeof AuthRoute
+  DashboardRoute: typeof DashboardRoute
   JokesRoute: typeof JokesRouteWithChildren
   MusicRoute: typeof MusicRoute
   ProfileRoute: typeof ProfileRoute
@@ -163,11 +189,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JokesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-syndicate': {
+      id: '/admin-syndicate'
+      path: '/admin-syndicate'
+      fullPath: '/admin-syndicate'
+      preLoaderRoute: typeof AdminSyndicateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -207,7 +247,9 @@ const JokesRouteWithChildren = JokesRoute._addFileChildren(JokesRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AdminSyndicateRoute: AdminSyndicateRoute,
   AuthRoute: AuthRoute,
+  DashboardRoute: DashboardRoute,
   JokesRoute: JokesRouteWithChildren,
   MusicRoute: MusicRoute,
   ProfileRoute: ProfileRoute,

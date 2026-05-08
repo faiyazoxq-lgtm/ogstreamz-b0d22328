@@ -3,6 +3,8 @@ import { Sparkles, Shuffle, Power, Skull, SprayCan, Crown, Drama, Flame } from "
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/use-auth";
+import { VaultLockedDialog } from "@/components/VaultLockedDialog";
 
 export type StylePreset = { id: string; label: string; Icon: typeof Skull };
 
@@ -26,8 +28,10 @@ export const Route = createFileRoute("/jokes")({
 
 function JokesSetup() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [selected, setSelected] = useState<string[]>(["street"]);
   const [custom, setCustom] = useState("");
+  const [locked, setLocked] = useState(false);
 
   const toggle = (id: string) =>
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
@@ -43,6 +47,10 @@ function JokesSetup() {
 
   const launch = () => {
     if (!canLaunch) return;
+    if (!user) {
+      setLocked(true);
+      return;
+    }
     navigate({
       to: "/jokes/portal",
       search: { styles: selected.join(","), custom: custom.trim() },
@@ -152,6 +160,12 @@ function JokesSetup() {
           {canLaunch ? "Ready · Frequency locked" : "Pick at least one style"}
         </p>
       </div>
+      <VaultLockedDialog
+        open={locked}
+        onOpenChange={setLocked}
+        itemName="Portal Activation"
+        isAuthenticated={!!user}
+      />
     </main>
   );
 }
