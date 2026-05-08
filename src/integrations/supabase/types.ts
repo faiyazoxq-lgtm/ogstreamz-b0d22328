@@ -302,6 +302,89 @@ export type Database = {
         }
         Relationships: []
       }
+      track_purchases: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          environment: string
+          id: string
+          stripe_session_id: string
+          track_id: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          currency?: string
+          environment?: string
+          id?: string
+          stripe_session_id: string
+          track_id: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          environment?: string
+          id?: string
+          stripe_session_id?: string
+          track_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "track_purchases_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracks: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          currency: string
+          full_path: string | null
+          id: string
+          portal_slug: string
+          preview_path: string | null
+          price_cents: number
+          suno_prompt: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          full_path?: string | null
+          id?: string
+          portal_slug: string
+          preview_path?: string | null
+          price_cents?: number
+          suno_prompt?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          full_path?: string | null
+          id?: string
+          portal_slug?: string
+          preview_path?: string | null
+          price_cents?: number
+          suno_prompt?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
