@@ -685,6 +685,83 @@ function RoleRow({ row, busy, onSave }: { row: Row; busy: boolean; onSave: (p: P
 }
 
 function ScoutPanel() {
+  // (defined below)
+}
+
+function LeadTrackingPanel() {
+  const [rows, setRows] = useState<{ slug: string; name: string; niche: string; view_count: number; vip: boolean; created_at: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const reload = () => {
+    setLoading(true);
+    supabase
+      .from("portals")
+      .select("slug, name, niche, view_count, vip, created_at")
+      .order("view_count", { ascending: false })
+      .limit(50)
+      .then(({ data }) => { setRows((data as any[]) ?? []); setLoading(false); });
+  };
+
+  useEffect(() => { reload(); }, []);
+
+  const total = rows.reduce((s, r) => s + (r.view_count || 0), 0);
+
+  return (
+    <section className="mt-10 rounded-2xl border border-[oklch(0.72_0.22_245/0.4)] bg-card p-6 sm:p-8">
+      <header className="flex items-center gap-3 mb-5 flex-wrap">
+        <TrendingUp className="h-5 w-5" style={{ color: "var(--neon-blue-bright)" }} />
+        <h2 className="font-[Montserrat] font-black text-xl text-white">Lead Tracking</h2>
+        <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Portal Visits · Hot Leads</span>
+        <span className="ml-auto text-[10px] uppercase tracking-[0.3em] text-foreground/80">
+          Total Opens: <span className="text-white font-bold">{total}</span>
+        </span>
+        <Button size="sm" variant="ghost" onClick={reload} className="text-[10px]">Refresh</Button>
+      </header>
+      {loading ? (
+        <div className="text-center py-6"><Loader2 className="h-4 w-4 animate-spin inline" /></div>
+      ) : rows.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No portals yet.</p>
+      ) : (
+        <div className="rounded-xl border border-border overflow-hidden">
+          <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground border-b border-border bg-background/40">
+            <div className="col-span-5">Portal</div>
+            <div className="col-span-4">Niche</div>
+            <div className="col-span-2 text-right">Opens</div>
+            <div className="col-span-1 text-right">Link</div>
+          </div>
+          {rows.map((r) => {
+            const url = typeof window !== "undefined" ? `${window.location.origin}/p/${r.slug}` : `/p/${r.slug}`;
+            const heat = r.view_count >= 50 ? "text-red-400" : r.view_count >= 10 ? "text-yellow-400" : "text-foreground/70";
+            return (
+              <div key={r.slug} className="grid grid-cols-12 gap-2 px-4 py-2.5 text-xs items-center border-b border-border last:border-0 hover:bg-background/40">
+                <div className="col-span-5 truncate">
+                  <span className="text-white font-bold">{r.name}</span>
+                  {r.vip && <span className="ml-2 text-[9px] uppercase tracking-[0.3em] px-1.5 py-0.5 rounded border" style={{ color: "var(--neon-blue-bright)", borderColor: "currentColor" }}>VIP</span>}
+                  <div className="text-[10px] text-muted-foreground font-mono">/p/{r.slug}</div>
+                </div>
+                <div className="col-span-4 truncate text-muted-foreground">{r.niche}</div>
+                <div className={`col-span-2 text-right font-mono font-bold ${heat}`}>
+                  <Eye className="inline h-3 w-3 mr-1" />{r.view_count}
+                </div>
+                <div className="col-span-1 text-right">
+                  <button
+                    onClick={() => { navigator.clipboard?.writeText(url); toast.success("Client link copied"); }}
+                    className="opacity-60 hover:opacity-100"
+                    title="Copy client link"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ScoutPanelImpl() {
   const scout = useServerFn(scoutUrl);
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
