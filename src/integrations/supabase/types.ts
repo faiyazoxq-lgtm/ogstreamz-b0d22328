@@ -214,6 +214,7 @@ export type Database = {
       }
       portals: {
         Row: {
+          audio_snippet_url: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -231,9 +232,11 @@ export type Database = {
           theme_config: Json
           updated_at: string
           vibe: string | null
+          view_count: number
           vip: boolean
         }
         Insert: {
+          audio_snippet_url?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -251,9 +254,11 @@ export type Database = {
           theme_config?: Json
           updated_at?: string
           vibe?: string | null
+          view_count?: number
           vip?: boolean
         }
         Update: {
+          audio_snippet_url?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -271,6 +276,7 @@ export type Database = {
           theme_config?: Json
           updated_at?: string
           vibe?: string | null
+          view_count?: number
           vip?: boolean
         }
         Relationships: []
@@ -582,6 +588,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_portal_view: { Args: { _slug: string }; Returns: number }
       redeem_code: { Args: { _code: string }; Returns: Json }
       spend_credits: {
         Args: { _amount: number; _reason: string }

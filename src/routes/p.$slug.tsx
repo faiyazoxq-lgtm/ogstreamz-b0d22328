@@ -134,6 +134,12 @@ function PortalPage() {
   const controls = useAnimationControls();
   const jokes = portal.jokes?.length ? portal.jokes : ["No jokes loaded yet."];
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioSnippet = (portal as any).audio_snippet_url as string | null | undefined;
+
+  // Lead tracking: increment view counter on mount
+  useEffect(() => {
+    supabase.rpc("increment_portal_view", { _slug: portal.slug }).then(() => {});
+  }, [portal.slug]);
 
   useEffect(() => {
     if (!portal.vip) { setOwned(true); return; }
@@ -329,6 +335,29 @@ function PortalPage() {
 
         <audio ref={audioRef} preload="none" />
       </div>
+
+      {audioSnippet && (
+        <div className="relative max-w-3xl mx-auto w-full px-5 pb-8">
+          <div
+            className="rounded-xl p-3 flex items-center gap-3 border-2 backdrop-blur-sm"
+            style={{
+              background: `linear-gradient(135deg, #1a1a1a, #2a2a2a)`,
+              borderColor: `${T.accent}88`,
+              boxShadow: `0 0 30px ${T.accent}44, inset 0 1px 0 rgba(255,255,255,0.1)`,
+            }}
+          >
+            <span className="text-[10px] uppercase tracking-[0.3em] font-bold px-2 py-1 rounded border" style={{ color: T.accent, borderColor: `${T.accent}66` }}>
+              30s
+            </span>
+            <audio
+              controls
+              src={audioSnippet}
+              className="flex-1 h-9"
+              style={{ filter: "invert(1) hue-rotate(180deg) saturate(0.6)" }}
+            />
+          </div>
+        </div>
+      )}
 
       <footer className="relative border-t py-6 text-center text-xs uppercase tracking-[0.4em] opacity-60" style={{ borderColor: `${T.accent}33` }}>
         <Link to="/" className="hover:opacity-100 inline-flex items-center gap-2">
