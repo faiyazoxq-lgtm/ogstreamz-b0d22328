@@ -246,3 +246,87 @@ function RedeemCodePanel() {
     </section>
   );
 }
+function ResellerAdminPanel({ rows }: { rows: Row[] }) {
+  const list = useServerFn(bossListResellers);
+  const create = useServerFn(bossCreateReseller);
+  const topup = useServerFn(bossTopupReseller);
+  const [resellers, setResellers] = useState<any[]>([]);
+  const [userId, setUserId] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [initialCredits, setInitialCredits] = useState("100");
+  const [markup, setMarkup] = useState("500");
+  const [busy, setBusy] = useState(false);
+
+  const refresh = async () => {
+    try { const r = await list(); setResellers(r.resellers ?? []); }
+    catch (e: any) {
+      let msg = e?.message;
+      if (e instanceof Response) { try { msg = await e.text(); } catch { msg = `HTTP ${e.status}`; } }
+      toast.error(msg ?? "Failed to load resellers");
+    }
+  };
+  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
+
+  const submit = async () => {
+    setBusy(true);
+    try {
+      await create({ data: { userId, displayName, initialCredits: Number(initialCredits), markupCents: Number(markup) } });
+      toast.success("Reseller activated");
+      setUserId(""); setDisplayName("");
+      refresh();
+    } catch (e: any) {
+      let msg = e?.message;
+      if (e instanceof Response) { try { msg = await e.text(); } catch { msg = `HTTP ${e.status}`; } }
+      toast.error(msg ?? "Failed");
+    } finally { setBusy(false); }
+  };
+
+  const adjust = async (uid: string, delta: number) => {
+    try { const r = await topup({ data: { userId: uid, delta, reason: "boss:adjust" } }); toast.success(`Wallet: ${r.credits}c`); refresh(); }
+    catch (e: any) {
+      let msg = e?.message;
+      if (e instanceof Response) { try { msg = await e.text(); } catch { msg = `HTTP ${e.status}`; } }
+      toast.error(msg ?? "Failed");
+    }
+  };
+
+  const emailOf = (uid: string) => rows.find((r) => r.id === uid)?.email ?? uid.slice(0, 8) + "…";
+
+  return (
+    <section className="mt-6 rounded-xl border border-pink-700/30 bg-black/50 p-5 backdrop-blur">
+      <h2 className="text-xs uppercase tracking-[0.4em] text-pink-400 mb-3 flex items-center gap-2">
+        <Users className="h-3.5 w-3.5" /> RESELLER PROGRAM
+      </h2>
+      <div className="grid sm:grid-cols-5 gap-2">
+        <select value={userId} onChange={(e) => setUserId(e.target.value)} className="bg-black/60 border border-emerald-800/40 rounded px-2 text-emerald-200 text-sm">
+          <option value="">— select user —</option>
+          {rows.map((r) => <option key={r.id} value={r.id}>{r.email}</option>)}
+        </select>
+        <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="display name" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
+        <Input value={initialCredits} onChange={(e) => setInitialCredits(e.target.value)} type="number" min="0" placeholder="initial credits" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
+        <Input value={markup} onChange={(e) => setMarkup(e.target.value)} type="number" min="0" placeholder="markup ¢" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
+        <Button onClick={submit} disabled={busy || !userId} className="bg-pink-500 hover:bg-pink-400 text-black font-bold">
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="h-4 w-4 mr-1" />ACTIVATE</>}
+        </Button>
+      </div>
+
+      <div className="mt-4">
+        {resellers.length === 0 && <p className="text-xs text-emerald-700">// no resellers yet</p>}
+        {resellers.map((r) => (
+          <div key={r.id} className="flex items-center justify-between py-2 border-b border-pink-900/20 text-sm">
+            <div>
+              <p className="text-pink-200">{emailOf(r.user_id)} · <span className="text-emerald-400">{r.display_name ?? "—"}</span></p>
+              <p className="text-[10px] text-emerald-700">markup: ${(r.markup_cents/100).toFixed(2)} · {r.active ? "active" : "disabled"}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Wallet className="h-3.5 w-3.5 text-cyan-400" />
+              <span className="text-cyan-300 tabular-nums w-14 text-right">{r.credits}c</span>
+              <Button size="sm" onClick={() => adjust(r.user_id, 100)} className="h-7 bg-emerald-700 hover:bg-emerald-600 text-black">+100</Button>
+              <Button size="sm" onClick={() => adjust(r.user_id, -100)} className="h-7 bg-rose-700 hover:bg-rose-600 text-white">-100</Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
