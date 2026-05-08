@@ -453,7 +453,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      syndicate_gallery: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          kind: string | null
+          language: string | null
+          name: string | null
+          path: string | null
+          slug: string | null
+          theme: string | null
+          theme_config: Json | null
+          vibe: string | null
+          vip: boolean | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       apply_credit_purchase: {
