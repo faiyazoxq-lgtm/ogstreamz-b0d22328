@@ -172,6 +172,7 @@ export const runPortalMarketing = createServerFn({ method: "POST" })
       (async () => {
         try {
           const offer = `${portal.name} — ${draft.audienceICP}`;
+          if (!portal.created_by) return null; // connect_campaigns requires an owner
           const { data: c } = await supabaseAdmin
             .from("connect_campaigns")
             .insert({
