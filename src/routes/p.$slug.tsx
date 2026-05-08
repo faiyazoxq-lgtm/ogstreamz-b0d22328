@@ -549,6 +549,14 @@ function NewsHubView({ portal }: { portal: Portal }) {
   const headline = data.headline || `${(data.pair || portal.name).toUpperCase()} INTEL DROP`;
   const tagline = data.tagline || "Live market intelligence stream";
   const overall = typeof data.overall_confidence === "number" ? data.overall_confidence : null;
+  const tvSymbol = data.tv_symbol || "TVC:DXY";
+  const relatedSymbols = data.related_symbols && data.related_symbols.length ? data.related_symbols : ["SP:SPX","OANDA:XAUUSD","TVC:USOIL"];
+  const assetCode = data.asset_code || (data.pair || "SIG").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4);
+  const bullArticles: NewsArticle[] = (data.bull_articles as NewsArticle[]) ?? (bias === "good" ? articles : []);
+  const bearArticles: NewsArticle[] = (data.bear_articles as NewsArticle[]) ?? (bias === "bad" ? articles : []);
+  const synthesis = data.synthesis;
+  const BULL = "#00e08a";
+  const BEAR = "#ff2233";
 
   // Bull market growth pulse vs. emergency alert
   const alertAnim = bias === "bad"
@@ -578,6 +586,12 @@ function NewsHubView({ portal }: { portal: Portal }) {
       </div>
 
       <main className="relative z-10 max-w-4xl mx-auto px-5 sm:px-8 py-10">
+        {/* Asset DNA watermark */}
+        <div aria-hidden className="pointer-events-none fixed inset-0 flex items-center justify-center -z-0 select-none"
+          style={{ fontFamily: `'${headingFont}', Impact, sans-serif`, color: accent, opacity: 0.04, fontSize: "min(60vw, 50vh)", fontWeight: 900, letterSpacing: "-0.05em" }}>
+          {assetCode}
+        </div>
+
         {/* Headline */}
         <motion.div animate={alertAnim} className="mb-8">
           <p className="text-[10px] uppercase tracking-[0.5em]" style={{ color: accent }}>
@@ -595,11 +609,25 @@ function NewsHubView({ portal }: { portal: Portal }) {
           )}
         </motion.div>
 
+        {/* Ticker tape */}
+        <div className="mb-6 rounded-xl border overflow-hidden" style={{ borderColor: `${accent}55`, background: "rgba(0,0,0,0.4)" }}>
+          <TradingViewTickerTape symbols={[tvSymbol, ...relatedSymbols]} />
+        </div>
+
+        {/* Live Pulse — TradingView */}
+        <div className="mb-8 rounded-xl border overflow-hidden" style={{ borderColor: `${accent}55`, boxShadow: `0 0 30px ${accent}22` }}>
+          <div className="flex items-center justify-between px-4 py-2 border-b" style={{ borderColor: `${accent}33`, background: "rgba(0,0,0,0.6)" }}>
+            <span className="text-[10px] uppercase tracking-[0.4em]" style={{ color: accent }}><Activity className="inline h-3 w-3 mr-2" />Live Pulse · {tvSymbol}</span>
+            <span className="text-[10px] uppercase tracking-[0.3em] opacity-60">100 / 200 SMA · Dark Theme</span>
+          </div>
+          <TradingViewChart symbol={tvSymbol} height={460} />
+        </div>
+
         {/* Scan button + last-scan stamp */}
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
           <Button onClick={() => runScan(false)} disabled={scanning} className="h-12 px-6 text-sm uppercase tracking-[0.35em] font-black border-2 rounded-xl"
             style={{ background: `linear-gradient(135deg, ${accent}, ${secondary})`, color: "#000", borderColor: accent, boxShadow: `0 0 40px ${accent}88` }}>
-            {scanning ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />SCANNING…</> : <><RefreshCw className="h-4 w-4 mr-2" />SCAN FOR UPDATES</>}
+            {scanning ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />SCANNING…</> : <><RefreshCw className="h-4 w-4 mr-2" />RE-SCAN GLOBAL INTEL</>}
           </Button>
           <div className="text-[10px] uppercase tracking-[0.3em] opacity-60 flex items-center gap-2">
             {data.scanned_at ? `Last scan · ${new Date(data.scanned_at).toLocaleTimeString()}` : "Awaiting first scan"}
@@ -611,67 +639,94 @@ function NewsHubView({ portal }: { portal: Portal }) {
           </div>
         </div>
 
-        {/* Feed */}
-        <div className="space-y-4">
-          {articles.length === 0 && (
-            <div className="rounded-xl border p-8 text-center text-sm opacity-70" style={{ borderColor: `${accent}55` }}>
-              No intel yet. Hit SCAN FOR UPDATES.
-            </div>
-          )}
-          {articles.map((a, i) => (
-            <motion.article
-              key={a.url + i}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className="rounded-xl border p-5 sm:p-6 backdrop-blur-sm"
-              style={{ borderColor: `${accent}55`, background: `linear-gradient(135deg, ${accent}10, ${secondary}06)`, boxShadow: `inset 0 0 30px ${accent}11` }}
-            >
-              <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] opacity-70 mb-2">
-                <span className="px-1.5 py-0.5 rounded border" style={{ color: accent, borderColor: `${accent}66` }}>#{i + 1}</span>
-                <span style={{ color: accent }}>{a.source}</span>
-              </div>
-              <h2 className="text-lg sm:text-xl font-black leading-snug uppercase" style={{ fontFamily: `'${headingFont}', Impact, sans-serif`, color: text }}>
-                {a.title}
-              </h2>
-              <p className="mt-2 text-sm opacity-90">{a.snippet}</p>
-
-              {showVip ? (
-                <div className="mt-4 rounded-lg p-4 border" style={{ borderColor: `${accent}55`, background: "rgba(0,0,0,0.35)" }}>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-[10px] uppercase tracking-[0.4em] font-bold" style={{ color: accent }}>
-                      ▣ AI Spin-off · Bias Analysis
-                    </p>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[10px] uppercase tracking-[0.3em]" style={{ color: accent, borderColor: `${accent}66` }}>
-                      <Gauge className="h-3 w-3" /> {a.confidence}/100
-                    </span>
-                  </div>
-                  <p className="text-sm leading-relaxed">{a.spinoff}</p>
-                </div>
-              ) : (
-                <div className="mt-4 rounded-lg p-4 border border-dashed flex items-center justify-between gap-3" style={{ borderColor: `${accent}66` }}>
-                  <div className="flex items-center gap-2 text-xs opacity-90">
-                    <Lock className="h-4 w-4" style={{ color: accent }} />
-                    <span><strong className="uppercase tracking-[0.2em]">VIP only:</strong> AI Spin-off + Confidence Score</span>
-                  </div>
-                  <Button size="sm" onClick={startUnlock} disabled={unlocking} style={{ background: accent, color: "#000" }}>
-                    {unlocking ? <Loader2 className="h-3 w-3 animate-spin" /> : `Unlock · $${(portal.price_cents / 100).toFixed(2)}`}
-                  </Button>
-                </div>
-              )}
-
-              <a href={a.url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.3em] opacity-70 hover:opacity-100" style={{ color: accent }}>
-                Source <ExternalLink className="h-3 w-3" />
-              </a>
-            </motion.article>
-          ))}
+        {/* Conflict Arena — Bull vs Bear dual columns */}
+        <div className="grid lg:grid-cols-2 gap-5">
+          <ConflictColumn side="bull" articles={bullArticles} headingFont={headingFont} text={text}
+            showVip={showVip} startUnlock={startUnlock} unlocking={unlocking} priceCents={portal.price_cents} />
+          <ConflictColumn side="bear" articles={bearArticles} headingFont={headingFont} text={text}
+            showVip={showVip} startUnlock={startUnlock} unlocking={unlocking} priceCents={portal.price_cents} />
         </div>
+
+        {/* Synthesis — VIP gated */}
+        {synthesis && (
+          <div className="mt-10 rounded-2xl border p-5 sm:p-7" style={{ borderColor: `${accent}66`, background: "linear-gradient(135deg, rgba(0,0,0,0.6), rgba(0,0,0,0.3))", boxShadow: `inset 0 0 40px ${accent}11` }}>
+            <div className="flex items-center gap-2 mb-4">
+              <Satellite className="h-4 w-4" style={{ color: accent }} />
+              <span className="text-[10px] uppercase tracking-[0.5em] font-bold" style={{ color: accent }}>Agent Synthesis · Scenario Matrix</span>
+            </div>
+
+            {showVip ? (
+              <>
+                <div className="grid sm:grid-cols-2 gap-3 mb-5">
+                  <div className="rounded-lg border p-4" style={{ borderColor: `${BULL}55`, background: `${BULL}0d` }}>
+                    <p className="text-[10px] uppercase tracking-[0.4em] font-bold mb-1" style={{ color: BULL }}>SUPPORT</p>
+                    <p className="text-sm leading-relaxed">{synthesis.support}</p>
+                  </div>
+                  <div className="rounded-lg border p-4" style={{ borderColor: `${BEAR}55`, background: `${BEAR}0d` }}>
+                    <p className="text-[10px] uppercase tracking-[0.4em] font-bold mb-1" style={{ color: BEAR }}>RESISTANCE</p>
+                    <p className="text-sm leading-relaxed">{synthesis.resistance}</p>
+                  </div>
+                </div>
+                {synthesis.trend_summary && (
+                  <div className="mb-5 rounded-lg border p-4 text-sm leading-relaxed" style={{ borderColor: `${accent}44`, background: "rgba(0,0,0,0.4)" }}>
+                    <p className="text-[10px] uppercase tracking-[0.4em] font-bold mb-2" style={{ color: accent }}>Trendline Read</p>
+                    {synthesis.trend_summary}
+                  </div>
+                )}
+                <div className="grid sm:grid-cols-2 gap-3 mb-5">
+                  <div className="rounded-lg border p-4" style={{ borderColor: `${BULL}66` }}>
+                    <p className="text-[10px] uppercase tracking-[0.4em] font-bold mb-1 flex items-center gap-1" style={{ color: BULL }}><TrendingUp className="h-3 w-3" /> If Bulls Win</p>
+                    <p className="text-sm leading-relaxed">{synthesis.bull_scenario}</p>
+                  </div>
+                  <div className="rounded-lg border p-4" style={{ borderColor: `${BEAR}66` }}>
+                    <p className="text-[10px] uppercase tracking-[0.4em] font-bold mb-1 flex items-center gap-1" style={{ color: BEAR }}><TrendingDown className="h-3 w-3" /> If Bears Win</p>
+                    <p className="text-sm leading-relaxed">{synthesis.bear_scenario}</p>
+                  </div>
+                </div>
+                {synthesis.impact_matrix.length > 0 && (
+                  <div className="rounded-lg border overflow-hidden" style={{ borderColor: `${accent}55` }}>
+                    <div className="grid grid-cols-2 px-4 py-2 border-b text-[10px] uppercase tracking-[0.4em]" style={{ borderColor: `${accent}33`, background: "rgba(0,0,0,0.6)", color: accent }}>
+                      <div>Event</div><div>Predicted Move</div>
+                    </div>
+                    {synthesis.impact_matrix.map((r, i) => {
+                      const isBull = /\+|up|surge|breakout|target|rally|gain/i.test(r.movement);
+                      const isBear = /-|down|drop|fall|retreat|crash|loss/i.test(r.movement);
+                      const c = isBull ? BULL : isBear ? BEAR : accent;
+                      return (
+                        <div key={i} className="grid grid-cols-2 px-4 py-2.5 text-sm border-b last:border-b-0" style={{ borderColor: `${accent}22` }}>
+                          <div className="font-bold uppercase tracking-wide text-xs">{r.event}</div>
+                          <div className="font-mono text-sm" style={{ color: c }}>{r.movement}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="rounded-lg border border-dashed p-6 flex items-center justify-between gap-4" style={{ borderColor: `${accent}66` }}>
+                <div className="flex items-center gap-3">
+                  <Lock className="h-6 w-6" style={{ color: accent }} />
+                  <div>
+                    <p className="font-bold uppercase tracking-[0.2em] text-sm">Professional Alpha Locked</p>
+                    <p className="text-xs opacity-80 mt-1">Impact Matrix · Support/Resistance levels · Bull & Bear scenario targets</p>
+                  </div>
+                </div>
+                <Button onClick={startUnlock} disabled={unlocking} className="font-black uppercase tracking-[0.25em]" style={{ background: accent, color: "#000" }}>
+                  {unlocking ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Unlock Alpha · ${(portal.price_cents / 100).toFixed(2)}</>}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
-      <footer className="relative border-t mt-12 py-6 text-center text-xs uppercase tracking-[0.4em] opacity-60" style={{ borderColor: `${accent}33` }}>
-        <Link to="/" className="hover:opacity-100 inline-flex items-center gap-2">
+      <footer className="relative z-10 border-t mt-12 py-6 px-5 sm:px-8 text-center" style={{ borderColor: `${accent}33` }}>
+        <Link to="/" className="hover:opacity-100 inline-flex items-center gap-2 text-xs uppercase tracking-[0.4em] opacity-70">
           <span style={{ color: accent }}>▣</span> Powered by 0G-PORTAL · Satellite Recon
         </Link>
+        <p className="mt-4 max-w-3xl mx-auto text-[10px] uppercase tracking-[0.25em] opacity-50 leading-relaxed">
+          0G-TradeHUB is a sentiment analysis tool. Close to financial advice, but legally NOT financial advice. Your capital is at risk.
+        </p>
       </footer>
 
       {clientSecret && (
