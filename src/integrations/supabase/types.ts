@@ -406,6 +406,7 @@ export type Database = {
       portals: {
         Row: {
           audio_snippet_url: string | null
+          audio_url: string | null
           bg_video_aspect: string
           bg_video_prompt: string | null
           bg_video_url: string | null
@@ -415,6 +416,7 @@ export type Database = {
           jokes: Json
           kind: string
           language: string
+          lyric_text: string | null
           name: string
           niche: string
           price_cents: number
@@ -431,6 +433,7 @@ export type Database = {
         }
         Insert: {
           audio_snippet_url?: string | null
+          audio_url?: string | null
           bg_video_aspect?: string
           bg_video_prompt?: string | null
           bg_video_url?: string | null
@@ -440,6 +443,7 @@ export type Database = {
           jokes?: Json
           kind?: string
           language?: string
+          lyric_text?: string | null
           name: string
           niche: string
           price_cents?: number
@@ -456,6 +460,7 @@ export type Database = {
         }
         Update: {
           audio_snippet_url?: string | null
+          audio_url?: string | null
           bg_video_aspect?: string
           bg_video_prompt?: string | null
           bg_video_url?: string | null
@@ -465,6 +470,7 @@ export type Database = {
           jokes?: Json
           kind?: string
           language?: string
+          lyric_text?: string | null
           name?: string
           niche?: string
           price_cents?: number
@@ -637,6 +643,63 @@ export type Database = {
           status?: string
           stripe_customer_id?: string
           stripe_subscription_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      suno_jobs: {
+        Row: {
+          audio_url: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          lyric_text: string | null
+          make_instrumental: boolean
+          portal_id: string | null
+          portal_slug: string | null
+          prompt: string | null
+          raw: Json
+          status: string
+          style_tags: string | null
+          task_id: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          lyric_text?: string | null
+          make_instrumental?: boolean
+          portal_id?: string | null
+          portal_slug?: string | null
+          prompt?: string | null
+          raw?: Json
+          status?: string
+          style_tags?: string | null
+          task_id: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          lyric_text?: string | null
+          make_instrumental?: boolean
+          portal_id?: string | null
+          portal_slug?: string | null
+          prompt?: string | null
+          raw?: Json
+          status?: string
+          style_tags?: string | null
+          task_id?: string
+          title?: string | null
           updated_at?: string
           user_id?: string
         }
