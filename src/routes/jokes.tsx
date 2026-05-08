@@ -129,14 +129,23 @@ function JokesSetup() {
       </section>
 
       {/* Activate portal */}
-      <div className="mt-10 flex flex-col items-center">
+      <div className="relative mt-12 flex flex-col items-center">
+        <div
+          aria-hidden
+          className={
+            "pointer-events-none absolute inset-0 flex items-center justify-center " +
+            (canLaunch ? "opacity-100" : "opacity-0")
+          }
+        >
+          <div className="h-40 w-[28rem] max-w-full rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245_/_0.7),transparent)] animate-pulse-gold" />
+        </div>
         <button
           type="button"
           onClick={launch}
           disabled={!canLaunch}
-          className="btn-glass-blue animate-pulse-gold rounded-2xl px-12 sm:px-20 py-6 sm:py-7 text-white font-black text-base sm:text-xl tracking-[0.3em] uppercase disabled:opacity-40 disabled:animate-none disabled:cursor-not-allowed inline-flex items-center gap-3"
+          className="relative btn-glass-blue rounded-2xl px-14 sm:px-24 py-7 sm:py-8 text-white font-black text-base sm:text-2xl tracking-[0.35em] uppercase disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-4 shadow-[0_0_60px_-5px_oklch(0.72_0.22_245/0.85),0_0_120px_-10px_oklch(0.72_0.22_245/0.6),inset_0_1px_0_oklch(1_0_0/0.15)] hover:shadow-[0_0_90px_-5px_oklch(0.72_0.22_245/1),0_0_180px_-10px_oklch(0.72_0.22_245/0.8),inset_0_1px_0_oklch(1_0_0/0.2)] transition-shadow"
         >
-          <Power className="h-6 w-6" />
+          <Power className="h-7 w-7" />
           Activate Portal
         </button>
         <p className="mt-4 text-xs text-muted-foreground uppercase tracking-[0.3em]">
