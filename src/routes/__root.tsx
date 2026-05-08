@@ -13,6 +13,7 @@ import { NavBar } from "../components/NavBar";
 import { AuthProvider } from "../hooks/use-auth";
 import { Toaster } from "../components/ui/sonner";
 import { PaymentTestModeBanner } from "../components/PaymentTestModeBanner";
+import { ScanOverlay } from "../components/ScanOverlay";
 
 function NotFoundComponent() {
   return (
@@ -127,6 +128,7 @@ function RootComponent() {
           <PaymentTestModeBanner />
           <NavBar />
           <Outlet />
+          <ScanOverlay />
         </div>
         <Toaster />
       </AuthProvider>
