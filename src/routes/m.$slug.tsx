@@ -1,12 +1,12 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Music, Wand2, Loader2, ArrowLeft, Disc3, Lock, BadgeCheck } from "lucide-react";
+import { Music, Wand2, Loader2, ArrowLeft, Disc3, Lock, BadgeCheck, Layers, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { formatLyrics, requestStudioTrack } from "@/lib/music-portals.functions";
+import { formatLyrics, requestStudioTrack, generateSunoStack, type SunoStack } from "@/lib/music-portals.functions";
 import { listPortalTracks, getTrackOwnership } from "@/lib/tracks.functions";
 import { TrackPlayer } from "@/components/TrackPlayer";
 
@@ -121,6 +121,7 @@ function MusicPortalPage() {
   const requestFn = useServerFn(requestStudioTrack);
   const listTracksFn = useServerFn(listPortalTracks);
   const ownershipFn = useServerFn(getTrackOwnership);
+  const stackFn = useServerFn(generateSunoStack);
 
   type T = { id: string; title: string; price_cents: number; preview_url: string | null };
   const [tracks, setTracks] = useState<T[]>([]);
@@ -148,6 +149,37 @@ function MusicPortalPage() {
   const [formatting, setFormatting] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [submitted, setSubmitted] = useState<string | null>(null);
+  const [stackVibe, setStackVibe] = useState("");
+  const [stack, setStack] = useState<SunoStack | null>(null);
+  const [stackLoading, setStackLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const onBuildStack = async () => {
+    if (!user) return toast.error("Sign in to build a Suno stack");
+    if (!stackVibe.trim()) return toast.error("Describe your vibe first");
+    setStackLoading(true);
+    try {
+      const r = await stackFn({ data: { slug: portal.slug, vibe: stackVibe } });
+      setStack(r);
+      toast.success("Suno V5.5 stack ready");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Stack failed");
+    } finally {
+      setStackLoading(false);
+    }
+  };
+
+  const onCopyStack = async () => {
+    if (!stack) return;
+    try {
+      await navigator.clipboard.writeText(stack.formatted);
+      setCopied(true);
+      toast.success("Copied — paste into Suno Custom Mode");
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      toast.error("Copy failed");
+    }
+  };
 
   const onFormat = async () => {
     if (!user) return toast.error("Sign in to compose");
@@ -253,6 +285,61 @@ function MusicPortalPage() {
                 className="whitespace-pre-wrap text-sm leading-relaxed bg-black/50 border rounded-md p-4 max-h-96 overflow-auto"
                 style={{ borderColor: `${theme.accent}40`, fontFamily: "ui-monospace, monospace" }}
               >{lyrics}</pre>
+            </div>
+          )}
+        </section>
+
+        {/* Suno V5.5 Style Vector Stack */}
+        <section
+          className="rounded-2xl border p-6 sm:p-8 mb-8"
+          style={{ borderColor: `${theme.accent}55`, background: `${theme.accent}05` }}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Layers className="h-4 w-4" style={{ color: theme.accent }} />
+            <h2 className="text-sm uppercase tracking-[0.3em] font-bold" style={{ color: theme.accent }}>
+              Suno V5.5 · Style Vector Stack
+            </h2>
+          </div>
+          <p className="text-xs opacity-70 mb-3">
+            Describe a vibe — we'll layer Genre/Timbre, Mood/BPM/Key, Vocal Texture and Structure tags into a Suno-perfect prompt.
+          </p>
+          <input
+            type="text"
+            value={stackVibe}
+            onChange={(e) => setStackVibe(e.target.value)}
+            placeholder="e.g. lo-fi DX7 night drive, breathy vocals, 92 BPM"
+            className="w-full bg-black/40 border rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2"
+            style={{ borderColor: `${theme.accent}40`, color: "#fff" }}
+          />
+          <Button
+            onClick={onBuildStack}
+            disabled={stackLoading}
+            className="mt-4 h-11 px-6 text-xs uppercase tracking-[0.25em] font-bold border"
+            style={{ background: `${theme.accent}20`, color: theme.accent, borderColor: theme.accent }}
+          >
+            {stackLoading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Stacking…</> : <><Layers className="h-4 w-4 mr-2" />Build Stack (1 cr)</>}
+          </Button>
+
+          {stack && (
+            <div className="mt-6 space-y-3">
+              {[
+                { label: "Genre / Timbre", value: stack.timbre },
+                { label: "Mood / BPM / Key", value: stack.moodKey },
+                { label: "Vocal Texture", value: stack.vocal },
+                { label: "Structure Tags", value: stack.structure },
+              ].map((row) => (
+                <div key={row.label} className="rounded-md border p-3" style={{ borderColor: `${theme.accent}30`, background: "rgba(0,0,0,0.4)" }}>
+                  <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 mb-1" style={{ color: theme.accent }}>{row.label}</p>
+                  <p className="text-sm leading-relaxed">{row.value}</p>
+                </div>
+              ))}
+              <Button
+                onClick={onCopyStack}
+                className="w-full h-12 text-xs uppercase tracking-[0.3em] font-bold"
+                style={{ background: theme.accent, color: "#000" }}
+              >
+                {copied ? <><Check className="h-4 w-4 mr-2" />Copied</> : <><Copy className="h-4 w-4 mr-2" />Copy to Suno</>}
+              </Button>
             </div>
           )}
         </section>
