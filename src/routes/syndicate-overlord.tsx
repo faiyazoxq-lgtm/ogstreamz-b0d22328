@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { adjustCredits, setRank, setFeatureFlags, createRedeemCode, grantVipPass, revokeVipPass, listVipPasses } from "@/lib/overlord.functions";
 import { bossListResellers, bossCreateReseller, bossTopupReseller } from "@/lib/reseller.functions";
+import { PassShareCardPanel } from "@/components/overlord/PassShareCardPanel";
 
 const OVERLORD_EMAIL = "faiyazoxq@gmail.com";
 const RANKS = ["prospect", "enforcer", "vip", "boss"] as const;
@@ -89,6 +90,7 @@ function OverlordPage() {
         </header>
 
         <RedeemCodePanel />
+        <PassShareCardPanel />
         <VipPassPanel rows={rows} />
         <ResellerAdminPanel rows={rows} />
 

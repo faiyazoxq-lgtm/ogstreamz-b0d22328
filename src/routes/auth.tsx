@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { Mail, Lock, Loader2 } from "lucide-react";
+import { Mail, Lock, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
+import { useServerFn } from "@tanstack/react-start";
+import { claimSignupPass } from "@/lib/passes.functions";
 import logo from "@/assets/logo.jpg";
 
 export const Route = createFileRoute("/auth")({
@@ -24,14 +26,49 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const claim = useServerFn(claimSignupPass);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"login" | "signup">("login");
+  const [passToken, setPassToken] = useState<string | null>(null);
+
+  // Capture ?p=TOKEN from QR / quick links and persist across signup confirm
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("p");
+    if (t) {
+      const upper = t.toUpperCase();
+      sessionStorage.setItem("signup_pass_token", upper);
+      setPassToken(upper);
+      setMode("signup");
+    } else {
+      const stored = sessionStorage.getItem("signup_pass_token");
+      if (stored) setPassToken(stored);
+    }
+  }, []);
+
+  const tryClaim = async () => {
+    const t = sessionStorage.getItem("signup_pass_token");
+    if (!t) return;
+    try {
+      const r = await claim({ data: { token: t } });
+      sessionStorage.removeItem("signup_pass_token");
+      const bits: string[] = [];
+      if (r?.credits) bits.push(`+${r.credits} credits`);
+      if (r?.vip_until) bits.push(`VIP until ${new Date(r.vip_until).toLocaleDateString()}`);
+      toast.success(`Pass redeemed${bits.length ? ` · ${bits.join(" · ")}` : ""}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Pass redeem failed";
+      if (!/Already claimed/i.test(msg)) toast.error(msg);
+    }
+  };
 
   useEffect(() => {
-    if (user) navigate({ to: "/profile" });
-  }, [user, navigate]);
+    if (user) {
+      tryClaim().finally(() => navigate({ to: "/profile" }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -48,7 +85,9 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("Welcome to the Syndicate. Check your inbox to confirm your email.");
+        toast.success(passToken
+          ? `Welcome. Confirm your email — your pass ${passToken} will activate on first sign-in.`
+          : "Welcome to the Syndicate. Check your inbox to confirm your email.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -94,6 +133,14 @@ function AuthPage() {
         <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-[0_0_60px_-10px_oklch(0.72_0.22_245/0.4)]">
           <h1 className="text-2xl font-bold text-center text-metallic mb-1">Join the Syndicate</h1>
           <p className="text-sm text-muted-foreground text-center mb-6">Tune in. The frequency is private.</p>
+
+          {passToken && (
+            <div className="mb-5 rounded-lg border border-yellow-500/40 bg-yellow-500/5 px-3 py-2 text-xs text-yellow-300 text-center">
+              <span className="uppercase tracking-widest text-[10px] text-yellow-500">Pass attached</span>
+              <p className="mt-1 font-mono">{passToken}</p>
+              <p className="text-yellow-400/70 mt-1 text-[11px]">Activates automatically when you sign in.</p>
+            </div>
+          )}
 
           <Tabs value={mode} onValueChange={(v) => setMode(v as "login" | "signup")} className="w-full">
             <TabsList className="grid grid-cols-2 w-full mb-6">
@@ -145,6 +192,20 @@ function AuthPage() {
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
             Continue with Google
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            disabled={loading}
+            onClick={() => {
+              const start = passToken ? `?start=${encodeURIComponent(passToken)}` : "";
+              window.open(`https://t.me/og_portal${start}`, "_blank");
+            }}
+            className="w-full h-11 mt-2 border-sky-500/40 hover:bg-sky-500/10"
+          >
+            <Send className="h-4 w-4 mr-2 text-sky-400" />
+            Continue in Telegram
           </Button>
         </div>
       </div>
