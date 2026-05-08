@@ -1014,6 +1014,77 @@ export type Database = {
         }
         Relationships: []
       }
+      signup_pass_claims: {
+        Row: {
+          created_at: string
+          id: string
+          pass_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pass_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pass_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signup_pass_claims_pass_id_fkey"
+            columns: ["pass_id"]
+            isOneToOne: false
+            referencedRelation: "signup_passes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signup_passes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          credits: number
+          expires_at: string | null
+          id: string
+          label: string | null
+          max_uses: number
+          redeem_code: string | null
+          token: string
+          uses: number
+          vip_days: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          credits?: number
+          expires_at?: string | null
+          id?: string
+          label?: string | null
+          max_uses?: number
+          redeem_code?: string | null
+          token: string
+          uses?: number
+          vip_days?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          credits?: number
+          expires_at?: string | null
+          id?: string
+          label?: string | null
+          max_uses?: number
+          redeem_code?: string | null
+          token?: string
+          uses?: number
+          vip_days?: number | null
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean
@@ -1411,6 +1482,7 @@ export type Database = {
         Args: { _delta: number; _reason: string; _user_id: string }
         Returns: number
       }
+      claim_signup_pass: { Args: { _token: string }; Returns: Json }
       has_active_vip: {
         Args: { _env?: string; _user?: string }
         Returns: boolean
