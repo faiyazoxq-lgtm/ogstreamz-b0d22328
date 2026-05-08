@@ -38,10 +38,14 @@ function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
+        const ref = new URLSearchParams(window.location.search).get("ref") || undefined;
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/profile` },
+          options: {
+            emailRedirectTo: `${window.location.origin}/profile`,
+            data: ref ? { referred_by_reseller: ref } : undefined,
+          },
         });
         if (error) throw error;
         toast.success("Welcome to the Syndicate. Check your inbox to confirm your email.");
