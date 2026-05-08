@@ -38,6 +38,23 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
     return;
   }
 
+  // Track unlock flow — uses inline price_data, no lookup_key.
+  if (session.metadata?.kind === "track_unlock" && session.metadata?.trackId) {
+    const trackId = session.metadata.trackId as string;
+    const amount = Number(session.amount_total ?? 0);
+    const { error } = await getSupabase().from("track_purchases").upsert({
+      user_id: userId,
+      track_id: trackId,
+      stripe_session_id: session.id,
+      amount_cents: amount,
+      currency: (session.currency || "usd").toLowerCase(),
+      environment: env,
+    }, { onConflict: "stripe_session_id" });
+    if (error) console.error("track_purchases upsert failed", error);
+    else console.log("Track unlocked", { userId, trackId, amount });
+    return;
+  }
+
   // Re-fetch the session with line items expanded so we can read lookup_key.
   const stripe = createStripeClient(env);
   const full = await stripe.checkout.sessions.retrieve(session.id, {

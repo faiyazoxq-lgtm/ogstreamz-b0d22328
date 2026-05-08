@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Shield, Loader2, Save, Telescope, Link2, Wand2, Copy, ExternalLink, Music } from "lucide-react";
+import { Shield, Loader2, Save, Telescope, Link2, Wand2, Copy, ExternalLink, Music, Upload, Disc3 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { scoutUrl } from "@/lib/firecrawl.functions";
 import { spawnPortal } from "@/lib/portals.functions";
 import { spawnMusicPortal } from "@/lib/music-portals.functions";
+import { createTrack } from "@/lib/tracks.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin Console · 0G-PORTAL" }] }),
@@ -81,6 +82,7 @@ function AdminPage() {
       <ScoutPanel />
       <SpawnerPanel />
       <MusicSpawnerPanel />
+      <TrackUploadPanel />
     </main>
   );
 }
@@ -167,6 +169,103 @@ function SpawnerPanel() {
               <ExternalLink className="h-3.5 w-3.5 mr-1" />Open
             </a>
           </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function TrackUploadPanel() {
+  const create = useServerFn(createTrack);
+  const [portals, setPortals] = useState<{ slug: string; name: string }[]>([]);
+  const [slug, setSlug] = useState("");
+  const [title, setTitle] = useState("");
+  const [price, setPrice] = useState("200");
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const [fullFile, setFullFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [created, setCreated] = useState<{ id: string; title: string; suno_prompt: string } | null>(null);
+
+  useEffect(() => {
+    supabase.from("portals").select("slug, name").eq("kind", "music").order("created_at", { ascending: false })
+      .then(({ data }) => setPortals((data as any[]) ?? []));
+  }, []);
+
+  const upload = async () => {
+    if (!slug || !title.trim() || !previewFile || !fullFile) {
+      toast.error("Pick a portal, title, and both audio files");
+      return;
+    }
+    setBusy(true);
+    setCreated(null);
+    try {
+      const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const previewPath = `${slug}/${stamp}/preview.mp3`;
+      const fullPath = `${slug}/${stamp}/full.mp3`;
+      const u1 = await supabase.storage.from("tracks").upload(previewPath, previewFile, { contentType: previewFile.type || "audio/mpeg", upsert: false });
+      if (u1.error) throw new Error(`Preview upload: ${u1.error.message}`);
+      const u2 = await supabase.storage.from("tracks").upload(fullPath, fullFile, { contentType: fullFile.type || "audio/mpeg", upsert: false });
+      if (u2.error) throw new Error(`Full upload: ${u2.error.message}`);
+
+      const r = await create({ data: {
+        portal_slug: slug, title: title.trim(),
+        preview_path: previewPath, full_path: fullPath,
+        price_cents: Math.max(50, parseInt(price, 10) || 200),
+      } });
+      setCreated(r.track);
+      toast.success("Track published");
+      setTitle(""); setPreviewFile(null); setFullFile(null);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Upload failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="mt-10 rounded-2xl border border-[oklch(0.72_0.22_245/0.4)] bg-card p-6 sm:p-8">
+      <header className="flex items-center gap-3 mb-5">
+        <Disc3 className="h-5 w-5" style={{ color: "var(--neon-blue-bright)" }} />
+        <h2 className="font-[Montserrat] font-black text-xl text-white">Track Vault</h2>
+        <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Preview &amp; sell</span>
+      </header>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Music Portal</label>
+          <select value={slug} onChange={(e) => setSlug(e.target.value)} className="mt-1 h-11 w-full bg-background border border-border rounded-md px-2 text-sm">
+            <option value="">— select —</option>
+            {portals.map((p) => <option key={p.slug} value={p.slug}>{p.name} (/m/{p.slug})</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Track Title</label>
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Midnight Nasheed" className="mt-1 h-11 bg-background" />
+        </div>
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Price (cents)</label>
+          <Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="mt-1 h-11 bg-background" />
+        </div>
+        <div />
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Preview MP3 (≈30s)</label>
+          <Input type="file" accept="audio/*" onChange={(e) => setPreviewFile(e.target.files?.[0] ?? null)} className="mt-1 h-11 bg-background text-xs" />
+        </div>
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Full HQ MP3</label>
+          <Input type="file" accept="audio/*" onChange={(e) => setFullFile(e.target.files?.[0] ?? null)} className="mt-1 h-11 bg-background text-xs" />
+        </div>
+      </div>
+      <Button onClick={upload} disabled={busy} className="btn-glass-blue text-white text-xs uppercase tracking-[0.25em] font-bold h-12 px-8 mt-5">
+        {busy ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Uploading...</> : <><Upload className="h-4 w-4 mr-2" />Publish Track</>}
+      </Button>
+
+      {created && (
+        <div className="mt-6 p-4 rounded-xl border border-border bg-background/60">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Suno V5 Style Prompt</p>
+          <pre className="text-xs whitespace-pre-wrap bg-black/40 border border-border rounded-md p-3 mt-2 max-h-64 overflow-auto">{created.suno_prompt}</pre>
+          <Button size="sm" variant="ghost" className="mt-2" onClick={() => { navigator.clipboard?.writeText(created.suno_prompt); toast.success("Prompt copied"); }}>
+            <Copy className="h-3.5 w-3.5 mr-1" />Copy for Suno
+          </Button>
         </div>
       )}
     </section>

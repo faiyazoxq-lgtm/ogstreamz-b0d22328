@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Music, Wand2, Loader2, ArrowLeft, Disc3 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { formatLyrics, requestStudioTrack } from "@/lib/music-portals.functions";
+import { listPortalTracks, getTrackOwnership } from "@/lib/tracks.functions";
+import { TrackPlayer } from "@/components/TrackPlayer";
 
 type MusicPortal = {
   id: string;
@@ -117,6 +119,29 @@ function MusicPortalPage() {
   const { user } = useAuth();
   const formatFn = useServerFn(formatLyrics);
   const requestFn = useServerFn(requestStudioTrack);
+  const listTracksFn = useServerFn(listPortalTracks);
+  const ownershipFn = useServerFn(getTrackOwnership);
+
+  type T = { id: string; title: string; price_cents: number; preview_url: string | null };
+  const [tracks, setTracks] = useState<T[]>([]);
+  const [owned, setOwned] = useState<Set<string>>(new Set());
+
+  const refresh = async () => {
+    try {
+      const r = await listTracksFn({ data: { portal_slug: portal.slug } });
+      setTracks(r.tracks);
+      if (user && r.tracks.length) {
+        const o = await ownershipFn({ data: { trackIds: r.tracks.map((t) => t.id) } });
+        setOwned(new Set(o.owned));
+      } else {
+        setOwned(new Set());
+      }
+    } catch (e: any) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, [portal.slug, user?.id]);
 
   const [raw, setRaw] = useState("");
   const [lyrics, setLyrics] = useState("");
@@ -174,6 +199,27 @@ function MusicPortalPage() {
           </h1>
           <p className="mt-3 text-sm opacity-70">{portal.style} · {portal.language}</p>
         </header>
+
+        {tracks.length > 0 && (
+          <section className="mb-10">
+            <p className="text-xs uppercase tracking-[0.4em] mb-4 opacity-70" style={{ color: theme.accent }}>
+              ◈ Studio Catalog · Preview &amp; Purchase
+            </p>
+            {tracks.map((t) => (
+              <TrackPlayer
+                key={t.id}
+                trackId={t.id}
+                title={t.title}
+                previewUrl={t.preview_url}
+                priceCents={t.price_cents}
+                owned={owned.has(t.id)}
+                accent={theme.accent}
+                secondary={theme.secondary}
+                onUnlocked={refresh}
+              />
+            ))}
+          </section>
+        )}
 
         <section
           className="rounded-2xl border p-6 sm:p-8 mb-8"
