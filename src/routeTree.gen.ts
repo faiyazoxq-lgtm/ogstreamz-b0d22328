@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as MusicRouteImport } from './routes/music'
+import { Route as JokesRouteImport } from './routes/jokes'
 import { Route as IndexRouteImport } from './routes/index'
 
 const MusicRoute = MusicRouteImport.update({
   id: '/music',
   path: '/music',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JokesRoute = JokesRouteImport.update({
+  id: '/jokes',
+  path: '/jokes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -25,27 +31,31 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/jokes': typeof JokesRoute
   '/music': typeof MusicRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/jokes': typeof JokesRoute
   '/music': typeof MusicRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/jokes': typeof JokesRoute
   '/music': typeof MusicRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/music'
+  fullPaths: '/' | '/jokes' | '/music'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/music'
-  id: '__root__' | '/' | '/music'
+  to: '/' | '/jokes' | '/music'
+  id: '__root__' | '/' | '/jokes' | '/music'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  JokesRoute: typeof JokesRoute
   MusicRoute: typeof MusicRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/music'
       fullPath: '/music'
       preLoaderRoute: typeof MusicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/jokes': {
+      id: '/jokes'
+      path: '/jokes'
+      fullPath: '/jokes'
+      preLoaderRoute: typeof JokesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  JokesRoute: JokesRoute,
   MusicRoute: MusicRoute,
 }
 export const routeTree = rootRouteImport
