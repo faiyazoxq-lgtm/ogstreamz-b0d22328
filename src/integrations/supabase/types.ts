@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      bot_configs: {
+        Row: {
+          active: boolean
+          asset_class: string | null
+          bias: string | null
+          channel_chat_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          last_broadcast: string | null
+          last_pinged_at: string | null
+          pair_label: string
+          pair_name: string
+          ping_count: number
+          tier_required: Database["public"]["Enums"]["subscription_plan"]
+          update_frequency: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          asset_class?: string | null
+          bias?: string | null
+          channel_chat_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_broadcast?: string | null
+          last_pinged_at?: string | null
+          pair_label: string
+          pair_name: string
+          ping_count?: number
+          tier_required?: Database["public"]["Enums"]["subscription_plan"]
+          update_frequency?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          asset_class?: string | null
+          bias?: string | null
+          channel_chat_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_broadcast?: string | null
+          last_pinged_at?: string | null
+          pair_label?: string
+          pair_name?: string
+          ping_count?: number
+          tier_required?: Database["public"]["Enums"]["subscription_plan"]
+          update_frequency?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       calculators: {
         Row: {
           config: Json
@@ -301,6 +355,7 @@ export type Database = {
           id: string
           rank: Database["public"]["Enums"]["syndicate_rank"]
           status: Database["public"]["Enums"]["account_status"]
+          subscription_plan: Database["public"]["Enums"]["subscription_plan"]
           updated_at: string
         }
         Insert: {
@@ -313,6 +368,7 @@ export type Database = {
           id: string
           rank?: Database["public"]["Enums"]["syndicate_rank"]
           status?: Database["public"]["Enums"]["account_status"]
+          subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
           updated_at?: string
         }
         Update: {
@@ -325,6 +381,7 @@ export type Database = {
           id?: string
           rank?: Database["public"]["Enums"]["syndicate_rank"]
           status?: Database["public"]["Enums"]["account_status"]
+          subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
           updated_at?: string
         }
         Relationships: []
@@ -443,6 +500,39 @@ export type Database = {
           status?: string
           stripe_customer_id?: string
           stripe_subscription_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      syndicate_subscribers: {
+        Row: {
+          id: string
+          joined_at: string
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          status: string
+          telegram_user_id: number | null
+          telegram_username: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          status?: string
+          telegram_user_id?: number | null
+          telegram_username?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          status?: string
+          telegram_user_id?: number | null
+          telegram_username?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -645,6 +735,13 @@ export type Database = {
         Returns: boolean
       }
       increment_portal_view: { Args: { _slug: string }; Returns: number }
+      plan_includes_tier: {
+        Args: {
+          _plan: Database["public"]["Enums"]["subscription_plan"]
+          _required: Database["public"]["Enums"]["subscription_plan"]
+        }
+        Returns: boolean
+      }
       redeem_code: { Args: { _code: string }; Returns: Json }
       refresh_news_scout: {
         Args: { _meta: Json; _slug: string }
@@ -658,6 +755,7 @@ export type Database = {
     Enums: {
       account_status: "free" | "vip"
       app_role: "admin" | "user"
+      subscription_plan: "free" | "metal" | "energy" | "syndicate"
       syndicate_rank: "prospect" | "enforcer" | "vip" | "boss"
     }
     CompositeTypes: {
@@ -788,6 +886,7 @@ export const Constants = {
     Enums: {
       account_status: ["free", "vip"],
       app_role: ["admin", "user"],
+      subscription_plan: ["free", "metal", "energy", "syndicate"],
       syndicate_rank: ["prospect", "enforcer", "vip", "boss"],
     },
   },
