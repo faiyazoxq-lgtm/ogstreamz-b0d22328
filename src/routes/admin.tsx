@@ -1191,12 +1191,12 @@ function FleetCommanderPanel() {
 
   const refresh = async () => {
     setLoading(true);
-    try {
-      const [a, b] = await Promise.all([list(), stats()]);
-      setBots((a.bots as Bot[]) || []);
-      setS(b as FleetStats);
-    } catch (e: any) { toast.error(e?.message ?? "Load failed"); }
-    finally { setLoading(false); }
+    const [a, b] = await Promise.allSettled([list(), stats()]);
+    if (a.status === "fulfilled") setBots(((a.value as any).bots as Bot[]) || []);
+    else toast.error(typeof a.reason?.message === "string" ? a.reason.message : "Bots load failed");
+    if (b.status === "fulfilled") setS(b.value as FleetStats);
+    else toast.error(typeof b.reason?.message === "string" ? b.reason.message : "Stats load failed");
+    setLoading(false);
   };
   useEffect(() => { refresh(); }, []);
 
