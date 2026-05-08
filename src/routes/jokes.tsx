@@ -1,63 +1,146 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Sparkles, RotateCw } from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Sparkles, Shuffle, Power, Skull, SprayCan, Smile, Drama, Flame } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
+export const STYLE_PRESETS = [
+  { id: "dark", label: "Dark Humor", Icon: Skull },
+  { id: "street", label: "Street Style", Icon: SprayCan },
+  { id: "dad", label: "Dad Jokes", Icon: Smile },
+  { id: "sarcastic", label: "Sarcastic", Icon: Drama },
+  { id: "absurd", label: "Absurd", Icon: Flame },
+] as const;
 
 export const Route = createFileRoute("/jokes")({
   head: () => ({
     meta: [
-      { title: "JokesHUB — 0G-STREAMZ" },
-      { name: "description", content: "Quick-fire wit on JokesHUB." },
+      { title: "JokesHUB — Style Mixer · 0G-STREAMZ" },
+      { name: "description", content: "Pick your joke styles, mix and launch a personalized punchline portal." },
     ],
   }),
-  component: JokesPage,
+  component: JokesSetup,
 });
 
-const jokes = [
-  "I told my Wi-Fi we needed to talk. It said 'no signal'.",
-  "Why don't scientists trust atoms? Because they make up everything.",
-  "I'm reading a book about anti-gravity. It's impossible to put down.",
-  "Parallel lines have so much in common. Shame they'll never meet.",
-  "I would tell you a construction joke, but I'm still working on it.",
-  "I'm on a seafood diet. I see food and I eat it.",
-  "Why did the scarecrow win an award? He was outstanding in his field.",
-  "I used to play piano by ear. Now I use my hands.",
-  "Time flies like an arrow. Fruit flies like a banana.",
-  "My dog used to chase people on a bike. I had to take it away — he had no license.",
-];
+function JokesSetup() {
+  const navigate = useNavigate();
+  const [selected, setSelected] = useState<string[]>(["street"]);
+  const [custom, setCustom] = useState("");
 
-function JokesPage() {
-  const [i, setI] = useState(0);
-  const next = () => {
-    if (jokes.length <= 1) return;
-    let n = i;
-    while (n === i) n = Math.floor(Math.random() * jokes.length);
-    setI(n);
+  const toggle = (id: string) =>
+    setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+
+  const surprise = () => {
+    const ids = STYLE_PRESETS.map((s) => s.id);
+    const count = 1 + Math.floor(Math.random() * 3);
+    const shuffled = [...ids].sort(() => Math.random() - 0.5).slice(0, count);
+    setSelected(shuffled);
   };
+
+  const canLaunch = selected.length > 0 || custom.trim().length > 0;
+
+  const launch = () => {
+    if (!canLaunch) return;
+    navigate({
+      to: "/jokes/portal",
+      search: { styles: selected.join(","), custom: custom.trim() },
+    });
+  };
+
   return (
-    <main className="max-w-3xl mx-auto px-5 sm:px-8 py-16 sm:py-24 min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center">
-      <p className="text-xs tracking-[0.4em] text-gold uppercase font-semibold mb-3">JokesHUB</p>
-      <h1 className="font-[Montserrat] font-black text-4xl sm:text-5xl tracking-tight text-center mb-12 text-metallic">
-        Daily Punchlines
-      </h1>
-
-      <article className="relative w-full rounded-2xl border border-border bg-card p-8 sm:p-14 text-center shadow-2xl">
-        <Sparkles className="absolute top-5 right-5 h-5 w-5 text-gold" />
-        <p className="text-xl sm:text-3xl font-medium leading-relaxed text-foreground min-h-[6rem]">
-          "{jokes[i]}"
+    <main className="max-w-4xl mx-auto px-5 sm:px-8 py-12 sm:py-16">
+      <header className="text-center mb-12">
+        <p className="text-xs tracking-[0.4em] uppercase font-semibold mb-3" style={{ color: "var(--neon-blue-bright)" }}>
+          JokesHUB · Style Mixer
         </p>
-        <p className="mt-6 text-xs uppercase tracking-[0.3em] text-muted-foreground">
-          Joke {i + 1} of {jokes.length}
+        <h1 className="font-[Montserrat] font-black text-4xl sm:text-6xl tracking-tight text-metallic">
+          Build Your Mix
+        </h1>
+        <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
+          Tag the joke styles you want. Add your own flavor. Then launch the portal.
         </p>
-      </article>
+      </header>
 
-      <Button
-        onClick={next}
-        className="mt-10 btn-glass-blue text-white font-bold uppercase tracking-[0.25em] px-10 py-6 text-base animate-pulse-gold"
-      >
-        <RotateCw className="h-4 w-4 mr-2" />
-        Random Joke
-      </Button>
+      <section className="rounded-2xl border border-border bg-card p-6 sm:p-10 space-y-10">
+        {/* Style tags */}
+        <div>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-semibold">
+              Joke Styles
+            </h2>
+            <span className="text-xs text-muted-foreground">{selected.length} selected</span>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {STYLE_PRESETS.map(({ id, label, Icon }) => {
+              const active = selected.includes(id);
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => toggle(id)}
+                  className={
+                    "inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold uppercase tracking-wider border transition-all " +
+                    (active
+                      ? "btn-glass-blue text-white border-transparent"
+                      : "bg-secondary text-muted-foreground border-border hover:text-foreground hover:border-[oklch(0.72_0.22_245/0.5)]")
+                  }
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Custom input */}
+        <div>
+          <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-semibold mb-4">
+            Custom Style Keywords
+          </h2>
+          <div className="relative">
+            <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "var(--neon-blue-bright)" }} />
+            <Input
+              value={custom}
+              onChange={(e) => setCustom(e.target.value)}
+              placeholder="Mix in your own style keywords..."
+              className="pl-11 h-12 bg-background border-border text-base"
+            />
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Try: "deadpan", "wholesome", "tech bro", "90s hip-hop"...
+          </p>
+        </div>
+
+        {/* Randomizer */}
+        <div>
+          <Button
+            type="button"
+            onClick={surprise}
+            variant="outline"
+            className="w-full h-12 border-[oklch(0.72_0.22_245/0.4)] text-foreground hover:bg-[oklch(0.72_0.22_245/0.1)] uppercase tracking-wider font-bold"
+          >
+            <Shuffle className="h-4 w-4 mr-2" />
+            Surprise Me
+          </Button>
+        </div>
+      </section>
+
+      {/* Activate portal */}
+      <div className="mt-10 flex flex-col items-center">
+        <button
+          type="button"
+          onClick={launch}
+          disabled={!canLaunch}
+          className="btn-glass-blue animate-pulse-gold rounded-2xl px-12 sm:px-20 py-6 sm:py-7 text-white font-black text-base sm:text-xl tracking-[0.3em] uppercase disabled:opacity-40 disabled:animate-none disabled:cursor-not-allowed inline-flex items-center gap-3"
+        >
+          <Power className="h-6 w-6" />
+          Activate Portal
+        </button>
+        <p className="mt-4 text-xs text-muted-foreground uppercase tracking-[0.3em]">
+          {canLaunch ? "Ready · Frequency locked" : "Pick at least one style"}
+        </p>
+      </div>
     </main>
   );
 }
