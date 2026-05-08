@@ -107,6 +107,24 @@ No markdown. No commentary.`;
     if (parsed.kind === "calculator" && parsed.formula) {
       const safe = /^[\sA-Za-z0-9_+\-*/().,**Math]+$/;
       if (!safe.test(parsed.formula)) throw new Error("Generated formula failed safety check");
+      // Sandbox validation: run the formula 3x with sample inputs to make
+      // sure it parses, doesn't reference unknown identifiers, and produces
+      // finite numbers. Reject the spawn if validation fails.
+      const inputKeys: string[] = (Array.isArray(parsed.inputs) ? parsed.inputs : [])
+        .map((i: any) => String(i?.key || ""))
+        .filter(Boolean);
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
+        const fn = new Function("Math", ...inputKeys, `"use strict"; return (${parsed.formula});`);
+        const samples = [1, 2, 7];
+        for (const s of samples) {
+          const args = inputKeys.map(() => s);
+          const out = Number(fn(Math, ...args));
+          if (!Number.isFinite(out)) throw new Error("non-finite result");
+        }
+      } catch (e: any) {
+        throw new Error(`Sandbox validation failed: ${e?.message ?? "bad formula"}`);
+      }
     }
 
     const config: ToolConfig = {
