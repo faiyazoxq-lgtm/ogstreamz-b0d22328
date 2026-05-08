@@ -1,12 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Sparkles, Shuffle, Power, Skull, Spray, Smile, Drama, Flame } from "lucide-react";
+import { Sparkles, Shuffle, Power, Skull, SprayCan, Smile, Drama, Flame } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export const STYLE_PRESETS = [
   { id: "dark", label: "Dark Humor", Icon: Skull },
-  { id: "street", label: "Street Style", Icon: Spray },
+  { id: "street", label: "Street Style", Icon: SprayCan },
   { id: "dad", label: "Dad Jokes", Icon: Smile },
   { id: "sarcastic", label: "Sarcastic", Icon: Drama },
   { id: "absurd", label: "Absurd", Icon: Flame },
