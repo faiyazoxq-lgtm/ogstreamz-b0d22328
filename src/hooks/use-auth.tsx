@@ -2,11 +2,18 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+export type SyndicateRank = "prospect" | "enforcer" | "vip" | "boss";
+export type FeatureFlags = { jokes: boolean; music: boolean; tools: boolean };
+
 type Profile = {
   id: string;
   email: string;
   status: "free" | "vip";
   credits: number;
+  rank: SyndicateRank;
+  feature_flags: FeatureFlags;
+  free_clicks_used: number;
+  display_name: string | null;
 };
 
 type AuthCtx = {
@@ -30,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadExtras = async (uid: string) => {
     const [{ data: prof }, { data: roles }] = await Promise.all([
-      supabase.from("profiles").select("id,email,status,credits").eq("id", uid).maybeSingle(),
+      supabase.from("profiles").select("id,email,status,credits,rank,feature_flags,free_clicks_used,display_name").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
     setProfile(prof as Profile | null);
