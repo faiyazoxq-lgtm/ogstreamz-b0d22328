@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { runTradeScan, getTrc20Fees, getWhaleAlerts, emitTradeSignal } from "@/lib/trade.functions";
+import { bundleAndBroadcastSignal, pollVeoBundle } from "@/lib/signal-mesh.functions";
 import { LiveDataIcon } from "@/components/LiveDataIcon";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -72,6 +73,8 @@ function TradeTerminal() {
   const fetchFees = useServerFn(getTrc20Fees);
   const fetchWhales = useServerFn(getWhaleAlerts);
   const emit = useServerFn(emitTradeSignal);
+  const bundleFn = useServerFn(bundleAndBroadcastSignal);
+  const pollVeoFn = useServerFn(pollVeoBundle);
 
   const [scanning, setScanning] = useState(false);
   const [intel, setIntel] = useState<any>(null);
@@ -79,6 +82,9 @@ function TradeTerminal() {
   const [whales, setWhales] = useState<any>(null);
   const [whalesLoading, setWhalesLoading] = useState(false);
   const [emitting, setEmitting] = useState(false);
+  const [bundling, setBundling] = useState(false);
+  const [bundle, setBundle] = useState<{ bundleId: string; veoOperation: string | null } | null>(null);
+  const [polling, setPolling] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => { fetchFees().then(setFees).catch(() => {}); }, [fetchFees]);
@@ -114,6 +120,28 @@ function TradeTerminal() {
     finally { setEmitting(false); }
   };
 
+  const onBundle = async () => {
+    if (!isAdmin) { toast.error("Boss-only bundle broadcast"); return; }
+    setBundling(true);
+    try {
+      const r = await bundleFn({ data: { slug: portal.slug } });
+      toast.success(`Bundle live in ${r.channel} · anthem & cinematic queued`);
+      setBundle({ bundleId: r.bundleId, veoOperation: r.veoOperation });
+    } catch (e: any) { toast.error(e?.message ?? "Bundle failed"); }
+    finally { setBundling(false); }
+  };
+
+  const onPollVeo = async () => {
+    if (!bundle) return;
+    setPolling(true);
+    try {
+      const r: any = await pollVeoFn({ data: { bundleId: bundle.bundleId } });
+      if (r.ready) toast.success("Cinematic ticker posted to VIP channel");
+      else toast.message(`Veo still rendering — try again in ~30s`);
+    } catch (e: any) { toast.error(e?.message ?? "Poll failed"); }
+    finally { setPolling(false); }
+  };
+
   // bias score: -100 (bearish) → +100 (bullish)
   const biasScore: number = typeof intel?.biasScore === "number" ? intel.biasScore : 0;
   const biasPct = (biasScore + 100) / 2; // 0..100
@@ -145,16 +173,40 @@ function TradeTerminal() {
             <h1 className="font-black text-3xl sm:text-5xl tracking-tight mt-1" style={{ color: "#fff", textShadow: `0 0 24px ${GOLD}33` }}>{portal.name}</h1>
           </div>
           {isAdmin && (
-            <button
-              onClick={onEmit}
-              disabled={emitting || !intel}
-              className="group relative inline-flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-black tracking-[0.3em] uppercase transition-transform active:scale-95 disabled:opacity-40"
-              style={{ background: GOLD, color: SLATE, boxShadow: `0 0 32px ${GOLD}aa, inset 0 0 12px rgba(0,0,0,0.15)` }}
-              title={intel ? "Broadcast to Syndicate" : "Run a scan first"}
-            >
-              {emitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Emit Signal · Syndicate
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={onEmit}
+                disabled={emitting || !intel}
+                className="group relative inline-flex items-center gap-2 px-4 py-3 rounded-xl text-xs font-black tracking-[0.3em] uppercase transition-transform active:scale-95 disabled:opacity-40"
+                style={{ background: GOLD, color: SLATE, boxShadow: `0 0 32px ${GOLD}aa, inset 0 0 12px rgba(0,0,0,0.15)` }}
+                title={intel ? "Broadcast to Syndicate" : "Run a scan first"}
+              >
+                {emitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                Emit Signal
+              </button>
+              <button
+                onClick={onBundle}
+                disabled={bundling}
+                className="group relative inline-flex items-center gap-2 px-4 py-3 rounded-xl text-xs font-black tracking-[0.3em] uppercase transition-transform active:scale-95 disabled:opacity-40"
+                style={{ background: `linear-gradient(135deg,${EMERALD},${GOLD})`, color: SLATE, boxShadow: `0 0 32px ${EMERALD}aa` }}
+                title="Trade + Anthem + Cinematic → @og_portal"
+              >
+                {bundling ? <Loader2 className="h-4 w-4 animate-spin" /> : <Radio className="h-4 w-4" />}
+                Bundle & Broadcast
+              </button>
+              {bundle && (
+                <button
+                  onClick={onPollVeo}
+                  disabled={polling}
+                  className="inline-flex items-center gap-2 px-3 py-3 rounded-xl text-[10px] font-black tracking-[0.3em] uppercase border disabled:opacity-40"
+                  style={{ borderColor: `${GOLD}66`, color: GOLD, background: "rgba(0,0,0,0.4)" }}
+                  title="Check Veo render & post"
+                >
+                  {polling ? <Loader2 className="h-3 w-3 animate-spin" /> : <Activity className="h-3 w-3" />}
+                  Finalize Cinematic
+                </button>
+              )}
+            </div>
           )}
         </div>
 
