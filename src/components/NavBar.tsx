@@ -136,7 +136,7 @@ export function NavBar() {
           <li className="hidden lg:block">
             <span
               className={`inline-flex items-center gap-1 px-2 py-1 rounded-md border text-[10px] font-bold uppercase tracking-[0.2em] ${statusColor}`}
-              title={user ? `Signed in as ${profile?.email ?? user.email}` : "Not signed in"}
+              title={user ? (isBoss ? "Boss Account" : `Signed in as ${profile?.email ?? user.email}`) : "Not signed in"}
             >
               {isBoss ? <Crown className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
               {statusLabel}
@@ -182,12 +182,16 @@ function AccountMenu({
               <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
                 {isBoss ? "Boss Account" : "Member"}
               </div>
-              <div className="text-xs font-mono truncate">{profile?.email ?? user.email}</div>
-              <div className="flex items-center gap-1.5 pt-1 border-t border-border/50">
-                <Coins className="h-3.5 w-3.5 text-gold" />
-                <span className="text-sm font-bold text-gold">{profile?.credits ?? 0}</span>
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">credits</span>
-              </div>
+              {!isBoss && (
+                <div className="text-xs font-mono truncate">{profile?.email ?? user.email}</div>
+              )}
+              {!isBoss && (
+                <div className="flex items-center gap-1.5 pt-1 border-t border-border/50">
+                  <Coins className="h-3.5 w-3.5 text-gold" />
+                  <span className="text-sm font-bold text-gold">{profile?.credits ?? 0}</span>
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">credits</span>
+                </div>
+              )}
               {profile?.status === "vip" && (
                 <div className="text-[10px] uppercase tracking-[0.2em] text-gold flex items-center gap-1">
                   <Crown className="h-3 w-3" /> VIP
@@ -201,12 +205,14 @@ function AccountMenu({
             <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
               {isBoss ? "Boss Account" : "Account"}
             </span>
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-gold">
-              <Coins className="h-3 w-3" /> {profile?.credits ?? 0}
-            </span>
+            {!isBoss && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-gold">
+                <Coins className="h-3 w-3" /> {profile?.credits ?? 0}
+              </span>
+            )}
           </DropdownMenuLabel>
           <div className="px-2 pb-2 text-xs font-mono text-muted-foreground truncate">
-            {profile?.email ?? user.email}
+            {isBoss ? "— BOSS —" : (profile?.email ?? user.email)}
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild className="cursor-pointer focus:bg-secondary">
