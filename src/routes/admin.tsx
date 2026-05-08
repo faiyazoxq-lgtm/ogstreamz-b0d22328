@@ -93,8 +93,10 @@ function SpawnerPanel() {
   const [niche, setNiche] = useState("");
   const [language, setLanguage] = useState("English");
   const [vibe, setVibe] = useState("");
+  const [vip, setVip] = useState(false);
+  const [useScout, setUseScout] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [created, setCreated] = useState<{ slug: string; name: string; theme: string } | null>(null);
+  const [created, setCreated] = useState<{ slug: string; name: string; theme: string; vip?: boolean } | null>(null);
 
   const run = async () => {
     if (!name.trim() || !niche.trim()) {
@@ -104,7 +106,7 @@ function SpawnerPanel() {
     setLoading(true);
     setCreated(null);
     try {
-      const r = await spawn({ data: { name: name.trim(), niche: niche.trim(), language: language.trim() || "English", vibe: vibe.trim() } });
+      const r = await spawn({ data: { name: name.trim(), niche: niche.trim(), language: language.trim() || "English", vibe: vibe.trim(), vip, useScout } });
       setCreated(r.portal);
       toast.success(`Spawned "${r.portal.name}" with ${r.jokeCount} jokes`);
       setName(""); setNiche(""); setVibe("");
@@ -146,6 +148,16 @@ function SpawnerPanel() {
         <div className="sm:col-span-2">
           <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Mascot / Image Vibe</label>
           <Input value={vibe} onChange={(e) => setVibe(e.target.value)} placeholder="Ancient Chinese architecture and characters" className="mt-1 h-11 bg-background" />
+        </div>
+        <div className="sm:col-span-2 flex flex-wrap gap-4 pt-1">
+          <label className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-muted-foreground cursor-pointer">
+            <input type="checkbox" checked={useScout} onChange={(e) => setUseScout(e.target.checked)} className="h-4 w-4" />
+            Firecrawl Scout (latest news)
+          </label>
+          <label className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-muted-foreground cursor-pointer">
+            <input type="checkbox" checked={vip} onChange={(e) => setVip(e.target.checked)} className="h-4 w-4" />
+            VIP Portal ($5 unlock)
+          </label>
         </div>
       </div>
       <Button
