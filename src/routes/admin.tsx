@@ -168,12 +168,14 @@ function ToolSpawnerPanel() {
 
 function SpawnerPanel() {
   const spawn = useServerFn(spawnPortal);
+  const genBrand = useServerFn(generateBrandBible);
   const [name, setName] = useState("");
   const [niche, setNiche] = useState("");
   const [language, setLanguage] = useState("English");
   const [vibe, setVibe] = useState("");
   const [vip, setVip] = useState(false);
   const [useScout, setUseScout] = useState(true);
+  const [initTelegram, setInitTelegram] = useState(false);
   const [loading, setLoading] = useState(false);
   const [created, setCreated] = useState<{ slug: string; name: string; theme: string; vip?: boolean } | null>(null);
 
@@ -188,6 +190,15 @@ function SpawnerPanel() {
       const r = await spawn({ data: { name: name.trim(), niche: niche.trim(), language: language.trim() || "English", vibe: vibe.trim(), vip, useScout } });
       setCreated(r.portal);
       toast.success(`Spawned "${r.portal.name}" with ${r.jokeCount} jokes`);
+      if (initTelegram) {
+        try {
+          toast.message("Generating Telegram Brand Bible…");
+          await genBrand({ data: { slug: r.portal.slug } });
+          toast.success("Brand Bible generated · scroll to Telegram Socials");
+        } catch (e: any) {
+          toast.error(`Brand Bible failed: ${e?.message ?? "unknown"}`);
+        }
+      }
       setName(""); setNiche(""); setVibe("");
     } catch (e: any) {
       toast.error(e?.message ?? "Spawn failed");
@@ -236,6 +247,10 @@ function SpawnerPanel() {
           <label className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-muted-foreground cursor-pointer">
             <input type="checkbox" checked={vip} onChange={(e) => setVip(e.target.checked)} className="h-4 w-4" />
             VIP Portal ($5 unlock)
+          </label>
+          <label className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] cursor-pointer" style={{ color: "var(--neon-blue-bright)" }}>
+            <input type="checkbox" checked={initTelegram} onChange={(e) => setInitTelegram(e.target.checked)} className="h-4 w-4" />
+            <Send className="h-3.5 w-3.5" /> Initialize Telegram Socials
           </label>
         </div>
       </div>
