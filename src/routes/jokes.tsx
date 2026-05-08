@@ -32,7 +32,7 @@ function JokesSetup() {
   const [selected, setSelected] = useState<string[]>(["street"]);
   const [custom, setCustom] = useState("");
   const [locked, setLocked] = useState(false);
-  const [liveWire, setLiveWire] = useState(false);
+  const [liveRoast, setLiveRoast] = useState(false);
   const isVip = profile?.status === "vip" || isAdmin;
 
   const toggle = (id: string) =>
@@ -53,13 +53,13 @@ function JokesSetup() {
       setLocked(true);
       return;
     }
-    if (liveWire && !isVip) {
+    if (liveRoast && !isVip) {
       setLocked(true);
       return;
     }
     navigate({
       to: "/jokes/portal",
-      search: { styles: selected.join(","), custom: custom.trim(), live: liveWire ? 1 : 0 },
+      search: { styles: selected.join(","), custom: custom.trim(), live: liveRoast ? 1 : 0 },
     });
   };
 
@@ -141,14 +141,14 @@ function JokesSetup() {
           </Button>
         </div>
 
-        {/* Live Wire VIP toggle */}
+        {/* Live Roast VIP toggle */}
         <div>
           <button
             type="button"
-            onClick={() => setLiveWire((v) => !v)}
+            onClick={() => setLiveRoast((v) => !v)}
             className={
               "w-full flex items-center justify-between gap-3 px-5 py-4 rounded-xl border transition-all " +
-              (liveWire
+              (liveRoast
                 ? "border-[oklch(0.72_0.22_245/0.7)] bg-[oklch(0.72_0.22_245/0.12)] shadow-[0_0_30px_-5px_oklch(0.72_0.22_245/0.6)]"
                 : "border-border bg-secondary/40 hover:border-[oklch(0.72_0.22_245/0.5)]")
             }
@@ -157,33 +157,33 @@ function JokesSetup() {
               <span
                 className={
                   "relative h-3 w-3 rounded-full " +
-                  (liveWire ? "bg-[var(--neon-blue-bright)] animate-pulse" : "bg-muted-foreground/40")
+                  (liveRoast ? "bg-[var(--neon-blue-bright)] animate-pulse" : "bg-muted-foreground/40")
                 }
               >
-                {liveWire && (
+                {liveRoast && (
                   <span className="absolute inset-0 rounded-full bg-[var(--neon-blue-bright)] blur-[6px] opacity-80" />
                 )}
               </span>
               <div>
                 <div className="flex items-center gap-2">
                   <Radio className="h-4 w-4" style={{ color: "var(--neon-blue-bright)" }} />
-                  <span className="text-sm font-bold uppercase tracking-[0.25em] text-white">Live Wire</span>
+                  <span className="text-sm font-bold uppercase tracking-[0.25em] text-white">Live Roast</span>
                   <span className="text-[9px] font-black uppercase tracking-[0.25em] px-2 py-0.5 rounded-full border border-[oklch(0.72_0.22_245/0.5)] text-[var(--neon-blue-bright)]">
                     VIP
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Pull today's most viral news. Roast it 0G-style.
+                  Pull today's most viral news. Sarcastic 0G-style burn, served fresh.
                 </p>
               </div>
             </div>
             <span
               className={
                 "text-[10px] font-bold uppercase tracking-[0.3em] " +
-                (liveWire ? "text-[var(--neon-blue-bright)]" : "text-muted-foreground")
+                (liveRoast ? "text-[var(--neon-blue-bright)]" : "text-muted-foreground")
               }
             >
-              {liveWire ? "ON" : "OFF"}
+              {liveRoast ? "ON" : "OFF"}
             </span>
           </button>
         </div>
@@ -216,7 +216,7 @@ function JokesSetup() {
       <VaultLockedDialog
         open={locked}
         onOpenChange={setLocked}
-        itemName={liveWire ? "Live Wire (VIP)" : "Portal Activation"}
+        itemName={liveRoast ? "Live Roast (VIP)" : "Portal Activation"}
         isAuthenticated={!!user}
       />
     </main>

@@ -12,6 +12,7 @@ import appCss from "../styles.css?url";
 import { NavBar } from "../components/NavBar";
 import { AuthProvider } from "../hooks/use-auth";
 import { Toaster } from "../components/ui/sonner";
+import { PaymentTestModeBanner } from "../components/PaymentTestModeBanner";
 
 function NotFoundComponent() {
   return (
@@ -123,6 +124,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <div className="min-h-screen bg-background text-foreground">
+          <PaymentTestModeBanner />
           <NavBar />
           <Outlet />
         </div>

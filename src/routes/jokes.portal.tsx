@@ -104,7 +104,7 @@ function JokePortal() {
         setCount((c) => c + 1);
       }
     } catch (e) {
-      setError("Live Wire signal lost. Try again.");
+      setError("Live Roast signal lost. Try again.");
     } finally {
       setLoading(false);
     }
@@ -158,7 +158,7 @@ function JokePortal() {
                   <span className="relative h-2.5 w-2.5 rounded-full bg-[var(--neon-blue-bright)] shadow-[0_0_10px_var(--neon-blue-bright)]" />
                 </span>
                 <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-[var(--neon-blue-bright)]">
-                  LIVE · Real-Time News
+                  LIVE ROAST · Real-Time News
                 </span>
               </>
             ) : (
@@ -228,7 +228,7 @@ function JokePortal() {
             ) : (
               <RotateCw className="h-4 w-4 mr-2" />
             )}
-            {live ? "Pull Next Wire" : "Next Joke"}
+            {live ? "Next Roast" : "Next Joke"}
           </Button>
           <Link
             to="/jokes"
