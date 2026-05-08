@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { SyndicateGallery } from "@/components/SyndicateGallery";
 import { Music2, Smile, Wrench, ArrowUpRight } from "lucide-react";
 import logo from "@/assets/logo.jpg";
 
