@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TradeRouteImport } from './routes/trade'
 import { Route as ToolsRouteImport } from './routes/tools'
 import { Route as SyndicateOverlordRouteImport } from './routes/syndicate-overlord'
 import { Route as StoreRouteImport } from './routes/store'
@@ -29,6 +30,11 @@ import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicHooksSyndicateTickRouteImport } from './routes/api/public/hooks/syndicate-tick'
 
+const TradeRoute = TradeRouteImport.update({
+  id: '/trade',
+  path: '/trade',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ToolsRoute = ToolsRouteImport.update({
   id: '/tools',
   path: '/tools',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/store': typeof StoreRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
+  '/trade': typeof TradeRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/store': typeof StoreRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
+  '/trade': typeof TradeRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/store': typeof StoreRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
+  '/trade': typeof TradeRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/store'
     | '/syndicate-overlord'
     | '/tools'
+    | '/trade'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -226,6 +236,7 @@ export interface FileRouteTypes {
     | '/store'
     | '/syndicate-overlord'
     | '/tools'
+    | '/trade'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/store'
     | '/syndicate-overlord'
     | '/tools'
+    | '/trade'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -269,6 +281,7 @@ export interface RootRouteChildren {
   StoreRoute: typeof StoreRoute
   SyndicateOverlordRoute: typeof SyndicateOverlordRoute
   ToolsRoute: typeof ToolsRoute
+  TradeRoute: typeof TradeRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   MSlugRoute: typeof MSlugRoute
   PSlugRoute: typeof PSlugRoute
@@ -280,6 +293,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/trade': {
+      id: '/trade'
+      path: '/trade'
+      fullPath: '/trade'
+      preLoaderRoute: typeof TradeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tools': {
       id: '/tools'
       path: '/tools'
@@ -438,6 +458,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoreRoute: StoreRoute,
   SyndicateOverlordRoute: SyndicateOverlordRoute,
   ToolsRoute: ToolsRoute,
+  TradeRoute: TradeRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   MSlugRoute: MSlugRoute,
   PSlugRoute: PSlugRoute,
@@ -449,3 +470,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
