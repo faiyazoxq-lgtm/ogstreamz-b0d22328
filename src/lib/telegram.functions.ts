@@ -143,7 +143,7 @@ export const deployToTelegram = createServerFn({ method: "POST" })
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
 
     const { data: portal } = await supabase
-      .from("portals").select("name, telegram_config").eq("slug", data.slug).maybeSingle();
+      .from("portals").select("id, name, telegram_config").eq("slug", data.slug).maybeSingle();
     if (!portal) throw new Error("Portal not found");
     const cfg = (portal.telegram_config ?? {}) as { brand?: BrandBible };
     const brand = cfg.brand;
@@ -175,6 +175,6 @@ export const deployToTelegram = createServerFn({ method: "POST" })
       deployed_at: new Date().toISOString(),
       lastDeploy: results,
     };
-    await supabase.from("portals").update({ telegram_config: next }).eq("name", portal.name);
+    await supabase.from("portals").update({ telegram_config: next }).eq("id", portal.id);
     return { results, botUsername: me?.username ?? null };
   });
