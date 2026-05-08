@@ -1,12 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import { User, LogIn } from "lucide-react";
-import logo from "@/assets/logo.jpg";
+import { User, LogIn, Coins } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { TVStaticLogo } from "@/components/TVStaticLogo";
 
 const links = [
   { to: "/music", label: "MusicHUB" },
   { to: "/jokes", label: "JokesHUB" },
   { to: "/tools", label: "ToolHUB" },
+  { to: "/store", label: "Store" },
 ] as const;
 
 export function NavBar() {
@@ -15,7 +16,7 @@ export function NavBar() {
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border">
       <nav className="max-w-7xl mx-auto flex items-center justify-between px-5 sm:px-8 h-16">
         <Link to="/" className="flex items-center gap-2 group">
-          <img src={logo} alt="0G-PORTAL" className="h-9 w-9 rounded-md object-cover ring-1 ring-[oklch(0.72_0.22_245/0.5)]" />
+          <TVStaticLogo />
           <span className="font-[Montserrat] font-black text-lg sm:text-xl tracking-tight text-metallic">
             0G-PORTAL
           </span>
@@ -28,6 +29,7 @@ export function NavBar() {
                 className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-muted-foreground hover:text-gold transition-colors rounded-md"
                 activeProps={{ className: "px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-gold rounded-md bg-secondary" }}
               >
+                {l.to === "/store" && <Coins className="inline h-3.5 w-3.5 mr-1" />}
                 {l.label}
               </Link>
             </li>

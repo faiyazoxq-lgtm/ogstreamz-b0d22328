@@ -92,11 +92,18 @@ function JokePortal() {
     setLoading(true);
     setError(null);
     try {
-      const res = await liveFn({
-        data: { styles: styleIds, custom, token: session?.access_token ?? "" },
-      });
+      if (!session) {
+        setError("Sign in to use Live Roast.");
+        return;
+      }
+      const res = await liveFn({ data: { styles: styleIds, custom } });
       if (res.error) {
-        setError(res.error);
+        if (res.error === "insufficient") {
+          setError("Out of credits. Redirecting to Store…");
+          setTimeout(() => { window.location.href = "/store?reason=empty"; }, 900);
+        } else {
+          setError(res.error);
+        }
       } else {
         setJoke(res.joke);
         setHeadline(res.headline);

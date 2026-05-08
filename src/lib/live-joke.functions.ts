@@ -1,43 +1,28 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-type Result = { joke: string; headline: string; source?: string; error?: string };
-
-async function isVipOrAdmin(token: string): Promise<{ ok: boolean; reason?: string }> {
-  const url = process.env.VITE_SUPABASE_URL!;
-  const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY!;
-  const supa = createClient(url, key, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
-  const { data: userRes } = await supa.auth.getUser();
-  if (!userRes?.user) return { ok: false, reason: "unauthenticated" };
-  const uid = userRes.user.id;
-  const [{ data: prof }, { data: roles }] = await Promise.all([
-    supa.from("profiles").select("status").eq("id", uid).maybeSingle(),
-    supa.from("user_roles").select("role").eq("user_id", uid),
-  ]);
-  const isAdmin = !!roles?.some((r: { role: string }) => r.role === "admin");
-  const isVip = (prof as { status?: string } | null)?.status === "vip";
-  if (!isVip && !isAdmin) return { ok: false, reason: "not_vip" };
-  return { ok: true };
-}
+type Result = { joke: string; headline: string; source?: string; error?: string; balance?: number };
 
 export const generateLiveJoke = createServerFn({ method: "POST" })
-  .inputValidator((data: { styles: string[]; custom: string; token: string }) => ({
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { styles: string[]; custom: string }) => ({
     styles: Array.isArray(data.styles) ? data.styles.slice(0, 10).map(String) : [],
     custom: typeof data.custom === "string" ? data.custom.slice(0, 200) : "",
-    token: typeof data.token === "string" ? data.token : "",
   }))
-  .handler(async ({ data }): Promise<Result> => {
-    const token = data.token;
-    if (!token) return { joke: "", headline: "", error: "Sign in to access Live Wire." };
-    const gate = await isVipOrAdmin(token);
-    if (!gate.ok) {
-      return {
-        joke: "",
-        headline: "",
-        error: gate.reason === "not_vip" ? "Live Wire is a VIP-only frequency." : "Access denied.",
-      };
+  .handler(async ({ data, context }): Promise<Result> => {
+    const { supabase } = context as { supabase: any };
+
+    // Charge 1 credit (VIP bypass handled inside RPC)
+    const { data: balance, error: spendErr } = await supabase.rpc("spend_credits", {
+      _amount: 1,
+      _reason: "live-roast",
+    });
+    if (spendErr) {
+      const msg = (spendErr.message || "").toLowerCase();
+      if (msg.includes("insufficient")) {
+        return { joke: "", headline: "", error: "insufficient" };
+      }
+      return { joke: "", headline: "", error: spendErr.message };
     }
 
     const apiKey = process.env.PERPLEXITY_API_KEY;
@@ -88,5 +73,5 @@ export const generateLiveJoke = createServerFn({ method: "POST" })
         // fall through
       }
     }
-    return { joke, headline, source: citations[0] };
+    return { joke, headline, source: citations[0], balance: balance as number };
   });
