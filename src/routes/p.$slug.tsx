@@ -79,10 +79,31 @@ export const Route = createFileRoute("/p/$slug")({
     </main>
   ),
   notFoundComponent: () => (
-    <main className="min-h-screen flex items-center justify-center p-8 text-center">
-      <div>
-        <h1 className="text-3xl font-bold">Portal not found</h1>
-        <Link to="/" className="text-sm underline mt-3 inline-block">Back to 0G-PORTAL</Link>
+    <main
+      className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden"
+      style={{ background: "radial-gradient(ellipse at center, #0a1530 0%, #050810 60%, #000 100%)" }}
+    >
+      <div className="tv-static-overlay opacity-40" />
+      <div className="scan-overlay" />
+      <div className="relative z-10 max-w-xl w-full text-center electric-border rounded-2xl p-10 bg-black/60 backdrop-blur-sm">
+        <div className="text-[10px] tracking-[0.5em] text-cyan-300/70 mb-3">// 0G-PORTAL DIAGNOSTIC</div>
+        <h1 className="font-mono text-5xl md:text-6xl font-black tracking-tight text-cyan-200 animate-glitch" style={{ textShadow: "0 0 24px rgba(120,200,255,0.55)" }}>
+          404
+        </h1>
+        <div className="mt-2 text-xl md:text-2xl font-bold uppercase tracking-[0.3em] text-white">Signal Lost</div>
+        <p className="mt-5 text-sm text-cyan-100/60 leading-relaxed">
+          The transmission you requested is not broadcasting on this frequency.<br />
+          The portal may have been re-routed, decommissioned, or never existed.
+        </p>
+        <div className="mt-8 flex items-center justify-center gap-3">
+          <Link
+            to="/"
+            className="px-5 py-2.5 rounded-md bg-cyan-400 text-black text-xs font-bold tracking-widest uppercase hover:bg-cyan-300 transition-colors"
+          >
+            Return to Mainframe
+          </Link>
+        </div>
+        <div className="mt-6 text-[10px] font-mono text-cyan-400/40">ERR_PORTAL_NOT_FOUND · 0G://void</div>
       </div>
     </main>
   ),
