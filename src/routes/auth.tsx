@@ -1,0 +1,199 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState, type FormEvent } from "react";
+import { Mail, Lock, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
+import { useAuth } from "@/hooks/use-auth";
+import logo from "@/assets/logo.jpg";
+
+export const Route = createFileRoute("/auth")({
+  head: () => ({
+    meta: [
+      { title: "Join the Syndicate · 0G-PORTAL" },
+      { name: "description", content: "Sign in or create your 0G-PORTAL account." },
+    ],
+  }),
+  component: AuthPage,
+});
+
+function AuthPage() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<"login" | "signup">("login");
+
+  useEffect(() => {
+    if (user) navigate({ to: "/profile" });
+  }, [user, navigate]);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      if (mode === "signup") {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: `${window.location.origin}/profile` },
+        });
+        if (error) throw error;
+        toast.success("Welcome to the Syndicate. Check your inbox to confirm your email.");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        toast.success("Locked in. Frequency unlocked.");
+        navigate({ to: "/profile" });
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const google = async () => {
+    setLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: `${window.location.origin}/profile`,
+      });
+      if (result.error) throw result.error;
+      if (result.redirected) return;
+      navigate({ to: "/profile" });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Google sign-in failed";
+      toast.error(msg);
+      setLoading(false);
+    }
+  };
+
+  return (
+    <main className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center px-5 py-12">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 h-[500px] w-[700px] rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245_/_0.35),transparent)] animate-pulse-gold" />
+      </div>
+
+      <div className="relative w-full max-w-md">
+        <Link to="/" className="flex items-center justify-center gap-3 mb-8">
+          <img src={logo} alt="0G-PORTAL" className="h-10 w-10 rounded-md ring-1 ring-[oklch(0.72_0.22_245/0.5)]" />
+          <span className="font-[Montserrat] font-black text-2xl tracking-tight text-metallic">0G-PORTAL</span>
+        </Link>
+
+        <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-[0_0_60px_-10px_oklch(0.72_0.22_245/0.4)]">
+          <h1 className="text-2xl font-bold text-center text-metallic mb-1">Join the Syndicate</h1>
+          <p className="text-sm text-muted-foreground text-center mb-6">Tune in. The frequency is private.</p>
+
+          <Tabs value={mode} onValueChange={(v) => setMode(v as "login" | "signup")} className="w-full">
+            <TabsList className="grid grid-cols-2 w-full mb-6">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="login" className="space-y-4">
+              <AuthForm
+                email={email}
+                setEmail={setEmail}
+                password={password}
+                setPassword={setPassword}
+                loading={loading}
+                submit={submit}
+                cta="Sign In"
+              />
+            </TabsContent>
+            <TabsContent value="signup" className="space-y-4">
+              <AuthForm
+                email={email}
+                setEmail={setEmail}
+                password={password}
+                setPassword={setPassword}
+                loading={loading}
+                submit={submit}
+                cta="Create Account"
+              />
+            </TabsContent>
+          </Tabs>
+
+          <div className="my-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">or</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            disabled={loading}
+            onClick={google}
+            className="w-full h-11 border-[oklch(0.72_0.22_245/0.4)] hover:bg-[oklch(0.72_0.22_245/0.1)]"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4 mr-2" aria-hidden>
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continue with Google
+          </Button>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function AuthForm(props: {
+  email: string;
+  setEmail: (v: string) => void;
+  password: string;
+  setPassword: (v: string) => void;
+  loading: boolean;
+  submit: (e: FormEvent) => void;
+  cta: string;
+}) {
+  const { email, setEmail, password, setPassword, loading, submit, cta } = props;
+  return (
+    <form onSubmit={submit} className="space-y-4">
+      <div>
+        <Label htmlFor="email" className="text-xs uppercase tracking-widest">Email</Label>
+        <div className="relative mt-1.5">
+          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@frequency.com"
+            className="pl-10 h-11"
+          />
+        </div>
+      </div>
+      <div>
+        <Label htmlFor="password" className="text-xs uppercase tracking-widest">Password</Label>
+        <div className="relative mt-1.5">
+          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="password"
+            type="password"
+            required
+            minLength={6}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            className="pl-10 h-11"
+          />
+        </div>
+      </div>
+      <Button type="submit" disabled={loading} className="btn-glass-blue w-full h-11 text-white font-bold uppercase tracking-[0.25em]">
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : cta}
+      </Button>
+    </form>
+  );
+}
