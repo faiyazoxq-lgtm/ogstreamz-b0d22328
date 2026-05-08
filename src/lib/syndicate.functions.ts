@@ -189,7 +189,7 @@ export async function runSyndicateTickInternal(): Promise<{ posted: number; skip
       const deep = await runDeepSearch({ query, recency: "hour" }).catch(() => null);
       const headline = deep?.answer?.split("\n")[0]?.slice(0, 140) || `${bot.pair_label} · pulse update`;
       const body = (deep?.answer || `No new high-signal updates for ${bot.pair_label}.`).slice(0, 800);
-      const cite = deep?.sources?.[0]?.url ? `\n\nSource: ${deep.sources[0].url}` : "";
+      const cite = deep?.verified_sources?.[0]?.url ? `\n\nSource: ${deep.verified_sources[0].url}` : "";
       await postPairUpdate(bot, headline, body + cite);
       await admin.from("bot_configs").update({
         last_pinged_at: new Date().toISOString(),
