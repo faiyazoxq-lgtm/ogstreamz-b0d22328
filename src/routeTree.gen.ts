@@ -18,6 +18,7 @@ import { Route as StoreRouteImport } from './routes/store'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MusicRouteImport } from './routes/music'
 import { Route as JokesRouteImport } from './routes/jokes'
+import { Route as FleetRouteImport } from './routes/fleet'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -78,6 +79,11 @@ const MusicRoute = MusicRouteImport.update({
 const JokesRoute = JokesRouteImport.update({
   id: '/jokes',
   path: '/jokes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FleetRoute = FleetRouteImport.update({
+  id: '/fleet',
+  path: '/fleet',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -170,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/connect': typeof ConnectRoute
   '/dashboard': typeof DashboardRoute
+  '/fleet': typeof FleetRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
@@ -197,6 +204,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/connect': typeof ConnectRoute
   '/dashboard': typeof DashboardRoute
+  '/fleet': typeof FleetRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
@@ -225,6 +233,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/connect': typeof ConnectRoute
   '/dashboard': typeof DashboardRoute
+  '/fleet': typeof FleetRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
@@ -254,6 +263,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/connect'
     | '/dashboard'
+    | '/fleet'
     | '/jokes'
     | '/music'
     | '/profile'
@@ -281,6 +291,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/connect'
     | '/dashboard'
+    | '/fleet'
     | '/jokes'
     | '/music'
     | '/profile'
@@ -308,6 +319,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/connect'
     | '/dashboard'
+    | '/fleet'
     | '/jokes'
     | '/music'
     | '/profile'
@@ -336,6 +348,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ConnectRoute: typeof ConnectRoute
   DashboardRoute: typeof DashboardRoute
+  FleetRoute: typeof FleetRoute
   JokesRoute: typeof JokesRouteWithChildren
   MusicRoute: typeof MusicRoute
   ProfileRoute: typeof ProfileRoute
@@ -420,6 +433,13 @@ declare module '@tanstack/react-router' {
       path: '/jokes'
       fullPath: '/jokes'
       preLoaderRoute: typeof JokesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fleet': {
+      id: '/fleet'
+      path: '/fleet'
+      fullPath: '/fleet'
+      preLoaderRoute: typeof FleetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -553,6 +573,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ConnectRoute: ConnectRoute,
   DashboardRoute: DashboardRoute,
+  FleetRoute: FleetRoute,
   JokesRoute: JokesRouteWithChildren,
   MusicRoute: MusicRoute,
   ProfileRoute: ProfileRoute,
