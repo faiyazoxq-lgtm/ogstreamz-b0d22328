@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SyndicateGallery } from "@/components/SyndicateGallery";
-import { Music2, Smile, Wrench, ArrowUpRight } from "lucide-react";
+import { Music2, Smile, Wrench, ArrowUpRight, TrendingUp, Rocket } from "lucide-react";
 import logo from "@/assets/logo.jpg";
 
 export const Route = createFileRoute("/")({
@@ -25,6 +25,18 @@ const portals = [
     title: "JokesHUB",
     desc: "Quick-fire wit. Tap, laugh, repeat.",
     Icon: Smile,
+  },
+  {
+    to: "/trade" as const,
+    title: "TradeHUB",
+    desc: "Slate & Gold war room. Bias meters, fact-cards, syndicate signals.",
+    Icon: TrendingUp,
+  },
+  {
+    to: "/connect" as const,
+    title: "ConnectHUB",
+    desc: "Scout buying signals, enrich decision-makers, ship outreach.",
+    Icon: Rocket,
   },
   {
     to: "/tools" as const,
@@ -63,7 +75,7 @@ function Index() {
         </p>
       </section>
 
-      <section className="relative max-w-7xl mx-auto px-5 sm:px-8 pb-28 grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-3">
+      <section className="relative max-w-7xl mx-auto px-5 sm:px-8 pb-28 grid gap-6 md:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {portals.map(({ to, title, desc, Icon }) => (
           <Link
             key={to}
