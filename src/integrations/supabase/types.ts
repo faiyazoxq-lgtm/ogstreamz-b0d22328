@@ -101,6 +101,143 @@ export type Database = {
         }
         Relationships: []
       }
+      connect_campaigns: {
+        Row: {
+          created_at: string
+          created_by: string
+          icp: string
+          id: string
+          instantly_campaign_id: string | null
+          offer: string
+          scout_news: Json
+          scout_summary: string | null
+          status: string
+          target_company: string
+          target_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          icp: string
+          id?: string
+          instantly_campaign_id?: string | null
+          offer: string
+          scout_news?: Json
+          scout_summary?: string | null
+          status?: string
+          target_company: string
+          target_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          icp?: string
+          id?: string
+          instantly_campaign_id?: string | null
+          offer?: string
+          scout_news?: Json
+          scout_summary?: string | null
+          status?: string
+          target_company?: string
+          target_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      connect_leads: {
+        Row: {
+          apollo_payload: Json
+          campaign_id: string
+          company: string | null
+          created_at: string
+          email: string | null
+          email_body: string | null
+          email_subject: string | null
+          full_name: string | null
+          id: string
+          job_title: string | null
+          linkedin_url: string | null
+          news_snippet: string | null
+          send_status: string
+          updated_at: string
+        }
+        Insert: {
+          apollo_payload?: Json
+          campaign_id: string
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          email_body?: string | null
+          email_subject?: string | null
+          full_name?: string | null
+          id?: string
+          job_title?: string | null
+          linkedin_url?: string | null
+          news_snippet?: string | null
+          send_status?: string
+          updated_at?: string
+        }
+        Update: {
+          apollo_payload?: Json
+          campaign_id?: string
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          email_body?: string | null
+          email_subject?: string | null
+          full_name?: string | null
+          id?: string
+          job_title?: string | null
+          linkedin_url?: string | null
+          news_snippet?: string | null
+          send_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connect_leads_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "connect_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      connect_sending_domains: {
+        Row: {
+          active: boolean
+          created_at: string
+          daily_cap: number
+          domain: string
+          id: string
+          last_reset: string
+          sent_today: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          daily_cap?: number
+          domain: string
+          id?: string
+          last_reset?: string
+          sent_today?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          daily_cap?: number
+          domain?: string
+          id?: string
+          last_reset?: string
+          sent_today?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       credit_ledger: {
         Row: {
           created_at: string
