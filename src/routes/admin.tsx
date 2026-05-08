@@ -86,6 +86,7 @@ function AdminPage() {
       <ScoutPanel />
       <LeadTrackingPanel />
       <SpawnerPanel />
+      <SignalCommandPanel />
       <NewsScoutSpawnerPanel />
       <MusicSpawnerPanel />
       <TrackUploadPanel />
