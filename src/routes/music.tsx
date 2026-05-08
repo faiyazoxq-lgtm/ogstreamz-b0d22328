@@ -169,129 +169,130 @@ function MusicPromptBuilder() {
   };
 
   return (
-    <main className="max-w-5xl mx-auto px-5 sm:px-8 py-10 sm:py-14 animate-fade-in">
-      <header className="mb-8 sm:mb-10">
-        <p className="text-xs tracking-[0.4em] text-gold uppercase font-semibold">MusicHUB · Prompt Studio</p>
-        <h1 className="mt-3 font-[Montserrat] font-black text-4xl sm:text-6xl tracking-tight">
+    <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
+      <header className="mb-6 sm:mb-8">
+        <p className="text-[10px] sm:text-xs tracking-[0.4em] text-gold uppercase font-semibold">MusicHUB · Prompt Studio</p>
+        <h1 className="mt-2 font-[Montserrat] font-black text-3xl sm:text-5xl lg:text-6xl tracking-tight leading-[1.05]">
           Stack the <span className="text-gradient-gold">Sound.</span>
         </h1>
-        <p className="mt-3 text-muted-foreground max-w-2xl">
-          Tap any keyword and it slides into your prompt. When the brief feels right, hit{" "}
-          <span className="text-gold font-semibold">Spawn Studio</span> — we build you a custom lyrics studio
-          tuned to that exact sound.
+        <p className="mt-2 text-sm sm:text-base text-muted-foreground max-w-2xl">
+          Tap keywords — they auto-paste into your brief. Hit <span className="text-gold font-semibold">Spawn Studio</span> to launch a custom lyrics studio.
         </p>
       </header>
 
-      {/* Chip groups */}
-      <div className="grid gap-5">
-        {GROUPS.map((g) => (
-          <section
-            key={g.id}
-            className="rounded-xl border border-border bg-card/60 backdrop-blur p-5 hover:border-gold/40 transition-colors"
-          >
-            <div className="flex items-baseline justify-between gap-3 mb-3">
-              <h2 className="font-semibold tracking-tight">{g.label}</h2>
-              <span className="text-xs text-muted-foreground">{g.hint}</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {g.options.map((opt) => {
-                const on = selected[g.id]?.has(opt);
-                return (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => toggle(g, opt)}
-                    className={
-                      "px-3 py-1.5 rounded-full text-sm border transition-all hover-scale " +
-                      (on
-                        ? "bg-gold text-primary-foreground border-gold shadow-[0_0_20px_oklch(0.82_0.16_88_/_0.4)]"
-                        : "bg-background/40 border-border text-foreground hover:border-gold/60")
-                    }
-                  >
-                    {on && <Plus className="inline h-3 w-3 mr-1 rotate-45" />}
-                    {opt}
-                  </button>
-                );
-              })}
+      <div className="grid gap-5 lg:gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
+        {/* Chip groups */}
+        <div className="grid gap-3 sm:gap-4 min-w-0">
+          {GROUPS.map((g) => (
+            <section
+              key={g.id}
+              className="rounded-xl border border-border bg-card/60 backdrop-blur p-3 sm:p-4 hover:border-gold/40 transition-colors"
+            >
+              <div className="flex items-baseline justify-between gap-2 mb-2 flex-wrap">
+                <h2 className="font-semibold tracking-tight text-sm sm:text-base">{g.label}</h2>
+                <span className="text-[10px] sm:text-xs text-muted-foreground">{g.hint}</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {g.options.map((opt) => {
+                  const on = selected[g.id]?.has(opt);
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => toggle(g, opt)}
+                      className={
+                        "px-2.5 py-1 rounded-full text-xs sm:text-sm border transition-all hover-scale " +
+                        (on
+                          ? "bg-gold text-primary-foreground border-gold shadow-[0_0_16px_oklch(0.82_0.16_88_/_0.4)]"
+                          : "bg-background/40 border-border text-foreground hover:border-gold/60")
+                      }
+                    >
+                      {on && <Plus className="inline h-3 w-3 mr-0.5 rotate-45" />}
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
+
+        {/* Brief panel — sticky on desktop, inline on mobile */}
+        <aside className="lg:sticky lg:top-4 lg:self-start min-w-0">
+          <section className="rounded-2xl border border-gold/40 bg-gradient-to-br from-card to-background p-4 sm:p-5 shadow-[0_0_60px_oklch(0.82_0.16_88_/_0.08)] backdrop-blur-xl">
+            <div className="grid gap-3">
+              <div>
+                <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Track Name</label>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Midnight Madinah"
+                  className="mt-1 bg-background/60"
+                  maxLength={80}
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Your Brief</label>
+                  {allChips.length > 0 && (
+                    <span className="text-[10px] text-muted-foreground">{allChips.length} stacked</span>
+                  )}
+                </div>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Tap chips or type freely…"
+                  className="mt-1 min-h-28 max-h-60 bg-background/60 font-mono text-xs sm:text-sm leading-relaxed resize-y"
+                  maxLength={1000}
+                />
+                {allChips.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1 animate-fade-in max-h-28 overflow-y-auto">
+                    {allChips.map((c) => (
+                      <span
+                        key={c}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-gold/10 border border-gold/40 text-gold"
+                      >
+                        {c}
+                        <button
+                          type="button"
+                          onClick={() => removeChip(c)}
+                          className="hover:text-foreground"
+                          aria-label={`Remove ${c}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                <Sparkles className="h-3.5 w-3.5 text-gold shrink-0" />
+                <span className="truncate">0G-BRAIN designs the studio around your prompt</span>
+              </div>
+
+              <Button
+                onClick={onGenerate}
+                disabled={busy}
+                size="lg"
+                className="w-full bg-gold text-primary-foreground hover:bg-gold/90 font-bold tracking-wide"
+              >
+                {busy ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Spawning…
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="h-4 w-4 mr-2" /> Spawn Studio
+                  </>
+                )}
+              </Button>
             </div>
           </section>
-        ))}
+        </aside>
       </div>
-
-      {/* Name + Description box */}
-      <section className="mt-8 rounded-2xl border border-gold/40 bg-gradient-to-br from-card to-background p-5 sm:p-7 shadow-[0_0_60px_oklch(0.82_0.16_88_/_0.08)] sticky bottom-4 backdrop-blur-xl">
-        <div className="grid gap-4">
-          <div>
-            <label className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Track Name</label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Midnight Madinah"
-              className="mt-1.5 bg-background/60"
-              maxLength={80}
-            />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between">
-              <label className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Your Brief</label>
-              {allChips.length > 0 && (
-                <span className="text-[10px] text-muted-foreground">{allChips.length} keyword{allChips.length === 1 ? "" : "s"} stacked</span>
-              )}
-            </div>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Type freely or tap chips above — they'll auto-paste here."
-              className="mt-1.5 min-h-32 bg-background/60 font-mono text-sm leading-relaxed"
-              maxLength={1000}
-            />
-            {allChips.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1.5 animate-fade-in">
-                {allChips.map((c) => (
-                  <span
-                    key={c}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-gold/10 border border-gold/40 text-gold"
-                  >
-                    {c}
-                    <button
-                      type="button"
-                      onClick={() => removeChip(c)}
-                      className="hover:text-foreground"
-                      aria-label={`Remove ${c}`}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Sparkles className="h-4 w-4 text-gold" />
-              0G-BRAIN will design the studio around your prompt
-            </div>
-            <Button
-              onClick={onGenerate}
-              disabled={busy}
-              size="lg"
-              className="bg-gold text-primary-foreground hover:bg-gold/90 font-bold tracking-wide"
-            >
-              {busy ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Spawning…
-                </>
-              ) : (
-                <>
-                  <Wand2 className="h-4 w-4 mr-2" /> Spawn Studio
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      </section>
     </main>
   );
 }
