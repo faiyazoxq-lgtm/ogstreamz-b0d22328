@@ -1,16 +1,18 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Sparkles, Shuffle, Power, Skull, SprayCan, Smile, Drama, Flame } from "lucide-react";
+import { Sparkles, Shuffle, Power, Skull, SprayCan, Crown, Drama, Flame } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export const STYLE_PRESETS = [
+export type StylePreset = { id: string; label: string; Icon: typeof Skull };
+
+export const STYLE_PRESETS: StylePreset[] = [
+  { id: "street", label: "Street Wit", Icon: SprayCan },
   { id: "dark", label: "Dark Humor", Icon: Skull },
-  { id: "street", label: "Street Style", Icon: SprayCan },
-  { id: "dad", label: "Dad Jokes", Icon: Smile },
   { id: "sarcastic", label: "Sarcastic", Icon: Drama },
-  { id: "absurd", label: "Absurd", Icon: Flame },
-] as const;
+  { id: "legendary", label: "Legendary", Icon: Crown },
+  { id: "gritty", label: "Gritty", Icon: Flame },
+];
 
 export const Route = createFileRoute("/jokes")({
   head: () => ({
