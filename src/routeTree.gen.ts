@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TradeRouteImport } from './routes/trade'
 import { Route as ToolsRouteImport } from './routes/tools'
 import { Route as SyndicateOverlordRouteImport } from './routes/syndicate-overlord'
+import { Route as SyndicateRouteImport } from './routes/syndicate'
 import { Route as StoreRouteImport } from './routes/store'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MusicRouteImport } from './routes/music'
@@ -45,6 +46,11 @@ const ToolsRoute = ToolsRouteImport.update({
 const SyndicateOverlordRoute = SyndicateOverlordRouteImport.update({
   id: '/syndicate-overlord',
   path: '/syndicate-overlord',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SyndicateRoute = SyndicateRouteImport.update({
+  id: '/syndicate',
+  path: '/syndicate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StoreRoute = StoreRouteImport.update({
@@ -155,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
   '/store': typeof StoreRoute
+  '/syndicate': typeof SyndicateRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
   '/trade': typeof TradeRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByTo {
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
   '/store': typeof StoreRoute
+  '/syndicate': typeof SyndicateRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
   '/trade': typeof TradeRoute
@@ -204,6 +212,7 @@ export interface FileRoutesById {
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
   '/store': typeof StoreRoute
+  '/syndicate': typeof SyndicateRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
   '/trade': typeof TradeRoute
@@ -230,6 +239,7 @@ export interface FileRouteTypes {
     | '/music'
     | '/profile'
     | '/store'
+    | '/syndicate'
     | '/syndicate-overlord'
     | '/tools'
     | '/trade'
@@ -254,6 +264,7 @@ export interface FileRouteTypes {
     | '/music'
     | '/profile'
     | '/store'
+    | '/syndicate'
     | '/syndicate-overlord'
     | '/tools'
     | '/trade'
@@ -278,6 +289,7 @@ export interface FileRouteTypes {
     | '/music'
     | '/profile'
     | '/store'
+    | '/syndicate'
     | '/syndicate-overlord'
     | '/tools'
     | '/trade'
@@ -303,6 +315,7 @@ export interface RootRouteChildren {
   MusicRoute: typeof MusicRoute
   ProfileRoute: typeof ProfileRoute
   StoreRoute: typeof StoreRoute
+  SyndicateRoute: typeof SyndicateRoute
   SyndicateOverlordRoute: typeof SyndicateOverlordRoute
   ToolsRoute: typeof ToolsRoute
   TradeRoute: typeof TradeRoute
@@ -338,6 +351,13 @@ declare module '@tanstack/react-router' {
       path: '/syndicate-overlord'
       fullPath: '/syndicate-overlord'
       preLoaderRoute: typeof SyndicateOverlordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/syndicate': {
+      id: '/syndicate'
+      path: '/syndicate'
+      fullPath: '/syndicate'
+      preLoaderRoute: typeof SyndicateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/store': {
@@ -496,6 +516,7 @@ const rootRouteChildren: RootRouteChildren = {
   MusicRoute: MusicRoute,
   ProfileRoute: ProfileRoute,
   StoreRoute: StoreRoute,
+  SyndicateRoute: SyndicateRoute,
   SyndicateOverlordRoute: SyndicateOverlordRoute,
   ToolsRoute: ToolsRoute,
   TradeRoute: TradeRoute,

@@ -101,6 +101,33 @@ export type Database = {
         }
         Relationships: []
       }
+      card_waitlist: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          notes: string | null
+          tier: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          notes?: string | null
+          tier?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          notes?: string | null
+          tier?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       connect_campaigns: {
         Row: {
           created_at: string
@@ -370,6 +397,36 @@ export type Database = {
         }
         Relationships: []
       }
+      market_pulse: {
+        Row: {
+          asset: string
+          delta_pct: number | null
+          direction: string
+          prev_price: number | null
+          price: number | null
+          source: string | null
+          updated_at: string
+        }
+        Insert: {
+          asset: string
+          delta_pct?: number | null
+          direction?: string
+          prev_price?: number | null
+          price?: number | null
+          source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          asset?: string
+          delta_pct?: number | null
+          direction?: string
+          prev_price?: number | null
+          price?: number | null
+          source?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       portal_unlocks: {
         Row: {
           amount_cents: number
@@ -421,6 +478,10 @@ export type Database = {
           niche: string
           price_cents: number
           scout_meta: Json
+          seo_description: string | null
+          seo_image_url: string | null
+          seo_refreshed_at: string | null
+          seo_title: string | null
           slug: string
           style: string | null
           telegram_config: Json
@@ -448,6 +509,10 @@ export type Database = {
           niche: string
           price_cents?: number
           scout_meta?: Json
+          seo_description?: string | null
+          seo_image_url?: string | null
+          seo_refreshed_at?: string | null
+          seo_title?: string | null
           slug: string
           style?: string | null
           telegram_config?: Json
@@ -475,6 +540,10 @@ export type Database = {
           niche?: string
           price_cents?: number
           scout_meta?: Json
+          seo_description?: string | null
+          seo_image_url?: string | null
+          seo_refreshed_at?: string | null
+          seo_title?: string | null
           slug?: string
           style?: string | null
           telegram_config?: Json
@@ -484,6 +553,78 @@ export type Database = {
           vibe?: string | null
           view_count?: number
           vip?: boolean
+        }
+        Relationships: []
+      }
+      power_packs: {
+        Row: {
+          anthem_prompt: string | null
+          asset: string
+          bear_case: string | null
+          bias: string
+          bull_case: string | null
+          citations: Json
+          command: string
+          created_at: string
+          headlines: Json
+          id: string
+          status: string
+          summary: string | null
+          suno_audio_url: string | null
+          suno_task_id: string | null
+          telegram_caption: string | null
+          telegram_message_id: string | null
+          telegram_status: string
+          updated_at: string
+          user_id: string
+          video_prompt: string | null
+          video_url: string | null
+        }
+        Insert: {
+          anthem_prompt?: string | null
+          asset: string
+          bear_case?: string | null
+          bias?: string
+          bull_case?: string | null
+          citations?: Json
+          command: string
+          created_at?: string
+          headlines?: Json
+          id?: string
+          status?: string
+          summary?: string | null
+          suno_audio_url?: string | null
+          suno_task_id?: string | null
+          telegram_caption?: string | null
+          telegram_message_id?: string | null
+          telegram_status?: string
+          updated_at?: string
+          user_id: string
+          video_prompt?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          anthem_prompt?: string | null
+          asset?: string
+          bear_case?: string | null
+          bias?: string
+          bull_case?: string | null
+          citations?: Json
+          command?: string
+          created_at?: string
+          headlines?: Json
+          id?: string
+          status?: string
+          summary?: string | null
+          suno_audio_url?: string | null
+          suno_task_id?: string | null
+          telegram_caption?: string | null
+          telegram_message_id?: string | null
+          telegram_status?: string
+          updated_at?: string
+          user_id?: string
+          video_prompt?: string | null
+          video_url?: string | null
         }
         Relationships: []
       }
@@ -658,6 +799,7 @@ export type Database = {
           make_instrumental: boolean
           portal_id: string | null
           portal_slug: string | null
+          power_pack_id: string | null
           prompt: string | null
           raw: Json
           status: string
@@ -676,6 +818,7 @@ export type Database = {
           make_instrumental?: boolean
           portal_id?: string | null
           portal_slug?: string | null
+          power_pack_id?: string | null
           prompt?: string | null
           raw?: Json
           status?: string
@@ -694,6 +837,7 @@ export type Database = {
           make_instrumental?: boolean
           portal_id?: string | null
           portal_slug?: string | null
+          power_pack_id?: string | null
           prompt?: string | null
           raw?: Json
           status?: string

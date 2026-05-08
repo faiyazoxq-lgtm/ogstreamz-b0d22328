@@ -1,94 +1,72 @@
-## Plan: 0G-PORTAL Full Enterprise Automation
+# 0G-Syndicate Mesh — Build Plan
 
-This is a large, multi-system build. I'll ship it in 4 cohesive workstreams. Confirm and I'll execute end-to-end.
+## Reality check (read first)
 
----
+Two pieces of the brief can't be built as described. I'll flag them now so we don't burn cycles:
 
-### 1. Intelligence Core — Automated Scout (Admin Panel)
+- **Wix GUI Agent / "browse my Wix dashboard"** — Lovable's server runtime is a Cloudflare Worker. It has no headless browser, no Puppeteer, no `child_process`. There is no way for an agent to "browse" Wix and click around. The realistic alternative: if your portals already live on Lovable, we update **their own** SEO meta tags (title/description/og:image) automatically when Trade signals change — no Wix needed. If you must update Wix, you need the **Wix REST API** with a Wix API token (separate integration), not a GUI agent.
+- **Stripe Treasury → virtual debit cards** — Treasury is invite-only, US-only, and requires you to be an approved Stripe Connect Platform with a signed Treasury agreement. We can build a `/wallet` route that shows 0G-Credits, top-up via the existing Stripe checkout, and a "Card coming soon — join waitlist" CTA. Real card issuance is a months-long compliance process, not a feature toggle.
 
-A new admin tool that takes a keyword and runs a full content pipeline:
+Everything else is buildable. Proposed scope below.
 
-1. **Perplexity** (`sonar-pro`) → search trending news on the keyword, return summary + citations.
-2. **Firecrawl** → scrape the top 2-3 cited URLs for richer context (titles, themes).
-3. **Lovable AI** (`google/gemini-2.5-flash`) → generate from the combined context:
-   - 5 "Live Wire" jokes → inserted into a new `jokes` table (visible in JokesHUB).
-   - 1 new calculator config (name, description, formula stub, inputs) → inserted into a new `calculators` table (rendered in ToolHUB).
-4. UI: keyword input, "Run Scout" button, real-time progress log, preview of generated content with "Publish" / "Discard" actions.
+## Phase 1 — Power Pack Orchestrator (the core ask)
 
-**Tech:** new server fn `runAutomatedScout` in `src/lib/scout.functions.ts`, admin-only via `has_role`.
+New server function `runPowerPack({ asset, bias, command })` in `src/lib/orchestrator.functions.ts`. Sequence:
 
----
+1. **Scout** — Perplexity `sonar` with `search_recency_filter: 'day'`, asset-specific query. Returns 5 headlines + citations.
+2. **Reason** — Gemini 2.5-flash with high thinking, fed the headlines, returns a structured JSON: `{ summary, bullCase, bearCase, anthemPrompt, videoPrompt, telegramCaption }`.
+3. **Produce in parallel**:
+   - Veo: `videogen--generate_video` using `videoPrompt` (1080p, 16:9, 5s).
+   - Suno: existing `spawnMusic` with `anthemPrompt` + asset-tagged style.
+4. **Persist** — insert a `power_packs` row (asset, bias, summary, headlines, video_url, suno_task_id, telegram_status).
+5. **Broadcast** — Telegram gateway `sendMessage` (caption) + `sendVideo` (when Veo finishes) + `sendAudio` (when Suno webhook lands) to the VIP channel from `bot_configs.channel_chat_id`.
 
-### 2. Vault Economy — Credit Gating + Syndicate Store
+New tables (one migration):
+- `power_packs` — id, user_id, asset, bias, command, summary, headlines (jsonb), video_url, suno_task_id, suno_audio_url, telegram_message_id, status, created_at.
+- Extend existing `suno_jobs` with `power_pack_id` FK so the suno-webhook can chain the Telegram broadcast.
 
-- **Syndicate Store route** (`/store`): polished shadcn dashboard listing the 3 existing Stripe packs + clear "0G Credits" balance with glowing blue progress bar.
-- **Credit gating** via shared hook `useCreditGate(cost)`:
-  - Wraps Live Wire generation (1 credit) and any tool flagged `vip: true` (1 credit).
-  - On submit: server fn `spendCredits({ amount, reason })` atomically decrements `profiles.credits` (RPC `spend_credits` with row-level lock).
-  - If balance = 0 → redirect to `/store?reason=empty` with a toast.
-- New `credit_ledger` table for audit trail (user_id, delta, reason, created_at).
+UI: new `/syndicate` route — single big input "Boss, give the order…", recent Power Packs feed, status pills (Scouting → Reasoning → Producing → Broadcast).
 
----
+## Phase 2 — TradeHUB live news on portal spawn
 
-### 3. MusicHUB Automation
+Extend `td.$slug` (Trade portal) loader / a `getLiveTradeNews(asset)` server fn:
+- Perplexity `sonar`, `search_recency_filter: 'hour'`, returns top 5 with citations.
+- Cache in `portals.scout_meta` for 5 min to avoid burning credits.
+- Render a "Live Wire" panel on the trade portal that auto-refreshes every 60s via `useQuery`.
 
-- **Lyric Assistant**: textarea for "vibe" → Lovable AI (`gpt-5-mini`) returns OG-style lyrics. Costs 2 credits per generation.
-- **Request Custom Suno Track**: button that costs 50 credits, opens a form (style, mood, notes), inserts a row into new `custom_track_requests` table (status: pending). Admin sees requests in admin panel with "Mark Delivered" + URL field.
-- Both gated by `useCreditGate`.
+## Phase 3 — Live Sync glow (the unified pulse)
 
----
+- New table `market_pulse` — single row per asset: `asset`, `price`, `direction` ('up' | 'down' | 'flat'), `delta_pct`, `updated_at`. Updated by a cron (existing bot infra) or on-demand from TradeHUB.
+- New `<MarketPulseProvider>` mounted in `__root.tsx`. Subscribes to `market_pulse` realtime channel for the user's "watched asset" (default Gold).
+- Sets a CSS variable `--pulse-hue` on `<html>`: green oklch when up, red when down, neutral when flat. Existing tokens (gold accents, borders) blend with `color-mix(in oklab, var(--pulse-hue) 20%, ...)`.
+- Subtle animated breathing border on hub cards driven by the same hue.
 
-### 4. Global UI Overhaul — "Living Machine"
+## Phase 4 — /wallet route (scoped honestly)
 
-- **CSS additions in `src/styles.css`**:
-  - `--shadow-electric`, `--gradient-flame` tokens.
-  - Keyframes: `scanline` (vertical sweep), `electric-pulse` (border glow), `tv-static` (logo overlay flicker).
-  - Utility classes: `.scan-overlay`, `.electric-border`, `.tv-static`.
-- **Logo**: wrap Demon/TV logo with animated static SVG noise overlay (subtle, ~15% opacity).
-- **Cards/Borders**: apply `electric-border` to dashboard cards, store packs, profile credit panel.
-- **Page transitions**: thin scanline sweep on route mount.
-- All animations honor `prefers-reduced-motion`.
+- Route `/wallet` shows: current 0G-Credits (from `profiles.credits`), credit ledger history (from `credit_ledger`), top-up CTA → existing Stripe checkout, recent purchases.
+- A dimmed "Syndicate Card" placeholder section: "Virtual debit card — apply for early access" with an email-capture button into a new `card_waitlist` table.
+- **No Treasury integration.** I'll add a code comment + memory note explaining why and what would be required to revisit.
 
----
+## Phase 5 — Auto-SEO on Lovable portals (replacement for the Wix piece)
 
-### Database changes (single migration)
+When a portal is spawned or its `scout_meta` refreshes, regenerate its `head()` meta:
+- Pull current trending headline from `scout_meta`.
+- Update the portal's stored `theme_config.seoTitle` / `seoDescription` / `seoImage`.
+- `head()` reads from those fields so each portal's social cards reflect today's trending angle.
 
-```sql
--- jokes (Live Wire output)
-create table jokes (id uuid pk, content text, source text, created_by uuid, published bool, created_at);
--- calculators (ToolHUB output)
-create table calculators (id uuid pk, slug text unique, name text, description text, config jsonb, vip bool, published bool, created_at);
--- credit ledger
-create table credit_ledger (id uuid pk, user_id uuid, delta int, reason text, created_at);
--- custom track requests
-create table custom_track_requests (id uuid pk, user_id uuid, vibe text, notes text, status text, deliverable_url text, created_at, updated_at);
--- RPC: spend_credits(amount int, reason text) returns int (new balance) or raises
-```
+This is the actual "autonomous SEO" — and it works because we own the portals.
 
-RLS:
-- Members see their own ledger + requests; admins see all.
-- Jokes & calculators readable by everyone when `published = true`; only admins write.
+## Technical notes
 
----
+- All API calls server-side via `createServerFn` (Perplexity, Gemini, Telegram gateway). No keys in client.
+- Veo via `videogen--generate_video` (Lovable AI). Suno already wired.
+- Telegram via existing connector gateway (`TELEGRAM_API_KEY`).
+- Power Pack chaining: suno-webhook checks `power_pack_id`, if present and video is ready, fires the final Telegram broadcast.
 
-### Files to create / edit (high level)
+## What I need from you before I build
 
-**New:**
-- `src/lib/scout.functions.ts`, `src/lib/credits.functions.ts`, `src/lib/lyrics.functions.ts`, `src/lib/track-requests.functions.ts`
-- `src/hooks/useCreditGate.ts`
-- `src/routes/store.tsx`
-- `src/components/ScoutPanel.tsx`, `src/components/LyricAssistant.tsx`, `src/components/CustomTrackForm.tsx`, `src/components/TVStaticLogo.tsx`, `src/components/CreditBalance.tsx`
-- 1 migration file
+This is 5+ days of work in one prompt. Please pick the priority order — I'll execute Phase 1 first by default unless you say otherwise. Also confirm:
 
-**Edit:**
-- `src/routes/admin.tsx` (Scout panel + custom track admin queue)
-- `src/routes/jokes.tsx` / `jokes.portal.tsx` (gate Live Wire, render generated jokes)
-- `src/routes/tools.tsx` (render dynamic calculators, gate VIP)
-- `src/routes/music.tsx` (Lyric Assistant + Custom Track button)
-- `src/routes/profile.tsx` (link to /store, electric borders)
-- `src/styles.css` (animations + tokens)
-- `src/routes/__root.tsx` (global scanline + logo overlay)
-
----
-
-**Reply "go" and I'll execute the full build in one pass: migration → server fns → UI → animation polish.**
+1. Should the Telegram broadcast go to the existing `bot_configs.channel_chat_id` (Gold bot), or a new dedicated VIP channel ID?
+2. For Live Sync, which asset is the "master pulse" by default — Gold, or per-user pick?
+3. /wallet — confirm you accept "no real Treasury card yet, waitlist only"?
