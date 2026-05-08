@@ -804,6 +804,66 @@ export type Database = {
           },
         ]
       }
+      signal_bundles: {
+        Row: {
+          channel_chat_id: string
+          compliance_badge: string
+          created_at: string
+          error: string | null
+          id: string
+          intro_message_id: number | null
+          portal_slug: string
+          signal_payload: Json
+          status: string
+          suno_audio_url: string | null
+          suno_message_id: number | null
+          suno_task_id: string | null
+          updated_at: string
+          user_id: string
+          veo_message_id: number | null
+          veo_operation: string | null
+          veo_video_url: string | null
+        }
+        Insert: {
+          channel_chat_id: string
+          compliance_badge?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          intro_message_id?: number | null
+          portal_slug: string
+          signal_payload?: Json
+          status?: string
+          suno_audio_url?: string | null
+          suno_message_id?: number | null
+          suno_task_id?: string | null
+          updated_at?: string
+          user_id: string
+          veo_message_id?: number | null
+          veo_operation?: string | null
+          veo_video_url?: string | null
+        }
+        Update: {
+          channel_chat_id?: string
+          compliance_badge?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          intro_message_id?: number | null
+          portal_slug?: string
+          signal_payload?: Json
+          status?: string
+          suno_audio_url?: string | null
+          suno_message_id?: number | null
+          suno_task_id?: string | null
+          updated_at?: string
+          user_id?: string
+          veo_message_id?: number | null
+          veo_operation?: string | null
+          veo_video_url?: string | null
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean
@@ -865,6 +925,7 @@ export type Database = {
           power_pack_id: string | null
           prompt: string | null
           raw: Json
+          signal_bundle_id: string | null
           status: string
           style_tags: string | null
           task_id: string
@@ -884,6 +945,7 @@ export type Database = {
           power_pack_id?: string | null
           prompt?: string | null
           raw?: Json
+          signal_bundle_id?: string | null
           status?: string
           style_tags?: string | null
           task_id: string
@@ -903,6 +965,7 @@ export type Database = {
           power_pack_id?: string | null
           prompt?: string | null
           raw?: Json
+          signal_bundle_id?: string | null
           status?: string
           style_tags?: string | null
           task_id?: string
@@ -910,7 +973,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "suno_jobs_signal_bundle_id_fkey"
+            columns: ["signal_bundle_id"]
+            isOneToOne: false
+            referencedRelation: "signal_bundles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       syndicate_subscribers: {
         Row: {
