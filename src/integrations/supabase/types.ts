@@ -637,6 +637,10 @@ export type Database = {
       }
       increment_portal_view: { Args: { _slug: string }; Returns: number }
       redeem_code: { Args: { _code: string }; Returns: Json }
+      refresh_news_scout: {
+        Args: { _meta: Json; _slug: string }
+        Returns: undefined
+      }
       spend_credits: {
         Args: { _amount: number; _reason: string }
         Returns: number

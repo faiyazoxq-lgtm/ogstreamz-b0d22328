@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Lock, Loader2, Radio, BadgeCheck, Send, Crown } from "lucide-react";
+import { ArrowLeft, Lock, Loader2, Radio, BadgeCheck, Send, Crown, Satellite, RefreshCw, ExternalLink, Gauge } from "lucide-react";
 import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { createPortalUnlockCheckout, getPortalUnlockStatus } from "@/lib/portals.functions";
+import { refreshNewsScout, type NewsScoutMeta, type NewsArticle } from "@/lib/news.functions";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { TVStaticLogo } from "@/components/TVStaticLogo";
@@ -143,6 +144,7 @@ const HIT_ANIMS: Record<string, any> = {
 
 function PortalPage() {
   const { portal } = Route.useLoaderData();
+  if (portal.kind === "news") return <NewsHubView portal={portal} />;
   const T = useMemo(() => mergeTheme(portal), [portal]);
   const fontPair = portal.theme_config?.fontPair;
   const bodyFont = fontPair?.body || "Inter";
@@ -441,6 +443,233 @@ function PortalPage() {
       <footer className="relative border-t py-6 text-center text-xs uppercase tracking-[0.4em] opacity-60" style={{ borderColor: `${T.accent}33` }}>
         <Link to="/" className="hover:opacity-100 inline-flex items-center gap-2">
           <span style={{ color: T.accent }}>▣</span> Powered by 0G-PORTAL
+        </Link>
+      </footer>
+
+      {clientSecret && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setClientSecret(null)}>
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-end p-2">
+              <button className="text-sm text-gray-500 px-3 py-1" onClick={() => { setClientSecret(null); setOwned(true); }}>Done</button>
+            </div>
+            <EmbeddedCheckoutProvider stripe={getStripe()} options={{ fetchClientSecret: async () => clientSecret }}>
+              <EmbeddedCheckout />
+            </EmbeddedCheckoutProvider>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// News Intelligence View — /p/[slug] when kind === "news"
+// ═══════════════════════════════════════════════════════════════
+function NewsHubView({ portal }: { portal: Portal }) {
+  const meta = (portal.scout_meta || {}) as Partial<NewsScoutMeta>;
+  const bias = (meta.bias as "bad" | "good" | "neutral") || "neutral";
+  const T = portal.theme_config as any;
+  const accent: string = T?.accent || (bias === "bad" ? "#ff2233" : bias === "good" ? "#00e08a" : "#9aa0ff");
+  const secondary: string = T?.secondary || "#ffffff";
+  const text: string = T?.text || "#fff";
+  const bgGradient: string = T?.bgGradient || "linear-gradient(180deg,#0a0a0e,#050507)";
+  const headingFont: string = T?.fontPair?.heading || "Oswald";
+  const bodyFont: string = T?.fontPair?.body || "JetBrains Mono";
+
+  const { user, profile } = useAuth();
+  const isVip = profile?.rank === "vip" || profile?.rank === "boss";
+  const checkoutFn = useServerFn(createPortalUnlockCheckout);
+  const statusFn = useServerFn(getPortalUnlockStatus);
+  const refreshFn = useServerFn(refreshNewsScout);
+
+  const [data, setData] = useState<Partial<NewsScoutMeta>>(meta);
+  const [scanning, setScanning] = useState(false);
+  const [owned, setOwned] = useState<boolean>(!portal.vip);
+  const [unlocking, setUnlocking] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const articles: NewsArticle[] = (data.articles as NewsArticle[]) ?? [];
+
+  // Inject fonts
+  useEffect(() => {
+    const id = `gf-news-${portal.slug}`;
+    if (document.getElementById(id)) return;
+    const families = [headingFont, bodyFont].filter(Boolean) as string[];
+    const link = document.createElement("link");
+    link.id = id;
+    link.rel = "stylesheet";
+    link.href = `https://fonts.googleapis.com/css2?${families.map((f) => `family=${encodeURIComponent(f)}:wght@400;700;900`).join("&")}&display=swap`;
+    document.head.appendChild(link);
+  }, [headingFont, bodyFont, portal.slug]);
+
+  // View tracking
+  useEffect(() => { supabase.rpc("increment_portal_view", { _slug: portal.slug }).then(() => {}); }, [portal.slug]);
+
+  // VIP unlock state
+  useEffect(() => {
+    if (!portal.vip) { setOwned(true); return; }
+    if (!user) { setOwned(false); return; }
+    statusFn({ data: { portalId: portal.id } }).then((r) => setOwned(r.owned)).catch(() => setOwned(false));
+  }, [portal.id, portal.vip, user, statusFn]);
+
+  // Always-fresh: auto-refresh on every visit
+  const runScan = async (silent = false) => {
+    if (scanning) return;
+    setScanning(true);
+    if (!silent) toast.message("Scouting the globe…", { description: "Firecrawl + Perplexity scanning sources." });
+    try {
+      const r = await refreshFn({ data: { slug: portal.slug } });
+      setData(r.meta);
+      if (!silent) toast.success(`Updated · ${r.meta.articles.length} articles`);
+    } catch (e: any) {
+      if (!silent) toast.error(e?.message ?? "Scan failed");
+    } finally { setScanning(false); }
+  };
+
+  useEffect(() => {
+    // Auto refresh once on mount (debounced if just scanned)
+    const last = data.scanned_at ? Date.parse(data.scanned_at) : 0;
+    if (Date.now() - last > 60_000) {
+      runScan(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [portal.slug]);
+
+  const startUnlock = async () => {
+    if (!user) { toast.error("Sign in to unlock VIP analysis"); return; }
+    setUnlocking(true);
+    try {
+      const cs = await checkoutFn({ data: { portalId: portal.id, environment: getStripeEnvironment(), customerEmail: user.email, returnUrl: `${window.location.href.split("?")[0]}?unlocked=1&session_id={CHECKOUT_SESSION_ID}` } });
+      setClientSecret(cs);
+    } catch (e: any) { toast.error(e?.message ?? "Checkout failed"); }
+    finally { setUnlocking(false); }
+  };
+
+  const showVip = owned || !portal.vip || isVip;
+  const headline = data.headline || `${(data.pair || portal.name).toUpperCase()} INTEL DROP`;
+  const tagline = data.tagline || "Live market intelligence stream";
+  const overall = typeof data.overall_confidence === "number" ? data.overall_confidence : null;
+
+  // Bull market growth pulse vs. emergency alert
+  const alertAnim = bias === "bad"
+    ? { x: [0, -3, 3, -2, 2, 0], transition: { duration: 0.6, repeat: Infinity, repeatDelay: 1.6 } }
+    : bias === "good"
+    ? { y: [0, -4, 0], transition: { duration: 1.4, repeat: Infinity } }
+    : { opacity: [0.85, 1, 0.85], transition: { duration: 2, repeat: Infinity } };
+
+  return (
+    <div style={{ background: bgGradient, color: text, minHeight: "100vh", fontFamily: `'${bodyFont}', monospace` }} className="relative overflow-hidden">
+      {/* Grid scanlines */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.08]" style={{ backgroundImage: `linear-gradient(${accent}33 1px, transparent 1px), linear-gradient(90deg, ${accent}22 1px, transparent 1px)`, backgroundSize: "40px 40px" }} />
+      <div className="absolute inset-0 pointer-events-none opacity-[0.05] mix-blend-overlay" style={{ backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence baseFrequency='0.9'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.7'/></svg>\")" }} />
+
+      {/* Top bar */}
+      <div className="relative z-10 flex items-center justify-between px-5 sm:px-8 py-4 border-b" style={{ borderColor: `${accent}33` }}>
+        <Link to="/" className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.4em] opacity-70 hover:opacity-100">
+          <ArrowLeft className="h-3 w-3" /> Back
+        </Link>
+        <div className="flex items-center gap-3">
+          <motion.div animate={{ scale: [1, 1.25, 1], opacity: [0.6, 1, 0.6] }} transition={{ duration: 1.6, repeat: Infinity }} style={{ filter: `drop-shadow(0 0 12px ${accent})` }}>
+            <Satellite className="h-4 w-4" style={{ color: accent }} />
+          </motion.div>
+          <span className="text-[10px] uppercase tracking-[0.4em]" style={{ color: accent }}>0G-PORTAL · SCOUTING</span>
+          <PortalMascot kind="trade" accent={accent} secondary={secondary} className="h-9 w-9" />
+        </div>
+      </div>
+
+      <main className="relative z-10 max-w-4xl mx-auto px-5 sm:px-8 py-10">
+        {/* Headline */}
+        <motion.div animate={alertAnim} className="mb-8">
+          <p className="text-[10px] uppercase tracking-[0.5em]" style={{ color: accent }}>
+            {(T?.label as string) || "INTEL FEED"} · {data.pair || ""} · {(data.bias || "neutral").toUpperCase()}
+          </p>
+          <h1 className="mt-3 font-black leading-[0.95] uppercase" style={{ fontFamily: `'${headingFont}', Impact, sans-serif`, fontSize: "clamp(2.2rem, 6vw, 4.5rem)", textShadow: `0 0 40px ${accent}88`, letterSpacing: "-0.01em" }}>
+            <span className="mr-3" style={{ color: accent }}>{(T?.ornament as string) || "⚠"}</span>
+            {headline}
+          </h1>
+          <p className="mt-3 text-sm sm:text-base opacity-80 max-w-2xl">{tagline}</p>
+          {data.context && (
+            <p className="mt-2 inline-block px-2 py-0.5 rounded border text-[10px] uppercase tracking-[0.3em]" style={{ color: accent, borderColor: `${accent}66` }}>
+              CONTEXT · {data.context}
+            </p>
+          )}
+        </motion.div>
+
+        {/* Scan button + last-scan stamp */}
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+          <Button onClick={() => runScan(false)} disabled={scanning} className="h-12 px-6 text-sm uppercase tracking-[0.35em] font-black border-2 rounded-xl"
+            style={{ background: `linear-gradient(135deg, ${accent}, ${secondary})`, color: "#000", borderColor: accent, boxShadow: `0 0 40px ${accent}88` }}>
+            {scanning ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />SCANNING…</> : <><RefreshCw className="h-4 w-4 mr-2" />SCAN FOR UPDATES</>}
+          </Button>
+          <div className="text-[10px] uppercase tracking-[0.3em] opacity-60 flex items-center gap-2">
+            {data.scanned_at ? `Last scan · ${new Date(data.scanned_at).toLocaleTimeString()}` : "Awaiting first scan"}
+            {showVip && overall !== null && (
+              <span className="ml-3 inline-flex items-center gap-1 px-2 py-1 rounded border" style={{ color: accent, borderColor: `${accent}66` }}>
+                <Gauge className="h-3 w-3" /> Confidence {overall}/100
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Feed */}
+        <div className="space-y-4">
+          {articles.length === 0 && (
+            <div className="rounded-xl border p-8 text-center text-sm opacity-70" style={{ borderColor: `${accent}55` }}>
+              No intel yet. Hit SCAN FOR UPDATES.
+            </div>
+          )}
+          {articles.map((a, i) => (
+            <motion.article
+              key={a.url + i}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="rounded-xl border p-5 sm:p-6 backdrop-blur-sm"
+              style={{ borderColor: `${accent}55`, background: `linear-gradient(135deg, ${accent}10, ${secondary}06)`, boxShadow: `inset 0 0 30px ${accent}11` }}
+            >
+              <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] opacity-70 mb-2">
+                <span className="px-1.5 py-0.5 rounded border" style={{ color: accent, borderColor: `${accent}66` }}>#{i + 1}</span>
+                <span style={{ color: accent }}>{a.source}</span>
+              </div>
+              <h2 className="text-lg sm:text-xl font-black leading-snug uppercase" style={{ fontFamily: `'${headingFont}', Impact, sans-serif`, color: text }}>
+                {a.title}
+              </h2>
+              <p className="mt-2 text-sm opacity-90">{a.snippet}</p>
+
+              {showVip ? (
+                <div className="mt-4 rounded-lg p-4 border" style={{ borderColor: `${accent}55`, background: "rgba(0,0,0,0.35)" }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] uppercase tracking-[0.4em] font-bold" style={{ color: accent }}>
+                      ▣ AI Spin-off · Bias Analysis
+                    </p>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[10px] uppercase tracking-[0.3em]" style={{ color: accent, borderColor: `${accent}66` }}>
+                      <Gauge className="h-3 w-3" /> {a.confidence}/100
+                    </span>
+                  </div>
+                  <p className="text-sm leading-relaxed">{a.spinoff}</p>
+                </div>
+              ) : (
+                <div className="mt-4 rounded-lg p-4 border border-dashed flex items-center justify-between gap-3" style={{ borderColor: `${accent}66` }}>
+                  <div className="flex items-center gap-2 text-xs opacity-90">
+                    <Lock className="h-4 w-4" style={{ color: accent }} />
+                    <span><strong className="uppercase tracking-[0.2em]">VIP only:</strong> AI Spin-off + Confidence Score</span>
+                  </div>
+                  <Button size="sm" onClick={startUnlock} disabled={unlocking} style={{ background: accent, color: "#000" }}>
+                    {unlocking ? <Loader2 className="h-3 w-3 animate-spin" /> : `Unlock · $${(portal.price_cents / 100).toFixed(2)}`}
+                  </Button>
+                </div>
+              )}
+
+              <a href={a.url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.3em] opacity-70 hover:opacity-100" style={{ color: accent }}>
+                Source <ExternalLink className="h-3 w-3" />
+              </a>
+            </motion.article>
+          ))}
+        </div>
+      </main>
+
+      <footer className="relative border-t mt-12 py-6 text-center text-xs uppercase tracking-[0.4em] opacity-60" style={{ borderColor: `${accent}33` }}>
+        <Link to="/" className="hover:opacity-100 inline-flex items-center gap-2">
+          <span style={{ color: accent }}>▣</span> Powered by 0G-PORTAL · Satellite Recon
         </Link>
       </footer>
 
