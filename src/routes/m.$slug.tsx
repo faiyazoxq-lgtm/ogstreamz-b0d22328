@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Music, Wand2, Loader2, ArrowLeft, Disc3 } from "lucide-react";
+import { Music, Wand2, Loader2, ArrowLeft, Disc3, Lock, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
@@ -259,17 +259,29 @@ function MusicPortalPage() {
 
         <Button
           onClick={onGenerate}
-          disabled={generating || !lyrics}
+          disabled={generating || !lyrics || owned.size === 0}
           className="w-full h-20 text-base sm:text-lg uppercase tracking-[0.4em] font-black border-2 rounded-2xl"
           style={{
             background: `linear-gradient(135deg, ${theme.accent}, ${theme.secondary})`,
             color: "#000",
             borderColor: theme.accent,
             boxShadow: `0 0 80px ${theme.accent}99, inset 0 0 30px rgba(255,255,255,0.2)`,
+            opacity: owned.size === 0 ? 0.45 : 1,
           }}
         >
-          {generating ? <><Loader2 className="h-6 w-6 mr-3 animate-spin" />Sending to Studio...</> : <><Disc3 className="h-6 w-6 mr-3" />Generate Studio Track</>}
+          {generating ? (
+            <><Loader2 className="h-6 w-6 mr-3 animate-spin" />Sending to Studio...</>
+          ) : owned.size === 0 ? (
+            <><Lock className="h-6 w-6 mr-3" />Unlock a Track to Request HQ Master</>
+          ) : (
+            <><Disc3 className="h-6 w-6 mr-3" />Request High-Quality Master</>
+          )}
         </Button>
+
+        <p className="mt-3 text-center text-[10px] uppercase tracking-[0.35em] opacity-60 flex items-center justify-center gap-2">
+          <BadgeCheck className="h-3 w-3" style={{ color: theme.accent }} />
+          Licensed by 0G-PORTAL · {owned.size > 0 ? "HQ Master fulfillment unlocked" : "Preview & Purchase to unlock HQ"}
+        </p>
 
         {submitted && (
           <div
