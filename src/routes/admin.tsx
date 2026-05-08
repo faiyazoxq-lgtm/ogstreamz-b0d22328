@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Shield, Loader2, Save, Telescope, Link2, Wand2, Copy, ExternalLink, Music, Upload, Disc3, Wrench } from "lucide-react";
+import { Shield, Loader2, Save, Telescope, Link2, Wand2, Copy, ExternalLink, Music, Upload, Disc3, Wrench, Send, Sparkles, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { spawnPortal } from "@/lib/portals.functions";
 import { spawnMusicPortal } from "@/lib/music-portals.functions";
 import { createTrack } from "@/lib/tracks.functions";
 import { spawnTool } from "@/lib/tools.functions";
+import { generateBrandBible, updateTelegramLinks, deployToTelegram } from "@/lib/telegram.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin Console · 0G-PORTAL" }] }),
@@ -85,6 +86,7 @@ function AdminPage() {
       <MusicSpawnerPanel />
       <TrackUploadPanel />
       <ToolSpawnerPanel />
+      <TelegramSocialsPanel />
     </main>
   );
 }
@@ -166,12 +168,14 @@ function ToolSpawnerPanel() {
 
 function SpawnerPanel() {
   const spawn = useServerFn(spawnPortal);
+  const genBrand = useServerFn(generateBrandBible);
   const [name, setName] = useState("");
   const [niche, setNiche] = useState("");
   const [language, setLanguage] = useState("English");
   const [vibe, setVibe] = useState("");
   const [vip, setVip] = useState(false);
   const [useScout, setUseScout] = useState(true);
+  const [initTelegram, setInitTelegram] = useState(false);
   const [loading, setLoading] = useState(false);
   const [created, setCreated] = useState<{ slug: string; name: string; theme: string; vip?: boolean } | null>(null);
 
@@ -186,6 +190,15 @@ function SpawnerPanel() {
       const r = await spawn({ data: { name: name.trim(), niche: niche.trim(), language: language.trim() || "English", vibe: vibe.trim(), vip, useScout } });
       setCreated(r.portal);
       toast.success(`Spawned "${r.portal.name}" with ${r.jokeCount} jokes`);
+      if (initTelegram) {
+        try {
+          toast.message("Generating Telegram Brand Bible…");
+          await genBrand({ data: { slug: r.portal.slug } });
+          toast.success("Brand Bible generated · scroll to Telegram Socials");
+        } catch (e: any) {
+          toast.error(`Brand Bible failed: ${e?.message ?? "unknown"}`);
+        }
+      }
       setName(""); setNiche(""); setVibe("");
     } catch (e: any) {
       toast.error(e?.message ?? "Spawn failed");
@@ -235,6 +248,10 @@ function SpawnerPanel() {
             <input type="checkbox" checked={vip} onChange={(e) => setVip(e.target.checked)} className="h-4 w-4" />
             VIP Portal ($5 unlock)
           </label>
+          <label className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] cursor-pointer" style={{ color: "var(--neon-blue-bright)" }}>
+            <input type="checkbox" checked={initTelegram} onChange={(e) => setInitTelegram(e.target.checked)} className="h-4 w-4" />
+            <Send className="h-3.5 w-3.5" /> Initialize Telegram Socials
+          </label>
         </div>
       </div>
       <Button
@@ -261,6 +278,190 @@ function SpawnerPanel() {
         </div>
       )}
     </section>
+  );
+}
+
+type TGPortal = {
+  id: string;
+  slug: string;
+  name: string;
+  niche: string;
+  telegram_config: {
+    enabled?: boolean;
+    deployed?: boolean;
+    botUsername?: string | null;
+    groupLink?: string | null;
+    vipLink?: string | null;
+    brand?: {
+      brandName?: string;
+      voice?: string;
+      bio?: string;
+      shortBio?: string;
+      logoEmoji?: string;
+      marketingPlan?: string;
+      starterMessages?: string[];
+    };
+  } | null;
+};
+
+function TelegramSocialsPanel() {
+  const genBrand = useServerFn(generateBrandBible);
+  const updateLinks = useServerFn(updateTelegramLinks);
+  const deploy = useServerFn(deployToTelegram);
+  const [portals, setPortals] = useState<TGPortal[]>([]);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    supabase
+      .from("portals")
+      .select("id, slug, name, niche, telegram_config")
+      .order("created_at", { ascending: false })
+      .limit(50)
+      .then(({ data }) => setPortals((data as any[]) ?? []));
+  }, [reloadKey]);
+
+  const reload = () => setReloadKey((k) => k + 1);
+
+  return (
+    <section className="mt-10 rounded-2xl border bg-card p-6 sm:p-8" style={{ borderColor: "oklch(0.72 0.22 245 / 0.5)", boxShadow: "0 0 60px oklch(0.72 0.22 245 / 0.15)" }}>
+      <header className="flex items-center gap-3 mb-5">
+        <Send className="h-5 w-5" style={{ color: "var(--neon-blue-bright)" }} />
+        <h2 className="font-[Montserrat] font-black text-xl text-white">Telegram Socials</h2>
+        <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Brand Bible · Deploy · Links</span>
+      </header>
+
+      {portals.length === 0 && (
+        <p className="text-sm text-muted-foreground">No portals yet. Spawn one above.</p>
+      )}
+
+      <div className="space-y-4">
+        {portals.map((p) => {
+          const cfg = p.telegram_config ?? {};
+          const brand = cfg.brand;
+          const id = p.id;
+          return (
+            <div key={id} className="rounded-xl border border-border bg-background/60 p-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-lg">{brand?.logoEmoji ?? "🛰"}</span>
+                <h3 className="font-bold text-white">{brand?.brandName || p.name}</h3>
+                <code className="text-[10px] text-muted-foreground">/p/{p.slug}</code>
+                {cfg.deployed && (
+                  <span className="text-[9px] uppercase tracking-[0.3em] px-2 py-0.5 rounded-full" style={{ color: "var(--neon-blue-bright)", border: "1px solid currentColor" }}>
+                    Deployed
+                  </span>
+                )}
+              </div>
+
+              {brand ? (
+                <div className="mt-3 grid sm:grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Voice</p>
+                    <p className="text-foreground/90 mt-1">{brand.voice}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Bio</p>
+                    <p className="text-foreground/90 mt-1">{brand.bio}</p>
+                  </div>
+                  {brand.marketingPlan && (
+                    <div className="sm:col-span-2">
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Marketing Plan</p>
+                      <pre className="text-foreground/80 whitespace-pre-wrap mt-1 text-[11px]">{brand.marketingPlan}</pre>
+                    </div>
+                  )}
+                  {brand.starterMessages && brand.starterMessages.length > 0 && (
+                    <div className="sm:col-span-2">
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-1">Starter Messages</p>
+                      <ul className="space-y-1">
+                        {brand.starterMessages.slice(0, 5).map((m, i) => (
+                          <li key={i} className="rounded bg-black/40 border border-border px-2 py-1.5 flex items-start justify-between gap-2">
+                            <span className="flex-1">{m}</span>
+                            <button onClick={() => { navigator.clipboard?.writeText(m); toast.success("Copied"); }} className="opacity-60 hover:opacity-100">
+                              <Copy className="h-3 w-3" />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="mt-2 text-xs text-muted-foreground">No brand bible yet.</p>
+              )}
+
+              <LinksEditor
+                slug={p.slug}
+                initial={{ groupLink: cfg.groupLink ?? "", vipLink: cfg.vipLink ?? "", botUsername: cfg.botUsername ?? "" }}
+                onSave={async (vals) => {
+                  setBusy(id);
+                  try { await updateLinks({ data: { slug: p.slug, ...vals } }); toast.success("Links saved"); reload(); }
+                  catch (e: any) { toast.error(e?.message ?? "Save failed"); }
+                  finally { setBusy(null); }
+                }}
+                disabled={busy === id}
+              />
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={busy === id}
+                  onClick={async () => {
+                    setBusy(id);
+                    try { await genBrand({ data: { slug: p.slug } }); toast.success("Brand bible generated"); reload(); }
+                    catch (e: any) { toast.error(e?.message ?? "Failed"); }
+                    finally { setBusy(null); }
+                  }}
+                >
+                  <Sparkles className="h-3.5 w-3.5 mr-1" />
+                  {brand ? "Regenerate Bible" : "Generate Brand Bible"}
+                </Button>
+                <Button
+                  size="sm"
+                  className="btn-glass-blue text-white"
+                  disabled={busy === id || !brand}
+                  onClick={async () => {
+                    setBusy(id);
+                    try {
+                      const r = await deploy({ data: { slug: p.slug } });
+                      toast.success(`Deployed to @${r.botUsername ?? "bot"}`);
+                      reload();
+                    } catch (e: any) { toast.error(e?.message ?? "Deploy failed"); }
+                    finally { setBusy(null); }
+                  }}
+                >
+                  <Rocket className="h-3.5 w-3.5 mr-1" />
+                  Deploy to Telegram
+                </Button>
+                {cfg.botUsername && (
+                  <a href={`https://t.me/${cfg.botUsername}`} target="_blank" rel="noreferrer" className="text-xs underline inline-flex items-center">
+                    <ExternalLink className="h-3 w-3 mr-1" />@{cfg.botUsername}
+                  </a>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function LinksEditor({ slug: _slug, initial, onSave, disabled }: { slug: string; initial: { groupLink: string; vipLink: string; botUsername: string }; onSave: (v: { groupLink: string; vipLink: string; botUsername: string }) => Promise<void>; disabled?: boolean }) {
+  const [g, setG] = useState(initial.groupLink);
+  const [v, setV] = useState(initial.vipLink);
+  const [b, setB] = useState(initial.botUsername);
+  return (
+    <div className="mt-3 grid sm:grid-cols-3 gap-2">
+      <Input value={g} onChange={(e) => setG(e.target.value)} placeholder="https://t.me/joinchat/…" className="h-9 bg-background text-xs" />
+      <Input value={v} onChange={(e) => setV(e.target.value)} placeholder="https://t.me/+vip…" className="h-9 bg-background text-xs" />
+      <div className="flex gap-2">
+        <Input value={b} onChange={(e) => setB(e.target.value)} placeholder="bot username" className="h-9 bg-background text-xs flex-1" />
+        <Button size="sm" variant="ghost" disabled={disabled} onClick={() => onSave({ groupLink: g, vipLink: v, botUsername: b })}>
+          <Save className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    </div>
   );
 }
 

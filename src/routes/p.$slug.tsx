@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Lock, Loader2, Radio, BadgeCheck } from "lucide-react";
+import { ArrowLeft, Lock, Loader2, Radio, BadgeCheck, Send, Crown } from "lucide-react";
 import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,13 +37,19 @@ type Portal = {
   price_cents: number;
   theme_config: ThemeConfig;
   scout_meta: { sources?: string[]; headlines?: string[] };
+  telegram_config: {
+    groupLink?: string | null;
+    vipLink?: string | null;
+    botUsername?: string | null;
+    brand?: { brandName?: string; logoEmoji?: string };
+  } | null;
 };
 
 export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals")
-      .select("id, slug, name, niche, language, vibe, theme, jokes, vip, price_cents, theme_config, scout_meta")
+      .select("id, slug, name, niche, language, vibe, theme, jokes, vip, price_cents, theme_config, scout_meta, telegram_config")
       .eq("slug", params.slug)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -112,7 +118,11 @@ const HIT_ANIMS: Record<string, any> = {
 function PortalPage() {
   const { portal } = Route.useLoaderData();
   const T = useMemo(() => mergeTheme(portal), [portal]);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const isVipMember = profile?.rank === "vip" || profile?.rank === "boss";
+  const tg = portal.telegram_config ?? {};
+  const groupLink = tg.groupLink || (tg.botUsername ? `https://t.me/${tg.botUsername}` : null);
+  const vipLink = tg.vipLink || null;
   const checkoutFn = useServerFn(createPortalUnlockCheckout);
   const statusFn = useServerFn(getPortalUnlockStatus);
 
@@ -264,6 +274,58 @@ function PortalPage() {
             {owned ? `${hits} hits · ${idx + 1}/${jokes.length}` : "Tap to unlock"}
           </p>
         </motion.div>
+
+        {(groupLink || (isVipMember && vipLink)) && (
+          <div className="mt-8 w-full max-w-md flex flex-col gap-3">
+            {groupLink && (
+              <a href={groupLink} target="_blank" rel="noreferrer" className="group">
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="relative overflow-hidden rounded-xl px-5 py-4 flex items-center justify-center gap-3 font-bold uppercase tracking-[0.3em] text-sm border-2"
+                  style={{
+                    background: "linear-gradient(135deg, oklch(0.55 0.22 245), oklch(0.72 0.22 245))",
+                    color: "#fff",
+                    borderColor: "oklch(0.85 0.18 245)",
+                    boxShadow: "0 0 40px oklch(0.72 0.22 245 / 0.7), inset 0 0 20px oklch(0.95 0.1 245 / 0.3)",
+                  }}
+                >
+                  <motion.span
+                    animate={{ opacity: [0.7, 1, 0.7] }}
+                    transition={{ duration: 1.6, repeat: Infinity }}
+                    className="absolute inset-0 pointer-events-none"
+                    style={{ background: "radial-gradient(circle at 50% 120%, oklch(0.95 0.18 245 / 0.5), transparent 60%)" }}
+                  />
+                  <Send className="h-5 w-5 relative" />
+                  <span className="relative">Join the Community</span>
+                </motion.div>
+              </a>
+            )}
+            {isVipMember && vipLink && (
+              <a href={vipLink} target="_blank" rel="noreferrer">
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="rounded-xl px-5 py-3 flex items-center justify-center gap-2 font-bold uppercase tracking-[0.3em] text-xs border"
+                  style={{
+                    background: "linear-gradient(135deg, #0a0a14, #1a1a2e)",
+                    color: "oklch(0.9 0.18 245)",
+                    borderColor: "oklch(0.72 0.22 245 / 0.6)",
+                    boxShadow: "0 0 25px oklch(0.72 0.22 245 / 0.4)",
+                  }}
+                >
+                  <Crown className="h-4 w-4" />
+                  Exclusive VIP Telegram
+                </motion.div>
+              </a>
+            )}
+            {!isVipMember && vipLink && (
+              <p className="text-center text-[10px] uppercase tracking-[0.3em] opacity-50">
+                <Crown className="inline h-3 w-3 mr-1" /> VIP / Boss rank required for exclusive Telegram
+              </p>
+            )}
+          </div>
+        )}
 
         <audio ref={audioRef} preload="none" />
       </div>
