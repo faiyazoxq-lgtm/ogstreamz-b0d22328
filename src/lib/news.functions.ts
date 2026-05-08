@@ -36,7 +36,40 @@ export type NewsScoutMeta = {
   overall_confidence: number;
   scanned_at: string;
   articles: NewsArticle[];
+  // Omniscient template additions
+  bull_articles?: NewsArticle[];
+  bear_articles?: NewsArticle[];
+  synthesis?: {
+    support: string;
+    resistance: string;
+    bull_scenario: string;
+    bear_scenario: string;
+    impact_matrix: { event: string; movement: string }[];
+    trend_summary: string;
+  };
+  tv_symbol?: string;
+  related_symbols?: string[];
+  asset_code?: string;
 };
+
+function tvSymbolFor(pair: string): { tv: string; related: string[]; code: string } {
+  const p = (pair || "").toLowerCase();
+  if (p.includes("gold") || p.includes("xau")) return { tv: "OANDA:XAUUSD", related: ["OANDA:XAGUSD","TVC:DXY","TVC:US10Y"], code: "XAU" };
+  if (p.includes("silver") || p.includes("xag")) return { tv: "OANDA:XAGUSD", related: ["OANDA:XAUUSD","TVC:DXY","TVC:US10Y"], code: "XAG" };
+  if (p.includes("copper")) return { tv: "COMEX:HG1!", related: ["TVC:DXY","SP:SPX","TVC:USOIL"], code: "HG" };
+  if (p.includes("gbp")) return { tv: "FX:GBPUSD", related: ["FX:EURUSD","TVC:DXY","TVC:UKX"], code: "GBP" };
+  if (p.includes("eur")) return { tv: "FX:EURUSD", related: ["FX:GBPUSD","TVC:DXY","TVC:DEU30"], code: "EUR" };
+  if (p.includes("jpy") || p.includes("yen")) return { tv: "FX:USDJPY", related: ["TVC:DXY","TVC:JP225","TVC:US10Y"], code: "JPY" };
+  if (p.includes("brent")) return { tv: "TVC:UKOIL", related: ["TVC:USOIL","NYMEX:NG1!","TVC:DXY"], code: "BRN" };
+  if (p.includes("wti") || p.includes("oil")) return { tv: "TVC:USOIL", related: ["TVC:UKOIL","NYMEX:NG1!","TVC:DXY"], code: "WTI" };
+  if (p.includes("gas") || p.includes("nat")) return { tv: "NYMEX:NG1!", related: ["TVC:USOIL","TVC:UKOIL","TVC:DXY"], code: "NG" };
+  if (p.includes("nasdaq") || p.includes("ndx")) return { tv: "NASDAQ:NDX", related: ["SP:SPX","TVC:DXY","TVC:US10Y"], code: "NDX" };
+  if (p.includes("s&p") || p.includes("spx") || p.includes("sp 500") || p.includes("sp500")) return { tv: "SP:SPX", related: ["NASDAQ:NDX","TVC:DXY","TVC:VIX"], code: "SPX" };
+  if (p.includes("ftse") || p.includes("uk100")) return { tv: "TVC:UKX", related: ["TVC:DXY","TVC:DEU30","FX:GBPUSD"], code: "UKX" };
+  if (p.includes("btc") || p.includes("bitcoin")) return { tv: "BINANCE:BTCUSDT", related: ["BINANCE:ETHUSDT","TVC:DXY","SP:SPX"], code: "BTC" };
+  if (p.includes("eth") || p.includes("ether")) return { tv: "BINANCE:ETHUSDT", related: ["BINANCE:BTCUSDT","TVC:DXY","SP:SPX"], code: "ETH" };
+  return { tv: "TVC:DXY", related: ["SP:SPX","OANDA:XAUUSD","TVC:USOIL"], code: (pair || "SIG").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4) || "SIG" };
+}
 
 function biasTheme(bias: NewsBias) {
   if (bias === "bad") {
@@ -94,7 +127,7 @@ async function firecrawlSearch(query: string, limit = 5): Promise<{ url: string;
     const res = await fetch("https://api.firecrawl.dev/v2/search", {
       method: "POST",
       headers: { Authorization: `Bearer ${FIRECRAWL}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ query, limit }),
+      body: JSON.stringify({ query, limit, tbs: "qdr:d" }),
     });
     if (!res.ok) return [];
     const j = await res.json();
@@ -108,55 +141,71 @@ async function firecrawlSearch(query: string, limit = 5): Promise<{ url: string;
   }
 }
 
-async function perplexityAnalyze(input: {
+async function perplexityDualAnalyze(input: {
   pair: string;
   bias: NewsBias;
   context: string;
-  hits: { url: string; title: string; description: string }[];
-}): Promise<{ headline: string; tagline: string; overall_confidence: number; articles: NewsArticle[] }> {
+  bullHits: { url: string; title: string; description: string }[];
+  bearHits: { url: string; title: string; description: string }[];
+}): Promise<{
+  headline: string;
+  tagline: string;
+  overall_confidence: number;
+  bull_articles: NewsArticle[];
+  bear_articles: NewsArticle[];
+  synthesis: NonNullable<NewsScoutMeta["synthesis"]>;
+}> {
   const PERPLEXITY = process.env.PERPLEXITY_API_KEY;
   if (!PERPLEXITY) throw new Error("PERPLEXITY_API_KEY missing");
 
-  const biasWord = input.bias === "bad" ? "BEARISH / WAR / CRISIS" : input.bias === "good" ? "BULLISH / PEACE / GROWTH" : "NEUTRAL";
-  const list = input.hits.map((h, i) => `${i + 1}. ${h.title} — ${h.description} (${h.url})`).join("\n");
+  const fmt = (arr: typeof input.bullHits) =>
+    arr.length ? arr.map((h, i) => `${i + 1}. ${h.title} — ${h.description} (${h.url})`).join("\n") : "(none — synthesize plausible recent catalysts)";
 
-  const prompt = `You are 0G-PORTAL's market intelligence editor.
-Asset: ${input.pair}
-Market bias to emphasize: ${biasWord}
-Context: ${input.context || "general macro"}
+  const biasEmphasis = input.bias === "bad" ? "lean bearish in tagline" : input.bias === "good" ? "lean bullish in tagline" : "balanced";
 
-Sources just scraped:
-${list || "(no sources — invent reasonable ${input.pair} alpha briefing)"}
+  const prompt = `You are 0G-PORTAL's "Omniscient" market intelligence editor for ${input.pair} as of May 2026.
+Context: ${input.context || "macro + geopolitics"}
+Editor stance: ${biasEmphasis}
 
-Return STRICT JSON only, exactly this shape:
+BULLISH-leaning sources just scraped:
+${fmt(input.bullHits)}
+
+BEARISH-leaning sources just scraped:
+${fmt(input.bearHits)}
+
+Return STRICT JSON only, no prose, no markdown, exactly this shape:
 {
-  "headline": "ALL-CAPS dramatic 6-12 word alert headline tying ${input.pair} to the context",
-  "tagline": "1 sentence sub-headline (max 140 chars)",
+  "headline": "ALL-CAPS dramatic 6-14 word headline framing ${input.pair} at a crossroads",
+  "tagline": "1 sentence (max 160 chars) framing the bull-vs-bear tension",
   "overall_confidence": 0-100 integer,
-  "articles": [
-    {
-      "url": "exact source url",
-      "title": "original article title",
-      "source": "domain like reuters.com",
-      "snippet": "1 sentence factual summary (max 180 chars)",
-      "spinoff": "2-3 sentence AI 'Bias Analysis' explaining why this drives ${input.pair} per the bias",
-      "confidence": 0-100 integer trade-confidence for this catalyst
-    }
-  ]
+  "bull_articles": [ /* up to 5, one per BULL source in order */
+    { "url": "...", "title": "...", "source": "domain", "snippet": "1 sentence factual (max 200 chars)", "spinoff": "2-3 sentences explaining WHY this is bullish for ${input.pair}", "confidence": 0-100 }
+  ],
+  "bear_articles": [ /* up to 5, one per BEAR source in order, same shape */ ],
+  "synthesis": {
+    "support": "$X,XXX (key technical floor with brief reason)",
+    "resistance": "$X,XXX (key technical ceiling with brief reason)",
+    "bull_scenario": "1-2 sentences: if bulls win, ${input.pair} targets $X (specific level + catalyst)",
+    "bear_scenario": "1-2 sentences: if bears win, ${input.pair} retreats to $X (specific level + catalyst)",
+    "impact_matrix": [
+      { "event": "short event label e.g. 'Iran Ceasefire'", "movement": "directional move e.g. '-3% to $4,576'" }
+    ],
+    "trend_summary": "2-3 sentences: 100/200 SMA posture + key trendlines + current setup"
+  }
 }
-Return one article per source, in the same order. No prose, no markdown.`;
+impact_matrix should have 4-6 rows mixing bullish & bearish events. Use real-looking 2026 prices.`;
 
   const res = await fetch("https://api.perplexity.ai/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${PERPLEXITY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "sonar",
+      model: "sonar-pro",
       messages: [
         { role: "system", content: "You output strict JSON only. No markdown, no prose." },
         { role: "user", content: prompt },
       ],
-      temperature: 0.6,
-      max_tokens: 1400,
+      temperature: 0.5,
+      max_tokens: 2400,
     }),
   });
   if (!res.ok) throw new Error(`Perplexity ${res.status}`);
@@ -166,32 +215,50 @@ Return one article per source, in the same order. No prose, no markdown.`;
   let parsed: any = {};
   try { parsed = JSON.parse(m ? m[0] : raw); } catch { parsed = {}; }
 
-  const articles: NewsArticle[] = Array.isArray(parsed.articles)
-    ? parsed.articles
-        .map((a: any, i: number) => ({
-          url: String(a.url || input.hits[i]?.url || ""),
-          title: String(a.title || input.hits[i]?.title || "Intel"),
-          source: String(a.source || (() => { try { return new URL(a.url || input.hits[i]?.url || "").hostname.replace(/^www\./, ""); } catch { return "intel"; } })()),
-          snippet: String(a.snippet || input.hits[i]?.description || "").slice(0, 240),
+  const mapArticles = (arr: any, hits: typeof input.bullHits): NewsArticle[] =>
+    Array.isArray(arr)
+      ? arr.map((a: any, i: number) => ({
+          url: String(a.url || hits[i]?.url || ""),
+          title: String(a.title || hits[i]?.title || "Intel"),
+          source: String(a.source || (() => { try { return new URL(a.url || hits[i]?.url || "").hostname.replace(/^www\./, ""); } catch { return "intel"; } })()),
+          snippet: String(a.snippet || hits[i]?.description || "").slice(0, 260),
           spinoff: String(a.spinoff || "").slice(0, 600),
-          confidence: Math.max(0, Math.min(100, Number(a.confidence) || 50)),
-        }))
-        .filter((a: NewsArticle) => a.url && a.title)
-        .slice(0, 5)
-    : [];
+          confidence: Math.max(0, Math.min(100, Number(a.confidence) || 55)),
+        })).filter((a: NewsArticle) => a.url && a.title).slice(0, 5)
+      : [];
 
+  const s = parsed.synthesis || {};
   return {
-    headline: String(parsed.headline || `${input.pair.toUpperCase()} INTEL DROP`).slice(0, 160),
-    tagline: String(parsed.tagline || "Live market intelligence stream").slice(0, 200),
+    headline: String(parsed.headline || `${input.pair.toUpperCase()} AT THE CROSSROADS`).slice(0, 180),
+    tagline: String(parsed.tagline || "Bulls and bears collide on the live tape").slice(0, 220),
     overall_confidence: Math.max(0, Math.min(100, Number(parsed.overall_confidence) || 60)),
-    articles,
+    bull_articles: mapArticles(parsed.bull_articles, input.bullHits),
+    bear_articles: mapArticles(parsed.bear_articles, input.bearHits),
+    synthesis: {
+      support: String(s.support || "—").slice(0, 200),
+      resistance: String(s.resistance || "—").slice(0, 200),
+      bull_scenario: String(s.bull_scenario || "—").slice(0, 400),
+      bear_scenario: String(s.bear_scenario || "—").slice(0, 400),
+      impact_matrix: Array.isArray(s.impact_matrix)
+        ? s.impact_matrix.slice(0, 8).map((r: any) => ({
+            event: String(r.event || "").slice(0, 80),
+            movement: String(r.movement || "").slice(0, 120),
+          })).filter((r: any) => r.event && r.movement)
+        : [],
+      trend_summary: String(s.trend_summary || "").slice(0, 600),
+    },
   };
 }
 
 async function buildScoutMeta(input: { pair: string; bias: NewsBias; context: string }): Promise<NewsScoutMeta> {
-  const query = `${input.pair} ${input.context} ${input.bias === "bad" ? "war crisis crash" : input.bias === "good" ? "rally surge breakout" : "news"} latest 2026`;
-  const hits = await firecrawlSearch(query, 5);
-  const ai = await perplexityAnalyze({ ...input, hits });
+  const baseCtx = input.context ? ` ${input.context}` : "";
+  const bullQ = `${input.pair}${baseCtx} bullish rally surge breakout supply tight central bank buying latest 2026`;
+  const bearQ = `${input.pair}${baseCtx} bearish crash drop ceasefire peace deal rate hike strong dollar latest 2026`;
+  const [bullHits, bearHits] = await Promise.all([firecrawlSearch(bullQ, 5), firecrawlSearch(bearQ, 5)]);
+  const ai = await perplexityDualAnalyze({ ...input, bullHits, bearHits });
+  const sym = tvSymbolFor(input.pair);
+  // Maintain backward-compat single-bias `articles` (used by legacy renderers)
+  const legacy = input.bias === "good" ? ai.bull_articles : input.bias === "bad" ? ai.bear_articles : [...ai.bull_articles, ...ai.bear_articles].slice(0, 5);
   return {
     pair: input.pair,
     bias: input.bias,
@@ -200,7 +267,13 @@ async function buildScoutMeta(input: { pair: string; bias: NewsBias; context: st
     tagline: ai.tagline,
     overall_confidence: ai.overall_confidence,
     scanned_at: new Date().toISOString(),
-    articles: ai.articles,
+    articles: legacy,
+    bull_articles: ai.bull_articles,
+    bear_articles: ai.bear_articles,
+    synthesis: ai.synthesis,
+    tv_symbol: sym.tv,
+    related_symbols: sym.related,
+    asset_code: sym.code,
   };
 }
 
