@@ -27,6 +27,7 @@ import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as Api0gOrchestratorRouteImport } from './routes/api/0g-orchestrator'
 import { Route as ApiPublicSunoWebhookRouteImport } from './routes/api/public/suno-webhook'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicHooksSyndicateTickRouteImport } from './routes/api/public/hooks/syndicate-tick'
@@ -121,6 +122,11 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   path: '/checkout/return',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Api0gOrchestratorRoute = Api0gOrchestratorRouteImport.update({
+  id: '/api/0g-orchestrator',
+  path: '/api/0g-orchestrator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSunoWebhookRoute = ApiPublicSunoWebhookRouteImport.update({
   id: '/api/public/suno-webhook',
   path: '/api/public/suno-webhook',
@@ -152,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
   '/trade': typeof TradeRoute
+  '/api/0g-orchestrator': typeof Api0gOrchestratorRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -175,6 +182,7 @@ export interface FileRoutesByTo {
   '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
   '/trade': typeof TradeRoute
+  '/api/0g-orchestrator': typeof Api0gOrchestratorRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -199,6 +207,7 @@ export interface FileRoutesById {
   '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
   '/trade': typeof TradeRoute
+  '/api/0g-orchestrator': typeof Api0gOrchestratorRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | '/syndicate-overlord'
     | '/tools'
     | '/trade'
+    | '/api/0g-orchestrator'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -247,6 +257,7 @@ export interface FileRouteTypes {
     | '/syndicate-overlord'
     | '/tools'
     | '/trade'
+    | '/api/0g-orchestrator'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -270,6 +281,7 @@ export interface FileRouteTypes {
     | '/syndicate-overlord'
     | '/tools'
     | '/trade'
+    | '/api/0g-orchestrator'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -294,6 +306,7 @@ export interface RootRouteChildren {
   SyndicateOverlordRoute: typeof SyndicateOverlordRoute
   ToolsRoute: typeof ToolsRoute
   TradeRoute: typeof TradeRoute
+  Api0gOrchestratorRoute: typeof Api0gOrchestratorRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   MSlugRoute: typeof MSlugRoute
   PSlugRoute: typeof PSlugRoute
@@ -432,6 +445,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/0g-orchestrator': {
+      id: '/api/0g-orchestrator'
+      path: '/api/0g-orchestrator'
+      fullPath: '/api/0g-orchestrator'
+      preLoaderRoute: typeof Api0gOrchestratorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/suno-webhook': {
       id: '/api/public/suno-webhook'
       path: '/api/public/suno-webhook'
@@ -479,6 +499,7 @@ const rootRouteChildren: RootRouteChildren = {
   SyndicateOverlordRoute: SyndicateOverlordRoute,
   ToolsRoute: ToolsRoute,
   TradeRoute: TradeRoute,
+  Api0gOrchestratorRoute: Api0gOrchestratorRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   MSlugRoute: MSlugRoute,
   PSlugRoute: PSlugRoute,
@@ -491,3 +512,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
