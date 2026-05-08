@@ -215,6 +215,9 @@ export type Database = {
       portals: {
         Row: {
           audio_snippet_url: string | null
+          bg_video_aspect: string
+          bg_video_prompt: string | null
+          bg_video_url: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -237,6 +240,9 @@ export type Database = {
         }
         Insert: {
           audio_snippet_url?: string | null
+          bg_video_aspect?: string
+          bg_video_prompt?: string | null
+          bg_video_url?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -259,6 +265,9 @@ export type Database = {
         }
         Update: {
           audio_snippet_url?: string | null
+          bg_video_aspect?: string
+          bg_video_prompt?: string | null
+          bg_video_url?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
