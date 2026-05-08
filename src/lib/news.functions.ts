@@ -260,8 +260,23 @@ async function buildScoutMeta(input: { pair: string; bias: NewsBias; context: st
   const baseCtx = input.context ? ` ${input.context}` : "";
   const bullQ = `${input.pair}${baseCtx} bullish rally surge breakout supply tight central bank buying latest 2026`;
   const bearQ = `${input.pair}${baseCtx} bearish crash drop ceasefire peace deal rate hike strong dollar latest 2026`;
-  const [bullHits, bearHits] = await Promise.all([firecrawlSearch(bullQ, 5), firecrawlSearch(bearQ, 5)]);
+  // 0G-BRAIN deep_search runs in parallel with Firecrawl scrapes — last-hour citations only
+  const deepQ = `${input.pair}${baseCtx} latest market-moving headlines, price action and catalysts in the last hour (May 2026). Cite at least 5 high-quality sources.`;
+  const [bullHits, bearHits, deep] = await Promise.all([
+    firecrawlSearch(bullQ, 5),
+    firecrawlSearch(bearQ, 5),
+    runDeepSearch({ query: deepQ, recency: "hour", minSources: 5 }).catch((e) => {
+      console.error("deep_search failed", e?.message);
+      return null;
+    }),
+  ]);
   const ai = await perplexityDualAnalyze({ ...input, bullHits, bearHits });
+  // Peer-review the synthesis against the deep_search evidence (Gemini fact-check)
+  let review: PeerReview | undefined;
+  if (deep) {
+    const analysisStr = `${ai.headline}\n${ai.tagline}\nSupport: ${ai.synthesis.support}\nResistance: ${ai.synthesis.resistance}\nBull: ${ai.synthesis.bull_scenario}\nBear: ${ai.synthesis.bear_scenario}\nTrend: ${ai.synthesis.trend_summary}`;
+    review = await runPeerReview({ topic: `${input.pair} · ${input.context}`, analysis: analysisStr, evidence: deep }).catch(() => undefined);
+  }
   const sym = tvSymbolFor(input.pair);
   // Maintain backward-compat single-bias `articles` (used by legacy renderers)
   const legacy = input.bias === "good" ? ai.bull_articles : input.bias === "bad" ? ai.bear_articles : [...ai.bull_articles, ...ai.bear_articles].slice(0, 5);
@@ -280,6 +295,10 @@ async function buildScoutMeta(input: { pair: string; bias: NewsBias; context: st
     tv_symbol: sym.tv,
     related_symbols: sym.related,
     asset_code: sym.code,
+    citations: deep?.citations ?? [],
+    verified_sources: deep?.verified_sources ?? [],
+    deep_search_answer: deep?.answer,
+    peer_review: review,
   };
 }
 
