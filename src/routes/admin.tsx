@@ -14,6 +14,7 @@ import { createTrack } from "@/lib/tracks.functions";
 import { spawnTool } from "@/lib/tools.functions";
 import { spawnTradePortal } from "@/lib/trade.functions";
 import { spawnNewsPortal } from "@/lib/news.functions";
+import { generatePortalCinema } from "@/lib/cinema.functions";
 import { generateBrandBible, updateTelegramLinks, deployToTelegram } from "@/lib/telegram.functions";
 
 export const Route = createFileRoute("/admin")({
