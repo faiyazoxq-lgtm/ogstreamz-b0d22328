@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequestHeader } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 
 type Result = { joke: string; headline: string; source?: string; error?: string };
@@ -24,13 +23,13 @@ async function isVipOrAdmin(token: string): Promise<{ ok: boolean; reason?: stri
 }
 
 export const generateLiveJoke = createServerFn({ method: "POST" })
-  .inputValidator((data: { styles: string[]; custom: string }) => ({
+  .inputValidator((data: { styles: string[]; custom: string; token: string }) => ({
     styles: Array.isArray(data.styles) ? data.styles.slice(0, 10).map(String) : [],
     custom: typeof data.custom === "string" ? data.custom.slice(0, 200) : "",
+    token: typeof data.token === "string" ? data.token : "",
   }))
   .handler(async ({ data }): Promise<Result> => {
-    const auth = getRequestHeader("authorization") || getRequestHeader("Authorization");
-    const token = auth?.replace(/^Bearer\s+/i, "") || "";
+    const token = data.token;
     if (!token) return { joke: "", headline: "", error: "Sign in to access Live Wire." };
     const gate = await isVipOrAdmin(token);
     if (!gate.ok) {
