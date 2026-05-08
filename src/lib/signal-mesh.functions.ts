@@ -261,10 +261,8 @@ export const pollVeoBundle = createServerFn({ method: "POST" })
     const publicUrl = pub.publicUrl;
 
     // Post cinematic reply to VIP channel
-    const ticker =
-      bundle.signal_payload?.price?.primaryTicker ||
-      bundle.signal_payload?.topMove?.ticker ||
-      "MARKET";
+    const sp: any = bundle.signal_payload || {};
+    const ticker = sp?.price?.primaryTicker || sp?.topMove?.ticker || "MARKET";
     const caption = `🎬 <b>Cinematic Ticker — ${ticker}</b>\n\n${FCA_COMPLIANCE_BADGE}`;
     const sent = await tgSendVideo(bundle.channel_chat_id, publicUrl, {
       caption,
