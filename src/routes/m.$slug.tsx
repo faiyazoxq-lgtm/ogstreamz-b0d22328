@@ -294,6 +294,7 @@ function MusicPortalPage() {
                 previewUrl={t.preview_url}
                 priceCents={t.price_cents}
                 owned={owned.has(t.id)}
+                isVip={isVip}
                 accent={theme.accent}
                 secondary={theme.secondary}
                 onUnlocked={refresh}
