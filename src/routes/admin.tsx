@@ -97,6 +97,86 @@ function AdminPage() {
 }
 
 function TradeSpawnerPanel() {
+  return _TradeSpawnerPanelImpl();
+}
+
+function NewsScoutSpawnerPanel() {
+  const spawn = useServerFn(spawnNewsPortal);
+  const [name, setName] = useState("");
+  const [pair, setPair] = useState("Gold");
+  const [bias, setBias] = useState<"bad" | "good" | "neutral">("bad");
+  const [ctx, setCtx] = useState("Iran War");
+  const [vip, setVip] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [last, setLast] = useState<{ slug: string; name: string } | null>(null);
+
+  const onSpawn = async () => {
+    if (!name.trim() || !pair.trim()) return toast.error("Name and pair required");
+    setLoading(true);
+    try {
+      const r = await spawn({ data: { name: name.trim(), pair: pair.trim(), bias, context: ctx.trim(), vip } });
+      setLast(r.portal);
+      toast.success(`Intel portal "${r.portal.name}" spawned · ${r.articleCount} articles`);
+      setName("");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Spawn failed");
+    } finally { setLoading(false); }
+  };
+
+  const url = last && typeof window !== "undefined" ? `${window.location.origin}/p/${last.slug}` : "";
+  const accent = bias === "bad" ? "#ff2233" : bias === "good" ? "#00e08a" : "#9aa0ff";
+
+  return (
+    <section className="mt-10 rounded-2xl border bg-card p-6" style={{ borderColor: `${accent}66` }}>
+      <div className="flex items-center gap-2 mb-2">
+        <Satellite className="h-5 w-5" style={{ color: accent }} />
+        <h2 className="font-[Montserrat] font-black text-xl text-white">News Scout Spawner</h2>
+        <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Market Intelligence</span>
+      </div>
+      <p className="text-sm text-muted-foreground mb-4">
+        Firecrawl scrapes the top 5 articles, Perplexity writes Bias Analysis + Confidence Score. Auto-refreshes on every visitor.
+      </p>
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Portal Name</label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="GOLD ALERT · Iran Desk" className="mt-1" />
+        </div>
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Asset Pair</label>
+          <Input value={pair} onChange={(e) => setPair(e.target.value)} placeholder="Gold / BTC / EURUSD" className="mt-1" />
+        </div>
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Market Bias</label>
+          <select value={bias} onChange={(e) => setBias(e.target.value as any)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm mt-1">
+            <option value="bad">Bad News / War (Crimson)</option>
+            <option value="good">Good News / Peace (Emerald)</option>
+            <option value="neutral">Neutral Recon</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Context</label>
+          <Input value={ctx} onChange={(e) => setCtx(e.target.value)} placeholder="Iran War, Fed cut, ETF flows…" className="mt-1" />
+        </div>
+        <label className="flex items-center gap-2 text-sm text-white sm:col-span-2">
+          <input type="checkbox" checked={vip} onChange={(e) => setVip(e.target.checked)} /> VIP-only deep analysis
+        </label>
+      </div>
+      <Button onClick={onSpawn} disabled={loading} className="mt-4 w-full" style={{ background: accent, color: "#000" }}>
+        {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Scouting the globe…</> : <><Satellite className="h-4 w-4 mr-2" />Spawn Intelligence Portal</>}
+      </Button>
+      {last && url && (
+        <div className="mt-4 rounded-lg border bg-black/40 p-3 text-xs flex items-center justify-between gap-3" style={{ borderColor: `${accent}66` }}>
+          <a href={url} target="_blank" rel="noreferrer" className="font-mono hover:underline truncate" style={{ color: accent }}>{url}</a>
+          <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(url); toast.success("Link copied"); }}>
+            <Copy className="h-3 w-3 mr-1" /> Copy
+          </Button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function _TradeSpawnerPanelImpl() {
   const spawn = useServerFn(spawnTradePortal);
   const [name, setName] = useState("");
   const [assetClass, setAssetClass] = useState<"Crypto"|"Forex"|"Stocks">("Crypto");
