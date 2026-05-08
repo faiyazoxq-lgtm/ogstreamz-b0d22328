@@ -744,3 +744,70 @@ function NewsHubView({ portal }: { portal: Portal }) {
     </div>
   );
 }
+
+function ConflictColumn({ side, articles, headingFont, text, showVip, startUnlock, unlocking, priceCents }: {
+  side: "bull" | "bear";
+  articles: NewsArticle[];
+  headingFont: string;
+  text: string;
+  showVip: boolean;
+  startUnlock: () => void;
+  unlocking: boolean;
+  priceCents: number;
+}) {
+  const c = side === "bull" ? "#00e08a" : "#ff2233";
+  const label = side === "bull" ? "Bullish Catalysts" : "Bearish Risks";
+  const zone = side === "bull" ? "GREEN ZONE" : "RED ZONE";
+  const Icon = side === "bull" ? TrendingUp : TrendingDown;
+  return (
+    <section className="rounded-2xl border p-4 sm:p-5 backdrop-blur-sm relative" style={{ borderColor: `${c}66`, background: `linear-gradient(180deg, ${c}10, ${c}03)`, boxShadow: `inset 0 0 40px ${c}11, 0 0 25px ${c}22` }}>
+      <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: `${c}33` }}>
+        <Icon className="h-5 w-5" style={{ color: c }} />
+        <div>
+          <p className="text-[9px] uppercase tracking-[0.5em] opacity-70" style={{ color: c }}>{zone}</p>
+          <p className="font-black text-base uppercase" style={{ fontFamily: `'${headingFont}', Impact, sans-serif`, color: c }}>{label}</p>
+        </div>
+      </div>
+      {articles.length === 0 ? (
+        <div className="text-xs opacity-60 text-center py-8">No {side} catalysts on the tape yet.</div>
+      ) : (
+        <div className="space-y-3">
+          {articles.map((a, i) => (
+            <motion.article key={a.url + i} initial={{ opacity: 0, x: side === "bull" ? -10 : 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
+              className="rounded-lg border p-3" style={{ borderColor: `${c}44`, background: "rgba(0,0,0,0.4)" }}>
+              <div className="flex items-center gap-2 text-[9px] uppercase tracking-[0.3em] opacity-70 mb-1">
+                <span className="px-1.5 py-0.5 rounded border font-mono" style={{ color: c, borderColor: `${c}66` }}>#{i + 1}</span>
+                <span style={{ color: c }}>{a.source}</span>
+              </div>
+              <h3 className="text-sm font-black leading-snug uppercase" style={{ fontFamily: `'${headingFont}', Impact, sans-serif`, color: text }}>
+                {a.title}
+              </h3>
+              <p className="mt-1.5 text-xs opacity-85 leading-relaxed">{a.snippet}</p>
+              {showVip ? (
+                <div className="mt-2.5 rounded p-2.5 border text-xs leading-relaxed" style={{ borderColor: `${c}44`, background: "rgba(0,0,0,0.4)" }}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[9px] uppercase tracking-[0.4em] font-bold" style={{ color: c }}>▣ AI Spin-off</span>
+                    <span className="inline-flex items-center gap-1 text-[9px]" style={{ color: c }}>
+                      <Gauge className="h-3 w-3" /> {a.confidence}
+                    </span>
+                  </div>
+                  <p>{a.spinoff}</p>
+                </div>
+              ) : (
+                <div className="mt-2.5 rounded p-2 border border-dashed flex items-center justify-between gap-2 text-[10px]" style={{ borderColor: `${c}66` }}>
+                  <span className="flex items-center gap-1.5"><Lock className="h-3 w-3" style={{ color: c }} />VIP analysis locked</span>
+                  <Button size="sm" onClick={startUnlock} disabled={unlocking} className="h-6 text-[10px] px-2" style={{ background: c, color: "#000" }}>
+                    {unlocking ? <Loader2 className="h-3 w-3 animate-spin" /> : `$${(priceCents / 100).toFixed(2)}`}
+                  </Button>
+                </div>
+              )}
+              <a href={a.url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.3em] opacity-70 hover:opacity-100" style={{ color: c }}>
+                Source <ExternalLink className="h-2.5 w-2.5" />
+              </a>
+            </motion.article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
