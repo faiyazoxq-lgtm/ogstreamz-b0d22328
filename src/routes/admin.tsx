@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Shield, Loader2, Save, Telescope, Link2, Wand2, Copy, ExternalLink, Music, Upload, Disc3, Wrench } from "lucide-react";
+import { Shield, Loader2, Save, Telescope, Link2, Wand2, Copy, ExternalLink, Music, Upload, Disc3, Wrench, Send, Sparkles, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { spawnPortal } from "@/lib/portals.functions";
 import { spawnMusicPortal } from "@/lib/music-portals.functions";
 import { createTrack } from "@/lib/tracks.functions";
 import { spawnTool } from "@/lib/tools.functions";
+import { generateBrandBible, updateTelegramLinks, deployToTelegram } from "@/lib/telegram.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin Console · 0G-PORTAL" }] }),
@@ -85,6 +86,7 @@ function AdminPage() {
       <MusicSpawnerPanel />
       <TrackUploadPanel />
       <ToolSpawnerPanel />
+      <TelegramSocialsPanel />
     </main>
   );
 }
