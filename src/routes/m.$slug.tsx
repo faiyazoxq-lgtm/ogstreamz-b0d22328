@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { formatLyrics, requestStudioTrack, generateSunoStack, type SunoStack } from "@/lib/music-portals.functions";
 import { listPortalTracks, getTrackOwnership } from "@/lib/tracks.functions";
+import { spawnMusic } from "@/lib/suno.functions";
 import { TrackPlayer } from "@/components/TrackPlayer";
 
 type MusicPortal = {
@@ -122,6 +123,7 @@ function MusicPortalPage() {
   const listTracksFn = useServerFn(listPortalTracks);
   const ownershipFn = useServerFn(getTrackOwnership);
   const stackFn = useServerFn(generateSunoStack);
+  const spawnFn = useServerFn(spawnMusic);
 
   type T = { id: string; title: string; price_cents: number; preview_url: string | null };
   const [tracks, setTracks] = useState<T[]>([]);
@@ -143,6 +145,37 @@ function MusicPortalPage() {
   };
 
   useEffect(() => { refresh(); /* eslint-disable-next-line */ }, [portal.slug, user?.id]);
+
+  // Realtime: when a Suno job for this user finishes, fire a toast.
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`suno-jobs-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "suno_jobs",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload: any) => {
+          const row = payload?.new;
+          if (!row?.audio_url) return;
+          toast.success("🎧 Track Ready", {
+            description: row.title || "Your Suno master is live",
+            action: {
+              label: "Play",
+              onClick: () => window.open(row.audio_url, "_blank"),
+            },
+          });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
 
   const [raw, setRaw] = useState("");
   const [lyrics, setLyrics] = useState("");
@@ -201,9 +234,25 @@ function MusicPortalPage() {
     if (!lyrics.trim()) return toast.error("Format your lyrics first");
     setGenerating(true);
     try {
-      const r = await requestFn({ data: { slug: portal.slug, lyrics } });
-      setSubmitted(r.request.id);
-      toast.success("Studio request sent");
+      const styleTags =
+        stack?.timbre || `${portal.style ?? "studio"}, ${portal.vibe ?? "cinematic"}`;
+      const r = await spawnFn({
+        data: {
+          prompt: lyrics,
+          style_tags: styleTags,
+          title: portal.name,
+          make_instrumental: false,
+          portal_slug: portal.slug,
+        },
+      });
+      setSubmitted(r.job.task_id);
+      toast.success("Suno V5.5 spawning your track…", {
+        description: "We'll ping you when the master is ready.",
+      });
+      // Keep the legacy fulfillment record too
+      try {
+        await requestFn({ data: { slug: portal.slug, lyrics } });
+      } catch {}
     } catch (e: any) {
       toast.error(e?.message ?? "Request failed");
     } finally {
