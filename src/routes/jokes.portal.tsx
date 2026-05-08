@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, RotateCw, Radio } from "lucide-react";
+import bgFlame from "@/assets/bg-flame.png";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { STYLE_PRESETS } from "./jokes";
@@ -85,6 +86,13 @@ function JokePortal() {
   return (
     <main className="relative min-h-[calc(100vh-4rem)]">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <img
+          src={bgFlame}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover opacity-25 mix-blend-screen"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
         <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-[700px] w-[900px] rounded-full blur-2xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245_/_0.45),transparent)] animate-pulse-gold" />
         <div className="absolute bottom-0 left-1/4 h-[400px] w-[400px] rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.55_0.24_255_/_0.35),transparent)]" />
         <div className="absolute bottom-10 right-1/4 h-[350px] w-[350px] rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.85_0.18_235_/_0.25),transparent)]" />
@@ -96,7 +104,7 @@ function JokePortal() {
           className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] font-bold text-muted-foreground hover:text-white transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Command Center
+          Return to Portal
         </Link>
 
         <div className="mt-8 text-center">
