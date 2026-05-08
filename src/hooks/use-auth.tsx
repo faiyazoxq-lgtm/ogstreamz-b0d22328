@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { promoteBossIfNeeded } from "@/lib/boss.functions";
 
 export type SyndicateRank = "prospect" | "enforcer" | "vip" | "boss";
 export type FeatureFlags = { jokes: boolean; music: boolean; tools: boolean };
@@ -36,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadExtras = async (uid: string) => {
+    try { await promoteBossIfNeeded(); } catch { /* non-fatal */ }
     const [{ data: prof }, { data: roles }] = await Promise.all([
       supabase.from("profiles").select("id,email,status,credits,rank,feature_flags,free_clicks_used,display_name").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
