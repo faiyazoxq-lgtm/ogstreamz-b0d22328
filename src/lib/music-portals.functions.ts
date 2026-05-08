@@ -141,3 +141,92 @@ export const requestStudioTrack = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { request: req };
   });
+
+export type SunoStack = {
+  timbre: string;        // [Genre/Timbre]
+  moodKey: string;       // [Mood/BPM/Key]
+  vocal: string;         // [Vocal Texture]
+  structure: string;     // [Structure Tags]
+  formatted: string;     // ready to paste in Suno Custom Mode
+};
+
+export const generateSunoStack = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { slug: string; vibe: string }) => ({
+    slug: String(data.slug || "").trim().slice(0, 80),
+    vibe: String(data.vibe || "").trim().slice(0, 400),
+  }))
+  .handler(async ({ data, context }): Promise<SunoStack> => {
+    const { supabase } = context as { supabase: any };
+    if (!data.vibe) throw new Error("Describe a vibe first");
+
+    const { data: portal } = await supabase
+      .from("portals")
+      .select("language, style, vibe")
+      .eq("slug", data.slug)
+      .maybeSingle();
+    if (!portal) throw new Error("Portal not found");
+
+    // Charge 1 credit (VIP bypass via RPC)
+    const { error: spendErr } = await supabase.rpc("spend_credits", {
+      _amount: 1,
+      _reason: "suno-stack",
+    });
+    if (spendErr) {
+      const msg = (spendErr.message || "").toLowerCase();
+      if (msg.includes("insufficient")) throw new Error("Insufficient credits");
+      throw new Error(spendErr.message);
+    }
+
+    const PERPLEXITY = process.env.PERPLEXITY_API_KEY;
+    if (!PERPLEXITY) throw new Error("PERPLEXITY_API_KEY missing");
+
+    const sys =
+      "You are a Suno V5.5 prompt engineer. Output STRICT JSON only — no markdown, no preamble. " +
+      "Build a 4-layer Style Vector Stack for Suno Custom Mode.";
+
+    const user = `Portal style: ${portal.style}
+Language: ${portal.language}
+Portal vibe: ${portal.vibe || "n/a"}
+User vibe: ${data.vibe}
+
+Return JSON:
+{
+  "timbre": "Genre + instrument timbre, max 18 words. Reference real synths/instruments + recording quality.",
+  "moodKey": "Mood + BPM (integer) + Key (e.g. C Major, F# Minor). Max 14 words.",
+  "vocal": "Vocal texture description, gender, range, delivery. Max 14 words.",
+  "structure": "2-4 Suno tags like [Intro], [Verse], [Chorus], [ad-lib: ...]. Comma-separated."
+}`;
+
+    const res = await fetch("https://api.perplexity.ai/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${PERPLEXITY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "sonar",
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: user },
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+      }),
+    });
+    if (!res.ok) throw new Error(`Perplexity ${res.status}`);
+    const json = await res.json();
+    const raw: string = json?.choices?.[0]?.message?.content ?? "";
+    const m = raw.match(/\{[\s\S]*\}/);
+    let parsed: any = {};
+    try { parsed = JSON.parse(m ? m[0] : raw); } catch { throw new Error("Suno stack parse failed"); }
+
+    const timbre = String(parsed.timbre || "").trim();
+    const moodKey = String(parsed.moodKey || "").trim();
+    const vocal = String(parsed.vocal || "").trim();
+    const structure = String(parsed.structure || "").trim();
+
+    const formatted = `[Genre/Timbre] ${timbre}
+[Mood/BPM/Key] ${moodKey}
+[Vocal Texture] ${vocal}
+[Structure] ${structure}`;
+
+    return { timbre, moodKey, vocal, structure, formatted };
+  });
