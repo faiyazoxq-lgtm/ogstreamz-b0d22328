@@ -20,8 +20,8 @@ function ToolsPage() {
     <main className="max-w-7xl mx-auto px-5 sm:px-8 py-12 sm:py-16">
       <header className="mb-10">
         <p className="text-xs tracking-[0.4em] text-gold uppercase font-semibold">ToolHUB</p>
-        <h1 className="mt-3 font-[Montserrat] font-black text-4xl sm:text-6xl tracking-tight">
-          Utility, <span className="text-gradient-gold">Elevated.</span>
+        <h1 className="mt-3 font-[Montserrat] font-black text-4xl sm:text-6xl tracking-tight text-metallic">
+          Utility, Elevated.
         </h1>
       </header>
 
@@ -68,8 +68,8 @@ function CountdownCard() {
         <h2 className="font-[Montserrat] font-bold text-xl">Countdown Timer</h2>
       </div>
 
-      <div className="text-center py-8">
-        <div className="font-[Montserrat] font-black text-7xl sm:text-8xl tabular-nums text-gradient-gold tracking-tighter">
+      <div className="py-6">
+        <div className="digital-display text-center py-8 px-4 font-black text-6xl sm:text-8xl tabular-nums tracking-widest">
           {String(m).padStart(2, "0")}:{String(s).padStart(2, "0")}
         </div>
       </div>
@@ -87,7 +87,7 @@ function CountdownCard() {
       <div className="flex gap-2">
         <Button
           onClick={() => setRunning((r) => !r)}
-          className="flex-1 bg-gold text-primary-foreground hover:bg-gold/90 font-semibold"
+          className="flex-1 btn-glass-blue text-white font-bold uppercase tracking-wider"
         >
           {running ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
           {running ? "Pause" : "Start"}
