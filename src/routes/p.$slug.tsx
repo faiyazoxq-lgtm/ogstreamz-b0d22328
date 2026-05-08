@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Lock, Loader2, Radio, BadgeCheck } from "lucide-react";
+import { ArrowLeft, Lock, Loader2, Radio, BadgeCheck, Send, Crown } from "lucide-react";
 import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,13 +37,19 @@ type Portal = {
   price_cents: number;
   theme_config: ThemeConfig;
   scout_meta: { sources?: string[]; headlines?: string[] };
+  telegram_config: {
+    groupLink?: string | null;
+    vipLink?: string | null;
+    botUsername?: string | null;
+    brand?: { brandName?: string; logoEmoji?: string };
+  } | null;
 };
 
 export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals")
-      .select("id, slug, name, niche, language, vibe, theme, jokes, vip, price_cents, theme_config, scout_meta")
+      .select("id, slug, name, niche, language, vibe, theme, jokes, vip, price_cents, theme_config, scout_meta, telegram_config")
       .eq("slug", params.slug)
       .maybeSingle();
     if (error) throw new Error(error.message);
