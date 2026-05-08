@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createClient } from "@supabase/supabase-js";
+import { runDeepSearch, runPeerReview, type DeepSearchSource, type PeerReview } from "./orchestrator.functions";
 
 async function isAdmin(supabase: any, userId: string): Promise<boolean> {
   const { data } = await supabase
@@ -50,6 +51,11 @@ export type NewsScoutMeta = {
   tv_symbol?: string;
   related_symbols?: string[];
   asset_code?: string;
+  // 0G-BRAIN deep_search additions
+  citations?: string[];
+  verified_sources?: DeepSearchSource[];
+  deep_search_answer?: string;
+  peer_review?: PeerReview;
 };
 
 function tvSymbolFor(pair: string): { tv: string; related: string[]; code: string } {
