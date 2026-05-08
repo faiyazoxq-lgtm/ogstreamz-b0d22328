@@ -522,6 +522,42 @@ export type Database = {
         }
         Relationships: []
       }
+      trade_scans: {
+        Row: {
+          asset_class: string | null
+          confidence: number | null
+          created_at: string
+          delayed: boolean
+          id: string
+          payload: Json
+          portal_slug: string
+          signal: string | null
+          user_id: string
+        }
+        Insert: {
+          asset_class?: string | null
+          confidence?: number | null
+          created_at?: string
+          delayed?: boolean
+          id?: string
+          payload?: Json
+          portal_slug: string
+          signal?: string | null
+          user_id: string
+        }
+        Update: {
+          asset_class?: string | null
+          confidence?: number | null
+          created_at?: string
+          delayed?: boolean
+          id?: string
+          payload?: Json
+          portal_slug?: string
+          signal?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -580,6 +616,17 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      apply_trade_scan: {
+        Args: {
+          _asset_class: string
+          _confidence: number
+          _delayed: boolean
+          _payload: Json
+          _portal_slug: string
+          _signal: string
+        }
+        Returns: Json
       }
       has_role: {
         Args: {
