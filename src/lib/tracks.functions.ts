@@ -108,9 +108,13 @@ export const getTrackDownloadUrl = createServerFn({ method: "POST" })
   .inputValidator((d: { trackId: string }) => ({ trackId: String(d.trackId || "").trim().slice(0, 64) }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
-    const { data: owned } = await supabase
-      .from("track_purchases").select("id").eq("user_id", userId).eq("track_id", data.trackId).maybeSingle();
-    if (!owned) throw new Error("Not unlocked");
+    const [{ data: owned }, vipRpc] = await Promise.all([
+      supabase
+        .from("track_purchases").select("id").eq("user_id", userId).eq("track_id", data.trackId).maybeSingle(),
+      supabase.rpc("has_active_vip", { _user: userId, _env: "sandbox" }),
+    ]);
+    const isVip = vipRpc?.data === true;
+    if (!owned && !isVip) throw new Error("Not unlocked");
 
     const { createClient } = await import("@supabase/supabase-js");
     const admin = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);

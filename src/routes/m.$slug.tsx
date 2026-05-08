@@ -117,7 +117,8 @@ const THEMES: Record<string, { bg: string; accent: string; secondary: string; fo
 function MusicPortalPage() {
   const { portal } = Route.useLoaderData();
   const theme = THEMES[portal.theme] ?? THEMES["studio-blue"];
-  const { user } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
+  const isVip = isAdmin || profile?.status === "vip";
   const formatFn = useServerFn(formatLyrics);
   const requestFn = useServerFn(requestStudioTrack);
   const listTracksFn = useServerFn(listPortalTracks);
@@ -294,6 +295,7 @@ function MusicPortalPage() {
                 previewUrl={t.preview_url}
                 priceCents={t.price_cents}
                 owned={owned.has(t.id)}
+                isVip={isVip}
                 accent={theme.accent}
                 secondary={theme.secondary}
                 onUnlocked={refresh}
