@@ -4,8 +4,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const RANKS = ["prospect", "enforcer", "vip", "boss"] as const;
 type Rank = typeof RANKS[number];
 
-async function isAdmin(supabase: any, userId: string) {
-  const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle();
+async function isBoss(supabase: any) {
+  const { data, error } = await supabase.rpc("is_boss", { _uid: (await supabase.auth.getUser()).data.user?.id });
+  if (error) return false;
   return !!data;
 }
 
@@ -17,8 +18,8 @@ export const adjustCredits = createServerFn({ method: "POST" })
     reason: String(d.reason ?? "admin:adjust").slice(0, 120),
   }))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context as any;
-    if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
+    const { supabase } = context as any;
+    if (!(await isBoss(supabase))) throw new Error("Boss only");
     const { data: bal, error } = await supabase.rpc("admin_adjust_credits", {
       _user_id: data.userId, _delta: data.delta, _reason: data.reason,
     });
@@ -33,8 +34,8 @@ export const setRank = createServerFn({ method: "POST" })
     return { userId: String(d.userId), rank: d.rank };
   })
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context as any;
-    if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
+    const { supabase } = context as any;
+    if (!(await isBoss(supabase))) throw new Error("Boss only");
     const status = data.rank === "vip" || data.rank === "boss" ? "vip" : "free";
     const { error } = await supabase.from("profiles").update({ rank: data.rank, status }).eq("id", data.userId);
     if (error) throw new Error(error.message);
@@ -48,8 +49,8 @@ export const setFeatureFlags = createServerFn({ method: "POST" })
     flags: { jokes: !!d.flags.jokes, music: !!d.flags.music, tools: !!d.flags.tools },
   }))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context as any;
-    if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
+    const { supabase } = context as any;
+    if (!(await isBoss(supabase))) throw new Error("Boss only");
     const { error } = await supabase.from("profiles").update({ feature_flags: data.flags }).eq("id", data.userId);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -66,7 +67,7 @@ export const createRedeemCode = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as any;
-    if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
+    if (!(await isBoss(supabase))) throw new Error("Boss only");
     if (!/^[A-Z0-9_-]{3,32}$/.test(data.code)) throw new Error("Code must be 3-32 chars A-Z 0-9 _ -");
     const { data: row, error } = await supabase
       .from("redeem_codes")
