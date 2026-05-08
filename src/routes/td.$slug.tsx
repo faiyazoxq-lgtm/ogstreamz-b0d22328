@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Activity, ArrowLeft, BadgeCheck, Crown, ExternalLink, Loader2, Lock, Radio, Send, ShieldAlert, TrendingDown, TrendingUp, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ const GOLD = "#D4AF37";
 const EMERALD = "#10B981";
 const CRIMSON = "#EF4444";
 
-export const Route = createFileRoute("/td/")({
+export const Route = createFileRoute("/td/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals")
