@@ -15,6 +15,7 @@ import { Route as ToolsRouteImport } from './routes/tools'
 import { Route as SyndicateOverlordRouteImport } from './routes/syndicate-overlord'
 import { Route as SyndicateRouteImport } from './routes/syndicate'
 import { Route as StoreRouteImport } from './routes/store'
+import { Route as ResellerRouteImport } from './routes/reseller'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MusicRouteImport } from './routes/music'
 import { Route as JokesRouteImport } from './routes/jokes'
@@ -64,6 +65,11 @@ const SyndicateRoute = SyndicateRouteImport.update({
 const StoreRoute = StoreRouteImport.update({
   id: '/store',
   path: '/store',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResellerRoute = ResellerRouteImport.update({
+  id: '/reseller',
+  path: '/reseller',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -180,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
+  '/reseller': typeof ResellerRoute
   '/store': typeof StoreRoute
   '/syndicate': typeof SyndicateRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByTo {
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
+  '/reseller': typeof ResellerRoute
   '/store': typeof StoreRoute
   '/syndicate': typeof SyndicateRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
@@ -237,6 +245,7 @@ export interface FileRoutesById {
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
+  '/reseller': typeof ResellerRoute
   '/store': typeof StoreRoute
   '/syndicate': typeof SyndicateRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
@@ -267,6 +276,7 @@ export interface FileRouteTypes {
     | '/jokes'
     | '/music'
     | '/profile'
+    | '/reseller'
     | '/store'
     | '/syndicate'
     | '/syndicate-overlord'
@@ -295,6 +305,7 @@ export interface FileRouteTypes {
     | '/jokes'
     | '/music'
     | '/profile'
+    | '/reseller'
     | '/store'
     | '/syndicate'
     | '/syndicate-overlord'
@@ -323,6 +334,7 @@ export interface FileRouteTypes {
     | '/jokes'
     | '/music'
     | '/profile'
+    | '/reseller'
     | '/store'
     | '/syndicate'
     | '/syndicate-overlord'
@@ -352,6 +364,7 @@ export interface RootRouteChildren {
   JokesRoute: typeof JokesRouteWithChildren
   MusicRoute: typeof MusicRoute
   ProfileRoute: typeof ProfileRoute
+  ResellerRoute: typeof ResellerRoute
   StoreRoute: typeof StoreRoute
   SyndicateRoute: typeof SyndicateRoute
   SyndicateOverlordRoute: typeof SyndicateOverlordRoute
@@ -412,6 +425,13 @@ declare module '@tanstack/react-router' {
       path: '/store'
       fullPath: '/store'
       preLoaderRoute: typeof StoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reseller': {
+      id: '/reseller'
+      path: '/reseller'
+      fullPath: '/reseller'
+      preLoaderRoute: typeof ResellerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -577,6 +597,7 @@ const rootRouteChildren: RootRouteChildren = {
   JokesRoute: JokesRouteWithChildren,
   MusicRoute: MusicRoute,
   ProfileRoute: ProfileRoute,
+  ResellerRoute: ResellerRoute,
   StoreRoute: StoreRoute,
   SyndicateRoute: SyndicateRoute,
   SyndicateOverlordRoute: SyndicateOverlordRoute,
