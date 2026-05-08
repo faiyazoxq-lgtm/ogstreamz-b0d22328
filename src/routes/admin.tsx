@@ -89,6 +89,81 @@ function AdminPage() {
   );
 }
 
+function ToolSpawnerPanel() {
+  const spawn = useServerFn(spawnTool);
+  const [name, setName] = useState("");
+  const [audience, setAudience] = useState<"kids" | "students" | "pro">("students");
+  const [logic, setLogic] = useState("");
+  const [vibe, setVibe] = useState("");
+  const [vip, setVip] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [last, setLast] = useState<{ slug: string } | null>(null);
+
+  const onSpawn = async () => {
+    if (!name || !logic) return toast.error("Name and logic required");
+    setLoading(true);
+    try {
+      const r = await spawn({ data: { name, audience, logic, vibe, vip } });
+      toast.success(`Spawned "${r.tool.name}"`);
+      setLast({ slug: r.slug });
+      setName(""); setLogic(""); setVibe("");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Spawn failed");
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <section className="mt-10 rounded-2xl border border-border bg-card p-6">
+      <div className="flex items-center gap-2 mb-2">
+        <Wrench className="h-5 w-5" style={{ color: "var(--neon-blue-bright)" }} />
+        <h2 className="font-[Montserrat] font-black text-xl text-white">ToolHUB Spawner</h2>
+      </div>
+      <p className="text-sm text-muted-foreground mb-4">AI agent designs the inputs, formula, and explanations from your description.</p>
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs uppercase tracking-widest text-muted-foreground">Tool Name</label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Kid Algebra Solver" />
+        </div>
+        <div>
+          <label className="text-xs uppercase tracking-widest text-muted-foreground">Audience</label>
+          <select
+            value={audience}
+            onChange={(e) => setAudience(e.target.value as any)}
+            className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+          >
+            <option value="kids">Kids</option>
+            <option value="students">Students</option>
+            <option value="pro">Professionals / Scientists</option>
+          </select>
+        </div>
+        <div className="sm:col-span-2">
+          <label className="text-xs uppercase tracking-widest text-muted-foreground">Tool Logic Description</label>
+          <Input value={logic} onChange={(e) => setLogic(e.target.value)} placeholder="Step-by-step algebra solver for two-variable equations" />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="text-xs uppercase tracking-widest text-muted-foreground">Visual Vibe</label>
+          <Input value={vibe} onChange={(e) => setVibe(e.target.value)} placeholder="Playful & Colorful, neon blue cartoon" />
+        </div>
+        <label className="flex items-center gap-2 text-sm text-white sm:col-span-2">
+          <input type="checkbox" checked={vip} onChange={(e) => setVip(e.target.checked)} />
+          VIP-only tool (Syndicate members)
+        </label>
+      </div>
+      <Button onClick={onSpawn} disabled={loading} className="mt-4 w-full">
+        {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Agent designing...</> : <><Wand2 className="h-4 w-4 mr-2" />Spawn Tool</>}
+      </Button>
+      {last && (
+        <p className="mt-3 text-sm text-muted-foreground">
+          Live at{" "}
+          <a href={`/t/${last.slug}`} target="_blank" rel="noreferrer" className="underline text-white inline-flex items-center gap-1">
+            /t/{last.slug} <ExternalLink className="h-3 w-3" />
+          </a>
+        </p>
+      )}
+    </section>
+  );
+}
+
 function SpawnerPanel() {
   const spawn = useServerFn(spawnPortal);
   const [name, setName] = useState("");
