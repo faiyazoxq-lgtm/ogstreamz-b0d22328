@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ToolsRouteImport } from './routes/tools'
+import { Route as StoreRouteImport } from './routes/store'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MusicRouteImport } from './routes/music'
 import { Route as JokesRouteImport } from './routes/jokes'
@@ -25,6 +26,11 @@ import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/publi
 const ToolsRoute = ToolsRouteImport.update({
   id: '/tools',
   path: '/tools',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoreRoute = StoreRouteImport.update({
+  id: '/store',
+  path: '/store',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
+  '/store': typeof StoreRoute
   '/tools': typeof ToolsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
+  '/store': typeof StoreRoute
   '/tools': typeof ToolsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
+  '/store': typeof StoreRoute
   '/tools': typeof ToolsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -138,6 +147,7 @@ export interface FileRouteTypes {
     | '/jokes'
     | '/music'
     | '/profile'
+    | '/store'
     | '/tools'
     | '/checkout/return'
     | '/jokes/portal'
@@ -152,6 +162,7 @@ export interface FileRouteTypes {
     | '/jokes'
     | '/music'
     | '/profile'
+    | '/store'
     | '/tools'
     | '/checkout/return'
     | '/jokes/portal'
@@ -166,6 +177,7 @@ export interface FileRouteTypes {
     | '/jokes'
     | '/music'
     | '/profile'
+    | '/store'
     | '/tools'
     | '/checkout/return'
     | '/jokes/portal'
@@ -181,6 +193,7 @@ export interface RootRouteChildren {
   JokesRoute: typeof JokesRouteWithChildren
   MusicRoute: typeof MusicRoute
   ProfileRoute: typeof ProfileRoute
+  StoreRoute: typeof StoreRoute
   ToolsRoute: typeof ToolsRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
@@ -193,6 +206,13 @@ declare module '@tanstack/react-router' {
       path: '/tools'
       fullPath: '/tools'
       preLoaderRoute: typeof ToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/store': {
+      id: '/store'
+      path: '/store'
+      fullPath: '/store'
+      preLoaderRoute: typeof StoreRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -294,6 +314,7 @@ const rootRouteChildren: RootRouteChildren = {
   JokesRoute: JokesRouteWithChildren,
   MusicRoute: MusicRoute,
   ProfileRoute: ProfileRoute,
+  StoreRoute: StoreRoute,
   ToolsRoute: ToolsRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
@@ -301,3 +322,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
