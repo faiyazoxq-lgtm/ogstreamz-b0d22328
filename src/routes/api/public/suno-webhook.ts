@@ -87,7 +87,7 @@ export const Route = createFileRoute("/api/public/suno-webhook")({
             raw: payload,
           })
           .eq("task_id", taskId)
-          .select("id, portal_id, portal_slug, user_id, power_pack_id")
+          .select("id, portal_id, portal_slug, user_id, power_pack_id, signal_bundle_id")
           .maybeSingle();
 
         if (jobErr) {
@@ -150,6 +150,48 @@ export const Route = createFileRoute("/api/public/suno-webhook")({
             }
           } catch (e) {
             console.error("Power Pack chain failed", e);
+          }
+        }
+
+        // Signal-Bundle chain — Master Bot posts the Victory Anthem reply
+        // into the VIP broadcast channel and updates the bundle row.
+        if (audioUrl && job.signal_bundle_id) {
+          try {
+            const { data: bundle } = await supabaseAdmin
+              .from("signal_bundles")
+              .select("channel_chat_id, intro_message_id, signal_payload, veo_video_url")
+              .eq("id", job.signal_bundle_id)
+              .maybeSingle();
+            if (bundle?.channel_chat_id) {
+              const ticker =
+                (bundle.signal_payload as any)?.price?.primaryTicker ||
+                (bundle.signal_payload as any)?.topMove?.ticker ||
+                "MARKET";
+              const compliance =
+                "⚖️ <b>SENTIMENT ANALYSIS ONLY — NOT A DIRECT FINANCIAL PROMOTION</b>\n<i>Compliant with FCA CP26/13 (May 2026). 0G-PORTAL Sentiment Mesh.</i>";
+              const sent = await tgSend("/sendAudio", {
+                chat_id: bundle.channel_chat_id,
+                audio: audioUrl,
+                title: title ?? `0G Victory Anthem — ${ticker}`,
+                performer: "0G-Syndicate Master Bot",
+                caption: `🎵 <b>Victory Anthem — ${ticker}</b>\n\n${compliance}`,
+                parse_mode: "HTML",
+                reply_parameters: bundle.intro_message_id
+                  ? { message_id: bundle.intro_message_id }
+                  : undefined,
+              });
+              const nextStatus = bundle.veo_video_url ? "complete" : "partial";
+              await supabaseAdmin
+                .from("signal_bundles")
+                .update({
+                  suno_audio_url: audioUrl,
+                  suno_message_id: (sent as any)?.message_id ?? null,
+                  status: nextStatus,
+                })
+                .eq("id", job.signal_bundle_id);
+            }
+          } catch (e) {
+            console.error("Signal-Bundle chain failed", e);
           }
         }
 
