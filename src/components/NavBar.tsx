@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
+import { User, LogIn } from "lucide-react";
 import logo from "@/assets/logo.jpg";
+import { useAuth } from "@/hooks/use-auth";
 
 const links = [
   { to: "/music", label: "MusicHUB" },
@@ -8,6 +10,7 @@ const links = [
 ] as const;
 
 export function NavBar() {
+  const { user } = useAuth();
   return (
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border">
       <nav className="max-w-7xl mx-auto flex items-center justify-between px-5 sm:px-8 h-16">
@@ -29,6 +32,26 @@ export function NavBar() {
               </Link>
             </li>
           ))}
+          <li>
+            {user ? (
+              <Link
+                to="/profile"
+                className="ml-1 inline-flex items-center gap-2 btn-glass-blue px-3 sm:px-4 py-2 rounded-md text-xs uppercase tracking-[0.2em] font-bold text-white"
+              >
+                <User className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Vault</span>
+              </Link>
+            ) : (
+              <Link
+                to="/auth"
+                className="ml-1 inline-flex items-center gap-2 btn-glass-blue px-3 sm:px-4 py-2 rounded-md text-xs uppercase tracking-[0.2em] font-bold text-white"
+              >
+                <LogIn className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Join the Syndicate</span>
+                <span className="sm:hidden">Join</span>
+              </Link>
+            )}
+          </li>
         </ul>
       </nav>
     </header>
