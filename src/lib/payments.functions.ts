@@ -70,6 +70,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       ui_mode: "embedded_page",
       return_url: data.returnUrl,
       ...(customerId && { customer: customerId }),
+      managed_payments: { enabled: true },
       ...(data.userId && {
         metadata: { userId: data.userId, priceId: data.priceId },
         ...(isRecurring && {
@@ -78,7 +79,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
           },
         }),
       }),
-    });
+    } as any);
 
     return session.client_secret;
   });
