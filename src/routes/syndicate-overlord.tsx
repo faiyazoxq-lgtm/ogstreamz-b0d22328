@@ -209,9 +209,19 @@ function RedeemCodePanel() {
     setBusy(true);
     try {
       const r = await create({ data: { code, credits: Number(credits), maxUses: Number(maxUses), grantRank: grantRank || null } });
+      if (!r?.code) {
+        toast.error("Mint failed: no row returned");
+        return;
+      }
       toast.success(`Minted ${r.code.code} · ${r.code.credits} credits × ${r.code.max_uses}`);
       setCode("");
-    } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+    } catch (e: any) {
+      let msg = e?.message;
+      if (e instanceof Response) {
+        try { msg = await e.text(); } catch { msg = `HTTP ${e.status}`; }
+      }
+      toast.error(msg || "Mint failed (are you signed in as admin?)");
+    } finally { setBusy(false); }
   };
 
   return (
