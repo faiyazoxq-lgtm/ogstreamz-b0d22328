@@ -33,6 +33,7 @@ import { Route as ApiPublicSunoWebhookRouteImport } from './routes/api/public/su
 import { Route as ApiPublic0gOrchestratorRouteImport } from './routes/api/public/0g-orchestrator'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicHooksSyndicateTickRouteImport } from './routes/api/public/hooks/syndicate-tick'
+import { Route as ApiPublicFleetWebhookBotIdRouteImport } from './routes/api/public/fleet/webhook/$botId'
 
 const VipRoute = VipRouteImport.update({
   id: '/vip',
@@ -156,6 +157,12 @@ const ApiPublicHooksSyndicateTickRoute =
     path: '/api/public/hooks/syndicate-tick',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicFleetWebhookBotIdRoute =
+  ApiPublicFleetWebhookBotIdRouteImport.update({
+    id: '/api/public/fleet/webhook/$botId',
+    path: '/api/public/fleet/webhook/$botId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -182,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/fleet/webhook/$botId': typeof ApiPublicFleetWebhookBotIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -208,6 +216,7 @@ export interface FileRoutesByTo {
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/fleet/webhook/$botId': typeof ApiPublicFleetWebhookBotIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -235,6 +244,7 @@ export interface FileRoutesById {
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/fleet/webhook/$botId': typeof ApiPublicFleetWebhookBotIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/api/public/suno-webhook'
     | '/api/public/hooks/syndicate-tick'
     | '/api/public/payments/webhook'
+    | '/api/public/fleet/webhook/$botId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -289,6 +300,7 @@ export interface FileRouteTypes {
     | '/api/public/suno-webhook'
     | '/api/public/hooks/syndicate-tick'
     | '/api/public/payments/webhook'
+    | '/api/public/fleet/webhook/$botId'
   id:
     | '__root__'
     | '/'
@@ -315,6 +327,7 @@ export interface FileRouteTypes {
     | '/api/public/suno-webhook'
     | '/api/public/hooks/syndicate-tick'
     | '/api/public/payments/webhook'
+    | '/api/public/fleet/webhook/$botId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -341,6 +354,7 @@ export interface RootRouteChildren {
   ApiPublicSunoWebhookRoute: typeof ApiPublicSunoWebhookRoute
   ApiPublicHooksSyndicateTickRoute: typeof ApiPublicHooksSyndicateTickRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
+  ApiPublicFleetWebhookBotIdRoute: typeof ApiPublicFleetWebhookBotIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -513,6 +527,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSyndicateTickRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/fleet/webhook/$botId': {
+      id: '/api/public/fleet/webhook/$botId'
+      path: '/api/public/fleet/webhook/$botId'
+      fullPath: '/api/public/fleet/webhook/$botId'
+      preLoaderRoute: typeof ApiPublicFleetWebhookBotIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -550,7 +571,18 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicSunoWebhookRoute: ApiPublicSunoWebhookRoute,
   ApiPublicHooksSyndicateTickRoute: ApiPublicHooksSyndicateTickRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
+  ApiPublicFleetWebhookBotIdRoute: ApiPublicFleetWebhookBotIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
