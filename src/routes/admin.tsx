@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Shield, Loader2, Save, Telescope, Link2, Wand2, Copy, ExternalLink, Music, Upload, Disc3, Wrench, Send, Sparkles, Rocket, Eye, TrendingUp, Satellite } from "lucide-react";
+import { Shield, Loader2, Save, Telescope, Link2, Wand2, Copy, ExternalLink, Music, Upload, Disc3, Wrench, Send, Sparkles, Rocket, Eye, TrendingUp, Satellite, Bot, Radio, Trash2, Megaphone, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { spawnTool } from "@/lib/tools.functions";
 import { spawnTradePortal } from "@/lib/trade.functions";
 import { spawnNewsPortal } from "@/lib/news.functions";
 import { generatePortalCinema } from "@/lib/cinema.functions";
+import { listBots, upsertBot, deleteBot, broadcastGlobalAlert, runSyndicateTickNow, getFleetStats, setSubscriberPlan, type Plan } from "@/lib/syndicate.functions";
 import { generateBrandBible, updateTelegramLinks, deployToTelegram } from "@/lib/telegram.functions";
 
 export const Route = createFileRoute("/admin")({
@@ -94,6 +95,7 @@ function AdminPage() {
       <ToolSpawnerPanel />
       <TradeSpawnerPanel />
       <TelegramSocialsPanel />
+      <FleetCommanderPanel />
     </main>
   );
 }
