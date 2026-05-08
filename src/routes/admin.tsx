@@ -1139,3 +1139,262 @@ function ScoutPanel() {
     </section>
   );
 }
+
+// ════════════ FLEET COMMANDER ════════════
+type Bot = {
+  id: string; pair_name: string; pair_label: string; channel_chat_id: string;
+  tier_required: Plan; update_frequency: string; bias: string; active: boolean;
+  last_pinged_at: string | null; ping_count: number; last_broadcast: string | null;
+};
+type FleetStats = {
+  bots: any[];
+  planCounts: Record<string, number>;
+  activeMembers: number;
+  churned: number;
+  churnRate: number;
+  recentProfiles: { id: string; email: string; subscription_plan: Plan }[];
+};
+
+function FleetCommanderPanel() {
+  const list = useServerFn(listBots);
+  const upsert = useServerFn(upsertBot);
+  const remove = useServerFn(deleteBot);
+  const tickNow = useServerFn(runSyndicateTickNow);
+  const broadcast = useServerFn(broadcastGlobalAlert);
+  const stats = useServerFn(getFleetStats);
+  const setPlan = useServerFn(setSubscriberPlan);
+
+  const [bots, setBots] = useState<Bot[]>([]);
+  const [s, setS] = useState<FleetStats | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [pair, setPair] = useState("Gold");
+  const [label, setLabel] = useState("0G · Gold Desk");
+  const [chatId, setChatId] = useState("@og_gold_desk");
+  const [tier, setTier] = useState<Plan>("metal");
+  const [freq, setFreq] = useState("15min");
+  const [bias, setBias] = useState("neutral");
+  const [msg, setMsg] = useState("");
+  const [busyAction, setBusyAction] = useState<string | null>(null);
+
+  const refresh = async () => {
+    setLoading(true);
+    try {
+      const [a, b] = await Promise.all([list(), stats()]);
+      setBots((a.bots as Bot[]) || []);
+      setS(b as FleetStats);
+    } catch (e: any) { toast.error(e?.message ?? "Load failed"); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { refresh(); }, []);
+
+  const onAdd = async () => {
+    if (!pair.trim() || !chatId.trim()) return toast.error("Pair name and channel ID required");
+    setBusyAction("add");
+    try {
+      await upsert({ data: { pair_name: pair, pair_label: label || pair, channel_chat_id: chatId, tier_required: tier, update_frequency: freq, bias, active: true } });
+      toast.success(`Bot for ${pair} registered`);
+      setPair(""); setLabel(""); setChatId("");
+      refresh();
+    } catch (e: any) { toast.error(e?.message ?? "Add failed"); }
+    finally { setBusyAction(null); }
+  };
+
+  const onToggle = async (b: Bot) => {
+    setBusyAction(b.id);
+    try {
+      await upsert({ data: { id: b.id, pair_name: b.pair_name, pair_label: b.pair_label, channel_chat_id: b.channel_chat_id, tier_required: b.tier_required, update_frequency: b.update_frequency, bias: b.bias, active: !b.active } });
+      refresh();
+    } catch (e: any) { toast.error(e?.message ?? "Toggle failed"); }
+    finally { setBusyAction(null); }
+  };
+
+  const onRemove = async (b: Bot) => {
+    if (!confirm(`Remove bot for ${b.pair_name}?`)) return;
+    setBusyAction(b.id);
+    try { await remove({ data: { id: b.id } }); refresh(); }
+    catch (e: any) { toast.error(e?.message ?? "Delete failed"); }
+    finally { setBusyAction(null); }
+  };
+
+  const onTick = async () => {
+    setBusyAction("tick");
+    try {
+      const r = await tickNow();
+      toast.success(`Tick: ${r.posted} posted · ${r.skipped} skipped` + (r.errors.length ? ` · ${r.errors.length} errors` : ""));
+      refresh();
+    } catch (e: any) { toast.error(e?.message ?? "Tick failed"); }
+    finally { setBusyAction(null); }
+  };
+
+  const onBroadcast = async () => {
+    if (!msg.trim()) return toast.error("Message required");
+    setBusyAction("broadcast");
+    try {
+      const r = await broadcast({ data: { message: msg.trim() } });
+      toast.success(`Broadcast: ${r.ok}/${r.total} channels reached`);
+      setMsg("");
+      refresh();
+    } catch (e: any) { toast.error(e?.message ?? "Broadcast failed"); }
+    finally { setBusyAction(null); }
+  };
+
+  const onPlanChange = async (userId: string, newPlan: Plan) => {
+    try { await setPlan({ data: { user_id: userId, plan: newPlan } }); toast.success("Plan updated"); refresh(); }
+    catch (e: any) { toast.error(e?.message ?? "Update failed"); }
+  };
+
+  const cyan = "#00e0ff";
+  return (
+    <section className="mt-10 rounded-2xl border bg-card p-6" style={{ borderColor: `${cyan}55` }}>
+      <div className="flex items-center gap-2 mb-1">
+        <Bot className="h-5 w-5" style={{ color: cyan }} />
+        <h2 className="font-[Montserrat] font-black text-xl text-white">Fleet Commander · Syndicate</h2>
+        <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Multi-Channel Telegram</span>
+      </div>
+      <p className="text-sm text-muted-foreground mb-5">
+        Master bot fans out a 15-min Perplexity scout to every active pair channel. Boss can broadcast a global alert that
+        relays into each pair's channel with its own context.
+      </p>
+
+      {/* Stats */}
+      {s && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+          <div className="rounded-lg border border-border bg-black/30 p-3">
+            <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Active members</div>
+            <div className="text-2xl font-black text-white mt-1">{s.activeMembers}</div>
+          </div>
+          <div className="rounded-lg border border-border bg-black/30 p-3">
+            <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Churn rate</div>
+            <div className="text-2xl font-black text-white mt-1">{s.churnRate}%</div>
+          </div>
+          <div className="rounded-lg border border-border bg-black/30 p-3">
+            <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Active bots</div>
+            <div className="text-2xl font-black text-white mt-1">{s.bots.filter((b: any) => b.active).length}</div>
+          </div>
+          <div className="rounded-lg border border-border bg-black/30 p-3">
+            <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Plans</div>
+            <div className="text-xs text-white mt-1 leading-relaxed">
+              M: <b>{s.planCounts.metal || 0}</b> · E: <b>{s.planCounts.energy || 0}</b> · S: <b>{s.planCounts.syndicate || 0}</b>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add bot */}
+      <div className="rounded-xl border border-border bg-black/30 p-4 mb-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Radio className="h-4 w-4" style={{ color: cyan }} />
+          <h3 className="text-sm font-bold text-white uppercase tracking-[0.2em]">Register Pair Channel</h3>
+        </div>
+        <div className="grid sm:grid-cols-3 gap-2">
+          <Input value={pair} onChange={(e) => setPair(e.target.value)} placeholder="Pair (Gold)" />
+          <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Label (0G · Gold Desk)" />
+          <Input value={chatId} onChange={(e) => setChatId(e.target.value)} placeholder="Channel @username or -100…" />
+          <select value={tier} onChange={(e) => setTier(e.target.value as Plan)} className="h-10 rounded-md border border-input bg-background px-3 text-sm">
+            <option value="metal">Tier · Metal Plan</option>
+            <option value="energy">Tier · Energy Plan</option>
+            <option value="syndicate">Tier · Syndicate</option>
+          </select>
+          <select value={freq} onChange={(e) => setFreq(e.target.value)} className="h-10 rounded-md border border-input bg-background px-3 text-sm">
+            <option value="5min">Every 5 min (high freq)</option>
+            <option value="15min">Every 15 min (default)</option>
+            <option value="hourly">Hourly</option>
+            <option value="volatility">Volatility-only (stub)</option>
+          </select>
+          <select value={bias} onChange={(e) => setBias(e.target.value)} className="h-10 rounded-md border border-input bg-background px-3 text-sm">
+            <option value="neutral">Neutral feed</option>
+            <option value="good">Bullish slant</option>
+            <option value="bad">Bearish slant</option>
+          </select>
+        </div>
+        <Button onClick={onAdd} disabled={busyAction === "add"} className="mt-3 w-full" style={{ background: cyan, color: "#000" }}>
+          {busyAction === "add" ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Registering…</> : <><Bot className="h-4 w-4 mr-2" />Register Bot</>}
+        </Button>
+        <p className="text-[10px] text-muted-foreground mt-2">
+          Master bot must be added as <b>admin</b> in the channel with "Post messages" permission. Use <code>@channel_username</code> for public channels or numeric <code>-100…</code> for private.
+        </p>
+      </div>
+
+      {/* Bot list */}
+      <div className="rounded-xl border border-border overflow-hidden mb-5">
+        <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground border-b border-border bg-black/40">
+          <div className="col-span-3">Pair</div>
+          <div className="col-span-3">Channel</div>
+          <div className="col-span-2">Tier · Freq</div>
+          <div className="col-span-2">Last ping</div>
+          <div className="col-span-2 text-right">Actions</div>
+        </div>
+        {loading && <div className="p-6 text-center text-sm text-muted-foreground">Loading…</div>}
+        {!loading && bots.length === 0 && <div className="p-6 text-center text-sm text-muted-foreground">No pair bots yet.</div>}
+        {bots.map((b) => (
+          <div key={b.id} className="grid grid-cols-12 gap-2 px-4 py-3 border-b border-border/50 text-sm items-center">
+            <div className="col-span-3">
+              <div className="font-bold text-white">{b.pair_label}</div>
+              <div className="text-[10px] text-muted-foreground uppercase tracking-[0.2em]">{b.pair_name} · {b.bias}</div>
+            </div>
+            <div className="col-span-3 font-mono text-xs text-white truncate">{b.channel_chat_id}</div>
+            <div className="col-span-2 text-xs text-white"><span className="uppercase">{b.tier_required}</span> · {b.update_frequency}</div>
+            <div className="col-span-2 text-[11px] text-muted-foreground">
+              {b.last_pinged_at ? new Date(b.last_pinged_at).toLocaleString() : "never"} <br />
+              <span className="opacity-70">{b.ping_count} pings</span>
+            </div>
+            <div className="col-span-2 flex justify-end gap-1">
+              <Button size="sm" variant="outline" onClick={() => onToggle(b)} disabled={busyAction === b.id}
+                className="h-7 text-[10px]" style={{ borderColor: b.active ? `${cyan}88` : "#666", color: b.active ? cyan : "#aaa" }}>
+                {b.active ? "ON" : "OFF"}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => onRemove(b)} disabled={busyAction === b.id} className="h-7 text-[10px] text-red-400 hover:text-red-300">
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tick + Broadcast */}
+      <div className="grid sm:grid-cols-2 gap-3 mb-5">
+        <Button onClick={onTick} disabled={busyAction === "tick"} variant="outline" style={{ borderColor: `${cyan}88`, color: cyan }}>
+          {busyAction === "tick" ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Ticking…</> : <><Radio className="h-4 w-4 mr-2" />Run Tick Now</>}
+        </Button>
+        <Button onClick={refresh} variant="ghost"><Eye className="h-4 w-4 mr-2" />Refresh stats</Button>
+      </div>
+
+      <div className="rounded-xl border border-border bg-black/30 p-4 mb-5">
+        <div className="flex items-center gap-2 mb-2">
+          <Megaphone className="h-4 w-4" style={{ color: cyan }} />
+          <h3 className="text-sm font-bold text-white uppercase tracking-[0.2em]">Boss · Global Alert</h3>
+        </div>
+        <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={3}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+          placeholder="🚨 Hormuz update: Iran navy intercepted tanker. All desks brace for spike across oil + gold." />
+        <Button onClick={onBroadcast} disabled={busyAction === "broadcast"} className="mt-3 w-full" style={{ background: cyan, color: "#000" }}>
+          {busyAction === "broadcast" ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Broadcasting…</> : <><Megaphone className="h-4 w-4 mr-2" />Relay to All Pair Bots</>}
+        </Button>
+      </div>
+
+      {/* Subscriber Management */}
+      {s && s.recentProfiles.length > 0 && (
+        <div className="rounded-xl border border-border overflow-hidden">
+          <div className="px-4 py-2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground border-b border-border bg-black/40 flex items-center gap-2">
+            <Users className="h-3 w-3" /> Subscriber Management · Recent 50
+          </div>
+          {s.recentProfiles.map((p) => (
+            <div key={p.id} className="grid grid-cols-12 gap-2 px-4 py-2 border-b border-border/50 text-sm items-center">
+              <div className="col-span-7 truncate text-white">{p.email}</div>
+              <div className="col-span-5 flex justify-end gap-1">
+                {(["free","metal","energy","syndicate"] as Plan[]).map((pl) => (
+                  <Button key={pl} size="sm" variant={p.subscription_plan === pl ? "default" : "outline"}
+                    onClick={() => onPlanChange(p.id, pl)}
+                    className="h-7 text-[10px] uppercase"
+                    style={p.subscription_plan === pl ? { background: cyan, color: "#000" } : { borderColor: "#444", color: "#aaa" }}>
+                    {pl}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
