@@ -11,6 +11,7 @@ import { createPortalUnlockCheckout, getPortalUnlockStatus } from "@/lib/portals
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { TVStaticLogo } from "@/components/TVStaticLogo";
+import { PortalMascot } from "@/components/PortalMascot";
 
 type ThemeConfig = {
   bgGradient?: string;
@@ -22,6 +23,9 @@ type ThemeConfig = {
   label?: string;
   animation?: "shake" | "pulse" | "explode" | "glow";
   hitButton?: string;
+  fontPair?: { heading?: string; body?: string };
+  vibeLabel?: string;
+  particleColors?: string[];
 };
 
 type Portal = {
@@ -36,6 +40,7 @@ type Portal = {
   vip: boolean;
   price_cents: number;
   theme_config: ThemeConfig;
+  kind: string;
   scout_meta: { sources?: string[]; headlines?: string[] };
   telegram_config: {
     groupLink?: string | null;
@@ -49,7 +54,7 @@ export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals")
-      .select("id, slug, name, niche, language, vibe, theme, jokes, vip, price_cents, theme_config, scout_meta, telegram_config")
+      .select("id, slug, name, niche, language, vibe, theme, jokes, vip, price_cents, theme_config, scout_meta, telegram_config, kind, audio_snippet_url")
       .eq("slug", params.slug)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -92,7 +97,7 @@ const PRESETS: Record<string, ThemeConfig> = {
   jungle:         { bgGradient: "linear-gradient(180deg, #0a2010, #1a4525)", accent: "#ffd54f", secondary: "#88ff88", text: "#f0fff0", fontFamily: "'Fredoka', sans-serif",             ornament: "🌿",  label: "TRIBE",        animation: "pulse",   hitButton: "GO" },
 };
 
-function mergeTheme(portal: Portal): Required<ThemeConfig> {
+function mergeTheme(portal: Portal): Required<Omit<ThemeConfig, "fontPair" | "vibeLabel" | "particleColors">> {
   const base = PRESETS[portal.theme] ?? PRESETS.street;
   const cfg = portal.theme_config ?? {};
   return {
@@ -118,6 +123,29 @@ const HIT_ANIMS: Record<string, any> = {
 function PortalPage() {
   const { portal } = Route.useLoaderData();
   const T = useMemo(() => mergeTheme(portal), [portal]);
+  const fontPair = portal.theme_config?.fontPair;
+  const bodyFont = fontPair?.body || "Inter";
+  const headingFont = fontPair?.heading;
+  const particleColors = portal.theme_config?.particleColors?.length
+    ? portal.theme_config.particleColors
+    : [T.accent, T.secondary];
+
+  // Inject Google Fonts dynamically based on Style Dictionary
+  useEffect(() => {
+    if (!headingFont && !bodyFont) return;
+    const families = [headingFont, bodyFont].filter(Boolean) as string[];
+    const familyParam = families
+      .map((f) => `family=${encodeURIComponent(f)}:wght@400;700;900`)
+      .join("&");
+    const id = `gf-${portal.slug}`;
+    if (document.getElementById(id)) return;
+    const link = document.createElement("link");
+    link.id = id;
+    link.rel = "stylesheet";
+    link.href = `https://fonts.googleapis.com/css2?${familyParam}&display=swap`;
+    document.head.appendChild(link);
+  }, [headingFont, bodyFont, portal.slug]);
+
   const { user, profile } = useAuth();
   const isVipMember = profile?.rank === "vip" || profile?.rank === "boss";
   const tg = portal.telegram_config ?? {};
@@ -135,6 +163,7 @@ function PortalPage() {
   const jokes = portal.jokes?.length ? portal.jokes : ["No jokes loaded yet."];
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioSnippet = (portal as any).audio_snippet_url as string | null | undefined;
+  const hitContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Lead tracking: increment view counter on mount
   useEffect(() => {
@@ -149,7 +178,30 @@ function PortalPage() {
       .catch(() => setOwned(false));
   }, [portal.id, portal.vip, user, statusFn]);
 
-  const hit = async () => {
+  const spawnParticles = (origin: { x: number; y: number }) => {
+    const host = hitContainerRef.current;
+    if (!host) return;
+    const rect = host.getBoundingClientRect();
+    const x = origin.x - rect.left;
+    const y = origin.y - rect.top;
+    for (let i = 0; i < 18; i++) {
+      const p = document.createElement("span");
+      const color = particleColors[i % particleColors.length];
+      const angle = (Math.PI * 2 * i) / 18 + Math.random() * 0.4;
+      const dist = 60 + Math.random() * 90;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist;
+      p.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:8px;height:8px;border-radius:9999px;background:${color};box-shadow:0 0 14px ${color};pointer-events:none;transform:translate(-50%,-50%);transition:transform 700ms cubic-bezier(.2,.7,.3,1),opacity 700ms ease-out;opacity:1;z-index:30;`;
+      host.appendChild(p);
+      requestAnimationFrame(() => {
+        p.style.transform = `translate(${dx}px, ${dy}px) scale(0.2)`;
+        p.style.opacity = "0";
+      });
+      setTimeout(() => p.remove(), 750);
+    }
+  };
+
+  const hit = async (e?: React.MouseEvent) => {
     if (!owned) {
       startUnlock();
       return;
@@ -157,6 +209,7 @@ function PortalPage() {
     setIdx((i) => (i + 1) % jokes.length);
     setHits((h) => h + 1);
     controls.start(HIT_ANIMS[T.animation] ?? HIT_ANIMS.pulse);
+    if (e) spawnParticles({ x: e.clientX, y: e.clientY });
   };
 
   const startUnlock = async () => {
@@ -180,15 +233,20 @@ function PortalPage() {
   };
 
   return (
-    <div style={{ background: T.bgGradient, color: T.text, minHeight: "100vh" }} className="relative flex flex-col overflow-hidden">
+    <div
+      style={{ background: T.bgGradient, color: T.text, minHeight: "100vh", fontFamily: `'${bodyFont}', system-ui, sans-serif` }}
+      className="relative flex flex-col overflow-hidden"
+    >
       {/* Gritty texture */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.06] mix-blend-overlay"
            style={{ backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence baseFrequency='0.9' /></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.7'/></svg>\")" }} />
 
       {/* Logo corner */}
       <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-        <TVStaticLogo className="h-8 w-8" />
-        <span className="text-[10px] uppercase tracking-[0.4em] opacity-70" style={{ color: T.accent }}>0G</span>
+        <PortalMascot kind={portal.kind} accent={T.accent} secondary={T.secondary} className="h-10 w-10" />
+        <span className="text-[10px] uppercase tracking-[0.4em] opacity-70" style={{ color: T.accent }}>
+          0G{portal.theme_config?.vibeLabel ? ` · ${portal.theme_config.vibeLabel}` : ""}
+        </span>
       </div>
 
       {/* Live status */}
@@ -261,7 +319,7 @@ function PortalPage() {
         </motion.div>
 
         {/* HIT ME button */}
-        <motion.div whileTap={{ scale: 0.95 }} className="mt-10 w-full max-w-md">
+        <motion.div whileTap={{ scale: 0.95 }} ref={hitContainerRef} className="mt-10 w-full max-w-md relative">
           <Button
             onClick={hit}
             disabled={unlocking}
