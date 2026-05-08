@@ -73,9 +73,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "0G-STREAMZ — Luxury Street Hub" },
-      { name: "description", content: "0G-STREAMZ: MusicHUB, JokesHUB, and ToolHUB. A cinematic, gold-accented platform." },
-      { property: "og:title", content: "0G-STREAMZ" },
+      { title: "0G-PORTAL — Luxury Street Hub" },
+      { name: "description", content: "0G-PORTAL: MusicHUB, JokesHUB, and ToolHUB. A cinematic neon platform." },
+      { property: "og:title", content: "0G-PORTAL" },
       { property: "og:description", content: "Luxury street style hub: music, jokes, tools." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
