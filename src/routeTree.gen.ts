@@ -13,6 +13,7 @@ import { Route as ToolsRouteImport } from './routes/tools'
 import { Route as MusicRouteImport } from './routes/music'
 import { Route as JokesRouteImport } from './routes/jokes'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
 
 const ToolsRoute = ToolsRouteImport.update({
   id: '/tools',
@@ -34,37 +35,45 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JokesPortalRoute = JokesPortalRouteImport.update({
+  id: '/portal',
+  path: '/portal',
+  getParentRoute: () => JokesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/jokes': typeof JokesRoute
+  '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/tools': typeof ToolsRoute
+  '/jokes/portal': typeof JokesPortalRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/jokes': typeof JokesRoute
+  '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/tools': typeof ToolsRoute
+  '/jokes/portal': typeof JokesPortalRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/jokes': typeof JokesRoute
+  '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/tools': typeof ToolsRoute
+  '/jokes/portal': typeof JokesPortalRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/jokes' | '/music' | '/tools'
+  fullPaths: '/' | '/jokes' | '/music' | '/tools' | '/jokes/portal'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/jokes' | '/music' | '/tools'
-  id: '__root__' | '/' | '/jokes' | '/music' | '/tools'
+  to: '/' | '/jokes' | '/music' | '/tools' | '/jokes/portal'
+  id: '__root__' | '/' | '/jokes' | '/music' | '/tools' | '/jokes/portal'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  JokesRoute: typeof JokesRoute
+  JokesRoute: typeof JokesRouteWithChildren
   MusicRoute: typeof MusicRoute
   ToolsRoute: typeof ToolsRoute
 }
@@ -99,15 +108,42 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/jokes/portal': {
+      id: '/jokes/portal'
+      path: '/portal'
+      fullPath: '/jokes/portal'
+      preLoaderRoute: typeof JokesPortalRouteImport
+      parentRoute: typeof JokesRoute
+    }
   }
 }
 
+interface JokesRouteChildren {
+  JokesPortalRoute: typeof JokesPortalRoute
+}
+
+const JokesRouteChildren: JokesRouteChildren = {
+  JokesPortalRoute: JokesPortalRoute,
+}
+
+const JokesRouteWithChildren = JokesRoute._addFileChildren(JokesRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  JokesRoute: JokesRoute,
+  JokesRoute: JokesRouteWithChildren,
   MusicRoute: MusicRoute,
   ToolsRoute: ToolsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
