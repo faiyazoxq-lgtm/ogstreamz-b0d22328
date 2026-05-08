@@ -97,7 +97,7 @@ const PRESETS: Record<string, ThemeConfig> = {
   jungle:         { bgGradient: "linear-gradient(180deg, #0a2010, #1a4525)", accent: "#ffd54f", secondary: "#88ff88", text: "#f0fff0", fontFamily: "'Fredoka', sans-serif",             ornament: "🌿",  label: "TRIBE",        animation: "pulse",   hitButton: "GO" },
 };
 
-function mergeTheme(portal: Portal): Required<ThemeConfig> {
+function mergeTheme(portal: Portal): Required<Omit<ThemeConfig, "fontPair" | "vibeLabel" | "particleColors">> {
   const base = PRESETS[portal.theme] ?? PRESETS.street;
   const cfg = portal.theme_config ?? {};
   return {
