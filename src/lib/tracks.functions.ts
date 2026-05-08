@@ -156,8 +156,11 @@ export const createTrackUnlockCheckout = createServerFn({ method: "POST" })
       line_items: [{
         price_data: {
           currency: track.currency || "usd",
-          product: "track_unlock",
           unit_amount: track.price_cents,
+          product_data: {
+            name: `0G Track Unlock — ${track.title}`,
+            tax_code: "txcd_10000000",
+          },
         },
         quantity: 1,
       }],
