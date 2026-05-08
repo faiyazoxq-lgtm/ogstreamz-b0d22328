@@ -90,6 +90,8 @@ function Index() {
           </Link>
         ))}
       </section>
+
+      <SyndicateGallery />
     </main>
   );
 }
