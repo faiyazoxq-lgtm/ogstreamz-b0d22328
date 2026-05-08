@@ -232,4 +232,91 @@
       inset 0 0 5px oklch(0 0 0 / 0.6);
     border-radius: 0.75rem;
   }
+
+  /* === Living Machine: scanline, electric pulse, TV static === */
+  @keyframes scanline-sweep {
+    0%   { transform: translateY(-100%); opacity: 0; }
+    10%  { opacity: 0.55; }
+    90%  { opacity: 0.45; }
+    100% { transform: translateY(100vh); opacity: 0; }
+  }
+  @keyframes electric-pulse {
+    0%, 100% { box-shadow: 0 0 0 1px oklch(0.72 0.22 245 / 0.3), 0 0 18px -4px oklch(0.72 0.22 245 / 0.5); }
+    50%      { box-shadow: 0 0 0 1px oklch(0.85 0.18 235 / 0.7), 0 0 32px -2px oklch(0.72 0.22 245 / 0.95); }
+  }
+  @keyframes tv-static {
+    0%   { transform: translate(0, 0); opacity: 0.18; }
+    20%  { transform: translate(-2px, 1px); opacity: 0.22; }
+    40%  { transform: translate(1px, -2px); opacity: 0.14; }
+    60%  { transform: translate(-1px, 2px); opacity: 0.20; }
+    80%  { transform: translate(2px, 1px); opacity: 0.12; }
+    100% { transform: translate(0, 0); opacity: 0.18; }
+  }
+  @keyframes scan-line-bar {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+  }
+
+  .electric-border {
+    position: relative;
+    border: 1px solid oklch(0.72 0.22 245 / 0.45);
+    animation: electric-pulse 3.4s ease-in-out infinite;
+  }
+
+  .scan-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 60;
+    overflow: hidden;
+  }
+  .scan-overlay::before {
+    content: "";
+    position: absolute;
+    left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, oklch(0.85 0.18 235 / 0.85), transparent);
+    box-shadow: 0 0 24px oklch(0.72 0.22 245 / 0.9);
+    animation: scanline-sweep 7s linear infinite;
+  }
+
+  .tv-static-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.78  0 0 0 0 1  0 0 0 0.45 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    background-size: 120px 120px;
+    mix-blend-mode: screen;
+    animation: tv-static 0.18s steps(2) infinite;
+    border-radius: inherit;
+  }
+
+  .tv-screen {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .tv-screen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      oklch(0 0 0 / 0) 0px,
+      oklch(0 0 0 / 0) 2px,
+      oklch(0 0 0 / 0.15) 3px,
+      oklch(0 0 0 / 0) 4px
+    );
+    border-radius: inherit;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scan-overlay::before,
+    .electric-border,
+    .tv-static-overlay,
+    .animate-pulse-gold,
+    .animate-glitch { animation: none !important; }
+  }
 }
