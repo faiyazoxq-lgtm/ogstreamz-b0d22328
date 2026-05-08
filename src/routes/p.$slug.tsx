@@ -51,13 +51,15 @@ type Portal = {
     botUsername?: string | null;
     brand?: { brandName?: string; logoEmoji?: string };
   } | null;
+  bg_video_url?: string | null;
+  bg_video_aspect?: string | null;
 };
 
 export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals")
-      .select("id, slug, name, niche, language, vibe, theme, jokes, vip, price_cents, theme_config, scout_meta, telegram_config, kind, audio_snippet_url")
+      .select("id, slug, name, niche, language, vibe, theme, jokes, vip, price_cents, theme_config, scout_meta, telegram_config, kind, audio_snippet_url, bg_video_url, bg_video_aspect")
       .eq("slug", params.slug)
       .maybeSingle();
     if (error) throw new Error(error.message);
