@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
 
 async function isAdmin(supabase: any, userId: string): Promise<boolean> {
   const { data } = await supabase
@@ -28,11 +29,13 @@ function inferTheme(vibe: string, niche: string): string {
 
 export const spawnPortal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { name: string; niche: string; language: string; vibe: string }) => ({
+  .inputValidator((data: { name: string; niche: string; language: string; vibe: string; vip?: boolean; useScout?: boolean }) => ({
     name: String(data.name || "").trim().slice(0, 80),
     niche: String(data.niche || "").trim().slice(0, 400),
     language: String(data.language || "English").trim().slice(0, 40),
     vibe: String(data.vibe || "").trim().slice(0, 200),
+    vip: !!data.vip,
+    useScout: data.useScout !== false,
   }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
@@ -41,8 +44,32 @@ export const spawnPortal = createServerFn({ method: "POST" })
 
     const PERPLEXITY = process.env.PERPLEXITY_API_KEY;
     if (!PERPLEXITY) throw new Error("PERPLEXITY_API_KEY missing");
+    const FIRECRAWL = process.env.FIRECRAWL_API_KEY;
+    const LOVABLE = process.env.LOVABLE_API_KEY;
 
-    const prompt = `Generate exactly 10 short original jokes in ${data.language}. Niche/theme: ${data.niche}. Vibe: ${data.vibe || "n/a"}. Each joke 1-3 sentences. Return STRICT JSON ONLY: { "jokes": ["...", "..."] }. No commentary.`;
+    // ───── Scout: Firecrawl search for fresh news ─────
+    let scoutMeta: { sources: string[]; headlines: string[]; summary: string } = { sources: [], headlines: [], summary: "" };
+    if (data.useScout && FIRECRAWL) {
+      try {
+        const fcRes = await fetch("https://api.firecrawl.dev/v2/search", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${FIRECRAWL}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ query: `latest ${data.niche}`, limit: 5 }),
+        });
+        if (fcRes.ok) {
+          const fc = await fcRes.json();
+          const arr: any[] = fc?.data?.web ?? fc?.data ?? [];
+          scoutMeta.sources = arr.map((x: any) => x.url).filter(Boolean).slice(0, 5);
+          scoutMeta.headlines = arr.map((x: any) => x.title).filter(Boolean).slice(0, 5);
+          scoutMeta.summary = arr.map((x: any) => x.description).filter(Boolean).slice(0, 3).join(" • ");
+        }
+      } catch { /* non-fatal */ }
+    }
+
+    const ctx = scoutMeta.headlines.length
+      ? `\nRecent intel:\n- ${scoutMeta.headlines.join("\n- ")}\nContext: ${scoutMeta.summary}`
+      : "";
+    const prompt = `Generate exactly 5 short original SAVAGE jokes in ${data.language}. Niche/theme: ${data.niche}. Vibe: ${data.vibe || "n/a"}.${ctx}\nEach joke 1-3 sentences. Punchy, sharp, on-trend. Return STRICT JSON ONLY: { "jokes": ["...", "..."] }. No commentary.`;
 
     const res = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
@@ -54,7 +81,7 @@ export const spawnPortal = createServerFn({ method: "POST" })
           { role: "user", content: prompt },
         ],
         temperature: 0.8,
-        max_tokens: 1200,
+        max_tokens: 800,
       }),
     });
     if (!res.ok) throw new Error(`Perplexity ${res.status}`);
@@ -63,8 +90,46 @@ export const spawnPortal = createServerFn({ method: "POST" })
     const match = raw.match(/\{[\s\S]*\}/);
     let parsed: { jokes?: string[] } = {};
     try { parsed = JSON.parse(match ? match[0] : raw); } catch { /* */ }
-    const jokes = (parsed.jokes ?? []).filter((s) => typeof s === "string" && s.trim()).slice(0, 10);
+    const jokes = (parsed.jokes ?? []).filter((s) => typeof s === "string" && s.trim()).slice(0, 5);
     if (jokes.length === 0) throw new Error("No jokes generated");
+
+    // ───── Designer: AI-designed Tailwind theme matching the vibe ─────
+    let themeConfig: any = null;
+    if (LOVABLE) {
+      try {
+        const designerPrompt = `You are a brand designer. Vibe: "${data.vibe || data.niche}". Niche: "${data.niche}".
+Return STRICT JSON only:
+{
+  "bgGradient": "linear-gradient(180deg, #hex 0%, #hex 100%)",
+  "accent": "#hex",
+  "secondary": "#hex",
+  "text": "#hex",
+  "fontFamily": "css font stack quoted",
+  "ornament": "single emoji or unicode glyph",
+  "label": "ALL-CAPS 1-3 word tagline",
+  "animation": "shake | pulse | explode | glow",
+  "hitButton": "ALL-CAPS 1-2 word battle cry"
+}
+High contrast. Match the mood (angry=red/black, calm=blue, mystic=gold/purple).`;
+        const dr = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${LOVABLE}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              { role: "system", content: "Output strict JSON only." },
+              { role: "user", content: designerPrompt },
+            ],
+          }),
+        });
+        if (dr.ok) {
+          const dj = await dr.json();
+          const drw: string = dj?.choices?.[0]?.message?.content ?? "{}";
+          const dm = drw.match(/\{[\s\S]*\}/);
+          themeConfig = JSON.parse(dm ? dm[0] : drw);
+        }
+      } catch { /* non-fatal */ }
+    }
 
     const baseSlug = slugify(data.name);
     let slug = baseSlug;
@@ -82,14 +147,69 @@ export const spawnPortal = createServerFn({ method: "POST" })
         language: data.language,
         vibe: data.vibe,
         theme,
+        vip: data.vip,
+        theme_config: themeConfig ?? {},
+        scout_meta: scoutMeta,
         jokes,
         created_by: userId,
       })
-      .select("id, slug, name, theme")
+      .select("id, slug, name, theme, vip")
       .single();
     if (error) throw new Error(error.message);
 
-    return { portal, jokeCount: jokes.length };
+    return { portal, jokeCount: jokes.length, scout: scoutMeta };
+  });
+
+// ───── VIP unlock: Stripe embedded checkout ─────
+export const createPortalUnlockCheckout = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { portalId: string; environment: StripeEnv; customerEmail?: string; returnUrl: string }) => {
+    if (!/^[a-zA-Z0-9-]{36}$/.test(data.portalId)) throw new Error("Invalid portalId");
+    if (data.environment !== "sandbox" && data.environment !== "live") throw new Error("Invalid environment");
+    return data;
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    const { data: portal } = await supabase
+      .from("portals")
+      .select("id, name, slug, vip, price_cents")
+      .eq("id", data.portalId)
+      .maybeSingle();
+    if (!portal) throw new Error("Portal not found");
+    if (!portal.vip) throw new Error("Portal is not VIP");
+
+    const stripe = createStripeClient(data.environment);
+    const session = await stripe.checkout.sessions.create({
+      line_items: [{
+        price_data: {
+          currency: "usd",
+          product_data: { name: `0G VIP Portal · ${portal.name}`, tax_code: "txcd_10000000" },
+          unit_amount: portal.price_cents,
+        },
+        quantity: 1,
+      }],
+      mode: "payment",
+      ui_mode: "embedded_page",
+      return_url: data.returnUrl,
+      ...(data.customerEmail && { customer_email: data.customerEmail }),
+      automatic_tax: { enabled: true },
+      metadata: { userId, kind: "portal_vip", portalId: portal.id, portalSlug: portal.slug },
+    });
+    return session.client_secret;
+  });
+
+export const getPortalUnlockStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { portalId: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    const { data: row } = await supabase
+      .from("portal_unlocks")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("portal_id", data.portalId)
+      .maybeSingle();
+    return { owned: !!row };
   });
 
 export const getMorePortalJokes = createServerFn({ method: "POST" })
