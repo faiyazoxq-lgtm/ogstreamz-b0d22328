@@ -20,6 +20,7 @@ import { Route as AdminSyndicateRouteImport } from './routes/admin-syndicate'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
+import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -79,6 +80,11 @@ const PSlugRoute = PSlugRouteImport.update({
   path: '/p/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MSlugRoute = MSlugRouteImport.update({
+  id: '/m/$slug',
+  path: '/m/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JokesPortalRoute = JokesPortalRouteImport.update({
   id: '/portal',
   path: '/portal',
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/tools': typeof ToolsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
+  '/m/$slug': typeof MSlugRoute
   '/p/$slug': typeof PSlugRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/tools': typeof ToolsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
+  '/m/$slug': typeof MSlugRoute
   '/p/$slug': typeof PSlugRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/tools': typeof ToolsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
+  '/m/$slug': typeof MSlugRoute
   '/p/$slug': typeof PSlugRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -160,6 +169,7 @@ export interface FileRouteTypes {
     | '/tools'
     | '/checkout/return'
     | '/jokes/portal'
+    | '/m/$slug'
     | '/p/$slug'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -176,6 +186,7 @@ export interface FileRouteTypes {
     | '/tools'
     | '/checkout/return'
     | '/jokes/portal'
+    | '/m/$slug'
     | '/p/$slug'
     | '/api/public/payments/webhook'
   id:
@@ -192,6 +203,7 @@ export interface FileRouteTypes {
     | '/tools'
     | '/checkout/return'
     | '/jokes/portal'
+    | '/m/$slug'
     | '/p/$slug'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
@@ -208,6 +220,7 @@ export interface RootRouteChildren {
   StoreRoute: typeof StoreRoute
   ToolsRoute: typeof ToolsRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
+  MSlugRoute: typeof MSlugRoute
   PSlugRoute: typeof PSlugRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
@@ -291,6 +304,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/m/$slug': {
+      id: '/m/$slug'
+      path: '/m/$slug'
+      fullPath: '/m/$slug'
+      preLoaderRoute: typeof MSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/jokes/portal': {
       id: '/jokes/portal'
       path: '/portal'
@@ -337,6 +357,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoreRoute: StoreRoute,
   ToolsRoute: ToolsRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
+  MSlugRoute: MSlugRoute,
   PSlugRoute: PSlugRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
