@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Shield, Skull, Loader2, Search, Sparkles, Save, Plus, Minus, Ticket } from "lucide-react";
+import { Shield, Skull, Loader2, Search, Sparkles, Save, Plus, Minus, Ticket, Users, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { adjustCredits, setRank, setFeatureFlags, createRedeemCode } from "@/lib/overlord.functions";
+import { bossListResellers, bossCreateReseller, bossTopupReseller } from "@/lib/reseller.functions";
 
 const OVERLORD_EMAIL = "faiyazoxq@gmail.com";
 const RANKS = ["prospect", "enforcer", "vip", "boss"] as const;
@@ -88,6 +89,7 @@ function OverlordPage() {
         </header>
 
         <RedeemCodePanel />
+        <ResellerAdminPanel rows={rows} />
 
         <section className="mt-8 rounded-xl border border-emerald-700/30 bg-black/50 backdrop-blur">
           <div className="grid grid-cols-12 gap-2 px-4 py-3 text-[10px] uppercase tracking-[0.3em] text-cyan-400 border-b border-emerald-800/40">
