@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Sparkles, Lock, Lightbulb, BadgeCheck, RotateCcw, Calculator } from "lucide-react";
+import { Sparkles, Lock, Lightbulb, BadgeCheck, RotateCcw, Calculator, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -97,11 +97,50 @@ function ToolPage() {
           <ChecklistView cfg={cfg} slug={tool.slug} accent={accent} isVip={isVip} />
         )}
 
+        {cfg.audience === "kids" && (
+          <MentorSidebar cfg={cfg} accent={accent} isVip={isVip} />
+        )}
+
         <footer className="mt-16 pt-8 border-t border-white/10 text-center text-xs uppercase tracking-[0.4em] text-white/40">
           <BadgeCheck className="inline h-3 w-3 mr-2" />Syndicate Member · Powered by 0G-PORTAL
         </footer>
       </div>
     </main>
+  );
+}
+
+function MentorSidebar({ cfg, accent, isVip }: { cfg: ToolConfig; accent: string; isVip: boolean }) {
+  return (
+    <motion.aside
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+      className="mt-8 rounded-2xl border p-5"
+      style={{ borderColor: `${accent}55`, background: `linear-gradient(135deg, ${accent}12, transparent)` }}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <GraduationCap className="h-4 w-4" style={{ color: accent }} />
+        <p className="text-[10px] uppercase tracking-[0.3em] font-bold" style={{ color: accent }}>
+          Mentor Mode · Kid-Friendly
+        </p>
+      </div>
+      <p className="text-sm text-white/85 leading-relaxed">
+        {cfg.kidExplain || cfg.basicExplanation}
+      </p>
+      {isVip ? (
+        <div className="mt-3 rounded-md border border-white/10 p-3 bg-black/30">
+          <p className="text-[10px] uppercase tracking-[0.25em] opacity-70 mb-1" style={{ color: accent }}>
+            Mentor Deep Dive
+          </p>
+          <p className="text-sm text-white/80 whitespace-pre-line">{cfg.deepExplanation}</p>
+        </div>
+      ) : (
+        <p className="mt-3 text-xs text-white/60">
+          <Lock className="inline h-3 w-3 mr-1" />
+          Upgrade to unlock the Mentor Deep Dive — step-by-step coaching for grown-ups.
+        </p>
+      )}
+    </motion.aside>
   );
 }
 

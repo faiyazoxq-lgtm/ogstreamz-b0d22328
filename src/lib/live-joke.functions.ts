@@ -1,7 +1,38 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-type Result = { joke: string; headline: string; source?: string; error?: string; balance?: number };
+type Result = { joke: string; headline: string; source?: string; error?: string; balance?: number; trends?: string[] };
+
+async function fetchRedditTrends(): Promise<{ headlines: string[]; sourceUrl: string }> {
+  const FIRECRAWL = process.env.FIRECRAWL_API_KEY;
+  if (!FIRECRAWL) return { headlines: [], sourceUrl: "" };
+  // Try r/news first, fall back to r/funny
+  const targets = [
+    "https://www.reddit.com/r/news/top/.json?t=day&limit=5",
+    "https://www.reddit.com/r/funny/top/.json?t=day&limit=5",
+  ];
+  for (const url of targets) {
+    try {
+      const r = await fetch("https://api.firecrawl.dev/v2/scrape", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${FIRECRAWL}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ url, formats: ["markdown"], onlyMainContent: true }),
+      });
+      if (!r.ok) continue;
+      const j = await r.json();
+      const md: string = j?.data?.markdown || j?.markdown || "";
+      // Pull "title": "..." JSON-style entries from the .json endpoint output
+      const titles = Array.from(md.matchAll(/"title"\s*:\s*"([^"]{8,180})"/g))
+        .map((m) => m[1].replace(/\\u0026/g, "&"))
+        .filter((t, i, arr) => arr.indexOf(t) === i)
+        .slice(0, 3);
+      if (titles.length) return { headlines: titles, sourceUrl: url.replace("/.json", "").split("?")[0] };
+    } catch {
+      // try next target
+    }
+  }
+  return { headlines: [], sourceUrl: "" };
+}
 
 export const generateLiveJoke = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -29,10 +60,20 @@ export const generateLiveJoke = createServerFn({ method: "POST" })
     if (!apiKey) return { joke: "", headline: "", error: "Live Wire is offline." };
 
     const styleStr = [...data.styles, data.custom].filter(Boolean).join(", ") || "gritty, sarcastic";
+
+    // Step 1: scrape live trends from Reddit (r/news → r/funny fallback)
+    const trends = await fetchRedditTrends();
+    const trendBlock = trends.headlines.length
+      ? `\nTRENDING NOW (Reddit, last 24h):\n${trends.headlines.map((t, i) => `${i + 1}. ${t}`).join("\n")}\n\nPick the SPICIEST one and reference its specific context.`
+      : "";
+
     const system =
       "You are 0G-PORTAL's underground comic — sharp, sarcastic, gritty, street-smart. " +
-      "Find ONE viral or trending news story from the last 24 hours, then craft a single short joke (1-3 sentences) about it. " +
-      "Tone styles to apply: " + styleStr + ". " +
+      (trends.headlines.length
+        ? "Use ONLY the supplied Reddit trend list to pick a topic. Do not invent news. "
+        : "Find ONE viral or trending story from the last 24 hours. ") +
+      "Craft a single short joke (1-3 sentences) that REFERENCES SPECIFIC CONTEXT from the chosen headline so it lands. " +
+      "Tone styles: " + styleStr + ". " +
       'Return STRICT JSON only: {"headline":"...","joke":"..."}. No preamble, no markdown.';
 
     const res = await fetch("https://api.perplexity.ai/chat/completions", {
@@ -45,7 +86,7 @@ export const generateLiveJoke = createServerFn({ method: "POST" })
         model: "sonar",
         messages: [
           { role: "system", content: system },
-          { role: "user", content: "Pull today's most viral story and give me the joke." },
+          { role: "user", content: `Give me the joke now.${trendBlock}` },
         ],
         search_recency_filter: "day",
         temperature: 0.9,
@@ -73,5 +114,11 @@ export const generateLiveJoke = createServerFn({ method: "POST" })
         // fall through
       }
     }
-    return { joke, headline, source: citations[0], balance: balance as number };
+    return {
+      joke,
+      headline,
+      source: citations[0] || trends.sourceUrl || undefined,
+      balance: balance as number,
+      trends: trends.headlines,
+    };
   });
