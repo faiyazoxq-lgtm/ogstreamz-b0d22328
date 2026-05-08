@@ -10,6 +10,8 @@ import {
 
 import appCss from "../styles.css?url";
 import { NavBar } from "../components/NavBar";
+import { AuthProvider } from "../hooks/use-auth";
+import { Toaster } from "../components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -119,10 +121,13 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-background text-foreground">
-        <NavBar />
-        <Outlet />
-      </div>
+      <AuthProvider>
+        <div className="min-h-screen bg-background text-foreground">
+          <NavBar />
+          <Outlet />
+        </div>
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

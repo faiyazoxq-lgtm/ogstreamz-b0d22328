@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Play, Pause, ShoppingBag, Heart } from "lucide-react";
+import { Play, Pause, ShoppingBag, Heart, Lock } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { VaultLockedDialog } from "@/components/VaultLockedDialog";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/music")({
   head: () => ({
@@ -14,16 +16,19 @@ export const Route = createFileRoute("/music")({
 });
 
 const tracks = [
-  { title: "Midnight Dhikr", artist: "Aamir Sufi", duration: "3:42" },
-  { title: "Crown of Light", artist: "Yusuf Vox", duration: "4:18" },
-  { title: "Madinah Drive", artist: "Bilal Wave", duration: "2:55" },
-  { title: "Golden Hour", artist: "Khalid Tone", duration: "5:01" },
-  { title: "Velvet Sajdah", artist: "Rumi Beats", duration: "3:27" },
-  { title: "Onyx Sky", artist: "Ali Frequency", duration: "4:44" },
+  { title: "Midnight Dhikr", artist: "Aamir Sufi", duration: "3:42", vip: false },
+  { title: "Crown of Light", artist: "Yusuf Vox", duration: "4:18", vip: true },
+  { title: "Madinah Drive", artist: "Bilal Wave", duration: "2:55", vip: false },
+  { title: "Golden Hour", artist: "Khalid Tone", duration: "5:01", vip: true },
+  { title: "Velvet Sajdah", artist: "Rumi Beats", duration: "3:27", vip: false },
+  { title: "Onyx Sky", artist: "Ali Frequency", duration: "4:44", vip: true },
 ];
 
 function MusicPage() {
   const [playing, setPlaying] = useState(false);
+  const [locked, setLocked] = useState<string | null>(null);
+  const { user, profile } = useAuth();
+  const isVip = profile?.status === "vip";
   return (
     <main className="max-w-7xl mx-auto px-5 sm:px-8 py-12 sm:py-16">
       <header className="mb-10">
@@ -70,11 +75,32 @@ function MusicPage() {
         {tracks.map((t) => (
           <article
             key={t.title}
-            className="group relative rounded-xl border border-border bg-card p-5 hover:border-gold transition-colors"
+            className={
+              "group relative rounded-xl border bg-card p-5 transition-colors " +
+              (t.vip
+                ? "border-[oklch(0.72_0.22_245/0.5)] hover:border-[oklch(0.72_0.22_245/0.9)]"
+                : "border-border hover:border-gold")
+            }
           >
+            {t.vip && (
+              <div className="absolute top-3 right-3 z-10 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] uppercase tracking-widest font-bold bg-[oklch(0.72_0.22_245/0.15)] border border-[oklch(0.72_0.22_245/0.5)] text-white">
+                <Lock className="h-3 w-3" style={{ color: "var(--neon-blue-bright)" }} />
+                VIP
+              </div>
+            )}
             <div className="aspect-square rounded-lg bg-gradient-to-br from-secondary via-background to-secondary mb-4 flex items-center justify-center">
-              <button className="h-14 w-14 rounded-full bg-background/60 backdrop-blur border border-border text-gold flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Play className="h-6 w-6 ml-0.5" />
+              <button
+                onClick={() => {
+                  if (t.vip && !isVip) setLocked(t.title);
+                }}
+                className="h-14 w-14 rounded-full bg-background/60 backdrop-blur border border-border text-gold flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label={t.vip && !isVip ? "Locked" : "Play"}
+              >
+                {t.vip && !isVip ? (
+                  <Lock className="h-6 w-6" style={{ color: "var(--neon-blue-bright)" }} />
+                ) : (
+                  <Play className="h-6 w-6 ml-0.5" />
+                )}
               </button>
             </div>
             <div className="flex items-start justify-between gap-2">
@@ -87,6 +113,13 @@ function MusicPage() {
           </article>
         ))}
       </div>
+
+      <VaultLockedDialog
+        open={!!locked}
+        onOpenChange={(o) => !o && setLocked(null)}
+        itemName={locked ?? ""}
+        isAuthenticated={!!user}
+      />
     </main>
   );
 }

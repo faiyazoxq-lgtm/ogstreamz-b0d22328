@@ -10,14 +10,22 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ToolsRouteImport } from './routes/tools'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MusicRouteImport } from './routes/music'
 import { Route as JokesRouteImport } from './routes/jokes'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
 
 const ToolsRoute = ToolsRouteImport.update({
   id: '/tools',
   path: '/tools',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MusicRoute = MusicRouteImport.update({
@@ -28,6 +36,16 @@ const MusicRoute = MusicRouteImport.update({
 const JokesRoute = JokesRouteImport.update({
   id: '/jokes',
   path: '/jokes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -43,38 +61,75 @@ const JokesPortalRoute = JokesPortalRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/auth': typeof AuthRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
+  '/profile': typeof ProfileRoute
   '/tools': typeof ToolsRoute
   '/jokes/portal': typeof JokesPortalRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/auth': typeof AuthRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
+  '/profile': typeof ProfileRoute
   '/tools': typeof ToolsRoute
   '/jokes/portal': typeof JokesPortalRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/auth': typeof AuthRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
+  '/profile': typeof ProfileRoute
   '/tools': typeof ToolsRoute
   '/jokes/portal': typeof JokesPortalRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/jokes' | '/music' | '/tools' | '/jokes/portal'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/auth'
+    | '/jokes'
+    | '/music'
+    | '/profile'
+    | '/tools'
+    | '/jokes/portal'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/jokes' | '/music' | '/tools' | '/jokes/portal'
-  id: '__root__' | '/' | '/jokes' | '/music' | '/tools' | '/jokes/portal'
+  to:
+    | '/'
+    | '/admin'
+    | '/auth'
+    | '/jokes'
+    | '/music'
+    | '/profile'
+    | '/tools'
+    | '/jokes/portal'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/auth'
+    | '/jokes'
+    | '/music'
+    | '/profile'
+    | '/tools'
+    | '/jokes/portal'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  AuthRoute: typeof AuthRoute
   JokesRoute: typeof JokesRouteWithChildren
   MusicRoute: typeof MusicRoute
+  ProfileRoute: typeof ProfileRoute
   ToolsRoute: typeof ToolsRoute
 }
 
@@ -85,6 +140,13 @@ declare module '@tanstack/react-router' {
       path: '/tools'
       fullPath: '/tools'
       preLoaderRoute: typeof ToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/music': {
@@ -99,6 +161,20 @@ declare module '@tanstack/react-router' {
       path: '/jokes'
       fullPath: '/jokes'
       preLoaderRoute: typeof JokesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -130,8 +206,11 @@ const JokesRouteWithChildren = JokesRoute._addFileChildren(JokesRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  AuthRoute: AuthRoute,
   JokesRoute: JokesRouteWithChildren,
   MusicRoute: MusicRoute,
+  ProfileRoute: ProfileRoute,
   ToolsRoute: ToolsRoute,
 }
 export const routeTree = rootRouteImport
