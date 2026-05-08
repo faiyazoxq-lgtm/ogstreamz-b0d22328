@@ -206,7 +206,7 @@ export const runPortalMarketing = createServerFn({ method: "POST" })
         hashtags: draft.hashtags,
         seo_title: draft.seoTitle,
         seo_description: draft.seoDescription,
-        telegram_message_id: tgMsgId,
+        telegram_message_id: tgMsgId ?? undefined,
         campaign_id: campaign,
         status: "shipped",
       })
