@@ -18,6 +18,7 @@ import { Route as StoreRouteImport } from './routes/store'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MusicRouteImport } from './routes/music'
 import { Route as JokesRouteImport } from './routes/jokes'
+import { Route as FleetRouteImport } from './routes/fleet'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -33,6 +34,7 @@ import { Route as ApiPublicSunoWebhookRouteImport } from './routes/api/public/su
 import { Route as ApiPublic0gOrchestratorRouteImport } from './routes/api/public/0g-orchestrator'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicHooksSyndicateTickRouteImport } from './routes/api/public/hooks/syndicate-tick'
+import { Route as ApiPublicFleetWebhookBotIdRouteImport } from './routes/api/public/fleet/webhook/$botId'
 
 const VipRoute = VipRouteImport.update({
   id: '/vip',
@@ -77,6 +79,11 @@ const MusicRoute = MusicRouteImport.update({
 const JokesRoute = JokesRouteImport.update({
   id: '/jokes',
   path: '/jokes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FleetRoute = FleetRouteImport.update({
+  id: '/fleet',
+  path: '/fleet',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -156,6 +163,12 @@ const ApiPublicHooksSyndicateTickRoute =
     path: '/api/public/hooks/syndicate-tick',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicFleetWebhookBotIdRoute =
+  ApiPublicFleetWebhookBotIdRouteImport.update({
+    id: '/api/public/fleet/webhook/$botId',
+    path: '/api/public/fleet/webhook/$botId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -163,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/connect': typeof ConnectRoute
   '/dashboard': typeof DashboardRoute
+  '/fleet': typeof FleetRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
@@ -182,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/fleet/webhook/$botId': typeof ApiPublicFleetWebhookBotIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -189,6 +204,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/connect': typeof ConnectRoute
   '/dashboard': typeof DashboardRoute
+  '/fleet': typeof FleetRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
@@ -208,6 +224,7 @@ export interface FileRoutesByTo {
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/fleet/webhook/$botId': typeof ApiPublicFleetWebhookBotIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -216,6 +233,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/connect': typeof ConnectRoute
   '/dashboard': typeof DashboardRoute
+  '/fleet': typeof FleetRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
@@ -235,6 +253,7 @@ export interface FileRoutesById {
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/fleet/webhook/$botId': typeof ApiPublicFleetWebhookBotIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -244,6 +263,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/connect'
     | '/dashboard'
+    | '/fleet'
     | '/jokes'
     | '/music'
     | '/profile'
@@ -263,6 +283,7 @@ export interface FileRouteTypes {
     | '/api/public/suno-webhook'
     | '/api/public/hooks/syndicate-tick'
     | '/api/public/payments/webhook'
+    | '/api/public/fleet/webhook/$botId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -270,6 +291,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/connect'
     | '/dashboard'
+    | '/fleet'
     | '/jokes'
     | '/music'
     | '/profile'
@@ -289,6 +311,7 @@ export interface FileRouteTypes {
     | '/api/public/suno-webhook'
     | '/api/public/hooks/syndicate-tick'
     | '/api/public/payments/webhook'
+    | '/api/public/fleet/webhook/$botId'
   id:
     | '__root__'
     | '/'
@@ -296,6 +319,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/connect'
     | '/dashboard'
+    | '/fleet'
     | '/jokes'
     | '/music'
     | '/profile'
@@ -315,6 +339,7 @@ export interface FileRouteTypes {
     | '/api/public/suno-webhook'
     | '/api/public/hooks/syndicate-tick'
     | '/api/public/payments/webhook'
+    | '/api/public/fleet/webhook/$botId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -323,6 +348,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ConnectRoute: typeof ConnectRoute
   DashboardRoute: typeof DashboardRoute
+  FleetRoute: typeof FleetRoute
   JokesRoute: typeof JokesRouteWithChildren
   MusicRoute: typeof MusicRoute
   ProfileRoute: typeof ProfileRoute
@@ -341,6 +367,7 @@ export interface RootRouteChildren {
   ApiPublicSunoWebhookRoute: typeof ApiPublicSunoWebhookRoute
   ApiPublicHooksSyndicateTickRoute: typeof ApiPublicHooksSyndicateTickRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
+  ApiPublicFleetWebhookBotIdRoute: typeof ApiPublicFleetWebhookBotIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -406,6 +433,13 @@ declare module '@tanstack/react-router' {
       path: '/jokes'
       fullPath: '/jokes'
       preLoaderRoute: typeof JokesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fleet': {
+      id: '/fleet'
+      path: '/fleet'
+      fullPath: '/fleet'
+      preLoaderRoute: typeof FleetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -513,6 +547,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSyndicateTickRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/fleet/webhook/$botId': {
+      id: '/api/public/fleet/webhook/$botId'
+      path: '/api/public/fleet/webhook/$botId'
+      fullPath: '/api/public/fleet/webhook/$botId'
+      preLoaderRoute: typeof ApiPublicFleetWebhookBotIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -532,6 +573,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ConnectRoute: ConnectRoute,
   DashboardRoute: DashboardRoute,
+  FleetRoute: FleetRoute,
   JokesRoute: JokesRouteWithChildren,
   MusicRoute: MusicRoute,
   ProfileRoute: ProfileRoute,
@@ -550,6 +592,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicSunoWebhookRoute: ApiPublicSunoWebhookRoute,
   ApiPublicHooksSyndicateTickRoute: ApiPublicHooksSyndicateTickRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
+  ApiPublicFleetWebhookBotIdRoute: ApiPublicFleetWebhookBotIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -68,6 +68,69 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_factory: {
+        Row: {
+          active: boolean
+          asset_class: string | null
+          bias: string
+          bot_username: string | null
+          channel_chat_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          last_broadcast: string | null
+          last_pinged_at: string | null
+          pair_label: string
+          pair_name: string
+          ping_count: number
+          telegram_bot_token: string
+          tier: string
+          updated_at: string
+          webhook_secret: string
+          webhook_url: string | null
+        }
+        Insert: {
+          active?: boolean
+          asset_class?: string | null
+          bias?: string
+          bot_username?: string | null
+          channel_chat_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_broadcast?: string | null
+          last_pinged_at?: string | null
+          pair_label?: string
+          pair_name: string
+          ping_count?: number
+          telegram_bot_token: string
+          tier?: string
+          updated_at?: string
+          webhook_secret?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          active?: boolean
+          asset_class?: string | null
+          bias?: string
+          bot_username?: string | null
+          channel_chat_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_broadcast?: string | null
+          last_pinged_at?: string | null
+          pair_label?: string
+          pair_name?: string
+          ping_count?: number
+          telegram_bot_token?: string
+          tier?: string
+          updated_at?: string
+          webhook_secret?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
       calculators: {
         Row: {
           config: Json
@@ -364,6 +427,24 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vibe?: string
+        }
+        Relationships: []
+      }
+      fleet_settings: {
+        Row: {
+          global_frequency: string
+          id: number
+          updated_at: string
+        }
+        Insert: {
+          global_frequency?: string
+          id?: number
+          updated_at?: string
+        }
+        Update: {
+          global_frequency?: string
+          id?: number
+          updated_at?: string
         }
         Relationships: []
       }
