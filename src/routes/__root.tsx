@@ -15,6 +15,7 @@ import { NavBar } from "../components/NavBar";
 import { AuthProvider } from "../hooks/use-auth";
 import { Toaster } from "../components/ui/sonner";
 import { PaymentTestModeBanner } from "../components/PaymentTestModeBanner";
+import { ZeroGBadge } from "../components/ZeroGBadge";
 
 function NotFoundComponent() {
   return (
@@ -130,6 +131,7 @@ function RootComponent() {
           <NavBar />
           <Outlet />
           <TeleportOverlay />
+          <ZeroGBadge />
         </div>
         <Toaster />
       </AuthProvider>
