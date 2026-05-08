@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Shield, Loader2, Save, Telescope, Link2, Wand2, Copy, ExternalLink, Music, Upload, Disc3, Wrench, Send, Sparkles, Rocket, Eye, TrendingUp, Satellite, Bot, Radio, Trash2, Megaphone, Users } from "lucide-react";
+import { Shield, Loader2, Save, Telescope, Link2, Wand2, Copy, ExternalLink, Music, Upload, Disc3, Wrench, Send, Sparkles, Rocket, Eye, TrendingUp, Satellite, Bot, Radio, Trash2, Megaphone, Users, Zap, Radar, Megaphone as MegaIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,11 +19,11 @@ import { listBots, upsertBot, deleteBot, broadcastGlobalAlert, runSyndicateTickN
 import { generateBrandBible, updateTelegramLinks, deployToTelegram } from "@/lib/telegram.functions";
 
 export const Route = createFileRoute("/admin")({
-  head: () => ({ meta: [{ title: "Admin Console · 0G-PORTAL" }] }),
+  head: () => ({ meta: [{ title: "Power Console · 0G-PORTAL" }] }),
   component: AdminPage,
 });
 
-type Row = { id: string; email: string; status: "free" | "vip"; credits: number };
+type Row = { id: string; email: string; status: "free" | "vip"; credits: number; rank?: "boss" | "enforcer" | "prospect" | "vip" };
 
 function AdminPage() {
   const { user, isAdmin, loading } = useAuth();
@@ -40,11 +40,11 @@ function AdminPage() {
     if (!isAdmin) return;
     supabase
       .from("profiles")
-      .select("id,email,status,credits")
+      .select("id,email,status,credits,rank")
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
         if (error) toast.error(error.message);
-        else setRows((data as Row[]) ?? []);
+        else setRows(((data as Row[]) ?? []).filter((r) => r.rank !== "boss"));
       });
   }, [isAdmin]);
 
@@ -65,11 +65,13 @@ function AdminPage() {
     <main className="max-w-5xl mx-auto px-5 sm:px-8 py-12">
       <header className="mb-8">
         <p className="text-xs uppercase tracking-[0.4em] font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
-          <Shield className="inline h-3.5 w-3.5 mr-2" />Admin Console
+          <Shield className="inline h-3.5 w-3.5 mr-2" />Power Console
         </p>
-        <h1 className="mt-3 font-[Montserrat] font-black text-3xl sm:text-5xl text-metallic">Syndicate Roster</h1>
+        <h1 className="mt-3 font-[Montserrat] font-black text-3xl sm:text-5xl text-metallic">One-Hit Command Deck</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Tap a tile to fire. Sections grouped by mission type.</p>
       </header>
 
+      <SectionHeader icon={<Users className="h-4 w-4" />} label="Roster" tint="#3ad6ff" />
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="grid grid-cols-12 gap-2 px-5 py-3 text-[10px] uppercase tracking-[0.3em] text-muted-foreground border-b border-border">
           <div className="col-span-5">Email</div>
@@ -85,19 +87,45 @@ function AdminPage() {
         )}
       </div>
 
-      <ScoutPanel />
-      <LeadTrackingPanel />
-      <SpawnerPanel />
-      <SignalCommandPanel />
-      <NewsScoutSpawnerPanel />
-      <MusicSpawnerPanel />
-      <TrackUploadPanel />
-      <ToolSpawnerPanel />
-      <TradeSpawnerPanel />
-      <TelegramSocialsPanel />
-      <FleetCommanderPanel />
-      <ConnectHubLinkPanel />
+      <SectionHeader icon={<Radar className="h-4 w-4" />} label="Intel · Recon" tint="#ff2233" />
+      <div className="space-y-6">
+        <ScoutPanel />
+        <LeadTrackingPanel />
+        <SignalCommandPanel />
+        <NewsScoutSpawnerPanel />
+      </div>
+
+      <SectionHeader icon={<Zap className="h-4 w-4" />} label="Spawners · Build" tint="#ffd166" />
+      <div className="space-y-6">
+        <SpawnerPanel />
+        <MusicSpawnerPanel />
+        <TrackUploadPanel />
+        <ToolSpawnerPanel />
+        <TradeSpawnerPanel />
+      </div>
+
+      <SectionHeader icon={<MegaIcon className="h-4 w-4" />} label="Broadcast · Reach" tint="#00e08a" />
+      <div className="space-y-6">
+        <TelegramSocialsPanel />
+        <FleetCommanderPanel />
+        <ConnectHubLinkPanel />
+      </div>
     </main>
+  );
+}
+
+function SectionHeader({ icon, label, tint }: { icon: React.ReactNode; label: string; tint: string }) {
+  return (
+    <div className="mt-12 mb-4 flex items-center gap-3">
+      <span
+        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] uppercase tracking-[0.4em] font-bold"
+        style={{ background: `${tint}1a`, border: `1px solid ${tint}55`, color: tint }}
+      >
+        {icon}
+        {label}
+      </span>
+      <div className="flex-1 h-px" style={{ background: `linear-gradient(90deg, ${tint}66, transparent)` }} />
+    </div>
   );
 }
 
