@@ -85,7 +85,9 @@ function JokePortal() {
   return (
     <main className="relative min-h-[calc(100vh-4rem)]">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-[radial-gradient(closest-side,oklch(0.72_0.22_245_/_0.25),transparent)]" />
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-[700px] w-[900px] rounded-full blur-2xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245_/_0.45),transparent)] animate-pulse-gold" />
+        <div className="absolute bottom-0 left-1/4 h-[400px] w-[400px] rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.55_0.24_255_/_0.35),transparent)]" />
+        <div className="absolute bottom-10 right-1/4 h-[350px] w-[350px] rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.85_0.18_235_/_0.25),transparent)]" />
       </div>
 
       <div className="relative max-w-3xl mx-auto px-5 sm:px-8 py-10 sm:py-14">
