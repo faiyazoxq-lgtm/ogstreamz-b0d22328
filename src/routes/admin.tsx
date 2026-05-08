@@ -212,6 +212,7 @@ function SignalCommandPanel() {
 
 function _NewsScoutSpawnerImpl() {
   const spawn = useServerFn(spawnNewsPortal);
+  const cinema = useServerFn(generatePortalCinema);
   const [name, setName] = useState("");
   const [pair, setPair] = useState("Gold");
   const [bias, setBias] = useState<"bad" | "good" | "neutral">("bad");
@@ -219,6 +220,22 @@ function _NewsScoutSpawnerImpl() {
   const [vip, setVip] = useState(false);
   const [loading, setLoading] = useState(false);
   const [last, setLast] = useState<{ slug: string; name: string } | null>(null);
+  const [cineBusy, setCineBusy] = useState<null | "16:9" | "9:16">(null);
+  const [cineUrl, setCineUrl] = useState<string | null>(null);
+
+  const onCinema = async (aspect: "16:9" | "9:16") => {
+    if (!last) return;
+    setCineBusy(aspect);
+    setCineUrl(null);
+    try {
+      toast.message(`Veo 3.1 rendering ${aspect}…`, { description: "This takes 30–90s. Keep this tab open." });
+      const r = await cinema({ data: { slug: last.slug, aspect } });
+      setCineUrl(r.url);
+      toast.success(`Cinema ready · ${aspect}`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Veo render failed");
+    } finally { setCineBusy(null); }
+  };
 
   const onSpawn = async () => {
     if (!name.trim() || !pair.trim()) return toast.error("Name and pair required");
@@ -280,6 +297,22 @@ function _NewsScoutSpawnerImpl() {
           <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(url); toast.success("Link copied"); }}>
             <Copy className="h-3 w-3 mr-1" /> Copy
           </Button>
+        </div>
+      )}
+      {last && (
+        <div className="mt-3 rounded-lg border bg-black/40 p-3 text-xs space-y-2" style={{ borderColor: `${accent}44` }}>
+          <div className="flex items-center justify-between gap-2">
+            <span className="uppercase tracking-[0.3em] text-muted-foreground">0G-Cinema · Veo 3.1 Background</span>
+            {cineUrl && <a href={cineUrl} target="_blank" rel="noreferrer" className="underline truncate" style={{ color: accent }}>preview .mp4</a>}
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" disabled={!!cineBusy} onClick={() => onCinema("16:9")} style={{ background: accent, color: "#000" }} className="flex-1">
+              {cineBusy === "16:9" ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Rendering 16:9…</> : "Generate Web BG (16:9)"}
+            </Button>
+            <Button size="sm" variant="outline" disabled={!!cineBusy} onClick={() => onCinema("9:16")} className="flex-1" style={{ borderColor: `${accent}88`, color: accent }}>
+              {cineBusy === "9:16" ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Rendering 9:16…</> : "Mobile View (9:16)"}
+            </Button>
+          </div>
         </div>
       )}
     </section>
