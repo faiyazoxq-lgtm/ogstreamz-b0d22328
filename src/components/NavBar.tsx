@@ -72,7 +72,7 @@ function NavDropdown({
         <DropdownMenuSeparator />
         {items.map((it) => (
           <DropdownMenuItem key={it.to} asChild className="cursor-pointer focus:bg-secondary">
-            <Link to={it.to} className="flex items-start gap-3 py-2">
+            <Link to={it.to as string} className="flex items-start gap-3 py-2">
               <it.icon className="h-4 w-4 mt-0.5 text-gold" />
               <span className="flex-1">
                 <span className="flex items-center gap-1.5 font-semibold text-foreground">
