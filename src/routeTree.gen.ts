@@ -19,6 +19,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TdSlugRouteImport } from './routes/td.$slug'
 import { Route as TSlugRouteImport } from './routes/t.$slug'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as MSlugRouteImport } from './routes/m.$slug'
@@ -76,6 +77,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TdSlugRoute = TdSlugRouteImport.update({
+  id: '/td/$slug',
+  path: '/td/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TSlugRoute = TSlugRouteImport.update({
   id: '/t/$slug',
   path: '/t/$slug',
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/m/$slug': typeof MSlugRoute
   '/p/$slug': typeof PSlugRoute
   '/t/$slug': typeof TSlugRoute
+  '/td/$slug': typeof TdSlugRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -142,6 +149,7 @@ export interface FileRoutesByTo {
   '/m/$slug': typeof MSlugRoute
   '/p/$slug': typeof PSlugRoute
   '/t/$slug': typeof TSlugRoute
+  '/td/$slug': typeof TdSlugRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -161,6 +169,7 @@ export interface FileRoutesById {
   '/m/$slug': typeof MSlugRoute
   '/p/$slug': typeof PSlugRoute
   '/t/$slug': typeof TSlugRoute
+  '/td/$slug': typeof TdSlugRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/m/$slug'
     | '/p/$slug'
     | '/t/$slug'
+    | '/td/$slug'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/m/$slug'
     | '/p/$slug'
     | '/t/$slug'
+    | '/td/$slug'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | '/m/$slug'
     | '/p/$slug'
     | '/t/$slug'
+    | '/td/$slug'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -235,6 +247,7 @@ export interface RootRouteChildren {
   MSlugRoute: typeof MSlugRoute
   PSlugRoute: typeof PSlugRoute
   TSlugRoute: typeof TSlugRoute
+  TdSlugRoute: typeof TdSlugRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -310,6 +323,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/td/$slug': {
+      id: '/td/$slug'
+      path: '/td/$slug'
+      fullPath: '/td/$slug'
+      preLoaderRoute: typeof TdSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/t/$slug': {
       id: '/t/$slug'
       path: '/t/$slug'
@@ -380,6 +400,7 @@ const rootRouteChildren: RootRouteChildren = {
   MSlugRoute: MSlugRoute,
   PSlugRoute: PSlugRoute,
   TSlugRoute: TSlugRoute,
+  TdSlugRoute: TdSlugRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
