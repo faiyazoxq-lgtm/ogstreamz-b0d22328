@@ -3,10 +3,10 @@ import { Play, Pause, Lock, Download, Loader2, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { getStripeEnvironment } from "@/lib/stripe";
+import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { createTrackUnlockCheckout, getTrackDownloadUrl } from "@/lib/tracks.functions";
-import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { useAuth } from "@/hooks/use-auth";
+import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 
 const PREVIEW_SECS = 30;
 
@@ -30,7 +30,8 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, acc
   const { user } = useAuth();
   const checkoutFn = useServerFn(createTrackUnlockCheckout);
   const downloadFn = useServerFn(getTrackDownloadUrl);
-  const { openCheckout, closeCheckout, checkoutElement } = useStripeCheckout();
+  const [unlocking, setUnlocking] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   useEffect(() => {
     const a = audioRef.current;
@@ -58,27 +59,6 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, acc
     else { a.play().then(() => setPlaying(true)).catch(() => toast.error("Couldn't play preview")); }
   };
 
-  const onUnlock = async () => {
-    if (!user) return toast.error("Sign in to unlock");
-    try {
-      const env = getStripeEnvironment();
-      // Use a dummy returnUrl — Stripe substitutes session_id; we close on success via polling
-      openCheckout({
-        priceId: "track_unlock", // unused — overridden below
-        userId: user.id,
-        customerEmail: user.email,
-        returnUrl: `${window.location.href}?unlocked=${trackId}&session_id={CHECKOUT_SESSION_ID}`,
-      });
-      // Override: useStripeCheckout uses createCheckoutSession by default. We need our own.
-      // Instead, fetch client_secret manually and open a custom modal — simpler path below.
-    } catch (e: any) {
-      toast.error(e?.message ?? "Checkout failed");
-    }
-  };
-
-  // Simpler: we open our own embedded checkout by calling createTrackUnlockCheckout directly.
-  const [unlocking, setUnlocking] = useState(false);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const startUnlock = async () => {
     if (!user) return toast.error("Sign in to unlock");
     setUnlocking(true);
@@ -193,18 +173,13 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, acc
       {clientSecret && (
         <EmbeddedCheckoutModal
           clientSecret={clientSecret}
-          onClose={() => { setClientSecret(null); closeCheckout(); }}
+          onClose={() => setClientSecret(null)}
           onSuccess={() => { setClientSecret(null); onUnlocked(); }}
         />
       )}
-      {/* Hidden hook artifact to keep tree-shake happy */}
-      <span className="hidden">{checkoutElement}</span>
     </div>
   );
 }
-
-import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
-import { getStripe } from "@/lib/stripe";
 
 function EmbeddedCheckoutModal({ clientSecret, onClose, onSuccess }: { clientSecret: string; onClose: () => void; onSuccess: () => void }) {
   // Poll the URL for ?unlocked=... after Stripe redirects within the iframe — or just rely on user closing.
