@@ -1,6 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+const TG_GATEWAY = "https://connector-gateway.lovable.dev/telegram";
+async function tgSend(path: string, body: any) {
+  const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
+  const TELEGRAM_API_KEY = process.env.TELEGRAM_API_KEY;
+  if (!LOVABLE_API_KEY || !TELEGRAM_API_KEY) return null;
+  const r = await fetch(`${TG_GATEWAY}${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      "X-Connection-Api-Key": TELEGRAM_API_KEY,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  return r.ok ? (await r.json().catch(() => null))?.result : null;
+}
+
 /**
  * Suno webhook receiver (sunoapi.com).
  * Provider posts JSON when a track finishes. Shape varies; we extract
@@ -70,7 +87,7 @@ export const Route = createFileRoute("/api/public/suno-webhook")({
             raw: payload,
           })
           .eq("task_id", taskId)
-          .select("id, portal_id, portal_slug, user_id")
+          .select("id, portal_id, portal_slug, user_id, power_pack_id")
           .maybeSingle();
 
         if (jobErr) {
@@ -97,6 +114,43 @@ export const Route = createFileRoute("/api/public/suno-webhook")({
             })
             .eq(filter.col, filter.val);
           if (pErr) console.error("Suno webhook: portal update failed", pErr);
+        }
+
+        // Power Pack chain — when this track belongs to a pack, append it
+        // to the same Telegram channel and mark the pack complete.
+        if (audioUrl && job.power_pack_id) {
+          try {
+            await supabaseAdmin
+              .from("power_packs")
+              .update({ suno_audio_url: audioUrl, status: "complete" })
+              .eq("id", job.power_pack_id);
+
+            const { data: bot } = await supabaseAdmin
+              .from("bot_configs")
+              .select("channel_chat_id")
+              .eq("active", true)
+              .order("updated_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            const { data: pack } = await supabaseAdmin
+              .from("power_packs")
+              .select("asset, bias")
+              .eq("id", job.power_pack_id)
+              .maybeSingle();
+
+            if (bot?.channel_chat_id) {
+              await tgSend("/sendAudio", {
+                chat_id: bot.channel_chat_id,
+                audio: audioUrl,
+                title: title ?? `0G ${pack?.asset ?? ""} Anthem`,
+                performer: "0G-Syndicate",
+                caption: `🎧 Anthem ready — ${pack?.asset ?? ""} · ${(pack?.bias ?? "").toUpperCase()}`,
+              });
+            }
+          } catch (e) {
+            console.error("Power Pack chain failed", e);
+          }
         }
 
         return new Response(JSON.stringify({ ok: true }), {
