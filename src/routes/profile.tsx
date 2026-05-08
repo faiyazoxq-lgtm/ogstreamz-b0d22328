@@ -31,6 +31,7 @@ function ProfilePage() {
   }
 
   const isVip = profile?.status === "vip";
+  const isBoss = profile?.rank === "boss";
   const credits = profile?.credits ?? 0;
   // Cap visual scale: full bar at 100 credits.
   const creditPct = Math.max(2, Math.min(100, (credits / 100) * 100));
@@ -60,7 +61,7 @@ function ProfilePage() {
           <h1 className="mt-3 font-[Montserrat] font-black text-4xl sm:text-5xl text-metallic">
             Welcome back
           </h1>
-          <p className="mt-3 text-muted-foreground text-sm">{profile?.email ?? user.email}</p>
+          <p className="mt-3 text-muted-foreground text-sm">{isBoss ? "— BOSS ACCOUNT —" : (profile?.email ?? user.email)}</p>
         </header>
 
         <section className="grid sm:grid-cols-2 gap-5">
@@ -71,12 +72,12 @@ function ProfilePage() {
             </div>
             <div className="mt-4 flex items-baseline gap-3">
               <span className="font-[Montserrat] font-black text-4xl sm:text-5xl text-metallic">
-                {isVip ? "VIP" : "Free"}
+                {isBoss ? "BOSS" : isVip ? "VIP" : "Free"}
               </span>
               {isVip && <Sparkles className="h-5 w-5" style={{ color: "var(--neon-blue-bright)" }} />}
             </div>
             <p className="mt-3 text-sm text-muted-foreground">
-              {isVip ? "All vaults unlocked. Premium frequencies active." : "Unlock VIP for premium tracks and tools."}
+              {isBoss ? "Sovereign access. All systems unlocked." : isVip ? "All vaults unlocked. Premium frequencies active." : "Unlock VIP for premium tracks and tools."}
             </p>
           </div>
 
@@ -87,16 +88,16 @@ function ProfilePage() {
             </div>
             <div className="mt-4">
               <span className="digital-display inline-block px-5 py-3 text-4xl sm:text-5xl">
-                {credits}
+                {isBoss ? "∞" : credits}
               </span>
             </div>
             <div className="mt-4 h-2 w-full rounded-full bg-secondary/60 overflow-hidden border border-[oklch(0.72_0.22_245/0.3)]">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-[oklch(0.55_0.24_255)] via-[var(--neon-blue-bright)] to-[oklch(0.85_0.18_235)] shadow-[0_0_18px_oklch(0.72_0.22_245/0.9)] transition-all"
-                style={{ width: `${creditPct}%` }}
+                style={{ width: `${isBoss ? 100 : creditPct}%` }}
               />
             </div>
-            <p className="mt-3 text-sm text-muted-foreground">Spend credits to unlock single VIP items.</p>
+            <p className="mt-3 text-sm text-muted-foreground">{isBoss ? "Unlimited reserve. No caps." : "Spend credits to unlock single VIP items."}</p>
           </div>
         </section>
 
