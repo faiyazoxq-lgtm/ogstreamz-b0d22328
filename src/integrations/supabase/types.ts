@@ -427,6 +427,69 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_marketing: {
+        Row: {
+          apollo_filters: Json
+          audience_icp: string | null
+          campaign_id: string | null
+          created_at: string
+          email_body: string | null
+          email_subject: string | null
+          error: string | null
+          expanded_pitch: string | null
+          hashtags: string[]
+          id: string
+          portal_id: string
+          portal_slug: string
+          seo_description: string | null
+          seo_title: string | null
+          status: string
+          telegram_caption: string | null
+          telegram_message_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          apollo_filters?: Json
+          audience_icp?: string | null
+          campaign_id?: string | null
+          created_at?: string
+          email_body?: string | null
+          email_subject?: string | null
+          error?: string | null
+          expanded_pitch?: string | null
+          hashtags?: string[]
+          id?: string
+          portal_id: string
+          portal_slug: string
+          seo_description?: string | null
+          seo_title?: string | null
+          status?: string
+          telegram_caption?: string | null
+          telegram_message_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          apollo_filters?: Json
+          audience_icp?: string | null
+          campaign_id?: string | null
+          created_at?: string
+          email_body?: string | null
+          email_subject?: string | null
+          error?: string | null
+          expanded_pitch?: string | null
+          hashtags?: string[]
+          id?: string
+          portal_id?: string
+          portal_slug?: string
+          seo_description?: string | null
+          seo_title?: string | null
+          status?: string
+          telegram_caption?: string | null
+          telegram_message_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       portal_unlocks: {
         Row: {
           amount_cents: number
@@ -1070,6 +1133,10 @@ export type Database = {
           _signal: string
         }
         Returns: Json
+      }
+      has_active_vip: {
+        Args: { _env?: string; _user?: string }
+        Returns: boolean
       }
       has_role: {
         Args: {
