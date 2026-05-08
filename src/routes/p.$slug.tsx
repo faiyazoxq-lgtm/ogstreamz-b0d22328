@@ -51,13 +51,15 @@ type Portal = {
     botUsername?: string | null;
     brand?: { brandName?: string; logoEmoji?: string };
   } | null;
+  bg_video_url?: string | null;
+  bg_video_aspect?: string | null;
 };
 
 export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals")
-      .select("id, slug, name, niche, language, vibe, theme, jokes, vip, price_cents, theme_config, scout_meta, telegram_config, kind, audio_snippet_url")
+      .select("id, slug, name, niche, language, vibe, theme, jokes, vip, price_cents, theme_config, scout_meta, telegram_config, kind, audio_snippet_url, bg_video_url, bg_video_aspect")
       .eq("slug", params.slug)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -568,6 +570,24 @@ function NewsHubView({ portal }: { portal: Portal }) {
 
   return (
     <div style={{ background: bgGradient, color: text, minHeight: "100vh", fontFamily: `'${bodyFont}', monospace` }} className="relative overflow-hidden">
+      {/* 0G-CINEMA · Veo 3.1 cinematic background */}
+      {portal.bg_video_url && (
+        <>
+          <video
+            key={portal.bg_video_url}
+            src={portal.bg_video_url}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
+            style={{ opacity: 0.55 }}
+          />
+          <div className="absolute inset-0 z-0 pointer-events-none"
+            style={{ background: `linear-gradient(180deg, ${bgGradient.includes('#14060a') ? 'rgba(20,6,10,0.55)' : bgGradient.includes('#02150f') ? 'rgba(2,21,15,0.55)' : 'rgba(0,0,0,0.55)'} 0%, rgba(0,0,0,0.75) 100%)` }} />
+        </>
+      )}
       {/* Grid scanlines */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.08]" style={{ backgroundImage: `linear-gradient(${accent}33 1px, transparent 1px), linear-gradient(90deg, ${accent}22 1px, transparent 1px)`, backgroundSize: "40px 40px" }} />
       <div className="absolute inset-0 pointer-events-none opacity-[0.05] mix-blend-overlay" style={{ backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence baseFrequency='0.9'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.7'/></svg>\")" }} />
