@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Shield, Loader2, Save, Telescope, Link2, Wand2, Copy, ExternalLink } from "lucide-react";
+import { Shield, Loader2, Save, Telescope, Link2, Wand2, Copy, ExternalLink, Music } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { scoutUrl } from "@/lib/firecrawl.functions";
 import { spawnPortal } from "@/lib/portals.functions";
+import { spawnMusicPortal } from "@/lib/music-portals.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin Console · 0G-PORTAL" }] }),
@@ -79,6 +80,7 @@ function AdminPage() {
 
       <ScoutPanel />
       <SpawnerPanel />
+      <MusicSpawnerPanel />
     </main>
   );
 }
@@ -162,6 +164,88 @@ function SpawnerPanel() {
               <Copy className="h-3.5 w-3.5 mr-1" />Copy
             </Button>
             <a href={`/p/${created.slug}`} target="_blank" rel="noreferrer" className="inline-flex items-center text-xs underline">
+              <ExternalLink className="h-3.5 w-3.5 mr-1" />Open
+            </a>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function MusicSpawnerPanel() {
+  const spawn = useServerFn(spawnMusicPortal);
+  const [slug, setSlug] = useState("");
+  const [language, setLanguage] = useState("English");
+  const [style, setStyle] = useState("");
+  const [vibe, setVibe] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [created, setCreated] = useState<{ slug: string; name: string; theme: string } | null>(null);
+
+  const run = async () => {
+    if (!slug.trim() || !style.trim()) {
+      toast.error("Slug and style required");
+      return;
+    }
+    setLoading(true);
+    setCreated(null);
+    try {
+      const r = await spawn({ data: { slug: slug.trim(), language: language.trim() || "English", style: style.trim(), vibe: vibe.trim() } });
+      setCreated(r.portal);
+      toast.success(`Music portal "${r.portal.name}" spawned`);
+      setSlug(""); setStyle(""); setVibe("");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Spawn failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const url = created ? `${typeof window !== "undefined" ? window.location.origin : ""}/m/${created.slug}` : "";
+
+  return (
+    <section className="mt-10 rounded-2xl border border-[oklch(0.72_0.22_245/0.4)] bg-card p-6 sm:p-8">
+      <header className="flex items-center gap-3 mb-5">
+        <Music className="h-5 w-5" style={{ color: "var(--neon-blue-bright)" }} />
+        <h2 className="font-[Montserrat] font-black text-xl text-white">Music Portal Spawner</h2>
+        <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">0G-Studio factory</span>
+      </header>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Portal Slug</label>
+          <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="urdu-nasheeds" className="mt-1 h-11 bg-background" />
+        </div>
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Language</label>
+          <Input value={language} onChange={(e) => setLanguage(e.target.value)} placeholder="Urdu / English / Spanish" className="mt-1 h-11 bg-background" />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Style / Genre</label>
+          <Input value={style} onChange={(e) => setStyle(e.target.value)} placeholder="Nasheed / Spiritual" className="mt-1 h-11 bg-background" />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Background Vibe</label>
+          <Input value={vibe} onChange={(e) => setVibe(e.target.value)} placeholder="Blue Mosque at night, neon blue accents" className="mt-1 h-11 bg-background" />
+        </div>
+      </div>
+      <Button
+        onClick={run}
+        disabled={loading}
+        className="btn-glass-blue text-white text-xs uppercase tracking-[0.25em] font-bold h-12 px-8 mt-5"
+      >
+        {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Spawning...</> : <><Music className="h-4 w-4 mr-2" />Spawn Music Portal</>}
+      </Button>
+
+      {created && (
+        <div className="mt-6 p-4 rounded-xl border border-border bg-background/60">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Live Music Portal</p>
+          <div className="mt-2 flex items-center gap-2 flex-wrap">
+            <code className="text-sm text-white font-mono">/m/{created.slug}</code>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-secondary border border-border">{created.theme}</span>
+            <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard?.writeText(url); toast.success("URL copied"); }}>
+              <Copy className="h-3.5 w-3.5 mr-1" />Copy
+            </Button>
+            <a href={`/m/${created.slug}`} target="_blank" rel="noreferrer" className="inline-flex items-center text-xs underline">
               <ExternalLink className="h-3.5 w-3.5 mr-1" />Open
             </a>
           </div>

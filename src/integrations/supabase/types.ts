@@ -113,7 +113,9 @@ export type Database = {
           credits_spent: number
           deliverable_url: string | null
           id: string
+          lyrics: string | null
           notes: string | null
+          portal_slug: string | null
           status: string
           updated_at: string
           user_id: string
@@ -124,7 +126,9 @@ export type Database = {
           credits_spent?: number
           deliverable_url?: string | null
           id?: string
+          lyrics?: string | null
           notes?: string | null
+          portal_slug?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -135,7 +139,9 @@ export type Database = {
           credits_spent?: number
           deliverable_url?: string | null
           id?: string
+          lyrics?: string | null
           notes?: string | null
+          portal_slug?: string | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -179,10 +185,12 @@ export type Database = {
           created_by: string | null
           id: string
           jokes: Json
+          kind: string
           language: string
           name: string
           niche: string
           slug: string
+          style: string | null
           theme: string
           updated_at: string
           vibe: string | null
@@ -192,10 +200,12 @@ export type Database = {
           created_by?: string | null
           id?: string
           jokes?: Json
+          kind?: string
           language?: string
           name: string
           niche: string
           slug: string
+          style?: string | null
           theme?: string
           updated_at?: string
           vibe?: string | null
@@ -205,10 +215,12 @@ export type Database = {
           created_by?: string | null
           id?: string
           jokes?: Json
+          kind?: string
           language?: string
           name?: string
           niche?: string
           slug?: string
+          style?: string | null
           theme?: string
           updated_at?: string
           vibe?: string | null
