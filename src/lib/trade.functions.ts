@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { runDeepSearch, runPeerReview } from "./orchestrator.functions";
+import { tgSendMessage } from "./syndicate.functions";
 
 function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48) || "trade";
@@ -168,7 +169,13 @@ Return STRICT JSON only:
   "topMove": { "ticker": "string", "direction": "LONG|SHORT|FLAT", "edge": "1 sentence" },
   "sentiment": "BULLISH|BEARISH|MIXED",
   "whaleActivity": "1 sentence on large wallet flows",
-  "riskFlags": ["short flag", "short flag"]
+  "riskFlags": ["short flag", "short flag"],
+  "price": { "value": number, "currency": "USD", "change24hPct": number, "primaryTicker": "string" },
+  "levels": { "resistance": number, "support": number, "target": number, "stop": number },
+  "volatilityIndex": "LOW|MEDIUM|HIGH",
+  "volatilityCatalyst": "≤8 word phrase (e.g. Iran Conflict Factor)",
+  "biasScore": -100,
+  "factCards": [ { "headline": "≤14 word punchy fact" }, { "headline": "..." }, { "headline": "..." } ]
 }`;
     const r = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
@@ -231,6 +238,12 @@ Return STRICT JSON only:
       sentiment: signal.sentiment || "MIXED",
       whaleActivity: isVip ? (signal.whaleActivity || null) : "🔒 Whale flows are VIP-only.",
       riskFlags: Array.isArray(signal.riskFlags) ? signal.riskFlags.slice(0,4) : [],
+      price: signal.price && Number.isFinite(Number(signal.price.value)) ? signal.price : null,
+      levels: signal.levels || null,
+      volatilityIndex: signal.volatilityIndex || "MEDIUM",
+      volatilityCatalyst: signal.volatilityCatalyst || null,
+      biasScore: Math.max(-100, Math.min(100, Number(signal.biasScore ?? (sig === "BUY" ? 60 : sig === "SELL" ? -60 : 0)))),
+      factCards: Array.isArray(signal.factCards) ? signal.factCards.slice(0, 4) : [],
       headlines, sources,
       citations: deep?.citations ?? [],
       verifiedSources: deep?.verified_sources ?? [],
@@ -313,4 +326,54 @@ export const getWhaleAlerts = createServerFn({ method: "POST" })
       }
     } catch { /* */ }
     return { alerts, generatedAt: new Date().toISOString() };
+  });
+
+// ────────── EMIT SIGNAL TO SYNDICATE (Telegram) ──────────
+export const emitTradeSignal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { slug: string; channel_chat_id?: string }) => ({
+    slug: String(d.slug || "").trim().slice(0, 80),
+    channel_chat_id: d.channel_chat_id ? String(d.channel_chat_id).trim().slice(0, 80) : undefined,
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    if (!(await isAdmin(supabase, userId))) throw new Error("Boss only — admins can emit signals");
+
+    // Re-run the scan to get the freshest payload
+    const intel: any = await runTradeScan({ data: { slug: data.slug } });
+
+    // Resolve target chat: explicit > matching pair_name > matching asset_class > first active
+    let chatId = data.channel_chat_id;
+    if (!chatId) {
+      const { data: portal } = await supabase
+        .from("portals").select("name, theme_config").eq("slug", data.slug).maybeSingle();
+      const assetClass = portal?.theme_config?.assetClass;
+      const { data: bots } = await supabase
+        .from("bot_configs").select("channel_chat_id, pair_name, asset_class")
+        .eq("active", true);
+      const list = (bots || []) as any[];
+      const match =
+        list.find((b) => b.pair_name?.toLowerCase() === String(portal?.name || "").toLowerCase()) ||
+        list.find((b) => b.asset_class && b.asset_class === assetClass) ||
+        list[0];
+      chatId = match?.channel_chat_id;
+    }
+    if (!chatId) throw new Error("No active syndicate channel — configure one in /syndicate-overlord");
+
+    const biasEmoji = intel.signal === "BUY" ? "🟢" : intel.signal === "SELL" ? "🔴" : "🟡";
+    const ticker = intel.price?.primaryTicker || intel.topMove?.ticker || "MARKET";
+    const px = intel.price?.value ? `$${Number(intel.price.value).toLocaleString()}` : "—";
+    const tgt = intel.levels?.target ? `$${intel.levels.target}` : "—";
+    const stp = intel.levels?.stop ? `$${intel.levels.stop}` : "—";
+    const text =
+      `🚨 <b>0G-SIGNAL: ${ticker}</b>\n` +
+      `BIAS: ${biasEmoji} <b>${intel.sentiment}</b>\n` +
+      `PRICE: <b>${px}</b>\n` +
+      `CATALYST: ${intel.thesis}\n` +
+      `TARGET: ${tgt} | STOP: ${stp}\n` +
+      `CONFIDENCE: <b>${intel.confidence}%</b>\n\n` +
+      `<i>Not financial advice · 0G-PORTAL TradeHUB</i>`;
+
+    const msg = await tgSendMessage(chatId, text);
+    return { ok: true, message_id: msg?.message_id ?? null, chat_id: chatId, intel };
   });

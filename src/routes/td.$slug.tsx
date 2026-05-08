@@ -1,11 +1,11 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, ArrowLeft, BadgeCheck, Crown, ExternalLink, Loader2, Lock, TrendingDown, TrendingUp, Zap } from "lucide-react";
+import { Activity, ArrowLeft, BadgeCheck, Crown, ExternalLink, Loader2, Lock, Radio, Send, ShieldAlert, TrendingDown, TrendingUp, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { runTradeScan, getTrc20Fees, getWhaleAlerts } from "@/lib/trade.functions";
+import { runTradeScan, getTrc20Fees, getWhaleAlerts, emitTradeSignal } from "@/lib/trade.functions";
 import { LiveDataIcon } from "@/components/LiveDataIcon";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -14,6 +14,13 @@ type Portal = {
   id: string; slug: string; name: string; niche: string; vip: boolean;
   theme_config: any;
 };
+
+// ── Executive Slate & Gold palette
+const SLATE = "#121417";
+const SLATE_2 = "#1a1d23";
+const GOLD = "#D4AF37";
+const EMERALD = "#10B981";
+const CRIMSON = "#EF4444";
 
 export const Route = createFileRoute("/td/$slug")({
   loader: async ({ params }) => {
@@ -29,24 +36,24 @@ export const Route = createFileRoute("/td/$slug")({
   head: ({ loaderData }) => ({
     meta: loaderData?.portal
       ? [
-          { title: `${loaderData.portal.name} · 0G-TRADE Terminal` },
-          { name: "description", content: `${loaderData.portal.niche} — live HFT signals on 0G-PORTAL.` },
+          { title: `${loaderData.portal.name} · 0G-TRADE Executive Terminal` },
+          { name: "description", content: `${loaderData.portal.niche} — Slate & Gold executive trading intelligence on 0G-PORTAL.` },
         ]
       : [],
   }),
   component: TradeTerminal,
   errorComponent: ({ error }) => (
-    <main className="min-h-screen flex items-center justify-center p-8 text-center bg-black text-cyan-200">
+    <main className="min-h-screen flex items-center justify-center p-8 text-center" style={{ background: SLATE, color: GOLD }}>
       <div><h1 className="text-2xl font-bold mb-2">Terminal offline</h1><p className="text-xs opacity-60">{error.message}</p></div>
     </main>
   ),
   notFoundComponent: () => (
-    <main className="min-h-screen flex items-center justify-center p-8 text-center" style={{ background: "radial-gradient(ellipse at center,#0a1530,#000)" }}>
-      <div className="electric-border rounded-2xl p-10 bg-black/60">
-        <div className="text-[10px] tracking-[0.5em] text-cyan-300/70 mb-2">// 0G-TRADE</div>
-        <h1 className="font-mono text-5xl font-black text-cyan-200 animate-glitch">404</h1>
-        <div className="mt-2 uppercase tracking-[0.3em]">Terminal not found</div>
-        <Link to="/" className="mt-6 inline-block px-5 py-2 rounded-md bg-cyan-400 text-black text-xs font-bold tracking-widest">RETURN</Link>
+    <main className="min-h-screen flex items-center justify-center p-8 text-center" style={{ background: SLATE }}>
+      <div className="rounded-2xl p-10 border" style={{ borderColor: `${GOLD}55`, background: "rgba(0,0,0,0.5)" }}>
+        <div className="text-[10px] tracking-[0.5em] mb-2" style={{ color: GOLD }}>// 0G-TRADE</div>
+        <h1 className="font-mono text-5xl font-black" style={{ color: GOLD }}>404</h1>
+        <div className="mt-2 uppercase tracking-[0.3em] text-white/70">Terminal not found</div>
+        <Link to="/" className="mt-6 inline-block px-5 py-2 rounded-md text-xs font-bold tracking-widest" style={{ background: GOLD, color: SLATE }}>RETURN</Link>
       </div>
     </main>
   ),
@@ -56,32 +63,37 @@ function TradeTerminal() {
   const { portal } = Route.useLoaderData();
   const { user } = useAuth();
   const tc = portal.theme_config || {};
-  const accent: string = tc.accent || "#39ff14";
-  const secondary: string = tc.secondary || "#7df9ff";
-  const tickers: string[] = Array.isArray(tc.tickers) && tc.tickers.length ? tc.tickers : ["BTC","ETH","TRX","USDT","SOL"];
+  const tickers: string[] = Array.isArray(tc.tickers) && tc.tickers.length ? tc.tickers : ["XAU/USD","BTC","ETH"];
   const assetClass: string = tc.assetClass || "Crypto";
   const risk: string = tc.risk || "Balanced";
+  const isGold = /gold|xau/i.test(portal.name) || tickers.some(t => /xau|gold/i.test(t));
 
   const scan = useServerFn(runTradeScan);
   const fetchFees = useServerFn(getTrc20Fees);
   const fetchWhales = useServerFn(getWhaleAlerts);
+  const emit = useServerFn(emitTradeSignal);
+
   const [scanning, setScanning] = useState(false);
   const [intel, setIntel] = useState<any>(null);
   const [fees, setFees] = useState<any>(null);
   const [whales, setWhales] = useState<any>(null);
   const [whalesLoading, setWhalesLoading] = useState(false);
+  const [emitting, setEmitting] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => { fetchFees().then(setFees).catch(() => {}); }, [fetchFees]);
+  useEffect(() => {
+    if (!user) { setIsAdmin(false); return; }
+    supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role","admin").maybeSingle()
+      .then(({ data }) => setIsAdmin(!!data));
+  }, [user]);
 
   const onScan = async () => {
     if (!user) { toast.error("Sign in to scan markets"); return; }
     setScanning(true);
-    try {
-      const r = await scan({ data: { slug: portal.slug } });
-      setIntel(r);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Scan failed");
-    } finally { setScanning(false); }
+    try { setIntel(await scan({ data: { slug: portal.slug } })); }
+    catch (e: any) { toast.error(e?.message ?? "Scan failed"); }
+    finally { setScanning(false); }
   };
 
   const onWhales = async () => {
@@ -91,232 +103,226 @@ function TradeTerminal() {
     finally { setWhalesLoading(false); }
   };
 
-  const sigColor = intel?.signal === "BUY" ? "#00ff88" : intel?.signal === "SELL" ? "#ff3355" : "#ffcc00";
+  const onEmit = async () => {
+    if (!isAdmin) { toast.error("Boss-only signal emission"); return; }
+    setEmitting(true);
+    try {
+      const r = await emit({ data: { slug: portal.slug } });
+      toast.success(`Syndicate signal broadcast · msg #${r.message_id ?? "—"}`);
+      if (r.intel) setIntel(r.intel);
+    } catch (e: any) { toast.error(e?.message ?? "Emit failed"); }
+    finally { setEmitting(false); }
+  };
+
+  // bias score: -100 (bearish) → +100 (bullish)
+  const biasScore: number = typeof intel?.biasScore === "number" ? intel.biasScore : 0;
+  const biasPct = (biasScore + 100) / 2; // 0..100
+
+  const px = intel?.price?.value;
+  const change = intel?.price?.change24hPct;
+  const upish = typeof change === "number" ? change >= 0 : intel?.signal === "BUY";
+  const priceColor = upish ? EMERALD : CRIMSON;
 
   return (
-    <main
-      className="relative min-h-screen text-cyan-100"
-      style={{ background: tc.bgGradient || "linear-gradient(180deg,#05060a 0%,#0d1117 100%)", fontFamily: tc.fontFamily || "'JetBrains Mono', monospace" }}
-    >
-      {/* HFT grid backdrop */}
-      <div className="pointer-events-none absolute inset-0 opacity-[0.18]"
-        style={{
-          backgroundImage: `linear-gradient(${accent}22 1px, transparent 1px), linear-gradient(90deg, ${accent}22 1px, transparent 1px)`,
-          backgroundSize: "48px 48px",
-          maskImage: "radial-gradient(ellipse at center, black 40%, transparent 90%)",
-        }}
-      />
-      <div className="scan-overlay" />
+    <main className="relative min-h-screen text-white" style={{ background: `radial-gradient(ellipse at top, #1a1d23 0%, ${SLATE} 70%)`, fontFamily: "'Inter','JetBrains Mono',monospace" }}>
+      {isGold && <GoldDust />}
+      {/* Subtle slate grid */}
+      <div className="pointer-events-none absolute inset-0 opacity-[0.08]" style={{ backgroundImage: `linear-gradient(${GOLD}33 1px,transparent 1px),linear-gradient(90deg,${GOLD}33 1px,transparent 1px)`, backgroundSize: "56px 56px", maskImage: "radial-gradient(ellipse at center,black 30%,transparent 90%)" }} />
 
-      {/* Top ticker tape */}
-      <div className="relative border-y border-white/10 bg-black/70 overflow-hidden">
-        <div className="ticker-tape py-2 text-xs uppercase tracking-[0.3em]" style={{ color: accent, textShadow: `0 0 8px ${accent}` }}>
-          {Array.from({ length: 3 }).flatMap((_, k) =>
-            tickers.map((t, i) => (
-              <span key={`${k}-${i}`} className="px-6 inline-flex items-center gap-2">
-                <span>{t}</span>
-                <span style={{ color: i % 2 ? "#ff4d6d" : "#00ff88" }}>
-                  {i % 2 ? "▼" : "▲"} {((Math.sin((Date.now()/1000) + i + k) + 1) * 1.4).toFixed(2)}%
-                </span>
-              </span>
-            ))
-          )}
-        </div>
-      </div>
-
-      <header className="relative max-w-6xl mx-auto px-5 sm:px-8 pt-8 pb-4 flex items-center justify-between">
-        <Link to="/" className="text-xs uppercase tracking-[0.3em] opacity-60 hover:opacity-100 inline-flex items-center gap-1"><ArrowLeft className="h-3 w-3" /> Mainframe</Link>
+      <header className="relative max-w-6xl mx-auto px-5 sm:px-8 pt-6 pb-3 flex items-center justify-between">
+        <Link to="/" className="text-[10px] uppercase tracking-[0.4em] opacity-60 hover:opacity-100 inline-flex items-center gap-1"><ArrowLeft className="h-3 w-3" /> Mainframe</Link>
         <div className="flex items-center gap-3">
-          <LiveDataIcon active={scanning} accent={accent} />
-          <div className="text-[10px] tracking-[0.4em] opacity-60">{tc.label || `// ${assetClass.toUpperCase()} DESK`}</div>
+          <LiveDataIcon active={scanning} accent={GOLD} />
+          <div className="text-[10px] tracking-[0.4em] opacity-60">// {assetClass.toUpperCase()} · {risk.toUpperCase()} · WAR ROOM</div>
         </div>
       </header>
 
-      <section className="relative max-w-6xl mx-auto px-5 sm:px-8 pt-2 pb-10">
-        <div className="flex items-end justify-between flex-wrap gap-4 mb-6">
+      <section className="relative max-w-6xl mx-auto px-5 sm:px-8 pt-2 pb-8">
+        {/* Title row */}
+        <div className="flex items-end justify-between flex-wrap gap-3 mb-5">
           <div>
-            <h1 className="font-black text-4xl sm:text-6xl tracking-tight" style={{ color: "#fff", textShadow: `0 0 18px ${accent}66` }}>
-              {portal.name}
-            </h1>
-            <p className="mt-2 text-xs uppercase tracking-[0.35em]" style={{ color: secondary }}>
-              {assetClass} · {risk} · {tc.vibeLabel || tc.vibe || "Whale Watching"}
-            </p>
+            <div className="text-[10px] tracking-[0.5em]" style={{ color: GOLD }}>EXECUTIVE TERMINAL</div>
+            <h1 className="font-black text-3xl sm:text-5xl tracking-tight mt-1" style={{ color: "#fff", textShadow: `0 0 24px ${GOLD}33` }}>{portal.name}</h1>
           </div>
-          <TerminalLogo accent={accent} tickers={tickers} />
+          {isAdmin && (
+            <button
+              onClick={onEmit}
+              disabled={emitting || !intel}
+              className="group relative inline-flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-black tracking-[0.3em] uppercase transition-transform active:scale-95 disabled:opacity-40"
+              style={{ background: GOLD, color: SLATE, boxShadow: `0 0 32px ${GOLD}aa, inset 0 0 12px rgba(0,0,0,0.15)` }}
+              title={intel ? "Broadcast to Syndicate" : "Run a scan first"}
+            >
+              {emitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Emit Signal · Syndicate
+            </button>
+          )}
         </div>
 
-        {/* SCAN BUTTON */}
-        <div className="rounded-2xl border bg-black/60 p-8 sm:p-12 text-center"
-             style={{ borderColor: `${accent}55`, boxShadow: `0 0 60px -20px ${accent}` }}>
-          <button
-            onClick={onScan}
-            disabled={scanning}
-            className="relative inline-flex items-center justify-center px-12 py-6 rounded-xl text-xl sm:text-2xl font-black tracking-[0.3em] transition-transform active:scale-95 disabled:opacity-50"
-            style={{ background: accent, color: "#000", boxShadow: `0 0 40px ${accent}, inset 0 0 20px rgba(0,0,0,0.2)` }}
-          >
-            {scanning ? <><Loader2 className="h-6 w-6 mr-3 animate-spin" /> SCANNING…</> : <><Activity className="h-6 w-6 mr-3" /> {tc.hitButton || "SCAN MARKETS"}</>}
-          </button>
-          <p className="mt-3 text-[10px] uppercase tracking-[0.4em] opacity-60">
-            {intel?.isVip ? "REAL-TIME · UNLIMITED" : `FREE TIER · ${intel?.usedToday ?? 0}/${intel?.dailyLimit ?? 3} TODAY · 15-MIN DELAY`}
-          </p>
+        {/* GLANCE HEADER — massive glowing price */}
+        <div className="rounded-2xl border p-6 sm:p-8 mb-5" style={{ borderColor: `${GOLD}44`, background: "rgba(10,12,15,0.7)", boxShadow: `0 0 48px -20px ${GOLD}` }}>
+          <div className="flex items-center justify-between flex-wrap gap-6">
+            <div>
+              <div className="text-[10px] tracking-[0.5em] opacity-60">{intel?.price?.primaryTicker || tickers[0]}</div>
+              <div
+                className="font-black tabular-nums leading-none mt-2"
+                style={{
+                  fontSize: "clamp(48px, 9vw, 112px)",
+                  color: "#fff",
+                  textShadow: px ? (upish ? `0 0 28px ${EMERALD}, 0 0 60px ${EMERALD}55` : `0 0 28px ${CRIMSON}, 0 0 60px ${CRIMSON}55`) : `0 0 16px ${GOLD}55`,
+                  animation: px && !upish ? "crimsonPulse 1.6s ease-in-out infinite" : undefined,
+                }}
+              >
+                {px ? `$${Number(px).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—.—"}
+              </div>
+              {typeof change === "number" && (
+                <div className="mt-2 inline-flex items-center gap-2 text-lg font-bold" style={{ color: priceColor }}>
+                  {upish ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+                  {change >= 0 ? "+" : ""}{change.toFixed(2)}% <span className="text-xs opacity-60 font-normal">24h</span>
+                </div>
+              )}
+            </div>
+            <div className="text-right">
+              <div className="text-[10px] tracking-[0.4em] opacity-60">SCAN STATUS</div>
+              <div className="text-sm mt-1">{intel ? new Date(intel.generatedAt).toLocaleTimeString() : "Awaiting first scan"}</div>
+              <Button onClick={onScan} disabled={scanning} className="mt-3" style={{ background: GOLD, color: SLATE }}>
+                {scanning ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Scanning…</> : <><Activity className="h-4 w-4 mr-2" />Run Market Scan</>}
+              </Button>
+              <p className="mt-2 text-[10px] uppercase tracking-[0.3em] opacity-50">
+                {intel?.isVip ? "REAL-TIME · UNLIMITED" : `FREE · ${intel?.usedToday ?? 0}/${intel?.dailyLimit ?? 3} TODAY`}
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* INTEL CARD */}
+        {/* BIAS METER */}
+        <div className="rounded-2xl border p-5 mb-5" style={{ borderColor: `${GOLD}33`, background: "rgba(0,0,0,0.5)" }}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-[10px] tracking-[0.5em] opacity-70">// 0G-AGENT BIAS METER</div>
+            <div className="text-xs font-bold" style={{ color: biasScore > 15 ? EMERALD : biasScore < -15 ? CRIMSON : GOLD }}>
+              {intel?.sentiment || "—"} · {biasScore > 0 ? "+" : ""}{biasScore}
+            </div>
+          </div>
+          <div className="relative h-4 rounded-full overflow-hidden" style={{ background: `linear-gradient(90deg, ${CRIMSON}, ${SLATE_2} 50%, ${EMERALD})` }}>
+            <div className="absolute inset-y-0 w-[2px] bg-white/20" style={{ left: "50%" }} />
+            <motion.div
+              initial={false}
+              animate={{ left: `${biasPct}%` }}
+              transition={{ type: "spring", stiffness: 80, damping: 15 }}
+              className="absolute -top-1 -translate-x-1/2 h-6 w-1 rounded"
+              style={{ background: "#fff", boxShadow: `0 0 12px #fff, 0 0 24px ${biasScore >= 0 ? EMERALD : CRIMSON}` }}
+            />
+          </div>
+          <div className="flex justify-between mt-2 text-[10px] tracking-[0.3em] uppercase">
+            <span style={{ color: CRIMSON }}>◀ Bearish</span>
+            <span className="opacity-50">Neutral</span>
+            <span style={{ color: EMERALD }}>Bullish ▶</span>
+          </div>
+        </div>
+
+        {/* DECISIVE FACTS — Bento Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+          <BentoStat label="Resistance" value={intel?.levels?.resistance} subtitle="Critical Test" color={GOLD} prefix="$" />
+          <BentoStat label="Structural Base" value={intel?.levels?.support} subtitle="Trend Floor" color={EMERALD} prefix="$" />
+          <BentoStat
+            label="Volatility"
+            valueText={intel?.volatilityIndex || "—"}
+            subtitle={intel?.volatilityCatalyst || "Awaiting scan"}
+            color={intel?.volatilityIndex === "HIGH" ? CRIMSON : intel?.volatilityIndex === "LOW" ? EMERALD : GOLD}
+          />
+          <BentoStat label="Confidence" value={intel?.confidence} subtitle={`Signal: ${intel?.signal || "—"}`} color={GOLD} suffix="%" />
+        </div>
+
+        {/* FACT CARDS — Punchy */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+          {(intel?.factCards?.length ? intel.factCards : [
+            { headline: "Run a scan to surface live Perplexity intelligence." },
+            { headline: "0G-Agent will distill catalysts into 14-word punch facts." },
+            { headline: "Verified peer-review pings will appear after scan." },
+          ]).slice(0, 3).map((f: any, i: number) => (
+            <div key={i} className="rounded-2xl border p-4" style={{ borderColor: `${GOLD}33`, background: "rgba(0,0,0,0.55)" }}>
+              <div className="text-[10px] tracking-[0.4em] mb-2" style={{ color: GOLD }}>FACT · {String(i+1).padStart(2,"0")}</div>
+              <div className="text-base font-bold leading-snug">{f.headline}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* INTEL CARD — thesis + sources */}
         <AnimatePresence>
           {intel && (
             <motion.div
-              initial={{ opacity: 0, y: 10, filter: "blur(6px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0)" }}
-              exit={{ opacity: 0 }}
-              className="mt-6 rounded-2xl border bg-black/70 p-6 sm:p-8"
-              style={{ borderColor: `${sigColor}66`, boxShadow: `0 0 50px -20px ${sigColor}` }}
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="rounded-2xl border p-6 mb-5"
+              style={{ borderColor: `${GOLD}44`, background: "rgba(0,0,0,0.6)", boxShadow: `0 0 60px -28px ${GOLD}` }}
             >
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-[10px] tracking-[0.4em] opacity-60">0G-TRADE SIGNAL</span>
-                  {intel.delayed && <span className="text-[9px] px-2 py-0.5 border border-yellow-400/40 text-yellow-300 rounded-full uppercase tracking-widest">15min delayed</span>}
+              <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
+                <div className="flex items-center gap-2">
+                  <Radio className="h-4 w-4" style={{ color: GOLD }} />
+                  <span className="text-[10px] tracking-[0.4em] opacity-70">0G-TRADE THESIS</span>
+                  {intel.delayed && <span className="text-[9px] px-2 py-0.5 border rounded-full uppercase tracking-widest" style={{ borderColor: `${GOLD}66`, color: GOLD }}>15min delayed</span>}
                 </div>
-                <span className="text-[10px] tracking-[0.3em] opacity-50">{new Date(intel.generatedAt).toLocaleTimeString()}</span>
-              </div>
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-                <div className="md:col-span-1 text-center md:text-left">
-                  <div className="text-6xl font-black flex items-center gap-3" style={{ color: sigColor, textShadow: `0 0 24px ${sigColor}` }}>
-                    {intel.signal === "BUY" ? <TrendingUp className="h-12 w-12" /> : intel.signal === "SELL" ? <TrendingDown className="h-12 w-12" /> : <Activity className="h-12 w-12" />}
-                    {intel.signal}
-                  </div>
-                  <div className="mt-3 text-xs uppercase tracking-[0.3em] opacity-70">Confidence</div>
-                  <div className="mt-1 h-2 rounded-full bg-white/10 overflow-hidden">
-                    <div className="h-full" style={{ width: `${intel.confidence}%`, background: sigColor, boxShadow: `0 0 12px ${sigColor}` }} />
-                  </div>
-                  <div className="mt-1 text-2xl font-bold" style={{ color: sigColor }}>{intel.confidence}%</div>
-                </div>
-                <div className="md:col-span-2 space-y-3 text-sm">
-                  <p className="leading-relaxed text-cyan-50">{intel.thesis}</p>
-                  {intel.topMove && (
-                    <div className="rounded-lg border border-white/10 p-3 bg-white/5">
-                      <div className="text-[10px] uppercase tracking-[0.3em] opacity-60">Top Move</div>
-                      <div className="mt-1 font-bold">{intel.topMove.ticker} <span className="opacity-70">·</span> <span style={{ color: sigColor }}>{intel.topMove.direction}</span></div>
-                      <div className="text-xs opacity-80">{intel.topMove.edge}</div>
-                    </div>
-                  )}
-                  <div className="flex flex-wrap gap-2">
-                    <Tag>Sentiment: {intel.sentiment}</Tag>
-                    {(intel.riskFlags || []).map((f: string, i: number) => <Tag key={i} warn>⚠ {f}</Tag>)}
-                  </div>
-                  <div className="rounded-lg border border-white/10 p-3 bg-white/5">
-                    <div className="text-[10px] uppercase tracking-[0.3em] opacity-60 flex items-center gap-1"><Zap className="h-3 w-3" />Whale Activity</div>
-                    <div className="mt-1 text-xs">{intel.whaleActivity}</div>
-                  </div>
-                  {intel.headlines?.length > 0 && (
-                    <details className="text-xs opacity-80">
-                      <summary className="cursor-pointer uppercase tracking-[0.3em] text-[10px] opacity-60">Source Feed ({intel.headlines.length})</summary>
-                      <ul className="mt-2 space-y-1 list-disc pl-4">
-                        {intel.headlines.map((h: string, i: number) => (
-                          <li key={i}>{intel.sources?.[i] ? <a href={intel.sources[i]} target="_blank" rel="noreferrer" className="hover:underline">{h}</a> : h}</li>
-                        ))}
-                      </ul>
-                    </details>
-                  )}
-                  {(intel.verifiedSources?.length ?? 0) > 0 && (
-                    <div className="rounded-lg border p-3" style={{ borderColor: `${accent}55`, background: `${accent}0d` }}>
-                      <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
-                        <div className="flex items-center gap-2">
-                          <BadgeCheck className="h-3.5 w-3.5" style={{ color: accent }} />
-                          <span className="text-[10px] uppercase tracking-[0.3em]" style={{ color: accent }}>
-                            Verified Sources · Last Hour · {intel.verifiedSources.length}
-                          </span>
-                        </div>
-                        {intel.peerReview && (
-                          <span
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[10px] uppercase tracking-[0.25em]"
-                            style={{
-                              color: intel.peerReview.verdict === "verified" ? "#00ff88" : intel.peerReview.verdict === "partial" ? "#ffb020" : "#ff4d6d",
-                              borderColor: (intel.peerReview.verdict === "verified" ? "#00ff88" : intel.peerReview.verdict === "partial" ? "#ffb020" : "#ff4d6d") + "66",
-                            }}
-                            title={intel.peerReview.notes}
-                          >
-                            Peer-Review · {intel.peerReview.verdict} · {intel.peerReview.confidence}%
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {intel.verifiedSources.slice(0, 12).map((s: any, i: number) => (
-                          <a key={i} href={s.url} target="_blank" rel="noreferrer"
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] uppercase tracking-[0.25em] hover:opacity-100 opacity-90"
-                            style={{ color: "#fff", borderColor: `${accent}55`, background: "rgba(0,0,0,0.4)" }}>
-                            <BadgeCheck className="h-3 w-3" style={{ color: accent }} />
-                            {s.source}
-                            <ExternalLink className="h-3 w-3 opacity-60" />
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                <div className="text-2xl font-black" style={{ color: intel.signal === "BUY" ? EMERALD : intel.signal === "SELL" ? CRIMSON : GOLD }}>
+                  {intel.signal}
                 </div>
               </div>
+              <p className="text-sm leading-relaxed text-white/90">{intel.thesis}</p>
+              {intel.topMove && (
+                <div className="mt-3 rounded-lg border border-white/10 p-3 bg-white/5 text-sm">
+                  <span className="text-[10px] uppercase tracking-[0.3em] opacity-60">Top Move · </span>
+                  <span className="font-bold">{intel.topMove.ticker}</span> · <span style={{ color: GOLD }}>{intel.topMove.direction}</span>
+                  <div className="text-xs opacity-80 mt-1">{intel.topMove.edge}</div>
+                </div>
+              )}
+              <div className="mt-3 rounded-lg border border-white/10 p-3 bg-white/5">
+                <div className="text-[10px] uppercase tracking-[0.3em] opacity-60 flex items-center gap-1"><Zap className="h-3 w-3" />Liquidity Pulse · TRC20 Whale Flow</div>
+                <div className="mt-1 text-xs">{intel.whaleActivity}</div>
+              </div>
+              {(intel.verifiedSources?.length ?? 0) > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {intel.verifiedSources.slice(0, 8).map((s: any, i: number) => (
+                    <a key={i} href={s.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] uppercase tracking-[0.25em]" style={{ borderColor: `${GOLD}55`, background: "rgba(0,0,0,0.5)" }}>
+                      <BadgeCheck className="h-3 w-3" style={{ color: GOLD }} />{s.source}<ExternalLink className="h-3 w-3 opacity-60" />
+                    </a>
+                  ))}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* TRC20 FEE TRACKER */}
-        <div className="mt-6 rounded-2xl border border-white/10 bg-black/60 p-6">
-          <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
-            <div>
-              <div className="text-[10px] tracking-[0.4em] opacity-60">// USDT NETWORK FEE TRACKER</div>
-              <h2 className="text-xl font-bold" style={{ color: accent }}>Cheapest USDT Route from Coinbase</h2>
-            </div>
-            {fees?.cheapest && (
-              <div className="text-right">
-                <div className="text-[10px] tracking-[0.3em] opacity-60">CHEAPEST</div>
-                <div className="text-lg font-bold" style={{ color: "#00ff88" }}>{fees.cheapest.network} · ${fees.cheapest.totalUsd}</div>
-              </div>
-            )}
-          </div>
-          {!fees ? (
-            <div className="text-xs opacity-60 flex items-center gap-2"><Loader2 className="h-3 w-3 animate-spin" /> Fetching live network params…</div>
-          ) : (
-            <div className="overflow-x-auto">
+        {/* TRC20 FEES (kept) */}
+        {fees && (
+          <details className="rounded-2xl border p-5 mb-5" style={{ borderColor: `${GOLD}22`, background: "rgba(0,0,0,0.4)" }}>
+            <summary className="cursor-pointer text-xs tracking-[0.3em] uppercase" style={{ color: GOLD }}>USDT Network Fee Tracker · Cheapest: {fees.cheapest?.network} · ${fees.cheapest?.totalUsd}</summary>
+            <div className="overflow-x-auto mt-3">
               <table className="w-full text-xs">
-                <thead>
-                  <tr className="text-[10px] uppercase tracking-[0.25em] opacity-60 border-b border-white/10">
-                    <th className="text-left py-2 pr-2">Network</th>
-                    <th className="text-right py-2 px-2">Coinbase Fee</th>
-                    <th className="text-right py-2 px-2">On-Chain</th>
-                    <th className="text-right py-2 px-2">Total</th>
-                    <th className="text-right py-2 pl-2">Speed</th>
+                <thead><tr className="text-[10px] uppercase tracking-[0.25em] opacity-60 border-b border-white/10">
+                  <th className="text-left py-2 pr-2">Network</th><th className="text-right py-2 px-2">Coinbase</th><th className="text-right py-2 px-2">On-Chain</th><th className="text-right py-2 px-2">Total</th><th className="text-right py-2 pl-2">Speed</th>
+                </tr></thead>
+                <tbody>{fees.routes.map((r: any, i: number) => (
+                  <tr key={r.network} className="border-b border-white/5">
+                    <td className="py-2 pr-2 font-bold" style={{ color: i === 0 ? EMERALD : undefined }}>{i === 0 ? "★ " : ""}{r.network}</td>
+                    <td className="py-2 px-2 text-right">${r.coinbaseFeeUsd.toFixed(2)}</td>
+                    <td className="py-2 px-2 text-right">${r.networkFeeUsd.toFixed(4)}</td>
+                    <td className="py-2 px-2 text-right font-bold" style={{ color: i === 0 ? EMERALD : "#fff" }}>${r.totalUsd.toFixed(4)}</td>
+                    <td className="py-2 pl-2 text-right opacity-70">~{r.speedSec}s</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {fees.routes.map((r: any, i: number) => (
-                    <tr key={r.network} className="border-b border-white/5">
-                      <td className="py-2 pr-2 font-bold" style={{ color: i === 0 ? "#00ff88" : undefined }}>{i === 0 ? "★ " : ""}{r.network}</td>
-                      <td className="py-2 px-2 text-right">${r.coinbaseFeeUsd.toFixed(2)}</td>
-                      <td className="py-2 px-2 text-right">${r.networkFeeUsd.toFixed(4)}</td>
-                      <td className="py-2 px-2 text-right font-bold" style={{ color: i === 0 ? "#00ff88" : "#fff" }}>${r.totalUsd.toFixed(4)}</td>
-                      <td className="py-2 pl-2 text-right opacity-70">~{r.speedSec}s</td>
-                    </tr>
-                  ))}
-                </tbody>
+                ))}</tbody>
               </table>
-              <p className="mt-3 text-[10px] opacity-50">
-                TRC20 burn calc · {fees.tron.energyPerUsdt.toLocaleString()} energy × {fees.tron.energyUnitPriceSun} sun = {fees.tron.tronBurnTrx} TRX (TRX/USD ${fees.tron.trxUsd}). Coinbase fees refreshed quarterly.
-              </p>
             </div>
-          )}
-        </div>
+          </details>
+        )}
 
-        {/* WHALE ALERTS — VIP */}
-        <div className="mt-6 rounded-2xl border bg-black/60 p-6"
-             style={{ borderColor: "rgba(255,215,0,0.4)" }}>
-          <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+        {/* WHALE VIP (kept, restyled) */}
+        <div className="rounded-2xl border p-5" style={{ borderColor: `${GOLD}44`, background: "rgba(0,0,0,0.45)" }}>
+          <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
             <div className="flex items-center gap-2">
-              <Crown className="h-4 w-4 text-yellow-400" />
+              <Crown className="h-4 w-4" style={{ color: GOLD }} />
               <div>
                 <div className="text-[10px] tracking-[0.4em] opacity-60">// VIP CHANNEL</div>
-                <h2 className="text-xl font-bold text-yellow-300">Whale Alerts (Firecrawl Scout)</h2>
+                <h2 className="text-lg font-bold" style={{ color: GOLD }}>Whale Alerts (Firecrawl Scout)</h2>
               </div>
             </div>
-            <Button onClick={onWhales} disabled={whalesLoading} variant="outline" className="border-yellow-400/40 text-yellow-200 hover:bg-yellow-400/10">
+            <Button onClick={onWhales} disabled={whalesLoading} variant="outline" style={{ borderColor: `${GOLD}66`, color: GOLD }}>
               {whalesLoading ? <><Loader2 className="h-3 w-3 mr-2 animate-spin" />Scouting…</> : <><Lock className="h-3 w-3 mr-2" />Pull Whale Feed</>}
             </Button>
           </div>
@@ -324,57 +330,95 @@ function TradeTerminal() {
             <ul className="space-y-2 text-sm">
               {whales.alerts.map((a: any, i: number) => (
                 <li key={i} className="rounded border border-white/10 p-3 bg-white/5">
-                  <a href={a.url} target="_blank" rel="noreferrer" className="font-bold hover:underline text-yellow-100">{a.title}</a>
+                  <a href={a.url} target="_blank" rel="noreferrer" className="font-bold hover:underline" style={{ color: GOLD }}>{a.title}</a>
                   {a.snippet && <div className="text-xs opacity-70 mt-1">{a.snippet}</div>}
                 </li>
               ))}
             </ul>
-          ) : whales ? (
-            <p className="text-xs opacity-60">No whale activity surfaced.</p>
-          ) : (
-            <p className="text-xs opacity-60">VIP unlocks live large-wallet flow alerts.</p>
-          )}
+          ) : whales ? <p className="text-xs opacity-60">No whale activity surfaced.</p> : <p className="text-xs opacity-60">VIP unlocks live large-wallet flow alerts.</p>}
         </div>
       </section>
 
-      <footer className="relative max-w-6xl mx-auto px-5 sm:px-8 pb-12 text-[10px] tracking-[0.4em] uppercase opacity-50 text-center">
-        0G-PORTAL · TradeHUB Terminal · Not financial advice
-      </footer>
+      {/* PINNED RISK DISCLOSURE BADGE */}
+      <div className="sticky bottom-3 z-30 mx-auto max-w-6xl px-5 sm:px-8">
+        <div className="flex items-center gap-2 rounded-full border px-4 py-2 backdrop-blur-md text-[10px] uppercase tracking-[0.3em]"
+             style={{ borderColor: `${GOLD}55`, background: "rgba(10,12,15,0.85)", color: GOLD, boxShadow: `0 0 24px -10px ${GOLD}` }}>
+          <ShieldAlert className="h-3.5 w-3.5" />
+          <span>Risk Disclosure · Not Financial Advice · Markets carry capital loss risk · 0G-PORTAL TradeHUB</span>
+        </div>
+      </div>
+
+      <div className="h-16" />
 
       <style>{`
-        .ticker-tape { display: flex; white-space: nowrap; animation: ticker 38s linear infinite; }
-        @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-33.333%); } }
-        @media (max-width: 768px) { .ticker-tape { animation-duration: 60s; } }
-        @media (prefers-reduced-motion: reduce) { .ticker-tape { animation: none; } }
+        @keyframes crimsonPulse {
+          0%, 100% { text-shadow: 0 0 28px ${CRIMSON}, 0 0 60px ${CRIMSON}55; }
+          50% { text-shadow: 0 0 44px ${CRIMSON}, 0 0 90px ${CRIMSON}aa; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          [style*="crimsonPulse"] { animation: none !important; }
+        }
       `}</style>
     </main>
   );
 }
 
-function Tag({ children, warn }: { children: React.ReactNode; warn?: boolean }) {
+function BentoStat({ label, value, valueText, subtitle, color, prefix = "", suffix = "" }: { label: string; value?: number | null; valueText?: string; subtitle?: string; color: string; prefix?: string; suffix?: string }) {
+  const display = valueText ?? (typeof value === "number" ? `${prefix}${value.toLocaleString()}${suffix}` : "—");
   return (
-    <span className={`inline-block text-[10px] uppercase tracking-[0.25em] px-2 py-0.5 rounded-full border ${warn ? "border-red-400/50 text-red-300" : "border-white/15 text-white/70"}`}>
-      {children}
-    </span>
+    <div className="rounded-2xl border p-4" style={{ borderColor: `${color}44`, background: "rgba(0,0,0,0.55)", boxShadow: `0 0 28px -20px ${color}` }}>
+      <div className="text-[10px] tracking-[0.4em] uppercase opacity-60">{label}</div>
+      <div className="font-black tabular-nums mt-2" style={{ color, fontSize: "clamp(22px,3.6vw,38px)", textShadow: `0 0 16px ${color}55` }}>{display}</div>
+      {subtitle && <div className="text-[10px] uppercase tracking-[0.3em] opacity-60 mt-1">{subtitle}</div>}
+    </div>
   );
 }
 
-function TerminalLogo({ accent, tickers }: { accent: string; tickers: string[] }) {
-  const [i, setI] = useState(0);
+// Animated gold-dust particles for Gold portals
+function GoldDust() {
+  const ref = useRef<HTMLCanvasElement | null>(null);
   useEffect(() => {
-    const t = setInterval(() => setI((x) => (x + 1) % tickers.length), 1200);
-    return () => clearInterval(t);
-  }, [tickers.length]);
-  return (
-    <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl border bg-black overflow-hidden flex flex-col items-center justify-center"
-         style={{ borderColor: `${accent}66`, boxShadow: `0 0 24px -8px ${accent}` }}>
-      <div className="absolute inset-0 opacity-30"
-           style={{ backgroundImage: `linear-gradient(${accent}22 1px, transparent 1px)`, backgroundSize: "100% 6px" }} />
-      <div className="text-[9px] tracking-[0.3em] opacity-60">0G-TRADE</div>
-      <div className="font-mono font-black text-2xl mt-1" style={{ color: accent, textShadow: `0 0 12px ${accent}` }}>
-        {tickers[i]}
-      </div>
-      <div className="text-[10px] mt-1" style={{ color: "#00ff88" }}>▲ {(((i + 1) * 1.7) % 9).toFixed(2)}%</div>
-    </div>
-  );
+    const canvas = ref.current; if (!canvas) return;
+    const ctx = canvas.getContext("2d"); if (!ctx) return;
+    let raf = 0;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const resize = () => {
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const N = window.innerWidth < 600 ? 50 : 110;
+    const parts = Array.from({ length: N }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: (Math.random() * 1.6 + 0.4) * dpr,
+      vy: -(Math.random() * 0.25 + 0.05) * dpr,
+      vx: (Math.random() - 0.5) * 0.15 * dpr,
+      a: Math.random() * 0.6 + 0.2,
+    }));
+
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const tick = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const p of parts) {
+        if (!reduce) { p.x += p.vx; p.y += p.vy; }
+        if (p.y < -10) { p.y = canvas.height + 10; p.x = Math.random() * canvas.width; }
+        if (p.x < -10 || p.x > canvas.width + 10) p.x = Math.random() * canvas.width;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(212,175,55,${p.a})`;
+        ctx.shadowColor = "rgba(212,175,55,0.8)";
+        ctx.shadowBlur = 8 * dpr;
+        ctx.fill();
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", resize); };
+  }, []);
+  return <canvas ref={ref} className="pointer-events-none fixed inset-0 z-0" aria-hidden="true" />;
 }
