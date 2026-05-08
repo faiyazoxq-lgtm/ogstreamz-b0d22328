@@ -151,18 +151,3 @@ No markdown. No commentary.`;
 
     return { tool: row, slug };
   });
-
-export const saveChecklistProgress = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: { slug: string; checked: number[] }) => ({
-    slug: String(d.slug).slice(0, 60),
-    checked: (Array.isArray(d.checked) ? d.checked : []).map((n) => Number(n)).filter((n) => Number.isFinite(n)).slice(0, 100),
-  }))
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context as { supabase: any; userId: string };
-    // store as a track_request-like simple log; reuse credit_ledger for audit-light persistence is overkill.
-    // Instead store inside a per-user kv via the calculators row config? Simpler: use credit_ledger reason field.
-    // Persist to a lightweight kv: use `custom_track_requests` is wrong table. Use profiles? No.
-    // Simplest: write to local 'tool_progress' jsonb on profile? Out of scope. Persist to localStorage via return only.
-    return { ok: true, userId, slug: data.slug, checked: data.checked };
-  });
