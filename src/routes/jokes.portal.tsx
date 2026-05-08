@@ -1,16 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, RotateCw, Radio } from "lucide-react";
+import { ArrowLeft, RotateCw, Radio, Loader2 } from "lucide-react";
 import bgFlame from "@/assets/bg-flame.png";
 import { useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { STYLE_PRESETS } from "./jokes";
+import { generateLiveJoke } from "@/lib/live-joke.functions";
 
-type Search = { styles: string; custom: string };
+type Search = { styles: string; custom: string; live: 0 | 1 };
 
 export const Route = createFileRoute("/jokes/portal")({
   validateSearch: (s: Record<string, unknown>): Search => ({
     styles: typeof s.styles === "string" ? s.styles : "",
     custom: typeof s.custom === "string" ? s.custom : "",
+    live: s.live === 1 || s.live === "1" ? 1 : 0,
   }),
   head: () => ({
     meta: [
@@ -63,7 +67,9 @@ function pickFor(styles: string[], custom: string): string {
 }
 
 function JokePortal() {
-  const { styles, custom } = Route.useSearch();
+  const { styles, custom, live } = Route.useSearch();
+  const liveFn = useServerFn(generateLiveJoke);
+  const { session } = useAuth();
   const styleIds = useMemo(
     () => styles.split(",").map((s: string) => s.trim()).filter(Boolean),
     [styles],
@@ -75,13 +81,49 @@ function JokePortal() {
     return custom ? [...preset, custom] : preset;
   }, [styleIds, custom]);
 
-  const [joke, setJoke] = useState<string>(() => pickFor(styleIds, custom));
-  const [count, setCount] = useState(1);
+  const [joke, setJoke] = useState<string>(() => (live ? "" : pickFor(styleIds, custom)));
+  const [headline, setHeadline] = useState<string>("");
+  const [source, setSource] = useState<string | undefined>(undefined);
+  const [count, setCount] = useState(live ? 0 : 1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchLive = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await liveFn({
+        data: { styles: styleIds, custom, token: session?.access_token ?? "" },
+      });
+      if (res.error) {
+        setError(res.error);
+      } else {
+        setJoke(res.joke);
+        setHeadline(res.headline);
+        setSource(res.source);
+        setCount((c) => c + 1);
+      }
+    } catch (e) {
+      setError("Live Wire signal lost. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const next = () => {
+    if (live) {
+      void fetchLive();
+      return;
+    }
     setJoke(pickFor(styleIds, custom));
     setCount((c) => c + 1);
   };
+
+  // Auto-fetch first live joke on mount
+  useMemo(() => {
+    if (live && count === 0 && !loading) void fetchLive();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <main className="relative min-h-[calc(100vh-4rem)]">
@@ -109,10 +151,22 @@ function JokePortal() {
 
         <div className="mt-8 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[oklch(0.72_0.22_245/0.4)] bg-[oklch(0.72_0.22_245/0.08)]">
-            <Radio className="h-4 w-4" style={{ color: "var(--neon-blue-bright)" }} />
-            <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-white">
-              Live Mix
-            </span>
+            {live ? (
+              <>
+                <span className="relative inline-flex h-2.5 w-2.5">
+                  <span className="absolute inset-0 rounded-full bg-[var(--neon-blue-bright)] animate-ping opacity-75" />
+                  <span className="relative h-2.5 w-2.5 rounded-full bg-[var(--neon-blue-bright)] shadow-[0_0_10px_var(--neon-blue-bright)]" />
+                </span>
+                <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-[var(--neon-blue-bright)]">
+                  LIVE · Real-Time News
+                </span>
+              </>
+            ) : (
+              <>
+                <Radio className="h-4 w-4" style={{ color: "var(--neon-blue-bright)" }} />
+                <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-white">Live Mix</span>
+              </>
+            )}
           </div>
           <h1 className="mt-5 font-[Montserrat] font-black text-3xl sm:text-5xl tracking-tight text-metallic">
             Your Joke Portal
@@ -132,21 +186,49 @@ function JokePortal() {
         </div>
 
         <article className="relative mt-12 rounded-2xl border border-[oklch(0.72_0.22_245/0.45)] bg-card p-8 sm:p-14 text-center animate-pulse-gold">
-          <p className="text-xl sm:text-3xl font-medium leading-relaxed text-foreground min-h-[8rem]">
-            "{joke}"
-          </p>
-          <p className="mt-6 text-xs uppercase tracking-[0.3em] text-muted-foreground">
-            Punchline #{count}
-          </p>
+          {loading ? (
+            <div className="flex flex-col items-center justify-center min-h-[8rem] gap-3">
+              <Loader2 className="h-8 w-8 animate-spin" style={{ color: "var(--neon-blue-bright)" }} />
+              <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                Scanning the wire…
+              </p>
+            </div>
+          ) : error ? (
+            <p className="text-base sm:text-lg leading-relaxed text-destructive min-h-[8rem]">{error}</p>
+          ) : (
+            <>
+              {live && headline && (
+                <p className="mb-5 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                  Re: {headline}
+                </p>
+              )}
+              <p className="text-xl sm:text-3xl font-medium leading-relaxed text-foreground min-h-[8rem]">
+                {joke ? `"${joke}"` : ""}
+              </p>
+              <p className="mt-6 text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                {live ? "Live Drop" : "Punchline"} #{count}
+              </p>
+              {live && source && (
+                <a href={source} target="_blank" rel="noreferrer" className="mt-3 inline-block text-[10px] uppercase tracking-[0.25em] text-muted-foreground hover:text-[var(--neon-blue-bright)]">
+                  Source ↗
+                </a>
+              )}
+            </>
+          )}
         </article>
 
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button
             onClick={next}
+            disabled={loading}
             className="btn-glass-blue text-white font-bold uppercase tracking-[0.25em] px-10 py-6 text-base"
           >
-            <RotateCw className="h-4 w-4 mr-2" />
-            Next Joke
+            {loading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <RotateCw className="h-4 w-4 mr-2" />
+            )}
+            {live ? "Pull Next Wire" : "Next Joke"}
           </Button>
           <Link
             to="/jokes"
