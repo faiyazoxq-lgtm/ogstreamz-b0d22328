@@ -79,7 +79,9 @@ function DashboardPage() {
           Syndicate Dashboard
         </p>
         <h1 className="mt-3 font-[Montserrat] font-black text-3xl sm:text-5xl text-metallic">
-          {profile.display_name || profile.email.split("@")[0]}
+          {profile.rank === "boss"
+            ? "0G · Control Centre"
+            : (profile.display_name || profile.email.split("@")[0])}
         </h1>
       </header>
 
