@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { Play, Pause, Lock, Download, Loader2, BadgeCheck } from "lucide-react";
+import { Play, Pause, Lock, Download, Loader2, BadgeCheck, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { getStripe, getStripeEnvironment } from "@/lib/stripe";
-import { createTrackUnlockCheckout, getTrackDownloadUrl } from "@/lib/tracks.functions";
+import { Link } from "@tanstack/react-router";
+import { getTrackDownloadUrl } from "@/lib/tracks.functions";
 import { useAuth } from "@/hooks/use-auth";
-import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 
-const PREVIEW_SECS = 30;
+const PREVIEW_SECS = 60;
 
 type Props = {
   trackId: string;
@@ -16,22 +15,22 @@ type Props = {
   previewUrl: string | null;
   priceCents: number;
   owned: boolean;
+  isVip?: boolean;
   accent: string;
   secondary: string;
   onUnlocked: () => void;
 };
 
-export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, accent, secondary, onUnlocked }: Props) {
+export function TrackPlayer({ trackId, title, previewUrl, priceCents: _priceCents, owned, isVip = false, accent, secondary, onUnlocked: _onUnlocked }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0); // 0..1
   const [previewEnded, setPreviewEnded] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const { user } = useAuth();
-  const checkoutFn = useServerFn(createTrackUnlockCheckout);
   const downloadFn = useServerFn(getTrackDownloadUrl);
-  const [unlocking, setUnlocking] = useState(false);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
+
+  const unlocked = owned || isVip;
 
   useEffect(() => {
     const a = audioRef.current;
@@ -39,7 +38,7 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, acc
     const tick = () => {
       const t = a.currentTime;
       setProgress(Math.min(1, t / PREVIEW_SECS));
-      if (!owned && t >= PREVIEW_SECS) {
+      if (!unlocked && t >= PREVIEW_SECS) {
         a.pause();
         a.currentTime = 0;
         setPlaying(false);
@@ -50,7 +49,7 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, acc
     a.addEventListener("timeupdate", tick);
     a.addEventListener("ended", onEnd);
     return () => { a.removeEventListener("timeupdate", tick); a.removeEventListener("ended", onEnd); };
-  }, [owned]);
+  }, [unlocked]);
 
   const toggle = () => {
     const a = audioRef.current;
@@ -59,28 +58,8 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, acc
     else { a.play().then(() => setPlaying(true)).catch(() => toast.error("Couldn't play preview")); }
   };
 
-  const startUnlock = async () => {
-    if (!user) return toast.error("Sign in to unlock");
-    setUnlocking(true);
-    try {
-      const env = getStripeEnvironment();
-      const cs = await checkoutFn({
-        data: {
-          trackId,
-          environment: env,
-          customerEmail: user.email,
-          returnUrl: `${window.location.href.split("?")[0]}?unlocked=${trackId}&session_id={CHECKOUT_SESSION_ID}`,
-        },
-      });
-      setClientSecret(cs);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Checkout failed");
-    } finally {
-      setUnlocking(false);
-    }
-  };
-
   const onDownload = async () => {
+    if (!user) return toast.error("Sign in to download");
     setDownloading(true);
     try {
       const r = await downloadFn({ data: { trackId } });
@@ -91,8 +70,6 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, acc
       setDownloading(false);
     }
   };
-
-  const price = `$${(priceCents / 100).toFixed(2)}`;
 
   return (
     <div
@@ -114,7 +91,7 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, acc
       <div className="flex items-center gap-3">
         <button
           onClick={toggle}
-          disabled={!previewUrl || (previewEnded && !owned)}
+          disabled={!previewUrl || (previewEnded && !unlocked)}
           className="h-12 w-12 rounded-full flex items-center justify-center border-2 transition disabled:opacity-40"
           style={{ borderColor: accent, background: `${accent}25`, color: accent, boxShadow: `0 0 30px ${accent}55` }}
         >
@@ -128,17 +105,17 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, acc
               style={{
                 width: `${progress * 100}%`,
                 background: `linear-gradient(90deg, ${accent}, ${secondary})`,
-                opacity: previewEnded && !owned ? 0.3 : 1,
+                opacity: previewEnded && !unlocked ? 0.3 : 1,
               }}
             />
           </div>
           <p className="text-[10px] uppercase tracking-[0.25em] mt-1.5 opacity-60">
-            {owned ? "Full Track Unlocked" : `${PREVIEW_SECS}s Preview`}
+            {unlocked ? (isVip && !owned ? "VIP · Full Track" : "Full Track Unlocked") : `${PREVIEW_SECS}s Preview`}
           </p>
         </div>
       </div>
 
-      {!owned && (previewEnded || progress > 0.95) && !clientSecret && (
+      {!unlocked && (previewEnded || progress > 0.95) && (
         <div
           className="mt-4 rounded-xl border-2 p-4 text-center animate-fade-in"
           style={{
@@ -148,18 +125,21 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, acc
           }}
         >
           <p className="text-xs uppercase tracking-[0.3em] mb-2 opacity-80">Preview Ended</p>
-          <Button
-            onClick={startUnlock}
-            disabled={unlocking}
-            className="h-12 w-full text-xs uppercase tracking-[0.3em] font-black border-2"
-            style={{ background: accent, color: "#000", borderColor: accent, boxShadow: `0 0 40px ${accent}` }}
-          >
-            {unlocking ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Loading...</> : <><Lock className="h-4 w-4 mr-2" />Unlock Full HQ Track · {price}</>}
-          </Button>
+          <Link to="/vip">
+            <Button
+              className="h-12 w-full text-xs uppercase tracking-[0.3em] font-black border-2"
+              style={{ background: accent, color: "#000", borderColor: accent, boxShadow: `0 0 40px ${accent}` }}
+            >
+              <Crown className="h-4 w-4 mr-2" /> Unlock Everything · Go VIP
+            </Button>
+          </Link>
+          <p className="mt-2 text-[10px] uppercase tracking-[0.3em] opacity-60">
+            <Lock className="h-3 w-3 inline mr-1" /> One sub · every track · every portal
+          </p>
         </div>
       )}
 
-      {owned && (
+      {unlocked && (
         <Button
           onClick={onDownload}
           disabled={downloading}
@@ -169,30 +149,6 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, acc
           {downloading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Preparing...</> : <><Download className="h-4 w-4 mr-2" />Download HQ MP3</>}
         </Button>
       )}
-
-      {clientSecret && (
-        <EmbeddedCheckoutModal
-          clientSecret={clientSecret}
-          onClose={() => setClientSecret(null)}
-          onSuccess={() => { setClientSecret(null); onUnlocked(); }}
-        />
-      )}
-    </div>
-  );
-}
-
-function EmbeddedCheckoutModal({ clientSecret, onClose, onSuccess }: { clientSecret: string; onClose: () => void; onSuccess: () => void }) {
-  // Poll the URL for ?unlocked=... after Stripe redirects within the iframe — or just rely on user closing.
-  return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-end p-2">
-          <button className="text-sm text-gray-500 px-3 py-1" onClick={() => { onClose(); onSuccess(); }}>Done</button>
-        </div>
-        <EmbeddedCheckoutProvider stripe={getStripe()} options={{ fetchClientSecret: async () => clientSecret }}>
-          <EmbeddedCheckout />
-        </EmbeddedCheckoutProvider>
-      </div>
     </div>
   );
 }
