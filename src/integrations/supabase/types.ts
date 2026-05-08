@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      calculators: {
+        Row: {
+          config: Json
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          published: boolean
+          slug: string
+          vip: boolean
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          published?: boolean
+          slug: string
+          vip?: boolean
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          published?: boolean
+          slug?: string
+          vip?: boolean
+        }
+        Relationships: []
+      }
+      credit_ledger: {
+        Row: {
+          created_at: string
+          delta: number
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delta: number
+          id?: string
+          reason: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delta?: number
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       credit_purchases: {
         Row: {
           amount_cents: number
@@ -47,6 +104,72 @@ export type Database = {
           price_id?: string
           stripe_session_id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      custom_track_requests: {
+        Row: {
+          created_at: string
+          credits_spent: number
+          deliverable_url: string | null
+          id: string
+          notes: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          vibe: string
+        }
+        Insert: {
+          created_at?: string
+          credits_spent?: number
+          deliverable_url?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          vibe: string
+        }
+        Update: {
+          created_at?: string
+          credits_spent?: number
+          deliverable_url?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          vibe?: string
+        }
+        Relationships: []
+      }
+      jokes: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          keyword: string | null
+          published: boolean
+          source: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          keyword?: string | null
+          published?: boolean
+          source?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          keyword?: string | null
+          published?: boolean
+          source?: string | null
         }
         Relationships: []
       }
@@ -169,6 +292,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      spend_credits: {
+        Args: { _amount: number; _reason: string }
+        Returns: number
       }
     }
     Enums: {
