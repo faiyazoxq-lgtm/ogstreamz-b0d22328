@@ -276,28 +276,111 @@ export type Database = {
         Row: {
           created_at: string
           credits: number
+          display_name: string | null
           email: string
+          feature_flags: Json
+          free_clicks_used: number
           id: string
+          rank: Database["public"]["Enums"]["syndicate_rank"]
           status: Database["public"]["Enums"]["account_status"]
           updated_at: string
         }
         Insert: {
           created_at?: string
           credits?: number
+          display_name?: string | null
           email: string
+          feature_flags?: Json
+          free_clicks_used?: number
           id: string
+          rank?: Database["public"]["Enums"]["syndicate_rank"]
           status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
         }
         Update: {
           created_at?: string
           credits?: number
+          display_name?: string | null
           email?: string
+          feature_flags?: Json
+          free_clicks_used?: number
           id?: string
+          rank?: Database["public"]["Enums"]["syndicate_rank"]
           status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
         }
         Relationships: []
+      }
+      redeem_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          credits: number
+          expires_at: string | null
+          grant_rank: Database["public"]["Enums"]["syndicate_rank"] | null
+          id: string
+          max_uses: number
+          uses: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          credits: number
+          expires_at?: string | null
+          grant_rank?: Database["public"]["Enums"]["syndicate_rank"] | null
+          id?: string
+          max_uses?: number
+          uses?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          credits?: number
+          expires_at?: string | null
+          grant_rank?: Database["public"]["Enums"]["syndicate_rank"] | null
+          id?: string
+          max_uses?: number
+          uses?: number
+        }
+        Relationships: []
+      }
+      redemptions: {
+        Row: {
+          code_id: string
+          created_at: string
+          credits_granted: number
+          id: string
+          rank_granted: Database["public"]["Enums"]["syndicate_rank"] | null
+          user_id: string
+        }
+        Insert: {
+          code_id: string
+          created_at?: string
+          credits_granted: number
+          id?: string
+          rank_granted?: Database["public"]["Enums"]["syndicate_rank"] | null
+          user_id: string
+        }
+        Update: {
+          code_id?: string
+          created_at?: string
+          credits_granted?: number
+          id?: string
+          rank_granted?: Database["public"]["Enums"]["syndicate_rank"] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "redemptions_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "redeem_codes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {
@@ -473,6 +556,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_adjust_credits: {
+        Args: { _delta: number; _reason: string; _user_id: string }
+        Returns: number
+      }
       apply_credit_purchase: {
         Args: {
           _amount_cents: number
@@ -492,6 +579,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      redeem_code: { Args: { _code: string }; Returns: Json }
       spend_credits: {
         Args: { _amount: number; _reason: string }
         Returns: number
@@ -500,6 +588,7 @@ export type Database = {
     Enums: {
       account_status: "free" | "vip"
       app_role: "admin" | "user"
+      syndicate_rank: "prospect" | "enforcer" | "vip" | "boss"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -629,6 +718,7 @@ export const Constants = {
     Enums: {
       account_status: ["free", "vip"],
       app_role: ["admin", "user"],
+      syndicate_rank: ["prospect", "enforcer", "vip", "boss"],
     },
   },
 } as const

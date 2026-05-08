@@ -10,13 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ToolsRouteImport } from './routes/tools'
+import { Route as SyndicateOverlordRouteImport } from './routes/syndicate-overlord'
 import { Route as StoreRouteImport } from './routes/store'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MusicRouteImport } from './routes/music'
 import { Route as JokesRouteImport } from './routes/jokes'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AdminSyndicateRouteImport } from './routes/admin-syndicate'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TSlugRouteImport } from './routes/t.$slug'
@@ -29,6 +29,11 @@ import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/publi
 const ToolsRoute = ToolsRouteImport.update({
   id: '/tools',
   path: '/tools',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SyndicateOverlordRoute = SyndicateOverlordRouteImport.update({
+  id: '/syndicate-overlord',
+  path: '/syndicate-overlord',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StoreRoute = StoreRouteImport.update({
@@ -59,11 +64,6 @@ const DashboardRoute = DashboardRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminSyndicateRoute = AdminSyndicateRouteImport.update({
-  id: '/admin-syndicate',
-  path: '/admin-syndicate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -111,13 +111,13 @@ const ApiPublicPaymentsWebhookRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/admin-syndicate': typeof AdminSyndicateRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
   '/store': typeof StoreRoute
+  '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -129,13 +129,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/admin-syndicate': typeof AdminSyndicateRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
   '/store': typeof StoreRoute
+  '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -148,13 +148,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/admin-syndicate': typeof AdminSyndicateRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/profile': typeof ProfileRoute
   '/store': typeof StoreRoute
+  '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -168,13 +168,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
-    | '/admin-syndicate'
     | '/auth'
     | '/dashboard'
     | '/jokes'
     | '/music'
     | '/profile'
     | '/store'
+    | '/syndicate-overlord'
     | '/tools'
     | '/checkout/return'
     | '/jokes/portal'
@@ -186,13 +186,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
-    | '/admin-syndicate'
     | '/auth'
     | '/dashboard'
     | '/jokes'
     | '/music'
     | '/profile'
     | '/store'
+    | '/syndicate-overlord'
     | '/tools'
     | '/checkout/return'
     | '/jokes/portal'
@@ -204,13 +204,13 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
-    | '/admin-syndicate'
     | '/auth'
     | '/dashboard'
     | '/jokes'
     | '/music'
     | '/profile'
     | '/store'
+    | '/syndicate-overlord'
     | '/tools'
     | '/checkout/return'
     | '/jokes/portal'
@@ -223,13 +223,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
-  AdminSyndicateRoute: typeof AdminSyndicateRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
   JokesRoute: typeof JokesRouteWithChildren
   MusicRoute: typeof MusicRoute
   ProfileRoute: typeof ProfileRoute
   StoreRoute: typeof StoreRoute
+  SyndicateOverlordRoute: typeof SyndicateOverlordRoute
   ToolsRoute: typeof ToolsRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   MSlugRoute: typeof MSlugRoute
@@ -245,6 +245,13 @@ declare module '@tanstack/react-router' {
       path: '/tools'
       fullPath: '/tools'
       preLoaderRoute: typeof ToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/syndicate-overlord': {
+      id: '/syndicate-overlord'
+      path: '/syndicate-overlord'
+      fullPath: '/syndicate-overlord'
+      preLoaderRoute: typeof SyndicateOverlordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/store': {
@@ -287,13 +294,6 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin-syndicate': {
-      id: '/admin-syndicate'
-      path: '/admin-syndicate'
-      fullPath: '/admin-syndicate'
-      preLoaderRoute: typeof AdminSyndicateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -368,13 +368,13 @@ const JokesRouteWithChildren = JokesRoute._addFileChildren(JokesRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
-  AdminSyndicateRoute: AdminSyndicateRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
   JokesRoute: JokesRouteWithChildren,
   MusicRoute: MusicRoute,
   ProfileRoute: ProfileRoute,
   StoreRoute: StoreRoute,
+  SyndicateOverlordRoute: SyndicateOverlordRoute,
   ToolsRoute: ToolsRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   MSlugRoute: MSlugRoute,
