@@ -267,30 +267,44 @@ export const getFleetStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
-    if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
-    const admin = adminClient();
-
-    const [bots, subs, profiles] = await Promise.all([
-      admin.from("bot_configs").select("pair_name, pair_label, tier_required, active, last_pinged_at, ping_count"),
-      admin.from("syndicate_subscribers").select("plan, status"),
-      admin.from("profiles").select("id, email, subscription_plan").order("created_at", { ascending: false }).limit(50),
-    ]);
-
-    const planCounts: Record<string, number> = { free: 0, metal: 0, energy: 0, syndicate: 0 };
-    let activeMembers = 0, churned = 0;
-    for (const s of subs.data || []) {
-      planCounts[s.plan] = (planCounts[s.plan] || 0) + 1;
-      if (s.status === "active") activeMembers++;
-      if (s.status === "canceled" || s.status === "kicked") churned++;
-    }
-    const churnRate = activeMembers + churned > 0 ? Math.round((churned / (activeMembers + churned)) * 100) : 0;
-
-    return {
-      bots: bots.data || [],
-      planCounts,
-      activeMembers,
-      churned,
-      churnRate,
-      recentProfiles: profiles.data || [],
+    const empty = {
+      bots: [] as any[],
+      planCounts: { free: 0, metal: 0, energy: 0, syndicate: 0 } as Record<string, number>,
+      activeMembers: 0,
+      churned: 0,
+      churnRate: 0,
+      recentProfiles: [] as any[],
+      error: null as string | null,
     };
+    try {
+      if (!(await isAdmin(supabase, userId))) return { ...empty, error: "Admin only" };
+      const admin = adminClient();
+      const [bots, subs, profiles] = await Promise.all([
+        admin.from("bot_configs").select("pair_name, pair_label, tier_required, active, last_pinged_at, ping_count"),
+        admin.from("syndicate_subscribers").select("plan, status"),
+        admin.from("profiles").select("id, email, subscription_plan").order("created_at", { ascending: false }).limit(50),
+      ]);
+
+      const planCounts: Record<string, number> = { free: 0, metal: 0, energy: 0, syndicate: 0 };
+      let activeMembers = 0, churned = 0;
+      for (const s of subs.data || []) {
+        planCounts[s.plan] = (planCounts[s.plan] || 0) + 1;
+        if (s.status === "active") activeMembers++;
+        if (s.status === "canceled" || s.status === "kicked") churned++;
+      }
+      const churnRate = activeMembers + churned > 0 ? Math.round((churned / (activeMembers + churned)) * 100) : 0;
+
+      return {
+        bots: bots.data || [],
+        planCounts,
+        activeMembers,
+        churned,
+        churnRate,
+        recentProfiles: profiles.data || [],
+        error: null,
+      };
+    } catch (e: any) {
+      console.error("getFleetStats failed:", e?.message ?? e);
+      return { ...empty, error: e?.message ?? "Stats unavailable" };
+    }
   });
