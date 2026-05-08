@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Timer, Zap, Play, Pause, RotateCcw } from "lucide-react";
+import { Timer, Zap, Play, Pause, RotateCcw, BadgeCheck, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/tools")({
   head: () => ({
@@ -16,6 +17,16 @@ export const Route = createFileRoute("/tools")({
 });
 
 function ToolsPage() {
+  const [spawned, setSpawned] = useState<Array<{ id: string; slug: string; name: string; description: string | null; vip: boolean; config: any }>>([]);
+  useEffect(() => {
+    supabase
+      .from("calculators")
+      .select("id, slug, name, description, vip, config")
+      .eq("published", true)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setSpawned((data ?? []) as any));
+  }, []);
+
   return (
     <main className="max-w-7xl mx-auto px-5 sm:px-8 py-12 sm:py-16">
       <header className="mb-10">
@@ -29,6 +40,33 @@ function ToolsPage() {
         <CountdownCard />
         <OhmsCard />
       </div>
+
+      {spawned.length > 0 && (
+        <section className="mt-16">
+          <h2 className="text-xs tracking-[0.4em] uppercase text-gold font-semibold mb-4">Agent-Spawned Tools</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {spawned.map((t) => (
+              <Link
+                key={t.id}
+                to="/t/$slug"
+                params={{ slug: t.slug }}
+                className="group rounded-2xl border border-border bg-card p-5 hover:border-primary transition-colors"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-2xl">{t.config?.theme?.emoji ?? "⚡"}</span>
+                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{t.config?.audience}</span>
+                  {t.vip && <span className="ml-auto text-[10px] text-yellow-400"><Lock className="inline h-3 w-3 mr-1" />VIP</span>}
+                </div>
+                <h3 className="font-bold text-lg text-metallic group-hover:text-primary">{t.name}</h3>
+                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{t.description}</p>
+                <p className="mt-3 text-[10px] uppercase tracking-widest text-muted-foreground">
+                  <BadgeCheck className="inline h-3 w-3 mr-1" />Syndicate Member
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </main>
   );
 }
