@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Shield, Loader2, Save, Telescope, Link2, Wand2, Copy, ExternalLink, Music, Upload, Disc3, Wrench, Send, Sparkles, Rocket, Eye, TrendingUp, Satellite, Bot, Radio, Trash2, Megaphone, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -96,7 +96,20 @@ function AdminPage() {
       <TradeSpawnerPanel />
       <TelegramSocialsPanel />
       <FleetCommanderPanel />
+      <ConnectHubLinkPanel />
     </main>
+  );
+}
+
+function ConnectHubLinkPanel() {
+  return (
+    <section className="rounded-xl border border-primary/30 bg-primary/5 p-5 flex items-center justify-between">
+      <div>
+        <h2 className="font-bold text-lg flex items-center gap-2"><Rocket className="h-5 w-5 text-primary" /> ConnectHUB · Growth Engine</h2>
+        <p className="text-xs text-muted-foreground mt-1">Signal-based prospecting: Firecrawl scout → Apollo enrich → Gemini draft → Instantly send.</p>
+      </div>
+      <Link to="/connect" className="text-sm font-semibold text-primary hover:underline">Open →</Link>
+    </section>
   );
 }
 
