@@ -5,8 +5,8 @@ import logo from "@/assets/logo.jpg";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "0G-STREAMZ — The Hub" },
-      { name: "description", content: "Enter the 0G-STREAMZ universe: MusicHUB, JokesHUB, and ToolHUB." },
+      { title: "0G-PORTAL — The Hub" },
+      { name: "description", content: "Enter the 0G-PORTAL universe: MusicHUB, JokesHUB, and ToolHUB." },
     ],
   }),
   component: Index,
@@ -47,7 +47,7 @@ function Index() {
           <div className="absolute inset-0 blur-3xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245_/_0.45),transparent)]" />
           <img
             src={logo}
-            alt="OG-STREAMZ mascot"
+            alt="0G-PORTAL mascot"
             className="relative w-full h-auto rounded-2xl border border-[oklch(0.72_0.22_245/0.4)] shadow-[0_0_80px_-10px_oklch(0.72_0.22_245/0.6)]"
           />
         </div>
@@ -55,7 +55,7 @@ function Index() {
           Street · Static · Stream
         </p>
         <h1 className="mt-6 font-[Montserrat] font-black text-5xl sm:text-7xl md:text-8xl tracking-tight leading-[0.95]">
-          <span className="text-metallic animate-glitch">OG-STREAMZ</span>
+          <span className="text-metallic animate-glitch">0G-PORTAL</span>
         </h1>
         <p className="mt-6 max-w-xl mx-auto text-muted-foreground text-base sm:text-lg">
           Tune in to the static. Three portals, one frequency. Pick your channel.
