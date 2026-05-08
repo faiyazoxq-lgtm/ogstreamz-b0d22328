@@ -8,7 +8,7 @@ type Hub = "trade" | "music" | "tools" | "connect" | "general";
 
 /**
  * Live stream of 0G-BRAIN's reasoning. Hits the streaming server route
- * (/api/0g-orchestrator), which proxies Gemini 2.5-flash with thinking_mode
+ * (/api/public/0g-orchestrator), which proxies Gemini 2.5-flash with thinking_mode
  * HIGH and googleSearch grounding. Renders thought-summaries and the final
  * answer as tokens arrive.
  */
@@ -47,7 +47,7 @@ export function ZeroGStreamPanel() {
           : { prompt: vibe || asset };
 
     try {
-      const resp = await fetch("/api/0g-orchestrator", {
+      const resp = await fetch("/api/public/0g-orchestrator", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ hub, params }),

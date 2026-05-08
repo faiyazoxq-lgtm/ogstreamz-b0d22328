@@ -69,7 +69,7 @@ Return: structured [Verse]/[Chorus] lyrics + Suno V5.5 tag stack + BPM + key.`,
   }
 }
 
-export const Route = createFileRoute("/api/0g-orchestrator")({
+export const Route = createFileRoute("/api/public/0g-orchestrator")({
   server: {
     handlers: {
       OPTIONS: async () =>
