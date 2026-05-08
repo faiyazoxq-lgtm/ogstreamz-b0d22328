@@ -3,6 +3,7 @@ import { ArrowLeft, RotateCw, Radio, Loader2 } from "lucide-react";
 import bgFlame from "@/assets/bg-flame.png";
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { STYLE_PRESETS } from "./jokes";
 import { generateLiveJoke } from "@/lib/live-joke.functions";
@@ -68,6 +69,7 @@ function pickFor(styles: string[], custom: string): string {
 function JokePortal() {
   const { styles, custom, live } = Route.useSearch();
   const liveFn = useServerFn(generateLiveJoke);
+  const { session } = useAuth();
   const styleIds = useMemo(
     () => styles.split(",").map((s: string) => s.trim()).filter(Boolean),
     [styles],
@@ -90,7 +92,9 @@ function JokePortal() {
     setLoading(true);
     setError(null);
     try {
-      const res = await liveFn({ data: { styles: styleIds, custom } });
+      const res = await liveFn({
+        data: { styles: styleIds, custom, token: session?.access_token ?? "" },
+      });
       if (res.error) {
         setError(res.error);
       } else {
