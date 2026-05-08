@@ -48,6 +48,21 @@ export async function tgSendMessage(chat_id: string | number, text: string, opts
   return tgFetch("/sendMessage", { chat_id, text, parse_mode: "HTML", disable_web_page_preview: true, ...opts });
 }
 
+export async function tgSendVideo(chat_id: string | number, video: string, opts: any = {}) {
+  return tgFetch("/sendVideo", { chat_id, video, parse_mode: "HTML", supports_streaming: true, ...opts });
+}
+
+export async function tgSendAudio(chat_id: string | number, audio: string, opts: any = {}) {
+  return tgFetch("/sendAudio", { chat_id, audio, parse_mode: "HTML", ...opts });
+}
+
+/** FCA CP26/13 (May 2026) compliance badge — must accompany every signal. */
+export const FCA_COMPLIANCE_BADGE =
+  "⚖️ <b>SENTIMENT ANALYSIS ONLY — NOT A DIRECT FINANCIAL PROMOTION</b>\n<i>Compliant with FCA CP26/13 (May 2026). 0G-PORTAL Sentiment Mesh.</i>";
+
+/** VIP broadcast channel for the Master Bot bundle posts. */
+export const VIP_BROADCAST_CHAT_ID = "@og_portal";
+
 // ───── Admin: Bot config CRUD ─────
 export const listBots = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
