@@ -12,9 +12,9 @@ export function NavBar() {
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border">
       <nav className="max-w-7xl mx-auto flex items-center justify-between px-5 sm:px-8 h-16">
         <Link to="/" className="flex items-center gap-2 group">
-          <img src={logo} alt="OG-STREAMZ" className="h-9 w-9 rounded-md object-cover ring-1 ring-[oklch(0.72_0.22_245/0.5)]" />
+          <img src={logo} alt="0G-PORTAL" className="h-9 w-9 rounded-md object-cover ring-1 ring-[oklch(0.72_0.22_245/0.5)]" />
           <span className="font-[Montserrat] font-black text-lg sm:text-xl tracking-tight text-metallic">
-            OG-STREAMZ
+            0G-PORTAL
           </span>
         </Link>
         <ul className="flex items-center gap-1 sm:gap-2">
