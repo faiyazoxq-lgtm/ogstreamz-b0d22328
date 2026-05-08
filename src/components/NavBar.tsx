@@ -24,24 +24,25 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 
-const hubLinks = [
+type HubLink = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; desc?: string; bossOnly?: boolean };
+const hubLinks: ReadonlyArray<HubLink> = [
   { to: "/music",   label: "MusicHUB",   icon: Music,       desc: "AI lyrics + Suno tracks" },
   { to: "/jokes",   label: "JokesHUB",   icon: Laugh,       desc: "Live comedy generator" },
   { to: "/trade",   label: "TradeHUB",   icon: TrendingUp,  desc: "Quant signals & whale flows" },
   { to: "/connect", label: "ConnectHUB", icon: Rocket,      desc: "Lead-gen outreach engine", bossOnly: true },
   { to: "/tools",   label: "ToolHUB",    icon: Wrench,      desc: "Spawn calculators & utilities" },
-] as const;
+];
 
-const storeLinks = [
+const storeLinks: ReadonlyArray<HubLink> = [
   { to: "/store",            label: "Credit Store",     icon: ShoppingBag, desc: "Top up credits & VIP" },
   { to: "/checkout/return",  label: "Last Receipt",     icon: Receipt,     desc: "Recent purchase status" },
-] as const;
+];
 
-const adminLinks = [
+const adminLinks: ReadonlyArray<HubLink> = [
   { to: "/admin",              label: "Admin Console",        icon: ShieldCheck,     desc: "Users · credits · codes" },
   { to: "/syndicate-overlord", label: "Syndicate Overlord",   icon: Eye,             desc: "Live ops surveillance" },
   { to: "/dashboard",          label: "Boss Dashboard",       icon: LayoutDashboard, desc: "Cross-hub metrics" },
-] as const;
+];
 
 function NavDropdown({
   label, icon: Icon, items, gold,
