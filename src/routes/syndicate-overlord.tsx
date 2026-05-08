@@ -1,13 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Shield, Skull, Loader2, Search, Sparkles, Save, Plus, Minus, Ticket, Users, Wallet } from "lucide-react";
+import { Shield, Skull, Loader2, Search, Sparkles, Save, Plus, Minus, Ticket, Users, Wallet, Crown, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { adjustCredits, setRank, setFeatureFlags, createRedeemCode } from "@/lib/overlord.functions";
+import { adjustCredits, setRank, setFeatureFlags, createRedeemCode, grantVipPass, revokeVipPass, listVipPasses } from "@/lib/overlord.functions";
 import { bossListResellers, bossCreateReseller, bossTopupReseller } from "@/lib/reseller.functions";
 
 const OVERLORD_EMAIL = "faiyazoxq@gmail.com";
@@ -89,6 +89,7 @@ function OverlordPage() {
         </header>
 
         <RedeemCodePanel />
+        <VipPassPanel rows={rows} />
         <ResellerAdminPanel rows={rows} />
 
         <section className="mt-8 rounded-xl border border-emerald-700/30 bg-black/50 backdrop-blur">
@@ -324,6 +325,125 @@ function ResellerAdminPanel({ rows }: { rows: Row[] }) {
               <Button size="sm" onClick={() => adjust(r.user_id, 100)} className="h-7 bg-emerald-700 hover:bg-emerald-600 text-black">+100</Button>
               <Button size="sm" onClick={() => adjust(r.user_id, -100)} className="h-7 bg-rose-700 hover:bg-rose-600 text-white">-100</Button>
             </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function VipPassPanel({ rows }: { rows: Row[] }) {
+  const grant = useServerFn(grantVipPass);
+  const revoke = useServerFn(revokeVipPass);
+  const list = useServerFn(listVipPasses);
+  const [passes, setPasses] = useState<any[]>([]);
+  const [userId, setUserId] = useState("");
+  const [preset, setPreset] = useState<"30" | "90" | "180" | "365" | "custom">("30");
+  const [customDate, setCustomDate] = useState("");
+  const [notes, setNotes] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const refresh = async () => {
+    try { const r = await list(); setPasses(r.passes ?? []); }
+    catch (e: any) {
+      let msg = e?.message;
+      if (e instanceof Response) { try { msg = await e.text(); } catch { msg = `HTTP ${e.status}`; } }
+      toast.error(msg ?? "Failed to load passes");
+    }
+  };
+  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
+
+  const computeExpiry = (): string | null => {
+    if (preset === "custom") {
+      if (!customDate) return null;
+      const d = new Date(customDate);
+      if (isNaN(d.getTime()) || d <= new Date()) return null;
+      return d.toISOString();
+    }
+    const days = parseInt(preset, 10);
+    return new Date(Date.now() + days * 86400_000).toISOString();
+  };
+
+  const submit = async () => {
+    if (!userId) { toast.error("Pick a user"); return; }
+    const exp = computeExpiry();
+    if (!exp) { toast.error("Invalid expiry date"); return; }
+    setBusy(true);
+    try {
+      await grant({ data: { userId, expiresAt: exp, source: preset === "custom" ? "custom" : `${preset}d`, notes } });
+      toast.success("VIP pass granted");
+      setUserId(""); setNotes(""); setCustomDate("");
+      refresh();
+    } catch (e: any) {
+      let msg = e?.message;
+      if (e instanceof Response) { try { msg = await e.text(); } catch { msg = `HTTP ${e.status}`; } }
+      toast.error(msg ?? "Grant failed");
+    } finally { setBusy(false); }
+  };
+
+  const cancel = async (id: string) => {
+    try { await revoke({ data: { passId: id } }); toast.success("Revoked"); refresh(); }
+    catch (e: any) {
+      let msg = e?.message;
+      if (e instanceof Response) { try { msg = await e.text(); } catch { msg = `HTTP ${e.status}`; } }
+      toast.error(msg ?? "Failed");
+    }
+  };
+
+  const emailOf = (uid: string) => rows.find((r) => r.id === uid)?.email ?? uid.slice(0, 8) + "…";
+  const fmt = (s: string) => new Date(s).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  const isActive = (p: any) => !p.revoked_at && new Date(p.expires_at) > new Date();
+
+  return (
+    <section className="mt-6 rounded-xl border border-yellow-700/30 bg-black/50 p-5 backdrop-blur">
+      <h2 className="text-xs uppercase tracking-[0.4em] text-yellow-400 mb-3 flex items-center gap-2">
+        <Crown className="h-3.5 w-3.5" /> VIP PASSES
+      </h2>
+      <div className="grid sm:grid-cols-6 gap-2">
+        <select value={userId} onChange={(e) => setUserId(e.target.value)} className="bg-black/60 border border-emerald-800/40 rounded px-2 text-emerald-200 text-sm sm:col-span-2">
+          <option value="">— select user —</option>
+          {rows.map((r) => <option key={r.id} value={r.id}>{r.email}</option>)}
+        </select>
+        <select value={preset} onChange={(e) => setPreset(e.target.value as any)} className="bg-black/60 border border-emerald-800/40 rounded px-2 text-emerald-200 text-sm">
+          <option value="30">1 month</option>
+          <option value="90">3 months</option>
+          <option value="180">6 months</option>
+          <option value="365">12 months</option>
+          <option value="custom">custom date</option>
+        </select>
+        <Input
+          type="date"
+          value={customDate}
+          onChange={(e) => setCustomDate(e.target.value)}
+          disabled={preset !== "custom"}
+          className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
+        />
+        <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="notes (optional)" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
+        <Button onClick={submit} disabled={busy} className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold">
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Crown className="h-4 w-4 mr-1" />GRANT</>}
+        </Button>
+      </div>
+
+      <div className="mt-4">
+        {passes.length === 0 && <p className="text-xs text-emerald-700">// no passes issued</p>}
+        {passes.map((p) => (
+          <div key={p.id} className="flex items-center justify-between py-2 border-b border-yellow-900/20 text-sm">
+            <div>
+              <p className="text-yellow-200">
+                {emailOf(p.user_id)}
+                <span className={`ml-2 text-[10px] uppercase tracking-widest ${isActive(p) ? "text-emerald-400" : "text-rose-400"}`}>
+                  {isActive(p) ? "active" : p.revoked_at ? "revoked" : "expired"}
+                </span>
+              </p>
+              <p className="text-[10px] text-emerald-700">
+                expires {fmt(p.expires_at)} · source: {p.source}{p.notes ? ` · ${p.notes}` : ""}
+              </p>
+            </div>
+            {isActive(p) && (
+              <Button size="sm" onClick={() => cancel(p.id)} className="h-7 bg-rose-700 hover:bg-rose-600 text-white">
+                <X className="h-3 w-3 mr-1" />REVOKE
+              </Button>
+            )}
           </div>
         ))}
       </div>

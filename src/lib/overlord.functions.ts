@@ -90,3 +90,46 @@ export const redeemCode = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return result as { credits: number; rank: string | null };
   });
+
+export const grantVipPass = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string; expiresAt: string; source?: string; notes?: string }) => ({
+    userId: String(d.userId),
+    expiresAt: String(d.expiresAt),
+    source: String(d.source ?? "custom").slice(0, 32),
+    notes: d.notes ? String(d.notes).slice(0, 240) : null,
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context as any;
+    if (!(await isBoss(supabase))) throw new Error("Boss only");
+    const { data: id, error } = await supabase.rpc("boss_grant_vip_pass", {
+      _user_id: data.userId, _expires_at: data.expiresAt, _source: data.source, _notes: data.notes,
+    });
+    if (error) throw new Error(error.message);
+    return { id: id as string };
+  });
+
+export const revokeVipPass = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { passId: string }) => ({ passId: String(d.passId) }))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context as any;
+    if (!(await isBoss(supabase))) throw new Error("Boss only");
+    const { error } = await supabase.rpc("boss_revoke_vip_pass", { _pass_id: data.passId });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const listVipPasses = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context as any;
+    if (!(await isBoss(supabase))) throw new Error("Boss only");
+    const { data, error } = await supabase
+      .from("vip_passes")
+      .select("id,user_id,source,notes,expires_at,revoked_at,created_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) throw new Error(error.message);
+    return { passes: data ?? [] };
+  });

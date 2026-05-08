@@ -1306,6 +1306,39 @@ export type Database = {
         }
         Relationships: []
       }
+      vip_passes: {
+        Row: {
+          created_at: string
+          expires_at: string
+          granted_by: string | null
+          id: string
+          notes: string | null
+          revoked_at: string | null
+          source: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          granted_by?: string | null
+          id?: string
+          notes?: string | null
+          revoked_at?: string | null
+          source?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          granted_by?: string | null
+          id?: string
+          notes?: string | null
+          revoked_at?: string | null
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       syndicate_gallery: {
@@ -1364,6 +1397,16 @@ export type Database = {
         }
         Returns: string
       }
+      boss_grant_vip_pass: {
+        Args: {
+          _expires_at: string
+          _notes: string
+          _source: string
+          _user_id: string
+        }
+        Returns: string
+      }
+      boss_revoke_vip_pass: { Args: { _pass_id: string }; Returns: boolean }
       boss_topup_reseller: {
         Args: { _delta: number; _reason: string; _user_id: string }
         Returns: number
