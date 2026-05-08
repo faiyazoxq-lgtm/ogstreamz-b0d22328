@@ -14,6 +14,7 @@ import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe
 import { TVStaticLogo } from "@/components/TVStaticLogo";
 import { PortalMascot } from "@/components/PortalMascot";
 import { TradingViewChart, TradingViewTickerTape } from "@/components/TradingViewWidgets";
+import { LiveDataIcon } from "@/components/LiveDataIcon";
 
 type ThemeConfig = {
   bgGradient?: string;
