@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
+import { useServerFn } from "@tanstack/react-start";
+import { claimSignupPass } from "@/lib/passes.functions";
 import logo from "@/assets/logo.jpg";
 
 export const Route = createFileRoute("/auth")({
@@ -24,14 +26,49 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const claim = useServerFn(claimSignupPass);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"login" | "signup">("login");
+  const [passToken, setPassToken] = useState<string | null>(null);
+
+  // Capture ?p=TOKEN from QR / quick links and persist across signup confirm
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("p");
+    if (t) {
+      const upper = t.toUpperCase();
+      sessionStorage.setItem("signup_pass_token", upper);
+      setPassToken(upper);
+      setMode("signup");
+    } else {
+      const stored = sessionStorage.getItem("signup_pass_token");
+      if (stored) setPassToken(stored);
+    }
+  }, []);
+
+  const tryClaim = async () => {
+    const t = sessionStorage.getItem("signup_pass_token");
+    if (!t) return;
+    try {
+      const r = await claim({ data: { token: t } });
+      sessionStorage.removeItem("signup_pass_token");
+      const bits: string[] = [];
+      if (r?.credits) bits.push(`+${r.credits} credits`);
+      if (r?.vip_until) bits.push(`VIP until ${new Date(r.vip_until).toLocaleDateString()}`);
+      toast.success(`Pass redeemed${bits.length ? ` · ${bits.join(" · ")}` : ""}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Pass redeem failed";
+      if (!/Already claimed/i.test(msg)) toast.error(msg);
+    }
+  };
 
   useEffect(() => {
-    if (user) navigate({ to: "/profile" });
-  }, [user, navigate]);
+    if (user) {
+      tryClaim().finally(() => navigate({ to: "/profile" }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -48,7 +85,9 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("Welcome to the Syndicate. Check your inbox to confirm your email.");
+        toast.success(passToken
+          ? `Welcome. Confirm your email — your pass ${passToken} will activate on first sign-in.`
+          : "Welcome to the Syndicate. Check your inbox to confirm your email.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -94,6 +133,14 @@ function AuthPage() {
         <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-[0_0_60px_-10px_oklch(0.72_0.22_245/0.4)]">
           <h1 className="text-2xl font-bold text-center text-metallic mb-1">Join the Syndicate</h1>
           <p className="text-sm text-muted-foreground text-center mb-6">Tune in. The frequency is private.</p>
+
+          {passToken && (
+            <div className="mb-5 rounded-lg border border-yellow-500/40 bg-yellow-500/5 px-3 py-2 text-xs text-yellow-300 text-center">
+              <span className="uppercase tracking-widest text-[10px] text-yellow-500">Pass attached</span>
+              <p className="mt-1 font-mono">{passToken}</p>
+              <p className="text-yellow-400/70 mt-1 text-[11px]">Activates automatically when you sign in.</p>
+            </div>
+          )}
 
           <Tabs value={mode} onValueChange={(v) => setMode(v as "login" | "signup")} className="w-full">
             <TabsList className="grid grid-cols-2 w-full mb-6">
