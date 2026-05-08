@@ -14,6 +14,7 @@ import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe
 import { TVStaticLogo } from "@/components/TVStaticLogo";
 import { PortalMascot } from "@/components/PortalMascot";
 import { TradingViewChart, TradingViewTickerTape } from "@/components/TradingViewWidgets";
+import { LiveDataIcon } from "@/components/LiveDataIcon";
 
 type ThemeConfig = {
   bgGradient?: string;
@@ -577,6 +578,7 @@ function NewsHubView({ portal }: { portal: Portal }) {
           <ArrowLeft className="h-3 w-3" /> Back
         </Link>
         <div className="flex items-center gap-3">
+          <LiveDataIcon active={scanning} accent={accent} />
           <motion.div animate={{ scale: [1, 1.25, 1], opacity: [0.6, 1, 0.6] }} transition={{ duration: 1.6, repeat: Infinity }} style={{ filter: `drop-shadow(0 0 12px ${accent})` }}>
             <Satellite className="h-4 w-4" style={{ color: accent }} />
           </motion.div>
@@ -613,6 +615,48 @@ function NewsHubView({ portal }: { portal: Portal }) {
         <div className="mb-6 rounded-xl border overflow-hidden" style={{ borderColor: `${accent}55`, background: "rgba(0,0,0,0.4)" }}>
           <TradingViewTickerTape symbols={[tvSymbol, ...relatedSymbols]} />
         </div>
+
+        {/* Verified Sources — 0G-BRAIN deep_search citations (last hour) */}
+        {(data.verified_sources?.length ?? 0) > 0 && (
+          <div className="mb-6 rounded-xl border p-3 sm:p-4" style={{ borderColor: `${accent}44`, background: "rgba(0,0,0,0.45)" }}>
+            <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <BadgeCheck className="h-3.5 w-3.5" style={{ color: accent }} />
+                <span className="text-[10px] uppercase tracking-[0.4em]" style={{ color: accent }}>
+                  Verified Sources · Last Hour · {data.verified_sources!.length}
+                </span>
+              </div>
+              {data.peer_review && (
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[10px] uppercase tracking-[0.3em]"
+                  style={{
+                    color: data.peer_review.verdict === "verified" ? "#00e08a" : data.peer_review.verdict === "partial" ? "#ffb020" : "#ff4d4d",
+                    borderColor: (data.peer_review.verdict === "verified" ? "#00e08a" : data.peer_review.verdict === "partial" ? "#ffb020" : "#ff4d4d") + "66",
+                  }}
+                  title={data.peer_review.notes}
+                >
+                  Peer-Review · {data.peer_review.verdict} · {data.peer_review.confidence}%
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {data.verified_sources!.slice(0, 12).map((s, i) => (
+                <a
+                  key={i}
+                  href={s.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] uppercase tracking-[0.25em] hover:opacity-100 opacity-90 transition"
+                  style={{ color: text, borderColor: `${accent}55`, background: `${accent}0d` }}
+                >
+                  <BadgeCheck className="h-3 w-3" style={{ color: accent }} />
+                  {s.source}
+                  <ExternalLink className="h-3 w-3 opacity-60" />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Live Pulse — TradingView */}
         <div className="mb-8 rounded-xl border overflow-hidden" style={{ borderColor: `${accent}55`, boxShadow: `0 0 30px ${accent}22` }}>

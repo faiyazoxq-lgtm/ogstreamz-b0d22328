@@ -1,11 +1,12 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, ArrowLeft, Crown, Loader2, Lock, TrendingDown, TrendingUp, Zap } from "lucide-react";
+import { Activity, ArrowLeft, BadgeCheck, Crown, ExternalLink, Loader2, Lock, TrendingDown, TrendingUp, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { runTradeScan, getTrc20Fees, getWhaleAlerts } from "@/lib/trade.functions";
+import { LiveDataIcon } from "@/components/LiveDataIcon";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
@@ -125,7 +126,10 @@ function TradeTerminal() {
 
       <header className="relative max-w-6xl mx-auto px-5 sm:px-8 pt-8 pb-4 flex items-center justify-between">
         <Link to="/" className="text-xs uppercase tracking-[0.3em] opacity-60 hover:opacity-100 inline-flex items-center gap-1"><ArrowLeft className="h-3 w-3" /> Mainframe</Link>
-        <div className="text-[10px] tracking-[0.4em] opacity-60">{tc.label || `// ${assetClass.toUpperCase()} DESK`}</div>
+        <div className="flex items-center gap-3">
+          <LiveDataIcon active={scanning} accent={accent} />
+          <div className="text-[10px] tracking-[0.4em] opacity-60">{tc.label || `// ${assetClass.toUpperCase()} DESK`}</div>
+        </div>
       </header>
 
       <section className="relative max-w-6xl mx-auto px-5 sm:px-8 pt-2 pb-10">
@@ -212,6 +216,41 @@ function TradeTerminal() {
                         ))}
                       </ul>
                     </details>
+                  )}
+                  {(intel.verifiedSources?.length ?? 0) > 0 && (
+                    <div className="rounded-lg border p-3" style={{ borderColor: `${accent}55`, background: `${accent}0d` }}>
+                      <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          <BadgeCheck className="h-3.5 w-3.5" style={{ color: accent }} />
+                          <span className="text-[10px] uppercase tracking-[0.3em]" style={{ color: accent }}>
+                            Verified Sources · Last Hour · {intel.verifiedSources.length}
+                          </span>
+                        </div>
+                        {intel.peerReview && (
+                          <span
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[10px] uppercase tracking-[0.25em]"
+                            style={{
+                              color: intel.peerReview.verdict === "verified" ? "#00ff88" : intel.peerReview.verdict === "partial" ? "#ffb020" : "#ff4d6d",
+                              borderColor: (intel.peerReview.verdict === "verified" ? "#00ff88" : intel.peerReview.verdict === "partial" ? "#ffb020" : "#ff4d6d") + "66",
+                            }}
+                            title={intel.peerReview.notes}
+                          >
+                            Peer-Review · {intel.peerReview.verdict} · {intel.peerReview.confidence}%
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {intel.verifiedSources.slice(0, 12).map((s: any, i: number) => (
+                          <a key={i} href={s.url} target="_blank" rel="noreferrer"
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] uppercase tracking-[0.25em] hover:opacity-100 opacity-90"
+                            style={{ color: "#fff", borderColor: `${accent}55`, background: "rgba(0,0,0,0.4)" }}>
+                            <BadgeCheck className="h-3 w-3" style={{ color: accent }} />
+                            {s.source}
+                            <ExternalLink className="h-3 w-3 opacity-60" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>

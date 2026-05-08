@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { runDeepSearch, runPeerReview } from "./orchestrator.functions";
 
 function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48) || "trade";
@@ -191,13 +192,27 @@ Return STRICT JSON only:
     const sig = String(signal.signal || "HOLD").toUpperCase();
     const conf = Math.max(0, Math.min(100, Number(signal.confidence ?? 50)));
 
+    // 2b. 0G-BRAIN deep_search — last-hour citations + peer-review
+    const deepQ = `${assetClass} ${tickers.join(", ")} market-moving news, whale flows, and price catalysts in the last hour. Cite at least 5 sources.`;
+    const deep = await runDeepSearch({ query: deepQ, recency: "hour", minSources: 5 }).catch((e) => {
+      console.error("trade deep_search failed", e?.message);
+      return null;
+    });
+    const review = deep
+      ? await runPeerReview({
+          topic: `${assetClass} signal ${sig}`,
+          analysis: `Signal=${sig} Conf=${conf}\nThesis: ${signal.thesis ?? ""}\nTopMove: ${JSON.stringify(signal.topMove ?? {})}\nSentiment: ${signal.sentiment ?? ""}`,
+          evidence: deep,
+        }).catch(() => undefined)
+      : undefined;
+
     // 3. Apply rate-limit + record (RPC enforces 3/day for free)
     const { data: rl, error: rlErr } = await supabase.rpc("apply_trade_scan", {
       _portal_slug: portal.slug,
       _asset_class: assetClass,
       _signal: sig,
       _confidence: conf,
-      _payload: { signal, headlines, sources, tickers },
+      _payload: { signal, headlines, sources, tickers, citations: deep?.citations ?? [], verified_sources: deep?.verified_sources ?? [], peer_review: review ?? null },
       _delayed: false, // set after we know vip status from RPC
     });
     if (rlErr) throw new Error(rlErr.message);
@@ -217,6 +232,9 @@ Return STRICT JSON only:
       whaleActivity: isVip ? (signal.whaleActivity || null) : "🔒 Whale flows are VIP-only.",
       riskFlags: Array.isArray(signal.riskFlags) ? signal.riskFlags.slice(0,4) : [],
       headlines, sources,
+      citations: deep?.citations ?? [],
+      verifiedSources: deep?.verified_sources ?? [],
+      peerReview: review ?? null,
       delayed, isVip,
       usedToday: rl?.used_today ?? null, dailyLimit: rl?.daily_limit ?? null,
       generatedAt: new Date().toISOString(),
