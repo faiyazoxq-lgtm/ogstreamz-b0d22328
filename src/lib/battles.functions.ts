@@ -229,7 +229,7 @@ RULES:
 
     // Bump view count on round 1
     if (data.round === 1) {
-      await supabase.rpc("increment_portal_view", { _slug: battle.slug }).catch(() => {});
+      try { await supabase.rpc("increment_portal_view", { _slug: battle.slug }); } catch { /* noop */ }
     }
 
     return {
