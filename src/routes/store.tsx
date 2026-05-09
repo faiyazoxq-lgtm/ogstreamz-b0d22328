@@ -95,16 +95,27 @@ function StorePage() {
 
       <header className="text-center mt-6 mb-10">
         <p className="text-xs uppercase tracking-[0.4em] font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
-          {isBoss ? "Store · Boss Editor" : "Syndicate Store"}
+          {isBoss ? "Store · Boss Editor" : "Credits · Your In-House Currency"}
         </p>
         <h1 className="mt-3 font-[Montserrat] font-black text-4xl sm:text-6xl text-metallic">
-          {isBoss ? "Curate the Vault" : "Top Up the Vault"}
+          {isBoss ? "Curate the Vault" : "Buy Credits — Power Everything"}
         </h1>
-        <p className="mt-3 text-muted-foreground">
-          {isBoss
-            ? "Add, edit, hide or remove credit packages. Set how many credits a song costs."
-            : `Credits power Live Wire jokes, VIP tools, AI lyrics, and custom tracks. ${creditsPerSong} credits = 1 song.`}
-        </p>
+        {isBoss ? (
+          <p className="mt-3 text-muted-foreground">Add, edit, hide or remove credit packages. Set how many credits a song costs.</p>
+        ) : (
+          <>
+            <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
+              Credits are the syndicate's in-house currency. Spend them on AI tracks, lyrics, jokes,
+              trade scans, and pro tools. Or skip the math and go <strong className="text-white">VIP monthly</strong> for
+              priority queues and free Hit-Button.
+            </p>
+            <p className="mt-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">
+              <span className="text-[color:var(--neon-blue-bright)] font-bold">{creditsPerSong} credits</span> = 1 full AI song
+              <span className="mx-2 opacity-50">·</span>
+              <span className="text-[color:var(--neon-blue-bright)] font-bold">1 credit</span> = 1 joke / scan / tool run
+            </p>
+          </>
+        )}
       </header>
 
       {/* Boss never sees their own balance — they are unlimited */}
