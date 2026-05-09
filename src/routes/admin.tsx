@@ -117,7 +117,7 @@ function AdminPage() {
       <SectionHeader icon={<Sliders className="h-4 w-4" />} label="Hub Controls · Tuning" tint="#a78bfa" />
       <HubControlsPanel />
 
-      <SectionHeader icon={<Brain className="h-4 w-4" />} label="Shape Bridge · Persona" tint="#ff5c8a" />
+      <SectionHeader icon={<Brain className="h-4 w-4" />} label="Global Mood · Syndicate Persona" tint="#ff2e55" />
       <ShapeBridgePanel />
 
       <SectionHeader icon={<Rocket className="h-4 w-4" />} label="Homepage · Custom Hubs" tint="#ff00aa" />
