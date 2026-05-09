@@ -168,12 +168,18 @@ function AuthPage() {
                 submit={submit}
                 cta="Sign In"
               />
-              <Link
-                to="/forgot-password"
-                className="block text-center text-xs text-muted-foreground hover:text-foreground"
-              >
-                Forgot password?
-              </Link>
+              <div className="flex items-center justify-between text-xs">
+                <label className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground">
+                  <Checkbox
+                    checked={remember}
+                    onCheckedChange={(v) => setRememberState(v === true)}
+                  />
+                  Remember me
+                </label>
+                <Link to="/forgot-password" className="text-muted-foreground hover:text-foreground">
+                  Forgot password?
+                </Link>
+              </div>
             </TabsContent>
             <TabsContent value="signup" className="space-y-4">
               <AuthForm
