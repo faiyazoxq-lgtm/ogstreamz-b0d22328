@@ -22,7 +22,9 @@ export const getCivility = createServerFn({ method: "GET" })
       .eq("id", 1)
       .maybeSingle();
     if (error) throw new Error(error.message);
-    return { swear_default: !!data?.swear_default, updated_at: data?.updated_at ?? null };
+    // Swearing is ON by default unless explicitly muzzled.
+    const swear_default = data?.swear_default == null ? true : !!data.swear_default;
+    return { swear_default, updated_at: data?.updated_at ?? null };
   });
 
 export const setCivilityDefault = createServerFn({ method: "POST" })
