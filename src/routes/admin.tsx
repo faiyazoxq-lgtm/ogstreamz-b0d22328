@@ -23,6 +23,18 @@ import { generateBrandBible, updateTelegramLinks, deployToTelegram } from "@/lib
 import { runAgentTask, getOpsSnapshot, runMaintenance } from "@/lib/command-deck.functions";
 import { TopUpRequestsPanel } from "@/components/TopUpRequestsPanel";
 
+const NAV_SECTIONS: { id: string; label: string; tint: string }[] = [
+  { id: "roster", label: "Roster", tint: "#3ad6ff" },
+  { id: "intel", label: "Intel · Recon", tint: "#ff2233" },
+  { id: "spawners", label: "Spawners · Build", tint: "#ffd166" },
+  { id: "broadcast", label: "Broadcast · Reach", tint: "#00e08a" },
+  { id: "hubs", label: "Hub Controls", tint: "#a78bfa" },
+  { id: "mood", label: "Global Mood", tint: "#ff2e55" },
+  { id: "homehubs", label: "Homepage Hubs", tint: "#ff00aa" },
+  { id: "topups", label: "Top-Ups", tint: "#ff5577" },
+  { id: "command", label: "Command Deck", tint: "#ff00aa" },
+];
+
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Power Console · 0G-PORTAL" }] }),
   component: AdminPage,
