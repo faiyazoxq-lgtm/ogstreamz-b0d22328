@@ -102,17 +102,20 @@ function AuthPage() {
     }
   };
 
-  const google = async () => {
+  const google = async () => oauth("google");
+  const apple = async () => oauth("apple");
+
+  const oauth = async (provider: "google" | "apple") => {
     setLoading(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
+      const result = await lovable.auth.signInWithOAuth(provider, {
         redirect_uri: `${window.location.origin}/profile`,
       });
       if (result.error) throw result.error;
       if (result.redirected) return;
       navigate({ to: "/profile" });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Google sign-in failed";
+      const msg = err instanceof Error ? err.message : `${provider} sign-in failed`;
       toast.error(msg);
       setLoading(false);
     }
@@ -192,6 +195,19 @@ function AuthPage() {
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
             Continue with Google
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            disabled={loading}
+            onClick={apple}
+            className="w-full h-11 mt-2 bg-black text-white hover:bg-black/85 border-white/20"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4 mr-2" aria-hidden fill="currentColor">
+              <path d="M16.365 1.43c0 1.14-.46 2.23-1.21 3.03-.81.86-2.13 1.52-3.21 1.43-.13-1.1.42-2.25 1.16-3.04.83-.88 2.24-1.54 3.26-1.42zM20.5 17.31c-.55 1.27-.81 1.83-1.52 2.95-.99 1.56-2.39 3.5-4.12 3.51-1.54.02-1.94-1-4.03-.99-2.09.01-2.53 1.01-4.07.99-1.73-.02-3.05-1.78-4.05-3.34C.01 16.18-.31 11.13 1.5 8.43c1.28-1.92 3.31-3.04 5.21-3.04 1.94 0 3.16 1.06 4.77 1.06 1.56 0 2.51-1.06 4.76-1.06 1.7 0 3.5.93 4.78 2.53-4.21 2.31-3.52 8.32.48 9.39z"/>
+            </svg>
+            Continue with Apple
           </Button>
 
           <Button
