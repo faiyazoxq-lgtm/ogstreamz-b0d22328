@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function isBossCtx(supabase: any) {
   const uid = (await supabase.auth.getUser()).data.user?.id;
@@ -74,8 +75,11 @@ export const getResellerWallet = createServerFn({ method: "GET" })
       supabase.from("redeem_codes")
         .select("id,code,credits,max_uses,uses,price_cents,created_at,expires_at")
         .eq("reseller_id", userId).order("created_at", { ascending: false }).limit(100),
-      supabase.from("profiles")
-        .select("id,email,display_name,credits,rank,created_at")
+      // Downline read uses admin client with strict column allowlist —
+      // RLS policy "Reseller views downline" was removed to prevent broad
+      // profile exposure. We deliberately omit email and other PII.
+      supabaseAdmin.from("profiles")
+        .select("id,display_name,rank,created_at")
         .eq("referred_by_reseller", userId).order("created_at", { ascending: false }).limit(200),
       supabase.from("reseller_credit_ledger")
         .select("id,delta,reason,created_at")
