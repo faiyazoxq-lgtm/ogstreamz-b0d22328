@@ -478,6 +478,48 @@ export type Database = {
         }
         Relationships: []
       }
+      hub_settings: {
+        Row: {
+          created_at: string
+          display_name: string
+          enabled: boolean
+          hub_key: string
+          id: string
+          integrations: Json
+          model: string
+          style_prompt: string
+          tuning: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          enabled?: boolean
+          hub_key: string
+          id?: string
+          integrations?: Json
+          model?: string
+          style_prompt?: string
+          tuning?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          enabled?: boolean
+          hub_key?: string
+          id?: string
+          integrations?: Json
+          model?: string
+          style_prompt?: string
+          tuning?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       jokes: {
         Row: {
           content: string
