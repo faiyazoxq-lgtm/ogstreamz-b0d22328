@@ -603,6 +603,7 @@ function BulkActionBar({
   const setR = useServerFn(setRank);
   const setF = useServerFn(setFeatureFlags);
   const [busy, setBusy] = useState(false);
+  const [customDelta, setCustomDelta] = useState("");
 
   if (selected.size === 0) return null;
 
@@ -658,6 +659,48 @@ function BulkActionBar({
     toast.success(`${key} ${value ? "ON" : "OFF"} on ${ok} users${fail ? ` · ${fail} failed` : ""}`);
   };
 
+  const runAllFlags = async (value: boolean) => {
+    setBusy(true);
+    const updates: Record<string, Partial<Row>> = {};
+    let ok = 0, fail = 0;
+    const flags: Flags = { jokes: value, music: value, tools: value };
+    for (const t of targets) {
+      try {
+        await setF({ data: { userId: t.id, flags } });
+        updates[t.id] = { feature_flags: flags };
+        ok++;
+      } catch { fail++; }
+    }
+    onApplied(updates);
+    setBusy(false);
+    toast.success(`${value ? "Unlocked" : "Locked"} all features on ${ok} users${fail ? ` · ${fail} failed` : ""}`);
+  };
+
+  const runZeroCredits = async () => {
+    setBusy(true);
+    const updates: Record<string, Partial<Row>> = {};
+    let ok = 0, fail = 0;
+    for (const t of targets) {
+      const delta = -t.credits;
+      if (delta === 0) { ok++; continue; }
+      try {
+        const r = await adj({ data: { userId: t.id, delta, reason: "boss:bulk:zero" } });
+        updates[t.id] = { credits: r.credits };
+        ok++;
+      } catch { fail++; }
+    }
+    onApplied(updates);
+    setBusy(false);
+    toast.success(`Zeroed credits on ${ok} users${fail ? ` · ${fail} failed` : ""}`);
+  };
+
+  const runCustomDelta = async () => {
+    const n = Number(customDelta);
+    if (!Number.isFinite(n) || n === 0) { toast.error("Enter a non-zero number"); return; }
+    await runCredits(n);
+    setCustomDelta("");
+  };
+
   return (
     <div className="px-3 py-2 border-b border-cyan-700/40 bg-cyan-950/30 backdrop-blur flex items-center gap-2 flex-wrap">
       <span className="text-[10px] uppercase tracking-[0.3em] text-cyan-300 font-bold">
@@ -671,14 +714,36 @@ function BulkActionBar({
       {[50, 100].map((v) => (
         <Button key={`-${v}`} size="sm" disabled={busy} onClick={() => runCredits(-v)} className="h-6 px-2 text-[10px] bg-rose-700 hover:bg-rose-600 text-white">−{v}</Button>
       ))}
-      <span className="text-[10px] text-emerald-700 uppercase tracking-widest ml-2">rank:</span>
-      <Button size="sm" disabled={busy} onClick={() => runRank("vip")} className="h-6 px-2 text-[10px] bg-yellow-500 hover:bg-yellow-400 text-black">
-        <Crown className="h-3 w-3 mr-1" />Grant VIP
+      <Input
+        value={customDelta}
+        onChange={(e) => setCustomDelta(e.target.value)}
+        placeholder="±N"
+        type="number"
+        className="h-6 w-16 px-1 text-[10px] bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
+      />
+      <Button size="sm" disabled={busy || !customDelta} onClick={runCustomDelta} className="h-6 px-2 text-[10px] bg-cyan-600 hover:bg-cyan-500 text-black font-bold">
+        <Coins className="h-3 w-3 mr-1" />Apply
       </Button>
-      <Button size="sm" disabled={busy} onClick={() => runRank("prospect")} className="h-6 px-2 text-[10px] bg-emerald-800 hover:bg-emerald-700 text-emerald-100">
-        Revoke / Reset
+      <Button size="sm" disabled={busy} onClick={runZeroCredits} className="h-6 px-2 text-[10px] bg-zinc-700 hover:bg-zinc-600 text-zinc-200">
+        Zero
+      </Button>
+      <span className="text-[10px] text-emerald-700 uppercase tracking-widest ml-2">rank:</span>
+      <Button size="sm" disabled={busy} onClick={() => runRank("prospect")} className="h-6 px-2 text-[10px] bg-emerald-900 hover:bg-emerald-800 text-emerald-100">
+        <UserIcon className="h-3 w-3 mr-1" />Prospect
+      </Button>
+      <Button size="sm" disabled={busy} onClick={() => runRank("enforcer")} className="h-6 px-2 text-[10px] bg-cyan-700 hover:bg-cyan-600 text-white">
+        <Shield className="h-3 w-3 mr-1" />Enforcer
+      </Button>
+      <Button size="sm" disabled={busy} onClick={() => runRank("vip")} className="h-6 px-2 text-[10px] bg-yellow-500 hover:bg-yellow-400 text-black">
+        <Crown className="h-3 w-3 mr-1" />VIP
       </Button>
       <span className="text-[10px] text-emerald-700 uppercase tracking-widest ml-2">features:</span>
+      <Button size="sm" disabled={busy} onClick={() => runAllFlags(true)} className="h-6 px-2 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-black font-bold">
+        <Unlock className="h-3 w-3 mr-1" />Unlock all
+      </Button>
+      <Button size="sm" disabled={busy} onClick={() => runAllFlags(false)} className="h-6 px-2 text-[10px] bg-rose-700 hover:bg-rose-600 text-white font-bold">
+        <Lock className="h-3 w-3 mr-1" />Lock all
+      </Button>
       {(["jokes","music","tools"] as const).map((k) => (
         <span key={k} className="inline-flex items-center gap-1">
           <Button size="sm" disabled={busy} onClick={() => runFlag(k, true)} className="h-6 px-2 text-[10px] bg-cyan-700 hover:bg-cyan-600 text-white">{k}+</Button>
