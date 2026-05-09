@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link } from "@tanstack/react-router";
-import { Mail, Lock, User as UserIcon, Loader2, Send, X, Sparkles } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Mail, Lock, User as UserIcon, Loader2, Send, X, Sparkles, Github, Facebook } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
