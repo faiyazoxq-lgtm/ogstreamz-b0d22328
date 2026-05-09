@@ -6,6 +6,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+const BOT_UA_RE = /bot|crawler|spider|crawling|slurp|bingpreview|mediapartners|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|discordbot|telegrambot|whatsapp|skypeuripreview|pinterest|embedly|quora|outbrain|vkshare|w3c_validator|redditbot|applebot|duckduckbot|yandex|baiduspider|sogou|petalbot|ahrefs|semrush|mj12bot|dotbot|seznambot|ia_archiver|archive\.org_bot|gptbot|claudebot|anthropic|chatgpt-user|perplexitybot|ccbot|google-inspectiontool|google-extended|bytespider|amazonbot|headlesschrome|phantomjs|puppeteer|playwright|selenium|lighthouse|pagespeed|chrome-lighthouse|node-fetch|axios|python-requests|curl|wget|httpclient|okhttp|go-http-client|java\/|libwww-perl|scrapy|nutch|cypress|prerender|prerendercloud|http-client|monitor|uptimerobot|pingdom|statuscake|newrelic|datadog/i;
+
+function isBotEvent(e: { user_agent: string | null }): boolean {
+  const ua = (e.user_agent || "").toLowerCase();
+  if (!ua) return true; // no UA = almost certainly a script
+  return BOT_UA_RE.test(ua);
+}
+
 export const Route = createFileRoute("/boss/analytics")({
   head: () => ({
     meta: [
@@ -74,7 +82,8 @@ function AnalyticsPage() {
     ]);
 
     const eventList = (evs as Event[]) ?? [];
-    setEvents(eventList);
+    const humanList = eventList.filter((e) => !isBotEvent(e));
+    setEvents(humanList);
 
     const nameMap = new Map<string, string>();
     (portals ?? []).forEach((p: any) => nameMap.set(`portal:${p.slug}`, p.name));
