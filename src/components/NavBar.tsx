@@ -3,7 +3,7 @@ import {
   User, LogIn, Coins, Crown, Shield, ChevronDown,
   Music, Laugh, TrendingUp, Rocket, Wrench,
   Store, ShoppingBag, Receipt,
-  ShieldCheck, LayoutDashboard, Eye,
+  ShieldCheck, LayoutDashboard,
   UserCircle, Settings, LogOut,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -39,9 +39,8 @@ const storeLinks: ReadonlyArray<HubLink> = [
 ];
 
 const adminLinks: ReadonlyArray<HubLink> = [
-  { to: "/admin",              label: "Admin Console",        icon: ShieldCheck,     desc: "Users · credits · codes" },
-  { to: "/syndicate-overlord", label: "Syndicate Overlord",   icon: Eye,             desc: "Live ops surveillance" },
-  { to: "/dashboard",          label: "Boss Dashboard",       icon: LayoutDashboard, desc: "Cross-hub metrics" },
+  { to: "/admin",              label: "Admin Console",         icon: ShieldCheck,     desc: "Users · credits · codes" },
+  { to: "/syndicate-overlord", label: "Boss Control Center",   icon: LayoutDashboard, desc: "Ultimate command deck" },
 ];
 
 function NavDropdown({
