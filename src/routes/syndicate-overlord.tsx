@@ -537,7 +537,7 @@ function UserRow({ row, onChange, selected, onToggleSelect }: { row: Row; onChan
     catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
   };
   const setAllFlags = async (value: boolean) => {
-    const flags: Flags = { jokes: value, music: value, tools: value };
+    const flags: Flags = { jokes: value, music: value, tools: value, swearing: value };
     setBusy(true);
     try {
       await setF({ data: { userId: row.id, flags } });
@@ -556,6 +556,7 @@ function UserRow({ row, onChange, selected, onToggleSelect }: { row: Row; onChan
     { k: "jokes", Icon: Smile, label: "Jokes" },
     { k: "music", Icon: Music, label: "Music" },
     { k: "tools", Icon: Wrench, label: "Tools" },
+    { k: "swearing", Icon: Flame, label: "Swearing" },
   ];
   const RANK_BTNS: Array<{ r: Rank; Icon: any }> = [
     { r: "prospect", Icon: UserIcon },
@@ -835,7 +836,7 @@ function BulkActionBar({
     setBusy(true);
     const updates: Record<string, Partial<Row>> = {};
     let ok = 0, fail = 0;
-    const flags: Flags = { jokes: value, music: value, tools: value };
+    const flags: Flags = { jokes: value, music: value, tools: value, swearing: value };
     for (const t of targets) {
       try {
         await setF({ data: { userId: t.id, flags } });
