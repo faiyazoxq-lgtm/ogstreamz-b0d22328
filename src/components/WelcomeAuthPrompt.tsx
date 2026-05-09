@@ -10,9 +10,12 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
+import { Checkbox } from "@/components/ui/checkbox";
+import { getRemember, setRemember, markTabSession, clearTabSession } from "@/lib/remember-session";
 
 const DISMISS_KEY = "welcome_auth_dismissed_at";
-const DISMISS_TTL_MS = 1000 * 60 * 60 * 12; // 12h
+const DISMISS_TTL_REMEMBER_MS = 1000 * 60 * 60 * 24 * 30; // 30d
+const DISMISS_TTL_TAB_MS = 1000 * 60 * 60 * 12; // 12h
 
 export function WelcomeAuthPrompt() {
   const { user, loading: authLoading } = useAuth();
@@ -22,11 +25,15 @@ export function WelcomeAuthPrompt() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [remember, setRememberState] = useState<boolean>(true);
+
+  useEffect(() => { setRememberState(getRemember()); }, []);
 
   useEffect(() => {
     if (authLoading || user) return;
     const at = Number(localStorage.getItem(DISMISS_KEY) || 0);
-    if (Date.now() - at > DISMISS_TTL_MS) {
+    const ttl = getRemember() ? DISMISS_TTL_REMEMBER_MS : DISMISS_TTL_TAB_MS;
+    if (Date.now() - at > ttl) {
       const t = setTimeout(() => setOpen(true), 600);
       return () => clearTimeout(t);
     }
@@ -56,6 +63,8 @@ export function WelcomeAuthPrompt() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        setRemember(remember);
+        if (remember) markTabSession(); else clearTabSession();
         toast.success("Welcome back.");
         setOpen(false);
       }
