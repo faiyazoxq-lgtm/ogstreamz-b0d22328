@@ -536,6 +536,107 @@ function RedeemCodePanel() {
   );
 }
 
+function BulkActionBar({
+  selected, rows, onClear, onApplied,
+}: {
+  selected: Set<string>;
+  rows: Row[];
+  onClear: () => void;
+  onApplied: (updates: Record<string, Partial<Row>>) => void;
+}) {
+  const adj = useServerFn(adjustCredits);
+  const setR = useServerFn(setRank);
+  const setF = useServerFn(setFeatureFlags);
+  const [busy, setBusy] = useState(false);
+
+  if (selected.size === 0) return null;
+
+  const ids = Array.from(selected);
+  const targets = rows.filter((r) => selected.has(r.id));
+
+  const runCredits = async (delta: number) => {
+    setBusy(true);
+    const updates: Record<string, Partial<Row>> = {};
+    let ok = 0, fail = 0;
+    for (const id of ids) {
+      try {
+        const r = await adj({ data: { userId: id, delta, reason: "boss:bulk" } });
+        updates[id] = { credits: r.credits };
+        ok++;
+      } catch { fail++; }
+    }
+    onApplied(updates);
+    setBusy(false);
+    toast.success(`${delta > 0 ? "+" : ""}${delta} credits → ${ok} users${fail ? ` · ${fail} failed` : ""}`);
+  };
+
+  const runRank = async (rank: Rank) => {
+    setBusy(true);
+    const updates: Record<string, Partial<Row>> = {};
+    let ok = 0, fail = 0;
+    for (const id of ids) {
+      try {
+        await setR({ data: { userId: id, rank } });
+        updates[id] = { rank, status: rank === "vip" || rank === "boss" ? "vip" : "free" };
+        ok++;
+      } catch { fail++; }
+    }
+    onApplied(updates);
+    setBusy(false);
+    toast.success(`Rank → ${rank.toUpperCase()} on ${ok} users${fail ? ` · ${fail} failed` : ""}`);
+  };
+
+  const runFlag = async (key: keyof Flags, value: boolean) => {
+    setBusy(true);
+    const updates: Record<string, Partial<Row>> = {};
+    let ok = 0, fail = 0;
+    for (const t of targets) {
+      const flags = { ...t.feature_flags, [key]: value };
+      try {
+        await setF({ data: { userId: t.id, flags } });
+        updates[t.id] = { feature_flags: flags };
+        ok++;
+      } catch { fail++; }
+    }
+    onApplied(updates);
+    setBusy(false);
+    toast.success(`${key} ${value ? "ON" : "OFF"} on ${ok} users${fail ? ` · ${fail} failed` : ""}`);
+  };
+
+  return (
+    <div className="px-3 py-2 border-b border-cyan-700/40 bg-cyan-950/30 backdrop-blur flex items-center gap-2 flex-wrap">
+      <span className="text-[10px] uppercase tracking-[0.3em] text-cyan-300 font-bold">
+        {busy ? <Loader2 className="h-3 w-3 inline animate-spin mr-1" /> : null}
+        {selected.size} selected
+      </span>
+      <span className="text-[10px] text-emerald-700 uppercase tracking-widest">credits:</span>
+      {[50, 100, 500].map((v) => (
+        <Button key={`+${v}`} size="sm" disabled={busy} onClick={() => runCredits(v)} className="h-6 px-2 text-[10px] bg-emerald-700 hover:bg-emerald-600 text-black">+{v}</Button>
+      ))}
+      {[50, 100].map((v) => (
+        <Button key={`-${v}`} size="sm" disabled={busy} onClick={() => runCredits(-v)} className="h-6 px-2 text-[10px] bg-rose-700 hover:bg-rose-600 text-white">−{v}</Button>
+      ))}
+      <span className="text-[10px] text-emerald-700 uppercase tracking-widest ml-2">rank:</span>
+      <Button size="sm" disabled={busy} onClick={() => runRank("vip")} className="h-6 px-2 text-[10px] bg-yellow-500 hover:bg-yellow-400 text-black">
+        <Crown className="h-3 w-3 mr-1" />Grant VIP
+      </Button>
+      <Button size="sm" disabled={busy} onClick={() => runRank("prospect")} className="h-6 px-2 text-[10px] bg-emerald-800 hover:bg-emerald-700 text-emerald-100">
+        Revoke / Reset
+      </Button>
+      <span className="text-[10px] text-emerald-700 uppercase tracking-widest ml-2">features:</span>
+      {(["jokes","music","tools"] as const).map((k) => (
+        <span key={k} className="inline-flex items-center gap-1">
+          <Button size="sm" disabled={busy} onClick={() => runFlag(k, true)} className="h-6 px-2 text-[10px] bg-cyan-700 hover:bg-cyan-600 text-white">{k}+</Button>
+          <Button size="sm" disabled={busy} onClick={() => runFlag(k, false)} className="h-6 px-2 text-[10px] bg-zinc-700 hover:bg-zinc-600 text-zinc-200">{k}−</Button>
+        </span>
+      ))}
+      <button onClick={onClear} disabled={busy} className="ml-auto text-[10px] uppercase tracking-widest text-emerald-600 hover:text-emerald-300">
+        <X className="h-3 w-3 inline mr-1" />Clear
+      </button>
+    </div>
+  );
+}
+
 function ResellerAdminPanel({ rows }: { rows: Row[] }) {
   const list = useServerFn(bossListResellers);
   const create = useServerFn(bossCreateReseller);
