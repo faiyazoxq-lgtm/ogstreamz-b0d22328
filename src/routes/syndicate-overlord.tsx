@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Skull, Loader2, Search, Sparkles, Plus, Minus, Ticket, Users, Wallet, Crown, X,
   Activity, Shield, Filter, Zap, Mail, Send, Trash2, NotebookPen, Pin, PinOff, Save,
@@ -34,6 +34,63 @@ type Row = {
   id: string; email: string; status: "free" | "vip"; credits: number;
   rank: Rank; feature_flags: Flags; display_name: string | null; created_at: string;
 };
+
+/** Labeled form field used across generator panels for a clearer interface. */
+function Field({
+  label, hint, icon: Icon, className, children,
+}: {
+  label: string;
+  hint?: string;
+  icon?: any;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className={`flex flex-col gap-1.5 ${className ?? ""}`}>
+      <label className="text-[11px] uppercase tracking-[0.2em] text-cyan-300 font-black flex items-center gap-1.5">
+        {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
+        {label}
+      </label>
+      {children}
+      {hint ? <span className="text-[11px] text-emerald-600/80 normal-case tracking-normal leading-snug">{hint}</span> : null}
+    </div>
+  );
+}
+
+/** Header strip used at the top of each generator panel. */
+function GeneratorHeader({
+  icon: Icon, title, subtitle, accent,
+}: {
+  icon: any;
+  title: string;
+  subtitle: string;
+  accent: "cyan" | "yellow" | "pink";
+}) {
+  const map = {
+    cyan:   { bar: "from-cyan-500 to-cyan-300",   ring: "ring-cyan-500/30",  text: "text-cyan-200",   chip: "bg-cyan-500/15 text-cyan-300 border-cyan-700/40" },
+    yellow: { bar: "from-yellow-400 to-amber-300", ring: "ring-yellow-500/30", text: "text-yellow-200", chip: "bg-yellow-500/15 text-yellow-300 border-yellow-700/40" },
+    pink:   { bar: "from-pink-500 to-fuchsia-400", ring: "ring-pink-500/30",  text: "text-pink-200",   chip: "bg-pink-500/15 text-pink-300 border-pink-700/40" },
+  } as const;
+  const c = map[accent];
+  return (
+    <div className="mb-5 flex items-start gap-4">
+      <div className={`shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br ${c.bar} grid place-items-center text-black shadow-lg ring-4 ${c.ring}`}>
+        <Icon className="h-6 w-6 stroke-[2.5]" />
+      </div>
+      <div className="min-w-0">
+        <span className={`inline-block text-[10px] uppercase tracking-[0.4em] font-black px-2 py-0.5 rounded border ${c.chip} mb-1.5`}>
+          Generator
+        </span>
+        <h2 className={`text-2xl sm:text-3xl font-black tracking-tight ${c.text} leading-tight`}>{title}</h2>
+        <p className="mt-1 text-sm text-emerald-400/80 normal-case tracking-normal leading-snug">{subtitle}</p>
+      </div>
+    </div>
+  );
+}
+
+const FIELD_INPUT = "h-11 bg-black/70 border-2 border-emerald-800/50 focus-visible:border-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-500/30 text-emerald-100 placeholder:text-emerald-700 text-base font-bold tracking-tight";
+const FIELD_SELECT = "h-11 bg-black/70 border-2 border-emerald-800/50 text-emerald-100 text-base font-bold tracking-tight";
+const PRIMARY_BTN = "h-11 text-base font-black tracking-wider uppercase shadow-lg";
 
 export const Route = createFileRoute("/syndicate-overlord")({
   head: () => ({ meta: [{ title: "Boss Control Center · 0G-PORTAL" }] }),
@@ -670,26 +727,36 @@ function RedeemCodePanel() {
   };
 
   return (
-    <section className="rounded-xl border border-emerald-700/30 bg-black/50 p-5 backdrop-blur">
-      <h2 className="text-xs uppercase tracking-[0.4em] text-cyan-400 mb-4 flex items-center gap-2">
-        <Ticket className="h-3.5 w-3.5" /> Create a Redeem Code
-      </h2>
-      <p className="text-[10px] text-emerald-700 uppercase tracking-widest mb-3">
-        Share the code — anyone who enters it gets the credits (and rank, if set).
-      </p>
-      <div className="grid sm:grid-cols-5 gap-2">
-        <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="Code (e.g. WELCOME50)" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono uppercase" />
-        <Input value={credits} onChange={(e) => setCredits(e.target.value)} type="number" min="1" placeholder="Credits to give" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
-        <Input value={maxUses} onChange={(e) => setMaxUses(e.target.value)} type="number" min="1" placeholder="How many people" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
-        <Select value={grantRank || "none"} onValueChange={(v) => setGrantRank(v === "none" ? "" : v as Rank)}>
-          <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200"><SelectValue /></SelectTrigger>
-          <SelectContent className="bg-black border-emerald-800 text-emerald-200">
-            <SelectItem value="none">No rank change</SelectItem>
-            {RANKS.filter((r) => r !== "boss").map((r) => <SelectItem key={r} value={r}>Also set rank: {r}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Button onClick={submit} disabled={busy || !code} className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="h-4 w-4 mr-1" />Create</>}
+    <section className="rounded-2xl border-2 border-cyan-700/30 bg-gradient-to-br from-black/70 to-cyan-950/20 p-6 backdrop-blur shadow-xl">
+      <GeneratorHeader
+        icon={Ticket}
+        accent="cyan"
+        title="Create a Redeem Code"
+        subtitle="Share the code — anyone who enters it gets credits (and a rank, if set)."
+      />
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Field label="Code" hint="Word people will type" icon={Ticket}>
+          <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="WELCOME50" className={`${FIELD_INPUT} uppercase`} />
+        </Field>
+        <Field label="Credits" hint="Per redemption" icon={Coins}>
+          <Input value={credits} onChange={(e) => setCredits(e.target.value)} type="number" min="1" placeholder="25" className={FIELD_INPUT} />
+        </Field>
+        <Field label="Max uses" hint="How many people can redeem" icon={Users}>
+          <Input value={maxUses} onChange={(e) => setMaxUses(e.target.value)} type="number" min="1" placeholder="1" className={FIELD_INPUT} />
+        </Field>
+        <Field label="Bonus rank" hint="Optional rank upgrade on redeem" icon={Crown}>
+          <Select value={grantRank || "none"} onValueChange={(v) => setGrantRank(v === "none" ? "" : v as Rank)}>
+            <SelectTrigger className={FIELD_SELECT}><SelectValue /></SelectTrigger>
+            <SelectContent className="bg-black border-emerald-800 text-emerald-200">
+              <SelectItem value="none">No rank change</SelectItem>
+              {RANKS.filter((r) => r !== "boss").map((r) => <SelectItem key={r} value={r}>Set rank: {r}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </Field>
+      </div>
+      <div className="mt-5 flex justify-end">
+        <Button onClick={submit} disabled={busy || !code} className={`${PRIMARY_BTN} px-6 bg-cyan-500 hover:bg-cyan-400 text-black`}>
+          {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Sparkles className="h-5 w-5 mr-2" />Mint Code</>}
         </Button>
       </div>
     </section>
@@ -909,27 +976,37 @@ function ResellerAdminPanel({ rows }: { rows: Row[] }) {
   const emailOf = (uid: string) => rows.find((r) => r.id === uid)?.email ?? uid.slice(0, 8) + "…";
 
   return (
-    <section className="rounded-xl border border-pink-700/30 bg-black/50 p-5 backdrop-blur">
-      <h2 className="text-xs uppercase tracking-[0.4em] text-pink-400 mb-4 flex items-center gap-2">
-        <Users className="h-3.5 w-3.5" /> Reseller Program
-      </h2>
-      <p className="text-[10px] text-emerald-700 uppercase tracking-widest mb-3">
-        Give a user a wallet so they can sell credits on your behalf.
-      </p>
-      <div className="grid sm:grid-cols-5 gap-2">
-        <Select value={userId} onValueChange={setUserId}>
-          <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200">
-            <SelectValue placeholder="Choose a user…" />
-          </SelectTrigger>
-          <SelectContent className="bg-black border-emerald-800 text-emerald-200 max-h-72">
-            {rows.map((r) => <SelectItem key={r.id} value={r.id}>{r.email}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Reseller name" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
-        <Input value={initialCredits} onChange={(e) => setInitialCredits(e.target.value)} type="number" min="0" placeholder="Starting credits" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
-        <Input value={markup} onChange={(e) => setMarkup(e.target.value)} type="number" min="0" placeholder="Their markup (¢)" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
-        <Button onClick={submit} disabled={busy || !userId} className="bg-pink-500 hover:bg-pink-400 text-black font-bold">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="h-4 w-4 mr-1" />Activate</>}
+    <section className="rounded-2xl border-2 border-pink-700/30 bg-gradient-to-br from-black/70 to-pink-950/20 p-6 backdrop-blur shadow-xl">
+      <GeneratorHeader
+        icon={Users}
+        accent="pink"
+        title="Reseller Program"
+        subtitle="Give a user a wallet so they can sell credits on your behalf."
+      />
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Field label="Choose user" hint="Pick from existing accounts" icon={UserIcon}>
+          <Select value={userId} onValueChange={setUserId}>
+            <SelectTrigger className={FIELD_SELECT}>
+              <SelectValue placeholder="Choose a user…" />
+            </SelectTrigger>
+            <SelectContent className="bg-black border-emerald-800 text-emerald-200 max-h-72">
+              {rows.map((r) => <SelectItem key={r.id} value={r.id}>{r.email}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Reseller name" hint="Display label for their store" icon={NotebookPen}>
+          <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Acme Drops" className={FIELD_INPUT} />
+        </Field>
+        <Field label="Starting credits" hint="Wallet balance to seed" icon={Wallet}>
+          <Input value={initialCredits} onChange={(e) => setInitialCredits(e.target.value)} type="number" min="0" placeholder="100" className={FIELD_INPUT} />
+        </Field>
+        <Field label="Markup (cents)" hint="Their profit per credit sold" icon={Coins}>
+          <Input value={markup} onChange={(e) => setMarkup(e.target.value)} type="number" min="0" placeholder="500" className={FIELD_INPUT} />
+        </Field>
+      </div>
+      <div className="mt-5 flex justify-end">
+        <Button onClick={submit} disabled={busy || !userId} className={`${PRIMARY_BTN} px-6 bg-pink-500 hover:bg-pink-400 text-black`}>
+          {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Sparkles className="h-5 w-5 mr-2" />Activate Reseller</>}
         </Button>
       </div>
 
@@ -1021,46 +1098,37 @@ function PreLoadPanel({ onApplied }: { onApplied: () => void }) {
   const visible = pending.filter((g) => showClaimed || !g.claimed_at);
 
   return (
-    <section className="rounded-xl border border-cyan-700/30 bg-black/50 p-5 backdrop-blur">
-      <h2 className="text-xs uppercase tracking-[0.4em] text-cyan-400 mb-1 flex items-center gap-2">
-        <Mail className="h-3.5 w-3.5" /> Pre-load Credits by Email
-      </h2>
-      <p className="text-[10px] text-emerald-700 uppercase tracking-widest mb-4">
-        Already a user → credits added now · new email → waiting, added when they sign up
-      </p>
-
-      <div className="grid sm:grid-cols-6 gap-2">
-        <Input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="user@example.com"
-          type="email"
-          className="sm:col-span-2 bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
-        />
-        <Input
-          value={credits}
-          onChange={(e) => setCredits(e.target.value)}
-          type="number"
-          min="0"
-          placeholder="Credits"
-          className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
-        />
-        <Select value={grantRank || "none"} onValueChange={(v) => setGrantRank(v === "none" ? "" : v as Rank)}>
-          <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200"><SelectValue /></SelectTrigger>
-          <SelectContent className="bg-black border-emerald-800 text-emerald-200">
-            <SelectItem value="none">No rank change</SelectItem>
-            {RANKS.filter((r) => r !== "boss").map((r) => <SelectItem key={r} value={r}>Also set rank: {r}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Input
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Note (optional)"
-          className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
-        />
-        <Button onClick={submit} disabled={busy || !email} className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 mr-1" />Send</>}
-        </Button>
+    <section className="rounded-2xl border-2 border-cyan-700/30 bg-gradient-to-br from-black/70 to-cyan-950/20 p-6 backdrop-blur shadow-xl">
+      <GeneratorHeader
+        icon={Mail}
+        accent="cyan"
+        title="Pre-load Credits by Email"
+        subtitle="If they're a user → credits land instantly. If not → queued, applied on signup."
+      />
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Field label="Recipient email" hint="Who to credit" icon={Mail} className="lg:col-span-2">
+          <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="user@example.com" type="email" className={FIELD_INPUT} />
+        </Field>
+        <Field label="Credits" hint="Amount to grant" icon={Coins}>
+          <Input value={credits} onChange={(e) => setCredits(e.target.value)} type="number" min="0" placeholder="50" className={FIELD_INPUT} />
+        </Field>
+        <Field label="Bonus rank" hint="Optional rank upgrade" icon={Crown}>
+          <Select value={grantRank || "none"} onValueChange={(v) => setGrantRank(v === "none" ? "" : v as Rank)}>
+            <SelectTrigger className={FIELD_SELECT}><SelectValue /></SelectTrigger>
+            <SelectContent className="bg-black border-emerald-800 text-emerald-200">
+              <SelectItem value="none">No rank change</SelectItem>
+              {RANKS.filter((r) => r !== "boss").map((r) => <SelectItem key={r} value={r}>Set rank: {r}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Note" hint="Private — only you see this" icon={NotebookPen} className="lg:col-span-3">
+          <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. early supporter, conf giveaway…" className={FIELD_INPUT} />
+        </Field>
+        <div className="flex items-end">
+          <Button onClick={submit} disabled={busy || !email} className={`${PRIMARY_BTN} w-full bg-cyan-500 hover:bg-cyan-400 text-black`}>
+            {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Send className="h-5 w-5 mr-2" />Send Grant</>}
+          </Button>
+        </div>
       </div>
 
       <div className="mt-5 flex items-center justify-between text-[10px] uppercase tracking-widest text-emerald-700">
@@ -1168,43 +1236,53 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
   const visible = passes.filter((p) => showInactive || isActive(p));
 
   return (
-    <section className="rounded-xl border border-yellow-700/30 bg-black/50 p-5 backdrop-blur">
-      <h2 className="text-xs uppercase tracking-[0.4em] text-yellow-400 mb-4 flex items-center gap-2">
-        <Crown className="h-3.5 w-3.5" /> VIP Passes
-      </h2>
-      <p className="text-[10px] text-emerald-700 uppercase tracking-widest mb-3">
-        Choose a user, pick how long, and grant VIP access.
-      </p>
-      <div className="grid sm:grid-cols-6 gap-2">
-        <Select value={userId} onValueChange={setUserId}>
-          <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200 sm:col-span-2">
-            <SelectValue placeholder="Choose a user…" />
-          </SelectTrigger>
-          <SelectContent className="bg-black border-emerald-800 text-emerald-200 max-h-72">
-            {rows.map((r) => <SelectItem key={r.id} value={r.id}>{r.email}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={preset} onValueChange={(v) => setPreset(v as any)}>
-          <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200"><SelectValue /></SelectTrigger>
-          <SelectContent className="bg-black border-emerald-800 text-emerald-200">
-            <SelectItem value="30">1 month</SelectItem>
-            <SelectItem value="90">3 months</SelectItem>
-            <SelectItem value="180">6 months</SelectItem>
-            <SelectItem value="365">12 months</SelectItem>
-            <SelectItem value="custom">Pick a date</SelectItem>
-          </SelectContent>
-        </Select>
-        <Input
-          type="date"
-          value={customDate}
-          onChange={(e) => setCustomDate(e.target.value)}
-          disabled={preset !== "custom"}
-          className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
-        />
-        <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Note (optional)" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
-        <Button onClick={submit} disabled={busy} className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Crown className="h-4 w-4 mr-1" />Grant VIP</>}
-        </Button>
+    <section className="rounded-2xl border-2 border-yellow-700/30 bg-gradient-to-br from-black/70 to-yellow-950/10 p-6 backdrop-blur shadow-xl">
+      <GeneratorHeader
+        icon={Crown}
+        accent="yellow"
+        title="Grant VIP Pass"
+        subtitle="Choose a user, pick how long, and unlock VIP access immediately."
+      />
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Field label="User" hint="Search and pick a member" icon={UserIcon} className="lg:col-span-2">
+          <Select value={userId} onValueChange={setUserId}>
+            <SelectTrigger className={FIELD_SELECT}>
+              <SelectValue placeholder="Choose a user…" />
+            </SelectTrigger>
+            <SelectContent className="bg-black border-emerald-800 text-emerald-200 max-h-72">
+              {rows.map((r) => <SelectItem key={r.id} value={r.id}>{r.email}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Duration" hint="How long VIP lasts" icon={Clock}>
+          <Select value={preset} onValueChange={(v) => setPreset(v as any)}>
+            <SelectTrigger className={FIELD_SELECT}><SelectValue /></SelectTrigger>
+            <SelectContent className="bg-black border-emerald-800 text-emerald-200">
+              <SelectItem value="30">1 month</SelectItem>
+              <SelectItem value="90">3 months</SelectItem>
+              <SelectItem value="180">6 months</SelectItem>
+              <SelectItem value="365">12 months</SelectItem>
+              <SelectItem value="custom">Custom date…</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Custom expiry" hint="Only used when Duration = Custom" icon={Clock}>
+          <Input
+            type="date"
+            value={customDate}
+            onChange={(e) => setCustomDate(e.target.value)}
+            disabled={preset !== "custom"}
+            className={`${FIELD_INPUT} disabled:opacity-40`}
+          />
+        </Field>
+        <Field label="Note" hint="Private reminder for you" icon={NotebookPen} className="lg:col-span-2">
+          <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. comp pass for podcast guest…" className={FIELD_INPUT} />
+        </Field>
+        <div className="flex items-end lg:col-span-1">
+          <Button onClick={submit} disabled={busy} className={`${PRIMARY_BTN} w-full bg-yellow-500 hover:bg-yellow-400 text-black`}>
+            {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Crown className="h-5 w-5 mr-2" />Grant VIP</>}
+          </Button>
+        </div>
       </div>
 
       <div className="mt-4 flex items-center justify-between text-[10px] uppercase tracking-widest text-emerald-700">
