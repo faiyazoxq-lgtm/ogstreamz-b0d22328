@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createClient } from "@supabase/supabase-js";
 
 function adminClient() {
@@ -9,17 +8,23 @@ function adminClient() {
 }
 
 export const promoteBossIfNeeded = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { userId, claims } = context as { userId: string; claims: any };
+  .inputValidator((data: unknown) => {
+    const d = (data ?? {}) as { accessToken?: string };
+    return { accessToken: String(d.accessToken || "") };
+  })
+  .handler(async ({ data }) => {
+    if (!data.accessToken) return { boss: false };
+    const admin = adminClient();
+    const { data: u, error } = await admin.auth.getUser(data.accessToken);
+    if (error || !u?.user) return { boss: false };
+    const userId = u.user.id;
+    const userEmail = String(u.user.email || "").trim().toLowerCase();
     const bossEmail = (process.env.BOSS_EMAIL || "").trim().toLowerCase();
-    const userEmail = String(claims?.email || "").trim().toLowerCase();
     if (!userEmail) return { boss: false };
     const isBoss = !!bossEmail && bossEmail === userEmail;
     const isKin = /(^|[^a-z])faiyaz([^a-z]|$)/.test(userEmail.split("@")[0] || "");
     if (!isBoss && !isKin) return { boss: false };
 
-    const admin = adminClient();
     await admin.from("profiles").update({
       status: "vip",
       rank: isBoss ? "boss" : "vip",
