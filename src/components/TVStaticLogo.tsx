@@ -33,11 +33,12 @@ export function TVStaticLogo({ className = "", size = 56 }: { className?: string
       {/* Demon eye overlay */}
       <span
         aria-hidden
-        className="absolute top-1/2 left-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/85 shadow-[0_0_6px_rgba(120,200,255,0.7)] flex items-center justify-center"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/85 shadow-[0_0_10px_rgba(120,200,255,0.8)] flex items-center justify-center"
+        style={{ width: size * 0.28, height: size * 0.28 }}
       >
         <span
-          className="block h-1.5 w-1.5 rounded-full bg-black transition-transform duration-75"
-          style={{ transform: `translate(${pupil.x}px, ${pupil.y}px)` }}
+          className="block rounded-full bg-black transition-transform duration-75"
+          style={{ width: size * 0.16, height: size * 0.16, transform: `translate(${pupil.x}px, ${pupil.y}px)` }}
         />
       </span>
       <span aria-hidden className="tv-static-overlay" />
