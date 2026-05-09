@@ -493,6 +493,10 @@ function ResellerAdminPanel({ rows }: { rows: Row[] }) {
 }
 
 function VipPassPanel({ rows }: { rows: Row[] }) {
+  // placeholder so PreLoadPanel can be defined above without disturbing existing code
+  return _VipPassPanel({ rows });
+}
+function _VipPassPanel({ rows }: { rows: Row[] }) {
   const grant = useServerFn(grantVipPass);
   const revoke = useServerFn(revokeVipPass);
   const list = useServerFn(listVipPasses);
