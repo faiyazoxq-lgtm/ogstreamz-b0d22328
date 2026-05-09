@@ -238,14 +238,10 @@ function PortalsHub() {
                     </div>
                   )}
                 </div>
-                <Link
-                  to={i.to as any}
-                  params={{ slug: i.slug }}
-                  className="mt-3 block"
-                >
+                <a href={href} className="mt-3 block">
                   <h3 className="font-[Montserrat] font-black text-xl tracking-tight truncate">{i.name}</h3>
                   <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{i.subtitle || "—"}</p>
-                </Link>
+                </a>
                 <div className="mt-3 text-[10px] uppercase tracking-widest text-muted-foreground/70 truncate">
                   {origin.replace(/^https?:\/\//, "")}{href}
                 </div>
@@ -256,14 +252,13 @@ function PortalsHub() {
                   >
                     <Copy className="h-3.5 w-3.5" /> Copy link
                   </button>
-                  <Link
-                    to={i.to as any}
-                    params={{ slug: i.slug }}
+                  <a
+                    href={href}
                     className="inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-[11px] uppercase tracking-[0.2em] font-bold text-black"
                     style={{ background: meta.accent }}
                   >
                     Open <ExternalLink className="h-3.5 w-3.5" />
-                  </Link>
+                  </a>
                 </div>
                 {i.views > 0 && (
                   <div className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground/60">
