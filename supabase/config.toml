@@ -1,1 +1,4 @@
 project_id = "dawcdietltejjxbdimkm"
+
+[functions.shapes-handler]
+verify_jwt = false
