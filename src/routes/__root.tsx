@@ -21,6 +21,7 @@ import { BottomDock } from "../components/BottomDock";
 import { LiveThinkingFeed } from "../components/LiveThinkingFeed";
 import { SystemGlitchOverlay } from "../components/SystemGlitchOverlay";
 import { EnforcerConsole } from "../components/EnforcerConsole";
+import { SpotlightEyes } from "../components/SpotlightEyes";
 
 function NotFoundComponent() {
   return (
@@ -134,6 +135,7 @@ function RootComponent() {
         <GlobalMoodProvider>
           <div className="min-h-screen bg-background text-foreground">
             <PaymentTestModeBanner />
+            <SpotlightEyes />
             <NavBar />
             <Outlet />
             <TeleportOverlay />

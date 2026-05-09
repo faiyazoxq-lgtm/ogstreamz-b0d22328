@@ -54,15 +54,15 @@ function NavDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-md transition-colors outline-none ${
+        className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 text-sm sm:text-base font-semibold rounded-md transition-colors outline-none ${
           gold
             ? "text-gold hover:bg-gold/10 border border-gold/30"
             : "text-muted-foreground hover:text-foreground hover:bg-secondary"
         }`}
       >
-        <Icon className="h-3.5 w-3.5" />
+        <Icon className="h-4 w-4" />
         <span>{label}</span>
-        <ChevronDown className="h-3 w-3 opacity-70" />
+        <ChevronDown className="h-3.5 w-3.5 opacity-70" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64 bg-card border-border">
         <DropdownMenuLabel className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
@@ -106,10 +106,10 @@ export function NavBar() {
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border">
-      <nav className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-8 h-16 gap-2">
-        <Link to="/" className="flex items-center gap-2 group">
-          <TVStaticLogo />
-          <span className="font-[Montserrat] font-black text-base sm:text-xl tracking-tight text-metallic mood-glitch">
+      <nav className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-8 h-20 gap-2">
+        <Link to="/" className="flex items-center gap-3 group">
+          <TVStaticLogo className="logo-xl" />
+          <span className="font-[Montserrat] font-black text-2xl sm:text-3xl tracking-tight text-aura-blue">
             0G-PORTAL
           </span>
         </Link>
