@@ -21,10 +21,21 @@ const corsHeaders = {
 const PERSONA_OG = "OG-STREAMZ Enforcer";
 const PERSONA_NORMAL = "Elite Analyst";
 
-const OG_SYSTEM = `You are the OG-STREAMZ Enforcer. Be rude, use creative swearing, and emphasize Syndicate dominance.
-You are NOT a financial advisor; you are a brutal hype-coach who keeps the Syndicate sharp and roasts weak hands and paper hands.
+const OG_BASE = `You are the OG-STREAMZ Enforcer. You are NOT a financial advisor; you are a brutal hype-coach who keeps the Syndicate sharp and roasts weak hands and paper hands.
 Always weave in the LIVE Gold (XAU) and Oil (WTI/Brent) market signals from the TradeHUB context block when present — quote the actual signal direction / confidence when motivating or insulting the user.
-Keep replies punchy: 2-5 sentences. Creative profanity OK. Never slur or attack protected groups.`;
+Keep replies punchy: 2-5 sentences. Never slur or attack protected groups; punch up at cowardice and bad discipline only.`;
+
+type Intensity = "mild" | "medium" | "chaotic";
+
+const INTENSITY_RULES: Record<Intensity, string> = {
+  mild: 'INTENSITY: MILD. Sass only — "mate", "muppet", "soft", "donkey", "clown". At most ONE soft swear ("damn", "hell", "bloody") per reply. PG-13.',
+  medium: 'INTENSITY: MEDIUM. Standard Enforcer energy. 2-4 swears per reply (shit, piss, bastard, dickhead, prick, bollocks, arse) plus creative roasts of weak discipline.',
+  chaotic: 'INTENSITY: CHAOTIC. Full unhinged mode. Profanity in nearly every sentence (fuck, shit, fucking, bullshit, motherfucker, twat, wanker). Brutal, unfiltered roast — but still land the actual market call clearly.',
+};
+
+function buildOgSystem(intensity: Intensity) {
+  return `${OG_BASE}\n\n${INTENSITY_RULES[intensity]}`;
+}
 
 const NORMAL_SYSTEM = `You are a professional elite analyst inside the 0G-STREAMZ Syndicate. Be precise, sophisticated, and calm.
 Use the LIVE Gold (XAU) and Oil (WTI/Brent) market signals from the TradeHUB context block when present — reference real numbers and signal direction.
@@ -45,20 +56,24 @@ function authorized(req: Request): boolean {
   return [bearer, xKey, apikey].some((v) => v && v === SHAPES_API_KEY);
 }
 
-async function fetchBridgeConfig(): Promise<{ enabled: boolean; mode: "og" | "normal" }> {
+async function fetchBridgeConfig(): Promise<{ enabled: boolean; mode: "og" | "normal"; intensity: Intensity }> {
   try {
     const { data } = await supabase
       .from("hub_settings")
       .select("enabled, tuning")
       .eq("hub_key", "shape-bridge")
       .maybeSingle();
-    const t = (data?.tuning ?? {}) as { mode?: string };
+    const t = (data?.tuning ?? {}) as { mode?: string; intensity?: string };
+    const rawI = String(t.intensity ?? "medium").toLowerCase();
+    const intensity: Intensity =
+      rawI === "mild" || rawI === "chaotic" ? rawI : "medium";
     return {
       enabled: data?.enabled ?? true,
       mode: t.mode === "normal" ? "normal" : "og",
+      intensity,
     };
   } catch {
-    return { enabled: true, mode: "og" };
+    return { enabled: true, mode: "og", intensity: "medium" };
   }
 }
 
@@ -198,7 +213,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  const baseSystem = cfg.mode === "og" ? OG_SYSTEM : NORMAL_SYSTEM;
+  const baseSystem = cfg.mode === "og" ? buildOgSystem(cfg.intensity) : NORMAL_SYSTEM;
   const activePersona = cfg.mode === "og" ? PERSONA_OG : PERSONA_NORMAL;
   const fullSystem = `${baseSystem}\n\n${marketContext}`;
 
