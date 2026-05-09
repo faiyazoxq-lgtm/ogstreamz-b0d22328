@@ -3,12 +3,14 @@ import { SyndicateGallery } from "@/components/SyndicateGallery";
 import {
   Music2, Smile, Wrench, ArrowUpRight, TrendingUp, Rocket, Swords,
   Sparkles, Radio, Bot, Brain, Zap, Star, Megaphone, Disc3, Satellite, Radar,
+  UserPlus, LogIn, Gift, ShieldCheck,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.jpg";
 import { TiltCard } from "@/components/TiltCard";
 import { WelcomeAuthPrompt } from "@/components/WelcomeAuthPrompt";
+import { useAuth } from "@/hooks/use-auth";
 
 const ICONS: Record<string, any> = {
   Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
@@ -36,6 +38,7 @@ const portals = [
 
 function Index() {
   const [customHubs, setCustomHubs] = useState<any[]>([]);
+  const { user, profile } = useAuth();
   useEffect(() => {
     supabase
       .from("custom_hubs")
@@ -81,6 +84,84 @@ function Index() {
             All Spawned Portals
             <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
+        </div>
+      </section>
+
+      {/* Intro / promo strip — free signup CTA for guests, members entrance for signed-in users */}
+      <section className="relative max-w-5xl mx-auto px-5 sm:px-8 -mt-4 pb-10">
+        <div className="relative overflow-hidden rounded-3xl border border-[oklch(0.72_0.22_245/0.35)] bg-card/60 backdrop-blur-xl p-6 sm:p-8">
+          <div className="pointer-events-none absolute -top-24 -right-16 h-64 w-64 rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245/0.35),transparent)]" />
+          <div className="pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.55_0.24_300/0.25),transparent)]" />
+
+          <p className="text-[10px] uppercase tracking-[0.4em] font-bold" style={{ color: "var(--neon-blue-bright)" }}>
+            {user ? "Members entrance" : "Welcome to the Syndicate"}
+          </p>
+          <h2 className="mt-2 font-[Montserrat] font-black text-2xl sm:text-3xl md:text-4xl tracking-tight text-metallic">
+            {user
+              ? `Back at the decks${profile?.display_name ? `, ${profile.display_name}` : ""}.`
+              : "One frequency. Six portals. Yours, free."}
+          </h2>
+          <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-2xl">
+            {user
+              ? "Your portals, credits and saved sessions are loaded. Drop into a hub or jump back to your dashboard."
+              : "0G-PORTAL fuses music, jokes, trade signals, outreach, battles and tools into one streetwise hub. Free sign-up — keep your credits, lyrics, scans and chats forever. No card, no nonsense."}
+          </p>
+
+          {!user && (
+            <ul className="mt-4 grid gap-2 sm:grid-cols-3 text-[12px] text-white/80">
+              <li className="flex items-center gap-2 rounded-md border border-white/10 bg-black/30 px-3 py-2">
+                <Gift className="h-3.5 w-3.5 text-[oklch(0.72_0.22_245)]" />
+                5 free credits at signup
+              </li>
+              <li className="flex items-center gap-2 rounded-md border border-white/10 bg-black/30 px-3 py-2">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+                No card. Cancel any time.
+              </li>
+              <li className="flex items-center gap-2 rounded-md border border-white/10 bg-black/30 px-3 py-2">
+                <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                All six portals unlocked
+              </li>
+            </ul>
+          )}
+
+          <div className="mt-5 flex flex-wrap gap-2.5">
+            {user ? (
+              <>
+                <Link
+                  to="/dashboard"
+                  className="btn-glass-blue inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-[11px] uppercase tracking-[0.25em] font-bold text-white"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  My dashboard
+                </Link>
+                <Link
+                  to="/portals"
+                  className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-black/40 px-5 py-2.5 text-[11px] uppercase tracking-[0.25em] font-bold text-white/90 hover:border-[oklch(0.72_0.22_245/0.7)]"
+                >
+                  Browse portals
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/auth"
+                  search={{ mode: "signup" } as never}
+                  className="btn-glass-blue inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-[11px] uppercase tracking-[0.25em] font-bold text-white"
+                >
+                  <UserPlus className="h-3.5 w-3.5" />
+                  Create free account
+                </Link>
+                <Link
+                  to="/auth"
+                  className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-black/40 px-5 py-2.5 text-[11px] uppercase tracking-[0.25em] font-bold text-white/90 hover:border-[oklch(0.72_0.22_245/0.7)]"
+                >
+                  <LogIn className="h-3.5 w-3.5" />
+                  Members enter
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </section>
 
