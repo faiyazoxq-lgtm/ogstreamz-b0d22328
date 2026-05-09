@@ -87,7 +87,7 @@ function OverlordPage() {
   }), [rows]);
 
   if (loading || !allowed) {
-    return <main className="px-5 py-20 text-center font-mono text-emerald-400">// Verifying clearance…</main>;
+    return <main className="px-5 py-20 text-center font-mono text-emerald-400">Checking access…</main>;
   }
 
   return (
@@ -98,26 +98,28 @@ function OverlordPage() {
         <header className="mb-6 flex items-center justify-between flex-wrap gap-3">
           <div>
             <p className="text-[10px] uppercase tracking-[0.5em] text-cyan-400 flex items-center gap-2">
-              <Skull className="h-3.5 w-3.5" /> OVERLORD TERMINAL
+              <Skull className="h-3.5 w-3.5" /> BOSS CONTROL
             </p>
             <h1 className="mt-1 text-3xl sm:text-4xl font-black tracking-tight text-cyan-300 drop-shadow-[0_0_18px_rgba(58,214,255,0.4)]">
-              GOD MODE
+              User Manager
             </h1>
+            <p className="mt-1 text-xs text-emerald-600/80 normal-case tracking-normal">
+              Manage every user from one place — credits, rank, features, VIP, all in one row.
+            </p>
           </div>
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest">
             <span className="px-2 py-1 rounded border border-emerald-700/50 text-emerald-300 flex items-center gap-1.5">
-              <Activity className="h-3 w-3 text-emerald-400 animate-pulse" /> live
+              <Activity className="h-3 w-3 text-emerald-400 animate-pulse" /> live data
             </span>
-            <span className="text-emerald-700">session {user?.id.slice(0, 8)}</span>
           </div>
         </header>
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <StatCard icon={<Users className="h-4 w-4" />} label="souls" value={stats.total} tint="cyan" />
-          <StatCard icon={<Crown className="h-4 w-4" />} label="vip+" value={stats.vip} tint="yellow" />
+          <StatCard icon={<Users className="h-4 w-4" />} label="total users" value={stats.total} tint="cyan" />
+          <StatCard icon={<Crown className="h-4 w-4" />} label="vip members" value={stats.vip} tint="yellow" />
           <StatCard icon={<Shield className="h-4 w-4" />} label="enforcers" value={stats.enforcers} tint="emerald" />
-          <StatCard icon={<Zap className="h-4 w-4" />} label="∑ credits" value={stats.credits} tint="pink" />
+          <StatCard icon={<Zap className="h-4 w-4" />} label="credits in circulation" value={stats.credits} tint="pink" />
         </div>
 
         {/* Tabbed control surface */}
@@ -127,10 +129,10 @@ function OverlordPage() {
               <Users className="h-3 w-3 mr-1.5" /> Users
             </TabsTrigger>
             <TabsTrigger value="preload" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
-              <Mail className="h-3 w-3 mr-1.5" /> Pre-Load
+              <Mail className="h-3 w-3 mr-1.5" /> Pre-load Credits
             </TabsTrigger>
             <TabsTrigger value="codes" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
-              <Ticket className="h-3 w-3 mr-1.5" /> Redeem
+              <Ticket className="h-3 w-3 mr-1.5" /> Redeem Codes
             </TabsTrigger>
             <TabsTrigger value="passes" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
               <Crown className="h-3 w-3 mr-1.5" /> VIP Passes
@@ -152,7 +154,7 @@ function OverlordPage() {
                   <Input
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
-                    placeholder="grep email or name…"
+                    placeholder="Search by email or name…"
                     className="pl-9 h-8 bg-black/60 border-emerald-800/40 text-emerald-200 placeholder:text-emerald-700 font-mono text-xs"
                   />
                 </div>
@@ -172,20 +174,21 @@ function OverlordPage() {
                     </button>
                   ))}
                 </div>
-                <span className="text-[10px] text-emerald-700 ml-auto">{filtered.length} / {rows.length}</span>
+                <span className="text-[10px] text-emerald-700 ml-auto">Showing {filtered.length} of {rows.length}</span>
               </div>
 
               <div className="hidden md:grid grid-cols-12 gap-2 px-4 py-2 text-[10px] uppercase tracking-[0.3em] text-cyan-400 border-b border-emerald-800/40 bg-black/40">
-                <div className="col-span-4">User</div>
+                <div className="col-span-3">User</div>
                 <div className="col-span-2">Rank</div>
                 <div className="col-span-2">Credits</div>
-                <div className="col-span-4">Hubs</div>
+                <div className="col-span-2">Features</div>
+                <div className="col-span-3 text-right pr-2">Quick actions</div>
               </div>
 
               <div className="max-h-[60vh] overflow-y-auto">
                 {filtered.map((r) => <UserRow key={r.id} row={r} onChange={(p) => updateRow(r.id, p)} />)}
                 {filtered.length === 0 && (
-                  <p className="px-5 py-12 text-center text-emerald-700">// no records found</p>
+                  <p className="px-5 py-12 text-center text-emerald-700">No users match your search.</p>
                 )}
               </div>
             </div>
