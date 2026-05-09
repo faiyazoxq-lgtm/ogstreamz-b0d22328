@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Copy, ExternalLink, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, Search, Crown } from "lucide-react";
+import { Copy, ExternalLink, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, Search, Crown, QrCode, Share2, Globe, Download, X } from "lucide-react";
 import { toast } from "sonner";
+import { QRCodeSVG } from "qrcode.react";
 
 type PortalRow = {
   id: string;
@@ -61,6 +62,7 @@ function PortalsHub() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | Item["kind"]>("all");
   const [q, setQ] = useState("");
+  const [qrFor, setQrFor] = useState<Item | null>(null);
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 
   useEffect(() => {
@@ -148,6 +150,43 @@ function PortalsHub() {
     }
   };
 
+  const nativeShare = async (i: Item) => {
+    const url = `${origin}${buildHref(i)}`;
+    if (typeof navigator !== "undefined" && (navigator as any).share) {
+      try {
+        await (navigator as any).share({ title: i.name, text: i.subtitle || i.name, url });
+        return;
+      } catch { /* user cancelled */ }
+    }
+    copyLink(i);
+  };
+
+  const downloadQr = (i: Item) => {
+    const svg = document.getElementById(`qr-${i.id}`) as SVGElement | null;
+    if (!svg) return;
+    const xml = new XMLSerializer().serializeToString(svg);
+    const img = new Image();
+    const blob = new Blob([xml], { type: "image/svg+xml;charset=utf-8" });
+    const urlObj = URL.createObjectURL(blob);
+    img.onload = () => {
+      const size = 1024;
+      const canvas = document.createElement("canvas");
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, size, size);
+      ctx.drawImage(img, 0, 0, size, size);
+      const png = canvas.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = png;
+      a.download = `0g-${i.kind}-${i.slug}.png`;
+      a.click();
+      URL.revokeObjectURL(urlObj);
+    };
+    img.src = urlObj;
+  };
+
   return (
     <main className="max-w-7xl mx-auto px-5 sm:px-8 py-10 sm:py-14 pb-24 md:pb-14">
       <header className="mb-8">
@@ -160,6 +199,9 @@ function PortalsHub() {
         <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-2xl">
           Every portal you've spawned — Music, Jokes, Trade, News, Battles and Tools — in one share-ready feed. Tap a card to open it, or copy a clean link to drop anywhere.
         </p>
+        <div className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-[10px] uppercase tracking-[0.25em] font-bold text-emerald-300">
+          <Globe className="h-3 w-3" /> Public view · No account needed to open
+        </div>
       </header>
 
       {/* Controls */}
@@ -248,13 +290,30 @@ function PortalsHub() {
                 <div className="mt-4 flex items-center gap-2">
                   <button
                     onClick={() => copyLink(i)}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-[11px] uppercase tracking-[0.2em] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-2 text-[11px] uppercase tracking-[0.18em] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
+                    title="Copy link"
                   >
-                    <Copy className="h-3.5 w-3.5" /> Copy link
+                    <Copy className="h-3.5 w-3.5" /> Copy
+                  </button>
+                  <button
+                    onClick={() => setQrFor(i)}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-2 text-[11px] uppercase tracking-[0.18em] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
+                    title="Show QR code"
+                    aria-label={`Show QR code for ${i.name}`}
+                  >
+                    <QrCode className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => nativeShare(i)}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-2 text-[11px] uppercase tracking-[0.18em] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
+                    title="Share"
+                    aria-label={`Share ${i.name}`}
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
                   </button>
                   <a
                     href={href}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-[11px] uppercase tracking-[0.2em] font-bold text-black"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-[11px] uppercase tracking-[0.18em] font-bold text-black"
                     style={{ background: meta.accent }}
                   >
                     Open <ExternalLink className="h-3.5 w-3.5" />
@@ -268,6 +327,74 @@ function PortalsHub() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {qrFor && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+          onClick={() => setQrFor(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Share ${qrFor.name}`}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-sm rounded-2xl border border-white/15 bg-black/90 p-6 backdrop-blur-xl"
+            style={{ boxShadow: `0 0 60px -20px ${KIND_META[qrFor.kind].accent}` }}
+          >
+            <button
+              onClick={() => setQrFor(null)}
+              className="absolute top-3 right-3 rounded-full p-1.5 text-muted-foreground hover:text-foreground"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="text-center">
+              <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.3em]" style={{ color: KIND_META[qrFor.kind].accent }}>
+                <QrCode className="h-3.5 w-3.5" /> Scan to open
+              </div>
+              <h3 className="mt-2 font-[Montserrat] font-black text-xl tracking-tight">{qrFor.name}</h3>
+              <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                Public · No account needed
+              </p>
+            </div>
+            <div className="mt-5 flex items-center justify-center rounded-xl bg-white p-4">
+              <QRCodeSVG
+                id={`qr-${qrFor.id}`}
+                value={`${origin}${buildHref(qrFor)}`}
+                size={232}
+                level="M"
+                marginSize={1}
+                fgColor="#000000"
+                bgColor="#ffffff"
+              />
+            </div>
+            <div className="mt-4 break-all rounded-md border border-border bg-card px-3 py-2 text-center text-[11px] text-muted-foreground">
+              {origin}{buildHref(qrFor)}
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <button
+                onClick={() => copyLink(qrFor)}
+                className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-card px-2 py-2 text-[10px] uppercase tracking-[0.18em] font-bold"
+              >
+                <Copy className="h-3.5 w-3.5" /> Copy
+              </button>
+              <button
+                onClick={() => downloadQr(qrFor)}
+                className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-card px-2 py-2 text-[10px] uppercase tracking-[0.18em] font-bold"
+              >
+                <Download className="h-3.5 w-3.5" /> PNG
+              </button>
+              <button
+                onClick={() => nativeShare(qrFor)}
+                className="inline-flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-[10px] uppercase tracking-[0.18em] font-bold text-black"
+                style={{ background: KIND_META[qrFor.kind].accent }}
+              >
+                <Share2 className="h-3.5 w-3.5" /> Share
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </main>
