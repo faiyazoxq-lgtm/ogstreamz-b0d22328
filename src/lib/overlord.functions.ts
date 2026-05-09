@@ -44,9 +44,14 @@ export const setRank = createServerFn({ method: "POST" })
 
 export const setFeatureFlags = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { userId: string; flags: { jokes: boolean; music: boolean; tools: boolean } }) => ({
+  .inputValidator((d: { userId: string; flags: { jokes: boolean; music: boolean; tools: boolean; swearing?: boolean } }) => ({
     userId: String(d.userId),
-    flags: { jokes: !!d.flags.jokes, music: !!d.flags.music, tools: !!d.flags.tools },
+    flags: {
+      jokes: !!d.flags.jokes,
+      music: !!d.flags.music,
+      tools: !!d.flags.tools,
+      swearing: !!d.flags.swearing,
+    },
   }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
