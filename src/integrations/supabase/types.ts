@@ -108,6 +108,7 @@ export type Database = {
           research: Json
           scenario: string
           slug: string
+          swear_chat_enabled: boolean
           tagline: string
           theme_config: Json
           themes: string[]
@@ -127,6 +128,7 @@ export type Database = {
           research?: Json
           scenario: string
           slug: string
+          swear_chat_enabled?: boolean
           tagline?: string
           theme_config?: Json
           themes?: string[]
@@ -146,6 +148,7 @@ export type Database = {
           research?: Json
           scenario?: string
           slug?: string
+          swear_chat_enabled?: boolean
           tagline?: string
           theme_config?: Json
           themes?: string[]
@@ -604,6 +607,7 @@ export type Database = {
           id: string
           published: boolean
           sort_order: number
+          swear_chat_enabled: boolean
           tagline: string
           title: string
           updated_at: string
@@ -617,6 +621,7 @@ export type Database = {
           id?: string
           published?: boolean
           sort_order?: number
+          swear_chat_enabled?: boolean
           tagline?: string
           title: string
           updated_at?: string
@@ -630,6 +635,7 @@ export type Database = {
           id?: string
           published?: boolean
           sort_order?: number
+          swear_chat_enabled?: boolean
           tagline?: string
           title?: string
           updated_at?: string
@@ -954,6 +960,7 @@ export type Database = {
           seo_title: string | null
           slug: string
           style: string | null
+          swear_chat_enabled: boolean
           telegram_config: Json
           theme: string
           theme_config: Json
@@ -985,6 +992,7 @@ export type Database = {
           seo_title?: string | null
           slug: string
           style?: string | null
+          swear_chat_enabled?: boolean
           telegram_config?: Json
           theme?: string
           theme_config?: Json
@@ -1016,6 +1024,7 @@ export type Database = {
           seo_title?: string | null
           slug?: string
           style?: string | null
+          swear_chat_enabled?: boolean
           telegram_config?: Json
           theme?: string
           theme_config?: Json
