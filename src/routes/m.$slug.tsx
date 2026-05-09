@@ -19,13 +19,14 @@ type MusicPortal = {
   style: string | null;
   vibe: string | null;
   theme: string;
+  swear_chat_enabled?: boolean;
 };
 
 export const Route = createFileRoute("/m/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals")
-      .select("id, slug, name, language, style, vibe, theme, kind")
+      .select("id, slug, name, language, style, vibe, theme, kind, swear_chat_enabled")
       .eq("slug", params.slug)
       .eq("kind", "music")
       .maybeSingle();
