@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { playBattleRound } from "@/lib/battles.functions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { SwearChatPanel } from "@/components/SwearChatPanel";
 
 export const Route = createFileRoute("/b/$slug")({
   head: ({ params }) => ({
@@ -30,6 +31,7 @@ type Battle = {
   language: string;
   themes: string[];
   public: boolean;
+  swear_chat_enabled?: boolean;
 };
 
 type Round = {
@@ -51,7 +53,7 @@ function BattlePlayPage() {
   useEffect(() => {
     supabase
       .from("battles")
-      .select("id, slug, name, scenario, accent, emoji, tagline, language, themes, public")
+      .select("id, slug, name, scenario, accent, emoji, tagline, language, themes, public, swear_chat_enabled")
       .eq("slug", slug)
       .maybeSingle()
       .then(({ data }) => {
@@ -213,6 +215,15 @@ function BattlePlayPage() {
               </div>
             )}
           </div>
+        )}
+        {battle && (
+          <SwearChatPanel
+            enabled={!!battle.swear_chat_enabled}
+            table="battles"
+            id={battle.id}
+            slug={battle.slug}
+            accent={battle.accent}
+          />
         )}
       </div>
     </main>
