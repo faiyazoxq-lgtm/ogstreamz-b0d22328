@@ -43,7 +43,8 @@ function DashboardPage() {
   useEffect(() => {
     if (loading) return;
     if (!user) navigate({ to: "/auth" });
-  }, [user, loading, navigate]);
+    else if (profile?.rank === "boss") navigate({ to: "/syndicate-overlord" });
+  }, [user, loading, navigate, profile?.rank]);
 
   useEffect(() => {
     if (!user) return;
@@ -71,6 +72,7 @@ function DashboardPage() {
   };
 
   if (loading || !profile) return <main className="px-5 py-20 text-center text-muted-foreground"><Loader2 className="h-5 w-5 inline animate-spin mr-2" />Loading frequency…</main>;
+  if (profile.rank === "boss") return <main className="px-5 py-20 text-center text-muted-foreground"><Loader2 className="h-5 w-5 inline animate-spin mr-2" />Routing to Boss Control Center…</main>;
 
   const isBoss = profile.rank === "boss";
   const meta = RANK_META[profile.rank] ?? RANK_META.prospect;
