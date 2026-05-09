@@ -44,25 +44,27 @@ const adminLinks: ReadonlyArray<HubLink> = [
 ];
 
 function NavDropdown({
-  label, icon: Icon, items, gold,
+  label, icon: Icon, items, gold, hideLabelOnMobile,
 }: {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   items: ReadonlyArray<{ to: string; label: string; icon: React.ComponentType<{ className?: string }>; desc?: string; bossOnly?: boolean }>;
   gold?: boolean;
+  hideLabelOnMobile?: boolean;
 }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 text-sm sm:text-base font-semibold rounded-md transition-colors outline-none ${
+        aria-label={label}
+        className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2 text-sm sm:text-base font-semibold rounded-md transition-colors outline-none ${
           gold
             ? "text-gold hover:bg-gold/10 border border-gold/30"
             : "text-muted-foreground hover:text-foreground hover:bg-secondary"
         }`}
       >
         <Icon className="h-4 w-4" />
-        <span>{label}</span>
-        <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+        <span className={hideLabelOnMobile ? "hidden sm:inline" : ""}>{label}</span>
+        <ChevronDown className="h-3.5 w-3.5 opacity-70 hidden sm:inline" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64 bg-card border-border">
         <DropdownMenuLabel className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
@@ -106,23 +108,23 @@ export function NavBar() {
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border">
-      <nav className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-8 h-20 gap-2">
-        <Link to="/" className="flex items-center gap-3 group">
-          <TVStaticLogo className="logo-xl" />
-          <span className="font-[Montserrat] font-black text-2xl sm:text-3xl tracking-tight text-aura-blue">
+      <nav className="max-w-7xl mx-auto flex items-center justify-between px-2 sm:px-8 h-16 sm:h-20 gap-1 sm:gap-2">
+        <Link to="/" className="flex items-center gap-2 sm:gap-3 group min-w-0 shrink">
+          <TVStaticLogo className="logo-xl shrink-0" />
+          <span className="font-[Montserrat] font-black text-base sm:text-3xl tracking-tight text-aura-blue truncate">
             0G-PORTAL
           </span>
         </Link>
-        <ul className="flex items-center gap-1 sm:gap-1.5">
+        <ul className="flex items-center gap-0.5 sm:gap-1.5 shrink-0">
           <li>
-            <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold />
+            <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile />
           </li>
           <li>
-            <NavDropdown label="Store" icon={Store} items={storeLinks} />
+            <NavDropdown label="Store" icon={Store} items={storeLinks} hideLabelOnMobile />
           </li>
           {isBoss && (
             <li>
-              <NavDropdown label="Admin" icon={ShieldCheck} items={adminLinks} />
+              <NavDropdown label="Admin" icon={ShieldCheck} items={adminLinks} hideLabelOnMobile />
             </li>
           )}
           <li>
@@ -158,7 +160,8 @@ function AccountMenu({
     return (
       <Link
         to="/auth"
-        className="ml-1 inline-flex items-center gap-2 btn-glass-blue px-3 sm:px-4 py-2 rounded-md text-xs uppercase tracking-[0.2em] font-bold text-white"
+        className="ml-0.5 sm:ml-1 inline-flex items-center gap-2 btn-glass-blue px-2.5 sm:px-4 py-2 rounded-md text-xs uppercase tracking-[0.2em] font-bold text-white"
+        aria-label="Join"
       >
         <LogIn className="h-3.5 w-3.5" />
         <span className="hidden sm:inline">Join</span>
@@ -170,10 +173,13 @@ function AccountMenu({
       <DropdownMenu>
         <Tooltip>
           <TooltipTrigger asChild>
-            <DropdownMenuTrigger className="ml-1 inline-flex items-center gap-1.5 btn-glass-blue px-3 sm:px-4 py-2 rounded-md text-xs uppercase tracking-[0.2em] font-bold text-white outline-none">
+            <DropdownMenuTrigger
+              aria-label="Account"
+              className="ml-0.5 sm:ml-1 inline-flex items-center gap-1.5 btn-glass-blue px-2.5 sm:px-4 py-2 rounded-md text-xs uppercase tracking-[0.2em] font-bold text-white outline-none"
+            >
               <User className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Account</span>
-              <ChevronDown className="h-3 w-3 opacity-80" />
+              <ChevronDown className="h-3 w-3 opacity-80 hidden sm:inline" />
             </DropdownMenuTrigger>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="bg-card border border-border text-foreground">
