@@ -175,6 +175,30 @@ function Index() {
               </>
             )}
           </div>
+
+          <div className="mt-5 pt-4 border-t border-white/10">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-2.5">
+              Quick jump
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { to: "/music" as const, title: "MusicHUB", Icon: Music2, tint: "oklch(0.72_0.22_245)" },
+                { to: "/jokes" as const, title: "JokesHUB", Icon: Smile, tint: "oklch(0.78_0.18_85)" },
+                { to: "/tools" as const, title: "ToolHUB", Icon: Wrench, tint: "oklch(0.70_0.18_180)" },
+              ].map(({ to, title, Icon, tint }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className="group inline-flex items-center gap-2 rounded-lg border border-white/15 bg-black/40 px-3.5 py-2 text-[11px] uppercase tracking-[0.2em] font-bold text-white/90 hover:border-[var(--ql-tint)] hover:bg-white/5 transition-colors"
+                  style={{ ["--ql-tint" as any]: tint }}
+                >
+                  <Icon className="h-3.5 w-3.5" style={{ color: tint }} />
+                  {title}
+                  <ArrowUpRight className="h-3 w-3 opacity-60 group-hover:opacity-100" />
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
