@@ -436,6 +436,21 @@ function MusicPortalPage() {
         )}
       </div>
 
+      <div className="max-w-4xl mx-auto px-5 sm:px-8 pb-8">
+        <SwearChatPanel
+          enabled={!!portal.swear_chat_enabled}
+          table="portals"
+          id={portal.id}
+          slug={portal.slug}
+          accent={theme.accent}
+        />
+        {portal.swear_chat_enabled && (
+          <p className="mt-2 text-[10px] uppercase tracking-[0.3em] text-center opacity-70" style={{ color: theme.accent }}>
+            Brutal swearing AI is ON · lyrics + Suno style stack will generate explicit
+          </p>
+        )}
+      </div>
+
       <footer className="relative border-t py-6 text-center text-xs uppercase tracking-[0.4em] opacity-60" style={{ borderColor: `${theme.accent}33` }}>
         <Link to="/" className="hover:opacity-100">
           <span style={{ color: theme.accent }}>▣</span> Powered by 0G-PORTAL
