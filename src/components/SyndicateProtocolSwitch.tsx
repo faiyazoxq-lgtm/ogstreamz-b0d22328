@@ -11,7 +11,7 @@ import { ShieldAlert, ShieldCheck } from "lucide-react";
  */
 export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean }) {
   const [mode, setMode] = useState<"og" | "normal">("og");
-  const [intensity, setIntensityState] = useState<"mild" | "medium" | "chaotic">("medium");
+  const [intensity, setIntensityState] = useState<"mild" | "medium" | "chaotic">("chaotic");
   const [enabled, setEnabled] = useState(true);
   const [id, setId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -29,8 +29,8 @@ export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean
       setEnabled(!!data.enabled);
       const t = (data.tuning ?? {}) as { mode?: string; intensity?: string };
       setMode(t.mode === "normal" ? "normal" : "og");
-      const ri = String(t.intensity ?? "medium").toLowerCase();
-      setIntensityState(ri === "mild" || ri === "chaotic" ? (ri as any) : "medium");
+      const ri = String(t.intensity ?? "chaotic").toLowerCase();
+      setIntensityState(ri === "mild" || ri === "medium" ? (ri as any) : "chaotic");
     })();
     return () => { alive = false; };
   }, []);
