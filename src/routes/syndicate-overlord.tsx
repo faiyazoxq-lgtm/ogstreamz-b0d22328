@@ -43,7 +43,7 @@ function Field({
   hint?: string;
   icon?: any;
   className?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div className={`flex flex-col gap-1.5 ${className ?? ""}`}>
