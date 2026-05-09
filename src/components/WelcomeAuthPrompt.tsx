@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Mail, Lock, User as UserIcon, Loader2, Send, X, Sparkles, Github, Facebook } from "lucide-react";
+import { Mail, Lock, User as UserIcon, Loader2, Send, X, Sparkles, Github, Facebook, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,7 @@ export function WelcomeAuthPrompt() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [magicSent, setMagicSent] = useState(false);
   const [remember, setRememberState] = useState<boolean>(true);
 
   useEffect(() => { setRememberState(getRemember()); }, []);
@@ -91,6 +92,33 @@ export function WelcomeAuthPrompt() {
       setOpen(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : `${provider} sign-in failed`);
+      setBusy(false);
+    }
+  };
+
+  const sendMagicLink = async () => {
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      toast.error("Enter your email above first");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/profile`,
+          shouldCreateUser: mode === "signup",
+          data: name ? { display_name: name, full_name: name } : undefined,
+        },
+      });
+      if (error) throw error;
+      setMagicSent(true);
+      setRemember(remember);
+      if (remember) markTabSession(); else clearTabSession();
+      toast.success("Magic link sent. Check your inbox.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not send magic link");
+    } finally {
       setBusy(false);
     }
   };
@@ -275,6 +303,31 @@ export function WelcomeAuthPrompt() {
               <Button type="submit" disabled={busy} className="btn-glass-blue w-full h-10 text-white font-bold uppercase tracking-[0.25em]">
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : mode === "signup" ? "Create Account" : "Sign In"}
               </Button>
+
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-[9px] uppercase tracking-[0.25em] text-muted-foreground">no password</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+
+              {magicSent ? (
+                <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/5 px-3 py-2.5 text-[11px] text-emerald-300 text-center">
+                  Magic link sent to <span className="font-mono">{email}</span>.
+                  <br />Click it from this device to sign in.
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={sendMagicLink}
+                  className="w-full h-10 border-[oklch(0.72_0.22_245/0.4)] hover:bg-[oklch(0.72_0.22_245/0.1)]"
+                >
+                  <Wand2 className="h-4 w-4 mr-2" />
+                  Email me a magic link
+                </Button>
+              )}
+
               {mode === "login" && (
                 <div className="flex items-center justify-between text-[11px]">
                   <label className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground">
