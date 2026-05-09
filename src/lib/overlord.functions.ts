@@ -133,3 +133,58 @@ export const listVipPasses = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return { passes: data ?? [] };
   });
+
+export const grantByEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { email: string; credits: number; grantRank?: Rank | null; notes?: string }) => {
+    const email = String(d.email ?? "").trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Invalid email");
+    return {
+      email,
+      credits: Math.max(0, Math.trunc(Number(d.credits ?? 0))),
+      grantRank: d.grantRank && RANKS.includes(d.grantRank) ? d.grantRank : null,
+      notes: d.notes ? String(d.notes).slice(0, 240) : null,
+    };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase } = context as any;
+    if (!(await isBoss(supabase))) throw new Error("Boss only");
+    if (data.credits === 0 && !data.grantRank) throw new Error("Set credits or a rank");
+    const { data: result, error } = await supabase.rpc("boss_grant_by_email", {
+      _email: data.email,
+      _credits: data.credits,
+      _grant_rank: data.grantRank,
+      _notes: data.notes,
+    });
+    if (error) throw new Error(error.message);
+    return result as { status: "applied" | "queued"; user_id?: string; credits?: number; grant_id: string };
+  });
+
+export const listPendingGrants = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context as any;
+    if (!(await isBoss(supabase))) throw new Error("Boss only");
+    const { data, error } = await supabase
+      .from("pending_credit_grants")
+      .select("id,email,credits,grant_rank,notes,created_at,claimed_at,claimed_by")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) throw new Error(error.message);
+    return { grants: data ?? [] };
+  });
+
+export const deletePendingGrant = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context as any;
+    if (!(await isBoss(supabase))) throw new Error("Boss only");
+    const { error } = await supabase
+      .from("pending_credit_grants")
+      .delete()
+      .eq("id", data.id)
+      .is("claimed_at", null);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
