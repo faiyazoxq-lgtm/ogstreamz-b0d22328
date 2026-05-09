@@ -37,6 +37,7 @@ import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as BossCivilityRouteImport } from './routes/boss.civility'
+import { Route as BossAnalyticsRouteImport } from './routes/boss.analytics'
 import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as ApiPublicSunoWebhookRouteImport } from './routes/api/public/suno-webhook'
 import { Route as ApiPublic0gOrchestratorRouteImport } from './routes/api/public/0g-orchestrator'
@@ -184,6 +185,11 @@ const BossCivilityRoute = BossCivilityRouteImport.update({
   path: '/civility',
   getParentRoute: () => BossRoute,
 } as any)
+const BossAnalyticsRoute = BossAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => BossRoute,
+} as any)
 const BSlugRoute = BSlugRouteImport.update({
   id: '/b/$slug',
   path: '/b/$slug',
@@ -241,6 +247,7 @@ export interface FileRoutesByFullPath {
   '/trade': typeof TradeRoute
   '/vip': typeof VipRoute
   '/b/$slug': typeof BSlugRoute
+  '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/civility': typeof BossCivilityRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -277,6 +284,7 @@ export interface FileRoutesByTo {
   '/trade': typeof TradeRoute
   '/vip': typeof VipRoute
   '/b/$slug': typeof BSlugRoute
+  '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/civility': typeof BossCivilityRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -314,6 +322,7 @@ export interface FileRoutesById {
   '/trade': typeof TradeRoute
   '/vip': typeof VipRoute
   '/b/$slug': typeof BSlugRoute
+  '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/civility': typeof BossCivilityRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -352,6 +361,7 @@ export interface FileRouteTypes {
     | '/trade'
     | '/vip'
     | '/b/$slug'
+    | '/boss/analytics'
     | '/boss/civility'
     | '/checkout/return'
     | '/jokes/portal'
@@ -388,6 +398,7 @@ export interface FileRouteTypes {
     | '/trade'
     | '/vip'
     | '/b/$slug'
+    | '/boss/analytics'
     | '/boss/civility'
     | '/checkout/return'
     | '/jokes/portal'
@@ -424,6 +435,7 @@ export interface FileRouteTypes {
     | '/trade'
     | '/vip'
     | '/b/$slug'
+    | '/boss/analytics'
     | '/boss/civility'
     | '/checkout/return'
     | '/jokes/portal'
@@ -671,6 +683,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossCivilityRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/analytics': {
+      id: '/boss/analytics'
+      path: '/analytics'
+      fullPath: '/boss/analytics'
+      preLoaderRoute: typeof BossAnalyticsRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/b/$slug': {
       id: '/b/$slug'
       path: '/b/$slug'
@@ -717,10 +736,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface BossRouteChildren {
+  BossAnalyticsRoute: typeof BossAnalyticsRoute
   BossCivilityRoute: typeof BossCivilityRoute
 }
 
 const BossRouteChildren: BossRouteChildren = {
+  BossAnalyticsRoute: BossAnalyticsRoute,
   BossCivilityRoute: BossCivilityRoute,
 }
 

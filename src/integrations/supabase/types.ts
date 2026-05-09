@@ -957,6 +957,42 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_view_events: {
+        Row: {
+          country: string | null
+          created_at: string
+          id: string
+          kind: string
+          path: string | null
+          referrer: string | null
+          slug: string
+          user_agent: string | null
+          visitor_id: string | null
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          path?: string | null
+          referrer?: string | null
+          slug: string
+          user_agent?: string | null
+          visitor_id?: string | null
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          path?: string | null
+          referrer?: string | null
+          slug?: string
+          user_agent?: string | null
+          visitor_id?: string | null
+        }
+        Relationships: []
+      }
       portals: {
         Row: {
           audio_snippet_url: string | null
