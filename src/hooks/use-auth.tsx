@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { promoteBossIfNeeded } from "@/lib/boss.functions";
 
 export type SyndicateRank = "prospect" | "enforcer" | "vip" | "boss";
-export type FeatureFlags = { jokes: boolean; music: boolean; tools: boolean };
+export type FeatureFlags = { jokes: boolean; music: boolean; tools: boolean; swearing: boolean };
 
 type Profile = {
   id: string;
