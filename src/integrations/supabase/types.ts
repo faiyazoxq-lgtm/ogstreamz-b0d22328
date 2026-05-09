@@ -400,6 +400,27 @@ export type Database = {
         }
         Relationships: []
       }
+      civility_settings: {
+        Row: {
+          id: number
+          swear_default: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: number
+          swear_default?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: number
+          swear_default?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       connect_campaigns: {
         Row: {
           created_at: string
@@ -1952,6 +1973,7 @@ export type Database = {
         Args: { _delta: number; _reason: string; _user_id: string }
         Returns: number
       }
+      civility_default: { Args: never; Returns: boolean }
       claim_signup_pass: { Args: { _token: string }; Returns: Json }
       has_active_vip: {
         Args: { _env?: string; _user?: string }
