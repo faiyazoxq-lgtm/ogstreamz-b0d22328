@@ -70,6 +70,17 @@ function Index() {
         <p className="mt-6 max-w-xl mx-auto text-muted-foreground text-base sm:text-lg">
           One frequency. Five portals. Pick your channel.
         </p>
+        <div className="mt-6 flex justify-center">
+          <Link
+            to="/portals"
+            className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-[11px] uppercase tracking-[0.3em] font-bold backdrop-blur-xl hover:border-[oklch(0.72_0.22_245/0.7)]"
+            style={{ color: "var(--mood-accent, #ffd166)" }}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            All Spawned Portals
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
       </section>
 
       <section className="relative max-w-7xl mx-auto px-5 sm:px-8 pb-28 grid gap-6 md:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
