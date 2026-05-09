@@ -1,10 +1,10 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Radio, LineChart, Sparkles, Crown, Gauge } from "lucide-react";
+import { Home, Radio, LineChart, Sparkles, Crown, Cpu } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 const ITEMS = [
   { to: "/", label: "Home", icon: Home },
-  { to: "/command", label: "Command", icon: Gauge },
+  { to: "/console", label: "Console", icon: Cpu },
   { to: "/trade", label: "Trade", icon: LineChart },
   { to: "/syndicate", label: "Syndicate", icon: Radio },
   { to: "/store", label: "Store", icon: Sparkles },
@@ -19,7 +19,7 @@ export function BottomDock() {
   if (pathname.startsWith("/login") || pathname.startsWith("/signup")) return null;
 
   const items = isBoss
-    ? [...ITEMS, { to: "/admin", label: "Boss", icon: Crown } as const]
+    ? [...ITEMS, { to: "/boss", label: "Boss", icon: Crown } as const]
     : ITEMS;
 
   return (
