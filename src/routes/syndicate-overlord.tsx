@@ -976,27 +976,37 @@ function ResellerAdminPanel({ rows }: { rows: Row[] }) {
   const emailOf = (uid: string) => rows.find((r) => r.id === uid)?.email ?? uid.slice(0, 8) + "…";
 
   return (
-    <section className="rounded-xl border border-pink-700/30 bg-black/50 p-5 backdrop-blur">
-      <h2 className="text-xs uppercase tracking-[0.4em] text-pink-400 mb-4 flex items-center gap-2">
-        <Users className="h-3.5 w-3.5" /> Reseller Program
-      </h2>
-      <p className="text-[10px] text-emerald-700 uppercase tracking-widest mb-3">
-        Give a user a wallet so they can sell credits on your behalf.
-      </p>
-      <div className="grid sm:grid-cols-5 gap-2">
-        <Select value={userId} onValueChange={setUserId}>
-          <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200">
-            <SelectValue placeholder="Choose a user…" />
-          </SelectTrigger>
-          <SelectContent className="bg-black border-emerald-800 text-emerald-200 max-h-72">
-            {rows.map((r) => <SelectItem key={r.id} value={r.id}>{r.email}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Reseller name" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
-        <Input value={initialCredits} onChange={(e) => setInitialCredits(e.target.value)} type="number" min="0" placeholder="Starting credits" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
-        <Input value={markup} onChange={(e) => setMarkup(e.target.value)} type="number" min="0" placeholder="Their markup (¢)" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
-        <Button onClick={submit} disabled={busy || !userId} className="bg-pink-500 hover:bg-pink-400 text-black font-bold">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="h-4 w-4 mr-1" />Activate</>}
+    <section className="rounded-2xl border-2 border-pink-700/30 bg-gradient-to-br from-black/70 to-pink-950/20 p-6 backdrop-blur shadow-xl">
+      <GeneratorHeader
+        icon={Users}
+        accent="pink"
+        title="Reseller Program"
+        subtitle="Give a user a wallet so they can sell credits on your behalf."
+      />
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Field label="Choose user" hint="Pick from existing accounts" icon={UserIcon}>
+          <Select value={userId} onValueChange={setUserId}>
+            <SelectTrigger className={FIELD_SELECT}>
+              <SelectValue placeholder="Choose a user…" />
+            </SelectTrigger>
+            <SelectContent className="bg-black border-emerald-800 text-emerald-200 max-h-72">
+              {rows.map((r) => <SelectItem key={r.id} value={r.id}>{r.email}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Reseller name" hint="Display label for their store" icon={NotebookPen}>
+          <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Acme Drops" className={FIELD_INPUT} />
+        </Field>
+        <Field label="Starting credits" hint="Wallet balance to seed" icon={Wallet}>
+          <Input value={initialCredits} onChange={(e) => setInitialCredits(e.target.value)} type="number" min="0" placeholder="100" className={FIELD_INPUT} />
+        </Field>
+        <Field label="Markup (cents)" hint="Their profit per credit sold" icon={Coins}>
+          <Input value={markup} onChange={(e) => setMarkup(e.target.value)} type="number" min="0" placeholder="500" className={FIELD_INPUT} />
+        </Field>
+      </div>
+      <div className="mt-5 flex justify-end">
+        <Button onClick={submit} disabled={busy || !userId} className={`${PRIMARY_BTN} px-6 bg-pink-500 hover:bg-pink-400 text-black`}>
+          {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Sparkles className="h-5 w-5 mr-2" />Activate Reseller</>}
         </Button>
       </div>
 
