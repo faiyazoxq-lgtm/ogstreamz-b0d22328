@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Crown, ArrowLeft, ShieldCheck, Flame, Search, Loader2 } from "lucide-react";
+import { Crown, ArrowLeft, ShieldCheck, Flame, Search, Loader2, Power } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { getCivility, setCivilityDefault, listSwearItems } from "@/lib/civility.functions";
@@ -142,6 +142,51 @@ function CivilityPage() {
         <p className="mt-3 text-sm text-white/65 max-w-2xl">
           Decide whether the foul-mouthed Guttermouth swear-chat is on by default for new portals, battles, and custom hubs — and flip individual items below.
         </p>
+
+        {/* Ultimate Override — one-tap boss control */}
+        <div className="mt-5 rounded-2xl border-2 p-4 md:p-5"
+          style={{
+            borderColor: defaultOn ? "rgba(255,46,85,0.55)" : "rgba(58,214,255,0.45)",
+            background: defaultOn
+              ? "linear-gradient(135deg, rgba(255,46,85,0.18), rgba(255,46,85,0.04))"
+              : "linear-gradient(135deg, rgba(58,214,255,0.15), rgba(58,214,255,0.03))",
+          }}
+        >
+          <div className="flex flex-wrap items-center gap-3 justify-between">
+            <div className="flex items-center gap-3 min-w-0">
+              <Power className="h-5 w-5 shrink-0" style={{ color: defaultOn ? "#ff5577" : "#3ad6ff" }} />
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-[0.35em]" style={{ color: defaultOn ? "#ff5577" : "#3ad6ff" }}>
+                  Ultimate Override
+                </p>
+                <p className="text-sm text-white/85 mt-0.5 truncate">
+                  {defaultOn == null
+                    ? "Loading…"
+                    : defaultOn
+                      ? "Swear API LIVE — every portal, battle & hub is foul-mouthed."
+                      : "Swear API SILENT — every portal, battle & hub is muzzled."}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setDefault(!defaultOn, true)}
+              disabled={busy === "default" || defaultOn == null}
+              aria-pressed={!!defaultOn}
+              className="inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-xs uppercase tracking-[0.25em] font-bold border-2 disabled:opacity-50 transition-colors"
+              style={{
+                borderColor: defaultOn ? "#3ad6ff" : "#ff2e55",
+                color: defaultOn ? "#3ad6ff" : "#ff5577",
+                background: defaultOn ? "rgba(58,214,255,0.08)" : "rgba(255,46,85,0.10)",
+              }}
+            >
+              {busy === "default"
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : defaultOn
+                  ? <><ShieldCheck className="h-4 w-4" /> Muzzle Everything</>
+                  : <><Flame className="h-4 w-4" /> Unleash Everything</>}
+            </button>
+          </div>
+        </div>
 
         {/* Master toggle */}
         <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto] items-center rounded-2xl border border-white/10 bg-black/40 p-4">
