@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.jpg";
 import { TiltCard } from "@/components/TiltCard";
+import { WelcomeAuthPrompt } from "@/components/WelcomeAuthPrompt";
 
 const ICONS: Record<string, any> = {
   Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
