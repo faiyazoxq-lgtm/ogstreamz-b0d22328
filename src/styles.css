@@ -499,6 +499,64 @@ html[data-mood="og"] {
     box-shadow: var(--mood-glow);
   }
 
+  /* === Skeleton shimmer loaders === */
+  @keyframes skeleton-shimmer {
+    0% { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+  }
+  .skeleton-shimmer {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(
+      90deg,
+      rgba(255,255,255,0.04) 0%,
+      color-mix(in srgb, var(--syndicate-glow) 18%, transparent) 50%,
+      rgba(255,255,255,0.04) 100%
+    );
+    background-size: 800px 100%;
+    animation: skeleton-shimmer 1.6s linear infinite;
+    border-radius: 0.5rem;
+  }
+
+  /* === Magnetic button — soft floating glow on hover === */
+  .btn-magnetic {
+    position: relative;
+    transition: transform 0.25s cubic-bezier(.2,.9,.2,1.1), box-shadow 0.25s ease, border-color 0.25s ease;
+    will-change: transform;
+  }
+  .btn-magnetic:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--syndicate-glow) 60%, transparent),
+      0 12px 40px -10px color-mix(in srgb, var(--syndicate-glow) 60%, transparent);
+  }
+  .btn-magnetic:active { transform: translateY(0) scale(0.99); }
+
+  /* === System Glitch overlay — fires on mood toggle === */
+  @keyframes system-glitch {
+    0%   { opacity: 0; clip-path: inset(0 0 0 0); }
+    8%   { opacity: 1; clip-path: inset(20% 0 60% 0); transform: translate(-6px, 0); }
+    18%  { clip-path: inset(70% 0 5% 0); transform: translate(8px, -2px); }
+    28%  { clip-path: inset(40% 0 30% 0); transform: translate(-4px, 4px); }
+    45%  { clip-path: inset(0 0 0 0); transform: translate(0, 0); opacity: 0.85; }
+    100% { opacity: 0; }
+  }
+  .system-glitch-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 4px),
+      linear-gradient(120deg,
+        color-mix(in srgb, var(--syndicate-glow) 28%, transparent) 0%,
+        transparent 35%,
+        color-mix(in srgb, var(--syndicate-glow) 22%, transparent) 70%,
+        transparent 100%);
+    mix-blend-mode: screen;
+    animation: system-glitch 1s steps(8, end) forwards;
+  }
+
   /* Glitch — only animates while OG-MODE is active */
   .mood-glitch {
     position: relative;
