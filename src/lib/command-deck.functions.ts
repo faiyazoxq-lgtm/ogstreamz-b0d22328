@@ -69,7 +69,7 @@ export const getOpsSnapshot = createServerFn({ method: "GET" })
     await assertBoss(context.userId);
     const since24 = new Date(Date.now() - 24 * 3600_000).toISOString();
     const counts = async (table: string, filter?: (q: any) => any) => {
-      let q = supabaseAdmin.from(table).select("id", { head: true, count: "exact" });
+      let q: any = (supabaseAdmin as any).from(table).select("id", { head: true, count: "exact" });
       if (filter) q = filter(q);
       const { count, error } = await q;
       if (error) return 0;
