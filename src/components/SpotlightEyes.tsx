@@ -152,21 +152,21 @@ export function SpotlightEyes() {
       });
 
       // Periodically emit a lightning bolt from each eye to the cursor
-      if (m.active && ts - lastBolt > 140) {
+      if (m.active && ts - lastBolt > 420) {
         lastBolt = ts;
         eyes.forEach((eye) => {
-          if (Math.random() < 0.85) {
+          if (Math.random() < 0.55) {
             boltsRef.current.push({
               from: { x: eye.x, y: eye.y },
               to: { x: m.x, y: m.y },
               life: 0,
-              max: 8 + Math.random() * 6,
+              max: 18 + Math.random() * 12,
               seed: Math.random() * 1000,
             });
           }
         });
         // Extra bolts coming from random edges/directions toward the mouse
-        const edgeCount = 1 + Math.floor(Math.random() * 3);
+        const edgeCount = Math.random() < 0.6 ? 1 : 0;
         for (let i = 0; i < edgeCount; i++) {
           const side = Math.floor(Math.random() * 4);
           let fx = 0, fy = 0;
@@ -178,7 +178,7 @@ export function SpotlightEyes() {
             from: { x: fx, y: fy },
             to: { x: m.x, y: m.y },
             life: 0,
-            max: 7 + Math.random() * 7,
+            max: 16 + Math.random() * 14,
             seed: Math.random() * 1000,
           });
         }
