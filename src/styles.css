@@ -384,3 +384,104 @@
     backface-visibility: hidden;
   }
 }
+
+/* =====================================================================
+   Visual DNA 2026 — Frosted Obsidian + Mood-driven accents
+   ===================================================================== */
+
+:root {
+  --mood-accent: #ffd166;        /* Electric Gold (NORMAL default visual) */
+  --mood-accent-soft: #ffd16633;
+  --mood-accent-strong: #ffe18a;
+  --mood-glow: 0 0 0 1px #ffd16640, 0 18px 60px -32px #ffd166cc;
+}
+
+html[data-mood="og"] {
+  --mood-accent: #ff2e55;        /* Crimson Red */
+  --mood-accent-soft: #ff2e5530;
+  --mood-accent-strong: #ff7591;
+  --mood-glow: 0 0 0 1px #ff2e5550, 0 22px 70px -28px #ff2e55cc;
+}
+
+@layer utilities {
+  .glass-obsidian {
+    background:
+      linear-gradient(160deg, rgba(20, 20, 26, 0.72), rgba(8, 8, 12, 0.82));
+    backdrop-filter: blur(22px) saturate(1.4);
+    -webkit-backdrop-filter: blur(22px) saturate(1.4);
+    border: 1px solid var(--mood-accent-soft);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 1px 0 var(--mood-accent-soft),
+      0 24px 60px -32px rgba(0, 0, 0, 0.9);
+  }
+
+  .glass-obsidian-strong {
+    background:
+      linear-gradient(160deg, rgba(24, 24, 32, 0.8), rgba(6, 6, 10, 0.92));
+    backdrop-filter: blur(28px) saturate(1.5);
+    -webkit-backdrop-filter: blur(28px) saturate(1.5);
+    border: 1px solid var(--mood-accent);
+    box-shadow: var(--mood-glow);
+  }
+
+  .syndicate-header {
+    font-family: "Montserrat", "Inter", system-ui, sans-serif;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-stretch: condensed;
+  }
+
+  .terminal-mono {
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+  }
+
+  .mood-accent {
+    color: var(--mood-accent);
+  }
+  .mood-bg {
+    background: var(--mood-accent);
+  }
+  .mood-border {
+    border-color: var(--mood-accent) !important;
+  }
+  .mood-ring {
+    box-shadow: var(--mood-glow);
+  }
+
+  /* Glitch — only animates while OG-MODE is active */
+  .mood-glitch {
+    position: relative;
+    display: inline-block;
+  }
+  html[data-mood="og"] .mood-glitch {
+    animation: mood-glitch 4.5s steps(1, end) infinite;
+    text-shadow:
+      1px 0 0 #ff2e55,
+      -1px 0 0 #19ffe0;
+  }
+
+  @keyframes mood-glitch {
+    0%, 92%, 100% { transform: translate(0, 0) skewX(0deg); filter: none; }
+    93% { transform: translate(-1px, 0) skewX(-4deg); }
+    94% { transform: translate(1px, -1px) skewX(3deg); filter: hue-rotate(20deg); }
+    95% { transform: translate(-2px, 1px) skewX(-2deg); }
+    96% { transform: translate(2px, 0) skewX(2deg); filter: hue-rotate(-20deg); }
+    97% { transform: translate(0, 0) skewX(0deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html[data-mood="og"] .mood-glitch { animation: none; }
+  }
+
+  /* Reserve space so the mobile bottom dock doesn't cover content */
+  @media (max-width: 767px) {
+    body {
+      padding-bottom: calc(72px + env(safe-area-inset-bottom));
+    }
+  }
+}
