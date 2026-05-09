@@ -321,10 +321,10 @@ function OverlordPage() {
                 icon: FileDown, label: "Export CSV", tint: "cyan",
                 onClick: () => {
                   const csv = [
-                    ["email","display_name","rank","status","credits","jokes","music","tools","created_at"].join(","),
+                    ["email","display_name","rank","status","credits","jokes","music","tools","swearing","created_at"].join(","),
                     ...rows.map(r => [
                       r.email, r.display_name ?? "", r.rank, r.status, r.credits,
-                      r.feature_flags.jokes, r.feature_flags.music, r.feature_flags.tools, r.created_at,
+                      r.feature_flags.jokes, r.feature_flags.music, r.feature_flags.tools, !!r.feature_flags.swearing, r.created_at,
                     ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")),
                   ].join("\n");
                   const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
