@@ -342,7 +342,7 @@ const RANK_STYLES: Record<Rank, string> = {
   boss: "bg-pink-500/10 text-pink-300 border-pink-700/40",
 };
 
-function UserRow({ row, onChange }: { row: Row; onChange: (p: Partial<Row>) => void }) {
+function UserRow({ row, onChange, selected, onToggleSelect }: { row: Row; onChange: (p: Partial<Row>) => void; selected: boolean; onToggleSelect: () => void }) {
   const adj = useServerFn(adjustCredits);
   const setR = useServerFn(setRank);
   const setF = useServerFn(setFeatureFlags);
@@ -384,8 +384,15 @@ function UserRow({ row, onChange }: { row: Row; onChange: (p: Partial<Row>) => v
 
   return (
     <div className="border-b border-emerald-900/30 hover:bg-emerald-900/5 transition">
-      <div className="grid grid-cols-12 gap-2 px-4 py-3 items-center text-sm">
+      <div className={`grid grid-cols-12 gap-2 px-4 py-3 items-center text-sm ${selected ? "bg-cyan-900/15" : ""}`}>
         <div className="col-span-12 md:col-span-3 truncate flex items-center gap-2">
+          <button
+            onClick={onToggleSelect}
+            title={selected ? "Deselect" : "Select for bulk action"}
+            className="text-cyan-400 hover:text-cyan-200 flex-shrink-0"
+          >
+            {selected ? <CheckSquare className="h-3.5 w-3.5" /> : <Square className="h-3.5 w-3.5" />}
+          </button>
           <span className={`inline-block h-1.5 w-1.5 rounded-full ${row.status === "vip" ? "bg-yellow-400" : "bg-emerald-700"}`} />
           <div className="min-w-0 flex-1">
             <p className="text-emerald-200 truncate">{row.email}</p>
