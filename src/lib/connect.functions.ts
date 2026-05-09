@@ -100,23 +100,28 @@ Rules:
 - Friendly, punchy, no fluff, no emojis.
 
 Return JSON only: {"subject":"...","body":"..."}`;
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: "application/json" },
-      }),
-    }
-  );
+  const PPLX = process.env.PERPLEXITY_API_KEY;
+  if (!PPLX) throw new Error("PERPLEXITY_API_KEY missing");
+  const res = await fetch("https://api.perplexity.ai/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${PPLX}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "sonar",
+      messages: [
+        { role: "system", content: "Output strict JSON only. No markdown." },
+        { role: "user", content: prompt },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.7,
+      max_tokens: 800,
+    }),
+  });
   if (!res.ok) {
     const t = await res.text().catch(() => "");
-    throw new Error(`Gemini ${res.status}: ${t.slice(0, 200)}`);
+    throw new Error(`Perplexity ${res.status}: ${t.slice(0, 200)}`);
   }
   const json: any = await res.json();
-  const text = json.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
+  const text = json?.choices?.[0]?.message?.content ?? "{}";
   try {
     const parsed = JSON.parse(text);
     return { subject: parsed.subject ?? "Quick note", body: parsed.body ?? "" };
