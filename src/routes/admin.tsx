@@ -117,6 +117,9 @@ function AdminPage() {
       <SectionHeader icon={<Sliders className="h-4 w-4" />} label="Hub Controls · Tuning" tint="#a78bfa" />
       <HubControlsPanel />
 
+      <SectionHeader icon={<Rocket className="h-4 w-4" />} label="Homepage · Custom Hubs" tint="#ff00aa" />
+      <CustomHubBuilderPanel />
+
       <SectionHeader icon={<Terminal className="h-4 w-4" />} label="Command Deck · Superuser" tint="#ff00aa" />
       <div className="space-y-6">
         <OpsSnapshotPanel />
