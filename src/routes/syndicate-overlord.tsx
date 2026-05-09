@@ -87,7 +87,7 @@ function OverlordPage() {
   }), [rows]);
 
   if (loading || !allowed) {
-    return <main className="px-5 py-20 text-center font-mono text-emerald-400">// Verifying clearance…</main>;
+    return <main className="px-5 py-20 text-center font-mono text-emerald-400">Checking access…</main>;
   }
 
   return (
@@ -98,26 +98,28 @@ function OverlordPage() {
         <header className="mb-6 flex items-center justify-between flex-wrap gap-3">
           <div>
             <p className="text-[10px] uppercase tracking-[0.5em] text-cyan-400 flex items-center gap-2">
-              <Skull className="h-3.5 w-3.5" /> OVERLORD TERMINAL
+              <Skull className="h-3.5 w-3.5" /> BOSS CONTROL
             </p>
             <h1 className="mt-1 text-3xl sm:text-4xl font-black tracking-tight text-cyan-300 drop-shadow-[0_0_18px_rgba(58,214,255,0.4)]">
-              GOD MODE
+              User Manager
             </h1>
+            <p className="mt-1 text-xs text-emerald-600/80 normal-case tracking-normal">
+              Manage every user from one place — credits, rank, features, VIP, all in one row.
+            </p>
           </div>
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest">
             <span className="px-2 py-1 rounded border border-emerald-700/50 text-emerald-300 flex items-center gap-1.5">
-              <Activity className="h-3 w-3 text-emerald-400 animate-pulse" /> live
+              <Activity className="h-3 w-3 text-emerald-400 animate-pulse" /> live data
             </span>
-            <span className="text-emerald-700">session {user?.id.slice(0, 8)}</span>
           </div>
         </header>
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <StatCard icon={<Users className="h-4 w-4" />} label="souls" value={stats.total} tint="cyan" />
-          <StatCard icon={<Crown className="h-4 w-4" />} label="vip+" value={stats.vip} tint="yellow" />
+          <StatCard icon={<Users className="h-4 w-4" />} label="total users" value={stats.total} tint="cyan" />
+          <StatCard icon={<Crown className="h-4 w-4" />} label="vip members" value={stats.vip} tint="yellow" />
           <StatCard icon={<Shield className="h-4 w-4" />} label="enforcers" value={stats.enforcers} tint="emerald" />
-          <StatCard icon={<Zap className="h-4 w-4" />} label="∑ credits" value={stats.credits} tint="pink" />
+          <StatCard icon={<Zap className="h-4 w-4" />} label="credits in circulation" value={stats.credits} tint="pink" />
         </div>
 
         {/* Tabbed control surface */}
@@ -127,10 +129,10 @@ function OverlordPage() {
               <Users className="h-3 w-3 mr-1.5" /> Users
             </TabsTrigger>
             <TabsTrigger value="preload" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
-              <Mail className="h-3 w-3 mr-1.5" /> Pre-Load
+              <Mail className="h-3 w-3 mr-1.5" /> Pre-load Credits
             </TabsTrigger>
             <TabsTrigger value="codes" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
-              <Ticket className="h-3 w-3 mr-1.5" /> Redeem
+              <Ticket className="h-3 w-3 mr-1.5" /> Redeem Codes
             </TabsTrigger>
             <TabsTrigger value="passes" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
               <Crown className="h-3 w-3 mr-1.5" /> VIP Passes
@@ -152,7 +154,7 @@ function OverlordPage() {
                   <Input
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
-                    placeholder="grep email or name…"
+                    placeholder="Search by email or name…"
                     className="pl-9 h-8 bg-black/60 border-emerald-800/40 text-emerald-200 placeholder:text-emerald-700 font-mono text-xs"
                   />
                 </div>
@@ -172,20 +174,21 @@ function OverlordPage() {
                     </button>
                   ))}
                 </div>
-                <span className="text-[10px] text-emerald-700 ml-auto">{filtered.length} / {rows.length}</span>
+                <span className="text-[10px] text-emerald-700 ml-auto">Showing {filtered.length} of {rows.length}</span>
               </div>
 
               <div className="hidden md:grid grid-cols-12 gap-2 px-4 py-2 text-[10px] uppercase tracking-[0.3em] text-cyan-400 border-b border-emerald-800/40 bg-black/40">
-                <div className="col-span-4">User</div>
+                <div className="col-span-3">User</div>
                 <div className="col-span-2">Rank</div>
                 <div className="col-span-2">Credits</div>
-                <div className="col-span-4">Hubs</div>
+                <div className="col-span-2">Features</div>
+                <div className="col-span-3 text-right pr-2">Quick actions</div>
               </div>
 
               <div className="max-h-[60vh] overflow-y-auto">
                 {filtered.map((r) => <UserRow key={r.id} row={r} onChange={(p) => updateRow(r.id, p)} />)}
                 {filtered.length === 0 && (
-                  <p className="px-5 py-12 text-center text-emerald-700">// no records found</p>
+                  <p className="px-5 py-12 text-center text-emerald-700">No users match your search.</p>
                 )}
               </div>
             </div>
@@ -246,23 +249,27 @@ function UserRow({ row, onChange }: { row: Row; onChange: (p: Partial<Row>) => v
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
 
-  const apply = async () => {
+  const give = async (amount: number) => {
     setBusy(true);
     try {
-      const n = parseInt(delta, 10);
-      if (!Number.isFinite(n) || n === 0) throw new Error("Enter a non-zero amount");
-      const r = await adj({ data: { userId: row.id, delta: n, reason: "overlord:adjust" } });
+      if (!amount) throw new Error("Enter an amount");
+      const r = await adj({ data: { userId: row.id, delta: amount, reason: "boss:adjust" } });
       onChange({ credits: r.credits });
       setDelta("0");
-      toast.success(`Balance: ${r.credits}`);
+      toast.success(`${row.email}: ${amount > 0 ? "+" : ""}${amount} → ${r.credits} credits`);
     } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+  };
+  const apply = () => {
+    const n = parseInt(delta, 10);
+    if (!Number.isFinite(n) || n === 0) { toast.error("Enter a non-zero amount"); return; }
+    give(n);
   };
   const changeRank = async (rank: Rank) => {
     setBusy(true);
     try {
       await setR({ data: { userId: row.id, rank } });
       onChange({ rank, status: rank === "vip" || rank === "boss" ? "vip" : "free" });
-      toast.success(`${row.email} → ${rank.toUpperCase()}`);
+      toast.success(`${row.email} is now ${rank.toUpperCase()}`);
     } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
   };
   const toggleFlag = async (key: keyof Flags) => {
@@ -277,12 +284,12 @@ function UserRow({ row, onChange }: { row: Row; onChange: (p: Partial<Row>) => v
   return (
     <div className="border-b border-emerald-900/30 hover:bg-emerald-900/5 transition">
       <div className="grid grid-cols-12 gap-2 px-4 py-3 items-center text-sm">
-        <div className="col-span-12 md:col-span-4 truncate flex items-center gap-2">
+        <div className="col-span-12 md:col-span-3 truncate flex items-center gap-2">
           <span className={`inline-block h-1.5 w-1.5 rounded-full ${row.status === "vip" ? "bg-yellow-400" : "bg-emerald-700"}`} />
           <div className="min-w-0 flex-1">
             <p className="text-emerald-200 truncate">{row.email}</p>
             <p className="text-[10px] text-emerald-700 truncate">
-              {row.display_name ?? "—"} · {row.id.slice(0, 8)}
+              {row.display_name ?? "no name"} · joined {new Date(row.created_at).toLocaleDateString()}
             </p>
           </div>
         </div>
@@ -297,26 +304,29 @@ function UserRow({ row, onChange }: { row: Row; onChange: (p: Partial<Row>) => v
           </Select>
         </div>
         <div className="col-span-6 md:col-span-2 flex items-center gap-1">
-          <Badge variant="outline" className="border-cyan-800/40 text-cyan-300 tabular-nums font-mono">
+          <Badge variant="outline" className="border-cyan-800/40 text-cyan-300 tabular-nums font-mono" title="Current credit balance">
             {row.credits.toLocaleString()}
           </Badge>
           <Input
             value={delta}
             onChange={(e) => setDelta(e.target.value)}
+            placeholder="±"
+            title="Type any number, then press the button. Negative numbers remove credits."
             className="h-7 w-14 bg-black/60 border-emerald-800/40 text-emerald-200 font-mono text-xs"
           />
           <Button
             size="icon"
             onClick={apply}
             disabled={busy || !n}
+            title={n < 0 ? "Remove credits" : "Add credits"}
             className="h-7 w-7 bg-emerald-700 hover:bg-emerald-600 text-black"
           >
             {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : (n < 0 ? <Minus className="h-3 w-3" /> : <Plus className="h-3 w-3" />)}
           </Button>
         </div>
-        <div className="col-span-10 md:col-span-3 flex items-center gap-3 text-[11px] uppercase tracking-widest">
+        <div className="col-span-6 md:col-span-2 flex items-center gap-2 text-[10px] uppercase tracking-widest">
           {(["jokes","music","tools"] as const).map((k) => (
-            <label key={k} className="inline-flex items-center gap-1.5 cursor-pointer text-emerald-400">
+            <label key={k} className="inline-flex items-center gap-1 cursor-pointer text-emerald-400" title={`Toggle ${k} access`}>
               <Switch
                 checked={row.feature_flags[k]}
                 onCheckedChange={() => toggleFlag(k)}
@@ -327,10 +337,22 @@ function UserRow({ row, onChange }: { row: Row; onChange: (p: Partial<Row>) => v
             </label>
           ))}
         </div>
-        <div className="col-span-2 md:col-span-1 text-right">
+        <div className="col-span-6 md:col-span-3 flex items-center justify-end gap-1 flex-wrap">
+          <Button size="sm" disabled={busy} onClick={() => give(50)} className="h-7 px-2 text-[10px] bg-emerald-700 hover:bg-emerald-600 text-black" title="Add 50 credits">+50</Button>
+          <Button size="sm" disabled={busy} onClick={() => give(-50)} className="h-7 px-2 text-[10px] bg-rose-700 hover:bg-rose-600 text-white" title="Remove 50 credits">−50</Button>
+          {row.rank !== "vip" ? (
+            <Button size="sm" disabled={busy} onClick={() => changeRank("vip")} className="h-7 px-2 text-[10px] bg-yellow-500 hover:bg-yellow-400 text-black" title="Upgrade to VIP">
+              <Crown className="h-3 w-3 mr-1" />Make VIP
+            </Button>
+          ) : (
+            <Button size="sm" disabled={busy} onClick={() => changeRank("prospect")} className="h-7 px-2 text-[10px] bg-emerald-800 hover:bg-emerald-700 text-emerald-100" title="Downgrade to standard member">
+              Reset
+            </Button>
+          )}
           <button
             onClick={() => setOpen((o) => !o)}
-            className="text-emerald-700 hover:text-cyan-300 transition"
+            className="text-emerald-700 hover:text-cyan-300 transition px-1"
+            title={open ? "Hide details" : "Show details"}
           >
             <ChevronDown className={`h-4 w-4 inline transition ${open ? "rotate-180" : ""}`} />
           </button>
@@ -338,16 +360,17 @@ function UserRow({ row, onChange }: { row: Row; onChange: (p: Partial<Row>) => v
       </div>
       {open && (
         <div className="px-4 pb-3 flex flex-wrap items-center gap-3 text-[10px] text-emerald-700 uppercase tracking-widest">
-          <div><span className="text-emerald-500">id:</span> {row.id.slice(0, 12)}</div>
-          <div><span className="text-emerald-500">status:</span> {row.status}</div>
-          <div><span className="text-emerald-500">joined:</span> {new Date(row.created_at).toLocaleDateString()}</div>
+          <div><span className="text-emerald-500">user id:</span> {row.id.slice(0, 12)}…</div>
+          <div><span className="text-emerald-500">account:</span> {row.status === "vip" ? "VIP" : "Free"}</div>
+          <div><span className="text-emerald-500">joined:</span> {new Date(row.created_at).toLocaleString()}</div>
           <div className="flex items-center gap-1 ml-auto">
-            <span className="text-emerald-500">quick:</span>
-            {[10, 50, 100, 500].map((v) => (
-              <Button key={v} size="sm" onClick={() => setDelta(String(v))} className="h-6 px-2 text-[10px] bg-emerald-800/70 hover:bg-emerald-700 text-emerald-100">+{v}</Button>
+            <span className="text-emerald-500">add:</span>
+            {[10, 100, 500, 1000].map((v) => (
+              <Button key={v} disabled={busy} size="sm" onClick={() => give(v)} className="h-6 px-2 text-[10px] bg-emerald-800/70 hover:bg-emerald-700 text-emerald-100">+{v}</Button>
             ))}
-            {[-10, -50, -100].map((v) => (
-              <Button key={v} size="sm" onClick={() => setDelta(String(v))} className="h-6 px-2 text-[10px] bg-rose-800/70 hover:bg-rose-700 text-rose-100">{v}</Button>
+            <span className="text-emerald-500 ml-2">remove:</span>
+            {[10, 100, 500].map((v) => (
+              <Button key={v} disabled={busy} size="sm" onClick={() => give(-v)} className="h-6 px-2 text-[10px] bg-rose-800/70 hover:bg-rose-700 text-rose-100">−{v}</Button>
             ))}
           </div>
         </div>
@@ -381,21 +404,24 @@ function RedeemCodePanel() {
   return (
     <section className="rounded-xl border border-emerald-700/30 bg-black/50 p-5 backdrop-blur">
       <h2 className="text-xs uppercase tracking-[0.4em] text-cyan-400 mb-4 flex items-center gap-2">
-        <Ticket className="h-3.5 w-3.5" /> MINT REDEEM CODE
+        <Ticket className="h-3.5 w-3.5" /> Create a Redeem Code
       </h2>
+      <p className="text-[10px] text-emerald-700 uppercase tracking-widest mb-3">
+        Share the code — anyone who enters it gets the credits (and rank, if set).
+      </p>
       <div className="grid sm:grid-cols-5 gap-2">
-        <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="0G-FOUNDER" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono uppercase" />
-        <Input value={credits} onChange={(e) => setCredits(e.target.value)} type="number" min="1" placeholder="credits" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
-        <Input value={maxUses} onChange={(e) => setMaxUses(e.target.value)} type="number" min="1" placeholder="max uses" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
+        <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="Code (e.g. WELCOME50)" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono uppercase" />
+        <Input value={credits} onChange={(e) => setCredits(e.target.value)} type="number" min="1" placeholder="Credits to give" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
+        <Input value={maxUses} onChange={(e) => setMaxUses(e.target.value)} type="number" min="1" placeholder="How many people" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
         <Select value={grantRank || "none"} onValueChange={(v) => setGrantRank(v === "none" ? "" : v as Rank)}>
           <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200"><SelectValue /></SelectTrigger>
           <SelectContent className="bg-black border-emerald-800 text-emerald-200">
-            <SelectItem value="none">no rank</SelectItem>
-            {RANKS.map((r) => <SelectItem key={r} value={r}>grant: {r}</SelectItem>)}
+            <SelectItem value="none">No rank change</SelectItem>
+            {RANKS.filter((r) => r !== "boss").map((r) => <SelectItem key={r} value={r}>Also set rank: {r}</SelectItem>)}
           </SelectContent>
         </Select>
         <Button onClick={submit} disabled={busy || !code} className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="h-4 w-4 mr-1" />MINT</>}
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="h-4 w-4 mr-1" />Create</>}
         </Button>
       </div>
     </section>
@@ -451,27 +477,30 @@ function ResellerAdminPanel({ rows }: { rows: Row[] }) {
   return (
     <section className="rounded-xl border border-pink-700/30 bg-black/50 p-5 backdrop-blur">
       <h2 className="text-xs uppercase tracking-[0.4em] text-pink-400 mb-4 flex items-center gap-2">
-        <Users className="h-3.5 w-3.5" /> RESELLER PROGRAM
+        <Users className="h-3.5 w-3.5" /> Reseller Program
       </h2>
+      <p className="text-[10px] text-emerald-700 uppercase tracking-widest mb-3">
+        Give a user a wallet so they can sell credits on your behalf.
+      </p>
       <div className="grid sm:grid-cols-5 gap-2">
         <Select value={userId} onValueChange={setUserId}>
           <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200">
-            <SelectValue placeholder="— select user —" />
+            <SelectValue placeholder="Choose a user…" />
           </SelectTrigger>
           <SelectContent className="bg-black border-emerald-800 text-emerald-200 max-h-72">
             {rows.map((r) => <SelectItem key={r.id} value={r.id}>{r.email}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="display name" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
-        <Input value={initialCredits} onChange={(e) => setInitialCredits(e.target.value)} type="number" min="0" placeholder="initial credits" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
-        <Input value={markup} onChange={(e) => setMarkup(e.target.value)} type="number" min="0" placeholder="markup ¢" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
+        <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Reseller name" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
+        <Input value={initialCredits} onChange={(e) => setInitialCredits(e.target.value)} type="number" min="0" placeholder="Starting credits" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
+        <Input value={markup} onChange={(e) => setMarkup(e.target.value)} type="number" min="0" placeholder="Their markup (¢)" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
         <Button onClick={submit} disabled={busy || !userId} className="bg-pink-500 hover:bg-pink-400 text-black font-bold">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="h-4 w-4 mr-1" />ACTIVATE</>}
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="h-4 w-4 mr-1" />Activate</>}
         </Button>
       </div>
 
       <div className="mt-5 divide-y divide-pink-900/20">
-        {resellers.length === 0 && <p className="text-xs text-emerald-700 py-2">// no resellers yet</p>}
+        {resellers.length === 0 && <p className="text-xs text-emerald-700 py-2">No resellers yet.</p>}
         {resellers.map((r) => (
           <div key={r.id} className="flex items-center justify-between py-3 text-sm">
             <div>
@@ -560,17 +589,17 @@ function PreLoadPanel({ onApplied }: { onApplied: () => void }) {
   return (
     <section className="rounded-xl border border-cyan-700/30 bg-black/50 p-5 backdrop-blur">
       <h2 className="text-xs uppercase tracking-[0.4em] text-cyan-400 mb-1 flex items-center gap-2">
-        <Mail className="h-3.5 w-3.5" /> PRE-LOAD CREDITS BY EMAIL
+        <Mail className="h-3.5 w-3.5" /> Pre-load Credits by Email
       </h2>
       <p className="text-[10px] text-emerald-700 uppercase tracking-widest mb-4">
-        // existing user → instant top-up · new email → queued, applied at signup
+        Already a user → credits added now · new email → waiting, added when they sign up
       </p>
 
       <div className="grid sm:grid-cols-6 gap-2">
         <Input
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="email@domain.com"
+          placeholder="user@example.com"
           type="email"
           className="sm:col-span-2 bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
         />
@@ -579,58 +608,58 @@ function PreLoadPanel({ onApplied }: { onApplied: () => void }) {
           onChange={(e) => setCredits(e.target.value)}
           type="number"
           min="0"
-          placeholder="credits"
+          placeholder="Credits"
           className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
         />
         <Select value={grantRank || "none"} onValueChange={(v) => setGrantRank(v === "none" ? "" : v as Rank)}>
           <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200"><SelectValue /></SelectTrigger>
           <SelectContent className="bg-black border-emerald-800 text-emerald-200">
-            <SelectItem value="none">no rank</SelectItem>
-            {RANKS.map((r) => <SelectItem key={r} value={r}>grant: {r}</SelectItem>)}
+            <SelectItem value="none">No rank change</SelectItem>
+            {RANKS.filter((r) => r !== "boss").map((r) => <SelectItem key={r} value={r}>Also set rank: {r}</SelectItem>)}
           </SelectContent>
         </Select>
         <Input
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="notes (optional)"
+          placeholder="Note (optional)"
           className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
         />
         <Button onClick={submit} disabled={busy || !email} className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 mr-1" />GRANT</>}
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 mr-1" />Send</>}
         </Button>
       </div>
 
       <div className="mt-5 flex items-center justify-between text-[10px] uppercase tracking-widest text-emerald-700">
-        <span>{visible.length} grant{visible.length === 1 ? "" : "s"}</span>
+        <span>{visible.length} {visible.length === 1 ? "entry" : "entries"}</span>
         <label className="flex items-center gap-2 cursor-pointer">
           <Switch checked={showClaimed} onCheckedChange={setShowClaimed} className="scale-75 data-[state=checked]:bg-cyan-500" />
-          show claimed
+          Include claimed
         </label>
       </div>
 
       <div className="mt-2 divide-y divide-cyan-900/20">
-        {visible.length === 0 && <p className="text-xs text-emerald-700 py-3">// no pre-loaded grants</p>}
+        {visible.length === 0 && <p className="text-xs text-emerald-700 py-3">Nothing pre-loaded yet.</p>}
         {visible.map((g) => (
           <div key={g.id} className="flex items-center justify-between py-3 text-sm">
             <div className="min-w-0 flex-1">
               <p className="text-cyan-200 flex items-center gap-2 truncate">
                 {g.email}
                 <Badge variant="outline" className={g.claimed_at ? "border-emerald-700 text-emerald-300" : "border-yellow-700 text-yellow-300"}>
-                  {g.claimed_at ? "claimed" : "pending"}
+                  {g.claimed_at ? "claimed" : "waiting"}
                 </Badge>
                 {g.grant_rank && (
                   <Badge variant="outline" className="border-pink-700 text-pink-300">{g.grant_rank}</Badge>
                 )}
               </p>
               <p className="text-[10px] text-emerald-700">
-                {g.credits}c · {new Date(g.created_at).toLocaleDateString()}
+                {g.credits} credits · created {new Date(g.created_at).toLocaleDateString()}
                 {g.claimed_at ? ` · claimed ${new Date(g.claimed_at).toLocaleDateString()}` : ""}
                 {g.notes ? ` · ${g.notes}` : ""}
               </p>
             </div>
             {!g.claimed_at && (
-              <Button size="sm" onClick={() => cancel(g.id)} className="h-7 bg-rose-700 hover:bg-rose-600 text-white">
-                <Trash2 className="h-3 w-3" />
+              <Button size="sm" onClick={() => cancel(g.id)} className="h-7 bg-rose-700 hover:bg-rose-600 text-white" title="Cancel this grant">
+                <Trash2 className="h-3 w-3 mr-1" /> Cancel
               </Button>
             )}
           </div>
@@ -707,12 +736,15 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
   return (
     <section className="rounded-xl border border-yellow-700/30 bg-black/50 p-5 backdrop-blur">
       <h2 className="text-xs uppercase tracking-[0.4em] text-yellow-400 mb-4 flex items-center gap-2">
-        <Crown className="h-3.5 w-3.5" /> VIP PASSES
+        <Crown className="h-3.5 w-3.5" /> VIP Passes
       </h2>
+      <p className="text-[10px] text-emerald-700 uppercase tracking-widest mb-3">
+        Choose a user, pick how long, and grant VIP access.
+      </p>
       <div className="grid sm:grid-cols-6 gap-2">
         <Select value={userId} onValueChange={setUserId}>
           <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200 sm:col-span-2">
-            <SelectValue placeholder="— select user —" />
+            <SelectValue placeholder="Choose a user…" />
           </SelectTrigger>
           <SelectContent className="bg-black border-emerald-800 text-emerald-200 max-h-72">
             {rows.map((r) => <SelectItem key={r.id} value={r.id}>{r.email}</SelectItem>)}
@@ -725,7 +757,7 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
             <SelectItem value="90">3 months</SelectItem>
             <SelectItem value="180">6 months</SelectItem>
             <SelectItem value="365">12 months</SelectItem>
-            <SelectItem value="custom">custom</SelectItem>
+            <SelectItem value="custom">Pick a date</SelectItem>
           </SelectContent>
         </Select>
         <Input
@@ -735,22 +767,22 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
           disabled={preset !== "custom"}
           className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
         />
-        <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="notes" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
+        <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Note (optional)" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
         <Button onClick={submit} disabled={busy} className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Crown className="h-4 w-4 mr-1" />GRANT</>}
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Crown className="h-4 w-4 mr-1" />Grant VIP</>}
         </Button>
       </div>
 
       <div className="mt-4 flex items-center justify-between text-[10px] uppercase tracking-widest text-emerald-700">
-        <span>{visible.length} pass{visible.length === 1 ? "" : "es"}</span>
+        <span>{visible.length} {visible.length === 1 ? "pass" : "passes"}</span>
         <label className="flex items-center gap-2 cursor-pointer">
           <Switch checked={showInactive} onCheckedChange={setShowInactive} className="scale-75 data-[state=checked]:bg-yellow-500" />
-          show inactive
+          Include expired
         </label>
       </div>
 
       <div className="mt-2 divide-y divide-yellow-900/20">
-        {visible.length === 0 && <p className="text-xs text-emerald-700 py-3">// no passes</p>}
+        {visible.length === 0 && <p className="text-xs text-emerald-700 py-3">No VIP passes yet.</p>}
         {visible.map((p) => (
           <div key={p.id} className="flex items-center justify-between py-3 text-sm">
             <div>
@@ -761,12 +793,12 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
                 </Badge>
               </p>
               <p className="text-[10px] text-emerald-700">
-                expires {fmt(p.expires_at)} · {p.source}{p.notes ? ` · ${p.notes}` : ""}
+                Expires {fmt(p.expires_at)} · {p.source}{p.notes ? ` · ${p.notes}` : ""}
               </p>
             </div>
             {isActive(p) && (
               <Button size="sm" onClick={() => cancel(p.id)} className="h-7 bg-rose-700 hover:bg-rose-600 text-white">
-                <X className="h-3 w-3 mr-1" />REVOKE
+                <X className="h-3 w-3 mr-1" />Revoke
               </Button>
             )}
           </div>
