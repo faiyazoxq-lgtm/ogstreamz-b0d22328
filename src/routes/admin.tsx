@@ -117,8 +117,12 @@ function AdminPage() {
       <SectionHeader icon={<Sliders className="h-4 w-4" />} label="Hub Controls · Tuning" tint="#a78bfa" />
       <HubControlsPanel />
 
-      <SectionHeader icon={<Brain className="h-4 w-4" />} label="Global Mood · Syndicate Persona" tint="#ff2e55" />
-      <ShapeBridgePanel />
+      <SectionHeader icon={<Brain className="h-4 w-4" />} label="Global Mood · Syndicate Protocol" tint="#ff2e55" />
+      <SyndicateProtocolSwitch />
+      <details className="mt-3 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-xs text-white/55">
+        <summary className="cursor-pointer">Legacy bridge controls</summary>
+        <div className="pt-3"><ShapeBridgePanel /></div>
+      </details>
 
       <SectionHeader icon={<Rocket className="h-4 w-4" />} label="Homepage · Custom Hubs" tint="#ff00aa" />
       <CustomHubBuilderPanel />
