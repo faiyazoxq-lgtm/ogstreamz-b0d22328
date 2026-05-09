@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      boss_chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          external_user: string | null
+          id: string
+          market_context: Json | null
+          persona: string | null
+          role: string
+          session_id: string | null
+          source: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          external_user?: string | null
+          id?: string
+          market_context?: Json | null
+          persona?: string | null
+          role: string
+          session_id?: string | null
+          source?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          external_user?: string | null
+          id?: string
+          market_context?: Json | null
+          persona?: string | null
+          role?: string
+          session_id?: string | null
+          source?: string
+        }
+        Relationships: []
+      }
       boss_notes: {
         Row: {
           body: string
