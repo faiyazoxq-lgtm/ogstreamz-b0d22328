@@ -117,7 +117,7 @@ function AdminPage() {
       <SectionHeader icon={<Sliders className="h-4 w-4" />} label="Hub Controls · Tuning" tint="#a78bfa" />
       <HubControlsPanel />
 
-      <SectionHeader icon={<Brain className="h-4 w-4" />} label="Shape Bridge · Persona" tint="#ff5c8a" />
+      <SectionHeader icon={<Brain className="h-4 w-4" />} label="Global Mood · Syndicate Persona" tint="#ff2e55" />
       <ShapeBridgePanel />
 
       <SectionHeader icon={<Rocket className="h-4 w-4" />} label="Homepage · Custom Hubs" tint="#ff00aa" />
@@ -228,7 +228,7 @@ function ShapeBridgePanel() {
             <Brain className="h-3.5 w-3.5" /> 0G-Shape-Bridge
           </div>
           <h3 className="text-2xl md:text-3xl font-extrabold leading-tight">
-            Persona Switch · {isOg ? "OG-MODE (Sweary)" : "Normal Mode"}
+            Global Mood · {isOg ? "OG-MODE" : "NORMAL"}
           </h3>
           <p className="text-sm text-white/65">
             Controls how your Shapes Inc OG-MODE character replies in the Shapes chat window.
@@ -252,8 +252,8 @@ function ShapeBridgePanel() {
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         {([
-          { key: "og" as const, label: "OG-MODE", sub: "Sweary AI · Hype Coach", color: "#ff5c8a" },
-          { key: "normal" as const, label: "Normal Mode", sub: "Pro Desk · Clean Tone", color: "#3b82f6" },
+          { key: "og" as const, label: "OG-MODE", sub: "Enforcer · Crimson Pulse", color: "#ff2e55" },
+          { key: "normal" as const, label: "NORMAL", sub: "Elite Analyst · Gold", color: "#ffd166" },
         ]).map((opt) => {
           const active = mode === opt.key;
           return (

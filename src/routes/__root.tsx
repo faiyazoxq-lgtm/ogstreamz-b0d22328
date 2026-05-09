@@ -16,6 +16,9 @@ import { AuthProvider } from "../hooks/use-auth";
 import { Toaster } from "../components/ui/sonner";
 import { PaymentTestModeBanner } from "../components/PaymentTestModeBanner";
 import { ZeroGBadge } from "../components/ZeroGBadge";
+import { GlobalMoodProvider } from "../hooks/use-global-mood";
+import { BottomDock } from "../components/BottomDock";
+import { LiveThinkingFeed } from "../components/LiveThinkingFeed";
 
 function NotFoundComponent() {
   return (
@@ -126,14 +129,18 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="min-h-screen bg-background text-foreground">
-          <PaymentTestModeBanner />
-          <NavBar />
-          <Outlet />
-          <TeleportOverlay />
-          <ZeroGBadge />
-        </div>
-        <Toaster />
+        <GlobalMoodProvider>
+          <div className="min-h-screen bg-background text-foreground">
+            <PaymentTestModeBanner />
+            <NavBar />
+            <Outlet />
+            <TeleportOverlay />
+            <LiveThinkingFeed />
+            <BottomDock />
+            <ZeroGBadge />
+          </div>
+          <Toaster />
+        </GlobalMoodProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
