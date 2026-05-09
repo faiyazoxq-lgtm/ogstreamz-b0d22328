@@ -1,6 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "../hooks/use-auth";
-import { UserPlus, LogIn, Gift, ShieldCheck, Sparkles, Music2, Smile, Wrench, Zap, Lock, ArrowRight } from "lucide-react";
+import { UserPlus, LogIn, Gift, ShieldCheck, Sparkles, Music2, Smile, Wrench, Zap, Lock, ArrowRight, Coins } from "lucide-react";
+
+// Mirrors the +5 grant in handle_new_user(); update both if it changes.
+export const SIGNUP_BONUS_CREDITS = 5;
 import { useEffect, type ReactNode } from "react";
 
 const PUBLIC_PATHS = ["/auth", "/forgot-password", "/reset-password"];
@@ -61,8 +64,27 @@ function PromoLanding() {
 
           <p className="mt-4 max-w-2xl text-sm sm:text-base text-white/75 leading-relaxed">
             MusicHUB, JokesHUB, ToolHUB and the full neon platform are reserved for members.
-            Free account, no card, instant access — we top you up with credits the moment you land.
+            Free account, no card, instant access.
           </p>
+
+          <div className="mt-6 flex items-center gap-4 rounded-2xl border border-amber-300/40 bg-gradient-to-r from-amber-300/15 via-amber-300/5 to-transparent px-4 py-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-amber-300/50 bg-amber-300/15 shadow-[0_0_30px_-6px_rgba(252,211,77,0.7)]">
+              <Coins className="h-6 w-6 text-amber-200" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl sm:text-4xl font-black text-amber-200 tracking-tight">
+                  +{SIGNUP_BONUS_CREDITS}
+                </span>
+                <span className="text-[11px] uppercase tracking-[0.25em] font-bold text-amber-200/80">
+                  credits waiting
+                </span>
+              </div>
+              <p className="mt-0.5 text-[11px] sm:text-xs text-white/65">
+                Land in your wallet the moment your account is confirmed.
+              </p>
+            </div>
+          </div>
 
           <div className="mt-7 flex flex-col sm:flex-row gap-3">
             <Link
@@ -85,7 +107,7 @@ function PromoLanding() {
 
           <ul className="mt-7 grid gap-2.5 sm:grid-cols-3">
             {[
-              { icon: Gift, text: "5 free credits on signup" },
+              { icon: Gift, text: `${SIGNUP_BONUS_CREDITS} free credits on signup` },
               { icon: ShieldCheck, text: "No card required" },
               { icon: Sparkles, text: "All portals unlocked" },
             ].map(({ icon: Icon, text }) => (

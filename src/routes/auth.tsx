@@ -14,6 +14,7 @@ import { claimSignupPass } from "@/lib/passes.functions";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getRemember, setRemember, markTabSession, clearTabSession } from "@/lib/remember-session";
 import logo from "@/assets/logo.jpg";
+import { SIGNUP_BONUS_CREDITS } from "@/components/AuthGate";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const claim = useServerFn(claimSignupPass);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -104,10 +105,20 @@ function AuthPage() {
   useEffect(() => {
     if (user) {
       const dest = consumeRedirect();
+      // Confirm starting credits when this is the first sign-in after signup.
+      try {
+        if (sessionStorage.getItem("just_signed_up") === "1") {
+          sessionStorage.removeItem("just_signed_up");
+          const credits = profile?.credits ?? SIGNUP_BONUS_CREDITS;
+          toast.success(`Account created · +${credits} credits in your wallet`, {
+            description: "Spend them on any portal — no card needed.",
+          });
+        }
+      } catch { /* ignore */ }
       tryClaim().finally(() => navigate({ to: dest as never }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, profile?.credits]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -125,9 +136,10 @@ function AuthPage() {
           },
         });
         if (error) throw error;
+        try { sessionStorage.setItem("just_signed_up", "1"); } catch { /* ignore */ }
         toast.success(passToken
           ? `Welcome. Confirm your email — your pass ${passToken} will activate on first sign-in.`
-          : "Welcome to the Syndicate. Check your inbox to confirm your email.");
+          : `Welcome to the Syndicate. Confirm your inbox — +${SIGNUP_BONUS_CREDITS} credits land on first sign-in.`);
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
