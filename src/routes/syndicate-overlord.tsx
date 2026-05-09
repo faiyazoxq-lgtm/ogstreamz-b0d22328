@@ -249,23 +249,27 @@ function UserRow({ row, onChange }: { row: Row; onChange: (p: Partial<Row>) => v
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
 
-  const apply = async () => {
+  const give = async (amount: number) => {
     setBusy(true);
     try {
-      const n = parseInt(delta, 10);
-      if (!Number.isFinite(n) || n === 0) throw new Error("Enter a non-zero amount");
-      const r = await adj({ data: { userId: row.id, delta: n, reason: "overlord:adjust" } });
+      if (!amount) throw new Error("Enter an amount");
+      const r = await adj({ data: { userId: row.id, delta: amount, reason: "boss:adjust" } });
       onChange({ credits: r.credits });
       setDelta("0");
-      toast.success(`Balance: ${r.credits}`);
+      toast.success(`${row.email}: ${amount > 0 ? "+" : ""}${amount} → ${r.credits} credits`);
     } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+  };
+  const apply = () => {
+    const n = parseInt(delta, 10);
+    if (!Number.isFinite(n) || n === 0) { toast.error("Enter a non-zero amount"); return; }
+    give(n);
   };
   const changeRank = async (rank: Rank) => {
     setBusy(true);
     try {
       await setR({ data: { userId: row.id, rank } });
       onChange({ rank, status: rank === "vip" || rank === "boss" ? "vip" : "free" });
-      toast.success(`${row.email} → ${rank.toUpperCase()}`);
+      toast.success(`${row.email} is now ${rank.toUpperCase()}`);
     } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
   };
   const toggleFlag = async (key: keyof Flags) => {
@@ -280,12 +284,12 @@ function UserRow({ row, onChange }: { row: Row; onChange: (p: Partial<Row>) => v
   return (
     <div className="border-b border-emerald-900/30 hover:bg-emerald-900/5 transition">
       <div className="grid grid-cols-12 gap-2 px-4 py-3 items-center text-sm">
-        <div className="col-span-12 md:col-span-4 truncate flex items-center gap-2">
+        <div className="col-span-12 md:col-span-3 truncate flex items-center gap-2">
           <span className={`inline-block h-1.5 w-1.5 rounded-full ${row.status === "vip" ? "bg-yellow-400" : "bg-emerald-700"}`} />
           <div className="min-w-0 flex-1">
             <p className="text-emerald-200 truncate">{row.email}</p>
             <p className="text-[10px] text-emerald-700 truncate">
-              {row.display_name ?? "—"} · {row.id.slice(0, 8)}
+              {row.display_name ?? "no name"} · joined {new Date(row.created_at).toLocaleDateString()}
             </p>
           </div>
         </div>
@@ -300,26 +304,29 @@ function UserRow({ row, onChange }: { row: Row; onChange: (p: Partial<Row>) => v
           </Select>
         </div>
         <div className="col-span-6 md:col-span-2 flex items-center gap-1">
-          <Badge variant="outline" className="border-cyan-800/40 text-cyan-300 tabular-nums font-mono">
+          <Badge variant="outline" className="border-cyan-800/40 text-cyan-300 tabular-nums font-mono" title="Current credit balance">
             {row.credits.toLocaleString()}
           </Badge>
           <Input
             value={delta}
             onChange={(e) => setDelta(e.target.value)}
+            placeholder="±"
+            title="Type any number, then press the button. Negative numbers remove credits."
             className="h-7 w-14 bg-black/60 border-emerald-800/40 text-emerald-200 font-mono text-xs"
           />
           <Button
             size="icon"
             onClick={apply}
             disabled={busy || !n}
+            title={n < 0 ? "Remove credits" : "Add credits"}
             className="h-7 w-7 bg-emerald-700 hover:bg-emerald-600 text-black"
           >
             {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : (n < 0 ? <Minus className="h-3 w-3" /> : <Plus className="h-3 w-3" />)}
           </Button>
         </div>
-        <div className="col-span-10 md:col-span-3 flex items-center gap-3 text-[11px] uppercase tracking-widest">
+        <div className="col-span-6 md:col-span-2 flex items-center gap-2 text-[10px] uppercase tracking-widest">
           {(["jokes","music","tools"] as const).map((k) => (
-            <label key={k} className="inline-flex items-center gap-1.5 cursor-pointer text-emerald-400">
+            <label key={k} className="inline-flex items-center gap-1 cursor-pointer text-emerald-400" title={`Toggle ${k} access`}>
               <Switch
                 checked={row.feature_flags[k]}
                 onCheckedChange={() => toggleFlag(k)}
@@ -330,10 +337,22 @@ function UserRow({ row, onChange }: { row: Row; onChange: (p: Partial<Row>) => v
             </label>
           ))}
         </div>
-        <div className="col-span-2 md:col-span-1 text-right">
+        <div className="col-span-6 md:col-span-3 flex items-center justify-end gap-1 flex-wrap">
+          <Button size="sm" disabled={busy} onClick={() => give(50)} className="h-7 px-2 text-[10px] bg-emerald-700 hover:bg-emerald-600 text-black" title="Add 50 credits">+50</Button>
+          <Button size="sm" disabled={busy} onClick={() => give(-50)} className="h-7 px-2 text-[10px] bg-rose-700 hover:bg-rose-600 text-white" title="Remove 50 credits">−50</Button>
+          {row.rank !== "vip" ? (
+            <Button size="sm" disabled={busy} onClick={() => changeRank("vip")} className="h-7 px-2 text-[10px] bg-yellow-500 hover:bg-yellow-400 text-black" title="Upgrade to VIP">
+              <Crown className="h-3 w-3 mr-1" />Make VIP
+            </Button>
+          ) : (
+            <Button size="sm" disabled={busy} onClick={() => changeRank("prospect")} className="h-7 px-2 text-[10px] bg-emerald-800 hover:bg-emerald-700 text-emerald-100" title="Downgrade to standard member">
+              Reset
+            </Button>
+          )}
           <button
             onClick={() => setOpen((o) => !o)}
-            className="text-emerald-700 hover:text-cyan-300 transition"
+            className="text-emerald-700 hover:text-cyan-300 transition px-1"
+            title={open ? "Hide details" : "Show details"}
           >
             <ChevronDown className={`h-4 w-4 inline transition ${open ? "rotate-180" : ""}`} />
           </button>
@@ -341,16 +360,17 @@ function UserRow({ row, onChange }: { row: Row; onChange: (p: Partial<Row>) => v
       </div>
       {open && (
         <div className="px-4 pb-3 flex flex-wrap items-center gap-3 text-[10px] text-emerald-700 uppercase tracking-widest">
-          <div><span className="text-emerald-500">id:</span> {row.id.slice(0, 12)}</div>
-          <div><span className="text-emerald-500">status:</span> {row.status}</div>
-          <div><span className="text-emerald-500">joined:</span> {new Date(row.created_at).toLocaleDateString()}</div>
+          <div><span className="text-emerald-500">user id:</span> {row.id.slice(0, 12)}…</div>
+          <div><span className="text-emerald-500">account:</span> {row.status === "vip" ? "VIP" : "Free"}</div>
+          <div><span className="text-emerald-500">joined:</span> {new Date(row.created_at).toLocaleString()}</div>
           <div className="flex items-center gap-1 ml-auto">
-            <span className="text-emerald-500">quick:</span>
-            {[10, 50, 100, 500].map((v) => (
-              <Button key={v} size="sm" onClick={() => setDelta(String(v))} className="h-6 px-2 text-[10px] bg-emerald-800/70 hover:bg-emerald-700 text-emerald-100">+{v}</Button>
+            <span className="text-emerald-500">add:</span>
+            {[10, 100, 500, 1000].map((v) => (
+              <Button key={v} disabled={busy} size="sm" onClick={() => give(v)} className="h-6 px-2 text-[10px] bg-emerald-800/70 hover:bg-emerald-700 text-emerald-100">+{v}</Button>
             ))}
-            {[-10, -50, -100].map((v) => (
-              <Button key={v} size="sm" onClick={() => setDelta(String(v))} className="h-6 px-2 text-[10px] bg-rose-800/70 hover:bg-rose-700 text-rose-100">{v}</Button>
+            <span className="text-emerald-500 ml-2">remove:</span>
+            {[10, 100, 500].map((v) => (
+              <Button key={v} disabled={busy} size="sm" onClick={() => give(-v)} className="h-6 px-2 text-[10px] bg-rose-800/70 hover:bg-rose-700 text-rose-100">−{v}</Button>
             ))}
           </div>
         </div>
