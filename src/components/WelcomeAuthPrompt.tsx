@@ -303,6 +303,31 @@ export function WelcomeAuthPrompt() {
               <Button type="submit" disabled={busy} className="btn-glass-blue w-full h-10 text-white font-bold uppercase tracking-[0.25em]">
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : mode === "signup" ? "Create Account" : "Sign In"}
               </Button>
+
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-[9px] uppercase tracking-[0.25em] text-muted-foreground">no password</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+
+              {magicSent ? (
+                <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/5 px-3 py-2.5 text-[11px] text-emerald-300 text-center">
+                  Magic link sent to <span className="font-mono">{email}</span>.
+                  <br />Click it from this device to sign in.
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={sendMagicLink}
+                  className="w-full h-10 border-[oklch(0.72_0.22_245/0.4)] hover:bg-[oklch(0.72_0.22_245/0.1)]"
+                >
+                  <Wand2 className="h-4 w-4 mr-2" />
+                  Email me a magic link
+                </Button>
+              )}
+
               {mode === "login" && (
                 <div className="flex items-center justify-between text-[11px]">
                   <label className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground">
