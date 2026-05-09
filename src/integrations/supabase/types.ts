@@ -1085,6 +1085,66 @@ export type Database = {
         }
         Relationships: []
       }
+      store_packs: {
+        Row: {
+          active: boolean
+          amount_cents: number
+          created_at: string
+          credits: number | null
+          id: string
+          name: string
+          price_id: string
+          recurring: boolean
+          sort_order: number
+          tagline: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          amount_cents?: number
+          created_at?: string
+          credits?: number | null
+          id?: string
+          name: string
+          price_id: string
+          recurring?: boolean
+          sort_order?: number
+          tagline?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          amount_cents?: number
+          created_at?: string
+          credits?: number | null
+          id?: string
+          name?: string
+          price_id?: string
+          recurring?: boolean
+          sort_order?: number
+          tagline?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      store_settings: {
+        Row: {
+          credits_per_song: number
+          id: number
+          updated_at: string
+        }
+        Insert: {
+          credits_per_song?: number
+          id?: number
+          updated_at?: string
+        }
+        Update: {
+          credits_per_song?: number
+          id?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean
