@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Copy, ExternalLink, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, Search, Crown } from "lucide-react";
+import { Copy, ExternalLink, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, Search, Crown, QrCode, Share2, Globe, Download, X } from "lucide-react";
 import { toast } from "sonner";
+import { QRCodeSVG } from "qrcode.react";
 
 type PortalRow = {
   id: string;
@@ -61,6 +62,7 @@ function PortalsHub() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | Item["kind"]>("all");
   const [q, setQ] = useState("");
+  const [qrFor, setQrFor] = useState<Item | null>(null);
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 
   useEffect(() => {
