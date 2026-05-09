@@ -197,6 +197,7 @@ function PortalPage() {
   // Lead tracking: increment view counter on mount
   useEffect(() => {
     supabase.rpc("increment_portal_view", { _slug: portal.slug }).then(() => {});
+    import("@/lib/track-view").then((m) => m.trackPortalView("portal", portal.slug));
   }, [portal.slug]);
 
   useEffect(() => {
