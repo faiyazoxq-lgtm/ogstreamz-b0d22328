@@ -79,7 +79,7 @@ function AdminPage() {
   }
 
   return (
-    <main className="max-w-5xl mx-auto px-5 sm:px-8 py-12">
+    <main className="max-w-[1600px] mx-auto px-4 sm:px-6 py-12">
       <header className="mb-8">
         <p className="text-xs uppercase tracking-[0.4em] font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
           <Shield className="inline h-3.5 w-3.5 mr-2" />Power Console
@@ -87,8 +87,31 @@ function AdminPage() {
         <h1 className="mt-3 font-[Montserrat] font-black text-3xl sm:text-5xl text-metallic">One-Hit Command Deck</h1>
         <p className="mt-2 text-sm text-muted-foreground">Tap a tile to fire. Sections grouped by mission type.</p>
       </header>
+      <div className="grid gap-6 xl:grid-cols-[220px_minmax(0,1fr)_320px]">
+        {/* LEFT — Tools rail */}
+        <aside className="hidden xl:block">
+          <div className="sticky top-24 rounded-2xl border border-border bg-card/60 backdrop-blur p-3">
+            <p className="px-2 pb-2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground flex items-center gap-2">
+              <Wrench className="h-3 w-3" /> Tools
+            </p>
+            <nav className="flex flex-col gap-1">
+              {NAV_SECTIONS.map((s) => (
+                <a
+                  key={s.id}
+                  href={`#${s.id}`}
+                  className="px-3 py-2 rounded-lg text-xs font-semibold hover:bg-white/5 transition border-l-2"
+                  style={{ borderColor: s.tint, color: s.tint }}
+                >
+                  {s.label}
+                </a>
+              ))}
+            </nav>
+          </div>
+        </aside>
 
-      <SectionHeader icon={<Users className="h-4 w-4" />} label="Roster" tint="#3ad6ff" />
+        {/* CENTER — main panels */}
+        <div className="min-w-0">
+      <SectionHeader id="roster" icon={<Users className="h-4 w-4" />} label="Roster" tint="#3ad6ff" />
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="grid grid-cols-12 gap-2 px-5 py-3 text-[10px] uppercase tracking-[0.3em] text-muted-foreground border-b border-border">
           <div className="col-span-5">Email</div>
@@ -104,7 +127,7 @@ function AdminPage() {
         )}
       </div>
 
-      <SectionHeader icon={<Radar className="h-4 w-4" />} label="Intel · Recon" tint="#ff2233" />
+      <SectionHeader id="intel" icon={<Radar className="h-4 w-4" />} label="Intel · Recon" tint="#ff2233" />
       <div className="space-y-6">
         <ScoutPanel />
         <LeadTrackingPanel />
@@ -112,7 +135,7 @@ function AdminPage() {
         <NewsScoutSpawnerPanel />
       </div>
 
-      <SectionHeader icon={<Zap className="h-4 w-4" />} label="Spawners · Build" tint="#ffd166" />
+      <SectionHeader id="spawners" icon={<Zap className="h-4 w-4" />} label="Spawners · Build" tint="#ffd166" />
       <div className="space-y-6">
         <SpawnerPanel />
         <MusicSpawnerPanel />
@@ -121,42 +144,52 @@ function AdminPage() {
         <TradeSpawnerPanel />
       </div>
 
-      <SectionHeader icon={<MegaIcon className="h-4 w-4" />} label="Broadcast · Reach" tint="#00e08a" />
+      <SectionHeader id="broadcast" icon={<MegaIcon className="h-4 w-4" />} label="Broadcast · Reach" tint="#00e08a" />
       <div className="space-y-6">
         <TelegramSocialsPanel />
         <FleetCommanderPanel />
         <ConnectHubLinkPanel />
       </div>
 
-      <SectionHeader icon={<Sliders className="h-4 w-4" />} label="Hub Controls · Tuning" tint="#a78bfa" />
+      <SectionHeader id="hubs" icon={<Sliders className="h-4 w-4" />} label="Hub Controls · Tuning" tint="#a78bfa" />
       <HubControlsPanel />
 
-      <SectionHeader icon={<Brain className="h-4 w-4" />} label="Global Mood · Syndicate Protocol" tint="#ff2e55" />
+      <SectionHeader id="mood" icon={<Brain className="h-4 w-4" />} label="Global Mood · Syndicate Protocol" tint="#ff2e55" />
       <SyndicateProtocolSwitch />
       <details className="mt-3 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-xs text-white/55">
         <summary className="cursor-pointer">Legacy bridge controls</summary>
         <div className="pt-3"><ShapeBridgePanel /></div>
       </details>
 
-      <SectionHeader icon={<Rocket className="h-4 w-4" />} label="Homepage · Custom Hubs" tint="#ff00aa" />
+      <SectionHeader id="homehubs" icon={<Rocket className="h-4 w-4" />} label="Homepage · Custom Hubs" tint="#ff00aa" />
       <CustomHubBuilderPanel />
 
-      <SectionHeader icon={<Megaphone className="h-4 w-4" />} label="Friends & Family · Free Top-Ups" tint="#ff5577" />
+      <SectionHeader id="topups" icon={<Megaphone className="h-4 w-4" />} label="Friends & Family · Free Top-Ups" tint="#ff5577" />
       <TopUpRequestsPanel />
 
-      <SectionHeader icon={<Terminal className="h-4 w-4" />} label="Command Deck · Superuser" tint="#ff00aa" />
+      <SectionHeader id="command" icon={<Terminal className="h-4 w-4" />} label="Command Deck · Superuser" tint="#ff00aa" />
       <div className="space-y-6">
         <OpsSnapshotPanel />
         <AgentConsolePanel />
         <MaintenancePanel />
       </div>
+        </div>
+
+        {/* RIGHT — Users DB + quick actions */}
+        <aside className="hidden xl:block">
+          <div className="sticky top-24 space-y-4">
+            <UsersDirectoryPanel rows={rows} busy={busy} onUpdate={update} />
+            <QuickActionsPanel />
+          </div>
+        </aside>
+      </div>
     </main>
   );
 }
 
-function SectionHeader({ icon, label, tint }: { icon: React.ReactNode; label: string; tint: string }) {
+function SectionHeader({ id, icon, label, tint }: { id?: string; icon: React.ReactNode; label: string; tint: string }) {
   return (
-    <div className="mt-12 mb-4 flex items-center gap-3">
+    <div id={id} className="mt-12 mb-4 flex items-center gap-3 scroll-mt-24">
       <span
         className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] uppercase tracking-[0.4em] font-bold"
         style={{ background: `${tint}1a`, border: `1px solid ${tint}55`, color: tint }}
@@ -165,6 +198,91 @@ function SectionHeader({ icon, label, tint }: { icon: React.ReactNode; label: st
         {label}
       </span>
       <div className="flex-1 h-px" style={{ background: `linear-gradient(90deg, ${tint}66, transparent)` }} />
+    </div>
+  );
+}
+
+function UsersDirectoryPanel({ rows, busy, onUpdate }: { rows: Row[]; busy: string | null; onUpdate: (id: string, patch: Partial<Row>) => void }) {
+  const [q, setQ] = useState("");
+  const filtered = rows.filter((r) => !q || r.email.toLowerCase().includes(q.toLowerCase()));
+  return (
+    <div className="rounded-2xl border border-border bg-card/60 backdrop-blur p-4">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground flex items-center gap-2">
+          <Database className="h-3 w-3" /> Users DB
+        </p>
+        <span className="text-[10px] text-muted-foreground">{filtered.length}/{rows.length}</span>
+      </div>
+      <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search email…" className="mb-3 h-8 text-xs" />
+      <div className="max-h-[55vh] overflow-y-auto pr-1 space-y-2">
+        {filtered.slice(0, 60).map((r) => (
+          <div key={r.id} className="rounded-lg border border-white/10 bg-black/30 p-2 text-xs">
+            <div className="truncate font-mono text-[11px]" title={r.email}>{r.email}</div>
+            <div className="mt-1 flex items-center justify-between gap-2">
+              <span
+                className="px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider"
+                style={{
+                  background: r.status === "vip" ? "#ffd16622" : "#ffffff10",
+                  color: r.status === "vip" ? "#ffd166" : "#9aa4b2",
+                }}
+              >
+                {r.status}
+              </span>
+              <span className="text-[10px] text-muted-foreground">{r.credits} cr</span>
+              <div className="flex gap-1">
+                <button
+                  disabled={busy === r.id}
+                  onClick={() => onUpdate(r.id, { credits: r.credits + 10 })}
+                  className="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 text-[10px]"
+                  title="+10 credits"
+                >
+                  +10
+                </button>
+                <button
+                  disabled={busy === r.id}
+                  onClick={() => onUpdate(r.id, { status: r.status === "vip" ? "free" : "vip" })}
+                  className="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 text-[10px]"
+                  title="Toggle VIP"
+                >
+                  VIP
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+        {filtered.length === 0 && (
+          <p className="text-center text-[11px] text-muted-foreground py-6">No matches.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function QuickActionsPanel() {
+  const actions: { label: string; href: string; icon: React.ReactNode; tint: string }[] = [
+    { label: "Home", href: "/", icon: <ExternalLink className="h-3 w-3" />, tint: "#3ad6ff" },
+    { label: "Battle Hub", href: "/battle", icon: <Zap className="h-3 w-3" />, tint: "#ff2e55" },
+    { label: "Profile", href: "/profile", icon: <Users className="h-3 w-3" />, tint: "#a78bfa" },
+    { label: "Store", href: "/store", icon: <Rocket className="h-3 w-3" />, tint: "#ffd166" },
+  ];
+  return (
+    <div className="rounded-2xl border border-border bg-card/60 backdrop-blur p-4">
+      <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground flex items-center gap-2 mb-3">
+        <Activity className="h-3 w-3" /> Quick Actions
+      </p>
+      <div className="grid grid-cols-2 gap-2">
+        {actions.map((a) => (
+          <Link
+            key={a.href}
+            to={a.href}
+            className="flex items-center gap-1.5 px-2 py-2 rounded-lg border text-[11px] font-semibold hover:bg-white/5 transition"
+            style={{ borderColor: `${a.tint}55`, color: a.tint }}
+          >
+            {a.icon}
+            {a.label}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
