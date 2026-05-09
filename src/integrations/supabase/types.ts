@@ -418,6 +418,48 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_hubs: {
+        Row: {
+          accent: string
+          created_at: string
+          created_by: string | null
+          href: string
+          icon: string
+          id: string
+          published: boolean
+          sort_order: number
+          tagline: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          accent?: string
+          created_at?: string
+          created_by?: string | null
+          href: string
+          icon?: string
+          id?: string
+          published?: boolean
+          sort_order?: number
+          tagline?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          accent?: string
+          created_at?: string
+          created_by?: string | null
+          href?: string
+          icon?: string
+          id?: string
+          published?: boolean
+          sort_order?: number
+          tagline?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       custom_track_requests: {
         Row: {
           created_at: string
