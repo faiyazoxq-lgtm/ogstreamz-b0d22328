@@ -63,6 +63,32 @@ export const bossChat = createServerFn({ method: "POST" })
     if (!KEY) throw new Error("GEMINI_API_KEY missing");
     if (data.messages.length === 0) throw new Error("No messages");
 
+    // ── Cooldown / abuse throttle (Boss-controlled in HubControls) ─────────
+    try {
+      const { data: hub } = await supabase
+        .from("hub_settings")
+        .select("tuning")
+        .eq("hub_key", "boss-chat")
+        .maybeSingle();
+      const cd = Math.max(0, Number((hub?.tuning as any)?.cooldown_seconds ?? 0) || 0);
+      if (cd > 0) {
+        const since = new Date(Date.now() - cd * 1000).toISOString();
+        const { count } = await supabase
+          .from("boss_chat_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("role", "user")
+          .eq("source", "web")
+          .eq("external_user", userId)
+          .gte("created_at", since);
+        if ((count ?? 0) > 0) {
+          throw new Error(`COOLDOWN: Slow down — wait ${cd}s between messages.`);
+        }
+      }
+    } catch (e: any) {
+      if (String(e?.message || "").startsWith("COOLDOWN:")) throw e;
+      // ignore cooldown lookup errors, fail open
+    }
+
     const lookupId = data.targetUserId || userId;
     const { data: prof } = await supabase
       .from("profiles")
@@ -90,5 +116,14 @@ export const bossChat = createServerFn({ method: "POST" })
     const j = await r.json();
     const text: string =
       j?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text).filter(Boolean).join("\n") ?? "";
+    // Log this user message for cooldown tracking
+    try {
+      await supabase.from("boss_chat_messages").insert({
+        role: "user",
+        source: "web",
+        content: data.messages[data.messages.length - 1]?.content?.slice(0, 4000) ?? "",
+        external_user: userId,
+      });
+    } catch {}
     return { text: text || "(no response)", swearing, intensity };
   });

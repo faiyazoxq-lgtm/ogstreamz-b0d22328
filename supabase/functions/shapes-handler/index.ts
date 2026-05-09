@@ -56,24 +56,26 @@ function authorized(req: Request): boolean {
   return [bearer, xKey, apikey].some((v) => v && v === SHAPES_API_KEY);
 }
 
-async function fetchBridgeConfig(): Promise<{ enabled: boolean; mode: "og" | "normal"; intensity: Intensity }> {
+async function fetchBridgeConfig(): Promise<{ enabled: boolean; mode: "og" | "normal"; intensity: Intensity; cooldown: number }> {
   try {
     const { data } = await supabase
       .from("hub_settings")
       .select("enabled, tuning")
       .eq("hub_key", "shape-bridge")
       .maybeSingle();
-    const t = (data?.tuning ?? {}) as { mode?: string; intensity?: string };
+    const t = (data?.tuning ?? {}) as { mode?: string; intensity?: string; cooldown_seconds?: number };
     const rawI = String(t.intensity ?? "medium").toLowerCase();
     const intensity: Intensity =
       rawI === "mild" || rawI === "chaotic" ? rawI : "medium";
+    const cooldown = Math.max(0, Number(t.cooldown_seconds ?? 0) || 0);
     return {
       enabled: data?.enabled ?? true,
       mode: t.mode === "normal" ? "normal" : "og",
       intensity,
+      cooldown,
     };
   } catch {
-    return { enabled: true, mode: "og", intensity: "medium" };
+    return { enabled: true, mode: "og", intensity: "medium", cooldown: 0 };
   }
 }
 
@@ -211,6 +213,34 @@ Deno.serve(async (req) => {
       status: 503,
       headers: { ...corsHeaders, "content-type": "application/json" },
     });
+  }
+
+  // Boss-controlled per-user cooldown to prevent abuse of the shape bridge
+  if (cfg.cooldown > 0 && user) {
+    const since = new Date(Date.now() - cfg.cooldown * 1000).toISOString();
+    const { count } = await supabase
+      .from("boss_chat_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("source", "shapes")
+      .eq("role", "user")
+      .eq("external_user", user)
+      .gte("created_at", since);
+    if ((count ?? 0) > 0) {
+      return new Response(
+        JSON.stringify({
+          error: `Slow down — Boss has set a ${cfg.cooldown}s cooldown between messages.`,
+          retry_after: cfg.cooldown,
+        }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "content-type": "application/json",
+            "retry-after": String(cfg.cooldown),
+          },
+        },
+      );
+    }
   }
 
   const baseSystem = cfg.mode === "og" ? buildOgSystem(cfg.intensity) : NORMAL_SYSTEM;

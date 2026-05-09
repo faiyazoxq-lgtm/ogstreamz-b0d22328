@@ -869,6 +869,9 @@ function HubCard({ hub, onSaved }: { hub: HubSettings; onSaved: (p: Partial<HubS
   const [model, setModel] = useState(hub.model);
   const [integrations, setIntegrations] = useState(JSON.stringify(hub.integrations ?? {}, null, 2));
   const [tuning, setTuning] = useState(JSON.stringify(hub.tuning ?? {}, null, 2));
+  const [cooldown, setCooldown] = useState<number>(
+    Number((hub.tuning as any)?.cooldown_seconds ?? 0) || 0,
+  );
   const [busy, setBusy] = useState(false);
 
   const save = async () => {
@@ -877,6 +880,7 @@ function HubCard({ hub, onSaved }: { hub: HubSettings; onSaved: (p: Partial<HubS
     catch { return toast.error("Integrations must be valid JSON"); }
     try { tuningJson = JSON.parse(tuning || "{}"); }
     catch { return toast.error("Tuning must be valid JSON"); }
+    tuningJson = { ...tuningJson, cooldown_seconds: Math.max(0, Math.floor(cooldown || 0)) };
 
     setBusy(true);
     const { error } = await supabase.from("hub_settings").update({
@@ -887,6 +891,7 @@ function HubCard({ hub, onSaved }: { hub: HubSettings; onSaved: (p: Partial<HubS
     if (error) return toast.error(error.message);
     toast.success(`${hub.display_name} updated`);
     onSaved({ enabled, style_prompt: style, model, integrations: integrationsJson, tuning: tuningJson });
+    setTuning(JSON.stringify(tuningJson, null, 2));
   };
 
   const toggleEnabled = async (val: boolean) => {
@@ -947,6 +952,38 @@ function HubCard({ hub, onSaved }: { hub: HubSettings; onSaved: (p: Partial<HubS
         <div>
           <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Tuning (JSON)</label>
           <Textarea value={tuning} onChange={(e) => setTuning(e.target.value)} rows={4} className="mt-1 font-mono text-[11px]" />
+        </div>
+      </div>
+
+      <div className="flex items-end gap-3 p-3 rounded-lg border border-border/60 bg-background/40">
+        <div className="flex-1">
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            Message Cooldown (seconds per user)
+          </label>
+          <input
+            type="number"
+            min={0}
+            max={3600}
+            value={cooldown}
+            onChange={(e) => setCooldown(Number(e.target.value) || 0)}
+            className="mt-1 w-full bg-background border border-border rounded px-2 py-1.5 text-sm font-mono"
+            placeholder="0 = no limit"
+          />
+          <p className="text-[10px] text-muted-foreground mt-1">
+            Throttles abuse. Each user must wait this long between AI requests on this hub.
+          </p>
+        </div>
+        <div className="flex flex-col gap-1">
+          {[0, 5, 15, 30, 60].map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setCooldown(v)}
+              className={`text-[10px] px-2 py-0.5 rounded border ${cooldown === v ? "border-[color:var(--neon-blue-bright)] text-[color:var(--neon-blue-bright)]" : "border-border text-muted-foreground hover:text-foreground"}`}
+            >
+              {v === 0 ? "off" : `${v}s`}
+            </button>
+          ))}
         </div>
       </div>
 
