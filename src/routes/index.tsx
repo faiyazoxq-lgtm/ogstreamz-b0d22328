@@ -158,7 +158,7 @@ function Index() {
               {inner}
             </a>
           ) : (
-            <Link key={h.id} to={h.href} className={cardCls} style={{ borderColor: `${accent}55` }}>
+            <Link key={h.id} to={h.href as any} className={cardCls} style={{ borderColor: `${accent}55` }}>
               {inner}
             </Link>
           );
