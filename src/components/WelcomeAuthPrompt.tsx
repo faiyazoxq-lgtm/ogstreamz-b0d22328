@@ -91,6 +91,11 @@ export function WelcomeAuthPrompt() {
     }
   };
 
+  const goToAuth = (provider: string) => {
+    dismiss();
+    navigate({ to: "/auth", search: { provider } as never });
+  };
+
   if (user) return null;
 
   return (
@@ -153,6 +158,47 @@ export function WelcomeAuthPrompt() {
               <Send className="h-4 w-4 mr-2 text-sky-400" />
               Continue in Telegram
             </Button>
+
+            <div className="grid grid-cols-3 gap-2 pt-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => goToAuth("github")}
+                className="h-9 border-white/15 hover:bg-white/10"
+                aria-label="Continue with GitHub"
+              >
+                <Github className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => goToAuth("microsoft")}
+                className="h-9 border-white/15 hover:bg-white/10"
+                aria-label="Continue with Microsoft"
+              >
+                <svg viewBox="0 0 23 23" className="h-4 w-4" aria-hidden>
+                  <rect x="1" y="1" width="10" height="10" fill="#F25022" />
+                  <rect x="12" y="1" width="10" height="10" fill="#7FBA00" />
+                  <rect x="1" y="12" width="10" height="10" fill="#00A4EF" />
+                  <rect x="12" y="12" width="10" height="10" fill="#FFB900" />
+                </svg>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => goToAuth("facebook")}
+                className="h-9 border-white/15 hover:bg-white/10"
+                aria-label="Continue with Facebook"
+              >
+                <Facebook className="h-4 w-4 text-[#1877F2]" />
+              </Button>
+            </div>
+            <p className="text-center text-[10px] text-muted-foreground/80">
+              More providers — opens full sign-in
+            </p>
           </div>
 
           <div className="my-5 flex items-center gap-3">
