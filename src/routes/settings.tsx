@@ -1,0 +1,290 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
+import { Loader2, Upload, Save, User2, Globe, Send, Twitter, Instagram, Youtube, MessageCircle, Music2, Github, Linkedin, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/settings")({
+  head: () => ({
+    meta: [
+      { title: "Account Settings · 0G-PORTAL" },
+      { name: "description", content: "Edit your profile picture, bio and contact card." },
+    ],
+  }),
+  component: SettingsPage,
+});
+
+type ContactCard = {
+  telegram?: string;
+  website?: string;
+  twitter?: string;
+  instagram?: string;
+  youtube?: string;
+  tiktok?: string;
+  discord?: string;
+  github?: string;
+  linkedin?: string;
+  whatsapp?: string;
+  email_public?: string;
+};
+
+const SOCIAL_FIELDS: Array<{ key: keyof ContactCard; label: string; placeholder: string; Icon: any }> = [
+  { key: "telegram", label: "Telegram", placeholder: "@username or t.me/username", Icon: Send },
+  { key: "whatsapp", label: "WhatsApp", placeholder: "+44 7..." , Icon: MessageCircle },
+  { key: "website", label: "Website", placeholder: "https://yoursite.com", Icon: Globe },
+  { key: "twitter", label: "X / Twitter", placeholder: "@handle", Icon: Twitter },
+  { key: "instagram", label: "Instagram", placeholder: "@handle", Icon: Instagram },
+  { key: "youtube", label: "YouTube", placeholder: "youtube.com/@channel", Icon: Youtube },
+  { key: "tiktok", label: "TikTok", placeholder: "@handle", Icon: Music2 },
+  { key: "discord", label: "Discord", placeholder: "username#0000", Icon: MessageCircle },
+  { key: "github", label: "GitHub", placeholder: "@handle", Icon: Github },
+  { key: "linkedin", label: "LinkedIn", placeholder: "linkedin.com/in/handle", Icon: Linkedin },
+  { key: "email_public", label: "Public Email", placeholder: "you@domain.com", Icon: Globe },
+];
+
+function SettingsPage() {
+  const { user, profile, loading, refresh } = useAuth();
+  const navigate = useNavigate();
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const [displayName, setDisplayName] = useState("");
+  const [bio, setBio] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [contact, setContact] = useState<ContactCard>({});
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    if (!loading && !user) navigate({ to: "/auth" });
+  }, [loading, user, navigate]);
+
+  useEffect(() => {
+    if (!profile) return;
+    setDisplayName(profile.display_name ?? "");
+    setBio((profile as any).bio ?? "");
+    setAvatarUrl((profile as any).avatar_url ?? null);
+    setContact(((profile as any).contact_card ?? {}) as ContactCard);
+  }, [profile]);
+
+  if (loading || !user) {
+    return <main className="px-5 py-20 text-center text-muted-foreground">Loading…</main>;
+  }
+
+  const onPickFile = () => fileRef.current?.click();
+
+  const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, {
+        cacheControl: "3600",
+        upsert: true,
+        contentType: file.type,
+      });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+      const url = data.publicUrl;
+      const { error: updErr } = await supabase
+        .from("profiles")
+        .update({ avatar_url: url })
+        .eq("id", user.id);
+      if (updErr) throw updErr;
+      setAvatarUrl(url);
+      await refresh?.();
+      toast.success("Profile picture updated");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const removeAvatar = async () => {
+    if (!user) return;
+    setUploading(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ avatar_url: null })
+        .eq("id", user.id);
+      if (error) throw error;
+      setAvatarUrl(null);
+      await refresh?.();
+      toast.success("Profile picture removed");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const save = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      // Strip empty values
+      const cleanCard: ContactCard = {};
+      (Object.keys(contact) as (keyof ContactCard)[]).forEach((k) => {
+        const v = (contact[k] ?? "").toString().trim();
+        if (v) (cleanCard as any)[k] = v.slice(0, 300);
+      });
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          display_name: displayName.trim().slice(0, 80) || null,
+          bio: bio.trim().slice(0, 500) || null,
+          contact_card: cleanCard,
+        })
+        .eq("id", user.id);
+      if (error) throw error;
+      await refresh?.();
+      toast.success("Settings saved");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const initials = (displayName || profile?.email || user.email || "U")
+    .split(/[\s@.]/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase())
+    .join("");
+
+  return (
+    <main className="relative min-h-[calc(100vh-4rem)]">
+      <div className="max-w-3xl mx-auto px-5 sm:px-8 py-12 sm:py-16">
+        <header className="mb-10">
+          <p className="text-xs uppercase tracking-[0.4em] font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
+            Account Settings
+          </p>
+          <h1 className="mt-3 font-[Montserrat] font-black text-3xl sm:text-4xl text-metallic">
+            Your Profile & Contact Card
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Update your picture, bio, and the ways people can reach out to you across the syndicate.
+          </p>
+          <Link
+            to="/profile"
+            className="inline-block mt-3 text-xs uppercase tracking-[0.3em] text-muted-foreground hover:text-white"
+          >
+            ← Back to Vault
+          </Link>
+        </header>
+
+        {/* Avatar */}
+        <section className="rounded-2xl border border-border bg-card p-6 sm:p-8 mb-6">
+          <h2 className="text-xs uppercase tracking-[0.3em] font-bold text-muted-foreground mb-4">
+            Profile Picture
+          </h2>
+          <div className="flex items-center gap-5">
+            <div className="h-24 w-24 rounded-full overflow-hidden border-2 border-[oklch(0.72_0.22_245/0.5)] bg-secondary/40 flex items-center justify-center text-xl font-black text-metallic">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="avatar" className="h-full w-full object-cover" />
+              ) : (
+                <span>{initials || <User2 className="h-8 w-8" />}</span>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={onUpload}
+              />
+              <Button onClick={onPickFile} disabled={uploading} className="btn-glass-blue text-white text-xs uppercase tracking-[0.25em] font-bold">
+                {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                {avatarUrl ? "Change" : "Upload"} Picture
+              </Button>
+              {avatarUrl && (
+                <Button onClick={removeAvatar} disabled={uploading} variant="outline" size="sm" className="text-xs uppercase tracking-[0.25em]">
+                  <Trash2 className="h-3 w-3 mr-2" /> Remove
+                </Button>
+              )}
+              <p className="text-[10px] text-muted-foreground">PNG/JPG · max 5MB</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Identity */}
+        <section className="rounded-2xl border border-border bg-card p-6 sm:p-8 mb-6 space-y-4">
+          <h2 className="text-xs uppercase tracking-[0.3em] font-bold text-muted-foreground">
+            Identity
+          </h2>
+          <div className="space-y-2">
+            <Label htmlFor="display_name">Display name</Label>
+            <Input
+              id="display_name"
+              value={displayName}
+              maxLength={80}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="How others see you"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="bio">Bio</Label>
+            <Textarea
+              id="bio"
+              value={bio}
+              maxLength={500}
+              rows={4}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="A short tag-line for your contact card."
+            />
+            <p className="text-[10px] text-muted-foreground text-right">{bio.length}/500</p>
+          </div>
+        </section>
+
+        {/* Contact card */}
+        <section className="rounded-2xl border border-border bg-card p-6 sm:p-8 mb-6">
+          <h2 className="text-xs uppercase tracking-[0.3em] font-bold text-muted-foreground mb-1">
+            Contact Card
+          </h2>
+          <p className="text-xs text-muted-foreground mb-5">
+            Anything you fill in here can be shown to other members so they can reach you. Leave blank to hide.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {SOCIAL_FIELDS.map(({ key, label, placeholder, Icon }) => (
+              <div key={key} className="space-y-2">
+                <Label htmlFor={key} className="flex items-center gap-2 text-xs">
+                  <Icon className="h-3.5 w-3.5" style={{ color: "var(--neon-blue-bright)" }} />
+                  {label}
+                </Label>
+                <Input
+                  id={key}
+                  value={contact[key] ?? ""}
+                  maxLength={300}
+                  placeholder={placeholder}
+                  onChange={(e) => setContact((c) => ({ ...c, [key]: e.target.value }))}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <div className="flex justify-end">
+          <Button onClick={save} disabled={saving} className="btn-glass-blue text-white uppercase tracking-[0.25em] font-bold py-6 px-8">
+            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+            Save Changes
+          </Button>
+        </div>
+      </div>
+    </main>
+  );
+}

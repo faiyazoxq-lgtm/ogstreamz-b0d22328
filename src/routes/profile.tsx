@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Crown, Coins, LogOut, Shield, Sparkles, Zap, Flame, Skull } from "lucide-react";
+import { Crown, Coins, LogOut, Shield, Sparkles, Zap, Flame, Skull, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import bgFlame from "@/assets/bg-flame.png";
@@ -150,6 +150,13 @@ function ProfilePage() {
         </section>
 
         <section className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link
+            to="/settings"
+            className="btn-glass-blue inline-flex items-center gap-2 px-6 py-3 rounded-md text-xs uppercase tracking-[0.25em] font-bold text-white"
+          >
+            <Settings className="h-4 w-4" />
+            Account Settings
+          </Link>
           {isAdmin && (
             <Link
               to="/admin"
