@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import logo from "@/assets/logo.jpg";
 
-export function TVStaticLogo({ className = "" }: { className?: string }) {
+export function TVStaticLogo({ className = "", size = 56 }: { className?: string; size?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [pupil, setPupil] = useState({ x: 0, y: 0 });
 
@@ -27,8 +27,9 @@ export function TVStaticLogo({ className = "" }: { className?: string }) {
     <span
       ref={ref}
       className={`relative inline-block tv-screen rounded-md ring-1 ring-[oklch(0.72_0.22_245/0.55)] ${className}`}
+      style={{ width: size, height: size }}
     >
-      <img src={logo} alt="0G-PORTAL" className="h-9 w-9 rounded-md object-cover block" />
+      <img src={logo} alt="0G-PORTAL" className="rounded-md object-cover block" style={{ width: size, height: size }} />
       {/* Demon eye overlay */}
       <span
         aria-hidden
