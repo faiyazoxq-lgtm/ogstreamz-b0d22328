@@ -11,6 +11,7 @@ import { ShieldAlert, ShieldCheck } from "lucide-react";
  */
 export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean }) {
   const [mode, setMode] = useState<"og" | "normal">("og");
+  const [intensity, setIntensityState] = useState<"mild" | "medium" | "chaotic">("medium");
   const [enabled, setEnabled] = useState(true);
   const [id, setId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -26,8 +27,10 @@ export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean
       if (!alive || !data) return;
       setId(data.id);
       setEnabled(!!data.enabled);
-      const t = (data.tuning ?? {}) as { mode?: string };
+      const t = (data.tuning ?? {}) as { mode?: string; intensity?: string };
       setMode(t.mode === "normal" ? "normal" : "og");
+      const ri = String(t.intensity ?? "medium").toLowerCase();
+      setIntensityState(ri === "mild" || ri === "chaotic" ? (ri as any) : "medium");
     })();
     return () => { alive = false; };
   }, []);
@@ -39,7 +42,7 @@ export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean
     setMode(next);
     const { error } = await supabase
       .from("hub_settings")
-      .update({ tuning: { mode: next }, updated_at: new Date().toISOString() })
+      .update({ tuning: { mode: next, intensity }, updated_at: new Date().toISOString() })
       .eq("id", id);
     setSaving(false);
     if (error) {
@@ -48,6 +51,24 @@ export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean
       return;
     }
     toast.success(`Syndicate Protocol → ${next === "og" ? "OG-MODE · ENFORCER" : "NORMAL · ANALYST"}`);
+  }
+
+  async function setIntensity(next: "mild" | "medium" | "chaotic") {
+    if (!id || saving || next === intensity) return;
+    setSaving(true);
+    const prev = intensity;
+    setIntensityState(next);
+    const { error } = await supabase
+      .from("hub_settings")
+      .update({ tuning: { mode, intensity: next }, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    setSaving(false);
+    if (error) {
+      setIntensityState(prev);
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`Swearing intensity → ${next.toUpperCase()}`);
   }
 
   async function toggleOnline(v: boolean) {
@@ -153,6 +174,45 @@ export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean
         Flips <span className="mood-accent">system_instruction</span> for every Gemini 3 call across
         the Syndicate — Boss Chat, Shape Bridge & all hub agents — instantly.
       </p>
+
+      {isOg && (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className="text-[10px] uppercase tracking-[0.3em] terminal-mono text-white/55">
+            Swearing Intensity
+          </span>
+          {(["mild", "medium", "chaotic"] as const).map((opt) => {
+            const active = intensity === opt;
+            return (
+              <button
+                key={opt}
+                type="button"
+                disabled={saving}
+                onClick={() => setIntensity(opt)}
+                className={`px-3 py-1.5 rounded-full border-2 text-[10px] font-black uppercase tracking-[0.25em] transition-all ${
+                  active
+                    ? "border-[var(--syndicate-glow)] text-white"
+                    : "border-white/15 text-white/55 hover:border-white/35 hover:text-white/85 bg-black/30"
+                }`}
+                style={
+                  active
+                    ? {
+                        background: "color-mix(in srgb, var(--syndicate-glow) 18%, transparent)",
+                        boxShadow: "0 0 22px -2px color-mix(in srgb, var(--syndicate-glow) 70%, transparent)",
+                      }
+                    : undefined
+                }
+              >
+                {opt}
+              </button>
+            );
+          })}
+          <span className="text-[10px] terminal-mono text-white/45 italic ml-1">
+            {intensity === "mild" && "PG-13 · sass only"}
+            {intensity === "medium" && "Standard sweary roast"}
+            {intensity === "chaotic" && "Full unhinged Enforcer"}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
