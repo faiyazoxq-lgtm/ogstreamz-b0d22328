@@ -198,9 +198,9 @@ function Index() {
                       "group inline-flex items-center gap-2 rounded-lg border px-3.5 py-2 text-[11px] uppercase tracking-[0.2em] font-bold text-white transition-colors border-[var(--ql-tint)] bg-[color-mix(in_oklab,var(--ql-tint)_18%,transparent)] shadow-[0_0_24px_-2px_var(--ql-tint),inset_0_0_18px_-6px_var(--ql-tint)] focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ql-tint)] focus-visible:ring-offset-2 focus-visible:ring-offset-black",
                   }}
                 >
-                  <Icon className="h-3.5 w-3.5" style={{ color: tint }} />
+                  <Icon aria-hidden="true" focusable="false" className="h-3.5 w-3.5" style={{ color: tint }} />
                   {title}
-                  <ArrowUpRight className="h-3 w-3 opacity-60 group-hover:opacity-100" />
+                  <ArrowUpRight aria-hidden="true" focusable="false" className="h-3 w-3 opacity-60 group-hover:opacity-100" />
                 </Link>
               ))}
             </div>
