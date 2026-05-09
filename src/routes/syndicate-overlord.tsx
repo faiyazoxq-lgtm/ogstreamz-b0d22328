@@ -404,21 +404,24 @@ function RedeemCodePanel() {
   return (
     <section className="rounded-xl border border-emerald-700/30 bg-black/50 p-5 backdrop-blur">
       <h2 className="text-xs uppercase tracking-[0.4em] text-cyan-400 mb-4 flex items-center gap-2">
-        <Ticket className="h-3.5 w-3.5" /> MINT REDEEM CODE
+        <Ticket className="h-3.5 w-3.5" /> Create a Redeem Code
       </h2>
+      <p className="text-[10px] text-emerald-700 uppercase tracking-widest mb-3">
+        Share the code — anyone who enters it gets the credits (and rank, if set).
+      </p>
       <div className="grid sm:grid-cols-5 gap-2">
-        <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="0G-FOUNDER" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono uppercase" />
-        <Input value={credits} onChange={(e) => setCredits(e.target.value)} type="number" min="1" placeholder="credits" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
-        <Input value={maxUses} onChange={(e) => setMaxUses(e.target.value)} type="number" min="1" placeholder="max uses" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
+        <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="Code (e.g. WELCOME50)" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono uppercase" />
+        <Input value={credits} onChange={(e) => setCredits(e.target.value)} type="number" min="1" placeholder="Credits to give" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
+        <Input value={maxUses} onChange={(e) => setMaxUses(e.target.value)} type="number" min="1" placeholder="How many people" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
         <Select value={grantRank || "none"} onValueChange={(v) => setGrantRank(v === "none" ? "" : v as Rank)}>
           <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200"><SelectValue /></SelectTrigger>
           <SelectContent className="bg-black border-emerald-800 text-emerald-200">
-            <SelectItem value="none">no rank</SelectItem>
-            {RANKS.map((r) => <SelectItem key={r} value={r}>grant: {r}</SelectItem>)}
+            <SelectItem value="none">No rank change</SelectItem>
+            {RANKS.filter((r) => r !== "boss").map((r) => <SelectItem key={r} value={r}>Also set rank: {r}</SelectItem>)}
           </SelectContent>
         </Select>
         <Button onClick={submit} disabled={busy || !code} className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="h-4 w-4 mr-1" />MINT</>}
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="h-4 w-4 mr-1" />Create</>}
         </Button>
       </div>
     </section>
@@ -474,27 +477,30 @@ function ResellerAdminPanel({ rows }: { rows: Row[] }) {
   return (
     <section className="rounded-xl border border-pink-700/30 bg-black/50 p-5 backdrop-blur">
       <h2 className="text-xs uppercase tracking-[0.4em] text-pink-400 mb-4 flex items-center gap-2">
-        <Users className="h-3.5 w-3.5" /> RESELLER PROGRAM
+        <Users className="h-3.5 w-3.5" /> Reseller Program
       </h2>
+      <p className="text-[10px] text-emerald-700 uppercase tracking-widest mb-3">
+        Give a user a wallet so they can sell credits on your behalf.
+      </p>
       <div className="grid sm:grid-cols-5 gap-2">
         <Select value={userId} onValueChange={setUserId}>
           <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200">
-            <SelectValue placeholder="— select user —" />
+            <SelectValue placeholder="Choose a user…" />
           </SelectTrigger>
           <SelectContent className="bg-black border-emerald-800 text-emerald-200 max-h-72">
             {rows.map((r) => <SelectItem key={r.id} value={r.id}>{r.email}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="display name" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
-        <Input value={initialCredits} onChange={(e) => setInitialCredits(e.target.value)} type="number" min="0" placeholder="initial credits" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
-        <Input value={markup} onChange={(e) => setMarkup(e.target.value)} type="number" min="0" placeholder="markup ¢" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
+        <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Reseller name" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
+        <Input value={initialCredits} onChange={(e) => setInitialCredits(e.target.value)} type="number" min="0" placeholder="Starting credits" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
+        <Input value={markup} onChange={(e) => setMarkup(e.target.value)} type="number" min="0" placeholder="Their markup (¢)" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
         <Button onClick={submit} disabled={busy || !userId} className="bg-pink-500 hover:bg-pink-400 text-black font-bold">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="h-4 w-4 mr-1" />ACTIVATE</>}
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="h-4 w-4 mr-1" />Activate</>}
         </Button>
       </div>
 
       <div className="mt-5 divide-y divide-pink-900/20">
-        {resellers.length === 0 && <p className="text-xs text-emerald-700 py-2">// no resellers yet</p>}
+        {resellers.length === 0 && <p className="text-xs text-emerald-700 py-2">No resellers yet.</p>}
         {resellers.map((r) => (
           <div key={r.id} className="flex items-center justify-between py-3 text-sm">
             <div>
