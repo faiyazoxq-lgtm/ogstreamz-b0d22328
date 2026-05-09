@@ -128,6 +128,9 @@ function OverlordPage() {
             <TabsTrigger value="users" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
               <Users className="h-3 w-3 mr-1.5" /> Users
             </TabsTrigger>
+            <TabsTrigger value="notes" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
+              <NotebookPen className="h-3 w-3 mr-1.5" /> Private Notes
+            </TabsTrigger>
             <TabsTrigger value="preload" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
               <Mail className="h-3 w-3 mr-1.5" /> Pre-load Credits
             </TabsTrigger>
@@ -195,6 +198,7 @@ function OverlordPage() {
           </TabsContent>
 
           <TabsContent value="codes" className="mt-4"><RedeemCodePanel /></TabsContent>
+          <TabsContent value="notes" className="mt-4"><NotesPanel /></TabsContent>
           <TabsContent value="preload" className="mt-4"><PreLoadPanel onApplied={refreshUsers} /></TabsContent>
           <TabsContent value="passes" className="mt-4"><VipPassPanel rows={rows} /></TabsContent>
           <TabsContent value="resellers" className="mt-4"><ResellerAdminPanel rows={rows} /></TabsContent>
