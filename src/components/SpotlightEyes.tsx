@@ -217,7 +217,7 @@ export function SpotlightEyes() {
     <canvas
       ref={canvasRef}
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-0"
+      className="pointer-events-none fixed inset-0 z-40"
       style={{ mixBlendMode: "screen" }}
     />
   );
