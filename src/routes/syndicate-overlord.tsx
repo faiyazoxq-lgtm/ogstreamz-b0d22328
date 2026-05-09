@@ -1098,46 +1098,37 @@ function PreLoadPanel({ onApplied }: { onApplied: () => void }) {
   const visible = pending.filter((g) => showClaimed || !g.claimed_at);
 
   return (
-    <section className="rounded-xl border border-cyan-700/30 bg-black/50 p-5 backdrop-blur">
-      <h2 className="text-xs uppercase tracking-[0.4em] text-cyan-400 mb-1 flex items-center gap-2">
-        <Mail className="h-3.5 w-3.5" /> Pre-load Credits by Email
-      </h2>
-      <p className="text-[10px] text-emerald-700 uppercase tracking-widest mb-4">
-        Already a user → credits added now · new email → waiting, added when they sign up
-      </p>
-
-      <div className="grid sm:grid-cols-6 gap-2">
-        <Input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="user@example.com"
-          type="email"
-          className="sm:col-span-2 bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
-        />
-        <Input
-          value={credits}
-          onChange={(e) => setCredits(e.target.value)}
-          type="number"
-          min="0"
-          placeholder="Credits"
-          className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
-        />
-        <Select value={grantRank || "none"} onValueChange={(v) => setGrantRank(v === "none" ? "" : v as Rank)}>
-          <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200"><SelectValue /></SelectTrigger>
-          <SelectContent className="bg-black border-emerald-800 text-emerald-200">
-            <SelectItem value="none">No rank change</SelectItem>
-            {RANKS.filter((r) => r !== "boss").map((r) => <SelectItem key={r} value={r}>Also set rank: {r}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Input
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Note (optional)"
-          className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
-        />
-        <Button onClick={submit} disabled={busy || !email} className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 mr-1" />Send</>}
-        </Button>
+    <section className="rounded-2xl border-2 border-cyan-700/30 bg-gradient-to-br from-black/70 to-cyan-950/20 p-6 backdrop-blur shadow-xl">
+      <GeneratorHeader
+        icon={Mail}
+        accent="cyan"
+        title="Pre-load Credits by Email"
+        subtitle="If they're a user → credits land instantly. If not → queued, applied on signup."
+      />
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Field label="Recipient email" hint="Who to credit" icon={Mail} className="lg:col-span-2">
+          <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="user@example.com" type="email" className={FIELD_INPUT} />
+        </Field>
+        <Field label="Credits" hint="Amount to grant" icon={Coins}>
+          <Input value={credits} onChange={(e) => setCredits(e.target.value)} type="number" min="0" placeholder="50" className={FIELD_INPUT} />
+        </Field>
+        <Field label="Bonus rank" hint="Optional rank upgrade" icon={Crown}>
+          <Select value={grantRank || "none"} onValueChange={(v) => setGrantRank(v === "none" ? "" : v as Rank)}>
+            <SelectTrigger className={FIELD_SELECT}><SelectValue /></SelectTrigger>
+            <SelectContent className="bg-black border-emerald-800 text-emerald-200">
+              <SelectItem value="none">No rank change</SelectItem>
+              {RANKS.filter((r) => r !== "boss").map((r) => <SelectItem key={r} value={r}>Set rank: {r}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Note" hint="Private — only you see this" icon={NotebookPen} className="lg:col-span-3">
+          <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. early supporter, conf giveaway…" className={FIELD_INPUT} />
+        </Field>
+        <div className="flex items-end">
+          <Button onClick={submit} disabled={busy || !email} className={`${PRIMARY_BTN} w-full bg-cyan-500 hover:bg-cyan-400 text-black`}>
+            {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Send className="h-5 w-5 mr-2" />Send Grant</>}
+          </Button>
+        </div>
       </div>
 
       <div className="mt-5 flex items-center justify-between text-[10px] uppercase tracking-widest text-emerald-700">
