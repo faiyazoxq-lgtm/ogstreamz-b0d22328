@@ -23,6 +23,7 @@ import { SystemGlitchOverlay } from "../components/SystemGlitchOverlay";
 import { EnforcerConsole } from "../components/EnforcerConsole";
 import { SpotlightEyes } from "../components/SpotlightEyes";
 import { ReducedMotionToggle } from "../components/ReducedMotionToggle";
+import { AuthGate } from "../components/AuthGate";
 
 function NotFoundComponent() {
   return (
@@ -142,7 +143,9 @@ function RootComponent() {
             <PaymentTestModeBanner />
             <SpotlightEyes />
             <NavBar />
-            <Outlet />
+            <AuthGate>
+              <Outlet />
+            </AuthGate>
             <TeleportOverlay />
             <SystemGlitchOverlay />
             <LiveThinkingFeed />
