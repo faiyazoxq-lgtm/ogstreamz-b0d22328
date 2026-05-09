@@ -1632,6 +1632,51 @@ export type Database = {
         }
         Relationships: []
       }
+      topup_requests: {
+        Row: {
+          created_at: string
+          credits_granted: number | null
+          credits_requested: number
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          email: string | null
+          id: string
+          reason: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_granted?: number | null
+          credits_requested?: number
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          email?: string | null
+          id?: string
+          reason?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_granted?: number | null
+          credits_requested?: number
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          email?: string | null
+          id?: string
+          reason?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       track_purchases: {
         Row: {
           amount_cents: number
@@ -1858,6 +1903,10 @@ export type Database = {
         }
         Returns: Json
       }
+      boss_approve_topup: {
+        Args: { _credits: number; _id: string; _note: string }
+        Returns: Json
+      }
       boss_create_reseller: {
         Args: {
           _display_name: string
@@ -1866,6 +1915,10 @@ export type Database = {
           _user_id: string
         }
         Returns: string
+      }
+      boss_deny_topup: {
+        Args: { _id: string; _note: string }
+        Returns: boolean
       }
       boss_grant_by_email: {
         Args: {
@@ -1915,6 +1968,10 @@ export type Database = {
       refresh_news_scout: {
         Args: { _meta: Json; _slug: string }
         Returns: undefined
+      }
+      request_topup: {
+        Args: { _credits: number; _reason: string }
+        Returns: string
       }
       reseller_mint_code: {
         Args: {
