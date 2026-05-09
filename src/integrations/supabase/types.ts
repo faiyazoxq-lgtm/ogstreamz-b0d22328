@@ -1686,6 +1686,27 @@ export type Database = {
           },
         ]
       }
+      swear_lexicon: {
+        Row: {
+          category: string
+          items: string[]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category: string
+          items?: string[]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category?: string
+          items?: string[]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       syndicate_subscribers: {
         Row: {
           id: string

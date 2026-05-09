@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { enforceSwearRules, type SwearMode } from "./swear-enforcer.server";
+import { enforceSwearRules, loadLexicon, type SwearMode } from "./swear-enforcer.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { perplexityChat, shapesChat } from "./ai-providers.server";
 
@@ -114,7 +114,8 @@ export const bossChat = createServerFn({ method: "POST" })
     }
     // PRIORITY SWEARING OVERRIDE — profanity rules win over the model.
     const enforceMode: SwearMode = swearing ? (intensity as SwearMode) : "off";
-    const text = enforceSwearRules(rawText, enforceMode);
+    const lex = await loadLexicon(supabase);
+    const text = enforceSwearRules(rawText, enforceMode, lex);
     // Log this user message for cooldown tracking
     try {
       await supabase.from("boss_chat_messages").insert({
