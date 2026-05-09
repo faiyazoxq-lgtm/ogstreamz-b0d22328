@@ -10,6 +10,7 @@ import { formatLyrics, requestStudioTrack, generateSunoStack, type SunoStack } f
 import { listPortalTracks, getTrackOwnership } from "@/lib/tracks.functions";
 import { spawnMusic } from "@/lib/suno.functions";
 import { TrackPlayer } from "@/components/TrackPlayer";
+import { SwearChatPanel } from "@/components/SwearChatPanel";
 
 type MusicPortal = {
   id: string;
@@ -19,13 +20,14 @@ type MusicPortal = {
   style: string | null;
   vibe: string | null;
   theme: string;
+  swear_chat_enabled?: boolean;
 };
 
 export const Route = createFileRoute("/m/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals")
-      .select("id, slug, name, language, style, vibe, theme, kind")
+      .select("id, slug, name, language, style, vibe, theme, kind, swear_chat_enabled")
       .eq("slug", params.slug)
       .eq("kind", "music")
       .maybeSingle();
@@ -431,6 +433,21 @@ function MusicPortalPage() {
             </p>
             <p className="text-xs opacity-60 mt-2">Request ID: {submitted.slice(0, 8)}</p>
           </div>
+        )}
+      </div>
+
+      <div className="max-w-4xl mx-auto px-5 sm:px-8 pb-8">
+        <SwearChatPanel
+          enabled={!!portal.swear_chat_enabled}
+          table="portals"
+          id={portal.id}
+          slug={portal.slug}
+          accent={theme.accent}
+        />
+        {portal.swear_chat_enabled && (
+          <p className="mt-2 text-[10px] uppercase tracking-[0.3em] text-center opacity-70" style={{ color: theme.accent }}>
+            Brutal swearing AI is ON · lyrics + Suno style stack will generate explicit
+          </p>
         )}
       </div>
 

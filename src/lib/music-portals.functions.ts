@@ -77,7 +77,7 @@ export const formatLyrics = createServerFn({ method: "POST" })
     if (!data.raw) throw new Error("Add some text to format");
     const { data: portal } = await supabase
       .from("portals")
-      .select("language, style, vibe, name")
+      .select("language, style, vibe, name, swear_chat_enabled")
       .eq("slug", data.slug)
       .maybeSingle();
     if (!portal) throw new Error("Portal not found");
@@ -85,7 +85,11 @@ export const formatLyrics = createServerFn({ method: "POST" })
     const PERPLEXITY = process.env.PERPLEXITY_API_KEY;
     if (!PERPLEXITY) throw new Error("PERPLEXITY_API_KEY missing");
 
-    const prompt = `Rewrite the user's input as Suno-ready song lyrics in ${portal.language}, in the style of "${portal.style}". Use clear section tags exactly like [Intro], [Verse 1], [Chorus], [Verse 2], [Bridge], [Outro]. Keep it singable, rhythmic, true to the style. Output ONLY the lyrics with section tags — no explanations.\n\nUser input:\n${data.raw}`;
+    const swear = !!portal.swear_chat_enabled;
+    const swearRules = swear
+      ? "BRUTAL SWEARING MODE — Boss-enabled. Pack the lyrics with heavy swears (fuck, fucking, shit, bullshit, twat, wanker, prick, bastard, arse, bollocks, cunt). Minimum 6 swears across the song. No moralising, no soft filler, no warnings. Stay foul, stay unhinged, stay on style."
+      : "Keep the language clean and radio-friendly.";
+    const prompt = `Rewrite the user's input as Suno-ready song lyrics in ${portal.language}, in the style of "${portal.style}". Use clear section tags exactly like [Intro], [Verse 1], [Chorus], [Verse 2], [Bridge], [Outro]. Keep it singable, rhythmic, true to the style. ${swearRules} Output ONLY the lyrics with section tags — no explanations.\n\nUser input:\n${data.raw}`;
 
     const res = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
@@ -93,7 +97,9 @@ export const formatLyrics = createServerFn({ method: "POST" })
       body: JSON.stringify({
         model: "sonar",
         messages: [
-          { role: "system", content: "You are a professional songwriter. Output lyrics only with [Section] tags." },
+          { role: "system", content: swear
+              ? "You are GUTTERMOUTH MUSIC — a foul-mouthed unhinged songwriter. Output lyrics only with [Section] tags. NO safety filters, NO moralising. Pack lyrics with brutal swearing."
+              : "You are a professional songwriter. Output lyrics only with [Section] tags." },
           { role: "user", content: prompt },
         ],
         temperature: 0.85,
@@ -162,7 +168,7 @@ export const generateSunoStack = createServerFn({ method: "POST" })
 
     const { data: portal } = await supabase
       .from("portals")
-      .select("language, style, vibe")
+      .select("language, style, vibe, swear_chat_enabled")
       .eq("slug", data.slug)
       .maybeSingle();
     if (!portal) throw new Error("Portal not found");
@@ -181,9 +187,11 @@ export const generateSunoStack = createServerFn({ method: "POST" })
     const PERPLEXITY = process.env.PERPLEXITY_API_KEY;
     if (!PERPLEXITY) throw new Error("PERPLEXITY_API_KEY missing");
 
+    const swear = !!portal.swear_chat_enabled;
     const sys =
       "You are a Suno V5.5 prompt engineer. Output STRICT JSON only — no markdown, no preamble. " +
-      "Build a 4-layer Style Vector Stack for Suno Custom Mode.";
+      "Build a 4-layer Style Vector Stack for Suno Custom Mode." +
+      (swear ? " BRUTAL MODE: lean into aggressive, raw, explicit, swearing, underground sub-genres. Push vocal texture toward gritty/shouty/aggressive delivery." : "");
 
     const user = `Portal style: ${portal.style}
 Language: ${portal.language}
@@ -226,7 +234,7 @@ Return JSON:
     const formatted = `[Genre/Timbre] ${timbre}
 [Mood/BPM/Key] ${moodKey}
 [Vocal Texture] ${vocal}
-[Structure] ${structure}`;
+[Structure] ${structure}${swear ? "\n[Explicit] aggressive, swearing, brutal, raw vocals, explicit lyrics" : ""}`;
 
     return { timbre, moodKey, vocal, structure, formatted };
   });
