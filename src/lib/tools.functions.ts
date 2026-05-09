@@ -47,8 +47,8 @@ export const spawnTool = createServerFn({ method: "POST" })
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
     if (!data.name || !data.logic) throw new Error("Name and logic required");
 
-    const LOVABLE = process.env.LOVABLE_API_KEY;
-    if (!LOVABLE) throw new Error("LOVABLE_API_KEY missing");
+    const PPLX = process.env.PERPLEXITY_API_KEY;
+    if (!PPLX) throw new Error("PERPLEXITY_API_KEY missing");
 
     const audienceRules =
       data.audience === "kids"
@@ -85,18 +85,21 @@ Return STRICT JSON ONLY matching this TypeScript type:
 }
 No markdown. No commentary.`;
 
-    const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const r = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${PPLX}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "sonar",
         messages: [
           { role: "system", content: "Output strict JSON only." },
           { role: "user", content: prompt },
         ],
+        response_format: { type: "json_object" },
+        temperature: 0.6,
+        max_tokens: 1500,
       }),
     });
-    if (!r.ok) throw new Error(`AI gateway ${r.status}`);
+    if (!r.ok) throw new Error(`Perplexity ${r.status}`);
     const j = await r.json();
     const raw: string = j?.choices?.[0]?.message?.content ?? "{}";
     const m = raw.match(/\{[\s\S]*\}/);
