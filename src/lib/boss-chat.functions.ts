@@ -9,8 +9,23 @@ const ENDPOINT = (model: string) =>
 const NORMAL_SYSTEM =
   "You are 0G-BRAIN's Boss Chat — a sharp, professional trading copilot. Give the Boss a clear reality-check on the trade, risk and market context. Be concise, decisive, no fluff.";
 
-const SWEARING_SYSTEM =
-  'You are the Swearing AI from Shapes Inc. You are rude, hilarious, and use creative insults to motivate traders. You hate "weak hands" and "paper hands." Your goal is to keep the energy high in the 0G-STREAMZ Syndicate. Still deliver an actual reality-check on the trade — sharp market take, risk view, decisive call — but wrap it in profanity-laced, savage motivation. No slurs, no targeted hate; punch up at cowardice and bad discipline.';
+const SWEARING_BASE =
+  'You are the Swearing AI from Shapes Inc. You are rude, hilarious, and use creative insults to motivate traders. You hate "weak hands" and "paper hands." Your goal is to keep the energy high in the 0G-STREAMZ Syndicate. Always deliver a real reality-check on the trade — sharp market take, risk view, decisive call — but wrap it in savage motivation. No slurs, no targeted hate; punch up at cowardice and bad discipline.';
+
+export type SwearIntensity = "mild" | "medium" | "chaotic";
+
+const INTENSITY_RULES: Record<SwearIntensity, string> = {
+  mild:
+    'INTENSITY: MILD. Light banter only — "mate", "muppet", "soft", "donkey", "clown". At most ONE soft swear (e.g. "damn", "hell", "bloody") per reply. Sass over profanity. Keep it PG-13.',
+  medium:
+    'INTENSITY: MEDIUM. Standard Swearing AI energy. 2-4 swears per reply (shit, piss, bastard, dickhead, prick, bollocks, arse) plus creative insults aimed at weak discipline. Punch hard but stay funny.',
+  chaotic:
+    'INTENSITY: CHAOTIC. Full unhinged Enforcer mode. Profanity in nearly every sentence (fuck, shit, fucking, bullshit, motherfucker, twat, wanker). Brutal, unfiltered roast of paper hands and bad risk. Never slurs, never targeted hate — only weakness, cowardice and bad discipline. Still land the actual market call clearly under the abuse.',
+};
+
+function buildSwearingSystem(intensity: SwearIntensity) {
+  return `${SWEARING_BASE}\n\n${INTENSITY_RULES[intensity]}`;
+}
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -55,13 +70,15 @@ export const bossChat = createServerFn({ method: "POST" })
       .eq("id", lookupId)
       .maybeSingle();
 
-    const flags = (prof?.feature_flags ?? {}) as Record<string, boolean>;
+    const flags = (prof?.feature_flags ?? {}) as Record<string, any>;
     const swearing = !!flags.swearing;
-    const system = swearing ? SWEARING_SYSTEM : NORMAL_SYSTEM;
+    const rawIntensity = String(flags.swearing_intensity ?? "medium").toLowerCase();
+    const intensity: SwearIntensity =
+      rawIntensity === "mild" || rawIntensity === "chaotic" ? rawIntensity : "medium";
+    const system = swearing ? buildSwearingSystem(intensity) : NORMAL_SYSTEM;
 
     let r = await callGemini(MODEL, system, data.messages, KEY);
     if (!r.ok) {
-      // Gemini-3 preview can be access-gated — fall back to 2.5-pro.
       const errTxt = await r.text().catch(() => "");
       console.warn(`[bossChat] ${MODEL} ${r.status} — falling back to ${FALLBACK_MODEL}`, errTxt.slice(0, 200));
       r = await callGemini(FALLBACK_MODEL, system, data.messages, KEY);
@@ -73,5 +90,5 @@ export const bossChat = createServerFn({ method: "POST" })
     const j = await r.json();
     const text: string =
       j?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text).filter(Boolean).join("\n") ?? "";
-    return { text: text || "(no response)", swearing };
+    return { text: text || "(no response)", swearing, intensity };
   });
