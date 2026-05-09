@@ -334,7 +334,7 @@ export function WelcomeAuthPrompt() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    disabled={busy || magicCooldown > 0}
+                    disabled={busy || magicCooldown > 0 || !emailValid}
                     onClick={sendMagicLink}
                     className="mt-2 w-full h-9 border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-200"
                   >
@@ -349,7 +349,7 @@ export function WelcomeAuthPrompt() {
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={busy}
+                  disabled={busy || !emailValid}
                   onClick={sendMagicLink}
                   className="w-full h-10 border-[oklch(0.72_0.22_245/0.4)] hover:bg-[oklch(0.72_0.22_245/0.1)]"
                 >
