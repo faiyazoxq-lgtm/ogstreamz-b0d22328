@@ -228,6 +228,13 @@ Deno.serve(async (req) => {
       session_id: session,
       market_context: { snapshot: marketContext, mode: cfg.mode },
     });
+    await supabase.from("ai_logs").insert({
+      source: "shapes-handler",
+      level: "info",
+      mood: cfg.mode,
+      message: `▸ ${user ?? "guest"}: ${String(lastUser.content).slice(0, 180)}`,
+      metadata: { persona: activePersona, intensity: cfg.intensity, session },
+    });
   }
 
   let upstream: ReadableStream<Uint8Array>;
@@ -312,6 +319,13 @@ Deno.serve(async (req) => {
             external_user: user,
             session_id: session,
             market_context: { snapshot: marketContext, mode: cfg.mode },
+          });
+          await supabase.from("ai_logs").insert({
+            source: "shapes-handler",
+            level: "info",
+            mood: cfg.mode,
+            message: `◂ ${activePersona} → ${assembled.slice(0, 180)}`,
+            metadata: { persona: activePersona, intensity: cfg.intensity, session },
           });
         }
       } catch (e) {
