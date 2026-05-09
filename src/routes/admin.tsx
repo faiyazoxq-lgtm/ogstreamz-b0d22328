@@ -258,6 +258,163 @@ function SignalCommandPanel() {
   );
 }
 
+type HubSettings = {
+  id: string;
+  hub_key: string;
+  display_name: string;
+  enabled: boolean;
+  style_prompt: string;
+  model: string;
+  integrations: Record<string, any>;
+  tuning: Record<string, any>;
+  updated_at: string;
+};
+
+const HUB_MODELS = [
+  "google/gemini-2.5-flash",
+  "google/gemini-2.5-flash-lite",
+  "google/gemini-2.5-pro",
+  "google/gemini-3-flash-preview",
+  "google/gemini-3.1-pro-preview",
+  "openai/gpt-5",
+  "openai/gpt-5-mini",
+  "openai/gpt-5-nano",
+] as const;
+
+const HUB_LINKS: Record<string, string> = {
+  music: "/music", jokes: "/jokes", trade: "/trade", tools: "/tools",
+  news: "/", connect: "/connect",
+};
+
+function HubControlsPanel() {
+  const [hubs, setHubs] = useState<HubSettings[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = () => {
+    setLoading(true);
+    supabase.from("hub_settings").select("*").order("display_name")
+      .then(({ data, error }) => {
+        if (error) toast.error(error.message);
+        else setHubs((data ?? []) as any);
+        setLoading(false);
+      });
+  };
+
+  useEffect(() => { load(); }, []);
+
+  if (loading) {
+    return (
+      <section className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 inline animate-spin mr-2" /> Loading hub settings…
+      </section>
+    );
+  }
+
+  return (
+    <div className="grid md:grid-cols-2 gap-4">
+      {hubs.map((h) => (
+        <HubCard key={h.id} hub={h} onSaved={(patch) => setHubs((xs) => xs.map((x) => x.id === h.id ? { ...x, ...patch } : x))} />
+      ))}
+    </div>
+  );
+}
+
+function HubCard({ hub, onSaved }: { hub: HubSettings; onSaved: (p: Partial<HubSettings>) => void }) {
+  const [enabled, setEnabled] = useState(hub.enabled);
+  const [style, setStyle] = useState(hub.style_prompt);
+  const [model, setModel] = useState(hub.model);
+  const [integrations, setIntegrations] = useState(JSON.stringify(hub.integrations ?? {}, null, 2));
+  const [tuning, setTuning] = useState(JSON.stringify(hub.tuning ?? {}, null, 2));
+  const [busy, setBusy] = useState(false);
+
+  const save = async () => {
+    let integrationsJson: any, tuningJson: any;
+    try { integrationsJson = JSON.parse(integrations || "{}"); }
+    catch { return toast.error("Integrations must be valid JSON"); }
+    try { tuningJson = JSON.parse(tuning || "{}"); }
+    catch { return toast.error("Tuning must be valid JSON"); }
+
+    setBusy(true);
+    const { error } = await supabase.from("hub_settings").update({
+      enabled, style_prompt: style, model,
+      integrations: integrationsJson, tuning: tuningJson,
+    }).eq("id", hub.id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success(`${hub.display_name} updated`);
+    onSaved({ enabled, style_prompt: style, model, integrations: integrationsJson, tuning: tuningJson });
+  };
+
+  const toggleEnabled = async (val: boolean) => {
+    setEnabled(val);
+    const { error } = await supabase.from("hub_settings").update({ enabled: val }).eq("id", hub.id);
+    if (error) { setEnabled(!val); return toast.error(error.message); }
+    onSaved({ enabled: val });
+    toast.success(`${hub.display_name} ${val ? "enabled" : "disabled"}`);
+  };
+
+  const link = HUB_LINKS[hub.hub_key];
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-5 space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h3 className="font-bold text-base flex items-center gap-2">
+            <Power className={`h-4 w-4 ${enabled ? "text-emerald-400" : "text-muted-foreground"}`} />
+            {hub.display_name}
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">{hub.hub_key}</span>
+          </h3>
+          {link && (
+            <Link to={link} className="text-[11px] text-[color:var(--neon-blue-bright)] hover:underline inline-flex items-center gap-1 mt-0.5">
+              Open hub <ExternalLink className="h-3 w-3" />
+            </Link>
+          )}
+        </div>
+        <Switch checked={enabled} onCheckedChange={toggleEnabled} className="data-[state=checked]:bg-emerald-500" />
+      </div>
+
+      <div>
+        <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Style Prompt</label>
+        <Textarea
+          value={style}
+          onChange={(e) => setStyle(e.target.value)}
+          rows={3}
+          className="mt-1 font-mono text-xs"
+          placeholder="Voice, tone, formatting rules used by this hub's AI…"
+        />
+      </div>
+
+      <div>
+        <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Model</label>
+        <select
+          value={model}
+          onChange={(e) => setModel(e.target.value)}
+          className="mt-1 w-full bg-background border border-border rounded px-2 py-1.5 text-xs font-mono"
+        >
+          {HUB_MODELS.map((m) => <option key={m} value={m}>{m}</option>)}
+        </select>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Integrations (JSON)</label>
+          <Textarea value={integrations} onChange={(e) => setIntegrations(e.target.value)} rows={4} className="mt-1 font-mono text-[11px]" />
+        </div>
+        <div>
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Tuning (JSON)</label>
+          <Textarea value={tuning} onChange={(e) => setTuning(e.target.value)} rows={4} className="mt-1 font-mono text-[11px]" />
+        </div>
+      </div>
+
+      <div className="flex justify-end">
+        <Button size="sm" onClick={save} disabled={busy} className="font-bold">
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><Save className="h-3.5 w-3.5 mr-1.5" /> Save</>}
+        </Button>
+      </div>
+    </section>
+  );
+}
+
 function _NewsScoutSpawnerImpl() {
   const spawn = useServerFn(spawnNewsPortal);
   const cinema = useServerFn(generatePortalCinema);
