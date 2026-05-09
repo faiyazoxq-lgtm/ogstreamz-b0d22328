@@ -75,7 +75,7 @@
   --secondary: oklch(0.26 0.008 270);
   --secondary-foreground: oklch(0.97 0.01 90);
   --muted: oklch(0.24 0.006 270);
-  --muted-foreground: oklch(0.7 0.02 90);
+  --muted-foreground: oklch(0.86 0.02 90);
   --accent: oklch(0.7 0.22 245);
   --accent-foreground: oklch(0.98 0.01 240);
   --destructive: oklch(0.6 0.22 25);
@@ -169,7 +169,7 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
-    font-weight: 500;
+    font-weight: 600;
     line-height: 1.55;
     letter-spacing: -0.005em;
     -webkit-font-smoothing: antialiased;
@@ -178,12 +178,20 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-weight: 800;
+    font-weight: 900;
     line-height: 1.15;
     letter-spacing: -0.02em;
   }
-  p { line-height: 1.6; }
-  small, .text-xs { font-weight: 600; }
+  p { line-height: 1.6; font-weight: 600; }
+  small, .text-xs { font-weight: 700; }
+
+  /* Readability boost: ensure low-contrast utilities stay legible and bold */
+  .text-muted-foreground { color: var(--muted-foreground); font-weight: 600; }
+  .text-white\/60, .text-white\/70, .text-white\/80, .text-white\/90 {
+    color: rgb(255 255 255 / 0.95) !important;
+  }
+  a, button, label, span, li, dd, dt { font-weight: inherit; }
+  ::placeholder { color: oklch(0.78 0.02 90); font-weight: 600; opacity: 1; }
 
   /* Inputs and form controls — keep them comfortably tappable + readable. */
   input, textarea, select, button {
