@@ -190,28 +190,25 @@ function OverlordPage() {
 
         {/* Tabbed control surface */}
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="bg-black/60 border border-emerald-800/40 p-1 flex flex-wrap h-auto">
-            <TabsTrigger value="users" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
-              <Users className="h-3 w-3 mr-1.5" /> Users
-            </TabsTrigger>
-            <TabsTrigger value="notes" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
-              <NotebookPen className="h-3 w-3 mr-1.5" /> Private Notes
-            </TabsTrigger>
-            <TabsTrigger value="preload" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
-              <Mail className="h-3 w-3 mr-1.5" /> Pre-load Credits
-            </TabsTrigger>
-            <TabsTrigger value="codes" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
-              <Ticket className="h-3 w-3 mr-1.5" /> Redeem Codes
-            </TabsTrigger>
-            <TabsTrigger value="passes" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
-              <Crown className="h-3 w-3 mr-1.5" /> VIP Passes
-            </TabsTrigger>
-            <TabsTrigger value="resellers" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
-              <Wallet className="h-3 w-3 mr-1.5" /> Resellers
-            </TabsTrigger>
-            <TabsTrigger value="share" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
-              <Sparkles className="h-3 w-3 mr-1.5" /> Share Card
-            </TabsTrigger>
+          <TabsList className="bg-transparent border-0 p-0 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 h-auto w-full">
+            {[
+              { v: "users", icon: Users, label: "Users", color: "emerald" },
+              { v: "notes", icon: NotebookPen, label: "Private Notes", color: "amber" },
+              { v: "preload", icon: Mail, label: "Pre-load Credits", color: "cyan" },
+              { v: "codes", icon: Ticket, label: "Redeem Codes", color: "fuchsia" },
+              { v: "passes", icon: Crown, label: "VIP Passes", color: "yellow" },
+              { v: "resellers", icon: Wallet, label: "Resellers", color: "pink" },
+              { v: "share", icon: Sparkles, label: "Share Card", color: "violet" },
+            ].map(({ v, icon: Icon, label }) => (
+              <TabsTrigger
+                key={v}
+                value={v}
+                className="group flex flex-col items-center justify-center gap-2 h-28 rounded-xl border-2 border-emerald-800/40 bg-black/60 backdrop-blur text-emerald-300 font-black uppercase tracking-wider text-base sm:text-lg shadow-lg transition-all hover:border-cyan-500/60 hover:bg-emerald-900/20 data-[state=active]:border-cyan-400 data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-200 data-[state=active]:shadow-[0_0_30px_-5px] data-[state=active]:shadow-cyan-500/50 data-[state=active]:scale-[1.02]"
+              >
+                <Icon className="h-8 w-8 sm:h-10 sm:w-10 stroke-[2.5]" />
+                <span className="text-center leading-tight px-1">{label}</span>
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           {/* USERS */}
