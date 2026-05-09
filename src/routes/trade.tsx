@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Activity, ArrowRight, Crown, ShieldAlert, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { BossChatPanel } from "@/components/BossChatPanel";
 
 type TradePortal = {
   id: string; slug: string; name: string; niche: string; vip: boolean;
@@ -53,6 +54,10 @@ function TradeHubPage() {
           {error}
         </div>
       )}
+
+      <div className="mb-10">
+        <BossChatPanel />
+      </div>
 
       {!portals ? (
         <div className="text-sm text-muted-foreground">Loading terminals…</div>
