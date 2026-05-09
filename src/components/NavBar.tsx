@@ -3,7 +3,7 @@ import {
   User, LogIn, Coins, Crown, Shield, ChevronDown,
   Music, Laugh, TrendingUp, Rocket, Wrench,
   Store, ShoppingBag, Receipt,
-  ShieldCheck, LayoutDashboard, Eye,
+  ShieldCheck, LayoutDashboard,
   UserCircle, Settings, LogOut,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
