@@ -1236,43 +1236,53 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
   const visible = passes.filter((p) => showInactive || isActive(p));
 
   return (
-    <section className="rounded-xl border border-yellow-700/30 bg-black/50 p-5 backdrop-blur">
-      <h2 className="text-xs uppercase tracking-[0.4em] text-yellow-400 mb-4 flex items-center gap-2">
-        <Crown className="h-3.5 w-3.5" /> VIP Passes
-      </h2>
-      <p className="text-[10px] text-emerald-700 uppercase tracking-widest mb-3">
-        Choose a user, pick how long, and grant VIP access.
-      </p>
-      <div className="grid sm:grid-cols-6 gap-2">
-        <Select value={userId} onValueChange={setUserId}>
-          <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200 sm:col-span-2">
-            <SelectValue placeholder="Choose a user…" />
-          </SelectTrigger>
-          <SelectContent className="bg-black border-emerald-800 text-emerald-200 max-h-72">
-            {rows.map((r) => <SelectItem key={r.id} value={r.id}>{r.email}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={preset} onValueChange={(v) => setPreset(v as any)}>
-          <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200"><SelectValue /></SelectTrigger>
-          <SelectContent className="bg-black border-emerald-800 text-emerald-200">
-            <SelectItem value="30">1 month</SelectItem>
-            <SelectItem value="90">3 months</SelectItem>
-            <SelectItem value="180">6 months</SelectItem>
-            <SelectItem value="365">12 months</SelectItem>
-            <SelectItem value="custom">Pick a date</SelectItem>
-          </SelectContent>
-        </Select>
-        <Input
-          type="date"
-          value={customDate}
-          onChange={(e) => setCustomDate(e.target.value)}
-          disabled={preset !== "custom"}
-          className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
-        />
-        <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Note (optional)" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
-        <Button onClick={submit} disabled={busy} className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Crown className="h-4 w-4 mr-1" />Grant VIP</>}
-        </Button>
+    <section className="rounded-2xl border-2 border-yellow-700/30 bg-gradient-to-br from-black/70 to-yellow-950/10 p-6 backdrop-blur shadow-xl">
+      <GeneratorHeader
+        icon={Crown}
+        accent="yellow"
+        title="Grant VIP Pass"
+        subtitle="Choose a user, pick how long, and unlock VIP access immediately."
+      />
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Field label="User" hint="Search and pick a member" icon={UserIcon} className="lg:col-span-2">
+          <Select value={userId} onValueChange={setUserId}>
+            <SelectTrigger className={FIELD_SELECT}>
+              <SelectValue placeholder="Choose a user…" />
+            </SelectTrigger>
+            <SelectContent className="bg-black border-emerald-800 text-emerald-200 max-h-72">
+              {rows.map((r) => <SelectItem key={r.id} value={r.id}>{r.email}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Duration" hint="How long VIP lasts" icon={Clock}>
+          <Select value={preset} onValueChange={(v) => setPreset(v as any)}>
+            <SelectTrigger className={FIELD_SELECT}><SelectValue /></SelectTrigger>
+            <SelectContent className="bg-black border-emerald-800 text-emerald-200">
+              <SelectItem value="30">1 month</SelectItem>
+              <SelectItem value="90">3 months</SelectItem>
+              <SelectItem value="180">6 months</SelectItem>
+              <SelectItem value="365">12 months</SelectItem>
+              <SelectItem value="custom">Custom date…</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Custom expiry" hint="Only used when Duration = Custom" icon={Clock}>
+          <Input
+            type="date"
+            value={customDate}
+            onChange={(e) => setCustomDate(e.target.value)}
+            disabled={preset !== "custom"}
+            className={`${FIELD_INPUT} disabled:opacity-40`}
+          />
+        </Field>
+        <Field label="Note" hint="Private reminder for you" icon={NotebookPen} className="lg:col-span-2">
+          <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. comp pass for podcast guest…" className={FIELD_INPUT} />
+        </Field>
+        <div className="flex items-end lg:col-span-1">
+          <Button onClick={submit} disabled={busy} className={`${PRIMARY_BTN} w-full bg-yellow-500 hover:bg-yellow-400 text-black`}>
+            {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Crown className="h-5 w-5 mr-2" />Grant VIP</>}
+          </Button>
+        </div>
       </div>
 
       <div className="mt-4 flex items-center justify-between text-[10px] uppercase tracking-widest text-emerald-700">
