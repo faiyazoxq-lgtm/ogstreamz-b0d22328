@@ -52,6 +52,19 @@ function AuthPage() {
     }
   }, []);
 
+  // Surface a friendly notice when a non-native provider was requested
+  // from the welcome prompt (e.g. GitHub, Microsoft, Facebook).
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get("provider");
+    if (!p) return;
+    const native = new Set(["google", "apple"]);
+    const label = p.charAt(0).toUpperCase() + p.slice(1);
+    if (native.has(p)) return;
+    toast.message(`${label} sign-in coming soon`, {
+      description: "Use Google, Apple, or email — we'll add more providers soon.",
+    });
+  }, []);
+
   const tryClaim = async () => {
     const t = sessionStorage.getItem("signup_pass_token");
     if (!t) return;
