@@ -252,6 +252,36 @@
   }
   .animate-glitch { animation: glitch 6s infinite; }
 
+  /* Bright white + blue aura wordmark */
+  .text-aura-blue {
+    color: #ffffff;
+    text-shadow:
+      0 0 4px rgba(255,255,255,0.95),
+      0 0 12px rgba(140,210,255,0.95),
+      0 0 28px rgba(0,170,255,0.85),
+      0 0 56px rgba(0,120,255,0.7),
+      0 0 90px rgba(0,80,255,0.55);
+    letter-spacing: -0.01em;
+    animation: aura-pulse 3.2s ease-in-out infinite;
+  }
+  @keyframes aura-pulse {
+    0%, 100% {
+      text-shadow:
+        0 0 4px rgba(255,255,255,0.95),
+        0 0 12px rgba(140,210,255,0.95),
+        0 0 28px rgba(0,170,255,0.85),
+        0 0 56px rgba(0,120,255,0.7);
+    }
+    50% {
+      text-shadow:
+        0 0 6px rgba(255,255,255,1),
+        0 0 18px rgba(180,225,255,1),
+        0 0 40px rgba(60,180,255,0.95),
+        0 0 80px rgba(0,140,255,0.85),
+        0 0 120px rgba(0,100,255,0.65);
+    }
+  }
+
   /* Digital LCD display */
   .digital-display {
     font-family: 'JetBrains Mono', 'Courier New', monospace;
