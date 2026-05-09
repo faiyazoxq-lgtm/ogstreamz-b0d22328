@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Skull, RotateCcw, Share2, Swords } from "lucide-react";
+import { Loader2, Skull, RotateCcw, Share2, Swords, Music, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { playBattleRound } from "@/lib/battles.functions";
+import { playBattleRound, spawnBattleSong } from "@/lib/battles.functions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { SwearChatPanel } from "@/components/SwearChatPanel";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/b/$slug")({
   head: ({ params }) => ({
@@ -42,12 +43,23 @@ type Round = {
 function BattlePlayPage() {
   const { slug } = Route.useParams();
   const play = useServerFn(playBattleRound);
+  const dropTrack = useServerFn(spawnBattleSong);
+  const { user } = useAuth();
   const [battle, setBattle] = useState<Battle | null>(null);
   const [loading, setLoading] = useState(true);
   const [round, setRound] = useState<Round | null>(null);
   const [roundNum, setRoundNum] = useState(1);
   const [picked, setPicked] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const [songBusy, setSongBusy] = useState(false);
+  const [song, setSong] = useState<{
+    jobId: string;
+    title: string;
+    lyrics: string;
+    snippets: string[];
+    audioUrl: string | null;
+    status: string;
+  } | null>(null);
   const sessionId = useRef<string>(crypto.randomUUID());
 
   useEffect(() => {
@@ -61,6 +73,51 @@ function BattlePlayPage() {
         setLoading(false);
       });
   }, [slug]);
+
+  // Poll Suno job status until audio is ready
+  useEffect(() => {
+    if (!song || song.audioUrl) return;
+    let cancelled = false;
+    const tick = async () => {
+      const { data } = await supabase
+        .from("suno_jobs")
+        .select("status, audio_url")
+        .eq("id", song.jobId)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      if (data.audio_url) {
+        setSong((s) => (s ? { ...s, audioUrl: data.audio_url, status: data.status } : s));
+        toast.success("Brutal track ready");
+      } else {
+        setSong((s) => (s ? { ...s, status: data.status } : s));
+      }
+    };
+    const i = setInterval(tick, 5000);
+    tick();
+    return () => { cancelled = true; clearInterval(i); };
+  }, [song?.jobId, song?.audioUrl]);
+
+  const dropBrutalTrack = async () => {
+    if (!user) { toast.error("Sign in to drop a track"); return; }
+    if (songBusy) return;
+    setSongBusy(true);
+    try {
+      const r = await dropTrack({ data: { slug, extra: round?.situation || "" } });
+      setSong({
+        jobId: r.job.id,
+        title: r.title,
+        lyrics: r.lyrics,
+        snippets: r.snippets ?? [],
+        audioUrl: null,
+        status: "pending",
+      });
+      toast.success("Lyrics written. Suno is cooking the track…");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to drop track");
+    } finally {
+      setSongBusy(false);
+    }
+  };
 
   const start = async () => {
     setBusy(true);
@@ -224,6 +281,83 @@ function BattlePlayPage() {
             slug={battle.slug}
             accent={battle.accent}
           />
+        )}
+
+        {/* Brutal Suno track generator */}
+        {battle && (
+          <section className="mt-8 glass-obsidian rounded-2xl p-5" style={{ borderColor: `${accent}55` }}>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.4em] font-bold" style={{ color: accent }}>
+                  <Music className="inline h-3.5 w-3.5 mr-1.5 neon-icon" /> Brutal Track
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Turn this disaster into a foul-mouthed Suno track with snippets you can share.
+                </p>
+              </div>
+              <Button
+                onClick={dropBrutalTrack}
+                disabled={songBusy || !!song}
+                className="btn-magnetic"
+                style={{ background: accent, color: "#000" }}
+              >
+                {songBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Music className="h-4 w-4 mr-2" />}
+                {song ? (song.audioUrl ? "Track Dropped" : "Cooking…") : "Drop The Brutal Track"}
+              </Button>
+            </div>
+
+            {song && (
+              <div className="mt-5 space-y-4">
+                <div>
+                  <h3 className="syndicate-header text-lg" style={{ color: accent }}>{song.title}</h3>
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mt-1">
+                    Status: {song.status}{song.audioUrl ? "" : " · this can take 30–90 seconds"}
+                  </p>
+                </div>
+
+                {song.snippets.length > 0 && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-2">Snippets · tap to copy</p>
+                    <div className="grid gap-2">
+                      {song.snippets.map((s, i) => (
+                        <button
+                          key={i}
+                          onClick={() => { navigator.clipboard.writeText(s); toast.success("Snippet copied"); }}
+                          className="text-left text-sm rounded-lg p-3 bg-white/5 hover:bg-white/10 border transition flex items-start gap-2"
+                          style={{ borderColor: `${accent}33` }}
+                        >
+                          <Copy className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: accent }} />
+                          <span className="flex-1">{s}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {song.audioUrl ? (
+                  <audio controls src={song.audioUrl} className="w-full mt-2" />
+                ) : (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Suno is rendering the track. Audio will appear here when ready.
+                  </div>
+                )}
+
+                <details className="text-xs text-muted-foreground">
+                  <summary className="cursor-pointer hover:text-foreground uppercase tracking-[0.25em] text-[10px]">View lyrics</summary>
+                  <pre className="mt-2 whitespace-pre-wrap font-mono text-xs leading-relaxed bg-black/40 p-3 rounded-lg border border-white/10 max-h-80 overflow-y-auto">
+                    {song.lyrics}
+                  </pre>
+                </details>
+              </div>
+            )}
+
+            {!user && !song && (
+              <p className="mt-3 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                Sign in to drop a track · uses Suno credits
+              </p>
+            )}
+          </section>
         )}
       </div>
     </main>
