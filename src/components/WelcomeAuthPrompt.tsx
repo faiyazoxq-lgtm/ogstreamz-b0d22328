@@ -225,13 +225,22 @@ export function WelcomeAuthPrompt() {
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : mode === "signup" ? "Create Account" : "Sign In"}
               </Button>
               {mode === "login" && (
-                <Link
-                  to="/forgot-password"
-                  onClick={() => setOpen(false)}
-                  className="block text-center text-[11px] text-muted-foreground hover:text-foreground"
-                >
-                  Forgot password?
-                </Link>
+                <div className="flex items-center justify-between text-[11px]">
+                  <label className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground">
+                    <Checkbox
+                      checked={remember}
+                      onCheckedChange={(v) => setRememberState(v === true)}
+                    />
+                    Remember me
+                  </label>
+                  <Link
+                    to="/forgot-password"
+                    onClick={() => setOpen(false)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
               )}
             </form>
           </Tabs>
