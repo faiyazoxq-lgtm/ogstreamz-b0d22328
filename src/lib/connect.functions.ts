@@ -81,8 +81,7 @@ async function apolloFindPeople(company: string): Promise<any[]> {
 
 // ---------- WRITE: Gemini draft ----------
 async function geminiDraft(person: any, news: any[], offer: string): Promise<{ subject: string; body: string }> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY missing");
+  // (Perplexity key checked inside the call below.)
   const newsBlock = news.map((n) => `- ${n.title}`).join("\n");
   const prompt = `You are an elite cold-email writer. Write a 3-sentence email.
 
