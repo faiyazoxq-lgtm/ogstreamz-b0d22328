@@ -589,17 +589,17 @@ function PreLoadPanel({ onApplied }: { onApplied: () => void }) {
   return (
     <section className="rounded-xl border border-cyan-700/30 bg-black/50 p-5 backdrop-blur">
       <h2 className="text-xs uppercase tracking-[0.4em] text-cyan-400 mb-1 flex items-center gap-2">
-        <Mail className="h-3.5 w-3.5" /> PRE-LOAD CREDITS BY EMAIL
+        <Mail className="h-3.5 w-3.5" /> Pre-load Credits by Email
       </h2>
       <p className="text-[10px] text-emerald-700 uppercase tracking-widest mb-4">
-        // existing user → instant top-up · new email → queued, applied at signup
+        Already a user → credits added now · new email → waiting, added when they sign up
       </p>
 
       <div className="grid sm:grid-cols-6 gap-2">
         <Input
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="email@domain.com"
+          placeholder="user@example.com"
           type="email"
           className="sm:col-span-2 bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
         />
@@ -608,58 +608,58 @@ function PreLoadPanel({ onApplied }: { onApplied: () => void }) {
           onChange={(e) => setCredits(e.target.value)}
           type="number"
           min="0"
-          placeholder="credits"
+          placeholder="Credits"
           className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
         />
         <Select value={grantRank || "none"} onValueChange={(v) => setGrantRank(v === "none" ? "" : v as Rank)}>
           <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200"><SelectValue /></SelectTrigger>
           <SelectContent className="bg-black border-emerald-800 text-emerald-200">
-            <SelectItem value="none">no rank</SelectItem>
-            {RANKS.map((r) => <SelectItem key={r} value={r}>grant: {r}</SelectItem>)}
+            <SelectItem value="none">No rank change</SelectItem>
+            {RANKS.filter((r) => r !== "boss").map((r) => <SelectItem key={r} value={r}>Also set rank: {r}</SelectItem>)}
           </SelectContent>
         </Select>
         <Input
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="notes (optional)"
+          placeholder="Note (optional)"
           className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
         />
         <Button onClick={submit} disabled={busy || !email} className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 mr-1" />GRANT</>}
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 mr-1" />Send</>}
         </Button>
       </div>
 
       <div className="mt-5 flex items-center justify-between text-[10px] uppercase tracking-widest text-emerald-700">
-        <span>{visible.length} grant{visible.length === 1 ? "" : "s"}</span>
+        <span>{visible.length} {visible.length === 1 ? "entry" : "entries"}</span>
         <label className="flex items-center gap-2 cursor-pointer">
           <Switch checked={showClaimed} onCheckedChange={setShowClaimed} className="scale-75 data-[state=checked]:bg-cyan-500" />
-          show claimed
+          Include claimed
         </label>
       </div>
 
       <div className="mt-2 divide-y divide-cyan-900/20">
-        {visible.length === 0 && <p className="text-xs text-emerald-700 py-3">// no pre-loaded grants</p>}
+        {visible.length === 0 && <p className="text-xs text-emerald-700 py-3">Nothing pre-loaded yet.</p>}
         {visible.map((g) => (
           <div key={g.id} className="flex items-center justify-between py-3 text-sm">
             <div className="min-w-0 flex-1">
               <p className="text-cyan-200 flex items-center gap-2 truncate">
                 {g.email}
                 <Badge variant="outline" className={g.claimed_at ? "border-emerald-700 text-emerald-300" : "border-yellow-700 text-yellow-300"}>
-                  {g.claimed_at ? "claimed" : "pending"}
+                  {g.claimed_at ? "claimed" : "waiting"}
                 </Badge>
                 {g.grant_rank && (
                   <Badge variant="outline" className="border-pink-700 text-pink-300">{g.grant_rank}</Badge>
                 )}
               </p>
               <p className="text-[10px] text-emerald-700">
-                {g.credits}c · {new Date(g.created_at).toLocaleDateString()}
+                {g.credits} credits · created {new Date(g.created_at).toLocaleDateString()}
                 {g.claimed_at ? ` · claimed ${new Date(g.claimed_at).toLocaleDateString()}` : ""}
                 {g.notes ? ` · ${g.notes}` : ""}
               </p>
             </div>
             {!g.claimed_at && (
-              <Button size="sm" onClick={() => cancel(g.id)} className="h-7 bg-rose-700 hover:bg-rose-600 text-white">
-                <Trash2 className="h-3 w-3" />
+              <Button size="sm" onClick={() => cancel(g.id)} className="h-7 bg-rose-700 hover:bg-rose-600 text-white" title="Cancel this grant">
+                <Trash2 className="h-3 w-3 mr-1" /> Cancel
               </Button>
             )}
           </div>
@@ -736,12 +736,15 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
   return (
     <section className="rounded-xl border border-yellow-700/30 bg-black/50 p-5 backdrop-blur">
       <h2 className="text-xs uppercase tracking-[0.4em] text-yellow-400 mb-4 flex items-center gap-2">
-        <Crown className="h-3.5 w-3.5" /> VIP PASSES
+        <Crown className="h-3.5 w-3.5" /> VIP Passes
       </h2>
+      <p className="text-[10px] text-emerald-700 uppercase tracking-widest mb-3">
+        Choose a user, pick how long, and grant VIP access.
+      </p>
       <div className="grid sm:grid-cols-6 gap-2">
         <Select value={userId} onValueChange={setUserId}>
           <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200 sm:col-span-2">
-            <SelectValue placeholder="— select user —" />
+            <SelectValue placeholder="Choose a user…" />
           </SelectTrigger>
           <SelectContent className="bg-black border-emerald-800 text-emerald-200 max-h-72">
             {rows.map((r) => <SelectItem key={r.id} value={r.id}>{r.email}</SelectItem>)}
@@ -754,7 +757,7 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
             <SelectItem value="90">3 months</SelectItem>
             <SelectItem value="180">6 months</SelectItem>
             <SelectItem value="365">12 months</SelectItem>
-            <SelectItem value="custom">custom</SelectItem>
+            <SelectItem value="custom">Pick a date</SelectItem>
           </SelectContent>
         </Select>
         <Input
@@ -764,22 +767,22 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
           disabled={preset !== "custom"}
           className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
         />
-        <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="notes" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
+        <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Note (optional)" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
         <Button onClick={submit} disabled={busy} className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Crown className="h-4 w-4 mr-1" />GRANT</>}
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Crown className="h-4 w-4 mr-1" />Grant VIP</>}
         </Button>
       </div>
 
       <div className="mt-4 flex items-center justify-between text-[10px] uppercase tracking-widest text-emerald-700">
-        <span>{visible.length} pass{visible.length === 1 ? "" : "es"}</span>
+        <span>{visible.length} {visible.length === 1 ? "pass" : "passes"}</span>
         <label className="flex items-center gap-2 cursor-pointer">
           <Switch checked={showInactive} onCheckedChange={setShowInactive} className="scale-75 data-[state=checked]:bg-yellow-500" />
-          show inactive
+          Include expired
         </label>
       </div>
 
       <div className="mt-2 divide-y divide-yellow-900/20">
-        {visible.length === 0 && <p className="text-xs text-emerald-700 py-3">// no passes</p>}
+        {visible.length === 0 && <p className="text-xs text-emerald-700 py-3">No VIP passes yet.</p>}
         {visible.map((p) => (
           <div key={p.id} className="flex items-center justify-between py-3 text-sm">
             <div>
@@ -790,12 +793,12 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
                 </Badge>
               </p>
               <p className="text-[10px] text-emerald-700">
-                expires {fmt(p.expires_at)} · {p.source}{p.notes ? ` · ${p.notes}` : ""}
+                Expires {fmt(p.expires_at)} · {p.source}{p.notes ? ` · ${p.notes}` : ""}
               </p>
             </div>
             {isActive(p) && (
               <Button size="sm" onClick={() => cancel(p.id)} className="h-7 bg-rose-700 hover:bg-rose-600 text-white">
-                <X className="h-3 w-3 mr-1" />REVOKE
+                <X className="h-3 w-3 mr-1" />Revoke
               </Button>
             )}
           </div>
