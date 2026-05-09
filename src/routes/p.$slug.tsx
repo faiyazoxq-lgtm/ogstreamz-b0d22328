@@ -519,7 +519,10 @@ function NewsHubView({ portal }: { portal: Portal }) {
   }, [headingFont, bodyFont, portal.slug]);
 
   // View tracking
-  useEffect(() => { supabase.rpc("increment_portal_view", { _slug: portal.slug }).then(() => {}); }, [portal.slug]);
+  useEffect(() => {
+    supabase.rpc("increment_portal_view", { _slug: portal.slug }).then(() => {});
+    import("@/lib/track-view").then((m) => m.trackPortalView("portal", portal.slug));
+  }, [portal.slug]);
 
   // VIP unlock state
   useEffect(() => {
