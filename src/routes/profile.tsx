@@ -198,3 +198,145 @@ function ProfilePage() {
     </main>
   );
 }
+
+function FriendsFamilyTopUp() {
+  const askFn = useServerFn(requestTopup);
+  const listFn = useServerFn(listMyTopupRequests);
+  const [credits, setCredits] = useState(20);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
+
+  const refresh = async () => {
+    try {
+      const r = await listFn();
+      setHistory((r as any).requests);
+    } catch (e: any) {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    refresh();
+  }, []);
+
+  const submit = async () => {
+    setBusy(true);
+    try {
+      await askFn({ data: { credits, reason } });
+      toast.success("Request sent — boss will review.");
+      setReason("");
+      await refresh();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const pending = history.find((h) => h.status === "pending");
+
+  return (
+    <section className="mt-12 max-w-2xl mx-auto">
+      <div className="rounded-2xl border border-rose-400/30 bg-card p-6 sm:p-8">
+        <div className="flex items-center gap-2 text-rose-300">
+          <Heart className="h-4 w-4" />
+          <span className="text-xs uppercase tracking-[0.3em] font-bold">
+            Friends &amp; Family · Free Top-Up
+          </span>
+        </div>
+        <h2 className="mt-3 font-[Montserrat] font-black text-2xl text-white">
+          Need more credits? Just ask.
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          You're on the inside. Submit a request and the boss will approve it.
+        </p>
+
+        {pending ? (
+          <div className="mt-5 rounded-xl border border-amber-400/30 bg-amber-500/5 p-4">
+            <div className="text-xs uppercase tracking-[0.25em] text-amber-400 font-bold">
+              Pending
+            </div>
+            <div className="mt-2 text-sm">
+              Requested <strong>{pending.credits_requested}</strong> credits
+              {pending.reason && <> · "{pending.reason}"</>}
+            </div>
+            <div className="mt-1 text-[11px] text-muted-foreground">
+              Submitted {new Date(pending.created_at).toLocaleString()}
+            </div>
+          </div>
+        ) : (
+          <div className="mt-5 grid sm:grid-cols-[140px_1fr_auto] gap-3 items-start">
+            <div>
+              <label className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                Credits
+              </label>
+              <Input
+                type="number"
+                min={1}
+                max={500}
+                value={credits}
+                onChange={(e) => setCredits(Math.max(1, Math.min(500, Number(e.target.value))))}
+                className="bg-background/60 mt-1 text-center font-mono"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                Reason (optional)
+              </label>
+              <Textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value.slice(0, 500))}
+                placeholder="What you need them for…"
+                className="bg-background/60 mt-1 min-h-[44px]"
+              />
+            </div>
+            <Button
+              onClick={submit}
+              disabled={busy}
+              className="btn-glass-blue text-xs uppercase tracking-[0.25em] font-bold text-white sm:mt-5 py-5"
+            >
+              <Send className="h-4 w-4 mr-1" /> Request
+            </Button>
+          </div>
+        )}
+
+        {history.length > 0 && (
+          <div className="mt-6 space-y-2">
+            <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+              Recent requests
+            </div>
+            {history.slice(0, 5).map((h) => (
+              <div
+                key={h.id}
+                className="flex items-center justify-between gap-3 px-3 py-2 rounded-md bg-background/40 border border-white/5 text-sm"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <Coins className="h-3.5 w-3.5 text-amber-300 shrink-0" />
+                  <span className="font-mono">
+                    {h.credits_granted ?? h.credits_requested}
+                  </span>
+                  <span className="text-muted-foreground truncate">
+                    {h.reason ? `· "${h.reason}"` : ""}
+                  </span>
+                </div>
+                <span
+                  className={
+                    "text-[10px] uppercase tracking-[0.2em] font-bold " +
+                    (h.status === "pending"
+                      ? "text-amber-400"
+                      : h.status === "approved"
+                      ? "text-emerald-400"
+                      : "text-rose-400")
+                  }
+                >
+                  {h.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
