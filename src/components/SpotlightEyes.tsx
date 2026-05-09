@@ -61,8 +61,8 @@ export function SpotlightEyes() {
     let lastBolt = 0;
 
     const eyePositions = () => [
-      { x: 28, y: h * 0.45, side: -1 },
-      { x: w - 28, y: h * 0.45, side: 1 },
+      { x: 28, y: h * 0.18, side: -1 },
+      { x: w - 28, y: h * 0.18, side: 1 },
     ];
 
     const drawBolt = (
@@ -74,10 +74,10 @@ export function SpotlightEyes() {
       const segments = 14;
       const dx = to.x - from.x;
       const dy = to.y - from.y;
-      ctx.lineWidth = 1.6;
-      ctx.strokeStyle = `rgba(160,220,255,${alpha})`;
-      ctx.shadowBlur = 18;
-      ctx.shadowColor = `rgba(0,180,255,${alpha})`;
+      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = `rgba(160,220,255,${alpha * 0.75})`;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = `rgba(0,180,255,${alpha * 0.7})`;
       ctx.beginPath();
       ctx.moveTo(from.x, from.y);
       for (let i = 1; i < segments; i++) {
@@ -109,8 +109,8 @@ export function SpotlightEyes() {
         const len = 1400;
         const spread = 0.32;
         const grad = ctx.createRadialGradient(eye.x, eye.y, 10, eye.x, eye.y, len);
-        grad.addColorStop(0, "rgba(80,180,255,0.28)");
-        grad.addColorStop(0.35, "rgba(40,120,255,0.10)");
+        grad.addColorStop(0, "rgba(80,180,255,0.16)");
+        grad.addColorStop(0.35, "rgba(40,120,255,0.05)");
         grad.addColorStop(1, "rgba(0,0,0,0)");
         ctx.save();
         ctx.translate(eye.x, eye.y);
@@ -165,6 +165,23 @@ export function SpotlightEyes() {
             });
           }
         });
+        // Extra bolts coming from random edges/directions toward the mouse
+        const edgeCount = 1 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < edgeCount; i++) {
+          const side = Math.floor(Math.random() * 4);
+          let fx = 0, fy = 0;
+          if (side === 0) { fx = Math.random() * w; fy = -10; }
+          else if (side === 1) { fx = w + 10; fy = Math.random() * h; }
+          else if (side === 2) { fx = Math.random() * w; fy = h + 10; }
+          else { fx = -10; fy = Math.random() * h; }
+          boltsRef.current.push({
+            from: { x: fx, y: fy },
+            to: { x: m.x, y: m.y },
+            life: 0,
+            max: 7 + Math.random() * 7,
+            seed: Math.random() * 1000,
+          });
+        }
         // burst of sparks at cursor
         for (let i = 0; i < 6; i++) {
           const a = Math.random() * Math.PI * 2;
@@ -181,7 +198,7 @@ export function SpotlightEyes() {
       boltsRef.current = boltsRef.current.filter((b) => {
         b.life++;
         const alpha = Math.max(0, 1 - b.life / b.max);
-        drawBolt(b.from, b.to, alpha * 0.85, b.seed + b.life * 0.4);
+        drawBolt(b.from, b.to, alpha * 0.55, b.seed + b.life * 0.4);
         return b.life < b.max;
       });
       ctx.shadowBlur = 0;
@@ -217,7 +234,7 @@ export function SpotlightEyes() {
     <canvas
       ref={canvasRef}
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-40"
+      className="pointer-events-none fixed inset-0 z-30 opacity-70"
       style={{ mixBlendMode: "screen" }}
     />
   );
