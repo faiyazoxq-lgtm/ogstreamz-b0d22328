@@ -35,6 +35,63 @@ type Row = {
   rank: Rank; feature_flags: Flags; display_name: string | null; created_at: string;
 };
 
+/** Labeled form field used across generator panels for a clearer interface. */
+function Field({
+  label, hint, icon: Icon, className, children,
+}: {
+  label: string;
+  hint?: string;
+  icon?: any;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={`flex flex-col gap-1.5 ${className ?? ""}`}>
+      <label className="text-[11px] uppercase tracking-[0.2em] text-cyan-300 font-black flex items-center gap-1.5">
+        {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
+        {label}
+      </label>
+      {children}
+      {hint ? <span className="text-[11px] text-emerald-600/80 normal-case tracking-normal leading-snug">{hint}</span> : null}
+    </div>
+  );
+}
+
+/** Header strip used at the top of each generator panel. */
+function GeneratorHeader({
+  icon: Icon, title, subtitle, accent,
+}: {
+  icon: any;
+  title: string;
+  subtitle: string;
+  accent: "cyan" | "yellow" | "pink";
+}) {
+  const map = {
+    cyan:   { bar: "from-cyan-500 to-cyan-300",   ring: "ring-cyan-500/30",  text: "text-cyan-200",   chip: "bg-cyan-500/15 text-cyan-300 border-cyan-700/40" },
+    yellow: { bar: "from-yellow-400 to-amber-300", ring: "ring-yellow-500/30", text: "text-yellow-200", chip: "bg-yellow-500/15 text-yellow-300 border-yellow-700/40" },
+    pink:   { bar: "from-pink-500 to-fuchsia-400", ring: "ring-pink-500/30",  text: "text-pink-200",   chip: "bg-pink-500/15 text-pink-300 border-pink-700/40" },
+  } as const;
+  const c = map[accent];
+  return (
+    <div className="mb-5 flex items-start gap-4">
+      <div className={`shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br ${c.bar} grid place-items-center text-black shadow-lg ring-4 ${c.ring}`}>
+        <Icon className="h-6 w-6 stroke-[2.5]" />
+      </div>
+      <div className="min-w-0">
+        <span className={`inline-block text-[10px] uppercase tracking-[0.4em] font-black px-2 py-0.5 rounded border ${c.chip} mb-1.5`}>
+          Generator
+        </span>
+        <h2 className={`text-2xl sm:text-3xl font-black tracking-tight ${c.text} leading-tight`}>{title}</h2>
+        <p className="mt-1 text-sm text-emerald-400/80 normal-case tracking-normal leading-snug">{subtitle}</p>
+      </div>
+    </div>
+  );
+}
+
+const FIELD_INPUT = "h-11 bg-black/70 border-2 border-emerald-800/50 focus-visible:border-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-500/30 text-emerald-100 placeholder:text-emerald-700 text-base font-bold tracking-tight";
+const FIELD_SELECT = "h-11 bg-black/70 border-2 border-emerald-800/50 text-emerald-100 text-base font-bold tracking-tight";
+const PRIMARY_BTN = "h-11 text-base font-black tracking-wider uppercase shadow-lg";
+
 export const Route = createFileRoute("/syndicate-overlord")({
   head: () => ({ meta: [{ title: "Boss Control Center · 0G-PORTAL" }] }),
   component: OverlordPage,
