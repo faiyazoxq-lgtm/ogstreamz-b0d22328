@@ -36,6 +36,7 @@ import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as BossCivilityRouteImport } from './routes/boss.civility'
 import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as ApiPublicSunoWebhookRouteImport } from './routes/api/public/suno-webhook'
 import { Route as ApiPublic0gOrchestratorRouteImport } from './routes/api/public/0g-orchestrator'
@@ -178,6 +179,11 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   path: '/checkout/return',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BossCivilityRoute = BossCivilityRouteImport.update({
+  id: '/civility',
+  path: '/civility',
+  getParentRoute: () => BossRoute,
+} as any)
 const BSlugRoute = BSlugRouteImport.update({
   id: '/b/$slug',
   path: '/b/$slug',
@@ -217,7 +223,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/battle': typeof BattleRoute
-  '/boss': typeof BossRoute
+  '/boss': typeof BossRouteWithChildren
   '/connect': typeof ConnectRoute
   '/console': typeof ConsoleRoute
   '/dashboard': typeof DashboardRoute
@@ -235,6 +241,7 @@ export interface FileRoutesByFullPath {
   '/trade': typeof TradeRoute
   '/vip': typeof VipRoute
   '/b/$slug': typeof BSlugRoute
+  '/boss/civility': typeof BossCivilityRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -252,7 +259,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/battle': typeof BattleRoute
-  '/boss': typeof BossRoute
+  '/boss': typeof BossRouteWithChildren
   '/connect': typeof ConnectRoute
   '/console': typeof ConsoleRoute
   '/dashboard': typeof DashboardRoute
@@ -270,6 +277,7 @@ export interface FileRoutesByTo {
   '/trade': typeof TradeRoute
   '/vip': typeof VipRoute
   '/b/$slug': typeof BSlugRoute
+  '/boss/civility': typeof BossCivilityRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -288,7 +296,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/battle': typeof BattleRoute
-  '/boss': typeof BossRoute
+  '/boss': typeof BossRouteWithChildren
   '/connect': typeof ConnectRoute
   '/console': typeof ConsoleRoute
   '/dashboard': typeof DashboardRoute
@@ -306,6 +314,7 @@ export interface FileRoutesById {
   '/trade': typeof TradeRoute
   '/vip': typeof VipRoute
   '/b/$slug': typeof BSlugRoute
+  '/boss/civility': typeof BossCivilityRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -343,6 +352,7 @@ export interface FileRouteTypes {
     | '/trade'
     | '/vip'
     | '/b/$slug'
+    | '/boss/civility'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -378,6 +388,7 @@ export interface FileRouteTypes {
     | '/trade'
     | '/vip'
     | '/b/$slug'
+    | '/boss/civility'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -413,6 +424,7 @@ export interface FileRouteTypes {
     | '/trade'
     | '/vip'
     | '/b/$slug'
+    | '/boss/civility'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -431,7 +443,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   BattleRoute: typeof BattleRoute
-  BossRoute: typeof BossRoute
+  BossRoute: typeof BossRouteWithChildren
   ConnectRoute: typeof ConnectRoute
   ConsoleRoute: typeof ConsoleRoute
   DashboardRoute: typeof DashboardRoute
@@ -652,6 +664,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/boss/civility': {
+      id: '/boss/civility'
+      path: '/civility'
+      fullPath: '/boss/civility'
+      preLoaderRoute: typeof BossCivilityRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/b/$slug': {
       id: '/b/$slug'
       path: '/b/$slug'
@@ -697,6 +716,16 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface BossRouteChildren {
+  BossCivilityRoute: typeof BossCivilityRoute
+}
+
+const BossRouteChildren: BossRouteChildren = {
+  BossCivilityRoute: BossCivilityRoute,
+}
+
+const BossRouteWithChildren = BossRoute._addFileChildren(BossRouteChildren)
+
 interface JokesRouteChildren {
   JokesPortalRoute: typeof JokesPortalRoute
 }
@@ -712,7 +741,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   BattleRoute: BattleRoute,
-  BossRoute: BossRoute,
+  BossRoute: BossRouteWithChildren,
   ConnectRoute: ConnectRoute,
   ConsoleRoute: ConsoleRoute,
   DashboardRoute: DashboardRoute,
