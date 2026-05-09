@@ -154,6 +154,224 @@ function ConnectHubLinkPanel() {
   );
 }
 
+// ─── Command Deck Panels ─────────────────────────────────────────────
+
+const HOT_PINK = "#ff00aa";
+
+function OpsSnapshotPanel() {
+  const fetchSnap = useServerFn(getOpsSnapshot);
+  const [s, setS] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  const refresh = async () => {
+    setLoading(true);
+    try { setS(await fetchSnap()); }
+    catch (e: any) { toast.error(e?.message ?? "Snapshot failed"); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
+
+  const tiles: { label: string; value: number | string; tint: string; icon: React.ReactNode }[] = s ? [
+    { label: "Members", value: s.users, tint: "#3ad6ff", icon: <Users className="h-3 w-3" /> },
+    { label: "VIP", value: s.vipUsers, tint: "#ffd166", icon: <Sparkles className="h-3 w-3" /> },
+    { label: "Portals", value: s.portals, tint: "#a78bfa", icon: <Rocket className="h-3 w-3" /> },
+    { label: "Tracks", value: s.tracks, tint: "#00e08a", icon: <Music className="h-3 w-3" /> },
+    { label: "Suno · pending", value: s.sunoPending, tint: "#ff6b6b", icon: <Disc3 className="h-3 w-3" /> },
+    { label: "Suno · 24h", value: s.sunoToday, tint: "#3ad6ff", icon: <Disc3 className="h-3 w-3" /> },
+    { label: "Scans · 24h", value: s.scansToday, tint: "#ffd166", icon: <Radar className="h-3 w-3" /> },
+    { label: "Custom · queue", value: s.requestsPending, tint: "#ff00aa", icon: <Wand2 className="h-3 w-3" /> },
+    { label: "Bots · live", value: s.bots, tint: "#00e08a", icon: <Bot className="h-3 w-3" /> },
+    { label: "Leads · 24h", value: s.leadsToday, tint: "#a78bfa", icon: <Send className="h-3 w-3" /> },
+    { label: "Codes minted", value: s.codes, tint: "#3ad6ff", icon: <Save className="h-3 w-3" /> },
+  ] : [];
+
+  return (
+    <section className="rounded-2xl border bg-card p-6" style={{ borderColor: `${HOT_PINK}55` }}>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Activity className="h-5 w-5" style={{ color: HOT_PINK }} />
+          <h2 className="font-[Montserrat] font-black text-xl text-white">Live Ops Snapshot</h2>
+          <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Realtime counts</span>
+        </div>
+        <Button size="sm" variant="ghost" onClick={refresh} disabled={loading} className="h-8 text-xs">
+          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+          Refresh
+        </Button>
+      </div>
+      {!s && !loading && <p className="text-sm text-muted-foreground">Tap refresh to load.</p>}
+      {s && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+          {tiles.map((t) => (
+            <div key={t.label} className="rounded-lg border bg-black/40 p-3" style={{ borderColor: `${t.tint}44` }}>
+              <div className="flex items-center gap-1 text-[9px] uppercase tracking-[0.3em]" style={{ color: t.tint }}>
+                {t.icon} {t.label}
+              </div>
+              <div className="text-2xl font-black text-white mt-1 tabular-nums">{t.value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {s && <p className="mt-3 text-[10px] text-muted-foreground">Snapshot {new Date(s.ts).toLocaleTimeString()}</p>}
+    </section>
+  );
+}
+
+const AGENT_MODELS = [
+  { id: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash · fast" },
+  { id: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro · deep" },
+  { id: "google/gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite · cheap" },
+  { id: "google/gemini-3-flash-preview", label: "Gemini 3 Flash · preview" },
+  { id: "google/gemini-3.1-pro-preview", label: "Gemini 3.1 Pro · preview" },
+  { id: "openai/gpt-5", label: "GPT-5 · premium" },
+  { id: "openai/gpt-5-mini", label: "GPT-5 mini · balanced" },
+  { id: "openai/gpt-5-nano", label: "GPT-5 nano · cheapest" },
+];
+
+const AGENT_PRESETS: { label: string; system: string; placeholder: string }[] = [
+  { label: "Strategist",   system: "You are a ruthless growth strategist for a content + signals platform. Output a numbered action plan with metrics and risks.", placeholder: "How do we 10x weekly active users next 14 days?" },
+  { label: "Copywriter",   system: "You are a top-tier marketing copywriter. Voice: street-smart, confident, no fluff. Return 3 variants.", placeholder: "Write hooks for our new XAU bias engine portal." },
+  { label: "Analyst",      system: "You are a senior macro/quant analyst. Cross-reference recent news, give bias (BULL/BEAR/NEUTRAL), confidence, 3 decisive facts.", placeholder: "Brief me on Gold for the next 24h." },
+  { label: "Code Auditor", system: "You are a senior TypeScript reviewer. Identify bugs, perf issues, and security risks. Be precise.", placeholder: "Review this snippet for race conditions…" },
+  { label: "SQL Architect",system: "You are a senior Postgres/Supabase architect. Output safe parameterized SQL + RLS notes.", placeholder: "Give me a query for top 10 spending VIPs last 30 days." },
+  { label: "Free Form",    system: "You are a senior operator inside a command deck. Be terse, decisive, and output actionable steps.", placeholder: "Ask anything…" },
+];
+
+function AgentConsolePanel() {
+  const run = useServerFn(runAgentTask);
+  const [preset, setPreset] = useState(AGENT_PRESETS[0]);
+  const [model, setModel] = useState(AGENT_MODELS[0].id);
+  const [prompt, setPrompt] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [out, setOut] = useState<string>("");
+
+  const fire = async () => {
+    if (!prompt.trim()) return toast.error("Prompt required");
+    setBusy(true); setOut("");
+    try {
+      const r = await run({ data: { model, system: preset.system, prompt: prompt.trim(), temperature: 0.5 } });
+      setOut(r.text || "(empty response)");
+      toast.success(`${model.split("/")[1]} responded`);
+    } catch (e: any) { toast.error(e?.message ?? "Agent failed"); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <section className="rounded-2xl border bg-card p-6" style={{ borderColor: `${HOT_PINK}55` }}>
+      <div className="flex items-center gap-2 mb-2">
+        <Brain className="h-5 w-5" style={{ color: HOT_PINK }} />
+        <h2 className="font-[Montserrat] font-black text-xl text-white">AI Agent Console</h2>
+        <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Lovable AI Gateway</span>
+      </div>
+      <p className="text-sm text-muted-foreground mb-5">Pick a persona, choose a model, fire a prompt. Direct line to every supported AI.</p>
+
+      <div className="grid sm:grid-cols-3 gap-2 mb-3">
+        <select
+          value={preset.label}
+          onChange={(e) => setPreset(AGENT_PRESETS.find((p) => p.label === e.target.value) || AGENT_PRESETS[0])}
+          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+        >
+          {AGENT_PRESETS.map((p) => <option key={p.label} value={p.label}>Persona · {p.label}</option>)}
+        </select>
+        <select value={model} onChange={(e) => setModel(e.target.value)} className="h-10 rounded-md border border-input bg-background px-3 text-sm sm:col-span-2">
+          {AGENT_MODELS.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+        </select>
+      </div>
+
+      <Textarea
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
+        placeholder={preset.placeholder}
+        rows={4}
+        className="font-mono text-sm"
+      />
+
+      <div className="flex items-center gap-2 mt-3">
+        <Button onClick={fire} disabled={busy} style={{ background: HOT_PINK, color: "#000" }}>
+          {busy ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Thinking…</> : <><Cpu className="h-4 w-4 mr-2" />Run Agent</>}
+        </Button>
+        {out && (
+          <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(out); toast.success("Copied"); }}>
+            <Copy className="h-3 w-3 mr-1" /> Copy
+          </Button>
+        )}
+      </div>
+
+      {out && (
+        <pre className="mt-4 rounded-lg border border-border bg-black/60 p-4 text-xs text-white whitespace-pre-wrap font-mono max-h-96 overflow-auto">
+          {out}
+        </pre>
+      )}
+    </section>
+  );
+}
+
+const MAINTENANCE_ACTIONS: { id: string; label: string; desc: string; danger?: boolean; icon: React.ReactNode }[] = [
+  { id: "purge_stale_suno",         label: "Purge stale Suno jobs",        desc: "Delete pending jobs older than 6h.", icon: <Disc3 className="h-4 w-4" /> },
+  { id: "expire_vip_passes",        label: "Expire stale VIP passes",      desc: "Revoke any VIP pass past its expiry.", icon: <Sparkles className="h-4 w-4" /> },
+  { id: "reset_free_clicks",        label: "Reset free-click counters",    desc: "Zero free_clicks_used for every member.", icon: <RefreshCw className="h-4 w-4" /> },
+  { id: "clear_marketing_errors",   label: "Retry failed marketing jobs",  desc: "Flip portal_marketing errors back to pending.", icon: <Megaphone className="h-4 w-4" /> },
+  { id: "purge_view_zero_portals",  label: "Delete dead portals",          desc: "Drop portals with 0 views older than 30d.", danger: true, icon: <Trash2 className="h-4 w-4" /> },
+];
+
+function MaintenancePanel() {
+  const run = useServerFn(runMaintenance);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [log, setLog] = useState<{ id: string; msg: string; ts: number }[]>([]);
+
+  const fire = async (id: string, danger?: boolean) => {
+    if (danger && !confirm("This is destructive. Proceed?")) return;
+    setBusy(id);
+    try {
+      const r = await run({ data: { action: id } });
+      toast.success(r.message);
+      setLog((l) => [{ id, msg: r.message, ts: Date.now() }, ...l].slice(0, 12));
+    } catch (e: any) { toast.error(e?.message ?? "Action failed"); }
+    finally { setBusy(null); }
+  };
+
+  return (
+    <section className="rounded-2xl border bg-card p-6" style={{ borderColor: `${HOT_PINK}55` }}>
+      <div className="flex items-center gap-2 mb-2">
+        <Database className="h-5 w-5" style={{ color: HOT_PINK }} />
+        <h2 className="font-[Montserrat] font-black text-xl text-white">Power Utilities · Maintenance</h2>
+        <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">One-Click Housekeeping</span>
+      </div>
+      <p className="text-sm text-muted-foreground mb-5">Bulk cleanup actions. Destructive ones are flagged.</p>
+
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {MAINTENANCE_ACTIONS.map((a) => (
+          <button
+            key={a.id}
+            onClick={() => fire(a.id, a.danger)}
+            disabled={!!busy}
+            className="text-left rounded-xl border bg-black/40 p-4 transition hover:scale-[1.02] disabled:opacity-40"
+            style={{ borderColor: a.danger ? "#ff223388" : `${HOT_PINK}44` }}
+          >
+            <div className="flex items-center gap-2 text-white font-bold text-sm">
+              {busy === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : a.icon}
+              <span>{a.label}</span>
+              {a.danger && <AlertTriangle className="h-3 w-3 text-red-400 ml-auto" />}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">{a.desc}</p>
+          </button>
+        ))}
+      </div>
+
+      {log.length > 0 && (
+        <div className="mt-5 rounded-lg border border-border bg-black/60 p-3 max-h-40 overflow-auto">
+          <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-2">Recent runs</div>
+          {log.map((l, i) => (
+            <div key={i} className="text-xs font-mono text-white/80 py-0.5">
+              <span className="text-muted-foreground">{new Date(l.ts).toLocaleTimeString()}</span> · {l.msg}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function TradeSpawnerPanel() {
   return _TradeSpawnerPanelImpl();
 }
