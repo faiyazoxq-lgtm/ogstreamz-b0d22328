@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Mail, Lock, User as UserIcon, Loader2, Send, X, Sparkles, Github, Facebook, Wand2 } from "lucide-react";
+import { Mail, Lock, User as UserIcon, Loader2, Send, X, Sparkles, Github, Facebook, Wand2, RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import { getRemember, setRemember, markTabSession, clearTabSession } from "@/lib
 const DISMISS_KEY = "welcome_auth_dismissed_at";
 const DISMISS_TTL_REMEMBER_MS = 1000 * 60 * 60 * 24 * 30; // 30d
 const DISMISS_TTL_TAB_MS = 1000 * 60 * 60 * 12; // 12h
+const MAGIC_RESEND_COOLDOWN_S = 30;
 
 export function WelcomeAuthPrompt() {
   const { user, loading: authLoading, hasStoredSession } = useAuth();
@@ -27,9 +28,16 @@ export function WelcomeAuthPrompt() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [magicSent, setMagicSent] = useState(false);
+  const [magicCooldown, setMagicCooldown] = useState(0);
   const [remember, setRememberState] = useState<boolean>(true);
 
   useEffect(() => { setRememberState(getRemember()); }, []);
+
+  useEffect(() => {
+    if (magicCooldown <= 0) return;
+    const t = setInterval(() => setMagicCooldown((s) => (s <= 1 ? 0 : s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [magicCooldown]);
 
   useEffect(() => {
     // Skip while the session is still being restored, and skip entirely if a
@@ -113,6 +121,7 @@ export function WelcomeAuthPrompt() {
       });
       if (error) throw error;
       setMagicSent(true);
+      setMagicCooldown(MAGIC_RESEND_COOLDOWN_S);
       setRemember(remember);
       if (remember) markTabSession(); else clearTabSession();
       toast.success("Magic link sent. Check your inbox.");
