@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Swords, Skull, Sparkles, Plus, Copy, ExternalLink, Loader2, Share2 } from "lucide-react";
+import { Swords, Skull, Plus, Copy, ExternalLink, Loader2, Share2, Flame } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { spawnBattle, type BattleLanguage } from "@/lib/battles.functions";
@@ -130,13 +130,8 @@ function SpawnPanel({ onSpawned }: { onSpawned: () => void }) {
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState("");
   const [scenario, setScenario] = useState("");
-  const [language, setLanguage] = useState<BattleLanguage>("medium");
-  const [themes, setThemes] = useState("");
-  const [customPrompt, setCustomPrompt] = useState("");
   const [accent, setAccent] = useState("#ff2e55");
   const [emoji, setEmoji] = useState("💀");
-  const [tagline, setTagline] = useState("EVERY CHOICE IS A LOSS");
-  const [useResearch, setUseResearch] = useState(true);
   const [lastSlug, setLastSlug] = useState<string | null>(null);
 
   const submit = async (e: React.FormEvent) => {
@@ -148,19 +143,19 @@ function SpawnPanel({ onSpawned }: { onSpawned: () => void }) {
         data: {
           name,
           scenario,
-          language,
-          themes: themes.split(",").map((t) => t.trim()).filter(Boolean),
-          custom_prompt: customPrompt,
+          language: "chaotic" as BattleLanguage,
+          themes: [],
+          custom_prompt: "",
           accent,
           emoji,
-          tagline,
+          tagline: "EVERY CHOICE IS A LOSS",
           public: true,
-          use_research: useResearch,
+          use_research: true,
         },
       });
       setLastSlug(res.slug);
       toast.success(`BattleHUB portal "${res.battle.name}" spawned`);
-      setName(""); setScenario(""); setThemes(""); setCustomPrompt("");
+      setName(""); setScenario("");
       onSpawned();
     } catch (err: any) {
       toast.error(err?.message ?? "Failed to spawn");
@@ -169,83 +164,143 @@ function SpawnPanel({ onSpawned }: { onSpawned: () => void }) {
     }
   };
 
+  const PRESETS: { label: string; emoji: string; accent: string; name: string; scenario: string }[] = [
+    {
+      label: "Monday From Hell",
+      emoji: "☠️",
+      accent: "#ff2e55",
+      name: "Monday From Hell",
+      scenario: "You're hungover as fuck on a Monday morning. Your boss is on the warpath, your laptop's dead, the coffee machine's broken, and you've got a standup in 90 seconds. Every option is a fucking disaster waiting to detonate your career.",
+    },
+    {
+      label: "Pub Brawl Roulette",
+      emoji: "🍺",
+      accent: "#ffb02e",
+      name: "Pub Brawl Roulette",
+      scenario: "It's 1am in a Wetherspoons. You've spilled a stranger's pint, his girlfriend's eyeing you up, the bouncer hates your face, and your mate's gone to the bog with the only Uber on the app. Pick your poison — every choice ends with blood, vomit, or a barring order.",
+    },
+    {
+      label: "Family Christmas Meltdown",
+      emoji: "🎄",
+      accent: "#1fdc7d",
+      name: "Family Christmas Meltdown",
+      scenario: "Christmas Day at your mum's. Nan's pissed on sherry, your brother's brought his new vegan girlfriend, the turkey's burnt, and dad's started on the politics. Every reply makes someone cry, scream, or storm out into the rain.",
+    },
+    {
+      label: "Tinder Date Apocalypse",
+      emoji: "💔",
+      accent: "#ff5acd",
+      name: "Tinder Date Apocalypse",
+      scenario: "First date. They look nothing like the photos, they've ordered the most expensive bottle on the menu, your card just declined, and your ex just walked in with your best mate. Every move turns this date into a shit-stained anecdote.",
+    },
+    {
+      label: "Festival Toilet Hell",
+      emoji: "🚽",
+      accent: "#a371ff",
+      name: "Festival Toilet Hell",
+      scenario: "Day three at a muddy festival. You're caked in piss, lost your wristband, your phone's at 2%, and you desperately need a shit. The portaloos are warzones. Every option ends in horror, embarrassment, or sectioning.",
+    },
+    {
+      label: "Job Interview Nightmare",
+      emoji: "💼",
+      accent: "#2ec5ff",
+      name: "Job Interview Nightmare",
+      scenario: "Final round interview at your dream job. You're sweating through your shirt, you've forgotten the CEO's name, your fly's down, and you just realised you slagged the company off on LinkedIn last week. Every answer digs the grave deeper.",
+    },
+    {
+      label: "Stag Do Catastrophe",
+      emoji: "👰",
+      accent: "#ff7a1a",
+      name: "Stag Do Catastrophe",
+      scenario: "Stag do in Prague. The groom's missing, you've lost the passports, somebody ordered a stripper who's now demanding cash, and the bride's ringing nonstop. Every choice ruins the wedding before it starts.",
+    },
+    {
+      label: "School Run Massacre",
+      emoji: "🚸",
+      accent: "#7dff2e",
+      name: "School Run Massacre",
+      scenario: "8:47am. The kids haven't got shoes on, the dog's eaten the lunchbox, you're double-parked outside Karen-from-the-PTA's Range Rover, and you're still in your dressing gown. Every move ends with social services, a fight, or both.",
+    },
+  ];
+
+  const usePreset = (p: typeof PRESETS[number]) => {
+    setName(p.name);
+    setScenario(p.scenario);
+    setEmoji(p.emoji);
+    setAccent(p.accent);
+  };
+
   return (
     <form onSubmit={submit} className="glass-obsidian-strong rounded-2xl p-6 space-y-4">
       <div className="flex items-center gap-2 syndicate-header text-sm" style={{ color: "var(--syndicate-glow)" }}>
-        <Plus className="h-4 w-4 neon-icon" /> Spawn New Battle Portal
+        <Flame className="h-4 w-4 neon-icon" /> Spawn Brutal Portal · Chaotic Mode Forced
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <label className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">Name</label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Office Survival Hell" required />
-        </div>
-        <div>
-          <label className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">Tagline</label>
-          <Input value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="EVERY CHOICE IS A LOSS" />
+      <div>
+        <label className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-2 block">
+          Pick a preset · or write your own filth below
+        </label>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {PRESETS.map((p) => (
+            <button
+              key={p.label}
+              type="button"
+              onClick={() => usePreset(p)}
+              className="btn-magnetic text-left rounded-lg p-2.5 glass-obsidian hover:bg-white/5 transition group"
+              style={{ borderLeft: `3px solid ${p.accent}` }}
+              title={p.scenario}
+            >
+              <div className="text-xl leading-none mb-1">{p.emoji}</div>
+              <div className="text-[11px] uppercase tracking-[0.15em] font-bold" style={{ color: p.accent }}>
+                {p.label}
+              </div>
+            </button>
+          ))}
         </div>
       </div>
 
       <div>
-        <label className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">Scenario / Description</label>
+        <label className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">Portal Name</label>
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Monday From Hell"
+          required
+          className="text-base font-bold"
+        />
+      </div>
+
+      <div>
+        <label className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
+          The Filth · Describe the unwinnable scenario
+        </label>
         <Textarea
           value={scenario}
           onChange={(e) => setScenario(e.target.value)}
-          placeholder="You're a junior analyst on your first day. The Monday standup is in 3 minutes. Your boss is in a foul mood. Your laptop is dead. Every option ends badly."
+          placeholder="You're hungover, your boss hates you, the wifi's dead, and every choice you make ends in absolute carnage. Get foul. The AI will get fouler."
           rows={4}
           required
         />
+        <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+          Swearing AI is locked on · Every choice loses · Be as vile as you like
+        </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="flex items-center gap-3">
         <div>
-          <label className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">Language</label>
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value as BattleLanguage)}
-            className="w-full mt-1 rounded-md bg-input border border-border px-3 py-2 text-sm"
-          >
-            <option value="clean">Clean (PG)</option>
-            <option value="mild">Mild (PG-13)</option>
-            <option value="medium">Medium (Adult)</option>
-            <option value="chaotic">Chaotic (Unhinged)</option>
-          </select>
-        </div>
-        <div className="sm:col-span-2">
-          <label className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">Themes (comma-separated)</label>
-          <Input value={themes} onChange={(e) => setThemes(e.target.value)} placeholder="office, hangover, monday, awkward" />
-        </div>
-      </div>
-
-      <div>
-        <label className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">Custom Game-Master Prompt (optional)</label>
-        <Textarea
-          value={customPrompt}
-          onChange={(e) => setCustomPrompt(e.target.value)}
-          placeholder="Lean Cockney slang. Reference 90s TV. Always end consequences with a one-liner."
-          rows={2}
-        />
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-3 items-end">
-        <div>
-          <label className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">Accent</label>
-          <input type="color" value={accent} onChange={(e) => setAccent(e.target.value)} className="w-full h-10 rounded-md bg-input border border-border" />
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground block mb-1">Accent</label>
+          <input type="color" value={accent} onChange={(e) => setAccent(e.target.value)} className="w-12 h-10 rounded-md bg-input border border-border cursor-pointer" />
         </div>
         <div>
-          <label className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">Emoji</label>
-          <Input value={emoji} onChange={(e) => setEmoji(e.target.value)} maxLength={4} />
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground block mb-1">Emoji</label>
+          <Input value={emoji} onChange={(e) => setEmoji(e.target.value)} maxLength={4} className="w-16 text-center text-lg" />
         </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={useResearch} onChange={(e) => setUseResearch(e.target.checked)} />
-          Pull live research (Perplexity)
-        </label>
       </div>
 
       <div className="flex flex-wrap items-center gap-3 pt-2">
-        <Button type="submit" disabled={busy} className="btn-magnetic">
+        <Button type="submit" disabled={busy} className="btn-magnetic font-bold uppercase tracking-[0.2em]">
           {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Skull className="h-4 w-4 mr-2" />}
-          Spawn Portal
+          Unleash The Filth
         </Button>
         {lastSlug && (
           <button
