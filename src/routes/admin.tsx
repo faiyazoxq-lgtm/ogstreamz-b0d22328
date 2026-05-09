@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Shield, Loader2, Save, Telescope, Link2, Wand2, Copy, ExternalLink, Music, Upload, Disc3, Wrench, Send, Sparkles, Rocket, Eye, TrendingUp, Satellite, Bot, Radio, Trash2, Megaphone, Users, Zap, Radar, Megaphone as MegaIcon, Sliders, Power } from "lucide-react";
+import { Shield, Loader2, Save, Telescope, Link2, Wand2, Copy, ExternalLink, Music, Upload, Disc3, Wrench, Send, Sparkles, Rocket, Eye, TrendingUp, Satellite, Bot, Radio, Trash2, Megaphone, Users, Zap, Radar, Megaphone as MegaIcon, Sliders, Power, Cpu, Database, RefreshCw, Brain, Activity, Terminal, AlertTriangle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ import { spawnNewsPortal } from "@/lib/news.functions";
 import { generatePortalCinema } from "@/lib/cinema.functions";
 import { listBots, upsertBot, deleteBot, broadcastGlobalAlert, runSyndicateTickNow, getFleetStats, setSubscriberPlan, type Plan } from "@/lib/syndicate.functions";
 import { generateBrandBible, updateTelegramLinks, deployToTelegram } from "@/lib/telegram.functions";
+import { runAgentTask, getOpsSnapshot, runMaintenance } from "@/lib/command-deck.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Power Console · 0G-PORTAL" }] }),
@@ -115,6 +116,13 @@ function AdminPage() {
 
       <SectionHeader icon={<Sliders className="h-4 w-4" />} label="Hub Controls · Tuning" tint="#a78bfa" />
       <HubControlsPanel />
+
+      <SectionHeader icon={<Terminal className="h-4 w-4" />} label="Command Deck · Superuser" tint="#ff00aa" />
+      <div className="space-y-6">
+        <OpsSnapshotPanel />
+        <AgentConsolePanel />
+        <MaintenancePanel />
+      </div>
     </main>
   );
 }
