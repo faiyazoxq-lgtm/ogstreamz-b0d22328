@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Sparkles, Shuffle, Power, Skull, SprayCan, Crown, Drama, Flame, Radio, X, Plus, Dice5 } from "lucide-react";
+import { Sparkles, Shuffle, Power, Skull, SprayCan, Crown, Drama, Flame, Radio, X, Plus, Dice5, RotateCcw } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,8 +76,10 @@ export const Route = createFileRoute("/jokes")({
 function JokesSetup() {
   const navigate = useNavigate();
   const { user, profile, isAdmin } = useAuth();
-  const [selected, setSelected] = useState<string[]>(["street"]);
-  const [flavors, setFlavors] = useState<string[]>([]);
+  // Each click MOVES a chip from the available pool into the brief.
+  // The chip then disappears from the panel until reset.
+  const [usedCore, setUsedCore] = useState<string[]>([]);
+  const [usedFlavors, setUsedFlavors] = useState<string[]>([]);
   const [keywords, setKeywords] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
   const [brief, setBrief] = useState("");
@@ -86,21 +88,36 @@ function JokesSetup() {
   const [liveRoast, setLiveRoast] = useState(false);
   const isVip = profile?.status === "vip" || isAdmin;
 
-  const toggle = (id: string) =>
-    setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const consumeCore = (id: string) => {
+    setUsedCore((s) => (s.includes(id) ? s : [...s, id]));
+    setBriefDirty(false);
+  };
 
-  const toggleFlavor = (chip: string) =>
-    setFlavors((f) => (f.includes(chip) ? f.filter((x) => x !== chip) : [...f, chip]));
+  const consumeFlavor = (chip: string) => {
+    setUsedFlavors((f) => (f.includes(chip) ? f : [...f, chip]));
+    setBriefDirty(false);
+  };
 
   const addKeyword = (raw: string) => {
     const v = raw.trim().replace(/,+$/, "").trim();
     if (!v) return;
     setKeywords((k) => (k.includes(v) ? k : [...k, v]));
     setDraft("");
+    setBriefDirty(false);
   };
 
-  const removeKeyword = (k: string) =>
+  const removeKeyword = (k: string) => {
     setKeywords((arr) => arr.filter((x) => x !== k));
+    setBriefDirty(false);
+  };
+
+  const resetAll = () => {
+    setUsedCore([]);
+    setUsedFlavors([]);
+    setKeywords([]);
+    setBrief("");
+    setBriefDirty(false);
+  };
 
   const onDraftKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" || e.key === ",") {
@@ -109,10 +126,38 @@ function JokesSetup() {
     }
   };
 
-  const compiledCustom = useMemo(
-    () => [...flavors, ...keywords].join(", "),
-    [flavors, keywords],
-  );
+  // Build a STRUCTURED portal-style brief from the chips the user has clicked.
+  const compiledCustom = useMemo(() => {
+    const coreLabels = usedCore
+      .map((id) => STYLE_PRESETS.find((p) => p.id === id)?.label || id);
+
+    const grouped = FLAVOR_GROUPS.map((g) => ({
+      name: g.name,
+      picked: g.chips.filter((c) => usedFlavors.includes(c)),
+    })).filter((g) => g.picked.length > 0);
+
+    if (
+      coreLabels.length === 0 &&
+      grouped.length === 0 &&
+      keywords.length === 0
+    ) {
+      return "";
+    }
+
+    const lines: string[] = [];
+    lines.push("# JOKES PORTAL · STYLE BRIEF");
+    lines.push("");
+    if (coreLabels.length) lines.push(`Core styles: ${coreLabels.join(", ")}`);
+    grouped.forEach((g) => lines.push(`${g.name}: ${g.picked.join(", ")}`));
+    if (keywords.length) lines.push(`Custom flavors: ${keywords.join(", ")}`);
+    lines.push("");
+    lines.push(
+      "Generate a punchy interactive joke portal page styled around the above traits. " +
+        "Every joke, headline, button label, and microcopy must match this exact mix. " +
+        "Lean hard into the chosen tone, delivery and audience. No safe filler."
+    );
+    return lines.join("\n");
+  }, [usedCore, usedFlavors, keywords]);
 
   const effectiveBrief = briefDirty ? brief : compiledCustom;
 
@@ -120,8 +165,7 @@ function JokesSetup() {
     const ids = STYLE_PRESETS.map((s) => s.id);
     const count = 1 + Math.floor(Math.random() * 3);
     const shuffled = [...ids].sort(() => Math.random() - 0.5).slice(0, count);
-    setSelected(shuffled);
-    // Drop in a random joke-style burst as keywords too.
+    setUsedCore((c) => Array.from(new Set([...c, ...shuffled])));
     const burst = RANDOM_JOKE_PROMPTS[Math.floor(Math.random() * RANDOM_JOKE_PROMPTS.length)];
     const tokens = burst.split(/,\s*|\s+with\s+/g).map((t) => t.trim()).filter(Boolean);
     setKeywords((k) => Array.from(new Set([...k, ...tokens])));
@@ -135,7 +179,7 @@ function JokesSetup() {
   };
 
   const canLaunch =
-    selected.length > 0 || flavors.length > 0 || keywords.length > 0 || effectiveBrief.trim().length > 0;
+    usedCore.length > 0 || usedFlavors.length > 0 || keywords.length > 0 || effectiveBrief.trim().length > 0;
 
   const launch = () => {
     if (!canLaunch) return;
@@ -149,9 +193,11 @@ function JokesSetup() {
     }
     navigate({
       to: "/jokes/portal",
-      search: { styles: selected.join(","), custom: effectiveBrief.trim(), live: liveRoast ? 1 : 0 },
+      search: { styles: usedCore.join(","), custom: effectiveBrief.trim(), live: liveRoast ? 1 : 0 },
     });
   };
+
+  const availableCore = STYLE_PRESETS.filter((p) => !usedCore.includes(p.id));
 
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-8 py-10 sm:py-14">
@@ -173,61 +219,53 @@ function JokesSetup() {
         <div>
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-semibold">
-              Core Styles
+              Core Styles · tap to lock in
             </h2>
-            <span className="text-xs text-muted-foreground">{selected.length} selected</span>
+            <span className="text-xs text-muted-foreground">{usedCore.length} locked</span>
           </div>
-          <div className="flex flex-wrap gap-3">
-            {STYLE_PRESETS.map(({ id, label, Icon }) => {
-              const active = selected.includes(id);
-              return (
+          {availableCore.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic">All core styles locked in. Reset to start over.</p>
+          ) : (
+            <div className="flex flex-wrap gap-3">
+              {availableCore.map(({ id, label, Icon }) => (
                 <button
                   key={id}
                   type="button"
-                  onClick={() => toggle(id)}
-                  className={
-                    "inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-xs sm:text-sm font-semibold uppercase tracking-wider border transition-all " +
-                    (active
-                      ? "btn-glass-blue text-white border-transparent"
-                      : "bg-secondary text-muted-foreground border-border hover:text-foreground hover:border-[oklch(0.72_0.22_245/0.5)]")
-                  }
+                  onClick={() => consumeCore(id)}
+                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-xs sm:text-sm font-semibold uppercase tracking-wider border transition-all bg-secondary text-muted-foreground border-border hover:text-foreground hover:border-[oklch(0.72_0.22_245/0.5)] hover:scale-105 active:scale-95"
                 >
                   <Icon className="h-3.5 w-3.5" />
                   {label}
                 </button>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Flavor groups */}
-        {FLAVOR_GROUPS.map((group) => (
-          <div key={group.name}>
-            <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-semibold mb-3">
-              {group.name}
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {group.chips.map((chip) => {
-                const active = flavors.includes(chip);
-                return (
+        {FLAVOR_GROUPS.map((group) => {
+          const remaining = group.chips.filter((c) => !usedFlavors.includes(c));
+          if (remaining.length === 0) return null;
+          return (
+            <div key={group.name}>
+              <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-semibold mb-3">
+                {group.name}
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {remaining.map((chip) => (
                   <button
                     key={chip}
                     type="button"
-                    onClick={() => toggleFlavor(chip)}
-                    className={
-                      "px-2.5 py-1 rounded-full text-xs sm:text-sm border transition-all " +
-                      (active
-                        ? "btn-glass-blue text-white border-transparent"
-                        : "bg-secondary/60 text-muted-foreground border-border hover:text-foreground hover:border-[oklch(0.72_0.22_245/0.5)]")
-                    }
+                    onClick={() => consumeFlavor(chip)}
+                    className="px-2.5 py-1 rounded-full text-xs sm:text-sm border transition-all bg-secondary/60 text-muted-foreground border-border hover:text-foreground hover:border-[oklch(0.72_0.22_245/0.5)] hover:scale-105 active:scale-95"
                   >
                     {chip}
                   </button>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {/* Custom keywords */}
         <div>
@@ -337,17 +375,26 @@ function JokesSetup() {
         {/* Live brief panel */}
         <aside className="rounded-2xl border border-border bg-card p-5 sm:p-6 lg:sticky lg:top-4 lg:self-start space-y-4">
           <div>
-            <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-semibold">
-              Joke Brief
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-semibold">
+                Portal Brief
+              </h2>
+              <button
+                type="button"
+                onClick={resetAll}
+                className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground hover:text-foreground"
+              >
+                <RotateCcw className="h-3 w-3" /> Reset
+              </button>
+            </div>
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Auto-built from your chips. Edit freely — nothing generates until you press Activate.
+              Each chip you tap vanishes and stacks into this brief. Edit freely — nothing fires until you Activate.
             </p>
           </div>
 
           <div className="text-xs text-muted-foreground">
-            <span className="text-foreground font-semibold">{selected.length}</span> core ·{" "}
-            <span className="text-foreground font-semibold">{flavors.length}</span> flavors ·{" "}
+            <span className="text-foreground font-semibold">{usedCore.length}</span> core ·{" "}
+            <span className="text-foreground font-semibold">{usedFlavors.length}</span> flavors ·{" "}
             <span className="text-foreground font-semibold">{keywords.length}</span> keywords
           </div>
 
@@ -357,8 +404,8 @@ function JokesSetup() {
               setBrief(e.target.value);
               setBriefDirty(true);
             }}
-            placeholder="Your compiled joke prompt will appear here..."
-            className="min-h-32 max-h-60 resize-y bg-background border-border text-sm"
+            placeholder="Tap chips on the left — they vanish and appear here as a structured portal brief."
+            className="min-h-48 max-h-[28rem] resize-y bg-background border-border text-sm font-mono"
           />
 
           {briefDirty && (
