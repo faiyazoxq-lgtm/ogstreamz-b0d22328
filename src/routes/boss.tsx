@@ -18,7 +18,7 @@ type Tile = {
   hash?: string;
   label: string;
   blurb: string;
-  Icon: React.ComponentType<{ className?: string }>;
+  Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   tint: string;
 };
 
