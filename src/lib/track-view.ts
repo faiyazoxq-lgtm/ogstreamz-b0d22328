@@ -27,8 +27,7 @@ function looksLikeBot(): boolean {
   if (!ua) return true;
   if (BOT_UA_RE.test(ua)) return true;
   // Headless Chromium signal
-  // @ts-expect-error — webdriver is non-standard but widely available
-  if (navigator.webdriver) return true;
+  if ((navigator as Navigator & { webdriver?: boolean }).webdriver) return true;
   return false;
 }
 
