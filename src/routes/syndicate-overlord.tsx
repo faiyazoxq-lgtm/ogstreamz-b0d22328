@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Skull, Loader2, Search, Sparkles, Plus, Minus, Ticket, Users, Wallet, Crown, X,
-  Activity, Shield, Filter, Zap, ChevronDown, Mail, Send, Trash2, NotebookPen, Pin, PinOff, Save,
+  Activity, Shield, Filter, Zap, Mail, Send, Trash2, NotebookPen, Pin, PinOff, Save,
   Clock, BellRing, CheckSquare, Square,
   Copy, Smile, Music, Wrench, Lock, Unlock, User as UserIcon, Coins,
 } from "lucide-react";
