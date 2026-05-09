@@ -492,6 +492,148 @@ function ResellerAdminPanel({ rows }: { rows: Row[] }) {
   );
 }
 
+function PreLoadPanel({ onApplied }: { onApplied: () => void }) {
+  const grant = useServerFn(grantByEmail);
+  const list = useServerFn(listPendingGrants);
+  const remove = useServerFn(deletePendingGrant);
+  const [email, setEmail] = useState("");
+  const [credits, setCredits] = useState("50");
+  const [grantRank, setGrantRank] = useState<Rank | "">("");
+  const [notes, setNotes] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<any[]>([]);
+  const [showClaimed, setShowClaimed] = useState(false);
+
+  const refresh = async () => {
+    try { const r = await list(); setPending(r.grants ?? []); }
+    catch (e: any) {
+      let msg = e?.message;
+      if (e instanceof Response) { try { msg = await e.text(); } catch { msg = `HTTP ${e.status}`; } }
+      toast.error(msg ?? "Failed to load grants");
+    }
+  };
+  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
+
+  const submit = async () => {
+    setBusy(true);
+    try {
+      const r = await grant({
+        data: {
+          email,
+          credits: Number(credits) || 0,
+          grantRank: grantRank || null,
+          notes: notes || undefined,
+        },
+      });
+      if (r.status === "applied") {
+        toast.success(`Applied · ${r.credits ?? 0} credits added to ${email}`);
+        onApplied();
+      } else {
+        toast.success(`Queued · ${email} will receive on signup`);
+      }
+      setEmail(""); setNotes("");
+      refresh();
+    } catch (e: any) {
+      let msg = e?.message;
+      if (e instanceof Response) { try { msg = await e.text(); } catch { msg = `HTTP ${e.status}`; } }
+      toast.error(msg ?? "Grant failed");
+    } finally { setBusy(false); }
+  };
+
+  const cancel = async (id: string) => {
+    try { await remove({ data: { id } }); toast.success("Removed"); refresh(); }
+    catch (e: any) {
+      let msg = e?.message;
+      if (e instanceof Response) { try { msg = await e.text(); } catch { msg = `HTTP ${e.status}`; } }
+      toast.error(msg ?? "Failed");
+    }
+  };
+
+  const visible = pending.filter((g) => showClaimed || !g.claimed_at);
+
+  return (
+    <section className="rounded-xl border border-cyan-700/30 bg-black/50 p-5 backdrop-blur">
+      <h2 className="text-xs uppercase tracking-[0.4em] text-cyan-400 mb-1 flex items-center gap-2">
+        <Mail className="h-3.5 w-3.5" /> PRE-LOAD CREDITS BY EMAIL
+      </h2>
+      <p className="text-[10px] text-emerald-700 uppercase tracking-widest mb-4">
+        // existing user → instant top-up · new email → queued, applied at signup
+      </p>
+
+      <div className="grid sm:grid-cols-6 gap-2">
+        <Input
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="email@domain.com"
+          type="email"
+          className="sm:col-span-2 bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
+        />
+        <Input
+          value={credits}
+          onChange={(e) => setCredits(e.target.value)}
+          type="number"
+          min="0"
+          placeholder="credits"
+          className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
+        />
+        <Select value={grantRank || "none"} onValueChange={(v) => setGrantRank(v === "none" ? "" : v as Rank)}>
+          <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200"><SelectValue /></SelectTrigger>
+          <SelectContent className="bg-black border-emerald-800 text-emerald-200">
+            <SelectItem value="none">no rank</SelectItem>
+            {RANKS.map((r) => <SelectItem key={r} value={r}>grant: {r}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Input
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="notes (optional)"
+          className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
+        />
+        <Button onClick={submit} disabled={busy || !email} className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold">
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 mr-1" />GRANT</>}
+        </Button>
+      </div>
+
+      <div className="mt-5 flex items-center justify-between text-[10px] uppercase tracking-widest text-emerald-700">
+        <span>{visible.length} grant{visible.length === 1 ? "" : "s"}</span>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <Switch checked={showClaimed} onCheckedChange={setShowClaimed} className="scale-75 data-[state=checked]:bg-cyan-500" />
+          show claimed
+        </label>
+      </div>
+
+      <div className="mt-2 divide-y divide-cyan-900/20">
+        {visible.length === 0 && <p className="text-xs text-emerald-700 py-3">// no pre-loaded grants</p>}
+        {visible.map((g) => (
+          <div key={g.id} className="flex items-center justify-between py-3 text-sm">
+            <div className="min-w-0 flex-1">
+              <p className="text-cyan-200 flex items-center gap-2 truncate">
+                {g.email}
+                <Badge variant="outline" className={g.claimed_at ? "border-emerald-700 text-emerald-300" : "border-yellow-700 text-yellow-300"}>
+                  {g.claimed_at ? "claimed" : "pending"}
+                </Badge>
+                {g.grant_rank && (
+                  <Badge variant="outline" className="border-pink-700 text-pink-300">{g.grant_rank}</Badge>
+                )}
+              </p>
+              <p className="text-[10px] text-emerald-700">
+                {g.credits}c · {new Date(g.created_at).toLocaleDateString()}
+                {g.claimed_at ? ` · claimed ${new Date(g.claimed_at).toLocaleDateString()}` : ""}
+                {g.notes ? ` · ${g.notes}` : ""}
+              </p>
+            </div>
+            {!g.claimed_at && (
+              <Button size="sm" onClick={() => cancel(g.id)} className="h-7 bg-rose-700 hover:bg-rose-600 text-white">
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function VipPassPanel({ rows }: { rows: Row[] }) {
   const grant = useServerFn(grantVipPass);
   const revoke = useServerFn(revokeVipPass);
