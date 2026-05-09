@@ -168,7 +168,7 @@ Deno.serve(async (req) => {
   }
   if (req.method === "GET") {
     return new Response(
-      JSON.stringify({ ok: true, service: "0G-SHAPE-BRIDGE", persona: PERSONA }),
+      JSON.stringify({ ok: true, service: "0G-SHAPE-BRIDGE", personas: [PERSONA_OG, PERSONA_NORMAL] }),
       { headers: { ...corsHeaders, "content-type": "application/json" } },
     );
   }
