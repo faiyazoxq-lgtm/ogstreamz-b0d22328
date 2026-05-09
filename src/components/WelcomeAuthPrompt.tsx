@@ -19,6 +19,7 @@ const DISMISS_TTL_TAB_MS = 1000 * 60 * 60 * 12; // 12h
 
 export function WelcomeAuthPrompt() {
   const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"login" | "signup">("signup");
   const [name, setName] = useState("");
