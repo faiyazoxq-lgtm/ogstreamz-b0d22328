@@ -22,6 +22,7 @@ import { LiveThinkingFeed } from "../components/LiveThinkingFeed";
 import { SystemGlitchOverlay } from "../components/SystemGlitchOverlay";
 import { EnforcerConsole } from "../components/EnforcerConsole";
 import { SpotlightEyes } from "../components/SpotlightEyes";
+import { ReducedMotionToggle } from "../components/ReducedMotionToggle";
 
 function NotFoundComponent() {
   return (
@@ -148,6 +149,7 @@ function RootComponent() {
             <EnforcerConsole />
             <BottomDock />
             <ZeroGBadge />
+            <ReducedMotionToggle />
           </div>
           <Toaster />
         </GlobalMoodProvider>

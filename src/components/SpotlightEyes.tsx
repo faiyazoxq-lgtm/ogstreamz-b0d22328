@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 /**
  * Two glowing "eyes" docked to the left and right edges of the screen
@@ -7,6 +8,9 @@ import { useEffect, useRef } from "react";
  */
 export function SpotlightEyes() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const reduced = useReducedMotion();
+  const reducedRef = useRef(reduced);
+  useEffect(() => { reducedRef.current = reduced; }, [reduced]);
   const mouseRef = useRef({ x: -9999, y: -9999, active: false });
   const sparksRef = useRef<
     { x: number; y: number; vx: number; vy: number; life: number; max: number }[]
@@ -41,6 +45,7 @@ export function SpotlightEyes() {
       mouseRef.current.x = e.clientX;
       mouseRef.current.y = e.clientY;
       mouseRef.current.active = true;
+      if (reducedRef.current) return; // no spark trail when reduced motion is on
       // Emit a couple of sparks tracking the mouse
       for (let i = 0; i < 2; i++) {
         sparksRef.current.push({
@@ -151,9 +156,22 @@ export function SpotlightEyes() {
         ctx.fill();
       });
 
-      // Periodically emit a lightning bolt from each eye to the cursor
-      if (m.active && ts - lastBolt > 420) {
+      // Periodically emit a lightning bolt from each eye to the cursor.
+      // Reduced-motion mode: fire ~6× less often, single eye, no edge bolts, no sparks.
+      const boltInterval = reducedRef.current ? 2600 : 420;
+      if (m.active && ts - lastBolt > boltInterval) {
         lastBolt = ts;
+        if (reducedRef.current) {
+          // One subtle bolt from a single eye, longer-lived & dimmer
+          const eye = eyes[Math.floor(Math.random() * eyes.length)];
+          boltsRef.current.push({
+            from: { x: eye.x, y: eye.y },
+            to: { x: m.x, y: m.y },
+            life: 0,
+            max: 26 + Math.random() * 10,
+            seed: Math.random() * 1000,
+          });
+        } else {
         eyes.forEach((eye) => {
           if (Math.random() < 0.55) {
             boltsRef.current.push({
@@ -191,6 +209,7 @@ export function SpotlightEyes() {
             vx: Math.cos(a) * s, vy: Math.sin(a) * s,
             life: 0, max: 22 + Math.random() * 18,
           });
+        }
         }
       }
 
