@@ -15,6 +15,7 @@ import { TVStaticLogo } from "@/components/TVStaticLogo";
 import { PortalMascot } from "@/components/PortalMascot";
 import { TradingViewChart, TradingViewTickerTape } from "@/components/TradingViewWidgets";
 import { LiveDataIcon } from "@/components/LiveDataIcon";
+import { SwearChatPanel } from "@/components/SwearChatPanel";
 
 type ThemeConfig = {
   bgGradient?: string;
@@ -450,6 +451,16 @@ function PortalPage() {
           <span style={{ color: T.accent }}>▣</span> Powered by 0G-PORTAL
         </Link>
       </footer>
+
+      <div className="max-w-3xl mx-auto px-5 pb-8">
+        <SwearChatPanel
+          enabled={!!portal.swear_chat_enabled}
+          table="portals"
+          id={portal.id}
+          slug={portal.slug}
+          accent={T.accent}
+        />
+      </div>
 
       {clientSecret && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setClientSecret(null)}>
