@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Skull, Loader2, Search, Sparkles, Plus, Minus, Ticket, Users, Wallet, Crown, X,
   Activity, Shield, Filter, Zap, ChevronDown, Mail, Send, Trash2, NotebookPen, Pin, PinOff, Save,
+  Clock, BellRing,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,7 @@ type Row = {
 };
 
 export const Route = createFileRoute("/syndicate-overlord")({
-  head: () => ({ meta: [{ title: "Overlord Terminal · 0G-PORTAL" }] }),
+  head: () => ({ meta: [{ title: "Boss Control Center · 0G-PORTAL" }] }),
   component: OverlordPage,
 });
 
@@ -43,6 +44,19 @@ function OverlordPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [q, setQ] = useState("");
   const [rankFilter, setRankFilter] = useState<"all" | Rank>("all");
+  const [active30, setActive30] = useState(0);
+  const [expiringCount, setExpiringCount] = useState(0);
+  const [reminders, setReminders] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("boss:auto-reminders") !== "off";
+  });
+  const [reminderDays, setReminderDays] = useState<string>(() => {
+    if (typeof window === "undefined") return "7";
+    return localStorage.getItem("boss:reminder-days") ?? "7";
+  });
+
+  useEffect(() => { localStorage.setItem("boss:auto-reminders", reminders ? "on" : "off"); }, [reminders]);
+  useEffect(() => { localStorage.setItem("boss:reminder-days", reminderDays); }, [reminderDays]);
 
   const allowed = !!user && profile?.rank === "boss";
 
@@ -66,6 +80,21 @@ function OverlordPage() {
     if (!allowed) return;
     refreshUsers();
   }, [allowed]);
+
+  useEffect(() => {
+    if (!allowed) return;
+    const days = Math.max(1, parseInt(reminderDays, 10) || 7);
+    const sinceActive = new Date(Date.now() - 30 * 86400_000).toISOString();
+    const expiringSoon = new Date(Date.now() + days * 86400_000).toISOString();
+    const nowIso = new Date().toISOString();
+    Promise.all([
+      supabase.from("profiles").select("*", { count: "exact", head: true }).neq("rank", "boss").gte("updated_at", sinceActive),
+      supabase.from("vip_passes").select("*", { count: "exact", head: true }).is("revoked_at", null).gte("expires_at", nowIso).lte("expires_at", expiringSoon),
+    ]).then(([a, e]) => {
+      setActive30(a.count ?? 0);
+      setExpiringCount(e.count ?? 0);
+    });
+  }, [allowed, reminderDays, rows.length]);
 
   const filtered = useMemo(() => {
     const n = q.trim().toLowerCase();
@@ -98,13 +127,13 @@ function OverlordPage() {
         <header className="mb-6 flex items-center justify-between flex-wrap gap-3">
           <div>
             <p className="text-[10px] uppercase tracking-[0.5em] text-cyan-400 flex items-center gap-2">
-              <Skull className="h-3.5 w-3.5" /> BOSS CONTROL
+              <Skull className="h-3.5 w-3.5" /> BOSS CONTROL CENTER
             </p>
             <h1 className="mt-1 text-3xl sm:text-4xl font-black tracking-tight text-cyan-300 drop-shadow-[0_0_18px_rgba(58,214,255,0.4)]">
-              User Manager
+              Ultimate Control
             </h1>
             <p className="mt-1 text-xs text-emerald-600/80 normal-case tracking-normal">
-              Manage every user from one place — credits, rank, features, VIP, all in one row.
+              One command deck — users, credits, ranks, VIP passes, codes, resellers, and private notes.
             </p>
           </div>
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest">
@@ -115,11 +144,39 @@ function OverlordPage() {
         </header>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
           <StatCard icon={<Users className="h-4 w-4" />} label="total users" value={stats.total} tint="cyan" />
           <StatCard icon={<Crown className="h-4 w-4" />} label="vip members" value={stats.vip} tint="yellow" />
           <StatCard icon={<Shield className="h-4 w-4" />} label="enforcers" value={stats.enforcers} tint="emerald" />
           <StatCard icon={<Zap className="h-4 w-4" />} label="credits in circulation" value={stats.credits} tint="pink" />
+          <StatCard icon={<Activity className="h-4 w-4" />} label="active (30d)" value={active30} tint="emerald" />
+          <StatCard icon={<Clock className="h-4 w-4" />} label={`expiring ≤${reminderDays}d`} value={expiringCount} tint="pink" />
+        </div>
+
+        {/* Auto reminders */}
+        <div className="rounded-xl border border-emerald-700/30 bg-black/50 backdrop-blur p-4 mb-6 flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.4em] font-bold flex items-center gap-2 text-cyan-300">
+              <BellRing className="h-3 w-3" /> Auto Reminders
+            </p>
+            <p className="mt-2 text-xs text-emerald-300/90 normal-case">
+              Auto-ping users whose VIP pass expires within{" "}
+              <input
+                type="number"
+                min={1}
+                max={90}
+                value={reminderDays}
+                onChange={(e) => setReminderDays(e.target.value)}
+                className="w-14 mx-1 bg-black/60 border border-emerald-800/50 rounded px-2 py-0.5 text-center text-cyan-200 font-mono"
+              />{" "}
+              days. <span className="text-emerald-700">{reminders ? "ON" : "OFF"}</span>
+            </p>
+          </div>
+          <Switch
+            checked={reminders}
+            onCheckedChange={setReminders}
+            className="data-[state=checked]:bg-emerald-500"
+          />
         </div>
 
         {/* Tabbed control surface */}
