@@ -174,6 +174,45 @@ export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean
         Flips <span className="mood-accent">system_instruction</span> for every Gemini 3 call across
         the Syndicate — Boss Chat, Shape Bridge & all hub agents — instantly.
       </p>
+
+      {isOg && (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className="text-[10px] uppercase tracking-[0.3em] terminal-mono text-white/55">
+            Swearing Intensity
+          </span>
+          {(["mild", "medium", "chaotic"] as const).map((opt) => {
+            const active = intensity === opt;
+            return (
+              <button
+                key={opt}
+                type="button"
+                disabled={saving}
+                onClick={() => setIntensity(opt)}
+                className={`px-3 py-1.5 rounded-full border-2 text-[10px] font-black uppercase tracking-[0.25em] transition-all ${
+                  active
+                    ? "border-[var(--syndicate-glow)] text-white"
+                    : "border-white/15 text-white/55 hover:border-white/35 hover:text-white/85 bg-black/30"
+                }`}
+                style={
+                  active
+                    ? {
+                        background: "color-mix(in srgb, var(--syndicate-glow) 18%, transparent)",
+                        boxShadow: "0 0 22px -2px color-mix(in srgb, var(--syndicate-glow) 70%, transparent)",
+                      }
+                    : undefined
+                }
+              >
+                {opt}
+              </button>
+            );
+          })}
+          <span className="text-[10px] terminal-mono text-white/45 italic ml-1">
+            {intensity === "mild" && "PG-13 · sass only"}
+            {intensity === "medium" && "Standard sweary roast"}
+            {intensity === "chaotic" && "Full unhinged Enforcer"}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
