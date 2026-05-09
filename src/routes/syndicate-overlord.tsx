@@ -4,7 +4,7 @@ import {
   Skull, Loader2, Search, Sparkles, Plus, Minus, Ticket, Users, Wallet, Crown, X,
   Activity, Shield, Filter, Zap, Mail, Send, Trash2, NotebookPen, Pin, PinOff, Save,
   Clock, BellRing, CheckSquare, Square,
-  Copy, Smile, Music, Wrench, Lock, Unlock, User as UserIcon, Coins,
+  Copy, Smile, Music, Wrench, Lock, Unlock, User as UserIcon, Coins, Flame,
   RefreshCw, Download, FileDown, Power, Eraser, Rocket, Star,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -29,7 +29,7 @@ import { PassShareCardPanel } from "@/components/overlord/PassShareCardPanel";
 
 const RANKS = ["prospect", "enforcer", "vip", "boss"] as const;
 type Rank = typeof RANKS[number];
-type Flags = { jokes: boolean; music: boolean; tools: boolean };
+type Flags = { jokes: boolean; music: boolean; tools: boolean; swearing: boolean };
 type Row = {
   id: string; email: string; status: "free" | "vip"; credits: number;
   rank: Rank; feature_flags: Flags; display_name: string | null; created_at: string;
@@ -321,10 +321,10 @@ function OverlordPage() {
                 icon: FileDown, label: "Export CSV", tint: "cyan",
                 onClick: () => {
                   const csv = [
-                    ["email","display_name","rank","status","credits","jokes","music","tools","created_at"].join(","),
+                    ["email","display_name","rank","status","credits","jokes","music","tools","swearing","created_at"].join(","),
                     ...rows.map(r => [
                       r.email, r.display_name ?? "", r.rank, r.status, r.credits,
-                      r.feature_flags.jokes, r.feature_flags.music, r.feature_flags.tools, r.created_at,
+                      r.feature_flags.jokes, r.feature_flags.music, r.feature_flags.tools, !!r.feature_flags.swearing, r.created_at,
                     ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")),
                   ].join("\n");
                   const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
@@ -537,7 +537,7 @@ function UserRow({ row, onChange, selected, onToggleSelect }: { row: Row; onChan
     catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
   };
   const setAllFlags = async (value: boolean) => {
-    const flags: Flags = { jokes: value, music: value, tools: value };
+    const flags: Flags = { jokes: value, music: value, tools: value, swearing: value };
     setBusy(true);
     try {
       await setF({ data: { userId: row.id, flags } });
@@ -556,6 +556,7 @@ function UserRow({ row, onChange, selected, onToggleSelect }: { row: Row; onChan
     { k: "jokes", Icon: Smile, label: "Jokes" },
     { k: "music", Icon: Music, label: "Music" },
     { k: "tools", Icon: Wrench, label: "Tools" },
+    { k: "swearing", Icon: Flame, label: "Swearing" },
   ];
   const RANK_BTNS: Array<{ r: Rank; Icon: any }> = [
     { r: "prospect", Icon: UserIcon },
@@ -835,7 +836,7 @@ function BulkActionBar({
     setBusy(true);
     const updates: Record<string, Partial<Row>> = {};
     let ok = 0, fail = 0;
-    const flags: Flags = { jokes: value, music: value, tools: value };
+    const flags: Flags = { jokes: value, music: value, tools: value, swearing: value };
     for (const t of targets) {
       try {
         await setF({ data: { userId: t.id, flags } });
@@ -916,7 +917,7 @@ function BulkActionBar({
       <Button size="sm" disabled={busy} onClick={() => runAllFlags(false)} className="h-6 px-2 text-[10px] bg-rose-700 hover:bg-rose-600 text-white font-bold">
         <Lock className="h-3 w-3 mr-1" />Lock all
       </Button>
-      {(["jokes","music","tools"] as const).map((k) => (
+      {(["jokes","music","tools","swearing"] as const).map((k) => (
         <span key={k} className="inline-flex items-center gap-1">
           <Button size="sm" disabled={busy} onClick={() => runFlag(k, true)} className="h-6 px-2 text-[10px] bg-cyan-700 hover:bg-cyan-600 text-white">{k}+</Button>
           <Button size="sm" disabled={busy} onClick={() => runFlag(k, false)} className="h-6 px-2 text-[10px] bg-zinc-700 hover:bg-zinc-600 text-zinc-200">{k}−</Button>
