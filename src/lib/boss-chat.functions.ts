@@ -42,8 +42,6 @@ export const bossChat = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as any;
-    const KEY = process.env.GEMINI_API_KEY;
-    if (!KEY) throw new Error("GEMINI_API_KEY missing");
     if (data.messages.length === 0) throw new Error("No messages");
 
     // ── Cooldown / abuse throttle (Boss-controlled in HubControls) ─────────
@@ -87,19 +85,33 @@ export const bossChat = createServerFn({ method: "POST" })
       rawIntensity === "mild" || rawIntensity === "medium" ? rawIntensity : "chaotic";
     const system = swearing ? buildSwearingSystem(intensity) : NORMAL_SYSTEM;
 
-    let r = await callGemini(MODEL, system, data.messages, KEY);
-    if (!r.ok) {
-      const errTxt = await r.text().catch(() => "");
-      console.warn(`[bossChat] ${MODEL} ${r.status} — falling back to ${FALLBACK_MODEL}`, errTxt.slice(0, 200));
-      r = await callGemini(FALLBACK_MODEL, system, data.messages, KEY);
-      if (!r.ok) {
-        const t = await r.text().catch(() => "");
-        throw new Error(`Gemini error ${r.status}: ${t.slice(0, 240)}`);
+    // Route swearing chats through the Shapes API "swearing agent",
+    // and clean/normal chats through Perplexity Sonar.
+    let rawText: string;
+    try {
+      if (swearing) {
+        rawText = await shapesChat({
+          messages: [
+            { role: "system", content: system },
+            ...data.messages,
+          ],
+          userId: String(userId),
+          channelId: "boss-chat",
+        });
+      } else {
+        rawText = await perplexityChat({
+          messages: [
+            { role: "system", content: system },
+            ...data.messages,
+          ],
+          model: "sonar",
+          temperature: 0.7,
+          max_tokens: 1024,
+        });
       }
+    } catch (e: any) {
+      throw new Error(e?.message || "AI provider error");
     }
-    const j = await r.json();
-    const rawText: string =
-      j?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text).filter(Boolean).join("\n") ?? "";
     // PRIORITY SWEARING OVERRIDE — profanity rules win over the model.
     const enforceMode: SwearMode = swearing ? (intensity as SwearMode) : "off";
     const text = enforceSwearRules(rawText, enforceMode);
