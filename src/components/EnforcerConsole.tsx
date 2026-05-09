@@ -21,7 +21,8 @@ type LogRow = {
  * - Boss-only visibility
  */
 export function EnforcerConsole() {
-  const { isBoss, loading } = useAuth() as any;
+  const { profile, isAdmin, loading } = useAuth();
+  const isBoss = profile?.rank === "boss" || isAdmin;
   const { mood } = useGlobalMood();
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<LogRow[]>([]);
