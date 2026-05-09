@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Crown, Coins, Ticket, History, Loader2, Sparkles, ExternalLink, Music, Mic2,
   Flame, UserPlus, Users, Activity, Clock, BellRing, Settings2,
