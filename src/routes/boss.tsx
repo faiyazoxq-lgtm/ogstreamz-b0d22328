@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Crown, Users, Coins, Ticket, KeyRound, Handshake, Inbox, FileText, ArrowUpRight, Share2, ShieldCheck } from "lucide-react";
+import { Crown, Users, Coins, Ticket, KeyRound, Handshake, Inbox, FileText, ArrowUpRight, Share2, ShieldCheck, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/boss")({
@@ -32,6 +32,7 @@ const TILES: Tile[] = [
   { to: "/admin", hash: "share",     label: "Share Cards",      blurb: "Generate share-link cards for passes",               Icon: Share2,   tint: "#ff5acd" },
   { to: "/admin", hash: "notes",     label: "Boss Notes",       blurb: "Private operational notes",                          Icon: FileText, tint: "#94a3b8" },
   { to: "/boss/civility",            label: "Civility Controls",blurb: "Toggle Guttermouth swear-chat · keep things civil", Icon: ShieldCheck, tint: "#3ad6ff" },
+  { to: "/boss/analytics",           label: "View Analytics",   blurb: "Anonymous public-view counts for every portal & battle", Icon: BarChart3, tint: "#00e08a" },
 ];
 
 function BossPortal() {
