@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { BarChart3, ArrowLeft, RefreshCw, Eye, Users, Globe } from "lucide-react";
+import { BarChart3, ArrowLeft, RefreshCw, Eye, Users, Globe, Trash2, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 const BOT_UA_RE = /bot|crawler|spider|crawling|slurp|bingpreview|mediapartners|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|discordbot|telegrambot|whatsapp|skypeuripreview|pinterest|embedly|quora|outbrain|vkshare|w3c_validator|redditbot|applebot|duckduckbot|yandex|baiduspider|sogou|petalbot|ahrefs|semrush|mj12bot|dotbot|seznambot|ia_archiver|archive\.org_bot|gptbot|claudebot|anthropic|chatgpt-user|perplexitybot|ccbot|google-inspectiontool|google-extended|bytespider|amazonbot|headlesschrome|phantomjs|puppeteer|playwright|selenium|lighthouse|pagespeed|chrome-lighthouse|node-fetch|axios|python-requests|curl|wget|httpclient|okhttp|go-http-client|java\/|libwww-perl|scrapy|nutch|cypress|prerender|prerendercloud|http-client|monitor|uptimerobot|pingdom|statuscake|newrelic|datadog/i;
 
@@ -61,11 +62,50 @@ function AnalyticsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [filter, setFilter] = useState("");
   const [days, setDays] = useState<7 | 30 | 90>(30);
+  const [retentionDays, setRetentionDays] = useState<number>(90);
+  const [retentionInput, setRetentionInput] = useState<string>("90");
+  const [savingRetention, setSavingRetention] = useState(false);
+  const [purging, setPurging] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
     if (!user || !isBoss) navigate({ to: "/" });
   }, [user, isBoss, authLoading, navigate]);
+
+  const loadRetention = async () => {
+    const { data } = await supabase
+      .from("analytics_settings")
+      .select("retention_days")
+      .eq("id", 1)
+      .maybeSingle();
+    const r = (data as { retention_days?: number } | null)?.retention_days ?? 90;
+    setRetentionDays(r);
+    setRetentionInput(String(r));
+  };
+
+  const saveRetention = async () => {
+    const n = Math.max(1, Math.min(3650, parseInt(retentionInput, 10) || 0));
+    if (!n) { toast.error("Enter 1–3650 days"); return; }
+    setSavingRetention(true);
+    const { error } = await supabase
+      .from("analytics_settings")
+      .update({ retention_days: n, updated_at: new Date().toISOString(), updated_by: user?.id ?? null })
+      .eq("id", 1);
+    setSavingRetention(false);
+    if (error) { toast.error(error.message); return; }
+    setRetentionDays(n);
+    toast.success(`Retention set to ${n} days`);
+  };
+
+  const purgeNow = async () => {
+    if (!confirm(`Purge all view events older than ${retentionDays} days now?`)) return;
+    setPurging(true);
+    const { data, error } = await supabase.rpc("boss_purge_view_events");
+    setPurging(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Purged ${data ?? 0} event${data === 1 ? "" : "s"}`);
+    load();
+  };
 
   const load = async () => {
     setRefreshing(true);
@@ -131,7 +171,7 @@ function AnalyticsPage() {
     setRefreshing(false);
   };
 
-  useEffect(() => { if (isBoss) load(); /* eslint-disable-next-line */ }, [isBoss, days]);
+  useEffect(() => { if (isBoss) { load(); loadRetention(); } /* eslint-disable-next-line */ }, [isBoss, days]);
 
   const filtered = useMemo(() => {
     const q = filter.trim().toLowerCase();
@@ -175,6 +215,50 @@ function AnalyticsPage() {
         <p className="mt-3 text-sm text-white/65 max-w-2xl">
           Every public visit to a portal or battle is logged anonymously (no account required). Visitors are deduplicated per browser via a local id.
         </p>
+
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-3 md:p-4">
+          <div className="flex flex-wrap items-end gap-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-white/50">Retention policy</p>
+              <p className="text-sm text-white/80">
+                Auto-purge events older than{" "}
+                <span className="terminal-mono text-[color:var(--syndicate-glow)]">{retentionDays}</span> day{retentionDays === 1 ? "" : "s"}.
+                Runs daily at 03:17 UTC.
+              </p>
+            </div>
+            <div className="flex items-end gap-2 ml-auto">
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider text-white/50 mb-1">Days</label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={3650}
+                  value={retentionInput}
+                  onChange={(e) => setRetentionInput(e.target.value)}
+                  className="w-24"
+                />
+              </div>
+              <Button size="sm" onClick={saveRetention} disabled={savingRetention || retentionInput === String(retentionDays)}>
+                <Save className="h-3 w-3 mr-1" /> Save
+              </Button>
+              <Button size="sm" variant="outline" onClick={purgeNow} disabled={purging}>
+                <Trash2 className={`h-3 w-3 mr-1 ${purging ? "animate-pulse" : ""}`} /> Purge now
+              </Button>
+            </div>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {[7, 30, 60, 90, 180, 365].map((d) => (
+              <button
+                key={d}
+                type="button"
+                onClick={() => setRetentionInput(String(d))}
+                className="text-[11px] px-2 py-0.5 rounded-full border border-white/15 text-white/70 hover:bg-white/10"
+              >
+                {d}d
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
           <Stat label={`Events (last ${days}d)`} value={totals.events} icon={<Eye className="h-4 w-4" />} />

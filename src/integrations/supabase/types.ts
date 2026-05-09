@@ -47,6 +47,27 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_settings: {
+        Row: {
+          id: number
+          retention_days: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: number
+          retention_days?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: number
+          retention_days?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       battle_plays: {
         Row: {
           battle_id: string
@@ -2004,6 +2025,7 @@ export type Database = {
         }
         Returns: string
       }
+      boss_purge_view_events: { Args: never; Returns: number }
       boss_revoke_vip_pass: { Args: { _pass_id: string }; Returns: boolean }
       boss_topup_reseller: {
         Args: { _delta: number; _reason: string; _user_id: string }
@@ -2031,6 +2053,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      purge_portal_view_events: { Args: never; Returns: number }
       redeem_code: { Args: { _code: string }; Returns: Json }
       refresh_news_scout: {
         Args: { _meta: Json; _slug: string }
