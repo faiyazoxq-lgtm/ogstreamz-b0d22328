@@ -15,6 +15,7 @@ import { TVStaticLogo } from "@/components/TVStaticLogo";
 import { PortalMascot } from "@/components/PortalMascot";
 import { TradingViewChart, TradingViewTickerTape } from "@/components/TradingViewWidgets";
 import { LiveDataIcon } from "@/components/LiveDataIcon";
+import { SwearChatPanel } from "@/components/SwearChatPanel";
 
 type ThemeConfig = {
   bgGradient?: string;
@@ -53,13 +54,14 @@ type Portal = {
   } | null;
   bg_video_url?: string | null;
   bg_video_aspect?: string | null;
+  swear_chat_enabled?: boolean;
 };
 
 export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals")
-      .select("id, slug, name, niche, language, vibe, theme, jokes, vip, price_cents, theme_config, scout_meta, telegram_config, kind, audio_snippet_url, bg_video_url, bg_video_aspect")
+      .select("id, slug, name, niche, language, vibe, theme, jokes, vip, price_cents, theme_config, scout_meta, telegram_config, kind, audio_snippet_url, bg_video_url, bg_video_aspect, swear_chat_enabled")
       .eq("slug", params.slug)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -449,6 +451,16 @@ function PortalPage() {
           <span style={{ color: T.accent }}>▣</span> Powered by 0G-PORTAL
         </Link>
       </footer>
+
+      <div className="max-w-3xl mx-auto px-5 pb-8">
+        <SwearChatPanel
+          enabled={!!portal.swear_chat_enabled}
+          table="portals"
+          id={portal.id}
+          slug={portal.slug}
+          accent={T.accent}
+        />
+      </div>
 
       {clientSecret && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setClientSecret(null)}>
