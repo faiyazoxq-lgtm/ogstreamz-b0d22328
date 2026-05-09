@@ -28,6 +28,7 @@ export function WelcomeAuthPrompt() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [magicBusy, setMagicBusy] = useState(false);
   const [magicSent, setMagicSent] = useState(false);
   const [magicCooldown, setMagicCooldown] = useState(0);
   const [remember, setRememberState] = useState<boolean>(true);
@@ -113,6 +114,7 @@ export function WelcomeAuthPrompt() {
       return;
     }
     setBusy(true);
+    setMagicBusy(true);
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email,
@@ -132,6 +134,7 @@ export function WelcomeAuthPrompt() {
       toast.error(err instanceof Error ? err.message : "Could not send magic link");
     } finally {
       setBusy(false);
+      setMagicBusy(false);
     }
   };
 
@@ -336,11 +339,13 @@ export function WelcomeAuthPrompt() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    disabled={busy || magicCooldown > 0 || !emailValid}
+                    disabled={busy || magicBusy || magicCooldown > 0 || !emailValid}
                     onClick={sendMagicLink}
                     className="mt-2 w-full h-9 border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-200"
                   >
-                    {magicCooldown > 0 ? (
+                    {magicBusy ? (
+                      <><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />Sending…</>
+                    ) : magicCooldown > 0 ? (
                       <>Resend in {magicCooldown}s</>
                     ) : (
                       <><RotateCw className="h-3.5 w-3.5 mr-2" />Resend magic link</>
@@ -351,12 +356,16 @@ export function WelcomeAuthPrompt() {
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={busy || !emailValid}
+                  disabled={busy || magicBusy || !emailValid}
+                  aria-busy={magicBusy || undefined}
                   onClick={sendMagicLink}
                   className="w-full h-10 border-[oklch(0.72_0.22_245/0.4)] hover:bg-[oklch(0.72_0.22_245/0.1)]"
                 >
-                  <Wand2 className="h-4 w-4 mr-2" />
-                  Email me a magic link
+                  {magicBusy ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Sending magic link…</>
+                  ) : (
+                    <><Wand2 className="h-4 w-4 mr-2" />Email me a magic link</>
+                  )}
                 </Button>
               )}
 
