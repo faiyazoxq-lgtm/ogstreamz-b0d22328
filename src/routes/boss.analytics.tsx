@@ -62,11 +62,50 @@ function AnalyticsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [filter, setFilter] = useState("");
   const [days, setDays] = useState<7 | 30 | 90>(30);
+  const [retentionDays, setRetentionDays] = useState<number>(90);
+  const [retentionInput, setRetentionInput] = useState<string>("90");
+  const [savingRetention, setSavingRetention] = useState(false);
+  const [purging, setPurging] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
     if (!user || !isBoss) navigate({ to: "/" });
   }, [user, isBoss, authLoading, navigate]);
+
+  const loadRetention = async () => {
+    const { data } = await supabase
+      .from("analytics_settings")
+      .select("retention_days")
+      .eq("id", 1)
+      .maybeSingle();
+    const r = (data as { retention_days?: number } | null)?.retention_days ?? 90;
+    setRetentionDays(r);
+    setRetentionInput(String(r));
+  };
+
+  const saveRetention = async () => {
+    const n = Math.max(1, Math.min(3650, parseInt(retentionInput, 10) || 0));
+    if (!n) { toast.error("Enter 1–3650 days"); return; }
+    setSavingRetention(true);
+    const { error } = await supabase
+      .from("analytics_settings")
+      .update({ retention_days: n, updated_at: new Date().toISOString(), updated_by: user?.id ?? null })
+      .eq("id", 1);
+    setSavingRetention(false);
+    if (error) { toast.error(error.message); return; }
+    setRetentionDays(n);
+    toast.success(`Retention set to ${n} days`);
+  };
+
+  const purgeNow = async () => {
+    if (!confirm(`Purge all view events older than ${retentionDays} days now?`)) return;
+    setPurging(true);
+    const { data, error } = await supabase.rpc("boss_purge_view_events");
+    setPurging(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Purged ${data ?? 0} event${data === 1 ? "" : "s"}`);
+    load();
+  };
 
   const load = async () => {
     setRefreshing(true);
@@ -132,7 +171,7 @@ function AnalyticsPage() {
     setRefreshing(false);
   };
 
-  useEffect(() => { if (isBoss) load(); /* eslint-disable-next-line */ }, [isBoss, days]);
+  useEffect(() => { if (isBoss) { load(); loadRetention(); } /* eslint-disable-next-line */ }, [isBoss, days]);
 
   const filtered = useMemo(() => {
     const q = filter.trim().toLowerCase();
