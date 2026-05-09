@@ -22,8 +22,10 @@ import { Route as MusicRouteImport } from './routes/music'
 import { Route as JokesRouteImport } from './routes/jokes'
 import { Route as FleetRouteImport } from './routes/fleet'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ConsoleRouteImport } from './routes/console'
 import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as CommandRouteImport } from './routes/command'
+import { Route as BossRouteImport } from './routes/boss'
 import { Route as BattleRouteImport } from './routes/battle'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -106,6 +108,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConsoleRoute = ConsoleRouteImport.update({
+  id: '/console',
+  path: '/console',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConnectRoute = ConnectRouteImport.update({
   id: '/connect',
   path: '/connect',
@@ -114,6 +121,11 @@ const ConnectRoute = ConnectRouteImport.update({
 const CommandRoute = CommandRouteImport.update({
   id: '/command',
   path: '/command',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BossRoute = BossRouteImport.update({
+  id: '/boss',
+  path: '/boss',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BattleRoute = BattleRouteImport.update({
@@ -205,8 +217,10 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/battle': typeof BattleRoute
+  '/boss': typeof BossRoute
   '/command': typeof CommandRoute
   '/connect': typeof ConnectRoute
+  '/console': typeof ConsoleRoute
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
   '/jokes': typeof JokesRouteWithChildren
@@ -238,8 +252,10 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/battle': typeof BattleRoute
+  '/boss': typeof BossRoute
   '/command': typeof CommandRoute
   '/connect': typeof ConnectRoute
+  '/console': typeof ConsoleRoute
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
   '/jokes': typeof JokesRouteWithChildren
@@ -272,8 +288,10 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/battle': typeof BattleRoute
+  '/boss': typeof BossRoute
   '/command': typeof CommandRoute
   '/connect': typeof ConnectRoute
+  '/console': typeof ConsoleRoute
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
   '/jokes': typeof JokesRouteWithChildren
@@ -307,8 +325,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/battle'
+    | '/boss'
     | '/command'
     | '/connect'
+    | '/console'
     | '/dashboard'
     | '/fleet'
     | '/jokes'
@@ -340,8 +360,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/battle'
+    | '/boss'
     | '/command'
     | '/connect'
+    | '/console'
     | '/dashboard'
     | '/fleet'
     | '/jokes'
@@ -373,8 +395,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/battle'
+    | '/boss'
     | '/command'
     | '/connect'
+    | '/console'
     | '/dashboard'
     | '/fleet'
     | '/jokes'
@@ -407,8 +431,10 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   BattleRoute: typeof BattleRoute
+  BossRoute: typeof BossRoute
   CommandRoute: typeof CommandRoute
   ConnectRoute: typeof ConnectRoute
+  ConsoleRoute: typeof ConsoleRoute
   DashboardRoute: typeof DashboardRoute
   FleetRoute: typeof FleetRoute
   JokesRoute: typeof JokesRouteWithChildren
@@ -528,6 +554,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/console': {
+      id: '/console'
+      path: '/console'
+      fullPath: '/console'
+      preLoaderRoute: typeof ConsoleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/connect': {
       id: '/connect'
       path: '/connect'
@@ -540,6 +573,13 @@ declare module '@tanstack/react-router' {
       path: '/command'
       fullPath: '/command'
       preLoaderRoute: typeof CommandRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/boss': {
+      id: '/boss'
+      path: '/boss'
+      fullPath: '/boss'
+      preLoaderRoute: typeof BossRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/battle': {
@@ -672,8 +712,10 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   BattleRoute: BattleRoute,
+  BossRoute: BossRoute,
   CommandRoute: CommandRoute,
   ConnectRoute: ConnectRoute,
+  ConsoleRoute: ConsoleRoute,
   DashboardRoute: DashboardRoute,
   FleetRoute: FleetRoute,
   JokesRoute: JokesRouteWithChildren,
@@ -702,3 +744,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
