@@ -37,7 +37,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadExtras = async (uid: string) => {
-    try { await promoteBossIfNeeded(); } catch { /* non-fatal */ }
+    try {
+      const { data: { session: s } } = await supabase.auth.getSession();
+      if (s?.access_token) await promoteBossIfNeeded({ data: { accessToken: s.access_token } });
+    } catch { /* non-fatal */ }
     const [{ data: prof }, { data: roles }] = await Promise.all([
       supabase.from("profiles").select("id,email,status,credits,rank,feature_flags,free_clicks_used,display_name").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
