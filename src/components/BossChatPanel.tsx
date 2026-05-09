@@ -24,6 +24,9 @@ export function BossChatPanel() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const swearing = !!profile?.feature_flags?.swearing;
+  const intensityRaw = String((profile?.feature_flags as any)?.swearing_intensity ?? "medium").toLowerCase();
+  const intensity: "mild" | "medium" | "chaotic" =
+    intensityRaw === "mild" || intensityRaw === "chaotic" ? intensityRaw : "medium";
   const canToggleSelf = !!user;
   // Boss can also toggle in bulk via the Boss Control Center; this is the per-user switch.
   const isBoss = profile?.rank === "boss" || isAdmin;
@@ -53,6 +56,26 @@ export function BossChatPanel() {
       toast.success(next ? "Swearing Agent: ON 🔥" : "Swearing Agent: OFF");
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to toggle");
+    } finally {
+      setTogglingFlag(false);
+    }
+  };
+
+  const setIntensity = async (next: "mild" | "medium" | "chaotic") => {
+    if (!user || !profile || next === intensity) return;
+    setTogglingFlag(true);
+    try {
+      const merged = { ...(profile.feature_flags ?? {}), swearing_intensity: next };
+      if (isBoss) {
+        await setF({ data: { userId: user.id, flags: merged } });
+      } else {
+        const { error } = await supabase.from("profiles").update({ feature_flags: merged }).eq("id", user.id);
+        if (error) throw new Error(error.message);
+      }
+      await refresh();
+      toast.success(`Intensity: ${next.toUpperCase()}`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to set intensity");
     } finally {
       setTogglingFlag(false);
     }
@@ -135,6 +158,43 @@ export function BossChatPanel() {
           </span>
         </label>
       </header>
+
+      {swearing && (
+        <div className="-mt-1 mb-4 flex flex-wrap items-center gap-2">
+          <span className="text-[10px] uppercase tracking-[0.3em] font-black text-rose-300/80">
+            Intensity
+          </span>
+          {(["mild", "medium", "chaotic"] as const).map((opt) => {
+            const active = intensity === opt;
+            const tint =
+              opt === "mild"
+                ? "border-amber-500/60 text-amber-200 bg-amber-500/10"
+                : opt === "medium"
+                  ? "border-rose-500/60 text-rose-200 bg-rose-500/10"
+                  : "border-fuchsia-500/70 text-fuchsia-200 bg-fuchsia-500/15";
+            return (
+              <button
+                key={opt}
+                type="button"
+                disabled={togglingFlag || !canToggleSelf}
+                onClick={() => setIntensity(opt)}
+                className={`px-3 py-1.5 rounded-full border-2 text-[10px] font-black uppercase tracking-[0.25em] transition-all ${
+                  active
+                    ? `${tint} ring-2 ring-offset-2 ring-offset-black ring-rose-500/40 shadow-[0_0_18px_-2px_rgba(244,63,94,0.6)]`
+                    : "border-white/15 text-white/55 hover:border-white/35 hover:text-white/80 bg-black/30"
+                }`}
+              >
+                {opt}
+              </button>
+            );
+          })}
+          <span className="text-[10px] text-rose-300/60 italic ml-1">
+            {intensity === "mild" && "Sass only · PG-13"}
+            {intensity === "medium" && "Standard sweary roast"}
+            {intensity === "chaotic" && "Full unhinged Enforcer"}
+          </span>
+        </div>
+      )}
 
       <div
         ref={scrollRef}
