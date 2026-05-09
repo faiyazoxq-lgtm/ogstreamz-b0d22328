@@ -109,7 +109,7 @@ export function NavBar() {
       <nav className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-8 h-16 gap-2">
         <Link to="/" className="flex items-center gap-2 group">
           <TVStaticLogo />
-          <span className="font-[Montserrat] font-black text-base sm:text-xl tracking-tight text-metallic">
+          <span className="font-[Montserrat] font-black text-base sm:text-xl tracking-tight text-metallic mood-glitch">
             0G-PORTAL
           </span>
         </Link>
