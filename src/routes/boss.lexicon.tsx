@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Crown, Loader2, Plus, RotateCcw, Save, X, ShieldAlert, GripVertical } from "lucide-react";
+import { ArrowLeft, Crown, Loader2, Plus, RotateCcw, Save, X, ShieldAlert, GripVertical, Pencil, Check } from "lucide-react";
 import { toast } from "sonner";
 import {
   DndContext,
@@ -59,15 +59,23 @@ function SortableTag({
   item,
   cat,
   tint,
+  multiline,
   onRemove,
+  onEdit,
 }: {
   id: string;
   item: string;
   cat: Cat;
   tint: string;
+  multiline?: boolean;
   onRemove: () => void;
+  onEdit: (next: string) => boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(item);
+  useEffect(() => { if (!editing) setDraft(item); }, [item, editing]);
+
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -78,6 +86,48 @@ function SortableTag({
     opacity: isDragging ? 0.6 : 1,
     zIndex: isDragging ? 10 : undefined,
   };
+
+  const commit = () => {
+    const next = draft.trim();
+    if (!next) { toast.error("Cannot be empty"); return; }
+    if (next === item) { setEditing(false); return; }
+    if (onEdit(next)) setEditing(false);
+  };
+
+  if (editing) {
+    const Field: any = multiline ? "textarea" : "input";
+    return (
+      <span
+        ref={setNodeRef}
+        style={{ ...style, opacity: 1 }}
+        className="inline-flex items-center gap-1 rounded-full border pl-2 pr-1 py-1 text-[11px] font-medium"
+      >
+        <Field
+          autoFocus
+          value={draft}
+          rows={multiline ? 2 : undefined}
+          onChange={(e: any) => setDraft(e.target.value)}
+          onKeyDown={(e: any) => {
+            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); commit(); }
+            else if (e.key === "Escape") { e.preventDefault(); setEditing(false); setDraft(item); }
+          }}
+          className="bg-black/60 border border-white/15 rounded px-2 py-0.5 text-[11px] min-w-[160px] focus:outline-none focus:border-white/40"
+          style={{ fontFamily: cat === "refusal_patterns" ? "ui-monospace, monospace" : undefined, width: multiline ? 280 : undefined }}
+        />
+        <button onClick={commit} aria-label="Save edit" className="opacity-80 hover:opacity-100 px-1">
+          <Check className="h-3 w-3" />
+        </button>
+        <button
+          onClick={() => { setEditing(false); setDraft(item); }}
+          aria-label="Cancel edit"
+          className="opacity-60 hover:opacity-100 px-1"
+        >
+          <X className="h-3 w-3" />
+        </button>
+      </span>
+    );
+  }
+
   return (
     <span
       ref={setNodeRef}
@@ -93,7 +143,17 @@ function SortableTag({
       >
         <GripVertical className="h-3 w-3" />
       </button>
-      <span className="max-w-[420px] truncate" title={item}>{item}</span>
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        title="Click to edit"
+        className="max-w-[420px] truncate text-left hover:underline decoration-dotted underline-offset-2"
+      >
+        {item}
+      </button>
+      <button onClick={() => setEditing(true)} aria-label={`Edit ${item}`} className="opacity-50 hover:opacity-100">
+        <Pencil className="h-3 w-3" />
+      </button>
       <button onClick={onRemove} aria-label={`Remove ${item}`} className="opacity-60 hover:opacity-100">
         <X className="h-3 w-3" />
       </button>
@@ -156,6 +216,22 @@ function LexiconPage() {
   const removeItem = (cat: Cat, idx: number) => {
     const current = lex?.[cat] ?? [];
     updateItems(cat, current.filter((_, i) => i !== idx));
+  };
+
+  const editItem = (cat: Cat, idx: number, next: string): boolean => {
+    const current = lex?.[cat] ?? [];
+    const trimmed = next.trim();
+    if (!trimmed) return false;
+    if (cat === "refusal_patterns") {
+      try { new RegExp(trimmed, "gi"); }
+      catch { toast.error("Invalid regex"); return false; }
+    }
+    const dupIdx = current.findIndex((v) => v === trimmed);
+    if (dupIdx !== -1 && dupIdx !== idx) { toast.error("Already in the list"); return false; }
+    const copy = current.slice();
+    copy[idx] = trimmed;
+    updateItems(cat, copy);
+    return true;
   };
 
   const onDragEnd = (cat: Cat) => (e: DragEndEvent) => {
@@ -285,7 +361,9 @@ function LexiconPage() {
                               item={item}
                               cat={c.key}
                               tint={c.tint}
+                              multiline={c.multiline}
                               onRemove={() => removeItem(c.key, i)}
+                              onEdit={(next) => editItem(c.key, i, next)}
                             />
                           ))}
                         </div>
