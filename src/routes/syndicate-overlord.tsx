@@ -304,18 +304,18 @@ function OverlordPage() {
 
 function StatCard({ icon, label, value, tint }: { icon: React.ReactNode; label: string; value: number; tint: "cyan" | "yellow" | "emerald" | "pink" }) {
   const tints = {
-    cyan: "border-cyan-700/40 text-cyan-300",
-    yellow: "border-yellow-700/40 text-yellow-300",
-    emerald: "border-emerald-700/40 text-emerald-300",
-    pink: "border-pink-700/40 text-pink-300",
+    cyan: "border-cyan-700/50 text-cyan-300 shadow-[0_0_24px_-12px_rgb(34_211_238/0.6)]",
+    yellow: "border-yellow-700/50 text-yellow-300 shadow-[0_0_24px_-12px_rgb(250_204_21/0.6)]",
+    emerald: "border-emerald-700/50 text-emerald-300 shadow-[0_0_24px_-12px_rgb(16_185_129/0.6)]",
+    pink: "border-pink-700/50 text-pink-300 shadow-[0_0_24px_-12px_rgb(236_72_153/0.6)]",
   };
   return (
-    <div className={`rounded-lg border bg-black/50 backdrop-blur px-4 py-3 ${tints[tint]}`}>
-      <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] opacity-70">
-        <span>{label}</span>
-        {icon}
+    <div className={`rounded-xl border bg-black/60 backdrop-blur px-4 py-4 ${tints[tint]}`}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-80 leading-tight">{label}</span>
+        <span className="opacity-90">{icon}</span>
       </div>
-      <div className="mt-1 text-2xl font-black tabular-nums">{value.toLocaleString()}</div>
+      <div className="mt-2 text-3xl sm:text-4xl font-black tabular-nums leading-none">{value.toLocaleString()}</div>
     </div>
   );
 }
