@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { Mail, Lock, Loader2, Send } from "lucide-react";
+import { Mail, Lock, Loader2, Send, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -176,6 +176,30 @@ function AuthPage() {
     }
   };
 
+  const magicLink = async () => {
+    if (!email) {
+      toast.error("Enter your email first");
+      return;
+    }
+    setLoading(true);
+    try {
+      const dest = peekRedirect();
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: `${window.location.origin}${dest}` },
+      });
+      if (error) throw error;
+      toast.success("Magic link sent — check your inbox", {
+        description: "Tap the link from this device to sign in instantly.",
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Could not send magic link";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <main className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center px-5 py-12">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -261,6 +285,16 @@ function AuthPage() {
                 submit={submit}
                 cta="Sign In"
               />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={loading || !email}
+                onClick={magicLink}
+                className="w-full h-11 border-[oklch(0.78_0.18_85/0.5)] hover:bg-[oklch(0.78_0.18_85/0.1)] text-amber-200"
+              >
+                <Wand2 className="h-4 w-4 mr-2" />
+                Email me a magic link
+              </Button>
               <div className="flex items-center justify-between text-xs">
                 <label className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground">
                   <Checkbox
@@ -284,6 +318,16 @@ function AuthPage() {
                 submit={submit}
                 cta="Create Account"
               />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={loading || !email}
+                onClick={magicLink}
+                className="w-full h-11 border-[oklch(0.78_0.18_85/0.5)] hover:bg-[oklch(0.78_0.18_85/0.1)] text-amber-200"
+              >
+                <Wand2 className="h-4 w-4 mr-2" />
+                Or email me a magic link
+              </Button>
             </TabsContent>
           </Tabs>
 
