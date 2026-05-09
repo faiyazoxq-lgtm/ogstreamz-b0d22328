@@ -47,6 +47,113 @@ export type Database = {
         }
         Relationships: []
       }
+      battle_plays: {
+        Row: {
+          battle_id: string
+          choices: Json
+          created_at: string
+          id: string
+          outcome: string | null
+          picked_index: number | null
+          round: number
+          session_id: string
+          situation: string
+          user_id: string | null
+        }
+        Insert: {
+          battle_id: string
+          choices?: Json
+          created_at?: string
+          id?: string
+          outcome?: string | null
+          picked_index?: number | null
+          round?: number
+          session_id: string
+          situation: string
+          user_id?: string | null
+        }
+        Update: {
+          battle_id?: string
+          choices?: Json
+          created_at?: string
+          id?: string
+          outcome?: string | null
+          picked_index?: number | null
+          round?: number
+          session_id?: string
+          situation?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "battle_plays_battle_id_fkey"
+            columns: ["battle_id"]
+            isOneToOne: false
+            referencedRelation: "battles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      battles: {
+        Row: {
+          accent: string
+          created_at: string
+          created_by: string | null
+          custom_prompt: string
+          emoji: string
+          id: string
+          language: string
+          name: string
+          public: boolean
+          research: Json
+          scenario: string
+          slug: string
+          tagline: string
+          theme_config: Json
+          themes: string[]
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          accent?: string
+          created_at?: string
+          created_by?: string | null
+          custom_prompt?: string
+          emoji?: string
+          id?: string
+          language?: string
+          name: string
+          public?: boolean
+          research?: Json
+          scenario: string
+          slug: string
+          tagline?: string
+          theme_config?: Json
+          themes?: string[]
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          accent?: string
+          created_at?: string
+          created_by?: string | null
+          custom_prompt?: string
+          emoji?: string
+          id?: string
+          language?: string
+          name?: string
+          public?: boolean
+          research?: Json
+          scenario?: string
+          slug?: string
+          tagline?: string
+          theme_config?: Json
+          themes?: string[]
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       boss_chat_messages: {
         Row: {
           content: string
