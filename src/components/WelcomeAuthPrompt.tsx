@@ -17,6 +17,7 @@ const DISMISS_KEY = "welcome_auth_dismissed_at";
 const DISMISS_TTL_REMEMBER_MS = 1000 * 60 * 60 * 24 * 30; // 30d
 const DISMISS_TTL_TAB_MS = 1000 * 60 * 60 * 12; // 12h
 const MAGIC_RESEND_COOLDOWN_S = 30;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function WelcomeAuthPrompt() {
   const { user, loading: authLoading, hasStoredSession } = useAuth();
@@ -30,6 +31,8 @@ export function WelcomeAuthPrompt() {
   const [magicSent, setMagicSent] = useState(false);
   const [magicCooldown, setMagicCooldown] = useState(0);
   const [remember, setRememberState] = useState<boolean>(true);
+  const emailValid = EMAIL_RE.test(email.trim());
+  const emailInvalid = email.length > 0 && !emailValid;
 
   useEffect(() => { setRememberState(getRemember()); }, []);
 
@@ -284,9 +287,13 @@ export function WelcomeAuthPrompt() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@frequency.com"
-                    className="pl-10 h-10"
+                    aria-invalid={emailInvalid || undefined}
+                    className={`pl-10 h-10 ${emailInvalid ? "border-destructive focus-visible:ring-destructive" : ""}`}
                   />
                 </div>
+                {emailInvalid && (
+                  <p className="mt-1 text-[10px] text-destructive">Enter a valid email address.</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="wp-password" className="text-[10px] uppercase tracking-widest">Password</Label>
