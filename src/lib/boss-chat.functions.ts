@@ -98,9 +98,10 @@ export const bossChat = createServerFn({ method: "POST" })
 
     const flags = (prof?.feature_flags ?? {}) as Record<string, any>;
     const swearing = !!flags.swearing;
-    const rawIntensity = String(flags.swearing_intensity ?? "medium").toLowerCase();
+    // BRUTAL MODE: default to chaotic everywhere unless explicitly muzzled.
+    const rawIntensity = String(flags.swearing_intensity ?? "chaotic").toLowerCase();
     const intensity: SwearIntensity =
-      rawIntensity === "mild" || rawIntensity === "chaotic" ? rawIntensity : "medium";
+      rawIntensity === "mild" || rawIntensity === "medium" ? rawIntensity : "chaotic";
     const system = swearing ? buildSwearingSystem(intensity) : NORMAL_SYSTEM;
 
     let r = await callGemini(MODEL, system, data.messages, KEY);
