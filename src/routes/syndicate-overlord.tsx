@@ -917,7 +917,7 @@ function BulkActionBar({
       <Button size="sm" disabled={busy} onClick={() => runAllFlags(false)} className="h-6 px-2 text-[10px] bg-rose-700 hover:bg-rose-600 text-white font-bold">
         <Lock className="h-3 w-3 mr-1" />Lock all
       </Button>
-      {(["jokes","music","tools"] as const).map((k) => (
+      {(["jokes","music","tools","swearing"] as const).map((k) => (
         <span key={k} className="inline-flex items-center gap-1">
           <Button size="sm" disabled={busy} onClick={() => runFlag(k, true)} className="h-6 px-2 text-[10px] bg-cyan-700 hover:bg-cyan-600 text-white">{k}+</Button>
           <Button size="sm" disabled={busy} onClick={() => runFlag(k, false)} className="h-6 px-2 text-[10px] bg-zinc-700 hover:bg-zinc-600 text-zinc-200">{k}−</Button>
