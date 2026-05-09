@@ -48,7 +48,7 @@ const SOCIAL_FIELDS: Array<{ key: keyof ContactCard; label: string; placeholder:
 ];
 
 function SettingsPage() {
-  const { user, profile, loading, refreshProfile } = useAuth();
+  const { user, profile, loading, refresh } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -102,7 +102,7 @@ function SettingsPage() {
         .eq("id", user.id);
       if (updErr) throw updErr;
       setAvatarUrl(url);
-      await refreshProfile?.();
+      await refresh?.();
       toast.success("Profile picture updated");
     } catch (err: any) {
       toast.error(err?.message ?? "Upload failed");
@@ -122,7 +122,7 @@ function SettingsPage() {
         .eq("id", user.id);
       if (error) throw error;
       setAvatarUrl(null);
-      await refreshProfile?.();
+      await refresh?.();
       toast.success("Profile picture removed");
     } catch (err: any) {
       toast.error(err?.message ?? "Failed");
@@ -150,7 +150,7 @@ function SettingsPage() {
         })
         .eq("id", user.id);
       if (error) throw error;
-      await refreshProfile?.();
+      await refresh?.();
       toast.success("Settings saved");
     } catch (err: any) {
       toast.error(err?.message ?? "Save failed");
