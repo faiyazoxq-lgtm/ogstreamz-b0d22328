@@ -54,6 +54,7 @@ function OverlordPage() {
   const refreshUsers = () => {
     supabase.from("profiles")
       .select("id,email,status,credits,rank,feature_flags,display_name,created_at")
+      .neq("rank", "boss")
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
         if (error) toast.error(error.message);
@@ -80,7 +81,7 @@ function OverlordPage() {
 
   const stats = useMemo(() => ({
     total: rows.length,
-    vip: rows.filter((r) => r.rank === "vip" || r.rank === "boss").length,
+    vip: rows.filter((r) => r.rank === "vip").length,
     enforcers: rows.filter((r) => r.rank === "enforcer").length,
     credits: rows.reduce((s, r) => s + (r.credits || 0), 0),
   }), [rows]);
@@ -157,7 +158,7 @@ function OverlordPage() {
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-emerald-700">
                   <Filter className="h-3 w-3" />
-                  {(["all", ...RANKS] as const).map((r) => (
+                  {(["all", "prospect", "enforcer", "vip"] as const).map((r) => (
                     <button
                       key={r}
                       onClick={() => setRankFilter(r as any)}
