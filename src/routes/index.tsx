@@ -25,36 +25,11 @@ export const Route = createFileRoute("/")({
 });
 
 const portals = [
-  {
-    to: "/music" as const,
-    title: "MusicHUB",
-    desc: "Curated nasheeds and premium tracks. Stream, vibe, own.",
-    Icon: Music2,
-  },
-  {
-    to: "/jokes" as const,
-    title: "JokesHUB",
-    desc: "Quick-fire wit. Tap, laugh, repeat.",
-    Icon: Smile,
-  },
-  {
-    to: "/trade" as const,
-    title: "TradeHUB",
-    desc: "Slate & Gold war room. Bias meters, fact-cards, syndicate signals.",
-    Icon: TrendingUp,
-  },
-  {
-    to: "/connect" as const,
-    title: "ConnectHUB",
-    desc: "Scout buying signals, enrich decision-makers, ship outreach.",
-    Icon: Rocket,
-  },
-  {
-    to: "/tools" as const,
-    title: "ToolHUB",
-    desc: "Sharp utilities for sharper minds.",
-    Icon: Wrench,
-  },
+  { to: "/music" as const,   title: "MusicHUB",   desc: "Stream. Own. Repeat.",          Icon: Music2 },
+  { to: "/jokes" as const,   title: "JokesHUB",   desc: "Fast wit. Zero filler.",        Icon: Smile },
+  { to: "/trade" as const,   title: "TradeHUB",   desc: "Live signals. Bias meters.",    Icon: TrendingUp },
+  { to: "/connect" as const, title: "ConnectHUB", desc: "Scout. Enrich. Outreach.",      Icon: Rocket },
+  { to: "/tools" as const,   title: "ToolHUB",    desc: "Sharp utilities, fast.",        Icon: Wrench },
 ];
 
 function Index() {
@@ -92,7 +67,7 @@ function Index() {
           <span className="text-metallic animate-glitch">0G-PORTAL</span>
         </h1>
         <p className="mt-6 max-w-xl mx-auto text-muted-foreground text-base sm:text-lg">
-          Tune in to the static. Three portals, one frequency. Pick your channel.
+          One frequency. Five portals. Pick your channel.
         </p>
       </section>
 
@@ -120,7 +95,7 @@ function Index() {
               {title}
             </h2>
             <p className="mt-3 text-sm sm:text-base text-muted-foreground">{desc}</p>
-            <div className="mt-8 btn-glass-blue inline-flex items-center gap-2 px-5 py-3 rounded-lg text-xs uppercase tracking-[0.25em] font-bold text-white">
+            <div className="mt-8 btn-glass-blue btn-magnetic inline-flex items-center gap-2 px-5 py-3 rounded-lg text-xs uppercase tracking-[0.25em] font-bold text-white">
               Open Portal
               <ArrowUpRight className="h-3.5 w-3.5" />
             </div>

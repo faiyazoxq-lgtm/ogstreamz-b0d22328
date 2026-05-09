@@ -19,6 +19,8 @@ import { ZeroGBadge } from "../components/ZeroGBadge";
 import { GlobalMoodProvider } from "../hooks/use-global-mood";
 import { BottomDock } from "../components/BottomDock";
 import { LiveThinkingFeed } from "../components/LiveThinkingFeed";
+import { SystemGlitchOverlay } from "../components/SystemGlitchOverlay";
+import { EnforcerConsole } from "../components/EnforcerConsole";
 
 function NotFoundComponent() {
   return (
@@ -135,7 +137,9 @@ function RootComponent() {
             <NavBar />
             <Outlet />
             <TeleportOverlay />
+            <SystemGlitchOverlay />
             <LiveThinkingFeed />
+            <EnforcerConsole />
             <BottomDock />
             <ZeroGBadge />
           </div>
