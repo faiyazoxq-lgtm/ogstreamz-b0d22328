@@ -360,7 +360,7 @@ function EditPackCard({ pack, onClose, onSaved }: { pack: Pack; onClose: () => v
       </div>
       <Field label="Name"><Input value={name} onChange={(e) => setName(e.target.value)} /></Field>
       <Field label="Tagline"><Input value={tagline} onChange={(e) => setTagline(e.target.value)} /></Field>
-      <Field label="Price (USD)"><Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} /></Field>
+      <Field label="Price (GBP)"><Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} /></Field>
       <Field label="Credits granted (blank = subscription)">
         <Input type="number" value={credits} onChange={(e) => setCredits(e.target.value)} />
       </Field>
@@ -425,7 +425,7 @@ function NewPackCard({ onCreated }: { onCreated: () => void }) {
       <Field label="Stripe price_id"><Input value={priceId} onChange={(e) => setPriceId(e.target.value)} placeholder="mega_pack_200" /></Field>
       <Field label="Name"><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Mega Pack" /></Field>
       <Field label="Tagline"><Input value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="200 Portal Credits" /></Field>
-      <Field label="Price (USD)"><Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} /></Field>
+      <Field label="Price (GBP)"><Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} /></Field>
       <Field label="Credits granted (blank = subscription)">
         <Input type="number" value={credits} onChange={(e) => setCredits(e.target.value)} />
       </Field>
