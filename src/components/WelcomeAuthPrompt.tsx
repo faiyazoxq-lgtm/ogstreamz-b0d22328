@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Mail, Lock, User as UserIcon, Loader2, Send, X, Sparkles, Github, Facebook } from "lucide-react";
+import { Mail, Lock, User as UserIcon, Loader2, Send, X, Sparkles, Github, Facebook, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,7 @@ export function WelcomeAuthPrompt() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [magicSent, setMagicSent] = useState(false);
   const [remember, setRememberState] = useState<boolean>(true);
 
   useEffect(() => { setRememberState(getRemember()); }, []);
@@ -91,6 +92,33 @@ export function WelcomeAuthPrompt() {
       setOpen(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : `${provider} sign-in failed`);
+      setBusy(false);
+    }
+  };
+
+  const sendMagicLink = async () => {
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      toast.error("Enter your email above first");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/profile`,
+          shouldCreateUser: mode === "signup",
+          data: name ? { display_name: name, full_name: name } : undefined,
+        },
+      });
+      if (error) throw error;
+      setMagicSent(true);
+      setRemember(remember);
+      if (remember) markTabSession(); else clearTabSession();
+      toast.success("Magic link sent. Check your inbox.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not send magic link");
+    } finally {
       setBusy(false);
     }
   };
