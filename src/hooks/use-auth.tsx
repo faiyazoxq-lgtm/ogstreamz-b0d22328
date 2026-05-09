@@ -3,6 +3,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { promoteBossIfNeeded } from "@/lib/boss.functions";
 import { getRemember, hasTabSession, markTabSession, clearTabSession } from "@/lib/remember-session";
+import { hasStoredAuth } from "@/lib/has-stored-auth";
 
 export type SyndicateRank = "prospect" | "enforcer" | "vip" | "boss";
 export type FeatureFlags = { jokes: boolean; music: boolean; tools: boolean; swearing: boolean };
@@ -24,6 +25,10 @@ type AuthCtx = {
   profile: Profile | null;
   isAdmin: boolean;
   loading: boolean;
+  // True when a persisted auth token was detected in localStorage at mount.
+  // Lets UIs (e.g. the welcome prompt) skip the unauthenticated flash while
+  // the session is being restored asynchronously.
+  hasStoredSession: boolean;
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -35,6 +40,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  // Lazy init: read once at mount so SSR and first paint agree on the value.
+  const [hasStoredSession, setHasStoredSession] = useState<boolean>(() => hasStoredAuth());
   const [loading, setLoading] = useState(true);
 
   const loadExtras = async (uid: string) => {
@@ -73,12 +80,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Enforce "Remember me" = off: if no tab marker exists for this
       // browser tab, the previous session was tab-only — sign out now.
       if (s?.user && !getRemember() && !hasTabSession()) {
-        supabase.auth.signOut().finally(() => setLoading(false));
+        supabase.auth.signOut().finally(() => {
+          setHasStoredSession(false);
+          setLoading(false);
+        });
         return;
       }
       if (s?.user) markTabSession();
       setSession(s);
       setUser(s?.user ?? null);
+      setHasStoredSession(!!s?.user);
       if (s?.user) loadExtras(s.user.id).finally(() => setLoading(false));
       else setLoading(false);
     });
@@ -92,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <Ctx.Provider value={{ user, session, profile, isAdmin, loading, refresh, signOut }}>
+    <Ctx.Provider value={{ user, session, profile, isAdmin, loading, hasStoredSession, refresh, signOut }}>
       {children}
     </Ctx.Provider>
   );

@@ -18,7 +18,7 @@ const DISMISS_TTL_REMEMBER_MS = 1000 * 60 * 60 * 24 * 30; // 30d
 const DISMISS_TTL_TAB_MS = 1000 * 60 * 60 * 12; // 12h
 
 export function WelcomeAuthPrompt() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, hasStoredSession } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"login" | "signup">("signup");
@@ -31,14 +31,18 @@ export function WelcomeAuthPrompt() {
   useEffect(() => { setRememberState(getRemember()); }, []);
 
   useEffect(() => {
-    if (authLoading || user) return;
+    // Skip while the session is still being restored, and skip entirely if a
+    // persisted token was detected (it will resolve into a user shortly).
+    if (authLoading || user || hasStoredSession) return;
     const at = Number(localStorage.getItem(DISMISS_KEY) || 0);
     const ttl = getRemember() ? DISMISS_TTL_REMEMBER_MS : DISMISS_TTL_TAB_MS;
     if (Date.now() - at > ttl) {
-      const t = setTimeout(() => setOpen(true), 600);
+      // Slightly longer delay gives the session restore a chance to finish
+      // even on slow devices before we surface the prompt.
+      const t = setTimeout(() => setOpen(true), 1200);
       return () => clearTimeout(t);
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, hasStoredSession]);
 
   const dismiss = () => {
     localStorage.setItem(DISMISS_KEY, String(Date.now()));
