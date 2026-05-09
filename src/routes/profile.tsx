@@ -1,11 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
-import { Crown, Coins, LogOut, Shield, Sparkles, Zap, Flame, Skull, Settings } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Crown, Coins, LogOut, Shield, Sparkles, Zap, Flame, Skull, Settings, Heart, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import bgFlame from "@/assets/bg-flame.png";
 import { CREDIT_PACK_LIST } from "@/lib/credit-packs";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { useServerFn } from "@tanstack/react-start";
+import { requestTopup, listMyTopupRequests } from "@/lib/topup-requests.functions";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -32,6 +37,8 @@ function ProfilePage() {
 
   const isVip = profile?.status === "vip";
   const isBoss = profile?.rank === "boss";
+  const isFriendsFamily =
+    isBoss || ((profile as any)?.feature_flags?.friends_family === true);
   const credits = profile?.credits ?? 0;
   // Cap visual scale: full bar at 100 credits.
   const creditPct = Math.max(2, Math.min(100, (credits / 100) * 100));
@@ -171,6 +178,8 @@ function ProfilePage() {
             Sign Out
           </Button>
         </section>
+
+        {isFriendsFamily && <FriendsFamilyTopUp />}
 
         {isOpen && (
           <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur overflow-y-auto">
