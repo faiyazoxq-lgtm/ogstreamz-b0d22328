@@ -30,8 +30,8 @@ async function reasonWithGemini(
   headlines: string[],
   citations: string[],
 ): Promise<ReasonOut> {
-  const KEY = process.env.GEMINI_API_KEY;
-  if (!KEY) throw new Error("GEMINI_API_KEY missing");
+  const PPLX = process.env.PERPLEXITY_API_KEY;
+  if (!PPLX) throw new Error("PERPLEXITY_API_KEY missing");
 
   const sys =
     "You are 0G-BRAIN, the chief strategist of the 0G Syndicate. Output STRICT JSON only — no markdown, no prose. " +
@@ -55,28 +55,26 @@ Return STRICT JSON with this exact shape:
   "telegramCaption": "VIP-channel caption (max 600 chars), HTML-safe, with one emoji per line max"
 }`;
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: sys }] },
-        contents: [{ role: "user", parts: [{ text: user }] }],
-        generationConfig: {
-          temperature: 0.65,
-          responseMimeType: "application/json",
-          maxOutputTokens: 1200,
-        },
-      }),
-    },
-  );
+  const res = await fetch("https://api.perplexity.ai/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${PPLX}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "sonar",
+      messages: [
+        { role: "system", content: sys },
+        { role: "user", content: user },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.65,
+      max_tokens: 1200,
+    }),
+  });
   if (!res.ok) {
     const t = await res.text().catch(() => "");
-    throw new Error(`Gemini ${res.status}: ${t.slice(0, 200)}`);
+    throw new Error(`Perplexity ${res.status}: ${t.slice(0, 200)}`);
   }
   const j: any = await res.json();
-  const txt: string = j?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
+  const txt: string = j?.choices?.[0]?.message?.content ?? "{}";
   const m = txt.match(/\{[\s\S]*\}/);
   let parsed: Partial<ReasonOut> = {};
   try {
