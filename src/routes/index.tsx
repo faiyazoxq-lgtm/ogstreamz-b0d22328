@@ -1,7 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SyndicateGallery } from "@/components/SyndicateGallery";
-import { Music2, Smile, Wrench, ArrowUpRight, TrendingUp, Rocket } from "lucide-react";
+import {
+  Music2, Smile, Wrench, ArrowUpRight, TrendingUp, Rocket,
+  Sparkles, Radio, Bot, Brain, Zap, Star, Megaphone, Disc3, Satellite, Radar,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.jpg";
+
+const ICONS: Record<string, any> = {
+  Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
+  Zap, Star, Megaphone, Disc3, Satellite, Radar,
+};
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -47,6 +57,16 @@ const portals = [
 ];
 
 function Index() {
+  const [customHubs, setCustomHubs] = useState<any[]>([]);
+  useEffect(() => {
+    supabase
+      .from("custom_hubs")
+      .select("id,title,tagline,href,icon,accent,sort_order,published")
+      .eq("published", true)
+      .order("sort_order", { ascending: true })
+      .then(({ data }) => setCustomHubs(data ?? []));
+  }, []);
+
   return (
     <main className="relative">
       {/* Ambient glow */}
@@ -101,6 +121,48 @@ function Index() {
             </div>
           </Link>
         ))}
+        {customHubs.map((h) => {
+          const Icon = ICONS[h.icon] ?? Sparkles;
+          const accent = h.accent || "#3ad6ff";
+          const isExternal = /^https?:\/\//i.test(h.href);
+          const cardCls = "group relative overflow-hidden rounded-2xl border bg-card p-8 sm:p-10 transition-all duration-500 hover:-translate-y-1";
+          const inner = (
+            <>
+              <div
+                className="absolute -inset-px rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                style={{ background: `radial-gradient(500px circle at 50% 0%, ${accent}44, transparent 60%)` }}
+              />
+              <div className="flex items-center justify-between">
+                <div
+                  className="h-12 w-12 rounded-xl flex items-center justify-center"
+                  style={{ background: `${accent}1f`, color: accent }}
+                >
+                  <Icon className="h-6 w-6" />
+                </div>
+                <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <h2 className="mt-10 font-[Montserrat] font-black text-3xl sm:text-4xl tracking-tight text-metallic">
+                {h.title}
+              </h2>
+              <p className="mt-3 text-sm sm:text-base text-muted-foreground">{h.tagline}</p>
+              <div className="mt-8 inline-flex items-center gap-2 px-5 py-3 rounded-lg text-xs uppercase tracking-[0.25em] font-bold text-white"
+                style={{ background: `${accent}26`, border: `1px solid ${accent}66` }}>
+                Open Hub
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </div>
+            </>
+          );
+          return isExternal ? (
+            <a key={h.id} href={h.href} target="_blank" rel="noreferrer"
+              className={cardCls} style={{ borderColor: `${accent}55` }}>
+              {inner}
+            </a>
+          ) : (
+            <Link key={h.id} to={h.href} className={cardCls} style={{ borderColor: `${accent}55` }}>
+              {inner}
+            </Link>
+          );
+        })}
       </section>
 
       <SyndicateGallery />
