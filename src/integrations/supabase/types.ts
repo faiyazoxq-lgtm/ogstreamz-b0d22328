@@ -508,6 +508,42 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_credit_grants: {
+        Row: {
+          claimed_at: string | null
+          claimed_by: string | null
+          created_at: string
+          created_by: string | null
+          credits: number
+          email: string
+          grant_rank: Database["public"]["Enums"]["syndicate_rank"] | null
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          credits?: number
+          email: string
+          grant_rank?: Database["public"]["Enums"]["syndicate_rank"] | null
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          credits?: number
+          email?: string
+          grant_rank?: Database["public"]["Enums"]["syndicate_rank"] | null
+          id?: string
+          notes?: string | null
+        }
+        Relationships: []
+      }
       portal_marketing: {
         Row: {
           apollo_filters: Json
@@ -1508,6 +1544,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      apply_pending_grants: {
+        Args: { _email: string; _user_id: string }
+        Returns: number
+      }
       apply_trade_scan: {
         Args: {
           _asset_class: string
@@ -1527,6 +1567,15 @@ export type Database = {
           _user_id: string
         }
         Returns: string
+      }
+      boss_grant_by_email: {
+        Args: {
+          _credits: number
+          _email: string
+          _grant_rank: Database["public"]["Enums"]["syndicate_rank"]
+          _notes: string
+        }
+        Returns: Json
       }
       boss_grant_vip_pass: {
         Args: {
