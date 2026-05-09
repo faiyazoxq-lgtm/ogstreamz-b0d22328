@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 /**
  * Two glowing "eyes" docked to the left and right edges of the screen
@@ -7,6 +8,9 @@ import { useEffect, useRef } from "react";
  */
 export function SpotlightEyes() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const reduced = useReducedMotion();
+  const reducedRef = useRef(reduced);
+  useEffect(() => { reducedRef.current = reduced; }, [reduced]);
   const mouseRef = useRef({ x: -9999, y: -9999, active: false });
   const sparksRef = useRef<
     { x: number; y: number; vx: number; vy: number; life: number; max: number }[]
