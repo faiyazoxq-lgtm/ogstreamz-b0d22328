@@ -3,7 +3,7 @@ import { SyndicateGallery } from "@/components/SyndicateGallery";
 import {
   Music2, Smile, Wrench, ArrowUpRight, TrendingUp, Rocket, Swords,
   Sparkles, Radio, Bot, Brain, Zap, Star, Megaphone, Disc3, Satellite, Radar,
-  UserPlus, LogIn, Gift, ShieldCheck,
+  UserPlus, LogIn, Gift, ShieldCheck, Coins,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -103,9 +103,22 @@ function Index() {
           </h2>
           <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-2xl">
             {user
-              ? "Your portals, credits and saved sessions are loaded. Drop into a hub or jump back to your dashboard."
+              ? (() => {
+                  const c = profile?.credits ?? 0;
+                  if (c <= 0) return "You're out of credits. Top up to keep spinning the portals — or jump into the free hubs below.";
+                  if (c < 5) return `Only ${c} credit${c === 1 ? "" : "s"} left in the tank — make 'em count, or top up before the next drop.`;
+                  return `You've got ${c} credits loaded and the portals are warm. Pick a hub or hit the dashboard.`;
+                })()
               : "0G-PORTAL fuses music, jokes, trade signals, outreach, battles and tools into one streetwise hub. Free sign-up — keep your credits, lyrics, scans and chats forever. No card, no nonsense."}
           </p>
+
+          {user && (
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-amber-300/10 px-3 py-1.5 text-[12px] font-bold text-amber-200">
+              <Coins className="h-3.5 w-3.5" />
+              <span className="tabular-nums">{profile?.credits ?? 0}</span>
+              <span className="uppercase tracking-[0.2em] text-[10px] text-amber-200/80">credits</span>
+            </div>
+          )}
 
           {!user && (
             <ul className="mt-4 grid gap-2 sm:grid-cols-3 text-[12px] text-white/80">
