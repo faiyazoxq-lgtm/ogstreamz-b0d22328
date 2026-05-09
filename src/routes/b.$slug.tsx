@@ -72,6 +72,8 @@ function BattlePlayPage() {
         setBattle(data as Battle | null);
         setLoading(false);
       });
+    supabase.rpc("increment_portal_view", { _slug: slug }).then(() => {});
+    import("@/lib/track-view").then((m) => m.trackPortalView("battle", slug));
   }, [slug]);
 
   // Poll Suno job status until audio is ready
