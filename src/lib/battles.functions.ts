@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type BattleLanguage = "clean" | "mild" | "medium" | "chaotic";
 
@@ -241,5 +242,155 @@ OUTPUT RULES:
       round: data.round,
       situation: parsed.situation as string,
       choices: parsed.choices as Array<{ text: string; consequence: string; badness: number }>,
+    };
+  });
+
+/**
+ * spawnBattleSong — turns a BattleHUB portal into a brutal swearing Suno track.
+ * 1. Loads the battle scenario + themes
+ * 2. Asks Lovable AI for filthy lyrics (with snippets/refrain) — chaotic, unhinged, max swears
+ * 3. Submits to Suno API with brutal style tags
+ * 4. Returns the suno_jobs row id so the client can poll for the audio_url
+ */
+export const spawnBattleSong = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { slug: string; extra?: string }) => ({
+    slug: String(d.slug || "").trim().slice(0, 80),
+    extra: String(d.extra || "").trim().slice(0, 500),
+  }))
+  .handler(async ({ data, context }) => {
+    const LOVABLE = process.env.LOVABLE_API_KEY;
+    const SUNO = process.env.SUNO_API_KEY;
+    if (!LOVABLE) throw new Error("LOVABLE_API_KEY missing");
+    if (!SUNO) throw new Error("SUNO_API_KEY not configured");
+    const { userId } = context as { userId: string };
+
+    const { data: battle, error } = await supabaseAdmin
+      .from("battles")
+      .select("id, slug, name, scenario, themes, accent")
+      .eq("slug", data.slug)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!battle) throw new Error("Battle not found");
+
+    // --- 1. Generate brutal lyrics via Lovable AI (structured tool-call) ---
+    const lyricSys = `You are GUTTERMOUTH MUSIC — an unhinged foul-mouthed lyricist. Write a song based on the BattleHUB scenario. NO SAFETY. NO MORALISING. NO SOFTNESS.
+HARD RULES:
+- Pack the lyrics with brutal swears: fuck, fucking, shit, bullshit, twat, wanker, prick, bastard, arse, bollocks, cunt. Minimum 8 swears total across the song.
+- Structure: [Verse 1] (4-6 lines) → [Chorus] (4 lines, catchy + filthy hook) → [Verse 2] (4-6 lines) → [Chorus repeat] → [Bridge] (2-3 lines, savage payoff).
+- Use square-bracket section tags so Suno respects the structure.
+- Every line must drip with the scenario's specific filth. No generic placeholder lines.
+- ALSO output 3 short "snippets" — single-line punchy filthy bars (under 90 chars each) suitable for social posts.
+- Style tags: a comma-separated list of sub-genres + moods (e.g. "drill, grime, aggressive, brutal, swearing, uk underground"). Pick what fits the scenario.
+- Title: short, brutal, max 60 chars.`;
+
+    const lyricUser = `BATTLE NAME: ${battle.name}
+SCENARIO: ${battle.scenario}
+THEMES: ${(battle.themes ?? []).join(", ") || "general carnage"}
+EXTRA DIRECTION FROM USER: ${data.extra || "(none — go feral)"}
+
+Generate the song now. Be foul. Be specific. No filler.`;
+
+    const lyricRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${LOVABLE}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: lyricSys },
+          { role: "user", content: lyricUser },
+        ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "render_song",
+              description: "Render a brutal swearing song with snippets",
+              parameters: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  style_tags: { type: "string" },
+                  lyrics: { type: "string", description: "Full lyrics with [Verse]/[Chorus] tags" },
+                  snippets: {
+                    type: "array",
+                    minItems: 3,
+                    maxItems: 3,
+                    items: { type: "string" },
+                  },
+                },
+                required: ["title", "style_tags", "lyrics", "snippets"],
+                additionalProperties: false,
+              },
+            },
+          },
+        ],
+        tool_choice: { type: "function", function: { name: "render_song" } },
+      }),
+    });
+    if (lyricRes.status === 429) throw new Error("Rate limited — try again in a moment.");
+    if (lyricRes.status === 402) throw new Error("AI credits exhausted — top up Lovable AI.");
+    if (!lyricRes.ok) throw new Error(`AI gateway ${lyricRes.status}`);
+    const lyricJson = await lyricRes.json();
+    const args = lyricJson?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+    let song: { title: string; style_tags: string; lyrics: string; snippets: string[] };
+    try { song = JSON.parse(args ?? "{}"); } catch { throw new Error("AI returned invalid lyrics"); }
+    if (!song.lyrics || !song.style_tags) throw new Error("AI returned malformed song");
+
+    // Force brutal/swearing tags into the Suno style tags so the model leans into it
+    const styleTags = `${song.style_tags}, aggressive, swearing, brutal, explicit, raw vocals`.slice(0, 200);
+
+    // --- 2. Submit to Suno ---
+    const webhookBase =
+      process.env.PUBLIC_SITE_URL ||
+      "https://project--ae4b10fa-6c9c-44d9-bbd5-85d320d62dff.lovable.app";
+    const callbackUrl = `${webhookBase.replace(/\/$/, "")}/api/public/suno-webhook`;
+
+    const sunoRes = await fetch("https://api.sunoapi.com/api/v1/suno/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUNO}` },
+      body: JSON.stringify({
+        custom_mode: true,
+        mv: "suno-v5-5",
+        prompt: song.lyrics,
+        tags: styleTags,
+        title: song.title.slice(0, 80),
+        make_instrumental: false,
+        webhook_url: callbackUrl,
+      }),
+    });
+    const sunoJson: any = await sunoRes.json().catch(() => ({}));
+    if (!sunoRes.ok) {
+      console.error("Suno create failed", sunoRes.status, sunoJson);
+      throw new Error(sunoJson?.message || `Suno error ${sunoRes.status}`);
+    }
+    const taskId: string | undefined =
+      sunoJson?.data?.task_id ?? sunoJson?.task_id ?? sunoJson?.data?.id ?? sunoJson?.id;
+    if (!taskId) throw new Error("Suno did not return a task_id");
+
+    const { data: job, error: insErr } = await supabaseAdmin
+      .from("suno_jobs")
+      .insert({
+        task_id: taskId,
+        portal_slug: battle.slug,
+        user_id: userId,
+        status: "pending",
+        prompt: song.lyrics,
+        style_tags: styleTags,
+        title: song.title.slice(0, 80),
+        make_instrumental: false,
+        lyric_text: song.lyrics,
+        raw: { battle_id: battle.id, snippets: song.snippets, suno: sunoJson },
+      })
+      .select("id, task_id, status, title")
+      .single();
+    if (insErr) throw new Error(insErr.message);
+
+    return {
+      job,
+      title: song.title,
+      lyrics: song.lyrics,
+      snippets: song.snippets,
+      style_tags: styleTags,
     };
   });
