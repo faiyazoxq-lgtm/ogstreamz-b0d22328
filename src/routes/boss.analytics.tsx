@@ -246,7 +246,6 @@ function AnalyticsPage() {
               </Button>
             </div>
           </div>
-          {[7, 30, 60, 90, 180, 365].map(() => null)}
           <div className="mt-2 flex flex-wrap gap-1">
             {[7, 30, 60, 90, 180, 365].map((d) => (
               <button
