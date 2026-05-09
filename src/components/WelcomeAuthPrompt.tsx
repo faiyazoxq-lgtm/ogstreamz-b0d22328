@@ -144,7 +144,7 @@ export function WelcomeAuthPrompt() {
 
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : dismiss())}>
-      <DialogContent className="max-w-md p-0 overflow-hidden border-[oklch(0.72_0.22_245/0.4)] bg-card">
+      <DialogContent className="max-w-md p-0 overflow-hidden border-[oklch(0.72_0.22_245/0.4)] bg-card max-h-[92vh] sm:max-h-[90vh] flex flex-col">
         <button
           type="button"
           onClick={dismiss}
@@ -153,15 +153,17 @@ export function WelcomeAuthPrompt() {
         >
           <X className="h-4 w-4" />
         </button>
-        <div className="relative px-6 pt-7 pb-6">
+        <div className="relative px-5 sm:px-6 pt-6 pb-5 overflow-y-auto">
           <div className="pointer-events-none absolute inset-0 -z-10">
             <div className="absolute -top-20 left-1/2 -translate-x-1/2 h-64 w-72 rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245/0.35),transparent)]" />
           </div>
 
-          <div className="text-center mb-5">
+          <div className="text-center mb-4">
             <p className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground">Tune in</p>
-            <h2 className="mt-1 font-[Montserrat] font-black text-2xl text-metallic">Join the Syndicate</h2>
-            <p className="text-xs text-muted-foreground mt-1">Sign in to unlock all portals.</p>
+            <h2 className="mt-1 font-[Montserrat] font-black text-xl sm:text-2xl text-metallic leading-tight">
+              0G-STREAMZ <span className="text-[oklch(0.72_0.22_245)]">PORTAL</span>
+            </h2>
+            <p className="text-[11px] text-muted-foreground mt-1">Join the Syndicate — sign in to unlock all portals.</p>
           </div>
 
           <div className="space-y-2">
