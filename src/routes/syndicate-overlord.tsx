@@ -292,18 +292,18 @@ function UserRow({ row, onChange }: { row: Row; onChange: (p: Partial<Row>) => v
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-black border-emerald-800 text-emerald-200">
-              {RANKS.map((r) => <SelectItem key={r} value={r} className="text-xs uppercase">{r}</SelectItem>)}
+              {RANKS.filter((r) => r !== "boss").map((r) => <SelectItem key={r} value={r} className="text-xs uppercase">{r}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
-        <div className="col-span-6 md:col-span-2 flex items-center gap-1.5">
+        <div className="col-span-6 md:col-span-2 flex items-center gap-1">
           <Badge variant="outline" className="border-cyan-800/40 text-cyan-300 tabular-nums font-mono">
             {row.credits.toLocaleString()}
           </Badge>
           <Input
             value={delta}
             onChange={(e) => setDelta(e.target.value)}
-            className="h-7 w-16 bg-black/60 border-emerald-800/40 text-emerald-200 font-mono text-xs"
+            className="h-7 w-14 bg-black/60 border-emerald-800/40 text-emerald-200 font-mono text-xs"
           />
           <Button
             size="icon"
@@ -337,13 +337,18 @@ function UserRow({ row, onChange }: { row: Row; onChange: (p: Partial<Row>) => v
         </div>
       </div>
       {open && (
-        <div className="px-4 pb-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] text-emerald-700 uppercase tracking-widest">
+        <div className="px-4 pb-3 flex flex-wrap items-center gap-3 text-[10px] text-emerald-700 uppercase tracking-widest">
           <div><span className="text-emerald-500">id:</span> {row.id.slice(0, 12)}</div>
           <div><span className="text-emerald-500">status:</span> {row.status}</div>
           <div><span className="text-emerald-500">joined:</span> {new Date(row.created_at).toLocaleDateString()}</div>
-          <div className="flex gap-1">
-            <Button size="sm" onClick={() => { setDelta("100"); }} className="h-6 text-[10px] bg-emerald-800 hover:bg-emerald-700 text-emerald-100">+100</Button>
-            <Button size="sm" onClick={() => { setDelta("-100"); }} className="h-6 text-[10px] bg-rose-800 hover:bg-rose-700 text-rose-100">-100</Button>
+          <div className="flex items-center gap-1 ml-auto">
+            <span className="text-emerald-500">quick:</span>
+            {[10, 50, 100, 500].map((v) => (
+              <Button key={v} size="sm" onClick={() => setDelta(String(v))} className="h-6 px-2 text-[10px] bg-emerald-800/70 hover:bg-emerald-700 text-emerald-100">+{v}</Button>
+            ))}
+            {[-10, -50, -100].map((v) => (
+              <Button key={v} size="sm" onClick={() => setDelta(String(v))} className="h-6 px-2 text-[10px] bg-rose-800/70 hover:bg-rose-700 text-rose-100">{v}</Button>
+            ))}
           </div>
         </div>
       )}
