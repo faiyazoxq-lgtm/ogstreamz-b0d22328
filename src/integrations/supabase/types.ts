@@ -882,6 +882,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
+          bio: string | null
+          contact_card: Json
           created_at: string
           credits: number
           display_name: string | null
@@ -896,6 +899,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          contact_card?: Json
           created_at?: string
           credits?: number
           display_name?: string | null
@@ -910,6 +916,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          contact_card?: Json
           created_at?: string
           credits?: number
           display_name?: string | null
