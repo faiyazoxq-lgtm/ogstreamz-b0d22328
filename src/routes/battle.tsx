@@ -223,12 +223,28 @@ function SpawnPanel({ onSpawned }: { onSpawned: () => void }) {
     },
   ];
 
+  const [usedPresets, setUsedPresets] = useState<string[]>([]);
+
   const usePreset = (p: typeof PRESETS[number]) => {
-    setName(p.name);
-    setScenario(p.scenario);
-    setEmoji(p.emoji);
-    setAccent(p.accent);
+    // First press: seed name/emoji/accent. Subsequent: append filth into the textarea.
+    if (usedPresets.length === 0) {
+      setName(p.name);
+      setEmoji(p.emoji);
+      setAccent(p.accent);
+      setScenario((s) => (s.trim() ? `${s.trim()}\n\n${p.scenario}` : p.scenario));
+    } else {
+      setScenario((s) => `${s.trim()}\n\n${p.scenario}`);
+    }
+    setUsedPresets((u) => [...u, p.label]);
   };
+
+  const resetPresets = () => {
+    setUsedPresets([]);
+    setScenario("");
+    setName("");
+  };
+
+  const availablePresets = PRESETS.filter((p) => !usedPresets.includes(p.label));
 
   return (
     <form onSubmit={submit} className="glass-obsidian-strong rounded-2xl p-6 space-y-4">
@@ -237,26 +253,41 @@ function SpawnPanel({ onSpawned }: { onSpawned: () => void }) {
       </div>
 
       <div>
-        <label className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-2 block">
-          Pick a preset · or write your own filth below
-        </label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {PRESETS.map((p) => (
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
+            Tap presets · they vanish and stack into the filth
+          </label>
+          {usedPresets.length > 0 && (
             <button
-              key={p.label}
               type="button"
-              onClick={() => usePreset(p)}
-              className="btn-magnetic text-left rounded-lg p-2.5 glass-obsidian hover:bg-white/5 transition group"
-              style={{ borderLeft: `3px solid ${p.accent}` }}
-              title={p.scenario}
+              onClick={resetPresets}
+              className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground hover:text-foreground"
             >
-              <div className="text-xl leading-none mb-1">{p.emoji}</div>
-              <div className="text-[11px] uppercase tracking-[0.15em] font-bold" style={{ color: p.accent }}>
-                {p.label}
-              </div>
+              Reset
             </button>
-          ))}
+          )}
         </div>
+        {availablePresets.length === 0 ? (
+          <p className="text-xs text-muted-foreground italic">All presets stacked. Reset to start over.</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {availablePresets.map((p) => (
+              <button
+                key={p.label}
+                type="button"
+                onClick={() => usePreset(p)}
+                className="btn-magnetic text-left rounded-lg p-2.5 glass-obsidian hover:bg-white/5 hover:scale-105 active:scale-95 transition"
+                style={{ borderLeft: `3px solid ${p.accent}` }}
+                title={p.scenario}
+              >
+                <div className="text-xl leading-none mb-1">{p.emoji}</div>
+                <div className="text-[11px] uppercase tracking-[0.15em] font-bold" style={{ color: p.accent }}>
+                  {p.label}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div>
