@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SyndicateGallery } from "@/components/SyndicateGallery";
 import {
-  Music2, Smile, Wrench, ArrowUpRight, TrendingUp, Rocket,
+  Music2, Smile, Wrench, ArrowUpRight, TrendingUp, Rocket, Swords,
   Sparkles, Radio, Bot, Brain, Zap, Star, Megaphone, Disc3, Satellite, Radar,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -29,6 +29,7 @@ const portals = [
   { to: "/jokes" as const,   title: "JokesHUB",   desc: "Fast wit. Zero filler.",        Icon: Smile },
   { to: "/trade" as const,   title: "TradeHUB",   desc: "Live signals. Bias meters.",    Icon: TrendingUp },
   { to: "/connect" as const, title: "ConnectHUB", desc: "Scout. Enrich. Outreach.",      Icon: Rocket },
+  { to: "/battle" as const,  title: "BattleHUB",  desc: "Every choice is a loss.",       Icon: Swords },
   { to: "/tools" as const,   title: "ToolHUB",    desc: "Sharp utilities, fast.",        Icon: Wrench },
 ];
 
