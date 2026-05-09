@@ -116,14 +116,14 @@ export function NavBar() {
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border">
-      <nav className="max-w-7xl mx-auto flex items-center justify-between px-2 sm:px-8 h-16 sm:h-20 gap-1 sm:gap-2">
-        <Link to="/" className="flex items-center gap-2 sm:gap-3 group min-w-0 shrink">
+      <nav className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap px-2 sm:px-8 h-16 sm:h-20 gap-1 sm:gap-2">
+        <Link to="/" className="flex items-center gap-2 sm:gap-3 group min-w-0 flex-1 sm:flex-initial overflow-hidden">
           <TVStaticLogo className="logo-xl shrink-0" />
-          <span className="font-[Montserrat] font-black text-base sm:text-3xl tracking-tight text-aura-blue truncate">
+          <span className="hidden [@media(min-width:360px)]:inline font-[Montserrat] font-black text-base sm:text-3xl tracking-tight text-aura-blue truncate">
             0G-PORTAL
           </span>
         </Link>
-        <ul className="flex items-center gap-0.5 sm:gap-1.5 shrink-0">
+        <ul className="flex items-center flex-nowrap gap-0.5 sm:gap-1.5 shrink-0 ml-auto">
           <li className="hidden sm:block">
             <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile />
           </li>
