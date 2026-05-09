@@ -87,11 +87,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "0G-PORTAL — Luxury Street Hub" },
       { name: "description", content: "0G-PORTAL: MusicHUB, JokesHUB, and ToolHUB. A cinematic neon platform." },
-      { property: "og:title", content: "0G-PORTAL" },
-      { property: "og:description", content: "Luxury street style hub: music, jokes, tools." },
+      { property: "og:title", content: "0G-PORTAL — Luxury Street Hub" },
+      { property: "og:description", content: "0G-PORTAL: MusicHUB, JokesHUB, and ToolHUB. A cinematic neon platform." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "0G-PORTAL — Luxury Street Hub" },
+      { name: "twitter:description", content: "0G-PORTAL: MusicHUB, JokesHUB, and ToolHUB. A cinematic neon platform." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/7V7FIf0kcJXdLEMCppSP8BpMUv72/social-images/social-1778296602159-1.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/7V7FIf0kcJXdLEMCppSP8BpMUv72/social-images/social-1778296602159-1.webp" },
     ],
     links: [
       {
