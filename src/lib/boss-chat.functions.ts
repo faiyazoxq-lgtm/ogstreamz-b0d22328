@@ -1,11 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { enforceSwearRules, type SwearMode } from "./swear-enforcer.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { perplexityChat, shapesChat } from "./ai-providers.server";
 
-const MODEL = "gemini-3-pro-preview";
-const FALLBACK_MODEL = "gemini-2.5-pro";
-const ENDPOINT = (model: string) =>
-  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+// Boss-chat now routes to Shapes API (swearing agent) when swearing is on,
+// and Perplexity Sonar when the boss is in normal/clean mode.
 
 const NORMAL_SYSTEM =
   "You are 0G-BRAIN's Boss Chat — a sharp, professional trading copilot. Give the Boss a clear reality-check on the trade, risk and market context. Be concise, decisive, no fluff.";
@@ -29,23 +28,6 @@ function buildSwearingSystem(intensity: SwearIntensity) {
 }
 
 type Msg = { role: "user" | "assistant"; content: string };
-
-async function callGemini(model: string, system: string, history: Msg[], key: string) {
-  const contents = history.slice(-20).map((m) => ({
-    role: m.role === "assistant" ? "model" : "user",
-    parts: [{ text: String(m.content || "").slice(0, 4000) }],
-  }));
-  const r = await fetch(`${ENDPOINT(model)}?key=${encodeURIComponent(key)}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: system }] },
-      contents,
-      generationConfig: { temperature: 0.85, maxOutputTokens: 1024 },
-    }),
-  });
-  return r;
-}
 
 export const bossChat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
