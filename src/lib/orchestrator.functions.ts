@@ -114,9 +114,9 @@ export async function runPeerReview(opts: {
   analysis: string;
   evidence: DeepSearchResult;
 }): Promise<PeerReview> {
-  const LOVABLE = process.env.LOVABLE_API_KEY;
-  if (!LOVABLE) {
-    return { verdict: "unverified", confidence: 0, agree: [], disagree: [], corrections: [], notes: "LOVABLE_API_KEY missing" };
+  const PPLX = process.env.PERPLEXITY_API_KEY;
+  if (!PPLX) {
+    return { verdict: "unverified", confidence: 0, agree: [], disagree: [], corrections: [], notes: "PERPLEXITY_API_KEY missing" };
   }
   const sourceList = opts.evidence.verified_sources
     .map((s, i) => `[${i + 1}] ${s.source} — ${s.url}`)
@@ -145,18 +145,21 @@ Return STRICT JSON only, no markdown:
 }`;
 
   try {
-    const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const r = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${PPLX}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "sonar-reasoning",
         messages: [
           { role: "system", content: "Output strict JSON only." },
           { role: "user", content: prompt },
         ],
+        response_format: { type: "json_object" },
+        temperature: 0.2,
+        max_tokens: 1200,
       }),
     });
-    if (!r.ok) throw new Error(`gemini ${r.status}`);
+    if (!r.ok) throw new Error(`perplexity ${r.status}`);
     const j = await r.json();
     const raw: string = j?.choices?.[0]?.message?.content ?? "{}";
     const m = raw.match(/\{[\s\S]*\}/);
