@@ -160,6 +160,7 @@ function Index() {
       </section>
 
       <SyndicateGallery />
+      <WelcomeAuthPrompt />
     </main>
   );
 }
