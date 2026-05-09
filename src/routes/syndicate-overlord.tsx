@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Skull, Loader2, Search, Sparkles, Plus, Minus, Ticket, Users, Wallet, Crown, X,
-  Activity, Shield, Filter, Zap, ChevronDown,
+  Activity, Shield, Filter, Zap, ChevronDown, Mail, Send, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   adjustCredits, setRank, setFeatureFlags, createRedeemCode,
   grantVipPass, revokeVipPass, listVipPasses,
+  grantByEmail, listPendingGrants, deletePendingGrant,
 } from "@/lib/overlord.functions";
 import { bossListResellers, bossCreateReseller, bossTopupReseller } from "@/lib/reseller.functions";
 import { PassShareCardPanel } from "@/components/overlord/PassShareCardPanel";
@@ -124,6 +125,9 @@ function OverlordPage() {
             <TabsTrigger value="users" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
               <Users className="h-3 w-3 mr-1.5" /> Users
             </TabsTrigger>
+            <TabsTrigger value="preload" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
+              <Mail className="h-3 w-3 mr-1.5" /> Pre-Load
+            </TabsTrigger>
             <TabsTrigger value="codes" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
               <Ticket className="h-3 w-3 mr-1.5" /> Redeem
             </TabsTrigger>
@@ -187,6 +191,7 @@ function OverlordPage() {
           </TabsContent>
 
           <TabsContent value="codes" className="mt-4"><RedeemCodePanel /></TabsContent>
+          <TabsContent value="preload" className="mt-4"><PreLoadPanel onApplied={refreshUsers} /></TabsContent>
           <TabsContent value="passes" className="mt-4"><VipPassPanel rows={rows} /></TabsContent>
           <TabsContent value="resellers" className="mt-4"><ResellerAdminPanel rows={rows} /></TabsContent>
           <TabsContent value="share" className="mt-4"><PassShareCardPanel /></TabsContent>
