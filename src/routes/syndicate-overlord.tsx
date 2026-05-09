@@ -214,33 +214,46 @@ function OverlordPage() {
           {/* USERS */}
           <TabsContent value="users" className="mt-4">
             <div className="rounded-xl border border-emerald-700/30 bg-black/50 backdrop-blur">
-              <div className="p-3 flex flex-wrap items-center gap-2 border-b border-emerald-800/40">
-                <div className="relative flex-1 min-w-[200px]">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-cyan-400" />
+              <div className="p-4 flex flex-wrap items-center gap-3 border-b border-emerald-800/40 bg-gradient-to-r from-emerald-950/40 to-cyan-950/30">
+                <div className="relative flex-1 min-w-[260px]">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-cyan-400" />
                   <Input
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
-                    placeholder="Search by email or name…"
-                    className="pl-9 h-8 bg-black/60 border-emerald-800/40 text-emerald-200 placeholder:text-emerald-700 font-mono text-xs"
+                    placeholder="Quick search — email or name…"
+                    className="pl-12 pr-10 h-12 bg-black/70 border-2 border-cyan-700/50 focus-visible:border-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-500/30 text-cyan-100 placeholder:text-emerald-700 font-bold text-base shadow-lg"
                   />
-                </div>
-                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-emerald-700">
-                  <Filter className="h-3 w-3" />
-                  {(["all", "prospect", "enforcer", "vip"] as const).map((r) => (
+                  {q && (
                     <button
-                      key={r}
-                      onClick={() => setRankFilter(r as any)}
-                      className={`px-2 py-1 rounded border transition ${
-                        rankFilter === r
-                          ? "border-cyan-500 text-cyan-300 bg-cyan-500/10"
-                          : "border-emerald-800/40 text-emerald-600 hover:text-emerald-300"
-                      }`}
+                      onClick={() => setQ("")}
+                      title="Clear search"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-emerald-500 hover:text-rose-300 hover:bg-rose-900/20 transition"
                     >
-                      {r}
+                      <X className="h-4 w-4" />
                     </button>
-                  ))}
+                  )}
                 </div>
-                <span className="text-[10px] text-emerald-700 ml-auto">Showing {filtered.length} of {rows.length}</span>
+                <span className="px-3 py-2 rounded-lg bg-black/60 border border-cyan-700/40 text-cyan-300 font-black text-sm tabular-nums">
+                  {filtered.length}<span className="text-emerald-700 font-bold"> / {rows.length}</span>
+                </span>
+              </div>
+              <div className="px-4 py-2.5 flex flex-wrap items-center gap-2 border-b border-emerald-800/40 bg-black/40">
+                <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.25em] text-emerald-600 font-bold">
+                  <Filter className="h-3.5 w-3.5" /> Rank
+                </span>
+                {(["all", "prospect", "enforcer", "vip"] as const).map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setRankFilter(r as any)}
+                    className={`px-3 py-1.5 rounded-lg border-2 text-xs uppercase tracking-widest font-black transition ${
+                      rankFilter === r
+                        ? "border-cyan-400 text-cyan-200 bg-cyan-500/15 shadow-[0_0_15px_-3px] shadow-cyan-500/40"
+                        : "border-emerald-800/40 text-emerald-500 hover:text-emerald-200 hover:border-emerald-600"
+                    }`}
+                  >
+                    {r}
+                  </button>
+                ))}
               </div>
 
               <BulkActionBar
