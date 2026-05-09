@@ -104,7 +104,7 @@ function AuthPage() {
   useEffect(() => {
     if (user) {
       const dest = consumeRedirect();
-      tryClaim().finally(() => navigate({ to: dest }));
+      tryClaim().finally(() => navigate({ to: dest as never }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -134,7 +134,7 @@ function AuthPage() {
         setRemember(remember);
         if (remember) markTabSession(); else clearTabSession();
         toast.success("Locked in. Frequency unlocked.");
-        navigate({ to: consumeRedirect() });
+        navigate({ to: consumeRedirect() as never });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
@@ -156,7 +156,7 @@ function AuthPage() {
       });
       if (result.error) throw result.error;
       if (result.redirected) return;
-      navigate({ to: consumeRedirect() });
+      navigate({ to: consumeRedirect() as never });
     } catch (err) {
       const msg = err instanceof Error ? err.message : `${provider} sign-in failed`;
       toast.error(msg);
