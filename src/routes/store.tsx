@@ -237,13 +237,28 @@ function PackCard({ pack, isBoss, creditsPerSong, onBuy, onChanged }: {
       )}
       <Icon className="h-6 w-6" style={{ color: "var(--neon-blue-bright)" }} />
       <h3 className="mt-4 font-[Montserrat] font-black text-xl text-white">{pack.name}</h3>
-      <p className="mt-1 text-xs text-muted-foreground">
-        {isBoss
-          ? pack.tagline
-          : (songs !== null
-              ? `${songs} song${songs === 1 ? "" : "s"}`
-              : pack.tagline)}
-      </p>
+      {isBoss ? (
+        <p className="mt-1 text-xs text-muted-foreground">{pack.tagline}</p>
+      ) : pack.recurring ? (
+        <div className="mt-1 text-xs text-muted-foreground space-y-1">
+          <p className="text-white font-semibold">VIP monthly access</p>
+          <p>Unlimited Hit-Button · priority AI queue · Live Wire jokes · deep tool mode</p>
+          {pack.credits ? <p className="text-[color:var(--neon-blue-bright)]">+ {pack.credits} bonus credits each month</p> : null}
+        </div>
+      ) : pack.credits !== null ? (
+        <div className="mt-1 text-xs text-muted-foreground space-y-0.5">
+          <p className="text-white font-bold">
+            <Coins className="inline h-3.5 w-3.5 mr-1 text-yellow-400" />
+            {pack.credits.toLocaleString()} credits
+          </p>
+          <p>~ {songs} AI song{songs === 1 ? "" : "s"} · or {pack.credits.toLocaleString()} jokes / scans / tool runs</p>
+          <p className="text-[10px] text-muted-foreground/70">
+            ${(pack.amount_cents / Math.max(1, pack.credits) / 100).toFixed(3)} per credit
+          </p>
+        </div>
+      ) : (
+        <p className="mt-1 text-xs text-muted-foreground">{pack.tagline}</p>
+      )}
       <p className="mt-4 font-[Montserrat] font-black text-3xl text-metallic">
         ${(pack.amount_cents / 100).toFixed(2)}
         {pack.recurring && <span className="text-sm text-muted-foreground font-normal">/mo</span>}
@@ -253,7 +268,7 @@ function PackCard({ pack, isBoss, creditsPerSong, onBuy, onChanged }: {
         <BossPackControls pack={pack} onEdit={() => setEditing(true)} onChanged={onChanged} />
       ) : (
         <Button onClick={onBuy} className="btn-glass-blue mt-5 w-full text-white text-xs uppercase tracking-[0.25em] font-bold py-5">
-          {pack.recurring ? "Go Boss" : "Top Up"}
+          {pack.recurring ? "Go VIP Monthly" : "Buy Credits"}
         </Button>
       )}
     </div>
