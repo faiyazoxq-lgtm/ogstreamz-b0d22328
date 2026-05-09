@@ -216,6 +216,51 @@ function AnalyticsPage() {
           Every public visit to a portal or battle is logged anonymously (no account required). Visitors are deduplicated per browser via a local id.
         </p>
 
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-3 md:p-4">
+          <div className="flex flex-wrap items-end gap-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-white/50">Retention policy</p>
+              <p className="text-sm text-white/80">
+                Auto-purge events older than{" "}
+                <span className="terminal-mono text-[color:var(--syndicate-glow)]">{retentionDays}</span> day{retentionDays === 1 ? "" : "s"}.
+                Runs daily at 03:17 UTC.
+              </p>
+            </div>
+            <div className="flex items-end gap-2 ml-auto">
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider text-white/50 mb-1">Days</label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={3650}
+                  value={retentionInput}
+                  onChange={(e) => setRetentionInput(e.target.value)}
+                  className="w-24"
+                />
+              </div>
+              <Button size="sm" onClick={saveRetention} disabled={savingRetention || retentionInput === String(retentionDays)}>
+                <Save className="h-3 w-3 mr-1" /> Save
+              </Button>
+              <Button size="sm" variant="outline" onClick={purgeNow} disabled={purging}>
+                <Trash2 className={`h-3 w-3 mr-1 ${purging ? "animate-pulse" : ""}`} /> Purge now
+              </Button>
+            </div>
+          </div>
+          {[7, 30, 60, 90, 180, 365].map(() => null)}
+          <div className="mt-2 flex flex-wrap gap-1">
+            {[7, 30, 60, 90, 180, 365].map((d) => (
+              <button
+                key={d}
+                type="button"
+                onClick={() => setRetentionInput(String(d))}
+                className="text-[11px] px-2 py-0.5 rounded-full border border-white/15 text-white/70 hover:bg-white/10"
+              >
+                {d}d
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
           <Stat label={`Events (last ${days}d)`} value={totals.events} icon={<Eye className="h-4 w-4" />} />
           <Stat label="Unique visitors" value={totals.visitors} icon={<Users className="h-4 w-4" />} />
