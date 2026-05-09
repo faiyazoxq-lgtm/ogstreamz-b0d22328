@@ -1,10 +1,11 @@
 import { Link } from "@tanstack/react-router";
+import { useState } from "react";
 import {
   User, LogIn, Coins, Crown, Shield, ChevronDown,
   Music, Laugh, TrendingUp, Rocket, Wrench,
   Store, ShoppingBag, Receipt,
   ShieldCheck, LayoutDashboard,
-  UserCircle, Settings, LogOut,
+  UserCircle, Settings, LogOut, Menu,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { TVStaticLogo } from "@/components/TVStaticLogo";
@@ -23,6 +24,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 type HubLink = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; desc?: string; bossOnly?: boolean };
 const hubLinks: ReadonlyArray<HubLink> = [
@@ -116,19 +124,29 @@ export function NavBar() {
           </span>
         </Link>
         <ul className="flex items-center gap-0.5 sm:gap-1.5 shrink-0">
-          <li>
+          <li className="hidden sm:block">
             <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile />
           </li>
-          <li>
+          <li className="hidden sm:block">
             <NavDropdown label="Store" icon={Store} items={storeLinks} hideLabelOnMobile />
           </li>
           {isBoss && (
-            <li>
+            <li className="hidden sm:block">
               <NavDropdown label="Admin" icon={ShieldCheck} items={adminLinks} hideLabelOnMobile />
             </li>
           )}
-          <li>
+          <li className="hidden sm:block">
             <AccountMenu
+              user={user}
+              profile={profile}
+              isBoss={isBoss}
+            />
+          </li>
+          <li className="sm:hidden">
+            <MobileNavDrawer
+              hubs={visibleHubs}
+              stores={storeLinks}
+              admin={isBoss ? adminLinks : []}
               user={user}
               profile={profile}
               isBoss={isBoss}
@@ -146,6 +164,154 @@ export function NavBar() {
         </ul>
       </nav>
     </header>
+  );
+}
+
+function MobileNavDrawer({
+  hubs, stores, admin, user, profile, isBoss,
+}: {
+  hubs: ReadonlyArray<HubLink>;
+  stores: ReadonlyArray<HubLink>;
+  admin: ReadonlyArray<HubLink>;
+  user: ReturnType<typeof useAuth>["user"];
+  profile: ReturnType<typeof useAuth>["profile"];
+  isBoss: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const close = () => setOpen(false);
+
+  const Section = ({
+    title, icon: Icon, items, gold,
+  }: {
+    title: string;
+    icon: React.ComponentType<{ className?: string }>;
+    items: ReadonlyArray<HubLink>;
+    gold?: boolean;
+  }) => (
+    <div className="mb-4">
+      <div className={`flex items-center gap-2 px-1 mb-2 text-[10px] uppercase tracking-[0.3em] ${gold ? "text-gold" : "text-muted-foreground"}`}>
+        <Icon className="h-3.5 w-3.5" />
+        {title}
+      </div>
+      <ul className="space-y-1">
+        {items.map((it) => (
+          <li key={it.to}>
+            <Link
+              to={it.to as string}
+              onClick={close}
+              className="flex items-start gap-3 rounded-md px-2 py-2.5 hover:bg-secondary"
+            >
+              <it.icon className="h-4 w-4 mt-0.5 text-gold shrink-0" />
+              <span className="flex-1 min-w-0">
+                <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                  {it.label}
+                  {it.bossOnly && <Crown className="h-3 w-3 text-gold" />}
+                </span>
+                {it.desc && (
+                  <span className="block text-[11px] text-muted-foreground truncate">{it.desc}</span>
+                )}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger
+        aria-label="Open navigation menu"
+        className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-secondary/40 text-foreground hover:bg-secondary"
+      >
+        <Menu className="h-5 w-5" />
+      </SheetTrigger>
+      <SheetContent side="right" className="w-[88vw] max-w-sm bg-card p-0 flex flex-col">
+        <SheetHeader className="px-4 pt-4 pb-3 border-b border-border">
+          <SheetTitle className="text-left text-sm uppercase tracking-[0.3em] text-aura-blue">
+            0G-PORTAL · Menu
+          </SheetTitle>
+          {user ? (
+            <div className="flex items-center gap-2 text-xs">
+              {isBoss ? (
+                <span className="inline-flex items-center gap-1 text-gold font-bold">
+                  <Crown className="h-3.5 w-3.5" /> BOSS
+                </span>
+              ) : (
+                <span className="font-mono text-muted-foreground truncate">
+                  {profile?.email ?? user.email}
+                </span>
+              )}
+              {!isBoss && (
+                <span className="inline-flex items-center gap-1 ml-auto text-gold font-bold">
+                  <Coins className="h-3.5 w-3.5" /> {profile?.credits ?? 0}
+                </span>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">Not signed in</p>
+          )}
+        </SheetHeader>
+
+        <div className="flex-1 overflow-y-auto px-3 py-4">
+          <Section title="HUBS" icon={Rocket} items={hubs} gold />
+          <Section title="Store" icon={Store} items={stores} />
+          {admin.length > 0 && <Section title="Admin" icon={ShieldCheck} items={admin} />}
+
+          <div className="mt-2">
+            <div className="flex items-center gap-2 px-1 mb-2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+              <User className="h-3.5 w-3.5" />
+              Account
+            </div>
+            {user ? (
+              <ul className="space-y-1">
+                <li>
+                  <Link to="/profile" onClick={close} className="flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-secondary">
+                    <UserCircle className="h-4 w-4 text-gold" />
+                    <span className="text-sm font-semibold">Vault & Profile</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/store" onClick={close} className="flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-secondary">
+                    <Coins className="h-4 w-4 text-gold" />
+                    <span className="text-sm font-semibold">Buy Credits</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/dashboard" onClick={close} className="flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-secondary">
+                    <Settings className="h-4 w-4 text-gold" />
+                    <span className="text-sm font-semibold">Settings</span>
+                  </Link>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      close();
+                      await supabase.auth.signOut();
+                      window.location.href = "/";
+                    }}
+                    className="w-full flex items-center gap-3 rounded-md px-2 py-2.5 text-destructive hover:bg-destructive/10"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span className="text-sm font-semibold">Sign Out</span>
+                  </button>
+                </li>
+              </ul>
+            ) : (
+              <Link
+                to="/auth"
+                onClick={close}
+                className="flex items-center justify-center gap-2 btn-glass-blue rounded-md px-3 py-2.5 text-xs uppercase tracking-[0.25em] font-bold text-white"
+              >
+                <LogIn className="h-4 w-4" />
+                Join the Syndicate
+              </Link>
+            )}
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
