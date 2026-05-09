@@ -23,6 +23,7 @@ import { Route as JokesRouteImport } from './routes/jokes'
 import { Route as FleetRouteImport } from './routes/fleet'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConnectRouteImport } from './routes/connect'
+import { Route as CommandRouteImport } from './routes/command'
 import { Route as BattleRouteImport } from './routes/battle'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -108,6 +109,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const ConnectRoute = ConnectRouteImport.update({
   id: '/connect',
   path: '/connect',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommandRoute = CommandRouteImport.update({
+  id: '/command',
+  path: '/command',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BattleRoute = BattleRouteImport.update({
@@ -199,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/battle': typeof BattleRoute
+  '/command': typeof CommandRoute
   '/connect': typeof ConnectRoute
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
@@ -231,6 +238,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/battle': typeof BattleRoute
+  '/command': typeof CommandRoute
   '/connect': typeof ConnectRoute
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
@@ -264,6 +272,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/battle': typeof BattleRoute
+  '/command': typeof CommandRoute
   '/connect': typeof ConnectRoute
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
@@ -298,6 +307,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/battle'
+    | '/command'
     | '/connect'
     | '/dashboard'
     | '/fleet'
@@ -330,6 +340,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/battle'
+    | '/command'
     | '/connect'
     | '/dashboard'
     | '/fleet'
@@ -362,6 +373,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/battle'
+    | '/command'
     | '/connect'
     | '/dashboard'
     | '/fleet'
@@ -395,6 +407,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   BattleRoute: typeof BattleRoute
+  CommandRoute: typeof CommandRoute
   ConnectRoute: typeof ConnectRoute
   DashboardRoute: typeof DashboardRoute
   FleetRoute: typeof FleetRoute
@@ -520,6 +533,13 @@ declare module '@tanstack/react-router' {
       path: '/connect'
       fullPath: '/connect'
       preLoaderRoute: typeof ConnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/command': {
+      id: '/command'
+      path: '/command'
+      fullPath: '/command'
+      preLoaderRoute: typeof CommandRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/battle': {
@@ -652,6 +672,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   BattleRoute: BattleRoute,
+  CommandRoute: CommandRoute,
   ConnectRoute: ConnectRoute,
   DashboardRoute: DashboardRoute,
   FleetRoute: FleetRoute,

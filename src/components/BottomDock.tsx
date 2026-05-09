@@ -1,9 +1,10 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Radio, LineChart, Sparkles, Crown } from "lucide-react";
+import { Home, Radio, LineChart, Sparkles, Crown, Gauge } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 const ITEMS = [
   { to: "/", label: "Home", icon: Home },
+  { to: "/command", label: "Command", icon: Gauge },
   { to: "/trade", label: "Trade", icon: LineChart },
   { to: "/syndicate", label: "Syndicate", icon: Radio },
   { to: "/store", label: "Store", icon: Sparkles },
@@ -28,7 +29,7 @@ export function BottomDock() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className="mx-2 mb-2 rounded-2xl border border-white/10 bg-black/70 px-1 py-1 backdrop-blur-xl shadow-[0_-12px_40px_-20px_rgba(0,0,0,0.9)]">
-        <ul className="grid grid-cols-5">
+        <ul className={isBoss ? "grid grid-cols-6" : "grid grid-cols-5"}>
           {items.map(({ to, label, icon: Icon }) => {
             const active =
               to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(to + "/");
