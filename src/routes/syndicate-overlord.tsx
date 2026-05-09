@@ -4,7 +4,7 @@ import {
   Skull, Loader2, Search, Sparkles, Plus, Minus, Ticket, Users, Wallet, Crown, X,
   Activity, Shield, Filter, Zap, Mail, Send, Trash2, NotebookPen, Pin, PinOff, Save,
   Clock, BellRing, CheckSquare, Square,
-  Copy, Smile, Music, Wrench, Lock, Unlock, User as UserIcon, Coins,
+  Copy, Smile, Music, Wrench, Lock, Unlock, User as UserIcon, Coins, Flame,
   RefreshCw, Download, FileDown, Power, Eraser, Rocket, Star,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -29,7 +29,7 @@ import { PassShareCardPanel } from "@/components/overlord/PassShareCardPanel";
 
 const RANKS = ["prospect", "enforcer", "vip", "boss"] as const;
 type Rank = typeof RANKS[number];
-type Flags = { jokes: boolean; music: boolean; tools: boolean };
+type Flags = { jokes: boolean; music: boolean; tools: boolean; swearing: boolean };
 type Row = {
   id: string; email: string; status: "free" | "vip"; credits: number;
   rank: Rank; feature_flags: Flags; display_name: string | null; created_at: string;
