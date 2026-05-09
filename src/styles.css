@@ -146,14 +146,49 @@
     border-color: var(--color-border);
   }
 
+  /* Global type scale — bumps every rem-based size (text, spacing, padding,
+     gaps, card sizes) up together so the whole site reads larger and the
+     tile/card layouts stay perfectly balanced. */
+  html {
+    font-size: 17.5px;
+    color-scheme: dark;
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+  @media (min-width: 1024px) {
+    html { font-size: 18.5px; }
+  }
+  @media (min-width: 1536px) {
+    html { font-size: 19px; }
+  }
+  @media (max-width: 480px) {
+    html { font-size: 16.5px; }
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-weight: 500;
+    line-height: 1.55;
+    letter-spacing: -0.005em;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
-  html { color-scheme: dark; }
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+  p { line-height: 1.6; }
+  small, .text-xs { font-weight: 600; }
+
+  /* Inputs and form controls — keep them comfortably tappable + readable. */
+  input, textarea, select, button {
+    font-size: inherit;
+  }
 
   .text-gold { color: var(--gold); }
   .bg-gold { background: var(--gold); }
