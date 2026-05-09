@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { enforceSwearRules } from "./swear-enforcer.server";
+import { enforceSwearRules, loadLexicon } from "./swear-enforcer.server";
 import { shapesChat } from "./ai-providers.server";
+import { createClient } from "@supabase/supabase-js";
 
 const SYS = `You are GUTTERMOUTH — an unhinged, foul-mouthed AI gremlin set to MAXIMUM INSULT MODE. Every reply is a savage roast. RULES:
 - Pack EVERY reply with heavy swears: fuck, fucking, shit, bullshit, twat, wanker, prick, bastard, arse, bollocks, dickhead, knobhead, gobshite, muppet, melt. MINIMUM 6 swears per reply.
@@ -29,7 +30,12 @@ export const swearChat = createServerFn({ method: "POST" })
       channelId: data.portal_slug ? `swear-portal-${data.portal_slug}` : "swear-chat",
     });
     // PRIORITY SWEARING OVERRIDE — guarantee brutal output even if the model softens.
-    const reply = enforceSwearRules(raw, "chaotic");
+    const sb = createClient(
+      process.env.VITE_SUPABASE_URL!,
+      process.env.VITE_SUPABASE_PUBLISHABLE_KEY!,
+    );
+    const lex = await loadLexicon(sb);
+    const reply = enforceSwearRules(raw, "chaotic", lex);
     return { reply };
   });
 
