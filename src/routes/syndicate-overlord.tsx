@@ -5,6 +5,7 @@ import {
   Activity, Shield, Filter, Zap, Mail, Send, Trash2, NotebookPen, Pin, PinOff, Save,
   Clock, BellRing, CheckSquare, Square,
   Copy, Smile, Music, Wrench, Lock, Unlock, User as UserIcon, Coins,
+  RefreshCw, Download, FileDown, Power, Eraser, Rocket, Star,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -191,25 +192,119 @@ function OverlordPage() {
         {/* Tabbed control surface */}
         <Tabs defaultValue="users" className="w-full">
           <TabsList className="bg-transparent border-0 p-0 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 h-auto w-full">
-            {[
-              { v: "users", icon: Users, label: "Users", color: "emerald" },
-              { v: "notes", icon: NotebookPen, label: "Private Notes", color: "amber" },
-              { v: "preload", icon: Mail, label: "Pre-load Credits", color: "cyan" },
-              { v: "codes", icon: Ticket, label: "Redeem Codes", color: "fuchsia" },
-              { v: "passes", icon: Crown, label: "VIP Passes", color: "yellow" },
-              { v: "resellers", icon: Wallet, label: "Resellers", color: "pink" },
-              { v: "share", icon: Sparkles, label: "Share Card", color: "violet" },
-            ].map(({ v, icon: Icon, label }) => (
-              <TabsTrigger
-                key={v}
-                value={v}
-                className="group flex flex-col items-center justify-center gap-2 h-28 rounded-xl border-2 border-emerald-800/40 bg-black/60 backdrop-blur text-emerald-300 font-black uppercase tracking-wider text-base sm:text-lg shadow-lg transition-all hover:border-cyan-500/60 hover:bg-emerald-900/20 data-[state=active]:border-cyan-400 data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-200 data-[state=active]:shadow-[0_0_30px_-5px] data-[state=active]:shadow-cyan-500/50 data-[state=active]:scale-[1.02]"
-              >
-                <Icon className="h-8 w-8 sm:h-10 sm:w-10 stroke-[2.5]" />
-                <span className="text-center leading-tight px-1">{label}</span>
-              </TabsTrigger>
+            {([
+              {
+                v: "users", icon: Users, label: "Users",
+                actions: [
+                  { icon: RefreshCw, label: "Refresh", onClick: refreshUsers },
+                  { icon: Star, label: "Select VIPs", onClick: () => setSelected(new Set(rows.filter(r => r.rank === "vip").map(r => r.id))) },
+                  { icon: Eraser, label: "Clear filters", onClick: () => { setQ(""); setRankFilter("all"); setSelected(new Set()); } },
+                ],
+              },
+              {
+                v: "notes", icon: NotebookPen, label: "Private Notes",
+                actions: [{ icon: Plus, label: "New note", onClick: () => window.dispatchEvent(new CustomEvent("boss:new-note")) }],
+              },
+              {
+                v: "preload", icon: Mail, label: "Pre-load Credits",
+                actions: [{ icon: Rocket, label: "Quick grant", onClick: () => window.dispatchEvent(new CustomEvent("boss:focus-preload")) }],
+              },
+              {
+                v: "codes", icon: Ticket, label: "Redeem Codes",
+                actions: [{ icon: Sparkles, label: "Quick code", onClick: () => window.dispatchEvent(new CustomEvent("boss:focus-codes")) }],
+              },
+              {
+                v: "passes", icon: Crown, label: "VIP Passes",
+                actions: [{ icon: Plus, label: "Grant pass", onClick: () => window.dispatchEvent(new CustomEvent("boss:focus-passes")) }],
+              },
+              {
+                v: "resellers", icon: Wallet, label: "Resellers",
+                actions: [{ icon: Plus, label: "New reseller", onClick: () => window.dispatchEvent(new CustomEvent("boss:focus-resellers")) }],
+              },
+              {
+                v: "share", icon: Sparkles, label: "Share Card",
+                actions: [],
+              },
+            ] as Array<{ v: string; icon: any; label: string; actions: Array<{ icon: any; label: string; onClick: () => void }> }>).map(({ v, icon: Icon, label, actions }) => (
+              <div key={v} className="relative group">
+                <TabsTrigger
+                  value={v}
+                  className="w-full flex flex-col items-center justify-center gap-2 h-28 rounded-xl border-2 border-emerald-800/40 bg-black/60 backdrop-blur text-emerald-300 font-black uppercase tracking-wider text-base sm:text-lg shadow-lg transition-all hover:border-cyan-500/60 hover:bg-emerald-900/20 data-[state=active]:border-cyan-400 data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-200 data-[state=active]:shadow-[0_0_30px_-5px] data-[state=active]:shadow-cyan-500/50 data-[state=active]:scale-[1.02]"
+                >
+                  <Icon className="h-8 w-8 sm:h-10 sm:w-10 stroke-[2.5]" />
+                  <span className="text-center leading-tight px-1">{label}</span>
+                </TabsTrigger>
+                {actions.length > 0 && (
+                  <div className="pointer-events-none absolute inset-x-1 bottom-1 flex flex-wrap items-center justify-center gap-1 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-150 z-10">
+                    {actions.map((a, i) => (
+                      <button
+                        key={i}
+                        onClick={(e) => { e.stopPropagation(); e.preventDefault(); a.onClick(); }}
+                        title={a.label}
+                        className="px-2 py-1 rounded-md bg-cyan-500 hover:bg-cyan-400 text-black font-black text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-lg shadow-cyan-500/40"
+                      >
+                        <a.icon className="h-3 w-3" />
+                        {a.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </TabsList>
+
+          {/* Power Action tiles — quick launches that don't change tab */}
+          <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              {
+                icon: RefreshCw, label: "Refresh All", tint: "emerald",
+                onClick: () => { refreshUsers(); toast.success("Refreshed all data"); },
+              },
+              {
+                icon: FileDown, label: "Export CSV", tint: "cyan",
+                onClick: () => {
+                  const csv = [
+                    ["email","display_name","rank","status","credits","jokes","music","tools","created_at"].join(","),
+                    ...rows.map(r => [
+                      r.email, r.display_name ?? "", r.rank, r.status, r.credits,
+                      r.feature_flags.jokes, r.feature_flags.music, r.feature_flags.tools, r.created_at,
+                    ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")),
+                  ].join("\n");
+                  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+                  const a = document.createElement("a");
+                  a.href = url; a.download = `users-${Date.now()}.csv`; a.click();
+                  URL.revokeObjectURL(url);
+                  toast.success(`Exported ${rows.length} users`);
+                },
+              },
+              {
+                icon: Copy, label: "Copy Emails", tint: "violet",
+                onClick: async () => {
+                  const list = (filtered.length ? filtered : rows).map(r => r.email).join("\n");
+                  await navigator.clipboard.writeText(list);
+                  toast.success(`Copied ${(filtered.length ? filtered : rows).length} emails`);
+                },
+              },
+              {
+                icon: Power, label: "Clear Selection", tint: "rose",
+                onClick: () => { setSelected(new Set()); toast.success("Selection cleared"); },
+              },
+            ].map(({ icon: Icon, label, tint, onClick }) => (
+              <button
+                key={label}
+                onClick={onClick}
+                className={`flex flex-col items-center justify-center gap-2 h-24 rounded-xl border-2 bg-black/60 backdrop-blur font-black uppercase tracking-wider text-sm sm:text-base shadow-lg transition-all hover:scale-[1.03] active:scale-95 ${
+                  tint === "emerald" ? "border-emerald-700/50 text-emerald-300 hover:border-emerald-400 hover:shadow-emerald-500/40 hover:shadow-[0_0_25px_-5px]" :
+                  tint === "cyan" ? "border-cyan-700/50 text-cyan-300 hover:border-cyan-400 hover:shadow-cyan-500/40 hover:shadow-[0_0_25px_-5px]" :
+                  tint === "violet" ? "border-violet-700/50 text-violet-300 hover:border-violet-400 hover:shadow-violet-500/40 hover:shadow-[0_0_25px_-5px]" :
+                  "border-rose-700/50 text-rose-300 hover:border-rose-400 hover:shadow-rose-500/40 hover:shadow-[0_0_25px_-5px]"
+                }`}
+              >
+                <Icon className="h-7 w-7 sm:h-8 sm:w-8 stroke-[2.5]" />
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
 
           {/* USERS */}
           <TabsContent value="users" className="mt-4">
