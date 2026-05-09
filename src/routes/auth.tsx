@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { Mail, Lock, Loader2, Send, Wand2 } from "lucide-react";
+import { Mail, Lock, Loader2, Send, Wand2, Coins, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,7 @@ function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [passToken, setPassToken] = useState<string | null>(null);
   const [remember, setRememberState] = useState<boolean>(true);
+  const [signedInDest, setSignedInDest] = useState<string | null>(null);
 
   useEffect(() => { setRememberState(getRemember()); }, []);
 
@@ -115,10 +116,16 @@ function AuthPage() {
           });
         }
       } catch { /* ignore */ }
-      tryClaim().finally(() => navigate({ to: dest as never }));
+      // Surface the live credit balance on this screen for ~2.2s before
+      // redirecting, so members can see what they have to spend.
+      setSignedInDest(dest);
+      tryClaim().finally(() => {
+        const t = setTimeout(() => navigate({ to: dest as never }), 2200);
+        return () => clearTimeout(t);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, profile?.credits]);
+  }, [user]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -146,7 +153,9 @@ function AuthPage() {
         setRemember(remember);
         if (remember) markTabSession(); else clearTabSession();
         toast.success("Locked in. Frequency unlocked.");
-        navigate({ to: consumeRedirect() as never });
+        // Defer navigation to the signed-in confirmation screen below
+        // (rendered via the user/profile effect) so the credit balance
+        // is visible before redirect.
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
@@ -212,6 +221,46 @@ function AuthPage() {
           <span className="font-[Montserrat] font-black text-2xl tracking-tight text-metallic">0G-PORTAL</span>
         </Link>
 
+        {user && signedInDest ? (
+          <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-[0_0_60px_-10px_oklch(0.72_0.22_245/0.4)] space-y-5 text-center">
+            <header className="space-y-1">
+              <h1 className="text-2xl font-bold text-metallic">Welcome back</h1>
+              <p className="text-sm text-muted-foreground truncate">
+                {user.email}
+              </p>
+            </header>
+
+            <div className="rounded-xl border border-amber-400/40 bg-gradient-to-br from-amber-500/15 to-amber-600/5 px-4 py-5 space-y-1">
+              <div className="flex items-center justify-center gap-2 text-[10px] uppercase tracking-[0.3em] text-amber-300/90 font-bold">
+                <Coins className="h-3.5 w-3.5" />
+                Wallet balance
+              </div>
+              <div className="flex items-baseline justify-center gap-1.5">
+                <span className="text-4xl font-black text-amber-200 tabular-nums">
+                  {profile?.credits ?? "—"}
+                </span>
+                <span className="text-sm font-bold uppercase tracking-widest text-amber-300/80">
+                  credits
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Spend them on any portal — no card needed.
+              </p>
+            </div>
+
+            <Button
+              type="button"
+              onClick={() => navigate({ to: signedInDest as never })}
+              className="btn-glass-blue w-full h-12 text-white font-bold uppercase tracking-[0.25em]"
+            >
+              Continue
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+            <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+              Redirecting…
+            </p>
+          </div>
+        ) : (
         <div className="rounded-2xl border border-border bg-card p-5 sm:p-8 shadow-[0_0_60px_-10px_oklch(0.72_0.22_245/0.4)] space-y-6">
           <header className="text-center space-y-1">
             <h1 className="text-2xl font-bold text-metallic">Join the Syndicate</h1>
@@ -348,6 +397,7 @@ function AuthPage() {
             Continue in Telegram
           </Button>
         </div>
+        )}
       </div>
     </main>
   );
