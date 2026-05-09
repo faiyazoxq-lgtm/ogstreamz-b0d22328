@@ -10,9 +10,12 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
+import { Checkbox } from "@/components/ui/checkbox";
+import { getRemember, setRemember, markTabSession, clearTabSession } from "@/lib/remember-session";
 
 const DISMISS_KEY = "welcome_auth_dismissed_at";
-const DISMISS_TTL_MS = 1000 * 60 * 60 * 12; // 12h
+const DISMISS_TTL_REMEMBER_MS = 1000 * 60 * 60 * 24 * 30; // 30d
+const DISMISS_TTL_TAB_MS = 1000 * 60 * 60 * 12; // 12h
 
 export function WelcomeAuthPrompt() {
   const { user, loading: authLoading } = useAuth();
@@ -22,11 +25,15 @@ export function WelcomeAuthPrompt() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [remember, setRememberState] = useState<boolean>(true);
+
+  useEffect(() => { setRememberState(getRemember()); }, []);
 
   useEffect(() => {
     if (authLoading || user) return;
     const at = Number(localStorage.getItem(DISMISS_KEY) || 0);
-    if (Date.now() - at > DISMISS_TTL_MS) {
+    const ttl = getRemember() ? DISMISS_TTL_REMEMBER_MS : DISMISS_TTL_TAB_MS;
+    if (Date.now() - at > ttl) {
       const t = setTimeout(() => setOpen(true), 600);
       return () => clearTimeout(t);
     }
@@ -56,6 +63,8 @@ export function WelcomeAuthPrompt() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        setRemember(remember);
+        if (remember) markTabSession(); else clearTabSession();
         toast.success("Welcome back.");
         setOpen(false);
       }
@@ -216,13 +225,22 @@ export function WelcomeAuthPrompt() {
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : mode === "signup" ? "Create Account" : "Sign In"}
               </Button>
               {mode === "login" && (
-                <Link
-                  to="/forgot-password"
-                  onClick={() => setOpen(false)}
-                  className="block text-center text-[11px] text-muted-foreground hover:text-foreground"
-                >
-                  Forgot password?
-                </Link>
+                <div className="flex items-center justify-between text-[11px]">
+                  <label className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground">
+                    <Checkbox
+                      checked={remember}
+                      onCheckedChange={(v) => setRememberState(v === true)}
+                    />
+                    Remember me
+                  </label>
+                  <Link
+                    to="/forgot-password"
+                    onClick={() => setOpen(false)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
               )}
             </form>
           </Tabs>

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { promoteBossIfNeeded } from "@/lib/boss.functions";
+import { getRemember, hasTabSession, markTabSession, clearTabSession } from "@/lib/remember-session";
 
 export type SyndicateRank = "prospect" | "enforcer" | "vip" | "boss";
 export type FeatureFlags = { jokes: boolean; music: boolean; tools: boolean; swearing: boolean };
@@ -58,15 +59,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
+        if (_event === "SIGNED_IN") markTabSession();
         // defer fetch to avoid recursive auth state callbacks
         setTimeout(() => loadExtras(s.user.id), 0);
       } else {
+        clearTabSession();
         setProfile(null);
         setIsAdmin(false);
       }
     });
 
     supabase.auth.getSession().then(({ data: { session: s } }) => {
+      // Enforce "Remember me" = off: if no tab marker exists for this
+      // browser tab, the previous session was tab-only — sign out now.
+      if (s?.user && !getRemember() && !hasTabSession()) {
+        supabase.auth.signOut().finally(() => setLoading(false));
+        return;
+      }
+      if (s?.user) markTabSession();
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) loadExtras(s.user.id).finally(() => setLoading(false));

@@ -11,6 +11,8 @@ import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { claimSignupPass } from "@/lib/passes.functions";
+import { Checkbox } from "@/components/ui/checkbox";
+import { getRemember, setRemember, markTabSession, clearTabSession } from "@/lib/remember-session";
 import logo from "@/assets/logo.jpg";
 
 export const Route = createFileRoute("/auth")({
@@ -32,6 +34,9 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [passToken, setPassToken] = useState<string | null>(null);
+  const [remember, setRememberState] = useState<boolean>(true);
+
+  useEffect(() => { setRememberState(getRemember()); }, []);
 
   // Capture ?p=TOKEN from QR / quick links and persist across signup confirm
   useEffect(() => {
@@ -91,6 +96,8 @@ function AuthPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        setRemember(remember);
+        if (remember) markTabSession(); else clearTabSession();
         toast.success("Locked in. Frequency unlocked.");
         navigate({ to: "/profile" });
       }
@@ -161,12 +168,18 @@ function AuthPage() {
                 submit={submit}
                 cta="Sign In"
               />
-              <Link
-                to="/forgot-password"
-                className="block text-center text-xs text-muted-foreground hover:text-foreground"
-              >
-                Forgot password?
-              </Link>
+              <div className="flex items-center justify-between text-xs">
+                <label className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground">
+                  <Checkbox
+                    checked={remember}
+                    onCheckedChange={(v) => setRememberState(v === true)}
+                  />
+                  Remember me
+                </label>
+                <Link to="/forgot-password" className="text-muted-foreground hover:text-foreground">
+                  Forgot password?
+                </Link>
+              </div>
             </TabsContent>
             <TabsContent value="signup" className="space-y-4">
               <AuthForm
