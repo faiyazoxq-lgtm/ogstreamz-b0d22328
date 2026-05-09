@@ -7,6 +7,7 @@ import {
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.jpg";
+import { TiltCard } from "@/components/TiltCard";
 
 const ICONS: Record<string, any> = {
   Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
@@ -97,19 +98,23 @@ function Index() {
 
       <section className="relative max-w-7xl mx-auto px-5 sm:px-8 pb-28 grid gap-6 md:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {portals.map(({ to, title, desc, Icon }) => (
-          <Link
+          <TiltCard
             key={to}
+            className="group relative overflow-hidden rounded-2xl"
+          >
+          <Link
             to={to}
-            className="group relative overflow-hidden rounded-2xl border border-border bg-card p-8 sm:p-10 transition-all duration-500 hover:-translate-y-1 animate-pulse-gold hover:shadow-[0_0_80px_-10px_oklch(0.72_0.22_245_/_0.8)] hover:border-[oklch(0.72_0.22_245/0.7)]"
+            className="block relative overflow-hidden rounded-2xl border border-border bg-card p-8 sm:p-10 transition-all duration-500 hover:-translate-y-1 animate-pulse-gold hover:shadow-[0_0_80px_-10px_oklch(0.72_0.22_245_/_0.8)] hover:border-[oklch(0.72_0.22_245/0.7)]"
+            style={{ transform: "translateZ(40px)" }}
           >
             <div className="absolute -inset-px rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
               style={{ background: "radial-gradient(500px circle at 50% 0%, oklch(0.72 0.22 245 / 0.28), transparent 60%)" }}
             />
             <div className="flex items-center justify-between">
-              <div className="h-12 w-12 rounded-xl bg-secondary flex items-center justify-center text-gold transition-colors group-hover:shadow-[0_0_25px_oklch(0.72_0.22_245/0.7)]">
-                <Icon className="h-6 w-6" />
+              <div className="h-12 w-12 rounded-xl bg-secondary flex items-center justify-center transition-colors group-hover:shadow-[0_0_25px_oklch(0.72_0.22_245/0.7)]">
+                <Icon className="h-6 w-6 neon-icon" />
               </div>
-              <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:text-[oklch(0.85_0.18_235)] transition-colors" />
+              <ArrowUpRight className="h-5 w-5 neon-icon" />
             </div>
             <h2 className="mt-10 font-[Montserrat] font-black text-3xl sm:text-4xl tracking-tight text-metallic">
               {title}
@@ -120,6 +125,7 @@ function Index() {
               <ArrowUpRight className="h-3.5 w-3.5" />
             </div>
           </Link>
+          </TiltCard>
         ))}
         {customHubs.map((h) => {
           const Icon = ICONS[h.icon] ?? Sparkles;

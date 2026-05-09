@@ -394,6 +394,8 @@
   --mood-accent-soft: #ffd16633;
   --mood-accent-strong: #ffe18a;
   --mood-glow: 0 0 0 1px #ffd16640, 0 18px 60px -32px #ffd166cc;
+  /* Syndicate Glow — drives neon outlines, sidebar icons, table hovers */
+  --syndicate-glow: #00F2FF;
 }
 
 html[data-mood="og"] {
@@ -401,14 +403,15 @@ html[data-mood="og"] {
   --mood-accent-soft: #ff2e5530;
   --mood-accent-strong: #ff7591;
   --mood-glow: 0 0 0 1px #ff2e5550, 0 22px 70px -28px #ff2e55cc;
+  --syndicate-glow: #FF003C;
 }
 
 @layer utilities {
   .glass-obsidian {
     background:
       linear-gradient(160deg, rgba(20, 20, 26, 0.72), rgba(8, 8, 12, 0.82));
-    backdrop-filter: blur(22px) saturate(1.4);
-    -webkit-backdrop-filter: blur(22px) saturate(1.4);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
     border: 1px solid var(--mood-accent-soft);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.05),
@@ -419,10 +422,53 @@ html[data-mood="og"] {
   .glass-obsidian-strong {
     background:
       linear-gradient(160deg, rgba(24, 24, 32, 0.8), rgba(6, 6, 10, 0.92));
-    backdrop-filter: blur(28px) saturate(1.5);
-    -webkit-backdrop-filter: blur(28px) saturate(1.5);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
     border: 1px solid var(--mood-accent);
     box-shadow: var(--mood-glow);
+  }
+
+  /* Neon-Monoline icon — 1.25px stroke, glowing in current syndicate color */
+  .neon-icon {
+    color: var(--syndicate-glow);
+    stroke-width: 1.25;
+    filter:
+      drop-shadow(0 0 4px color-mix(in srgb, var(--syndicate-glow) 70%, transparent))
+      drop-shadow(0 0 12px color-mix(in srgb, var(--syndicate-glow) 35%, transparent));
+    transition: filter 0.25s ease, transform 0.25s ease;
+  }
+  .neon-icon:hover {
+    transform: translateY(-1px);
+    filter:
+      drop-shadow(0 0 6px var(--syndicate-glow))
+      drop-shadow(0 0 18px color-mix(in srgb, var(--syndicate-glow) 55%, transparent));
+  }
+
+  /* Syndicate data tables — zebra + glowing row highlight on hover */
+  .table-syndicate { width: 100%; border-collapse: separate; border-spacing: 0; }
+  .table-syndicate thead th {
+    text-align: left;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: rgba(255,255,255,0.55);
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .table-syndicate tbody td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.88);
+    transition: background 0.2s ease, box-shadow 0.25s ease;
+  }
+  .table-syndicate tbody tr:nth-child(odd) td {
+    background: rgba(255,255,255,0.05);
+  }
+  .table-syndicate tbody tr:hover td {
+    background: color-mix(in srgb, var(--syndicate-glow) 10%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--syndicate-glow) 35%, transparent);
+    color: #fff;
   }
 
   .syndicate-header {
