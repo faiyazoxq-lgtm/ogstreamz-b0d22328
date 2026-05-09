@@ -1,8 +1,25 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Crown, Loader2, Plus, RotateCcw, Save, X, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Crown, Loader2, Plus, RotateCcw, Save, X, ShieldAlert, GripVertical } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useAuth } from "@/hooks/use-auth";
 import { getLexicon, setLexiconCategory, resetLexiconCategory } from "@/lib/lexicon.functions";
 
@@ -37,6 +54,53 @@ const CATS: Array<{
 
 type Lex = Record<Cat, string[]>;
 
+function SortableTag({
+  id,
+  item,
+  cat,
+  tint,
+  onRemove,
+}: {
+  id: string;
+  item: string;
+  cat: Cat;
+  tint: string;
+  onRemove: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    borderColor: `${tint}66`,
+    background: `${tint}14`,
+    color: "rgba(255,255,255,0.9)",
+    fontFamily: cat === "refusal_patterns" ? "ui-monospace, monospace" : undefined,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
+  return (
+    <span
+      ref={setNodeRef}
+      style={style}
+      className="inline-flex items-center gap-1 rounded-full border pl-1 pr-2.5 py-1 text-[11px] font-medium touch-none"
+    >
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        aria-label="Drag to reorder"
+        className="cursor-grab active:cursor-grabbing opacity-50 hover:opacity-90 px-0.5"
+      >
+        <GripVertical className="h-3 w-3" />
+      </button>
+      <span className="max-w-[420px] truncate" title={item}>{item}</span>
+      <button onClick={onRemove} aria-label={`Remove ${item}`} className="opacity-60 hover:opacity-100">
+        <X className="h-3 w-3" />
+      </button>
+    </span>
+  );
+}
+
 function LexiconPage() {
   const { user, profile, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
@@ -45,6 +109,11 @@ function LexiconPage() {
   const fetchLex = useServerFn(getLexicon);
   const saveCat = useServerFn(setLexiconCategory);
   const resetCat = useServerFn(resetLexiconCategory);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   const [lex, setLex] = useState<Lex | null>(null);
   const [defaults, setDefaults] = useState<Lex | null>(null);
@@ -87,6 +156,16 @@ function LexiconPage() {
   const removeItem = (cat: Cat, idx: number) => {
     const current = lex?.[cat] ?? [];
     updateItems(cat, current.filter((_, i) => i !== idx));
+  };
+
+  const onDragEnd = (cat: Cat) => (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const current = lex?.[cat] ?? [];
+    const from = current.findIndex((_, i) => `${cat}-${i}` === active.id);
+    const to = current.findIndex((_, i) => `${cat}-${i}` === over.id);
+    if (from < 0 || to < 0) return;
+    updateItems(cat, arrayMove(current, from, to));
   };
 
   const save = async (cat: Cat) => {
@@ -195,27 +274,24 @@ function LexiconPage() {
                 <div className="mt-4 flex flex-wrap gap-1.5">
                   {items.length === 0 ? (
                     <p className="text-[12px] text-white/40 italic">List is empty — falls back to built-in defaults at runtime.</p>
-                  ) : items.map((item, i) => (
-                    <span
-                      key={`${c.key}-${i}`}
-                      className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium"
-                      style={{
-                        borderColor: `${c.tint}66`,
-                        background: `${c.tint}14`,
-                        color: "rgba(255,255,255,0.9)",
-                        fontFamily: c.key === "refusal_patterns" ? "ui-monospace, monospace" : undefined,
-                      }}
-                    >
-                      <span className="max-w-[420px] truncate" title={item}>{item}</span>
-                      <button
-                        onClick={() => removeItem(c.key, i)}
-                        aria-label={`Remove ${item}`}
-                        className="opacity-60 hover:opacity-100"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  ))}
+                  ) : (
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd(c.key)}>
+                      <SortableContext items={items.map((_, i) => `${c.key}-${i}`)} strategy={rectSortingStrategy}>
+                        <div className="flex flex-wrap gap-1.5 w-full">
+                          {items.map((item, i) => (
+                            <SortableTag
+                              key={`${c.key}-${i}-${item}`}
+                              id={`${c.key}-${i}`}
+                              item={item}
+                              cat={c.key}
+                              tint={c.tint}
+                              onRemove={() => removeItem(c.key, i)}
+                            />
+                          ))}
+                        </div>
+                      </SortableContext>
+                    </DndContext>
+                  )}
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-stretch gap-2">
