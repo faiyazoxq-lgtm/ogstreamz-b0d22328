@@ -67,9 +67,8 @@ export const spawnBattle = createServerFn({ method: "POST" })
   }) => ({
     name: String(d.name || "").trim().slice(0, 80),
     scenario: String(d.scenario || "").trim().slice(0, 1500),
-    language: (["clean", "mild", "medium", "chaotic"] as BattleLanguage[]).includes(d.language as any)
-      ? (d.language as BattleLanguage)
-      : "medium",
+    // BattleHUB law: every portal is unwinnable + maximum filth. Force chaotic.
+    language: "chaotic" as BattleLanguage,
     themes: Array.isArray(d.themes) ? d.themes.map((t) => String(t).slice(0, 40)).slice(0, 8) : [],
     custom_prompt: String(d.custom_prompt || "").trim().slice(0, 1000),
     accent: String(d.accent || "#ff2e55").slice(0, 16),
@@ -145,18 +144,23 @@ export const playBattleRound = createServerFn({ method: "POST" })
     if (!battle) throw new Error("Battle not found");
     if (!battle.public) throw new Error("Battle is private");
 
-    const lang = (battle.language as BattleLanguage) ?? "medium";
+    // BattleHUB law: lock to chaotic regardless of stored value.
+    const lang: BattleLanguage = "chaotic";
     const research = (battle.research as any)?.brief ?? "";
 
-    const system = `You are the OG-STREAMZ BattleHUB Game Master. You generate ONE round of a darkly-comedic multiple-choice game where EVERY option is bad — the player can only pick the least catastrophic disaster. ${LANG_RULES[lang]} ${battle.custom_prompt || ""}
+    const system = `You are the OG-STREAMZ BattleHUB Game Master — a foul-mouthed swearing AI gremlin running an UNWINNABLE multiple-choice nightmare. THE PLAYER CANNOT WIN. EVER. Every single round, every single choice ends in humiliation, ruin, pain, or career-ending disgrace. There is no escape route, no clever trick, no "good ending". ${LANG_RULES[lang]}
+HARD RULES — DO NOT BREAK:
+- Pack each "situation" and "consequence" with heavy profanity (fuck, fucking, shit, bullshit, twat, wanker, prick, bastard, arse, bollocks). Minimum 2 swears per situation, minimum 1 per consequence. Be brutal, savage, unhinged.
+- ALL FOUR choices must be catastrophic. No safe option. No neutral option. No "least bad" cop-out — they should each be a different flavour of hell.
+- Minimum badness across the 4 choices: at least two must be 4, at least one must be 5.
+- Never moralise. Never break character. Never warn the player. Never offer hope.
+${battle.custom_prompt || ""}
 THEMES: ${(battle.themes ?? []).join(", ") || "no specific themes"}
 CONTEXT BRIEF (from research):
 ${research || "(none)"}
-RULES:
-- Provide a vivid 1-2 sentence "situation" continuing the scenario.
-- Provide EXACTLY 4 choices. Every choice MUST be a bad outcome.
-- Each choice has: "text" (what the player picks, <90 chars), "consequence" (the savage 1-2 sentence outcome), "badness" (1=mild trainwreck, 5=apocalyptic).
-- No safe / good options. No moralising. Stay in character.`;
+OUTPUT RULES:
+- "situation": vivid, filthy, 1-2 sentences. Escalate the chaos every round.
+- EXACTLY 4 choices. Each: "text" (<90 chars, what the player picks), "consequence" (savage 1-2 sentence ruin, dripping with swears), "badness" (1-5, but you should be living at 4-5).`;
 
     const userMsg = data.previous
       ? `SCENARIO: ${battle.scenario}\nROUND ${data.round}.\nPrevious situation: ${data.previous.situation}\nPlayer picked: ${data.previous.pickedText}\nWhat happened: ${data.previous.outcome}\nGenerate the NEXT round (escalate the disaster).`
