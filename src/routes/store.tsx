@@ -240,10 +240,27 @@ function PackCard({ pack, isBoss, creditsPerSong, onBuy, onChanged }: {
       {isBoss ? (
         <p className="mt-1 text-xs text-muted-foreground">{pack.tagline}</p>
       ) : pack.recurring ? (
-        <div className="mt-1 text-xs text-muted-foreground space-y-1">
+        <div className="mt-1 text-xs text-muted-foreground space-y-2">
           <p className="text-white font-semibold">VIP monthly access</p>
-          <p>Unlimited Hit-Button · priority AI queue · Live Wire jokes · deep tool mode</p>
-          {pack.credits ? <p className="text-[color:var(--neon-blue-bright)]">+ {pack.credits} bonus credits each month</p> : null}
+          <ul className="space-y-1 leading-snug">
+            <li>• Unlimited Hit-Button generations</li>
+            <li>• Priority AI queue (skip the line)</li>
+            <li>• Live Wire jokes — fresh daily drops</li>
+            <li>• Deep tool mode + premium calculators</li>
+            <li>• VIP-only portals & signal channels</li>
+            <li>• No daily scan limits on TradeHUB</li>
+          </ul>
+          {pack.credits ? (
+            <div className="rounded-md border border-[color:var(--neon-blue-bright)]/40 bg-[color:var(--neon-blue-bright)]/5 px-2.5 py-2 mt-2">
+              <p className="text-[color:var(--neon-blue-bright)] font-bold">
+                + {pack.credits.toLocaleString()} bonus credits every month
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                That's ~ {creditsPerSong > 0 ? Math.floor(pack.credits / creditsPerSong) : 0} full AI songs,
+                or {pack.credits.toLocaleString()} jokes / trade scans / tool runs to spend however you want.
+              </p>
+            </div>
+          ) : null}
         </div>
       ) : pack.credits !== null ? (
         <div className="mt-1 text-xs text-muted-foreground space-y-0.5">
@@ -253,14 +270,14 @@ function PackCard({ pack, isBoss, creditsPerSong, onBuy, onChanged }: {
           </p>
           <p>~ {songs} AI song{songs === 1 ? "" : "s"} · or {pack.credits.toLocaleString()} jokes / scans / tool runs</p>
           <p className="text-[10px] text-muted-foreground/70">
-            ${(pack.amount_cents / Math.max(1, pack.credits) / 100).toFixed(3)} per credit
+            £{(pack.amount_cents / Math.max(1, pack.credits) / 100).toFixed(3)} per credit
           </p>
         </div>
       ) : (
         <p className="mt-1 text-xs text-muted-foreground">{pack.tagline}</p>
       )}
       <p className="mt-4 font-[Montserrat] font-black text-3xl text-metallic">
-        ${(pack.amount_cents / 100).toFixed(2)}
+        £{(pack.amount_cents / 100).toFixed(2)}
         {pack.recurring && <span className="text-sm text-muted-foreground font-normal">/mo</span>}
       </p>
 
@@ -343,7 +360,7 @@ function EditPackCard({ pack, onClose, onSaved }: { pack: Pack; onClose: () => v
       </div>
       <Field label="Name"><Input value={name} onChange={(e) => setName(e.target.value)} /></Field>
       <Field label="Tagline"><Input value={tagline} onChange={(e) => setTagline(e.target.value)} /></Field>
-      <Field label="Price (USD)"><Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} /></Field>
+      <Field label="Price (GBP)"><Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} /></Field>
       <Field label="Credits granted (blank = subscription)">
         <Input type="number" value={credits} onChange={(e) => setCredits(e.target.value)} />
       </Field>
@@ -408,7 +425,7 @@ function NewPackCard({ onCreated }: { onCreated: () => void }) {
       <Field label="Stripe price_id"><Input value={priceId} onChange={(e) => setPriceId(e.target.value)} placeholder="mega_pack_200" /></Field>
       <Field label="Name"><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Mega Pack" /></Field>
       <Field label="Tagline"><Input value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="200 Portal Credits" /></Field>
-      <Field label="Price (USD)"><Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} /></Field>
+      <Field label="Price (GBP)"><Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} /></Field>
       <Field label="Credits granted (blank = subscription)">
         <Input type="number" value={credits} onChange={(e) => setCredits(e.target.value)} />
       </Field>
