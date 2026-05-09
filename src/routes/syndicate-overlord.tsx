@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Skull, Loader2, Search, Sparkles, Plus, Minus, Ticket, Users, Wallet, Crown, X,
-  Activity, Shield, Filter, Zap, ChevronDown,
+  Activity, Shield, Filter, Zap, ChevronDown, Mail, Send, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   adjustCredits, setRank, setFeatureFlags, createRedeemCode,
   grantVipPass, revokeVipPass, listVipPasses,
+  grantByEmail, listPendingGrants, deletePendingGrant,
 } from "@/lib/overlord.functions";
 import { bossListResellers, bossCreateReseller, bossTopupReseller } from "@/lib/reseller.functions";
 import { PassShareCardPanel } from "@/components/overlord/PassShareCardPanel";
@@ -124,6 +125,9 @@ function OverlordPage() {
             <TabsTrigger value="users" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
               <Users className="h-3 w-3 mr-1.5" /> Users
             </TabsTrigger>
+            <TabsTrigger value="preload" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
+              <Mail className="h-3 w-3 mr-1.5" /> Pre-Load
+            </TabsTrigger>
             <TabsTrigger value="codes" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
               <Ticket className="h-3 w-3 mr-1.5" /> Redeem
             </TabsTrigger>
@@ -187,6 +191,7 @@ function OverlordPage() {
           </TabsContent>
 
           <TabsContent value="codes" className="mt-4"><RedeemCodePanel /></TabsContent>
+          <TabsContent value="preload" className="mt-4"><PreLoadPanel onApplied={refreshUsers} /></TabsContent>
           <TabsContent value="passes" className="mt-4"><VipPassPanel rows={rows} /></TabsContent>
           <TabsContent value="resellers" className="mt-4"><ResellerAdminPanel rows={rows} /></TabsContent>
           <TabsContent value="share" className="mt-4"><PassShareCardPanel /></TabsContent>
@@ -480,6 +485,148 @@ function ResellerAdminPanel({ rows }: { rows: Row[] }) {
               <Button size="sm" onClick={() => adjust(r.user_id, 100)} className="h-7 bg-emerald-700 hover:bg-emerald-600 text-black">+100</Button>
               <Button size="sm" onClick={() => adjust(r.user_id, -100)} className="h-7 bg-rose-700 hover:bg-rose-600 text-white">-100</Button>
             </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PreLoadPanel({ onApplied }: { onApplied: () => void }) {
+  const grant = useServerFn(grantByEmail);
+  const list = useServerFn(listPendingGrants);
+  const remove = useServerFn(deletePendingGrant);
+  const [email, setEmail] = useState("");
+  const [credits, setCredits] = useState("50");
+  const [grantRank, setGrantRank] = useState<Rank | "">("");
+  const [notes, setNotes] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<any[]>([]);
+  const [showClaimed, setShowClaimed] = useState(false);
+
+  const refresh = async () => {
+    try { const r = await list(); setPending(r.grants ?? []); }
+    catch (e: any) {
+      let msg = e?.message;
+      if (e instanceof Response) { try { msg = await e.text(); } catch { msg = `HTTP ${e.status}`; } }
+      toast.error(msg ?? "Failed to load grants");
+    }
+  };
+  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
+
+  const submit = async () => {
+    setBusy(true);
+    try {
+      const r = await grant({
+        data: {
+          email,
+          credits: Number(credits) || 0,
+          grantRank: grantRank || null,
+          notes: notes || undefined,
+        },
+      });
+      if (r.status === "applied") {
+        toast.success(`Applied · ${r.credits ?? 0} credits added to ${email}`);
+        onApplied();
+      } else {
+        toast.success(`Queued · ${email} will receive on signup`);
+      }
+      setEmail(""); setNotes("");
+      refresh();
+    } catch (e: any) {
+      let msg = e?.message;
+      if (e instanceof Response) { try { msg = await e.text(); } catch { msg = `HTTP ${e.status}`; } }
+      toast.error(msg ?? "Grant failed");
+    } finally { setBusy(false); }
+  };
+
+  const cancel = async (id: string) => {
+    try { await remove({ data: { id } }); toast.success("Removed"); refresh(); }
+    catch (e: any) {
+      let msg = e?.message;
+      if (e instanceof Response) { try { msg = await e.text(); } catch { msg = `HTTP ${e.status}`; } }
+      toast.error(msg ?? "Failed");
+    }
+  };
+
+  const visible = pending.filter((g) => showClaimed || !g.claimed_at);
+
+  return (
+    <section className="rounded-xl border border-cyan-700/30 bg-black/50 p-5 backdrop-blur">
+      <h2 className="text-xs uppercase tracking-[0.4em] text-cyan-400 mb-1 flex items-center gap-2">
+        <Mail className="h-3.5 w-3.5" /> PRE-LOAD CREDITS BY EMAIL
+      </h2>
+      <p className="text-[10px] text-emerald-700 uppercase tracking-widest mb-4">
+        // existing user → instant top-up · new email → queued, applied at signup
+      </p>
+
+      <div className="grid sm:grid-cols-6 gap-2">
+        <Input
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="email@domain.com"
+          type="email"
+          className="sm:col-span-2 bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
+        />
+        <Input
+          value={credits}
+          onChange={(e) => setCredits(e.target.value)}
+          type="number"
+          min="0"
+          placeholder="credits"
+          className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
+        />
+        <Select value={grantRank || "none"} onValueChange={(v) => setGrantRank(v === "none" ? "" : v as Rank)}>
+          <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200"><SelectValue /></SelectTrigger>
+          <SelectContent className="bg-black border-emerald-800 text-emerald-200">
+            <SelectItem value="none">no rank</SelectItem>
+            {RANKS.map((r) => <SelectItem key={r} value={r}>grant: {r}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Input
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="notes (optional)"
+          className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono"
+        />
+        <Button onClick={submit} disabled={busy || !email} className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold">
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 mr-1" />GRANT</>}
+        </Button>
+      </div>
+
+      <div className="mt-5 flex items-center justify-between text-[10px] uppercase tracking-widest text-emerald-700">
+        <span>{visible.length} grant{visible.length === 1 ? "" : "s"}</span>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <Switch checked={showClaimed} onCheckedChange={setShowClaimed} className="scale-75 data-[state=checked]:bg-cyan-500" />
+          show claimed
+        </label>
+      </div>
+
+      <div className="mt-2 divide-y divide-cyan-900/20">
+        {visible.length === 0 && <p className="text-xs text-emerald-700 py-3">// no pre-loaded grants</p>}
+        {visible.map((g) => (
+          <div key={g.id} className="flex items-center justify-between py-3 text-sm">
+            <div className="min-w-0 flex-1">
+              <p className="text-cyan-200 flex items-center gap-2 truncate">
+                {g.email}
+                <Badge variant="outline" className={g.claimed_at ? "border-emerald-700 text-emerald-300" : "border-yellow-700 text-yellow-300"}>
+                  {g.claimed_at ? "claimed" : "pending"}
+                </Badge>
+                {g.grant_rank && (
+                  <Badge variant="outline" className="border-pink-700 text-pink-300">{g.grant_rank}</Badge>
+                )}
+              </p>
+              <p className="text-[10px] text-emerald-700">
+                {g.credits}c · {new Date(g.created_at).toLocaleDateString()}
+                {g.claimed_at ? ` · claimed ${new Date(g.claimed_at).toLocaleDateString()}` : ""}
+                {g.notes ? ` · ${g.notes}` : ""}
+              </p>
+            </div>
+            {!g.claimed_at && (
+              <Button size="sm" onClick={() => cancel(g.id)} className="h-7 bg-rose-700 hover:bg-rose-600 text-white">
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            )}
           </div>
         ))}
       </div>
