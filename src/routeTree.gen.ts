@@ -23,6 +23,7 @@ import { Route as JokesRouteImport } from './routes/jokes'
 import { Route as FleetRouteImport } from './routes/fleet'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConnectRouteImport } from './routes/connect'
+import { Route as BattleRouteImport } from './routes/battle'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -32,6 +33,7 @@ import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as ApiPublicSunoWebhookRouteImport } from './routes/api/public/suno-webhook'
 import { Route as ApiPublic0gOrchestratorRouteImport } from './routes/api/public/0g-orchestrator'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -108,6 +110,11 @@ const ConnectRoute = ConnectRouteImport.update({
   path: '/connect',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BattleRoute = BattleRouteImport.update({
+  id: '/battle',
+  path: '/battle',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -153,6 +160,11 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   path: '/checkout/return',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BSlugRoute = BSlugRouteImport.update({
+  id: '/b/$slug',
+  path: '/b/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSunoWebhookRoute = ApiPublicSunoWebhookRouteImport.update({
   id: '/api/public/suno-webhook',
   path: '/api/public/suno-webhook',
@@ -186,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/battle': typeof BattleRoute
   '/connect': typeof ConnectRoute
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
@@ -200,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/tools': typeof ToolsRoute
   '/trade': typeof TradeRoute
   '/vip': typeof VipRoute
+  '/b/$slug': typeof BSlugRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -216,6 +230,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/battle': typeof BattleRoute
   '/connect': typeof ConnectRoute
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
@@ -230,6 +245,7 @@ export interface FileRoutesByTo {
   '/tools': typeof ToolsRoute
   '/trade': typeof TradeRoute
   '/vip': typeof VipRoute
+  '/b/$slug': typeof BSlugRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -247,6 +263,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/battle': typeof BattleRoute
   '/connect': typeof ConnectRoute
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
@@ -261,6 +278,7 @@ export interface FileRoutesById {
   '/tools': typeof ToolsRoute
   '/trade': typeof TradeRoute
   '/vip': typeof VipRoute
+  '/b/$slug': typeof BSlugRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -279,6 +297,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/battle'
     | '/connect'
     | '/dashboard'
     | '/fleet'
@@ -293,6 +312,7 @@ export interface FileRouteTypes {
     | '/tools'
     | '/trade'
     | '/vip'
+    | '/b/$slug'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -309,6 +329,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/battle'
     | '/connect'
     | '/dashboard'
     | '/fleet'
@@ -323,6 +344,7 @@ export interface FileRouteTypes {
     | '/tools'
     | '/trade'
     | '/vip'
+    | '/b/$slug'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -339,6 +361,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/battle'
     | '/connect'
     | '/dashboard'
     | '/fleet'
@@ -353,6 +376,7 @@ export interface FileRouteTypes {
     | '/tools'
     | '/trade'
     | '/vip'
+    | '/b/$slug'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -370,6 +394,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
+  BattleRoute: typeof BattleRoute
   ConnectRoute: typeof ConnectRoute
   DashboardRoute: typeof DashboardRoute
   FleetRoute: typeof FleetRoute
@@ -384,6 +409,7 @@ export interface RootRouteChildren {
   ToolsRoute: typeof ToolsRoute
   TradeRoute: typeof TradeRoute
   VipRoute: typeof VipRoute
+  BSlugRoute: typeof BSlugRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   MSlugRoute: typeof MSlugRoute
   PSlugRoute: typeof PSlugRoute
@@ -496,6 +522,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConnectRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/battle': {
+      id: '/battle'
+      path: '/battle'
+      fullPath: '/battle'
+      preLoaderRoute: typeof BattleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -559,6 +592,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/b/$slug': {
+      id: '/b/$slug'
+      path: '/b/$slug'
+      fullPath: '/b/$slug'
+      preLoaderRoute: typeof BSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/suno-webhook': {
       id: '/api/public/suno-webhook'
       path: '/api/public/suno-webhook'
@@ -611,6 +651,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
+  BattleRoute: BattleRoute,
   ConnectRoute: ConnectRoute,
   DashboardRoute: DashboardRoute,
   FleetRoute: FleetRoute,
@@ -625,6 +666,7 @@ const rootRouteChildren: RootRouteChildren = {
   ToolsRoute: ToolsRoute,
   TradeRoute: TradeRoute,
   VipRoute: VipRoute,
+  BSlugRoute: BSlugRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   MSlugRoute: MSlugRoute,
   PSlugRoute: PSlugRoute,
