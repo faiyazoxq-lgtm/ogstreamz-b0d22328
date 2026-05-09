@@ -11,6 +11,7 @@ import { ShieldAlert, ShieldCheck } from "lucide-react";
  */
 export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean }) {
   const [mode, setMode] = useState<"og" | "normal">("og");
+  const [intensity, setIntensityState] = useState<"mild" | "medium" | "chaotic">("medium");
   const [enabled, setEnabled] = useState(true);
   const [id, setId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -26,8 +27,10 @@ export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean
       if (!alive || !data) return;
       setId(data.id);
       setEnabled(!!data.enabled);
-      const t = (data.tuning ?? {}) as { mode?: string };
+      const t = (data.tuning ?? {}) as { mode?: string; intensity?: string };
       setMode(t.mode === "normal" ? "normal" : "og");
+      const ri = String(t.intensity ?? "medium").toLowerCase();
+      setIntensityState(ri === "mild" || ri === "chaotic" ? (ri as any) : "medium");
     })();
     return () => { alive = false; };
   }, []);
@@ -39,7 +42,7 @@ export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean
     setMode(next);
     const { error } = await supabase
       .from("hub_settings")
-      .update({ tuning: { mode: next }, updated_at: new Date().toISOString() })
+      .update({ tuning: { mode: next, intensity }, updated_at: new Date().toISOString() })
       .eq("id", id);
     setSaving(false);
     if (error) {
@@ -48,6 +51,24 @@ export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean
       return;
     }
     toast.success(`Syndicate Protocol → ${next === "og" ? "OG-MODE · ENFORCER" : "NORMAL · ANALYST"}`);
+  }
+
+  async function setIntensity(next: "mild" | "medium" | "chaotic") {
+    if (!id || saving || next === intensity) return;
+    setSaving(true);
+    const prev = intensity;
+    setIntensityState(next);
+    const { error } = await supabase
+      .from("hub_settings")
+      .update({ tuning: { mode, intensity: next }, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    setSaving(false);
+    if (error) {
+      setIntensityState(prev);
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`Swearing intensity → ${next.toUpperCase()}`);
   }
 
   async function toggleOnline(v: boolean) {
