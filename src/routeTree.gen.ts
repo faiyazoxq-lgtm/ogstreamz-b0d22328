@@ -16,11 +16,13 @@ import { Route as SyndicateOverlordRouteImport } from './routes/syndicate-overlo
 import { Route as SyndicateRouteImport } from './routes/syndicate'
 import { Route as StoreRouteImport } from './routes/store'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ResellerRouteImport } from './routes/reseller'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PortalsRouteImport } from './routes/portals'
 import { Route as MusicRouteImport } from './routes/music'
 import { Route as JokesRouteImport } from './routes/jokes'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FleetRouteImport } from './routes/fleet'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConsoleRouteImport } from './routes/console'
@@ -80,6 +82,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResellerRoute = ResellerRouteImport.update({
   id: '/reseller',
   path: '/reseller',
@@ -103,6 +110,11 @@ const MusicRoute = MusicRouteImport.update({
 const JokesRoute = JokesRouteImport.update({
   id: '/jokes',
   path: '/jokes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FleetRoute = FleetRouteImport.update({
@@ -234,11 +246,13 @@ export interface FileRoutesByFullPath {
   '/console': typeof ConsoleRoute
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/portals': typeof PortalsRoute
   '/profile': typeof ProfileRoute
   '/reseller': typeof ResellerRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/store': typeof StoreRoute
   '/syndicate': typeof SyndicateRoute
@@ -271,11 +285,13 @@ export interface FileRoutesByTo {
   '/console': typeof ConsoleRoute
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/portals': typeof PortalsRoute
   '/profile': typeof ProfileRoute
   '/reseller': typeof ResellerRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/store': typeof StoreRoute
   '/syndicate': typeof SyndicateRoute
@@ -309,11 +325,13 @@ export interface FileRoutesById {
   '/console': typeof ConsoleRoute
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/portals': typeof PortalsRoute
   '/profile': typeof ProfileRoute
   '/reseller': typeof ResellerRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/store': typeof StoreRoute
   '/syndicate': typeof SyndicateRoute
@@ -348,11 +366,13 @@ export interface FileRouteTypes {
     | '/console'
     | '/dashboard'
     | '/fleet'
+    | '/forgot-password'
     | '/jokes'
     | '/music'
     | '/portals'
     | '/profile'
     | '/reseller'
+    | '/reset-password'
     | '/settings'
     | '/store'
     | '/syndicate'
@@ -385,11 +405,13 @@ export interface FileRouteTypes {
     | '/console'
     | '/dashboard'
     | '/fleet'
+    | '/forgot-password'
     | '/jokes'
     | '/music'
     | '/portals'
     | '/profile'
     | '/reseller'
+    | '/reset-password'
     | '/settings'
     | '/store'
     | '/syndicate'
@@ -422,11 +444,13 @@ export interface FileRouteTypes {
     | '/console'
     | '/dashboard'
     | '/fleet'
+    | '/forgot-password'
     | '/jokes'
     | '/music'
     | '/portals'
     | '/profile'
     | '/reseller'
+    | '/reset-password'
     | '/settings'
     | '/store'
     | '/syndicate'
@@ -460,11 +484,13 @@ export interface RootRouteChildren {
   ConsoleRoute: typeof ConsoleRoute
   DashboardRoute: typeof DashboardRoute
   FleetRoute: typeof FleetRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   JokesRoute: typeof JokesRouteWithChildren
   MusicRoute: typeof MusicRoute
   PortalsRoute: typeof PortalsRoute
   ProfileRoute: typeof ProfileRoute
   ResellerRoute: typeof ResellerRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   StoreRoute: typeof StoreRoute
   SyndicateRoute: typeof SyndicateRoute
@@ -536,6 +562,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reseller': {
       id: '/reseller'
       path: '/reseller'
@@ -569,6 +602,13 @@ declare module '@tanstack/react-router' {
       path: '/jokes'
       fullPath: '/jokes'
       preLoaderRoute: typeof JokesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fleet': {
@@ -767,11 +807,13 @@ const rootRouteChildren: RootRouteChildren = {
   ConsoleRoute: ConsoleRoute,
   DashboardRoute: DashboardRoute,
   FleetRoute: FleetRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   JokesRoute: JokesRouteWithChildren,
   MusicRoute: MusicRoute,
   PortalsRoute: PortalsRoute,
   ProfileRoute: ProfileRoute,
   ResellerRoute: ResellerRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   StoreRoute: StoreRoute,
   SyndicateRoute: SyndicateRoute,
@@ -794,3 +836,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
