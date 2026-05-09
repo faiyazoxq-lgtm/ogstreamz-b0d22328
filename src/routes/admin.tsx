@@ -375,6 +375,171 @@ function MaintenancePanel() {
   );
 }
 
+// ─── Custom Hub Builder ───────────────────────────────────────────────
+
+const HUB_ICON_OPTIONS = [
+  "Sparkles", "Rocket", "Music2", "Smile", "Wrench", "TrendingUp",
+  "Radio", "Bot", "Brain", "Zap", "Star", "Megaphone", "Disc3",
+  "Satellite", "Radar",
+];
+
+const HUB_ACCENT_PRESETS = [
+  "#3ad6ff", "#ff00aa", "#00e08a", "#ffd166", "#a78bfa", "#ff6b6b", "#9aa0ff",
+];
+
+type CustomHub = {
+  id: string;
+  title: string;
+  tagline: string;
+  href: string;
+  icon: string;
+  accent: string;
+  sort_order: number;
+  published: boolean;
+};
+
+function CustomHubBuilderPanel() {
+  const [hubs, setHubs] = useState<CustomHub[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [title, setTitle] = useState("");
+  const [tagline, setTagline] = useState("");
+  const [href, setHref] = useState("/");
+  const [icon, setIcon] = useState("Sparkles");
+  const [accent, setAccent] = useState("#3ad6ff");
+  const [sortOrder, setSortOrder] = useState(0);
+  const [busy, setBusy] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("custom_hubs")
+      .select("*")
+      .order("sort_order", { ascending: true });
+    setLoading(false);
+    if (error) return toast.error(error.message);
+    setHubs((data ?? []) as any);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const create = async () => {
+    if (!title.trim() || !href.trim()) return toast.error("Title and link required");
+    setBusy(true);
+    const { error } = await supabase.from("custom_hubs").insert({
+      title: title.trim(),
+      tagline: tagline.trim(),
+      href: href.trim(),
+      icon, accent, sort_order: sortOrder, published: true,
+    });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Hub "${title}" published to homepage`);
+    setTitle(""); setTagline(""); setHref("/"); setIcon("Sparkles");
+    setAccent("#3ad6ff"); setSortOrder(0);
+    load();
+  };
+
+  const togglePublished = async (h: CustomHub) => {
+    const { error } = await supabase.from("custom_hubs")
+      .update({ published: !h.published }).eq("id", h.id);
+    if (error) return toast.error(error.message);
+    setHubs((xs) => xs.map((x) => x.id === h.id ? { ...x, published: !h.published } : x));
+  };
+
+  const remove = async (h: CustomHub) => {
+    if (!confirm(`Delete hub "${h.title}"?`)) return;
+    const { error } = await supabase.from("custom_hubs").delete().eq("id", h.id);
+    if (error) return toast.error(error.message);
+    setHubs((xs) => xs.filter((x) => x.id !== h.id));
+    toast.success("Hub deleted");
+  };
+
+  return (
+    <section className="rounded-2xl border bg-card p-6 space-y-5" style={{ borderColor: "#ff00aa55" }}>
+      <div className="flex items-center gap-2">
+        <Rocket className="h-5 w-5" style={{ color: "#ff00aa" }} />
+        <h2 className="font-[Montserrat] font-black text-xl text-white">Homepage Hub Builder</h2>
+        <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+          Boss · Spawn tiles on the public homepage
+        </span>
+      </div>
+
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 rounded-xl border border-border bg-black/30 p-4">
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Title</label>
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="AlphaHUB" className="mt-1" />
+        </div>
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Link / Path</label>
+          <Input value={href} onChange={(e) => setHref(e.target.value)} placeholder="/p/alpha-portal or https://…" className="mt-1 font-mono text-xs" />
+        </div>
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Sort Order</label>
+          <Input type="number" value={sortOrder} onChange={(e) => setSortOrder(parseInt(e.target.value || "0"))} className="mt-1" />
+        </div>
+        <div className="sm:col-span-2 lg:col-span-3">
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Tagline</label>
+          <Input value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="Short pitch shown under the title." className="mt-1" />
+        </div>
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Icon</label>
+          <select value={icon} onChange={(e) => setIcon(e.target.value)}
+            className="mt-1 w-full bg-background border border-border rounded px-2 py-2 text-xs font-mono">
+            {HUB_ICON_OPTIONS.map((i) => <option key={i} value={i}>{i}</option>)}
+          </select>
+        </div>
+        <div className="sm:col-span-2">
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Accent</label>
+          <div className="mt-1 flex flex-wrap gap-2 items-center">
+            {HUB_ACCENT_PRESETS.map((c) => (
+              <button key={c} type="button" onClick={() => setAccent(c)}
+                className={`h-7 w-7 rounded-full border-2 transition ${accent === c ? "scale-110" : ""}`}
+                style={{ background: c, borderColor: accent === c ? "#fff" : "transparent" }}
+                aria-label={c}
+              />
+            ))}
+            <Input value={accent} onChange={(e) => setAccent(e.target.value)}
+              className="ml-2 w-32 font-mono text-xs" />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end">
+        <Button onClick={create} disabled={busy} className="font-bold">
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Rocket className="h-4 w-4 mr-2" /> Publish Hub</>}
+        </Button>
+      </div>
+
+      <div className="border-t border-border pt-4">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-2">
+          Live Hubs ({hubs.length})
+        </p>
+        {loading && <p className="text-xs text-muted-foreground">Loading…</p>}
+        {!loading && hubs.length === 0 && <p className="text-xs text-muted-foreground">No custom hubs yet.</p>}
+        <div className="grid sm:grid-cols-2 gap-2">
+          {hubs.map((h) => (
+            <div key={h.id} className="flex items-center gap-3 rounded-lg border border-border bg-black/30 p-3">
+              <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: `${h.accent}1f`, color: h.accent, border: `1px solid ${h.accent}55` }}>
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-sm text-white truncate">{h.title}</div>
+                <div className="text-[11px] text-muted-foreground font-mono truncate">{h.href}</div>
+              </div>
+              <Switch checked={h.published} onCheckedChange={() => togglePublished(h)}
+                className="data-[state=checked]:bg-emerald-500" />
+              <Button size="icon" variant="ghost" onClick={() => remove(h)} className="h-8 w-8">
+                <Trash2 className="h-4 w-4 text-red-400" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function TradeSpawnerPanel() {
   return _TradeSpawnerPanelImpl();
 }
