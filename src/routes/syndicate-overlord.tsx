@@ -255,30 +255,25 @@ function OverlordPage() {
                 }}
               />
 
-              <div className="hidden md:grid grid-cols-12 gap-2 px-4 py-2 text-[10px] uppercase tracking-[0.3em] text-cyan-400 border-b border-emerald-800/40 bg-black/40">
-                <div className="col-span-3 flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      const allIds = filtered.map((r) => r.id);
-                      const allSelected = allIds.every((id) => selected.has(id));
-                      setSelected(allSelected ? new Set() : new Set(allIds));
-                    }}
-                    title="Select all visible"
-                    className="text-cyan-400 hover:text-cyan-200"
-                  >
-                    {filtered.length > 0 && filtered.every((r) => selected.has(r.id))
-                      ? <CheckSquare className="h-3.5 w-3.5" />
-                      : <Square className="h-3.5 w-3.5" />}
-                  </button>
-                  User
-                </div>
-                <div className="col-span-2">Rank</div>
-                <div className="col-span-2">Credits</div>
-                <div className="col-span-2">Features</div>
-                <div className="col-span-3 text-right pr-2">Quick actions</div>
+              <div className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-[0.3em] text-cyan-400 border-b border-emerald-800/40 bg-black/40">
+                <button
+                  onClick={() => {
+                    const allIds = filtered.map((r) => r.id);
+                    const allSelected = allIds.length > 0 && allIds.every((id) => selected.has(id));
+                    setSelected(allSelected ? new Set() : new Set(allIds));
+                  }}
+                  title="Select all visible"
+                  className="inline-flex items-center gap-2 text-cyan-300 hover:text-cyan-100 font-bold"
+                >
+                  {filtered.length > 0 && filtered.every((r) => selected.has(r.id))
+                    ? <CheckSquare className="h-4 w-4" />
+                    : <Square className="h-4 w-4" />}
+                  Select all visible
+                </button>
+                <span className="ml-auto text-emerald-700">Tap a card to toggle controls</span>
               </div>
 
-              <div className="max-h-[60vh] overflow-y-auto">
+              <div className="max-h-[70vh] overflow-y-auto divide-y divide-emerald-900/30">
                 {filtered.map((r) => (
                   <UserRow
                     key={r.id}
