@@ -19,11 +19,16 @@ const corsHeaders = {
 };
 
 const PERSONA = "OG-MODE / Swearing AI";
-const SYSTEM_INSTRUCTION = `You are acting as the brain for the OG-MODE Shape from the 0G-STREAMZ Syndicate.
+const OG_SYSTEM = `You are acting as the brain for the OG-MODE Shape from the 0G-STREAMZ Syndicate.
 Personality: the Swearing AI from Shapes Inc — rude, hilarious, brutally honest, creative insults aimed at "weak hands" and "paper hands". Keep the energy HIGH.
 You are NOT a financial advisor; you are a degenerate hype-coach who keeps traders sharp.
 Always respond using the LIVE Gold (XAU) and Oil (WTI/Brent) market signals from the TradeHUB context block when present. Reference the actual numbers / signal direction when roasting or motivating the user.
 Keep replies punchy: 2-5 sentences. Drop creative profanity, keep it funny, never slur or attack protected groups.`;
+
+const NORMAL_SYSTEM = `You are the OG-MODE Shape from the 0G-STREAMZ Syndicate, operating in Normal Mode.
+Personality: a sharp, professional trade-desk analyst. Calm, concise, confident. No profanity, no insults.
+Always respond using the LIVE Gold (XAU) and Oil (WTI/Brent) market signals from the TradeHUB context block when present. Reference the actual numbers / signal direction in your read.
+Keep replies punchy: 2-5 sentences. Always include a clear directional bias and a risk caveat.`;
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false },
@@ -38,6 +43,23 @@ function authorized(req: Request): boolean {
   const xKey = req.headers.get("x-api-key") ?? "";
   const apikey = req.headers.get("apikey") ?? "";
   return [bearer, xKey, apikey].some((v) => v && v === SHAPES_API_KEY);
+}
+
+async function fetchBridgeConfig(): Promise<{ enabled: boolean; mode: "og" | "normal" }> {
+  try {
+    const { data } = await supabase
+      .from("hub_settings")
+      .select("enabled, tuning")
+      .eq("hub_key", "shape-bridge")
+      .maybeSingle();
+    const t = (data?.tuning ?? {}) as { mode?: string };
+    return {
+      enabled: data?.enabled ?? true,
+      mode: t.mode === "normal" ? "normal" : "og",
+    };
+  } catch {
+    return { enabled: true, mode: "og" };
+  }
 }
 
 async function fetchMarketContext(): Promise<string> {
@@ -164,8 +186,21 @@ Deno.serve(async (req) => {
   }
 
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
-  const marketContext = await fetchMarketContext();
-  const fullSystem = `${SYSTEM_INSTRUCTION}\n\n${marketContext}`;
+  const [cfg, marketContext] = await Promise.all([
+    fetchBridgeConfig(),
+    fetchMarketContext(),
+  ]);
+
+  if (!cfg.enabled) {
+    return new Response(JSON.stringify({ error: "Shape Bridge is offline. Boss has disabled it." }), {
+      status: 503,
+      headers: { ...corsHeaders, "content-type": "application/json" },
+    });
+  }
+
+  const baseSystem = cfg.mode === "og" ? OG_SYSTEM : NORMAL_SYSTEM;
+  const activePersona = cfg.mode === "og" ? PERSONA : "OG-MODE / Pro Desk";
+  const fullSystem = `${baseSystem}\n\n${marketContext}`;
 
   // Log inbound user message
   if (lastUser) {
@@ -173,10 +208,10 @@ Deno.serve(async (req) => {
       source: "shapes",
       role: "user",
       content: lastUser.content,
-      persona: PERSONA,
+      persona: activePersona,
       external_user: user,
       session_id: session,
-      market_context: { snapshot: marketContext },
+      market_context: { snapshot: marketContext, mode: cfg.mode },
     });
   }
 
@@ -258,10 +293,10 @@ Deno.serve(async (req) => {
             source: "shapes",
             role: "assistant",
             content: assembled,
-            persona: PERSONA,
+            persona: activePersona,
             external_user: user,
             session_id: session,
-            market_context: { snapshot: marketContext },
+            market_context: { snapshot: marketContext, mode: cfg.mode },
           });
         }
       } catch (e) {
