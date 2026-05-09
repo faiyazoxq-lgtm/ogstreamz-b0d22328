@@ -38,6 +38,26 @@ function AuthPage() {
 
   useEffect(() => { setRememberState(getRemember()); }, []);
 
+  // Resolve the post-auth destination: AuthGate stashes the originally
+  // requested path in sessionStorage; honor it once, then clear.
+  const consumeRedirect = (): string => {
+    try {
+      const t = sessionStorage.getItem("post_auth_redirect");
+      if (t && t.startsWith("/") && !t.startsWith("/auth")) {
+        sessionStorage.removeItem("post_auth_redirect");
+        return t;
+      }
+    } catch { /* ignore */ }
+    return "/profile";
+  };
+  const peekRedirect = (): string => {
+    try {
+      const t = sessionStorage.getItem("post_auth_redirect");
+      if (t && t.startsWith("/") && !t.startsWith("/auth")) return t;
+    } catch { /* ignore */ }
+    return "/profile";
+  };
+
   // Capture ?p=TOKEN from QR / quick links and persist across signup confirm
   useEffect(() => {
     const t = new URLSearchParams(window.location.search).get("p");
@@ -83,7 +103,8 @@ function AuthPage() {
 
   useEffect(() => {
     if (user) {
-      tryClaim().finally(() => navigate({ to: "/profile" }));
+      const dest = consumeRedirect();
+      tryClaim().finally(() => navigate({ to: dest as never }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -94,11 +115,12 @@ function AuthPage() {
     try {
       if (mode === "signup") {
         const ref = new URLSearchParams(window.location.search).get("ref") || undefined;
+        const dest = peekRedirect();
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/profile`,
+            emailRedirectTo: `${window.location.origin}${dest}`,
             data: ref ? { referred_by_reseller: ref } : undefined,
           },
         });
@@ -112,7 +134,7 @@ function AuthPage() {
         setRemember(remember);
         if (remember) markTabSession(); else clearTabSession();
         toast.success("Locked in. Frequency unlocked.");
-        navigate({ to: "/profile" });
+        navigate({ to: consumeRedirect() as never });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
@@ -128,12 +150,13 @@ function AuthPage() {
   const oauth = async (provider: "google" | "apple") => {
     setLoading(true);
     try {
+      const dest = peekRedirect();
       const result = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: `${window.location.origin}/profile`,
+        redirect_uri: `${window.location.origin}${dest}`,
       });
       if (result.error) throw result.error;
       if (result.redirected) return;
-      navigate({ to: "/profile" });
+      navigate({ to: consumeRedirect() as never });
     } catch (err) {
       const msg = err instanceof Error ? err.message : `${provider} sign-in failed`;
       toast.error(msg);

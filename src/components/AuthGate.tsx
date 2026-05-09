@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "../hooks/use-auth";
 import { UserPlus, LogIn, Gift, ShieldCheck, Sparkles, Music2, Smile, Wrench, Zap, Lock, ArrowRight } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 const PUBLIC_PATHS = ["/auth", "/forgot-password", "/reset-password"];
 
@@ -12,6 +12,18 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const isPublic =
     PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/")) ||
     pathname.startsWith("/api/");
+
+  // Remember the destination so the auth page can return us here after sign-in.
+  // Skip the homepage (default landing) and auth pages.
+  useEffect(() => {
+    if (user || isPublic) return;
+    if (pathname === "/" || pathname === "") return;
+    try {
+      const qs = typeof window !== "undefined" ? window.location.search : "";
+      const target = pathname + (qs || "");
+      sessionStorage.setItem("post_auth_redirect", target);
+    } catch { /* ignore */ }
+  }, [user, isPublic, pathname]);
 
   if (isPublic || user) return <>{children}</>;
 
