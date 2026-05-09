@@ -8,7 +8,6 @@ const PUBLIC_PATHS = ["/auth", "/forgot-password", "/reset-password"];
 export function AuthGate({ children }: { children: ReactNode }) {
   const { user, loading, hasStoredSession } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const search = useRouterState({ select: (s) => s.location.searchStr });
 
   const isPublic =
     PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/")) ||
@@ -20,10 +19,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
     if (user || isPublic) return;
     if (pathname === "/" || pathname === "") return;
     try {
-      const target = pathname + (search ? (search.startsWith("?") ? search : `?${search}`) : "");
+      const qs = typeof window !== "undefined" ? window.location.search : "";
+      const target = pathname + (qs || "");
       sessionStorage.setItem("post_auth_redirect", target);
     } catch { /* ignore */ }
-  }, [user, isPublic, pathname, search]);
+  }, [user, isPublic, pathname]);
 
   if (isPublic || user) return <>{children}</>;
 
