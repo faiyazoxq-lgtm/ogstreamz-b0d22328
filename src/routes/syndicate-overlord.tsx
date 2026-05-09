@@ -727,26 +727,36 @@ function RedeemCodePanel() {
   };
 
   return (
-    <section className="rounded-xl border border-emerald-700/30 bg-black/50 p-5 backdrop-blur">
-      <h2 className="text-xs uppercase tracking-[0.4em] text-cyan-400 mb-4 flex items-center gap-2">
-        <Ticket className="h-3.5 w-3.5" /> Create a Redeem Code
-      </h2>
-      <p className="text-[10px] text-emerald-700 uppercase tracking-widest mb-3">
-        Share the code — anyone who enters it gets the credits (and rank, if set).
-      </p>
-      <div className="grid sm:grid-cols-5 gap-2">
-        <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="Code (e.g. WELCOME50)" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono uppercase" />
-        <Input value={credits} onChange={(e) => setCredits(e.target.value)} type="number" min="1" placeholder="Credits to give" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
-        <Input value={maxUses} onChange={(e) => setMaxUses(e.target.value)} type="number" min="1" placeholder="How many people" className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono" />
-        <Select value={grantRank || "none"} onValueChange={(v) => setGrantRank(v === "none" ? "" : v as Rank)}>
-          <SelectTrigger className="bg-black/60 border-emerald-800/40 text-emerald-200"><SelectValue /></SelectTrigger>
-          <SelectContent className="bg-black border-emerald-800 text-emerald-200">
-            <SelectItem value="none">No rank change</SelectItem>
-            {RANKS.filter((r) => r !== "boss").map((r) => <SelectItem key={r} value={r}>Also set rank: {r}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Button onClick={submit} disabled={busy || !code} className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="h-4 w-4 mr-1" />Create</>}
+    <section className="rounded-2xl border-2 border-cyan-700/30 bg-gradient-to-br from-black/70 to-cyan-950/20 p-6 backdrop-blur shadow-xl">
+      <GeneratorHeader
+        icon={Ticket}
+        accent="cyan"
+        title="Create a Redeem Code"
+        subtitle="Share the code — anyone who enters it gets credits (and a rank, if set)."
+      />
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Field label="Code" hint="Word people will type" icon={Ticket}>
+          <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="WELCOME50" className={`${FIELD_INPUT} uppercase`} />
+        </Field>
+        <Field label="Credits" hint="Per redemption" icon={Coins}>
+          <Input value={credits} onChange={(e) => setCredits(e.target.value)} type="number" min="1" placeholder="25" className={FIELD_INPUT} />
+        </Field>
+        <Field label="Max uses" hint="How many people can redeem" icon={Users}>
+          <Input value={maxUses} onChange={(e) => setMaxUses(e.target.value)} type="number" min="1" placeholder="1" className={FIELD_INPUT} />
+        </Field>
+        <Field label="Bonus rank" hint="Optional rank upgrade on redeem" icon={Crown}>
+          <Select value={grantRank || "none"} onValueChange={(v) => setGrantRank(v === "none" ? "" : v as Rank)}>
+            <SelectTrigger className={FIELD_SELECT}><SelectValue /></SelectTrigger>
+            <SelectContent className="bg-black border-emerald-800 text-emerald-200">
+              <SelectItem value="none">No rank change</SelectItem>
+              {RANKS.filter((r) => r !== "boss").map((r) => <SelectItem key={r} value={r}>Set rank: {r}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </Field>
+      </div>
+      <div className="mt-5 flex justify-end">
+        <Button onClick={submit} disabled={busy || !code} className={`${PRIMARY_BTN} px-6 bg-cyan-500 hover:bg-cyan-400 text-black`}>
+          {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Sparkles className="h-5 w-5 mr-2" />Mint Code</>}
         </Button>
       </div>
     </section>
