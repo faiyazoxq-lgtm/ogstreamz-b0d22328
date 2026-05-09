@@ -161,6 +161,12 @@ function AuthPage() {
                 submit={submit}
                 cta="Sign In"
               />
+              <Link
+                to="/forgot-password"
+                className="block text-center text-xs text-muted-foreground hover:text-foreground"
+              >
+                Forgot password?
+              </Link>
             </TabsContent>
             <TabsContent value="signup" className="space-y-4">
               <AuthForm

@@ -215,6 +215,15 @@ export function WelcomeAuthPrompt() {
               <Button type="submit" disabled={busy} className="btn-glass-blue w-full h-10 text-white font-bold uppercase tracking-[0.25em]">
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : mode === "signup" ? "Create Account" : "Sign In"}
               </Button>
+              {mode === "login" && (
+                <Link
+                  to="/forgot-password"
+                  onClick={() => setOpen(false)}
+                  className="block text-center text-[11px] text-muted-foreground hover:text-foreground"
+                >
+                  Forgot password?
+                </Link>
+              )}
             </form>
           </Tabs>
 
