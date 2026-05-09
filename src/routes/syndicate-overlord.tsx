@@ -44,6 +44,7 @@ function OverlordPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [q, setQ] = useState("");
   const [rankFilter, setRankFilter] = useState<"all" | Rank>("all");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [active30, setActive30] = useState(0);
   const [expiringCount, setExpiringCount] = useState(0);
   const [reminders, setReminders] = useState<boolean>(() => {
@@ -107,6 +108,13 @@ function OverlordPage() {
 
   const updateRow = (id: string, patch: Partial<Row>) =>
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+
+  const toggleSelect = (id: string) =>
+    setSelected((s) => {
+      const n = new Set(s);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
 
   const stats = useMemo(() => ({
     total: rows.length,
