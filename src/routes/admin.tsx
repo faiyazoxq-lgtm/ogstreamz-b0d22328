@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { SyndicateProtocolSwitch } from "@/components/SyndicateProtocolSwitch";
 import { useServerFn } from "@tanstack/react-start";
 import { scoutUrl } from "@/lib/firecrawl.functions";
 import { spawnPortal } from "@/lib/portals.functions";
