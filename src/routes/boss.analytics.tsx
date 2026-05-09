@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { BarChart3, ArrowLeft, RefreshCw, Eye, Users, Globe } from "lucide-react";
+import { BarChart3, ArrowLeft, RefreshCw, Eye, Users, Globe, Trash2, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 const BOT_UA_RE = /bot|crawler|spider|crawling|slurp|bingpreview|mediapartners|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|discordbot|telegrambot|whatsapp|skypeuripreview|pinterest|embedly|quora|outbrain|vkshare|w3c_validator|redditbot|applebot|duckduckbot|yandex|baiduspider|sogou|petalbot|ahrefs|semrush|mj12bot|dotbot|seznambot|ia_archiver|archive\.org_bot|gptbot|claudebot|anthropic|chatgpt-user|perplexitybot|ccbot|google-inspectiontool|google-extended|bytespider|amazonbot|headlesschrome|phantomjs|puppeteer|playwright|selenium|lighthouse|pagespeed|chrome-lighthouse|node-fetch|axios|python-requests|curl|wget|httpclient|okhttp|go-http-client|java\/|libwww-perl|scrapy|nutch|cypress|prerender|prerendercloud|http-client|monitor|uptimerobot|pingdom|statuscake|newrelic|datadog/i;
 
