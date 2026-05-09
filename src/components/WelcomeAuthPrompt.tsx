@@ -323,6 +323,20 @@ export function WelcomeAuthPrompt() {
                 <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/5 px-3 py-2.5 text-[11px] text-emerald-300 text-center">
                   Magic link sent to <span className="font-mono">{email}</span>.
                   <br />Click it from this device to sign in.
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={busy || magicCooldown > 0}
+                    onClick={sendMagicLink}
+                    className="mt-2 w-full h-9 border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-200"
+                  >
+                    {magicCooldown > 0 ? (
+                      <>Resend in {magicCooldown}s</>
+                    ) : (
+                      <><RotateCw className="h-3.5 w-3.5 mr-2" />Resend magic link</>
+                    )}
+                  </Button>
                 </div>
               ) : (
                 <Button
