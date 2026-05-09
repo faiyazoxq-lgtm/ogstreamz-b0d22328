@@ -1,11 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { enforceSwearRules, type SwearMode } from "./swear-enforcer.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { perplexityChat, shapesChat } from "./ai-providers.server";
 
-const MODEL = "gemini-3-pro-preview";
-const FALLBACK_MODEL = "gemini-2.5-pro";
-const ENDPOINT = (model: string) =>
-  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+// Boss-chat now routes to Shapes API (swearing agent) when swearing is on,
+// and Perplexity Sonar when the boss is in normal/clean mode.
 
 const NORMAL_SYSTEM =
   "You are 0G-BRAIN's Boss Chat — a sharp, professional trading copilot. Give the Boss a clear reality-check on the trade, risk and market context. Be concise, decisive, no fluff.";
@@ -30,23 +29,6 @@ function buildSwearingSystem(intensity: SwearIntensity) {
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-async function callGemini(model: string, system: string, history: Msg[], key: string) {
-  const contents = history.slice(-20).map((m) => ({
-    role: m.role === "assistant" ? "model" : "user",
-    parts: [{ text: String(m.content || "").slice(0, 4000) }],
-  }));
-  const r = await fetch(`${ENDPOINT(model)}?key=${encodeURIComponent(key)}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: system }] },
-      contents,
-      generationConfig: { temperature: 0.85, maxOutputTokens: 1024 },
-    }),
-  });
-  return r;
-}
-
 export const bossChat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { messages: Msg[]; targetUserId?: string | null }) => ({
@@ -60,8 +42,6 @@ export const bossChat = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as any;
-    const KEY = process.env.GEMINI_API_KEY;
-    if (!KEY) throw new Error("GEMINI_API_KEY missing");
     if (data.messages.length === 0) throw new Error("No messages");
 
     // ── Cooldown / abuse throttle (Boss-controlled in HubControls) ─────────
@@ -105,19 +85,33 @@ export const bossChat = createServerFn({ method: "POST" })
       rawIntensity === "mild" || rawIntensity === "medium" ? rawIntensity : "chaotic";
     const system = swearing ? buildSwearingSystem(intensity) : NORMAL_SYSTEM;
 
-    let r = await callGemini(MODEL, system, data.messages, KEY);
-    if (!r.ok) {
-      const errTxt = await r.text().catch(() => "");
-      console.warn(`[bossChat] ${MODEL} ${r.status} — falling back to ${FALLBACK_MODEL}`, errTxt.slice(0, 200));
-      r = await callGemini(FALLBACK_MODEL, system, data.messages, KEY);
-      if (!r.ok) {
-        const t = await r.text().catch(() => "");
-        throw new Error(`Gemini error ${r.status}: ${t.slice(0, 240)}`);
+    // Route swearing chats through the Shapes API "swearing agent",
+    // and clean/normal chats through Perplexity Sonar.
+    let rawText: string;
+    try {
+      if (swearing) {
+        rawText = await shapesChat({
+          messages: [
+            { role: "system", content: system },
+            ...data.messages,
+          ],
+          userId: String(userId),
+          channelId: "boss-chat",
+        });
+      } else {
+        rawText = await perplexityChat({
+          messages: [
+            { role: "system", content: system },
+            ...data.messages,
+          ],
+          model: "sonar",
+          temperature: 0.7,
+          max_tokens: 1024,
+        });
       }
+    } catch (e: any) {
+      throw new Error(e?.message || "AI provider error");
     }
-    const j = await r.json();
-    const rawText: string =
-      j?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text).filter(Boolean).join("\n") ?? "";
     // PRIORITY SWEARING OVERRIDE — profanity rules win over the model.
     const enforceMode: SwearMode = swearing ? (intensity as SwearMode) : "off";
     const text = enforceSwearRules(rawText, enforceMode);

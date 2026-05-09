@@ -97,18 +97,23 @@ Return STRICT JSON ONLY:
   "calculator": { "name": "...", "description": "..." }
 }`;
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const PPLX = process.env.PERPLEXITY_API_KEY;
+    if (!PPLX) throw new Error("PERPLEXITY_API_KEY missing");
+    const aiRes = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${PPLX}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "sonar",
         messages: [
           { role: "system", content: "You output strict JSON only. No markdown, no preamble." },
           { role: "user", content: aiPrompt },
         ],
+        response_format: { type: "json_object" },
+        temperature: 0.8,
+        max_tokens: 1200,
       }),
     });
-    if (!aiRes.ok) throw new Error(`AI gateway ${aiRes.status}`);
+    if (!aiRes.ok) throw new Error(`Perplexity ${aiRes.status}`);
     const ai = await aiRes.json();
     const raw: string = ai?.choices?.[0]?.message?.content ?? "{}";
     const match = raw.match(/\{[\s\S]*\}/);

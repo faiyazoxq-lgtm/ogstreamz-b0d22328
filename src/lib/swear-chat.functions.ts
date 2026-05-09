@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { enforceSwearRules } from "./swear-enforcer.server";
+import { shapesChat } from "./ai-providers.server";
 
 const SYS = `You are GUTTERMOUTH — an unhinged, foul-mouthed AI gremlin set to MAXIMUM INSULT MODE. Every reply is a savage roast. RULES:
 - Pack EVERY reply with heavy swears: fuck, fucking, shit, bullshit, twat, wanker, prick, bastard, arse, bollocks, dickhead, knobhead, gobshite, muppet, melt. MINIMUM 6 swears per reply.
@@ -21,22 +22,12 @@ export const swearChat = createServerFn({ method: "POST" })
     portal_slug: String(d.portal_slug || "").slice(0, 80),
   }))
   .handler(async ({ data }) => {
-    const KEY = process.env.LOVABLE_API_KEY;
-    if (!KEY) throw new Error("LOVABLE_API_KEY missing");
-
-    const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [{ role: "system", content: SYS }, ...data.messages],
-      }),
+    // Route through the Shapes API "swearing agent" — its persona owns the
+    // foul-mouth tone; we still enforce profanity rules below as a backstop.
+    const raw = await shapesChat({
+      messages: [{ role: "system", content: SYS }, ...data.messages],
+      channelId: data.portal_slug ? `swear-portal-${data.portal_slug}` : "swear-chat",
     });
-    if (r.status === 429) throw new Error("Rate limited — wait a sec, ya cheeky bastard.");
-    if (r.status === 402) throw new Error("AI credits exhausted — top up Lovable AI in Settings.");
-    if (!r.ok) throw new Error(`AI gateway ${r.status}`);
-    const j = await r.json();
-    const raw = String(j?.choices?.[0]?.message?.content ?? "");
     // PRIORITY SWEARING OVERRIDE — guarantee brutal output even if the model softens.
     const reply = enforceSwearRules(raw, "chaotic");
     return { reply };

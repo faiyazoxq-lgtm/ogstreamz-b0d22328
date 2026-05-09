@@ -51,10 +51,10 @@ function portalUrl(slug: string, kind: string): string {
 }
 
 async function geminiDraft(portal: any): Promise<MarketingDraft> {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) return FALLBACK_DRAFT(portal);
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
-  const sys = `You are the 0G-Syndicate marketing director. Output STRICT JSON matching the schema. No prose.`;
+  // Routed through Perplexity Sonar (kept the legacy function name for callers).
+  const PPLX = process.env.PERPLEXITY_API_KEY;
+  if (!PPLX) return FALLBACK_DRAFT(portal);
+  const sys = `You are the 0G-Syndicate marketing director. Output STRICT JSON matching the schema. No prose, no markdown.`;
   const user = `Portal:
 - Name: ${portal.name}
 - Kind: ${portal.kind}
@@ -78,22 +78,28 @@ Schema:
   "hashtags": ["tag1", "tag2", "tag3"]
 }`;
   try {
-    const res = await fetch(url, {
+    const res = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${PPLX}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: sys }] },
-        contents: [{ role: "user", parts: [{ text: user }] }],
-        generationConfig: { responseMimeType: "application/json", temperature: 0.85, maxOutputTokens: 2048 },
+        model: "sonar",
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: user },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.85,
+        max_tokens: 2048,
       }),
     });
-    if (!res.ok) throw new Error(`Gemini ${res.status}`);
+    if (!res.ok) throw new Error(`Perplexity ${res.status}`);
     const json = await res.json();
-    const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const parsed = JSON.parse(text);
+    const text: string = json?.choices?.[0]?.message?.content || "{}";
+    const m = text.match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(m ? m[0] : text);
     return { ...FALLBACK_DRAFT(portal), ...parsed };
   } catch (e) {
-    console.warn("[marketing] gemini draft failed, using fallback:", e);
+    console.warn("[marketing] perplexity draft failed, using fallback:", e);
     return FALLBACK_DRAFT(portal);
   }
 }
