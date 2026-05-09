@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Skull, Loader2, Search, Sparkles, Plus, Minus, Ticket, Users, Wallet, Crown, X,
-  Activity, Shield, Filter, Zap, ChevronDown, Mail, Send, Trash2,
+  Activity, Shield, Filter, Zap, ChevronDown, Mail, Send, Trash2, NotebookPen, Pin, PinOff, Save,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -128,6 +128,9 @@ function OverlordPage() {
             <TabsTrigger value="users" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
               <Users className="h-3 w-3 mr-1.5" /> Users
             </TabsTrigger>
+            <TabsTrigger value="notes" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
+              <NotebookPen className="h-3 w-3 mr-1.5" /> Private Notes
+            </TabsTrigger>
             <TabsTrigger value="preload" className="data-[state=active]:bg-emerald-700/30 data-[state=active]:text-cyan-300 text-xs uppercase tracking-widest">
               <Mail className="h-3 w-3 mr-1.5" /> Pre-load Credits
             </TabsTrigger>
@@ -195,6 +198,7 @@ function OverlordPage() {
           </TabsContent>
 
           <TabsContent value="codes" className="mt-4"><RedeemCodePanel /></TabsContent>
+          <TabsContent value="notes" className="mt-4"><NotesPanel /></TabsContent>
           <TabsContent value="preload" className="mt-4"><PreLoadPanel onApplied={refreshUsers} /></TabsContent>
           <TabsContent value="passes" className="mt-4"><VipPassPanel rows={rows} /></TabsContent>
           <TabsContent value="resellers" className="mt-4"><ResellerAdminPanel rows={rows} /></TabsContent>
@@ -803,6 +807,187 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
             )}
           </div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+type Note = {
+  id: string;
+  title: string;
+  body: string;
+  pinned: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+function NotesPanel() {
+  const { user } = useAuth();
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [q, setQ] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [draftTitle, setDraftTitle] = useState("");
+  const [draftBody, setDraftBody] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const refresh = async () => {
+    const { data, error } = await supabase
+      .from("boss_notes")
+      .select("id,title,body,pinned,created_at,updated_at")
+      .order("pinned", { ascending: false })
+      .order("updated_at", { ascending: false });
+    if (error) toast.error(error.message);
+    else setNotes((data ?? []) as Note[]);
+  };
+  useEffect(() => { refresh(); }, []);
+
+  const reset = () => { setEditingId(null); setDraftTitle(""); setDraftBody(""); };
+
+  const save = async () => {
+    if (!user) return;
+    const title = draftTitle.trim();
+    const body = draftBody.trim();
+    if (!title && !body) { toast.error("Add a title or some text first"); return; }
+    setBusy(true);
+    try {
+      if (editingId) {
+        const { error } = await supabase
+          .from("boss_notes")
+          .update({ title, body })
+          .eq("id", editingId);
+        if (error) throw error;
+        toast.success("Note updated");
+      } else {
+        const { error } = await supabase
+          .from("boss_notes")
+          .insert({ user_id: user.id, title, body });
+        if (error) throw error;
+        toast.success("Note saved");
+      }
+      reset();
+      refresh();
+    } catch (e: any) { toast.error(e.message ?? "Save failed"); }
+    finally { setBusy(false); }
+  };
+
+  const startEdit = (n: Note) => {
+    setEditingId(n.id);
+    setDraftTitle(n.title);
+    setDraftBody(n.body);
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm("Delete this note?")) return;
+    const { error } = await supabase.from("boss_notes").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    if (editingId === id) reset();
+    toast.success("Deleted");
+    refresh();
+  };
+
+  const togglePin = async (n: Note) => {
+    const { error } = await supabase
+      .from("boss_notes")
+      .update({ pinned: !n.pinned })
+      .eq("id", n.id);
+    if (error) toast.error(error.message);
+    else refresh();
+  };
+
+  const filtered = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    if (!s) return notes;
+    return notes.filter((n) =>
+      n.title.toLowerCase().includes(s) || n.body.toLowerCase().includes(s)
+    );
+  }, [notes, q]);
+
+  return (
+    <section className="grid lg:grid-cols-2 gap-4">
+      {/* Editor */}
+      <div className="rounded-xl border border-emerald-700/30 bg-black/50 p-5 backdrop-blur">
+        <h2 className="text-xs uppercase tracking-[0.4em] text-cyan-400 mb-1 flex items-center gap-2">
+          <NotebookPen className="h-3.5 w-3.5" /> {editingId ? "Edit Note" : "New Note"}
+        </h2>
+        <p className="text-[10px] text-emerald-700 uppercase tracking-widest mb-4">
+          Private to you. No one else can ever see these — not admins, not other users.
+        </p>
+        <Input
+          value={draftTitle}
+          onChange={(e) => setDraftTitle(e.target.value)}
+          placeholder="Title (e.g. Sarah's phone number)"
+          className="bg-black/60 border-emerald-800/40 text-emerald-200 font-mono mb-2"
+        />
+        <textarea
+          value={draftBody}
+          onChange={(e) => setDraftBody(e.target.value)}
+          placeholder="Write anything here — phone numbers, addresses, reminders, ideas. Only you can see it."
+          rows={8}
+          className="w-full rounded-md bg-black/60 border border-emerald-800/40 text-emerald-200 placeholder:text-emerald-700 font-mono text-sm p-3 focus:outline-none focus:border-cyan-500"
+        />
+        <div className="mt-3 flex items-center gap-2">
+          <Button onClick={save} disabled={busy} className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold">
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="h-4 w-4 mr-1" />{editingId ? "Update" : "Save Note"}</>}
+          </Button>
+          {editingId && (
+            <Button variant="outline" onClick={reset} className="border-emerald-700/50 text-emerald-300">
+              Cancel
+            </Button>
+          )}
+          <span className="ml-auto text-[10px] text-emerald-700 uppercase tracking-widest">
+            {draftBody.length} chars
+          </span>
+        </div>
+      </div>
+
+      {/* List */}
+      <div className="rounded-xl border border-emerald-700/30 bg-black/50 backdrop-blur">
+        <div className="p-3 border-b border-emerald-800/40 flex items-center gap-2">
+          <Search className="h-3.5 w-3.5 text-cyan-400" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search your notes…"
+            className="h-8 bg-black/60 border-emerald-800/40 text-emerald-200 placeholder:text-emerald-700 font-mono text-xs"
+          />
+          <span className="text-[10px] text-emerald-700 ml-auto whitespace-nowrap">{filtered.length} / {notes.length}</span>
+        </div>
+        <div className="max-h-[60vh] overflow-y-auto divide-y divide-emerald-900/30">
+          {filtered.length === 0 && (
+            <p className="px-5 py-12 text-center text-emerald-700">No notes yet. Write your first one on the left.</p>
+          )}
+          {filtered.map((n) => (
+            <article key={n.id} className={`p-4 hover:bg-emerald-900/5 transition ${editingId === n.id ? "bg-cyan-500/5" : ""}`}>
+              <div className="flex items-start gap-2">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-emerald-100 font-bold flex items-center gap-2 truncate">
+                    {n.pinned && <Pin className="h-3 w-3 text-yellow-400 shrink-0" />}
+                    {n.title || <span className="text-emerald-700 italic">Untitled</span>}
+                  </h3>
+                  {n.body && (
+                    <p className="mt-1 text-sm text-emerald-300 whitespace-pre-wrap break-words">
+                      {n.body.length > 240 ? n.body.slice(0, 240) + "…" : n.body}
+                    </p>
+                  )}
+                  <p className="mt-2 text-[10px] text-emerald-700 uppercase tracking-widest">
+                    Updated {new Date(n.updated_at).toLocaleString()}
+                  </p>
+                </div>
+                <div className="flex flex-col gap-1 shrink-0">
+                  <Button size="icon" variant="ghost" onClick={() => togglePin(n)} title={n.pinned ? "Unpin" : "Pin to top"} className="h-7 w-7 text-yellow-400 hover:bg-yellow-500/10">
+                    {n.pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+                  </Button>
+                  <Button size="icon" variant="ghost" onClick={() => startEdit(n)} title="Edit" className="h-7 w-7 text-cyan-300 hover:bg-cyan-500/10">
+                    <NotebookPen className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button size="icon" variant="ghost" onClick={() => remove(n.id)} title="Delete" className="h-7 w-7 text-rose-300 hover:bg-rose-500/10">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );
