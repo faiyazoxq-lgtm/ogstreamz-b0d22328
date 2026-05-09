@@ -10,6 +10,7 @@ import { formatLyrics, requestStudioTrack, generateSunoStack, type SunoStack } f
 import { listPortalTracks, getTrackOwnership } from "@/lib/tracks.functions";
 import { spawnMusic } from "@/lib/suno.functions";
 import { TrackPlayer } from "@/components/TrackPlayer";
+import { SwearChatPanel } from "@/components/SwearChatPanel";
 
 type MusicPortal = {
   id: string;
