@@ -2,8 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Skull, Loader2, Search, Sparkles, Plus, Minus, Ticket, Users, Wallet, Crown, X,
-  Activity, Shield, Filter, Zap, ChevronDown, Mail, Send, Trash2, NotebookPen, Pin, PinOff, Save,
+  Activity, Shield, Filter, Zap, Mail, Send, Trash2, NotebookPen, Pin, PinOff, Save,
   Clock, BellRing, CheckSquare, Square,
+  Copy, Smile, Music, Wrench, Lock, Unlock, User as UserIcon, Coins,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -254,30 +255,25 @@ function OverlordPage() {
                 }}
               />
 
-              <div className="hidden md:grid grid-cols-12 gap-2 px-4 py-2 text-[10px] uppercase tracking-[0.3em] text-cyan-400 border-b border-emerald-800/40 bg-black/40">
-                <div className="col-span-3 flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      const allIds = filtered.map((r) => r.id);
-                      const allSelected = allIds.every((id) => selected.has(id));
-                      setSelected(allSelected ? new Set() : new Set(allIds));
-                    }}
-                    title="Select all visible"
-                    className="text-cyan-400 hover:text-cyan-200"
-                  >
-                    {filtered.length > 0 && filtered.every((r) => selected.has(r.id))
-                      ? <CheckSquare className="h-3.5 w-3.5" />
-                      : <Square className="h-3.5 w-3.5" />}
-                  </button>
-                  User
-                </div>
-                <div className="col-span-2">Rank</div>
-                <div className="col-span-2">Credits</div>
-                <div className="col-span-2">Features</div>
-                <div className="col-span-3 text-right pr-2">Quick actions</div>
+              <div className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-[0.3em] text-cyan-400 border-b border-emerald-800/40 bg-black/40">
+                <button
+                  onClick={() => {
+                    const allIds = filtered.map((r) => r.id);
+                    const allSelected = allIds.length > 0 && allIds.every((id) => selected.has(id));
+                    setSelected(allSelected ? new Set() : new Set(allIds));
+                  }}
+                  title="Select all visible"
+                  className="inline-flex items-center gap-2 text-cyan-300 hover:text-cyan-100 font-bold"
+                >
+                  {filtered.length > 0 && filtered.every((r) => selected.has(r.id))
+                    ? <CheckSquare className="h-4 w-4" />
+                    : <Square className="h-4 w-4" />}
+                  Select all visible
+                </button>
+                <span className="ml-auto text-emerald-700">Tap a card to toggle controls</span>
               </div>
 
-              <div className="max-h-[60vh] overflow-y-auto">
+              <div className="max-h-[70vh] overflow-y-auto divide-y divide-emerald-900/30">
                 {filtered.map((r) => (
                   <UserRow
                     key={r.id}
@@ -308,18 +304,18 @@ function OverlordPage() {
 
 function StatCard({ icon, label, value, tint }: { icon: React.ReactNode; label: string; value: number; tint: "cyan" | "yellow" | "emerald" | "pink" }) {
   const tints = {
-    cyan: "border-cyan-700/40 text-cyan-300",
-    yellow: "border-yellow-700/40 text-yellow-300",
-    emerald: "border-emerald-700/40 text-emerald-300",
-    pink: "border-pink-700/40 text-pink-300",
+    cyan: "border-cyan-700/50 text-cyan-300 shadow-[0_0_24px_-12px_rgb(34_211_238/0.6)]",
+    yellow: "border-yellow-700/50 text-yellow-300 shadow-[0_0_24px_-12px_rgb(250_204_21/0.6)]",
+    emerald: "border-emerald-700/50 text-emerald-300 shadow-[0_0_24px_-12px_rgb(16_185_129/0.6)]",
+    pink: "border-pink-700/50 text-pink-300 shadow-[0_0_24px_-12px_rgb(236_72_153/0.6)]",
   };
   return (
-    <div className={`rounded-lg border bg-black/50 backdrop-blur px-4 py-3 ${tints[tint]}`}>
-      <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] opacity-70">
-        <span>{label}</span>
-        {icon}
+    <div className={`rounded-xl border bg-black/60 backdrop-blur px-4 py-4 ${tints[tint]}`}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-80 leading-tight">{label}</span>
+        <span className="opacity-90">{icon}</span>
       </div>
-      <div className="mt-1 text-2xl font-black tabular-nums">{value.toLocaleString()}</div>
+      <div className="mt-2 text-3xl sm:text-4xl font-black tabular-nums leading-none">{value.toLocaleString()}</div>
     </div>
   );
 }
@@ -348,7 +344,6 @@ function UserRow({ row, onChange, selected, onToggleSelect }: { row: Row; onChan
   const setF = useServerFn(setFeatureFlags);
   const [delta, setDelta] = useState("0");
   const [busy, setBusy] = useState(false);
-  const [open, setOpen] = useState(false);
 
   const give = async (amount: number) => {
     setBusy(true);
@@ -379,110 +374,170 @@ function UserRow({ row, onChange, selected, onToggleSelect }: { row: Row; onChan
     try { await setF({ data: { userId: row.id, flags } }); onChange({ feature_flags: flags }); }
     catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
   };
+  const setAllFlags = async (value: boolean) => {
+    const flags: Flags = { jokes: value, music: value, tools: value };
+    setBusy(true);
+    try {
+      await setF({ data: { userId: row.id, flags } });
+      onChange({ feature_flags: flags });
+      toast.success(`${value ? "Unlocked" : "Locked"} all features for ${row.email}`);
+    } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+  };
+
+  const copyEmail = () => {
+    navigator.clipboard?.writeText(row.email);
+    toast.success("Email copied");
+  };
 
   const n = parseInt(delta, 10);
+  const FLAGS: Array<{ k: keyof Flags; Icon: any; label: string }> = [
+    { k: "jokes", Icon: Smile, label: "Jokes" },
+    { k: "music", Icon: Music, label: "Music" },
+    { k: "tools", Icon: Wrench, label: "Tools" },
+  ];
+  const RANK_BTNS: Array<{ r: Rank; Icon: any }> = [
+    { r: "prospect", Icon: UserIcon },
+    { r: "enforcer", Icon: Shield },
+    { r: "vip", Icon: Crown },
+  ];
 
   return (
-    <div className="border-b border-emerald-900/30 hover:bg-emerald-900/5 transition">
-      <div className={`grid grid-cols-12 gap-2 px-4 py-3 items-center text-sm ${selected ? "bg-cyan-900/15" : ""}`}>
-        <div className="col-span-12 md:col-span-3 truncate flex items-center gap-2">
-          <button
-            onClick={onToggleSelect}
-            title={selected ? "Deselect" : "Select for bulk action"}
-            className="text-cyan-400 hover:text-cyan-200 flex-shrink-0"
-          >
-            {selected ? <CheckSquare className="h-3.5 w-3.5" /> : <Square className="h-3.5 w-3.5" />}
-          </button>
-          <span className={`inline-block h-1.5 w-1.5 rounded-full ${row.status === "vip" ? "bg-yellow-400" : "bg-emerald-700"}`} />
-          <div className="min-w-0 flex-1">
-            <p className="text-emerald-200 truncate">{row.email}</p>
-            <p className="text-[10px] text-emerald-700 truncate">
-              {row.display_name ?? "no name"} · joined {new Date(row.created_at).toLocaleDateString()}
-            </p>
+    <div className={`p-4 sm:p-5 transition ${selected ? "bg-cyan-900/15" : "hover:bg-emerald-900/5"}`}>
+      {/* Identity row */}
+      <div className="flex items-start gap-3">
+        <button
+          onClick={onToggleSelect}
+          title={selected ? "Deselect" : "Select for bulk action"}
+          className="mt-0.5 text-cyan-400 hover:text-cyan-200 flex-shrink-0"
+        >
+          {selected ? <CheckSquare className="h-5 w-5" /> : <Square className="h-5 w-5" />}
+        </button>
+        <span
+          className={`mt-2 inline-block h-2.5 w-2.5 rounded-full flex-shrink-0 ${row.status === "vip" ? "bg-yellow-400 shadow-[0_0_10px_rgb(250_204_21/0.9)]" : "bg-emerald-700"}`}
+          title={row.status === "vip" ? "Active VIP" : "Free account"}
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-base sm:text-lg font-bold text-emerald-100 truncate">{row.email}</h3>
+            <button onClick={copyEmail} className="text-emerald-700 hover:text-cyan-300 flex-shrink-0" title="Copy email">
+              <Copy className="h-3.5 w-3.5" />
+            </button>
           </div>
+          <p className="text-[11px] text-emerald-700 mt-0.5 truncate">
+            {row.display_name ?? "no name"} · joined {new Date(row.created_at).toLocaleDateString()}
+          </p>
         </div>
-        <div className="col-span-6 md:col-span-2">
-          <Select value={row.rank} onValueChange={(v) => changeRank(v as Rank)} disabled={busy}>
-            <SelectTrigger className={`h-8 bg-black/60 border text-[11px] uppercase tracking-widest ${RANK_STYLES[row.rank]}`}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-black border-emerald-800 text-emerald-200">
-              {RANKS.filter((r) => r !== "boss").map((r) => <SelectItem key={r} value={r} className="text-xs uppercase">{r}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="col-span-6 md:col-span-2 flex items-center gap-1">
-          <Badge variant="outline" className="border-cyan-800/40 text-cyan-300 tabular-nums font-mono" title="Current credit balance">
-            {row.credits.toLocaleString()}
-          </Badge>
+        <Badge variant="outline" className={`text-[11px] uppercase tracking-widest font-bold flex-shrink-0 ${RANK_STYLES[row.rank]}`}>
+          {row.rank}
+        </Badge>
+      </div>
+
+      {/* Rank pills */}
+      <div className="mt-4 flex items-center gap-2 flex-wrap">
+        <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-emerald-600 mr-1">Rank</span>
+        {RANK_BTNS.map(({ r, Icon }) => {
+          const active = row.rank === r;
+          return (
+            <button
+              key={r}
+              onClick={() => !active && changeRank(r)}
+              disabled={busy || active}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-md border text-xs font-bold uppercase tracking-widest transition ${
+                active
+                  ? `${RANK_STYLES[r]} ring-1 ring-cyan-400/50`
+                  : "border-emerald-900/50 text-emerald-700 hover:text-emerald-200 hover:border-emerald-700"
+              }`}
+            >
+              <Icon className="h-4 w-4" /> {r}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Credits */}
+      <div className="mt-3 flex items-center gap-2 flex-wrap">
+        <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-emerald-600 mr-1 flex items-center gap-1.5">
+          <Coins className="h-3.5 w-3.5 text-cyan-400" /> Credits
+        </span>
+        <span className="text-2xl font-black tabular-nums text-cyan-200 tracking-tight">{row.credits.toLocaleString()}</span>
+        <div className="ml-auto flex items-center gap-1 flex-wrap">
+          {[10, 50, 100, 500].map((v) => (
+            <Button key={`+${v}`} size="sm" disabled={busy} onClick={() => give(v)}
+              className="h-8 px-2.5 text-xs font-bold bg-emerald-700 hover:bg-emerald-600 text-black" title={`Add ${v}`}>+{v}</Button>
+          ))}
+          {[50, 100].map((v) => (
+            <Button key={`-${v}`} size="sm" disabled={busy} onClick={() => give(-v)}
+              className="h-8 px-2.5 text-xs font-bold bg-rose-700 hover:bg-rose-600 text-white" title={`Remove ${v}`}>−{v}</Button>
+          ))}
           <Input
             value={delta}
             onChange={(e) => setDelta(e.target.value)}
             placeholder="±"
-            title="Type any number, then press the button. Negative numbers remove credits."
-            className="h-7 w-14 bg-black/60 border-emerald-800/40 text-emerald-200 font-mono text-xs"
+            className="h-8 w-16 bg-black/60 border-emerald-800/40 text-emerald-200 font-mono text-xs text-center"
           />
-          <Button
-            size="icon"
-            onClick={apply}
-            disabled={busy || !n}
-            title={n < 0 ? "Remove credits" : "Add credits"}
-            className="h-7 w-7 bg-emerald-700 hover:bg-emerald-600 text-black"
-          >
-            {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : (n < 0 ? <Minus className="h-3 w-3" /> : <Plus className="h-3 w-3" />)}
+          <Button size="icon" onClick={apply} disabled={busy || !n}
+            className="h-8 w-8 bg-cyan-600 hover:bg-cyan-500 text-black" title={n < 0 ? "Remove" : "Add"}>
+            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (n < 0 ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />)}
           </Button>
         </div>
-        <div className="col-span-6 md:col-span-2 flex items-center gap-2 text-[10px] uppercase tracking-widest">
-          {(["jokes","music","tools"] as const).map((k) => (
-            <label key={k} className="inline-flex items-center gap-1 cursor-pointer text-emerald-400" title={`Toggle ${k} access`}>
-              <Switch
-                checked={row.feature_flags[k]}
-                onCheckedChange={() => toggleFlag(k)}
-                disabled={busy}
-                className="data-[state=checked]:bg-cyan-500 scale-75"
-              />
-              {k}
-            </label>
-          ))}
-        </div>
-        <div className="col-span-6 md:col-span-3 flex items-center justify-end gap-1 flex-wrap">
-          <Button size="sm" disabled={busy} onClick={() => give(50)} className="h-7 px-2 text-[10px] bg-emerald-700 hover:bg-emerald-600 text-black" title="Add 50 credits">+50</Button>
-          <Button size="sm" disabled={busy} onClick={() => give(-50)} className="h-7 px-2 text-[10px] bg-rose-700 hover:bg-rose-600 text-white" title="Remove 50 credits">−50</Button>
-          {row.rank !== "vip" ? (
-            <Button size="sm" disabled={busy} onClick={() => changeRank("vip")} className="h-7 px-2 text-[10px] bg-yellow-500 hover:bg-yellow-400 text-black" title="Upgrade to VIP">
-              <Crown className="h-3 w-3 mr-1" />Make VIP
-            </Button>
-          ) : (
-            <Button size="sm" disabled={busy} onClick={() => changeRank("prospect")} className="h-7 px-2 text-[10px] bg-emerald-800 hover:bg-emerald-700 text-emerald-100" title="Downgrade to standard member">
-              Reset
-            </Button>
-          )}
-          <button
-            onClick={() => setOpen((o) => !o)}
-            className="text-emerald-700 hover:text-cyan-300 transition px-1"
-            title={open ? "Hide details" : "Show details"}
-          >
-            <ChevronDown className={`h-4 w-4 inline transition ${open ? "rotate-180" : ""}`} />
-          </button>
-        </div>
       </div>
-      {open && (
-        <div className="px-4 pb-3 flex flex-wrap items-center gap-3 text-[10px] text-emerald-700 uppercase tracking-widest">
-          <div><span className="text-emerald-500">user id:</span> {row.id.slice(0, 12)}…</div>
-          <div><span className="text-emerald-500">account:</span> {row.status === "vip" ? "VIP" : "Free"}</div>
-          <div><span className="text-emerald-500">joined:</span> {new Date(row.created_at).toLocaleString()}</div>
-          <div className="flex items-center gap-1 ml-auto">
-            <span className="text-emerald-500">add:</span>
-            {[10, 100, 500, 1000].map((v) => (
-              <Button key={v} disabled={busy} size="sm" onClick={() => give(v)} className="h-6 px-2 text-[10px] bg-emerald-800/70 hover:bg-emerald-700 text-emerald-100">+{v}</Button>
-            ))}
-            <span className="text-emerald-500 ml-2">remove:</span>
-            {[10, 100, 500].map((v) => (
-              <Button key={v} disabled={busy} size="sm" onClick={() => give(-v)} className="h-6 px-2 text-[10px] bg-rose-800/70 hover:bg-rose-700 text-rose-100">−{v}</Button>
-            ))}
-          </div>
-        </div>
-      )}
+
+      {/* Feature toggles */}
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        {FLAGS.map(({ k, Icon, label }) => {
+          const on = row.feature_flags[k];
+          return (
+            <button
+              key={k}
+              onClick={() => toggleFlag(k)}
+              disabled={busy}
+              className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border transition ${
+                on
+                  ? "border-cyan-600/60 bg-cyan-500/10 text-cyan-200"
+                  : "border-emerald-900/50 bg-black/40 text-emerald-700 hover:text-emerald-300"
+              }`}
+              title={`${on ? "Disable" : "Enable"} ${label}`}
+            >
+              <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
+                <Icon className="h-4 w-4" /> {label}
+              </span>
+              <Switch checked={on} className="data-[state=checked]:bg-cyan-500 pointer-events-none scale-90" />
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Extra controls */}
+      <div className="mt-3 flex items-center gap-2 flex-wrap">
+        <Button size="sm" disabled={busy} onClick={() => setAllFlags(true)}
+          className="h-8 text-xs font-bold bg-emerald-800 hover:bg-emerald-700 text-emerald-100">
+          <Unlock className="h-3.5 w-3.5 mr-1.5" /> Unlock all
+        </Button>
+        <Button size="sm" disabled={busy} onClick={() => setAllFlags(false)}
+          className="h-8 text-xs font-bold bg-rose-900 hover:bg-rose-800 text-rose-100">
+          <Lock className="h-3.5 w-3.5 mr-1.5" /> Lock all
+        </Button>
+        {row.rank !== "vip" ? (
+          <Button size="sm" disabled={busy} onClick={() => changeRank("vip")}
+            className="h-8 text-xs font-bold bg-yellow-500 hover:bg-yellow-400 text-black">
+            <Crown className="h-3.5 w-3.5 mr-1.5" /> Make VIP
+          </Button>
+        ) : (
+          <Button size="sm" disabled={busy} onClick={() => changeRank("prospect")}
+            className="h-8 text-xs font-bold bg-emerald-900 hover:bg-emerald-800 text-emerald-100">
+            Reset rank
+          </Button>
+        )}
+        {row.credits > 0 && (
+          <Button size="sm" disabled={busy} onClick={() => give(-row.credits)}
+            className="h-8 text-xs font-bold bg-zinc-800 hover:bg-zinc-700 text-zinc-200" title="Zero out balance">
+            <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Zero credits
+          </Button>
+        )}
+        <span className="ml-auto text-[10px] text-emerald-700 uppercase tracking-widest" title={row.id}>
+          id {row.id.slice(0, 8)}
+        </span>
+      </div>
     </div>
   );
 }
