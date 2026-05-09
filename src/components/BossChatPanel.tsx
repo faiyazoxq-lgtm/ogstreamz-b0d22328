@@ -24,9 +24,10 @@ export function BossChatPanel() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const swearing = !!profile?.feature_flags?.swearing;
-  const intensityRaw = String((profile?.feature_flags as any)?.swearing_intensity ?? "medium").toLowerCase();
+  // BRUTAL MODE default — chaotic unless the user has explicitly chosen otherwise.
+  const intensityRaw = String((profile?.feature_flags as any)?.swearing_intensity ?? "chaotic").toLowerCase();
   const intensity: "mild" | "medium" | "chaotic" =
-    intensityRaw === "mild" || intensityRaw === "chaotic" ? intensityRaw : "medium";
+    intensityRaw === "mild" || intensityRaw === "medium" ? intensityRaw : "chaotic";
   const canToggleSelf = !!user;
   // Boss can also toggle in bulk via the Boss Control Center; this is the per-user switch.
   const isBoss = profile?.rank === "boss" || isAdmin;
