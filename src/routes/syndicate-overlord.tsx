@@ -245,8 +245,32 @@ function OverlordPage() {
                 <span className="text-[10px] text-emerald-700 ml-auto">Showing {filtered.length} of {rows.length}</span>
               </div>
 
+              <BulkActionBar
+                selected={selected}
+                rows={rows}
+                onClear={() => setSelected(new Set())}
+                onApplied={(updates) => {
+                  setRows((rs) => rs.map((r) => updates[r.id] ? { ...r, ...updates[r.id] } : r));
+                }}
+              />
+
               <div className="hidden md:grid grid-cols-12 gap-2 px-4 py-2 text-[10px] uppercase tracking-[0.3em] text-cyan-400 border-b border-emerald-800/40 bg-black/40">
-                <div className="col-span-3">User</div>
+                <div className="col-span-3 flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const allIds = filtered.map((r) => r.id);
+                      const allSelected = allIds.every((id) => selected.has(id));
+                      setSelected(allSelected ? new Set() : new Set(allIds));
+                    }}
+                    title="Select all visible"
+                    className="text-cyan-400 hover:text-cyan-200"
+                  >
+                    {filtered.length > 0 && filtered.every((r) => selected.has(r.id))
+                      ? <CheckSquare className="h-3.5 w-3.5" />
+                      : <Square className="h-3.5 w-3.5" />}
+                  </button>
+                  User
+                </div>
                 <div className="col-span-2">Rank</div>
                 <div className="col-span-2">Credits</div>
                 <div className="col-span-2">Features</div>
@@ -254,7 +278,15 @@ function OverlordPage() {
               </div>
 
               <div className="max-h-[60vh] overflow-y-auto">
-                {filtered.map((r) => <UserRow key={r.id} row={r} onChange={(p) => updateRow(r.id, p)} />)}
+                {filtered.map((r) => (
+                  <UserRow
+                    key={r.id}
+                    row={r}
+                    selected={selected.has(r.id)}
+                    onToggleSelect={() => toggleSelect(r.id)}
+                    onChange={(p) => updateRow(r.id, p)}
+                  />
+                ))}
                 {filtered.length === 0 && (
                   <p className="px-5 py-12 text-center text-emerald-700">No users match your search.</p>
                 )}
