@@ -201,81 +201,82 @@ function AuthPage() {
   };
 
   return (
-    <main className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center px-5 py-12">
+    <main className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 sm:px-5 py-8 sm:py-12">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 h-[500px] w-[700px] rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245_/_0.35),transparent)] animate-pulse-gold" />
       </div>
 
       <div className="relative w-full max-w-md">
-        <Link to="/" className="flex items-center justify-center gap-3 mb-8">
+        <Link to="/" className="flex items-center justify-center gap-3 mb-6 sm:mb-8">
           <img src={logo} alt="0G-PORTAL" className="h-10 w-10 rounded-md ring-1 ring-[oklch(0.72_0.22_245/0.5)]" />
           <span className="font-[Montserrat] font-black text-2xl tracking-tight text-metallic">0G-PORTAL</span>
         </Link>
 
-        <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-[0_0_60px_-10px_oklch(0.72_0.22_245/0.4)]">
-          <h1 className="text-2xl font-bold text-center text-metallic mb-1">Join the Syndicate</h1>
-          <p className="text-sm text-muted-foreground text-center mb-6">Tune in. The frequency is private.</p>
+        <div className="rounded-2xl border border-border bg-card p-5 sm:p-8 shadow-[0_0_60px_-10px_oklch(0.72_0.22_245/0.4)] space-y-6">
+          <header className="text-center space-y-1">
+            <h1 className="text-2xl font-bold text-metallic">Join the Syndicate</h1>
+            <p className="text-sm text-muted-foreground">Tune in. The frequency is private.</p>
+          </header>
 
           {passToken && (
-            <div className="mb-5 rounded-lg border border-yellow-500/40 bg-yellow-500/5 px-3 py-2 text-xs text-yellow-300 text-center">
+            <div className="rounded-lg border border-yellow-500/40 bg-yellow-500/5 px-3 py-2 text-xs text-yellow-300 text-center">
               <span className="uppercase tracking-widest text-[10px] text-yellow-500">Pass attached</span>
               <p className="mt-1 font-mono">{passToken}</p>
               <p className="text-yellow-400/70 mt-1 text-[11px]">Activates automatically when you sign in.</p>
             </div>
           )}
 
-          <Tabs value={mode} onValueChange={(v) => setMode(v as "login" | "signup")} className="w-full">
-            {/* Social sign-in — promoted above the email form for speed */}
-            <div className="mb-5">
-              <div className="mb-2.5 flex items-center justify-between">
-                <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-                  One-tap sign in
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300">
-                  ⚡ Fastest
-                </span>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={loading}
-                onClick={google}
-                className="w-full h-14 text-base font-semibold border-[oklch(0.72_0.22_245/0.5)] hover:bg-[oklch(0.72_0.22_245/0.12)] hover:border-[oklch(0.72_0.22_245/0.8)]"
-              >
-                <svg viewBox="0 0 24 24" className="h-5 w-5 mr-3" aria-hidden>
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                Continue with Google
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={loading}
-                onClick={apple}
-                className="w-full h-14 mt-3 text-base font-semibold bg-black text-white hover:bg-black/85 border-white/25"
-              >
-                <svg viewBox="0 0 24 24" className="h-5 w-5 mr-3" aria-hidden fill="currentColor">
-                  <path d="M16.365 1.43c0 1.14-.46 2.23-1.21 3.03-.81.86-2.13 1.52-3.21 1.43-.13-1.1.42-2.25 1.16-3.04.83-.88 2.24-1.54 3.26-1.42zM20.5 17.31c-.55 1.27-.81 1.83-1.52 2.95-.99 1.56-2.39 3.5-4.12 3.51-1.54.02-1.94-1-4.03-.99-2.09.01-2.53 1.01-4.07.99-1.73-.02-3.05-1.78-4.05-3.34C.01 16.18-.31 11.13 1.5 8.43c1.28-1.92 3.31-3.04 5.21-3.04 1.94 0 3.16 1.06 4.77 1.06 1.56 0 2.51-1.06 4.76-1.06 1.7 0 3.5.93 4.78 2.53-4.21 2.31-3.52 8.32.48 9.39z"/>
-                </svg>
-                Continue with Apple
-              </Button>
+          {/* PRIMARY: Social sign-in — visual priority */}
+          <section
+            aria-label="One-tap sign in"
+            className="relative rounded-xl border border-[oklch(0.72_0.22_245/0.35)] bg-[oklch(0.72_0.22_245/0.06)] p-4 sm:p-5 space-y-3"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase tracking-[0.3em] text-white/80 font-bold">
+                One-tap sign in
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300">
+                ⚡ Fastest
+              </span>
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={loading}
+              onClick={google}
+              className="w-full h-14 text-base font-semibold bg-white text-gray-900 hover:bg-gray-50 border-white/80 shadow-lg shadow-[oklch(0.72_0.22_245/0.25)]"
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5 mr-3" aria-hidden>
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              Continue with Google
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={loading}
+              onClick={apple}
+              className="w-full h-14 text-base font-semibold bg-black text-white hover:bg-black/85 border-white/25"
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5 mr-3" aria-hidden fill="currentColor">
+                <path d="M16.365 1.43c0 1.14-.46 2.23-1.21 3.03-.81.86-2.13 1.52-3.21 1.43-.13-1.1.42-2.25 1.16-3.04.83-.88 2.24-1.54 3.26-1.42zM20.5 17.31c-.55 1.27-.81 1.83-1.52 2.95-.99 1.56-2.39 3.5-4.12 3.51-1.54.02-1.94-1-4.03-.99-2.09.01-2.53 1.01-4.07.99-1.73-.02-3.05-1.78-4.05-3.34C.01 16.18-.31 11.13 1.5 8.43c1.28-1.92 3.31-3.04 5.21-3.04 1.94 0 3.16 1.06 4.77 1.06 1.56 0 2.51-1.06 4.76-1.06 1.7 0 3.5.93 4.78 2.53-4.21 2.31-3.52 8.32.48 9.39z"/>
+              </svg>
+              Continue with Apple
+            </Button>
+          </section>
 
-            <div className="my-5 flex items-center gap-3">
-              <div className="h-px flex-1 bg-border" />
-              <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">or use email</span>
-              <div className="h-px flex-1 bg-border" />
-            </div>
+          <Divider label="or with email" />
 
-            <TabsList className="grid grid-cols-2 w-full mb-6">
+          <Tabs value={mode} onValueChange={(v) => setMode(v as "login" | "signup")} className="w-full space-y-5">
+            <TabsList className="grid grid-cols-2 w-full">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="login" className="space-y-4">
+            <TabsContent value="login" className="space-y-4 mt-0">
               <AuthForm
                 email={email}
                 setEmail={setEmail}
@@ -290,7 +291,7 @@ function AuthPage() {
                 variant="outline"
                 disabled={loading || !email}
                 onClick={magicLink}
-                className="w-full h-11 border-[oklch(0.78_0.18_85/0.5)] hover:bg-[oklch(0.78_0.18_85/0.1)] text-amber-200"
+                className="w-full h-12 border-[oklch(0.78_0.18_85/0.5)] hover:bg-[oklch(0.78_0.18_85/0.1)] text-amber-200"
               >
                 <Wand2 className="h-4 w-4 mr-2" />
                 Email me a magic link
@@ -308,7 +309,7 @@ function AuthPage() {
                 </Link>
               </div>
             </TabsContent>
-            <TabsContent value="signup" className="space-y-4">
+            <TabsContent value="signup" className="space-y-4 mt-0">
               <AuthForm
                 email={email}
                 setEmail={setEmail}
@@ -323,13 +324,15 @@ function AuthPage() {
                 variant="outline"
                 disabled={loading || !email}
                 onClick={magicLink}
-                className="w-full h-11 border-[oklch(0.78_0.18_85/0.5)] hover:bg-[oklch(0.78_0.18_85/0.1)] text-amber-200"
+                className="w-full h-12 border-[oklch(0.78_0.18_85/0.5)] hover:bg-[oklch(0.78_0.18_85/0.1)] text-amber-200"
               >
                 <Wand2 className="h-4 w-4 mr-2" />
                 Or email me a magic link
               </Button>
             </TabsContent>
           </Tabs>
+
+          <Divider label="other ways" />
 
           <Button
             type="button"
@@ -339,7 +342,7 @@ function AuthPage() {
               const start = passToken ? `?start=${encodeURIComponent(passToken)}` : "";
               window.open(`https://t.me/og_portal${start}`, "_blank");
             }}
-            className="w-full h-11 mt-4 border-sky-500/40 hover:bg-sky-500/10"
+            className="w-full h-12 border-sky-500/40 hover:bg-sky-500/10"
           >
             <Send className="h-4 w-4 mr-2 text-sky-400" />
             Continue in Telegram
@@ -347,6 +350,18 @@ function AuthPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+function Divider({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-3" role="separator" aria-label={label}>
+      <div className="h-px flex-1 bg-border" />
+      <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-bold">
+        {label}
+      </span>
+      <div className="h-px flex-1 bg-border" />
+    </div>
   );
 }
 
