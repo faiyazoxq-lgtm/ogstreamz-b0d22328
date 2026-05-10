@@ -39,6 +39,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TdSlugRouteImport } from './routes/td.$slug'
 import { Route as TSlugRouteImport } from './routes/t.$slug'
+import { Route as StoreCatalogRouteImport } from './routes/store.catalog'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
@@ -206,6 +207,11 @@ const TSlugRoute = TSlugRouteImport.update({
   path: '/t/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoreCatalogRoute = StoreCatalogRouteImport.update({
+  id: '/catalog',
+  path: '/catalog',
+  getParentRoute: () => StoreRoute,
+} as any)
 const PSlugRoute = PSlugRouteImport.update({
   id: '/p/$slug',
   path: '/p/$slug',
@@ -314,7 +320,7 @@ export interface FileRoutesByFullPath {
   '/robots.txt': typeof RobotsDottxtRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/store': typeof StoreRoute
+  '/store': typeof StoreRouteWithChildren
   '/syndicate': typeof SyndicateRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
@@ -330,6 +336,7 @@ export interface FileRoutesByFullPath {
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
   '/p/$slug': typeof PSlugRoute
+  '/store/catalog': typeof StoreCatalogRoute
   '/t/$slug': typeof TSlugRoute
   '/td/$slug': typeof TdSlugRoute
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
@@ -362,7 +369,7 @@ export interface FileRoutesByTo {
   '/robots.txt': typeof RobotsDottxtRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/store': typeof StoreRoute
+  '/store': typeof StoreRouteWithChildren
   '/syndicate': typeof SyndicateRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
@@ -378,6 +385,7 @@ export interface FileRoutesByTo {
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
   '/p/$slug': typeof PSlugRoute
+  '/store/catalog': typeof StoreCatalogRoute
   '/t/$slug': typeof TSlugRoute
   '/td/$slug': typeof TdSlugRoute
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
@@ -411,7 +419,7 @@ export interface FileRoutesById {
   '/robots.txt': typeof RobotsDottxtRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/store': typeof StoreRoute
+  '/store': typeof StoreRouteWithChildren
   '/syndicate': typeof SyndicateRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
@@ -427,6 +435,7 @@ export interface FileRoutesById {
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
   '/p/$slug': typeof PSlugRoute
+  '/store/catalog': typeof StoreCatalogRoute
   '/t/$slug': typeof TSlugRoute
   '/td/$slug': typeof TdSlugRoute
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
@@ -477,6 +486,7 @@ export interface FileRouteTypes {
     | '/jokes/portal'
     | '/m/$slug'
     | '/p/$slug'
+    | '/store/catalog'
     | '/t/$slug'
     | '/td/$slug'
     | '/api/public/0g-orchestrator'
@@ -525,6 +535,7 @@ export interface FileRouteTypes {
     | '/jokes/portal'
     | '/m/$slug'
     | '/p/$slug'
+    | '/store/catalog'
     | '/t/$slug'
     | '/td/$slug'
     | '/api/public/0g-orchestrator'
@@ -573,6 +584,7 @@ export interface FileRouteTypes {
     | '/jokes/portal'
     | '/m/$slug'
     | '/p/$slug'
+    | '/store/catalog'
     | '/t/$slug'
     | '/td/$slug'
     | '/api/public/0g-orchestrator'
@@ -606,7 +618,7 @@ export interface RootRouteChildren {
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SettingsRoute: typeof SettingsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  StoreRoute: typeof StoreRoute
+  StoreRoute: typeof StoreRouteWithChildren
   SyndicateRoute: typeof SyndicateRoute
   SyndicateOverlordRoute: typeof SyndicateOverlordRoute
   ToolsRoute: typeof ToolsRoute
@@ -841,6 +853,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/store/catalog': {
+      id: '/store/catalog'
+      path: '/catalog'
+      fullPath: '/store/catalog'
+      preLoaderRoute: typeof StoreCatalogRouteImport
+      parentRoute: typeof StoreRoute
+    }
     '/p/$slug': {
       id: '/p/$slug'
       path: '/p/$slug'
@@ -980,6 +999,16 @@ const JokesRouteChildren: JokesRouteChildren = {
 
 const JokesRouteWithChildren = JokesRoute._addFileChildren(JokesRouteChildren)
 
+interface StoreRouteChildren {
+  StoreCatalogRoute: typeof StoreCatalogRoute
+}
+
+const StoreRouteChildren: StoreRouteChildren = {
+  StoreCatalogRoute: StoreCatalogRoute,
+}
+
+const StoreRouteWithChildren = StoreRoute._addFileChildren(StoreRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
@@ -1002,7 +1031,7 @@ const rootRouteChildren: RootRouteChildren = {
   RobotsDottxtRoute: RobotsDottxtRoute,
   SettingsRoute: SettingsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  StoreRoute: StoreRoute,
+  StoreRoute: StoreRouteWithChildren,
   SyndicateRoute: SyndicateRoute,
   SyndicateOverlordRoute: SyndicateOverlordRoute,
   ToolsRoute: ToolsRoute,
