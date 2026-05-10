@@ -340,7 +340,7 @@ function SettingsPage() {
               return (
                 <div
                   key={entry.id}
-                  className="grid grid-cols-[140px_1fr_auto] gap-2 items-center"
+                  className="grid grid-cols-[140px_1fr_auto_auto] gap-2 items-center"
                 >
                   <Select
                     value={entry.platform}
@@ -392,6 +392,29 @@ function SettingsPage() {
                       )
                     }
                   />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label="Copy URL"
+                    title="Copy URL"
+                    disabled={!entry.value.trim() || !!validateEntry(entry)}
+                    onClick={async () => {
+                      const normalized = normalizeEntry(entry);
+                      const url = entryHref(normalized);
+                      if (!url) return;
+                      try {
+                        await navigator.clipboard.writeText(url);
+                        setCopiedId(entry.id);
+                        toast.success("Copied to clipboard");
+                        setTimeout(() => setCopiedId((c) => (c === entry.id ? null : c)), 1500);
+                      } catch {
+                        toast.error("Could not copy");
+                      }
+                    }}
+                  >
+                    {copiedId === entry.id ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
                   <Button
                     type="button"
                     variant="outline"
