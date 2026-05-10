@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft, Menu, X, ShieldAlert, LogIn } from "lucide-react";
+import { Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft, Menu, X, ShieldAlert, LogIn, ChevronRight, Home } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/boss")({
@@ -140,9 +140,52 @@ function BossLayout() {
         </aside>
 
         <main className="min-w-0">
+          <BossBreadcrumbs pathname={pathname} />
           <Outlet />
         </main>
       </div>
     </div>
+  );
+}
+
+function BossBreadcrumbs({ pathname }: { pathname: string }) {
+  const match = NAV.find((n) =>
+    n.exact ? pathname === n.to : pathname === n.to || pathname.startsWith(n.to + "/"),
+  );
+  const currentLabel = match?.label
+    ?? (pathname === "/boss" ? "Overview" : pathname.replace("/boss/", "").replace(/[-/]/g, " ").trim() || "Boss");
+  const onOverview = pathname === "/boss" || pathname === "/boss/overview";
+
+  return (
+    <nav aria-label="Breadcrumb" className="mb-4">
+      <ol className="flex items-center flex-wrap gap-1.5 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+        <li>
+          <Link to="/" className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+            <Home className="h-3 w-3" />
+            <span>Home</span>
+          </Link>
+        </li>
+        <li aria-hidden="true"><ChevronRight className="h-3 w-3 opacity-50" /></li>
+        <li>
+          {onOverview ? (
+            <span className="inline-flex items-center gap-1 text-gold" aria-current="page">
+              <Crown className="h-3 w-3" /> Boss
+            </span>
+          ) : (
+            <Link to="/boss/overview" className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+              <Crown className="h-3 w-3" /> Boss
+            </Link>
+          )}
+        </li>
+        {!onOverview && (
+          <>
+            <li aria-hidden="true"><ChevronRight className="h-3 w-3 opacity-50" /></li>
+            <li>
+              <span className="text-gold font-bold" aria-current="page">{currentLabel}</span>
+            </li>
+          </>
+        )}
+      </ol>
+    </nav>
   );
 }
