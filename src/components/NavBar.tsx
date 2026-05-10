@@ -179,8 +179,8 @@ export function NavBar() {
       data-scrolled={scrolled ? "true" : "false"}
       className={`sticky top-0 z-50 transition-[background-color,backdrop-filter,border-color,box-shadow] duration-300 ease-out border-b ${
         scrolled
-          ? "bg-background/85 backdrop-blur-xl border-border shadow-[0_8px_28px_-18px_rgba(0,0,0,0.85)]"
-          : "bg-background/35 backdrop-blur-md border-transparent"
+          ? "bg-background/95 sm:bg-background/85 backdrop-blur-none sm:backdrop-blur-xl border-border shadow-[0_8px_28px_-18px_rgba(0,0,0,0.85)]"
+          : "bg-background/80 sm:bg-background/35 backdrop-blur-none sm:backdrop-blur-md border-transparent"
       }`}
     >
       <nav className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap px-1.5 sm:px-8 h-16 sm:h-20 gap-1 sm:gap-2">
