@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Coins, Zap, Flame, Skull, ArrowLeft, Music, Pencil, Plus, Trash2, Save, X, Loader2, Settings2 } from "lucide-react";
+import { Coins, Zap, Flame, Skull, ArrowLeft, Music, Pencil, Plus, Trash2, Save, X, Loader2, Settings2, Crown, Radio, Package, Image as ImageIcon, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -21,6 +21,23 @@ type Pack = {
   recurring: boolean;
   active: boolean;
   sort_order: number;
+};
+
+type CatalogKind = "vip_pass" | "streams_pass" | "digital" | "nft";
+type CatalogPreview = {
+  id: string;
+  kind: CatalogKind;
+  title: string;
+  image_url: string | null;
+  price_cents: number;
+  currency: string;
+};
+const CATALOG_KINDS: CatalogKind[] = ["vip_pass", "streams_pass", "digital", "nft"];
+const CATALOG_META: Record<CatalogKind, { label: string; icon: any; blurb: string }> = {
+  vip_pass:     { label: "VIP Passes",     icon: Crown,     blurb: "Priority queues, deep tools, all hubs" },
+  streams_pass: { label: "Streams Passes", icon: Radio,     blurb: "Live streams + boss frequency" },
+  digital:      { label: "Digital Drops",  icon: Package,   blurb: "Packs, presets, lyric kits" },
+  nft:          { label: "NFT",            icon: ImageIcon, blurb: "Collectible syndicate mints" },
 };
 
 export const Route = createFileRoute("/store")({
@@ -45,6 +62,8 @@ function StorePage() {
   const [packs, setPacks] = useState<Pack[]>([]);
   const [creditsPerSong, setCreditsPerSong] = useState(5);
   const [loadingPacks, setLoadingPacks] = useState(true);
+  const [catalog, setCatalog] = useState<CatalogPreview[]>([]);
+  const [loadingCatalog, setLoadingCatalog] = useState(true);
 
   const isBoss = profile?.rank === "boss";
 
@@ -70,6 +89,24 @@ function StorePage() {
     setLoadingPacks(false);
   };
   useEffect(() => { if (user) loadAll(); /* eslint-disable-next-line */ }, [user, isBoss]);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    setLoadingCatalog(true);
+    supabase
+      .from("store_products")
+      .select("id,kind,title,image_url,price_cents,currency,active,sort_order")
+      .eq("active", true)
+      .order("sort_order", { ascending: true })
+      .order("price_cents", { ascending: true })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (!error && data) setCatalog(data as CatalogPreview[]);
+        setLoadingCatalog(false);
+      });
+    return () => { cancelled = true; };
+  }, [user]);
 
   if (loading || !user) {
     return <main className="px-5 py-20 text-center text-muted-foreground">Loading store…</main>;
@@ -155,6 +192,88 @@ function StorePage() {
       )}
 
       {isBoss && <BossSettingsBar creditsPerSong={creditsPerSong} onSaved={(v) => setCreditsPerSong(v)} />}
+
+      {/* Shop the Vault — item previews per catalog kind */}
+      {!isBoss && (
+        <section className="mb-10">
+          <div className="flex items-end justify-between gap-3 mb-4 flex-wrap">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.4em] font-bold" style={{ color: "var(--neon-blue-bright)" }}>
+                Shop the Vault
+              </p>
+              <h2 className="mt-1 font-[Montserrat] font-black text-2xl sm:text-3xl text-metallic">Items & Passes</h2>
+              <p className="text-xs text-muted-foreground mt-1">Spend cash directly on passes and drops — no credits needed.</p>
+            </div>
+            <Link
+              to="/store/catalog"
+              className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] font-bold text-white hover:text-[color:var(--neon-blue-bright)]"
+            >
+              See full catalog <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          {loadingCatalog ? (
+            <p className="text-center py-6 text-muted-foreground text-xs"><Loader2 className="h-4 w-4 inline animate-spin mr-2" />Loading items…</p>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {CATALOG_KINDS.map((kind) => {
+                const items = catalog.filter((p) => p.kind === kind);
+                const meta = CATALOG_META[kind];
+                const Icon = meta.icon;
+                const featured = items[0];
+                const fromPrice = items.length
+                  ? Math.min(...items.map((i) => i.price_cents))
+                  : null;
+                return (
+                  <Link
+                    key={kind}
+                    to="/store/catalog"
+                    search={{ tab: kind }}
+                    className="group relative rounded-2xl border border-border bg-card p-4 hover:border-[oklch(0.72_0.22_245/0.7)] hover:shadow-[0_0_30px_oklch(0.72_0.22_245/0.25)] transition flex flex-col min-h-[220px]"
+                  >
+                    <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-secondary/50 border border-border mb-3">
+                      {featured?.image_url ? (
+                        <img
+                          src={featured.image_url}
+                          alt={featured.title}
+                          loading="lazy"
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Icon className="h-10 w-10 text-muted-foreground/40" />
+                        </div>
+                      )}
+                      <span className="absolute top-2 left-2 inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.25em] font-black px-2 py-0.5 rounded-full bg-background/80 backdrop-blur text-white border border-border">
+                        <Icon className="h-2.5 w-2.5" /> {meta.label}
+                      </span>
+                      <span className="absolute top-2 right-2 text-[9px] font-black px-2 py-0.5 rounded-full bg-[var(--neon-blue-bright)] text-black">
+                        {items.length}
+                      </span>
+                    </div>
+                    <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{meta.blurb}</p>
+                    <p className="mt-1 text-sm font-bold text-white line-clamp-2 min-h-[2.5rem]">
+                      {featured?.title ?? "Coming soon"}
+                    </p>
+                    <div className="mt-auto pt-2 flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        {fromPrice !== null ? (
+                          <>from <span className="text-white font-bold">£{(fromPrice / 100).toFixed(2)}</span></>
+                        ) : (
+                          "—"
+                        )}
+                      </span>
+                      <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-[color:var(--neon-blue-bright)] inline-flex items-center gap-1">
+                        Browse <ArrowRight className="h-3 w-3" />
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
 
       {loadingPacks ? (
         <p className="text-center py-10 text-muted-foreground"><Loader2 className="h-5 w-5 inline animate-spin mr-2" />Loading packs…</p>
