@@ -2355,6 +2355,74 @@ export type Database = {
         }
         Relationships: []
       }
+      vip_pass_pool: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vip_pass_reveals: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          pool_id: string
+          revealed_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          pool_id: string
+          revealed_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          pool_id?: string
+          revealed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vip_pass_reveals_pool_id_fkey"
+            columns: ["pool_id"]
+            isOneToOne: false
+            referencedRelation: "vip_pass_pool"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vip_passes: {
         Row: {
           created_at: string
@@ -2459,6 +2527,7 @@ export type Database = {
         Returns: Json
       }
       boss_delete_vault_credential: { Args: { _id: string }; Returns: boolean }
+      boss_delete_vip_pass_pool: { Args: { _id: string }; Returns: boolean }
       boss_deny_topup: {
         Args: { _id: string; _note: string }
         Returns: boolean
@@ -2495,6 +2564,16 @@ export type Database = {
           _password: string
           _sort_order: number
           _username: string
+        }
+        Returns: string
+      }
+      boss_upsert_vip_pass_pool: {
+        Args: {
+          _active: boolean
+          _code: string
+          _id: string
+          _label: string
+          _sort_order: number
         }
         Returns: string
       }
@@ -2568,6 +2647,7 @@ export type Database = {
         Returns: Json
       }
       reveal_vault_credential: { Args: never; Returns: Json }
+      reveal_vip_pass: { Args: never; Returns: Json }
       spend_credits: {
         Args: { _amount: number; _reason: string }
         Returns: number
