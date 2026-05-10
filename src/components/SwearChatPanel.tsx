@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { swearChat, setSwearChat } from "@/lib/swear-chat.functions";
+import { swearChat } from "@/lib/swear-chat.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { Send, Power, Skull, Loader2 } from "lucide-react";
+import { Send, Skull, Loader2 } from "lucide-react";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -22,32 +22,16 @@ export function SwearChatPanel({
 }) {
   const { profile } = useAuth();
   const isBoss = profile?.rank === "boss";
-  const [on, setOn] = useState(enabled);
-  const [busy, setBusy] = useState(false);
+  const on = enabled;
   const [sending, setSending] = useState(false);
   const [draft, setDraft] = useState("");
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const sendFn = useServerFn(swearChat);
-  const toggleFn = useServerFn(setSwearChat);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => setOn(enabled), [enabled]);
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [msgs.length, sending]);
-
-  const toggle = async () => {
-    setBusy(true);
-    try {
-      await toggleFn({ data: { table, id, enabled: !on } });
-      setOn(!on);
-      toast.success(!on ? "Swear chat ARMED" : "Swear chat muzzled");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Toggle failed");
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const send = async () => {
     const text = draft.trim();
@@ -81,21 +65,17 @@ export function SwearChatPanel({
             Guttermouth · Swear Chat
           </p>
         </div>
-        {isBoss && (
-          <button
-            onClick={toggle}
-            disabled={busy}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] uppercase tracking-wider font-bold border transition"
-            style={{
-              borderColor: on ? "#22c55e88" : "#71717a55",
-              background: on ? "#22c55e22" : "#71717a11",
-              color: on ? "#22c55e" : "#a1a1aa",
-            }}
-          >
-            <Power className="h-3 w-3" />
-            {busy ? "…" : on ? "ON" : "OFF"}
-          </button>
-        )}
+        <span
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] uppercase tracking-wider font-bold border"
+          style={{
+            borderColor: on ? "#22c55e88" : "#71717a55",
+            background: on ? "#22c55e22" : "#71717a11",
+            color: on ? "#22c55e" : "#a1a1aa",
+          }}
+          title="Use the Swear toggle in the header to flip this for your account."
+        >
+          {on ? "ON" : "OFF"}
+        </span>
       </header>
 
       {on ? (
@@ -154,7 +134,7 @@ export function SwearChatPanel({
         </>
       ) : (
         <div className="px-4 py-6 text-center text-xs text-white/50">
-          Swear chat is OFF for this portal. Boss can flip it on with the switch above.
+          Swear chat is OFF. Use the master Swear toggle in the page header to turn it on.
         </div>
       )}
     </section>
