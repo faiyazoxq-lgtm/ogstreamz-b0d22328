@@ -4,7 +4,7 @@ import {
   Music2, Smile, Wrench, ArrowUpRight, TrendingUp, Rocket, Swords,
   Sparkles, Radio, Bot, Brain, Zap, Star, Megaphone, Disc3, Satellite, Radar,
   UserPlus, LogIn, Gift, ShieldCheck, Coins,
-  LayoutDashboard, Store, Crown, Users, Send,
+  LayoutDashboard, Store, Crown, Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
