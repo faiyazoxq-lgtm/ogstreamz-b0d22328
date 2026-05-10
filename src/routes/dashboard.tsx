@@ -205,7 +205,12 @@ function SubSummary({
         </div>
       )}
       {renewalLabel && (
-        <p className="text-[11px] leading-tight text-muted-foreground break-words">{renewalLabel}</p>
+        <p
+          className="text-[11px] leading-tight text-muted-foreground break-words hyphens-auto max-w-full"
+          title={renewalLabel}
+        >
+          {renewalLabel}
+        </p>
       )}
     </div>
   );
