@@ -207,7 +207,7 @@ function StatTile({
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className={`inline-flex h-9 w-9 items-center justify-center rounded-xl bg-secondary ring-1 ring-border ${iconClass ?? "text-primary"}`}>
-            <Icon className="h-4.5 w-4.5" />
+            <Icon className="h-4 w-4" />
           </span>
           <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{label}</p>
         </div>
