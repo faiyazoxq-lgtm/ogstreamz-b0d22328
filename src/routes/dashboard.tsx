@@ -184,14 +184,15 @@ function SubSummary({
   activeSub: SubscriptionRow | null;
   renewalLabel: string | null;
 }) {
-  const hasStatus = Boolean(activeSub && activeSub.status);
-  if (!planLabel && !hasStatus && !renewalLabel) return null;
+  const subWithStatus: SubscriptionRow | null =
+    activeSub && activeSub.status ? activeSub : null;
+  if (!planLabel && !subWithStatus && !renewalLabel) return null;
   return (
     <div className="mt-3 flex flex-col gap-1.5">
-      {(planLabel || hasStatus) && (
+      {(planLabel || subWithStatus) && (
         <div className="flex flex-wrap items-center gap-1.5">
           <PlanChip planLabel={planLabel} tone="amber" size="sm" />
-          {hasStatus && <StatusBadge sub={activeSub} size="sm" />}
+          {subWithStatus && <StatusBadge sub={subWithStatus} size="sm" />}
         </div>
       )}
       {renewalLabel && (
