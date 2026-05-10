@@ -94,6 +94,51 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
 
   const retry = () => { setErrorMsg(null); void run(); };
 
+  const STAGES: ReadonlyArray<{ key: 1 | 2 | 3 | 4; label: string; hint: string }> = [
+    { key: 1, label: "Queued",      hint: "Reserving credit & slot" },
+    { key: 2, label: "Generating",  hint: "Scouting + AI seed content" },
+    { key: 3, label: "Publishing",  hint: "Writing portal & going live" },
+    { key: 4, label: "Ready",       hint: "Portal is live" },
+  ];
+
+  const SpawnProgress = ({ stage }: { stage: 0 | 1 | 2 | 3 | 4 }) => (
+    <ol
+      aria-label="Spawn progress"
+      className="mt-5 rounded-xl border border-border bg-background/60 p-3 grid grid-cols-1 sm:grid-cols-4 gap-2"
+    >
+      {STAGES.map((s) => {
+        const done = stage > s.key;
+        const active = stage === s.key;
+        return (
+          <li
+            key={s.key}
+            aria-current={active ? "step" : undefined}
+            className={[
+              "flex items-center gap-2 rounded-md px-3 py-2 border text-xs",
+              done
+                ? "border-[oklch(0.72_0.22_245/0.5)] bg-[oklch(0.72_0.22_245/0.08)] text-foreground"
+                : active
+                ? "border-gold/60 bg-gold/10 text-foreground"
+                : "border-border text-muted-foreground",
+            ].join(" ")}
+          >
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-current shrink-0">
+              {done
+                ? <Check className="h-3 w-3" />
+                : active
+                ? <Loader2 className="h-3 w-3 animate-spin" />
+                : <span className="text-[10px] font-bold">{s.key}</span>}
+            </span>
+            <div className="leading-tight min-w-0">
+              <div className="font-bold uppercase tracking-[0.18em] truncate">{s.label}</div>
+              <div className="text-[10px] text-muted-foreground truncate">{s.hint}</div>
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  );
+
   return (
     <section className="mt-10 rounded-2xl border border-[oklch(0.72_0.22_245/0.4)] bg-card p-6 sm:p-8">
       <header className="flex items-center gap-3 mb-1 flex-wrap">
