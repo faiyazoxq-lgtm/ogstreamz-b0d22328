@@ -470,6 +470,28 @@ function QuickJumpMenu({ user }: { user: boolean }) {
             </Link>
           </li>
         )}
+        {!user && (
+          <li className="contents">
+            <Link
+              to="/auth"
+              aria-label="Sign in to your account"
+              className="group relative flex items-center gap-2.5 rounded-xl border border-[oklch(0.72_0.22_245/0.4)] bg-[oklch(0.72_0.22_245/0.1)] px-3 py-2.5 text-left transition-all hover:-translate-y-0.5 hover:bg-[oklch(0.72_0.22_245/0.2)] hover:shadow-[0_0_24px_-6px_oklch(0.72_0.22_245)] focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.22_245)] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            >
+              <span className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center bg-[oklch(0.72_0.22_245/0.2)] text-[oklch(0.85_0.15_245)]">
+                <LogIn aria-hidden="true" focusable="false" className="h-4 w-4" />
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[11px] font-black uppercase tracking-[0.15em] text-white truncate">
+                  Sign in
+                </span>
+                <span className="block text-[10px] font-semibold text-white/70 truncate">
+                  Members entrance
+                </span>
+              </span>
+              <ArrowUpRight aria-hidden="true" focusable="false" className="h-3.5 w-3.5 text-[oklch(0.85_0.15_245)]" />
+            </Link>
+          </li>
+        )}
       </ul>
     </nav>
   );
