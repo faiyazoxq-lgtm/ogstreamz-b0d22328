@@ -250,23 +250,29 @@ function Index() {
               {thisPending ? (
                 "Opening…"
               ) : (
-                <span className="inline-flex items-center gap-[0.15em]">
-                  <TrackingEye
-                    variant="ice"
-                    bloodshot
-                    pupilRatio={0.5}
-                    travelRatio={0.22}
-                    className={`align-[-0.18em] ${EYE_SCALE_CLASS}`}
-                  />
-                  <span>pen P</span>
-                  <TrackingEye
-                    variant="ice"
-                    bloodshot
-                    pupilRatio={0.5}
-                    travelRatio={0.22}
-                    className={`align-[-0.18em] ${EYE_SCALE_CLASS}`}
-                  />
-                  <span>rtal</span>
+                <span className="inline-flex items-center whitespace-nowrap">
+                  <span className="inline-flex items-center">
+                    <TrackingEye
+                      variant="ice"
+                      bloodshot
+                      pupilRatio={0.5}
+                      travelRatio={0.22}
+                      className={`align-[-0.18em] ${EYE_SCALE_CLASS}`}
+                    />
+                    <span>pen</span>
+                  </span>
+                  <span aria-hidden>&nbsp;</span>
+                  <span className="inline-flex items-center">
+                    <span>P</span>
+                    <TrackingEye
+                      variant="ice"
+                      bloodshot
+                      pupilRatio={0.5}
+                      travelRatio={0.22}
+                      className={`align-[-0.18em] ${EYE_SCALE_CLASS}`}
+                    />
+                    <span>rtal</span>
+                  </span>
                 </span>
               )}
               <ArrowUpRight className="h-3.5 w-3.5" />
