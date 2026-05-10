@@ -15,7 +15,6 @@ import { NavBar } from "../components/NavBar";
 import { AuthProvider } from "../hooks/use-auth";
 import { Toaster } from "../components/ui/sonner";
 import { PaymentTestModeBanner } from "../components/PaymentTestModeBanner";
-import { ZeroGBadge } from "../components/ZeroGBadge";
 import { GlobalMoodProvider } from "../hooks/use-global-mood";
 import { BottomDock } from "../components/BottomDock";
 import { LiveThinkingFeed } from "../components/LiveThinkingFeed";
@@ -154,7 +153,6 @@ function RootComponent() {
             <LiveThinkingFeed />
             <EnforcerConsole />
             <BottomDock />
-            <ZeroGBadge />
             <ReducedMotionToggle />
           </div>
           <Toaster />
