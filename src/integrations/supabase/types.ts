@@ -1804,6 +1804,27 @@ export type Database = {
         }
         Relationships: []
       }
+      stream_expiry_reminders: {
+        Row: {
+          expires_at: string
+          notified_at: string
+          threshold_days: number
+          user_id: string
+        }
+        Insert: {
+          expires_at: string
+          notified_at?: string
+          threshold_days: number
+          user_id: string
+        }
+        Update: {
+          expires_at?: string
+          notified_at?: string
+          threshold_days?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       stream_verification_requests: {
         Row: {
           auto_expires_at: string | null
@@ -2720,6 +2741,17 @@ export type Database = {
       is_real_og: { Args: { _uid?: string }; Returns: boolean }
       mark_stream_verified: {
         Args: { _expires_at: string; _status: string; _user_id: string }
+        Returns: undefined
+      }
+      notify_stream_expiring_soon: { Args: never; Returns: number }
+      notify_user: {
+        Args: {
+          _body: string
+          _link: string
+          _severity: string
+          _title: string
+          _user_id: string
+        }
         Returns: undefined
       }
       plan_includes_tier: {
