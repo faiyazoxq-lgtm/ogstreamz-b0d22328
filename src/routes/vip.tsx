@@ -153,6 +153,35 @@ function VipPage() {
       : `Renews ${renewalDate}`
     : null;
 
+  const statusBadge = (() => {
+    const s = activeSub?.status;
+    if (!s) return null;
+    const cancelling = activeSub?.cancel_at_period_end;
+    type Variant = { label: string; cls: string };
+    const map: Record<string, Variant> = {
+      active:               { label: cancelling ? "Cancelling" : "Active",
+                              cls: cancelling
+                                ? "border-amber-300/60 bg-amber-400/15 text-amber-100"
+                                : "border-emerald-300/60 bg-emerald-400/15 text-emerald-100" },
+      trialing:             { label: "Trialing",   cls: "border-cyan-300/60 bg-cyan-400/15 text-cyan-100" },
+      past_due:             { label: "Past due",   cls: "border-amber-300/70 bg-amber-400/20 text-amber-100" },
+      unpaid:               { label: "Unpaid",     cls: "border-rose-300/60 bg-rose-500/15 text-rose-100" },
+      canceled:             { label: "Canceled",   cls: "border-rose-300/60 bg-rose-500/15 text-rose-100" },
+      incomplete:           { label: "Incomplete", cls: "border-white/30 bg-white/10 text-white/80" },
+      incomplete_expired:   { label: "Expired",    cls: "border-white/30 bg-white/10 text-white/70" },
+      paused:               { label: "Paused",     cls: "border-white/30 bg-white/10 text-white/80" },
+    };
+    const v = map[s] ?? { label: s.replace(/_/g, " "), cls: "border-white/30 bg-white/10 text-white/80" };
+    return (
+      <span
+        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.25em] ${v.cls}`}
+        title={`Subscription status: ${s}`}
+      >
+        {v.label}
+      </span>
+    );
+  })();
+
   // Surface a one-time toast on return from Stripe checkout.
   useEffect(() => {
     if (search.checkout === "success") {
@@ -207,6 +236,7 @@ function VipPage() {
                     {planLabel} plan
                   </span>
                 )}
+                {statusBadge}
               </p>
               <p className="text-xs text-emerald-100/80 mt-0.5">
                 Your status is live. Every portal, every track, every tool — unlocked.
@@ -239,6 +269,7 @@ function VipPage() {
                     {planLabel} plan
                   </span>
                 )}
+                {statusBadge}
               </p>
               <p className="text-xs text-amber-100/80 mt-0.5">
                 Real 0G status active{user?.email ? <> · <span className="font-mono">{user.email}</span></> : null}. Every portal is unlocked.
