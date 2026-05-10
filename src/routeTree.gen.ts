@@ -48,6 +48,7 @@ import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as BossUsersRouteImport } from './routes/boss.users'
 import { Route as BossStreamQueueRouteImport } from './routes/boss.stream-queue'
+import { Route as BossPricingRouteImport } from './routes/boss.pricing'
 import { Route as BossOverviewRouteImport } from './routes/boss.overview'
 import { Route as BossLexiconRouteImport } from './routes/boss.lexicon'
 import { Route as BossCivilityRouteImport } from './routes/boss.civility'
@@ -257,6 +258,11 @@ const BossStreamQueueRoute = BossStreamQueueRouteImport.update({
   path: '/stream-queue',
   getParentRoute: () => BossRoute,
 } as any)
+const BossPricingRoute = BossPricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossOverviewRoute = BossOverviewRouteImport.update({
   id: '/overview',
   path: '/overview',
@@ -364,6 +370,7 @@ export interface FileRoutesByFullPath {
   '/boss/civility': typeof BossCivilityRoute
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
+  '/boss/pricing': typeof BossPricingRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -417,6 +424,7 @@ export interface FileRoutesByTo {
   '/boss/civility': typeof BossCivilityRoute
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
+  '/boss/pricing': typeof BossPricingRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -472,6 +480,7 @@ export interface FileRoutesById {
   '/boss/civility': typeof BossCivilityRoute
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
+  '/boss/pricing': typeof BossPricingRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -528,6 +537,7 @@ export interface FileRouteTypes {
     | '/boss/civility'
     | '/boss/lexicon'
     | '/boss/overview'
+    | '/boss/pricing'
     | '/boss/stream-queue'
     | '/boss/users'
     | '/checkout/return'
@@ -581,6 +591,7 @@ export interface FileRouteTypes {
     | '/boss/civility'
     | '/boss/lexicon'
     | '/boss/overview'
+    | '/boss/pricing'
     | '/boss/stream-queue'
     | '/boss/users'
     | '/checkout/return'
@@ -635,6 +646,7 @@ export interface FileRouteTypes {
     | '/boss/civility'
     | '/boss/lexicon'
     | '/boss/overview'
+    | '/boss/pricing'
     | '/boss/stream-queue'
     | '/boss/users'
     | '/checkout/return'
@@ -975,6 +987,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossStreamQueueRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/pricing': {
+      id: '/boss/pricing'
+      path: '/pricing'
+      fullPath: '/boss/pricing'
+      preLoaderRoute: typeof BossPricingRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/overview': {
       id: '/boss/overview'
       path: '/overview'
@@ -1074,6 +1093,7 @@ interface BossRouteChildren {
   BossCivilityRoute: typeof BossCivilityRoute
   BossLexiconRoute: typeof BossLexiconRoute
   BossOverviewRoute: typeof BossOverviewRoute
+  BossPricingRoute: typeof BossPricingRoute
   BossStreamQueueRoute: typeof BossStreamQueueRoute
   BossUsersRoute: typeof BossUsersRoute
   BossIndexRoute: typeof BossIndexRoute
@@ -1084,6 +1104,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossCivilityRoute: BossCivilityRoute,
   BossLexiconRoute: BossLexiconRoute,
   BossOverviewRoute: BossOverviewRoute,
+  BossPricingRoute: BossPricingRoute,
   BossStreamQueueRoute: BossStreamQueueRoute,
   BossUsersRoute: BossUsersRoute,
   BossIndexRoute: BossIndexRoute,
