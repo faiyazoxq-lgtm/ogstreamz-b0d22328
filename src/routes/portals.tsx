@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Copy, ExternalLink, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, Search, Crown, QrCode, Share2, Globe, Download, X } from "lucide-react";
@@ -280,10 +280,14 @@ function PortalsHub() {
                     </div>
                   )}
                 </div>
-                <a href={href} className="mt-3 block">
-                  <h3 className="font-[Montserrat] font-black text-xl tracking-tight truncate">{i.name}</h3>
+                <Link
+                  to={i.to}
+                  params={{ slug: i.slug }}
+                  className="mt-3 block rounded-md outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <h3 className="font-[Montserrat] font-black text-xl tracking-tight truncate hover:underline">{i.name}</h3>
                   <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{i.subtitle || "—"}</p>
-                </a>
+                </Link>
                 <div className="mt-3 text-[10px] uppercase tracking-widest text-muted-foreground/70 truncate">
                   {origin.replace(/^https?:\/\//, "")}{href}
                 </div>
@@ -311,13 +315,14 @@ function PortalsHub() {
                   >
                     <Share2 className="h-3.5 w-3.5" />
                   </button>
-                  <a
-                    href={href}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-[11px] uppercase tracking-[0.18em] font-bold text-black"
+                  <Link
+                    to={i.to}
+                    params={{ slug: i.slug }}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-[11px] uppercase tracking-[0.18em] font-bold text-black outline-none transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-primary"
                     style={{ background: meta.accent }}
                   >
                     Open <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
+                  </Link>
                 </div>
                 {i.views > 0 && (
                   <div className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground/60">

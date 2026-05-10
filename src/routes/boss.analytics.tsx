@@ -322,7 +322,7 @@ function AnalyticsPage() {
                       <td className="py-2 px-2 text-white/70">{r.topReferrer}</td>
                       <td className="py-2 px-2 text-white/50 text-xs">{r.lastSeen ? new Date(r.lastSeen).toLocaleString() : "—"}</td>
                       <td className="py-2 pl-2 text-right">
-                        <a href={href} target="_blank" rel="noreferrer" className="text-xs underline text-[color:var(--syndicate-glow)]">open</a>
+                        <a href={href} target="_blank" rel="noopener noreferrer" className="text-xs underline text-[color:var(--syndicate-glow)]">open</a>
                       </td>
                     </tr>
                   );

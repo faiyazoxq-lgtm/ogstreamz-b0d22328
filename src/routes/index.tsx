@@ -258,7 +258,7 @@ function Index() {
             </>
           );
           return isExternal ? (
-            <a key={h.id} href={h.href} target="_blank" rel="noreferrer"
+            <a key={h.id} href={h.href} target="_blank" rel="noopener noreferrer"
               className={cardCls} style={{ borderColor: `${accent}55` }}>
               {inner}
             </a>

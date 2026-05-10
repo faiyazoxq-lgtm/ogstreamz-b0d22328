@@ -331,7 +331,7 @@ function TradeTerminal() {
               {(intel.verifiedSources?.length ?? 0) > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {intel.verifiedSources.slice(0, 8).map((s: any, i: number) => (
-                    <a key={i} href={s.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] uppercase tracking-[0.25em]" style={{ borderColor: `${GOLD}55`, background: "rgba(0,0,0,0.5)" }}>
+                    <a key={i} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] uppercase tracking-[0.25em]" style={{ borderColor: `${GOLD}55`, background: "rgba(0,0,0,0.5)" }}>
                       <BadgeCheck className="h-3 w-3" style={{ color: GOLD }} />{s.source}<ExternalLink className="h-3 w-3 opacity-60" />
                     </a>
                   ))}
@@ -382,7 +382,7 @@ function TradeTerminal() {
             <ul className="space-y-2 text-sm">
               {whales.alerts.map((a: any, i: number) => (
                 <li key={i} className="rounded border border-white/10 p-3 bg-white/5">
-                  <a href={a.url} target="_blank" rel="noreferrer" className="font-bold hover:underline" style={{ color: GOLD }}>{a.title}</a>
+                  <a href={a.url} target="_blank" rel="noopener noreferrer" className="font-bold hover:underline" style={{ color: GOLD }}>{a.title}</a>
                   {a.snippet && <div className="text-xs opacity-70 mt-1">{a.snippet}</div>}
                 </li>
               ))}
