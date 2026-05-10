@@ -18,7 +18,6 @@ type Profile = {
   free_clicks_used: number;
   display_name: string | null;
   banned?: boolean;
-  stream_username?: string | null;
   stream_status?: string | null;
   stream_expires_at?: string | null;
 };
@@ -54,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (s?.access_token) await promoteBossIfNeeded({ data: { accessToken: s.access_token } });
     } catch { /* non-fatal */ }
     const [{ data: prof }, { data: roles }] = await Promise.all([
-      supabase.from("profiles").select("id,email,status,credits,rank,feature_flags,free_clicks_used,display_name,banned,stream_username,stream_status,stream_expires_at").eq("id", uid).maybeSingle(),
+      supabase.from("profiles").select("id,email,status,credits,rank,feature_flags,free_clicks_used,display_name,banned,stream_status,stream_expires_at").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
     setProfile(prof as Profile | null);
