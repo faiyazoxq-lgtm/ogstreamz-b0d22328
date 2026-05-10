@@ -41,10 +41,28 @@ export function SpotlightEyes() {
     resize();
     window.addEventListener("resize", resize);
 
-    const onMove = (e: MouseEvent) => {
-      mouseRef.current.x = e.clientX;
-      mouseRef.current.y = e.clientY;
+    // Touch/coarse devices: hold tap target briefly, then release so the
+    // spotlights drift back to centre instead of getting stuck on a tap point.
+    let tapClearTimer: number | undefined;
+    const HOLD_MS = 1100;
+
+    const setTarget = (x: number, y: number, fromTap: boolean) => {
+      mouseRef.current.x = x;
+      mouseRef.current.y = y;
       mouseRef.current.active = true;
+      if (fromTap) {
+        if (tapClearTimer) window.clearTimeout(tapClearTimer);
+        tapClearTimer = window.setTimeout(() => {
+          mouseRef.current.active = false;
+        }, HOLD_MS);
+      }
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      // Only react to fine pointers here; coarse pointers fire spurious
+      // moves during scroll which would yank the spotlights around.
+      if (e.pointerType === "touch") return;
+      setTarget(e.clientX, e.clientY, false);
       if (reducedRef.current) return; // no spark trail when reduced motion is on
       // Emit a couple of sparks tracking the mouse
       for (let i = 0; i < 2; i++) {
@@ -59,8 +77,24 @@ export function SpotlightEyes() {
       }
       if (sparksRef.current.length > 240) sparksRef.current.splice(0, sparksRef.current.length - 240);
     };
+    const onPointerDown = (e: PointerEvent) => {
+      // Taps drive both fine and coarse pointers; treat as transient target.
+      setTarget(e.clientX, e.clientY, e.pointerType !== "mouse");
+      if (reducedRef.current) return;
+      // Burst a few sparks at the tap point for feedback.
+      for (let i = 0; i < 6; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const s = 1 + Math.random() * 2.5;
+        sparksRef.current.push({
+          x: e.clientX, y: e.clientY,
+          vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+          life: 0, max: 22 + Math.random() * 18,
+        });
+      }
+    };
     const onLeave = () => { mouseRef.current.active = false; };
-    window.addEventListener("mousemove", onMove);
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("pointerdown", onPointerDown, { passive: true });
     window.addEventListener("mouseleave", onLeave);
 
     let lastBolt = 0;
@@ -244,8 +278,10 @@ export function SpotlightEyes() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
-      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("mouseleave", onLeave);
+      if (tapClearTimer) window.clearTimeout(tapClearTimer);
     };
   }, []);
 
