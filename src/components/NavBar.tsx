@@ -175,7 +175,7 @@ export function NavBar() {
             />
           </li>
           {user && (
-            <li className="hidden md:block">
+            <li className="block">
               <MasterSwearToggle />
             </li>
           )}
