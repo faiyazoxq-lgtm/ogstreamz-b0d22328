@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { spawnMusicPortal } from "@/lib/music-spawn.functions";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
+import { CreditWallet } from "@/components/CreditWallet";
 import { FeaturedNasheedCard } from "@/components/FeaturedNasheedCard";
 
 export const Route = createFileRoute("/music")({
@@ -190,6 +191,7 @@ function MusicPromptBuilder() {
           )}
         </Button>
       </section>
+      <CreditWallet className="mt-10" />
       <SpawnPortalCard kind="music" />
     </main>
   );

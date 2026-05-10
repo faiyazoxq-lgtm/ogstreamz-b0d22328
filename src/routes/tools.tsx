@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { spawnTool, type ToolAudience } from "@/lib/tools.functions";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
+import { CreditWallet } from "@/components/CreditWallet";
 
 export const Route = createFileRoute("/tools")({
   head: () => ({
@@ -249,6 +250,7 @@ function ToolPromptBuilder() {
           </div>
         </section>
       )}
+      <CreditWallet className="mt-10" />
       <SpawnPortalCard kind="tools" />
     </main>
   );
