@@ -1627,7 +1627,7 @@ function SpawnerPanel() {
           </label>
           <label className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-muted-foreground cursor-pointer">
             <input type="checkbox" checked={vip} onChange={(e) => setVip(e.target.checked)} className="h-4 w-4" />
-            VIP Portal ($5 unlock)
+            VIP Portal (5 🪙 unlock)
           </label>
           <label className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] cursor-pointer" style={{ color: "var(--neon-blue-bright)" }}>
             <input type="checkbox" checked={initTelegram} onChange={(e) => setInitTelegram(e.target.checked)} className="h-4 w-4" />
