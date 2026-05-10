@@ -19,7 +19,12 @@ export function BottomDock() {
   if (pathname.startsWith("/login") || pathname.startsWith("/signup")) return null;
 
   const items = isBoss
-    ? [...ITEMS, { to: "/boss", label: "Boss", icon: Crown } as const]
+    ? [
+        ...ITEMS.map((it) =>
+          it.to === "/store" ? ({ ...it, label: "Manage Store" } as const) : it,
+        ),
+        { to: "/boss", label: "Boss", icon: Crown } as const,
+      ]
     : ITEMS;
 
   return (
