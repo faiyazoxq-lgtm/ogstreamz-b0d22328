@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
+import { OgWordmark } from "@/components/OgWordmark";
 
 export const Route = createFileRoute("/vault-login")({
   head: () => ({
