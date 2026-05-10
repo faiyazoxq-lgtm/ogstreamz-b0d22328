@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SyndicateProtocolSwitch } from "@/components/SyndicateProtocolSwitch";
 import { useServerFn } from "@tanstack/react-start";
 import { scoutUrl } from "@/lib/firecrawl.functions";
-import { spawnPortal } from "@/lib/portals.functions";
+import { spawnPortal, bossDeletePortal } from "@/lib/portals.functions";
 import { spawnMusicPortal } from "@/lib/music-portals.functions";
 import { createTrack } from "@/lib/tracks.functions";
 import { spawnTool } from "@/lib/tools.functions";
@@ -22,6 +22,16 @@ import { listBots, upsertBot, deleteBot, broadcastGlobalAlert, runSyndicateTickN
 import { generateBrandBible, updateTelegramLinks, deployToTelegram } from "@/lib/telegram.functions";
 import { runAgentTask, getOpsSnapshot, runMaintenance } from "@/lib/command-deck.functions";
 import { TopUpRequestsPanel } from "@/components/TopUpRequestsPanel";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const NAV_SECTIONS: { id: string; label: string; tint: string }[] = [
   { id: "roster", label: "Roster", tint: "#3ad6ff" },
