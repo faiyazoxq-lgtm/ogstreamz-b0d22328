@@ -22,6 +22,7 @@ type MusicPortal = {
   theme: string;
   swear_chat_enabled?: boolean;
   jokes: string[] | null;
+  music_hooks: string[] | null;
 };
 
 export const Route = createFileRoute("/m/$slug")({
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/m/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals")
-      .select("id, slug, name, language, style, vibe, theme, kind, swear_chat_enabled, jokes")
+      .select("id, slug, name, language, style, vibe, theme, kind, swear_chat_enabled, jokes, music_hooks")
       .eq("slug", params.slug)
       .eq("kind", "music")
       .maybeSingle();
@@ -526,8 +527,11 @@ function MusicHooksSection({
   theme: { accent: string; secondary: string; font: string; ornament: string };
   onUseHook: (text: string) => void;
 }) {
-  const hooks: string[] = Array.isArray(portal.jokes)
-    ? (portal.jokes as unknown[]).filter(
+  const hookSource = Array.isArray(portal.music_hooks) && portal.music_hooks.length > 0
+    ? portal.music_hooks
+    : portal.jokes;
+  const hooks: string[] = Array.isArray(hookSource)
+    ? (hookSource as unknown[]).filter(
         (h): h is string => typeof h === "string" && h.trim().length > 0,
       )
     : [];
