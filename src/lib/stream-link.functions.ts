@@ -17,6 +17,28 @@ export type StreamReasonCode =
   | "rpc_error"
   | "unknown";
 
+export type RpcErrorCause =
+  | "network"
+  | "rate_limit"
+  | "invalid_credentials"
+  | "resubmit_required"
+  | "save_failed"
+  | "permission_denied"
+  | "unknown";
+
+function classifyRpcError(message: string | undefined | null): RpcErrorCause {
+  const m = (message || "").toLowerCase();
+  if (!m) return "unknown";
+  if (m.includes("resubmit")) return "resubmit_required";
+  if (m.includes("rate") && m.includes("limit")) return "rate_limit";
+  if (m.includes("too many") || m.includes("429")) return "rate_limit";
+  if (m.includes("fetch") || m.includes("network") || m.includes("econn") || m.includes("timeout") || m.includes("unreachable")) return "network";
+  if (m.includes("invalid") && (m.includes("credential") || m.includes("password") || m.includes("username") || m.includes("login"))) return "invalid_credentials";
+  if (m.includes("unauthorized") || m.includes("forbidden") || m.includes("permission") || m.includes("rls") || m.includes("policy")) return "permission_denied";
+  if (m.includes("duplicate") || m.includes("conflict") || m.includes("constraint") || m.includes("insert") || m.includes("update")) return "save_failed";
+  return "unknown";
+}
+
 const REASON_MESSAGES: Record<StreamReasonCode, string> = {
   invalid_username: "Username must be 2–120 characters with no spaces.",
   invalid_password: "Password must be 2–200 characters.",
@@ -141,7 +163,7 @@ export const verifyAndLinkStream = createServerFn({ method: "POST" })
       const { error } = await supabase.rpc("set_stream_credentials", {
         _user_id: userId, _username: data.username, _password: data.password, _server: data.server,
       });
-      if (error) return { ok: false as const, reason: "rpc_error" as const, error: error.message };
+      if (error) return { ok: false as const, reason: "rpc_error" as const, cause: classifyRpcError(error.message), error: error.message };
     }
 
     // Enqueue for Boss approval (no auto-promotion)
@@ -154,7 +176,7 @@ export const verifyAndLinkStream = createServerFn({ method: "POST" })
       _auto_expires_at: expiresAt,
       _auto_payload: info as never,
     });
-    if (qErr) return { ok: false as const, reason: "rpc_error" as const, error: qErr.message };
+    if (qErr) return { ok: false as const, reason: "rpc_error" as const, cause: classifyRpcError(qErr.message), error: qErr.message };
     return {
       ok: true as const,
       queued: true as const,
@@ -177,6 +199,7 @@ export const reverifyStream = createServerFn({ method: "POST" })
     return {
       ok: false as const,
       reason: "rpc_error" as const,
+      cause: "resubmit_required" as const,
       error: "Re-verification requires the member to resubmit their stream credentials.",
     };
   });
