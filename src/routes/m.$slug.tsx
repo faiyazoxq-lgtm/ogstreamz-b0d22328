@@ -472,7 +472,7 @@ function MusicPortalPage() {
           ) : owned.size === 0 ? (
             <><Lock className="h-6 w-6 mr-3" />Unlock a Track to Request HQ Master</>
           ) : (
-            <><Disc3 className="h-6 w-6 mr-3" />Request HQ Master · 50 🪙</>
+            <><Disc3 className="h-6 w-6 mr-3" />Request HQ Master — Spend 50 🪙</>
           )}
         </Button>
 
