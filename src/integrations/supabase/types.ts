@@ -1086,6 +1086,33 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_downloads: {
+        Row: {
+          created_at: string
+          credits_spent: number
+          id: string
+          mode: string
+          portal_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_spent?: number
+          id?: string
+          mode: string
+          portal_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_spent?: number
+          id?: string
+          mode?: string
+          portal_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       portal_marketing: {
         Row: {
           apollo_filters: Json
@@ -2960,6 +2987,10 @@ export type Database = {
       }
       charge_portal_use: { Args: { _portal_id: string }; Returns: number }
       civility_default: { Args: never; Returns: boolean }
+      claim_portal_download: {
+        Args: { _cost?: number; _portal_id: string }
+        Returns: Json
+      }
       claim_real_og_bundle: {
         Args: {
           _amount_cents: number
@@ -3038,6 +3069,10 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      peek_portal_download: {
+        Args: { _cost?: number; _portal_id: string }
+        Returns: Json
       }
       plan_includes_tier: {
         Args: {
