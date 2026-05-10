@@ -288,6 +288,21 @@ function AuthPage() {
               </p>
             </header>
 
+            {magicLinkNotice?.kind === "consumed" && (
+              <div
+                role="status"
+                className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200 space-y-1"
+              >
+                <p className="font-bold uppercase tracking-widest text-[10px] text-emerald-300">
+                  Magic link consumed on this device
+                </p>
+                <p className="text-foreground/90">
+                  You're signed in. The link can't be reused — request a new one anytime
+                  from the sign-in screen if you need to log in again.
+                </p>
+              </div>
+            )}
+
             <div className="rounded-xl border border-amber-400/40 bg-gradient-to-br from-amber-500/15 to-amber-600/5 px-4 py-5 space-y-1">
               <div className="flex items-center justify-center gap-2 text-[10px] uppercase tracking-[0.3em] text-amber-300/90 font-bold">
                 <Coins className="h-3.5 w-3.5" />
