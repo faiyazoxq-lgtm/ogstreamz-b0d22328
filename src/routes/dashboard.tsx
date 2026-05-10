@@ -91,47 +91,59 @@ function DashboardPage() {
   return (
     <main className="relative max-w-5xl mx-auto px-5 sm:px-8 py-12">
       {/* Hero */}
-      <header className="mb-8">
-        <p className="text-xs tracking-[0.4em] uppercase font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
+      <header className="mb-8 rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-6 sm:p-8">
+        <p className="text-[11px] tracking-[0.4em] uppercase font-semibold text-primary">
           Syndicate Dashboard
         </p>
-        <h1 className="mt-3 font-[Montserrat] font-black text-3xl sm:text-5xl text-metallic">
+        <h1 className="mt-2 font-[Montserrat] font-black text-3xl sm:text-5xl text-metallic">
           {profile.display_name || profile.email.split("@")[0]}
         </h1>
+        <p className="mt-2 text-sm text-muted-foreground truncate">{profile.email}</p>
       </header>
 
-          <section className="grid sm:grid-cols-3 gap-4 mb-10">
-            <Card>
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Rank</p>
-              <p className={`mt-1 text-3xl font-black ${meta.color}`}><Crown className="inline h-6 w-6 mr-2" />{meta.label}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{meta.perks}</p>
-              <SubSummary planLabel={planLabel} activeSub={activeSub} renewalLabel={renewalLabel} />
-            </Card>
-            <Card>
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Credits</p>
-              <p className="mt-1 text-3xl font-black text-metallic"><Coins className="inline h-6 w-6 mr-2 text-yellow-400" />{profile.credits}</p>
-              <Link to="/store" className="mt-1 inline-block text-xs underline text-[color:var(--neon-blue-bright)]">Buy Credits →</Link>
-              <SubSummary planLabel={planLabel} activeSub={activeSub} renewalLabel={renewalLabel} />
-            </Card>
-            <Card>
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Hit-Button (free)</p>
-              <p className="mt-1 text-3xl font-black text-metallic"><Flame className="inline h-6 w-6 mr-2 text-orange-400" />{profile.rank === "prospect" ? `${freeLeft}/5` : "∞"}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{profile.rank === "prospect" ? "Upgrade for unlimited" : "Unlimited access unlocked"}</p>
-              <SubSummary planLabel={planLabel} activeSub={activeSub} renewalLabel={renewalLabel} />
-            </Card>
-          </section>
+      <section className="grid sm:grid-cols-3 gap-4 mb-6">
+        <StatTile
+          label="Rank"
+          Icon={Crown}
+          iconClass={meta.color}
+          value={meta.label}
+          valueClass={meta.color}
+          hint={meta.perks}
+        />
+        <StatTile
+          label="Credits"
+          Icon={Coins}
+          iconClass="text-yellow-400"
+          value={profile.credits.toLocaleString()}
+          action={<Link to="/store" className="text-xs font-semibold uppercase tracking-[0.2em] text-primary hover:underline">Buy →</Link>}
+        />
+        <StatTile
+          label="Hit-Button (free)"
+          Icon={Flame}
+          iconClass="text-orange-400"
+          value={profile.rank === "prospect" ? `${freeLeft}/5` : "∞"}
+          hint={profile.rank === "prospect" ? "Upgrade for unlimited" : "Unlimited access unlocked"}
+        />
+      </section>
 
-          <section className="rounded-2xl border p-6 mb-10" style={{ borderColor: "color-mix(in oklab, var(--neon-blue-bright) 40%, transparent)", background: "linear-gradient(135deg, color-mix(in oklab, var(--neon-blue-bright) 8%, transparent), transparent)" }}>
-            <h2 className="text-xs uppercase tracking-[0.4em] mb-3" style={{ color: "var(--neon-blue-bright)" }}>
-              <Ticket className="inline h-4 w-4 mr-2" />Redeem Code
-            </h2>
-            <div className="flex gap-2">
-              <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="0G-FOUNDER" className="font-mono uppercase" onKeyDown={(e) => e.key === "Enter" && onRedeem()} />
-              <Button onClick={onRedeem} disabled={busy || !code} className="font-bold">
-                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="h-4 w-4 mr-2" />Redeem</>}
-              </Button>
-            </div>
-          </section>
+      {(planLabel || activeSub || renewalLabel) && (
+        <section className="mb-6 rounded-2xl border border-border bg-card p-5">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-3">Subscription</p>
+          <SubSummary planLabel={planLabel} activeSub={activeSub} renewalLabel={renewalLabel} />
+        </section>
+      )}
+
+      <section className="mb-10 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-transparent p-5 sm:p-6">
+        <h2 className="text-[11px] uppercase tracking-[0.4em] mb-3 text-primary flex items-center gap-2">
+          <Ticket className="h-4 w-4" />Redeem Code
+        </h2>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="0G-FOUNDER" className="font-mono uppercase" onKeyDown={(e) => e.key === "Enter" && onRedeem()} />
+          <Button onClick={onRedeem} disabled={busy || !code} className="font-bold sm:w-auto">
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="h-4 w-4 mr-2" />Redeem</>}
+          </Button>
+        </div>
+      </section>
 
       {/* History */}
       <section className="space-y-6">
@@ -177,6 +189,34 @@ function DashboardPage() {
 
 function Card({ children }: { children: React.ReactNode }) {
   return <div className="rounded-2xl border border-border bg-card p-5">{children}</div>;
+}
+
+function StatTile({
+  label, Icon, iconClass, value, valueClass, hint, action,
+}: {
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  iconClass?: string;
+  value: React.ReactNode;
+  valueClass?: string;
+  hint?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 transition-colors hover:border-primary/40">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className={`inline-flex h-9 w-9 items-center justify-center rounded-xl bg-secondary ring-1 ring-border ${iconClass ?? "text-primary"}`}>
+            <Icon className="h-4 w-4" />
+          </span>
+          <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{label}</p>
+        </div>
+        {action}
+      </div>
+      <p className={`mt-3 text-3xl font-black leading-none ${valueClass ?? "text-metallic"}`}>{value}</p>
+      {hint && <p className="mt-2 text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
 }
 
 function StreamLinksCard({ streams }: { streams: unknown }) {

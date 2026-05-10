@@ -134,10 +134,12 @@ function BossLayout() {
 
       <div className="grid md:grid-cols-[220px_1fr] gap-6">
         <aside className="hidden md:block">
-          <div className="sticky top-24 rounded-2xl border border-border bg-card/60 p-3">
-            <div className="flex items-center gap-2 px-2 py-2 mb-2">
-              <Crown className="h-4 w-4 text-gold" />
-              <span className="text-[10px] uppercase tracking-[0.3em] text-gold font-bold">Boss</span>
+          <div className="sticky top-24 rounded-2xl border border-border bg-gradient-to-b from-gold/5 to-card/60 p-3 shadow-[0_0_40px_-20px_rgba(255,209,102,0.4)]">
+            <div className="flex items-center gap-2 px-2 py-2 mb-2 border-b border-gold/10 pb-3">
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gold/10 ring-1 ring-gold/30">
+                <Crown className="h-4 w-4 text-gold" />
+              </span>
+              <span className="text-[10px] uppercase tracking-[0.3em] text-gold font-bold">Boss Console</span>
             </div>
             <div className="px-1 pb-3">
               <BossSearch />
