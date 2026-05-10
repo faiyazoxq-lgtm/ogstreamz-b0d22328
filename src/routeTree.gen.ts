@@ -15,6 +15,7 @@ import { Route as ToolsRouteImport } from './routes/tools'
 import { Route as SyndicateOverlordRouteImport } from './routes/syndicate-overlord'
 import { Route as SyndicateRouteImport } from './routes/syndicate'
 import { Route as StoreRouteImport } from './routes/store'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ResellerRouteImport } from './routes/reseller'
@@ -78,6 +79,11 @@ const SyndicateRoute = SyndicateRouteImport.update({
 const StoreRoute = StoreRouteImport.update({
   id: '/store',
   path: '/store',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -274,6 +280,7 @@ export interface FileRoutesByFullPath {
   '/reseller': typeof ResellerRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/store': typeof StoreRoute
   '/syndicate': typeof SyndicateRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
@@ -316,6 +323,7 @@ export interface FileRoutesByTo {
   '/reseller': typeof ResellerRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/store': typeof StoreRoute
   '/syndicate': typeof SyndicateRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
@@ -359,6 +367,7 @@ export interface FileRoutesById {
   '/reseller': typeof ResellerRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/store': typeof StoreRoute
   '/syndicate': typeof SyndicateRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
@@ -403,6 +412,7 @@ export interface FileRouteTypes {
     | '/reseller'
     | '/reset-password'
     | '/settings'
+    | '/sitemap.xml'
     | '/store'
     | '/syndicate'
     | '/syndicate-overlord'
@@ -445,6 +455,7 @@ export interface FileRouteTypes {
     | '/reseller'
     | '/reset-password'
     | '/settings'
+    | '/sitemap.xml'
     | '/store'
     | '/syndicate'
     | '/syndicate-overlord'
@@ -487,6 +498,7 @@ export interface FileRouteTypes {
     | '/reseller'
     | '/reset-password'
     | '/settings'
+    | '/sitemap.xml'
     | '/store'
     | '/syndicate'
     | '/syndicate-overlord'
@@ -530,6 +542,7 @@ export interface RootRouteChildren {
   ResellerRoute: typeof ResellerRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StoreRoute: typeof StoreRoute
   SyndicateRoute: typeof SyndicateRoute
   SyndicateOverlordRoute: typeof SyndicateOverlordRoute
@@ -591,6 +604,13 @@ declare module '@tanstack/react-router' {
       path: '/store'
       fullPath: '/store'
       preLoaderRoute: typeof StoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -878,6 +898,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResellerRoute: ResellerRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   StoreRoute: StoreRoute,
   SyndicateRoute: SyndicateRoute,
   SyndicateOverlordRoute: SyndicateOverlordRoute,
@@ -899,3 +920,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
