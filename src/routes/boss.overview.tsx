@@ -473,6 +473,39 @@ function BossOverview() {
         ))}
       </section>
       </div>
+      <AlertDialog open={confirmGoLive} onOpenChange={setConfirmGoLive}>
+        <AlertDialogContent className="border-destructive/40">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Switch payments to LIVE mode?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span className="block">
+                Every checkout site-wide will charge <strong>real money</strong> to real cards
+                immediately. Sandbox / test cards will be rejected.
+              </span>
+              <span className="block text-orange-300">
+                The "Test Mode" banner will disappear for all members the moment you confirm.
+              </span>
+              <span className="block text-white/60 text-xs">
+                Only switch to live when your Stripe account, products and prices are fully
+                verified for production.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={togglingPayments}>Stay in test mode</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={togglingPayments}
+              onClick={() => { void applyPaymentMode("live"); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {togglingPayments ? "Switching…" : "Yes, go LIVE"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
