@@ -1,19 +1,23 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Tv, CheckCircle2, Loader2, AlertTriangle, Clock, CalendarClock } from "lucide-react";
-import { verifyAndLinkStream, type StreamReasonCode } from "@/lib/stream-link.functions";
+import { Tv, CheckCircle2, Loader2, AlertTriangle, Clock, CalendarClock, RefreshCw } from "lucide-react";
+import { verifyAndLinkStream, reverifyStream, type StreamReasonCode } from "@/lib/stream-link.functions";
 import { useAuth } from "@/hooks/use-auth";
 
 export function StreamLinkCard() {
   const { profile, refresh } = useAuth();
   const verify = useServerFn(verifyAndLinkStream);
+  const reverify = useServerFn(reverifyStream);
   const [u, setU] = useState("");
   const [p, setP] = useState("");
   const [server, setServer] = useState("http://xiu96ctyh6-system.xyz:80");
   const [busy, setBusy] = useState(false);
+  const [reverifying, setReverifying] = useState(false);
+  const [resubmitCta, setResubmitCta] = useState<{ title: string; detail: string } | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [errors, setErrors] = useState<{ username?: string; password?: string; server?: string }>({});
   const [banner, setBanner] = useState<{ reason: StreamReasonCode | "client_validation"; title: string; detail?: string } | null>(null);
+  const usernameRef = useRef<HTMLInputElement | null>(null);
 
   const REASON_TITLES: Record<StreamReasonCode | "client_validation", string> = {
     client_validation: "Fix the highlighted fields",
@@ -105,6 +109,30 @@ export function StreamLinkCard() {
         detail: e?.message || undefined,
       });
     } finally { setBusy(false); }
+  };
+
+  const onReverify = async () => {
+    setReverifying(true);
+    setResubmitCta(null);
+    setMsg(null);
+    try {
+      const res = await reverify({ data: {} });
+      if (!res.ok && res.reason === "rpc_error") {
+        setResubmitCta({
+          title: "Resubmit credentials to re-verify",
+          detail: res.error || "For security we don't store your stream password. Re-enter your credentials below to re-verify.",
+        });
+        setU("");
+        setP("");
+        requestAnimationFrame(() => usernameRef.current?.focus());
+      } else if (!res.ok) {
+        setMsg({ ok: false, text: res.error || "Re-verification failed." });
+      }
+    } catch (e: any) {
+      setMsg({ ok: false, text: e?.message || "Re-verification failed." });
+    } finally {
+      setReverifying(false);
+    }
   };
 
   return (
