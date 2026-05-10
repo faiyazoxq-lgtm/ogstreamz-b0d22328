@@ -97,7 +97,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       else setLoading(false);
     });
 
-    return () => sub.subscription.unsubscribe();
+    // When "Remember me" is off, clear the persisted Supabase auth token
+    // as the tab is being closed so reopening the browser requires sign-in.
+    // sessionStorage (the per-tab marker) dies with the tab automatically;
+    // we must explicitly purge the localStorage token Supabase persisted.
+    const onPageHide = () => {
+      if (getRemember()) return;
+      try {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (key && /^sb-.+-auth-token$/.test(key)) localStorage.removeItem(key);
+        }
+      } catch { /* ignore */ }
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("pagehide", onPageHide);
+    }
+
+    return () => {
+      sub.subscription.unsubscribe();
+      if (typeof window !== "undefined") {
+        window.removeEventListener("pagehide", onPageHide);
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
