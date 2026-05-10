@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Tv, CheckCircle2, Loader2, AlertTriangle, Clock, CalendarClock } from "lucide-react";
-import { verifyAndLinkStream } from "@/lib/stream-link.functions";
+import { verifyAndLinkStream, type StreamReasonCode } from "@/lib/stream-link.functions";
 import { useAuth } from "@/hooks/use-auth";
 
 export function StreamLinkCard() {
@@ -13,6 +13,23 @@ export function StreamLinkCard() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [errors, setErrors] = useState<{ username?: string; password?: string; server?: string }>({});
+  const [banner, setBanner] = useState<{ reason: StreamReasonCode | "client_validation"; title: string; detail?: string } | null>(null);
+
+  const REASON_TITLES: Record<StreamReasonCode | "client_validation", string> = {
+    client_validation: "Fix the highlighted fields",
+    invalid_username: "Username looks invalid",
+    invalid_password: "Password looks invalid",
+    invalid_server: "Server URL looks invalid",
+    server_unreachable: "Stream server unreachable",
+    server_timeout: "Stream server timed out",
+    server_error: "Stream server returned an error",
+    credentials_rejected: "Credentials rejected",
+    account_expired: "Account expired",
+    account_disabled: "Account disabled",
+    account_banned: "Account banned",
+    rpc_error: "Couldn't save your credentials",
+    unknown: "Verification failed",
+  };
 
   const validate = (un: string, pw: string, srv: string) => {
     const errs: { username?: string; password?: string; server?: string } = {};
@@ -54,24 +71,40 @@ export function StreamLinkCard() {
     const errs = validate(u, p, server);
     setErrors(errs);
     if (Object.keys(errs).length) {
-      setMsg({ ok: false, text: "Fix the highlighted fields and try again." });
+      setMsg(null);
+      setBanner({
+        reason: "client_validation",
+        title: REASON_TITLES.client_validation,
+        detail: "Resolve the highlighted fields below and try again.",
+      });
       return;
     }
-    setBusy(true); setMsg(null);
+    setBusy(true); setMsg(null); setBanner(null);
     try {
       const res = await verify({ data: { username: u.trim(), password: p, server: server.trim() } });
       if (res.ok) {
         setMsg({ ok: true, text: res.message || "Submitted to Boss for OGSTREAMZ approval." });
         setP("");
         setErrors({});
+        setBanner(null);
         await refresh();
       } else {
         const field = (res as any).field as "username" | "password" | "server" | undefined;
         if (field) setErrors({ [field]: res.error } as any);
-        setMsg({ ok: false, text: res.error || "Verification failed" });
+        const reason = ((res as any).reason as StreamReasonCode | undefined) ?? "unknown";
+        setBanner({
+          reason,
+          title: REASON_TITLES[reason] ?? REASON_TITLES.unknown,
+          detail: res.error || undefined,
+        });
+        setMsg(null);
       }
     } catch (e: any) {
-      setMsg({ ok: false, text: e?.message || "Verification failed" });
+      setBanner({
+        reason: "unknown",
+        title: REASON_TITLES.unknown,
+        detail: e?.message || undefined,
+      });
     } finally { setBusy(false); }
   };
 
@@ -127,6 +160,21 @@ export function StreamLinkCard() {
       )}
       {linked && !status && (
         <p className="mt-3 text-xs text-muted-foreground">Linked — awaiting fresh status check.</p>
+      )}
+
+      {banner && (
+        <div
+          role="alert"
+          className="mt-4 flex items-start gap-3 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
+        >
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div className="min-w-0">
+            <p className="font-bold leading-tight">{banner.title}</p>
+            {banner.detail && (
+              <p className="mt-0.5 text-xs text-destructive/90 break-words">{banner.detail}</p>
+            )}
+          </div>
+        </div>
       )}
 
       <form onSubmit={submit} className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
