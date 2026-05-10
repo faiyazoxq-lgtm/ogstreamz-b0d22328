@@ -119,7 +119,7 @@ export function VaultRevealCard() {
             className="inline-flex items-center gap-2 rounded-lg bg-amber-300 hover:bg-amber-200 text-black px-5 py-2.5 text-[11px] uppercase tracking-[0.25em] font-bold"
           >
             <Lock className="h-3.5 w-3.5" />
-            Get the Real OG Pass · £20
+            Get the Real OG Pass · £20 (20 🪙)
           </Link>
         </div>
       </section>
