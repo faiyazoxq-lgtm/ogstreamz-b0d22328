@@ -393,7 +393,7 @@ function PortalPage() {
               </span>
             </header>
             <ol className="space-y-3">
-              {portal.jokes.map((idea, i) => (
+              {portal.jokes.map((idea: string, i: number) => (
                 <li
                   key={i}
                   className="flex gap-3 rounded-lg border p-3"
