@@ -229,12 +229,16 @@ export function TrackingEye({
         />
       )}
       <span
-        className="relative block rounded-full ring-1 shadow-[inset_0_0_2px_rgba(0,0,0,0.8)] transition-transform duration-75"
+        className="relative block ring-1 shadow-[inset_0_0_2px_rgba(0,0,0,0.8)] transition-transform duration-75"
         style={{
           background: pupilBg,
           ["--tw-ring-color" as string]: pupilRing,
-          width: `${pupilRatio * 100}%`,
+          // Upright oval pupil — narrower than tall so it reads as a true
+          // eye pupil (and mirrors the egg-shaped iris that stands in for
+          // the letter "O" across the brand wordmark).
+          width: `${pupilRatio * 72}%`,
           height: `${pupilRatio * 100}%`,
+          borderRadius: "50% / 50%",
           transform: `translate(${pupil.x}px, ${pupil.y}px)`,
         }}
       />
