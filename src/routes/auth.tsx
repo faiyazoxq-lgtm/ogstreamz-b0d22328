@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { getRemember, setRemember, markTabSession, clearTabSession } from "@/lib/remember-session";
 import logo from "@/assets/logo.jpg";
 import { SIGNUP_BONUS_CREDITS } from "@/components/AuthGate";
+import { useSignupBonus } from "@/hooks/use-signup-bonus";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
