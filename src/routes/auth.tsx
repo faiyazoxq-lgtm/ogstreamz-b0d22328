@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { Mail, Lock, Loader2, Send, Wand2, Coins, ArrowRight } from "lucide-react";
+import { Mail, Lock, Loader2, Send, Wand2, Coins, ArrowRight, Heart, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,7 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [passToken, setPassToken] = useState<string | null>(null);
+  const [contentMode, setContentMode] = useState<"og" | "safe">("og");
   const [remember, setRememberState] = useState<boolean>(true);
   const [signedInDest, setSignedInDest] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -141,6 +142,29 @@ function AuthPage() {
           });
         }
       } catch { /* ignore */ }
+      // Apply chosen content mode (uncensored vs family-friendly) on first sign-in.
+      try {
+        const pref = sessionStorage.getItem("signup_content_mode");
+        if (pref === "og" || pref === "safe") {
+          sessionStorage.removeItem("signup_content_mode");
+          const wantSwearing = pref === "og";
+          void supabase
+            .from("profiles")
+            .select("feature_flags")
+            .eq("id", user.id)
+            .maybeSingle()
+            .then(({ data }) => {
+              const merged = { ...((data?.feature_flags as Record<string, unknown> | null) ?? {}), swearing: wantSwearing };
+              return supabase.from("profiles").update({ feature_flags: merged }).eq("id", user.id);
+            })
+            .then(() => {
+              toast.message(
+                wantSwearing ? "OG uncensored mode set 🖕" : "Family-friendly mode set 💚",
+                { description: "Switch any time from the toggle in the header." },
+              );
+            }, (e) => console.warn("[content-mode] update failed", e));
+        }
+      } catch { /* ignore */ }
       // Surface the live credit balance on this screen for ~2.2s before
       // redirecting, so members can see what they have to spend.
       setSignedInDest(dest);
@@ -178,6 +202,7 @@ function AuthPage() {
       if (mode === "signup") {
         const ref = new URLSearchParams(window.location.search).get("ref") || undefined;
         const dest = peekRedirect();
+        try { sessionStorage.setItem("signup_content_mode", contentMode); } catch { /* ignore */ }
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -216,6 +241,11 @@ function AuthPage() {
     setLoading(true);
     try {
       const dest = peekRedirect();
+      // Persist the content-mode choice across the OAuth round-trip so it
+      // applies as soon as the new account lands back on this device.
+      if (mode === "signup") {
+        try { sessionStorage.setItem("signup_content_mode", contentMode); } catch { /* ignore */ }
+      }
       const result = await lovable.auth.signInWithOAuth(provider, {
         redirect_uri: `${window.location.origin}${dest}`,
       });
