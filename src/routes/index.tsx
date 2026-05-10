@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/logo.jpg";
+import logo from "@/assets/logo.gif";
 import { TiltCard } from "@/components/TiltCard";
 import { WelcomeAuthPrompt } from "@/components/WelcomeAuthPrompt";
 import { QuickJumpDrawer } from "@/components/QuickJumpDrawer";

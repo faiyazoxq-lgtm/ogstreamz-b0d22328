@@ -1,4 +1,4 @@
-import logo from "@/assets/logo.jpg";
+import logo from "@/assets/logo.gif";
 
 export function TVStaticLogo({ className = "", size = 56 }: { className?: string; size?: number }) {
   return (
