@@ -13,6 +13,7 @@ import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { createPassCheckoutSession } from "@/lib/pass-checkout.functions";
 import { requireMember } from "@/lib/route-guards";
 import { toast } from "sonner";
+import { VaultGuard } from "@/components/VaultGuard";
 
 type Kind = "vip_pass" | "streams_pass" | "digital" | "nft";
 
@@ -46,7 +47,11 @@ export const Route = createFileRoute("/store/catalog")({
       { name: "description", content: "VIP Passes, Streams Passes, digital drops and NFT collections." },
     ],
   }),
-  component: CatalogPage,
+  component: () => (
+    <VaultGuard>
+      <CatalogPage />
+    </VaultGuard>
+  ),
 });
 
 const TAB_META: Record<Kind, { label: string; icon: any; blurb: string }> = {
