@@ -36,16 +36,38 @@ function describeReason(reason: string, delta: number): { label: string; note: s
   return { label: r || "Adjustment", note: null, gift: delta > 0 };
 }
 
+type DateRange = "all" | "7d" | "30d" | "90d";
+const RANGE_OPTIONS: { value: DateRange; label: string }[] = [
+  { value: "7d", label: "7d" },
+  { value: "30d", label: "30d" },
+  { value: "90d", label: "90d" },
+  { value: "all", label: "All" },
+];
+const rangeCutoff = (r: DateRange): string | null => {
+  if (r === "all") return null;
+  const days = r === "7d" ? 7 : r === "30d" ? 30 : 90;
+  return new Date(Date.now() - days * 86400_000).toISOString();
+};
+
 export function CoinActivity({
   limit = 8,
   loadMore = false,
   pageSize = 20,
-}: { limit?: number; loadMore?: boolean; pageSize?: number }) {
+  showDateFilter = false,
+  defaultRange = "all",
+}: {
+  limit?: number;
+  loadMore?: boolean;
+  pageSize?: number;
+  showDateFilter?: boolean;
+  defaultRange?: DateRange;
+}) {
   const { user } = useAuth();
   const [rows, setRows] = useState<LedgerRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [range, setRange] = useState<DateRange>(defaultRange);
   const sectionRef = useRef<HTMLElement | null>(null);
 
   const initialSize = loadMore ? pageSize : limit;
@@ -53,12 +75,15 @@ export function CoinActivity({
   const load = async () => {
     if (!user) return;
     setLoading(true);
-    const { data } = await supabase
+    let q = supabase
       .from("credit_ledger")
       .select("id, delta, reason, created_at")
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .limit(initialSize);
+    const cutoff = rangeCutoff(range);
+    if (cutoff) q = q.gte("created_at", cutoff);
+    const { data } = await q;
     const next = (data ?? []) as LedgerRow[];
     setRows(next);
     setHasMore(loadMore && next.length === initialSize);
@@ -71,13 +96,16 @@ export function CoinActivity({
     const last = rows[rows.length - 1];
     // Keyset pagination on (created_at desc, id desc) so rows that share a
     // created_at timestamp are neither dropped nor returned twice.
-    const { data } = await supabase
+    let q = supabase
       .from("credit_ledger")
       .select("id, delta, reason, created_at")
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .or(`created_at.lt.${last.created_at},and(created_at.eq.${last.created_at},id.lt.${last.id})`)
       .limit(pageSize);
+    const cutoff = rangeCutoff(range);
+    if (cutoff) q = q.gte("created_at", cutoff);
+    const { data } = await q;
     const fetched = (data ?? []) as LedgerRow[];
     // Defensive de-dupe in case anything slips through.
     const seen = new Set(rows.map((r) => r.id));
@@ -87,7 +115,7 @@ export function CoinActivity({
     setLoadingMore(false);
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [user?.id]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [user?.id, range]);
 
   if (!user) return null;
 
