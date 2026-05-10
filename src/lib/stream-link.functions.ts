@@ -1,7 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const DEFAULT_SERVER = "http://xiu96ctyh6-system.xyz:80";
+function getServerUrl(): string {
+  const raw = (process.env.STREAM_SERVER_URL || "").trim();
+  if (!raw) {
+    const err: any = new Error("Stream server URL is not configured. Ask Boss to set STREAM_SERVER_URL.");
+    err.reason = "invalid_server";
+    throw err;
+  }
+  let v = raw;
+  if (!/^https?:\/\//i.test(v)) v = "http://" + v;
+  return v.replace(/\/+$/, "");
+}
 
 export type StreamReasonCode =
   | "invalid_username"
@@ -53,13 +63,6 @@ const REASON_MESSAGES: Record<StreamReasonCode, string> = {
   rpc_error: "We couldn't save your credentials. Please try again.",
   unknown: "Verification failed. Please try again.",
 };
-
-function normalizeServer(s: string): string {
-  let v = (s || "").trim();
-  if (!v) return DEFAULT_SERVER;
-  if (!/^https?:\/\//i.test(v)) v = "http://" + v;
-  return v.replace(/\/+$/, "");
-}
 
 function isValidServer(s: string): boolean {
   try {
@@ -113,10 +116,9 @@ async function probeXtream(
 
 export const verifyAndLinkStream = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { username: string; password: string; server?: string }) => {
+  .inputValidator((d: { username: string; password: string }) => {
     const username = String(d.username ?? "").trim();
     const password = String(d.password ?? "");
-    const server = normalizeServer(String(d.server ?? ""));
     if (username.length < 2 || username.length > 120 || /\s/.test(username)) {
       const err: any = new Error(REASON_MESSAGES.invalid_username);
       err.reason = "invalid_username"; err.field = "username"; throw err;
@@ -125,15 +127,30 @@ export const verifyAndLinkStream = createServerFn({ method: "POST" })
       const err: any = new Error(REASON_MESSAGES.invalid_password);
       err.reason = "invalid_password"; err.field = "password"; throw err;
     }
-    if (!isValidServer(server)) {
-      const err: any = new Error(REASON_MESSAGES.invalid_server);
-      err.reason = "invalid_server"; err.field = "server"; throw err;
-    }
-    return { username, password, server };
+    return { username, password };
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as any;
-    const probe = await probeXtream(data.server, data.username, data.password);
+    let server: string;
+    try {
+      server = getServerUrl();
+    } catch (e: any) {
+      return {
+        ok: false as const,
+        reason: "invalid_server" as const,
+        field: "server" as const,
+        error: e?.message || REASON_MESSAGES.invalid_server,
+      };
+    }
+    if (!isValidServer(server)) {
+      return {
+        ok: false as const,
+        reason: "invalid_server" as const,
+        field: "server" as const,
+        error: REASON_MESSAGES.invalid_server,
+      };
+    }
+    const probe = await probeXtream(server, data.username, data.password);
     if ("reason" in probe) {
       return {
         ok: false as const,
@@ -161,7 +178,7 @@ export const verifyAndLinkStream = createServerFn({ method: "POST" })
     // Save credentials regardless (lets Boss re-verify later)
     {
       const { error } = await supabase.rpc("set_stream_credentials", {
-        _user_id: userId, _username: data.username, _password: data.password, _server: data.server,
+        _user_id: userId, _username: data.username, _password: data.password, _server: server,
       });
       if (error) return { ok: false as const, reason: "rpc_error" as const, cause: classifyRpcError(error.message), error: error.message };
     }
@@ -171,7 +188,7 @@ export const verifyAndLinkStream = createServerFn({ method: "POST" })
       _user_id: userId,
       _username: data.username,
       _password: data.password,
-      _server: data.server,
+      _server: server,
       _auto_status: status,
       _auto_expires_at: expiresAt,
       _auto_payload: info as never,
@@ -212,7 +229,7 @@ export const reverifyStream = createServerFn({ method: "POST" })
       return { ok: false as const, reason: "rpc_error" as const, cause: classifyRpcError(error.message), error: error.message };
     }
     const creds = Array.isArray(rows) && rows[0] ? rows[0] : null;
-    if (!creds || !creds.password || !creds.username || !creds.server) {
+    if (!creds || !creds.password || !creds.username) {
       return {
         ok: false as const,
         reason: "rpc_error" as const,
@@ -220,7 +237,17 @@ export const reverifyStream = createServerFn({ method: "POST" })
         error: "Re-verification requires you to resubmit your stream credentials.",
       };
     }
-    const probe = await probeXtream(creds.server, creds.username, creds.password);
+    let server: string;
+    try {
+      server = getServerUrl();
+    } catch (e: any) {
+      return {
+        ok: false as const,
+        reason: "invalid_server" as const,
+        error: e?.message || REASON_MESSAGES.invalid_server,
+      };
+    }
+    const probe = await probeXtream(server, creds.username, creds.password);
     if ("reason" in probe) {
       return {
         ok: false as const,
