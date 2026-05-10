@@ -107,7 +107,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
               <a
                 href={copy.viewPath(created.slug)}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="ml-auto inline-flex items-center gap-1 text-xs underline text-foreground"
               >
                 Open <ExternalLink className="h-3.5 w-3.5" />

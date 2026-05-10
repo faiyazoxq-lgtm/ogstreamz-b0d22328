@@ -216,7 +216,7 @@ function JokePortal() {
                 {live ? "Live Drop" : "Punchline"} #{count}
               </p>
               {live && source && (
-                <a href={source} target="_blank" rel="noreferrer" className="mt-3 inline-block text-[10px] uppercase tracking-[0.25em] text-muted-foreground hover:text-[var(--neon-blue-bright)]">
+                <a href={source} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block text-[10px] uppercase tracking-[0.25em] text-muted-foreground hover:text-[var(--neon-blue-bright)]">
                   Source ↗
                 </a>
               )}

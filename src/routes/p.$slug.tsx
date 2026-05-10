@@ -372,7 +372,7 @@ function PortalPage() {
         {(groupLink || (isVipMember && vipLink)) && (
           <div className="mt-8 w-full max-w-md flex flex-col gap-3">
             {groupLink && (
-              <a href={groupLink} target="_blank" rel="noreferrer" className="group">
+              <a href={groupLink} target="_blank" rel="noopener noreferrer" className="group">
                 <motion.div
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
@@ -396,7 +396,7 @@ function PortalPage() {
               </a>
             )}
             {isVipMember && vipLink && (
-              <a href={vipLink} target="_blank" rel="noreferrer">
+              <a href={vipLink} target="_blank" rel="noopener noreferrer">
                 <motion.div
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
@@ -681,7 +681,7 @@ function NewsHubView({ portal }: { portal: Portal }) {
                   key={i}
                   href={s.url}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] uppercase tracking-[0.25em] hover:opacity-100 opacity-90 transition"
                   style={{ color: text, borderColor: `${accent}55`, background: `${accent}0d` }}
                 >
@@ -881,7 +881,7 @@ function ConflictColumn({ side, articles, headingFont, text, showVip, startUnloc
                   </Button>
                 </div>
               )}
-              <a href={a.url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.3em] opacity-70 hover:opacity-100" style={{ color: c }}>
+              <a href={a.url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.3em] opacity-70 hover:opacity-100" style={{ color: c }}>
                 Source <ExternalLink className="h-2.5 w-2.5" />
               </a>
             </motion.article>

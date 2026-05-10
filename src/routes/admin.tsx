@@ -921,7 +921,7 @@ function SignalCommandPanel() {
       {last && (
         <div className="mt-5 rounded-lg border bg-black/40 p-3 text-xs flex items-center justify-between gap-3"
           style={{ borderColor: last.bias === "good" ? "#00e08a66" : "#ff223366" }}>
-          <a href={`/p/${last.slug}`} target="_blank" rel="noreferrer" className="font-mono hover:underline truncate"
+          <a href={`/p/${last.slug}`} target="_blank" rel="noopener noreferrer" className="font-mono hover:underline truncate"
              style={{ color: last.bias === "good" ? "#00e08a" : "#ff2233" }}>
             /p/{last.slug}
           </a>
@@ -1209,7 +1209,7 @@ function _NewsScoutSpawnerImpl() {
       </Button>
       {last && url && (
         <div className="mt-4 rounded-lg border bg-black/40 p-3 text-xs flex items-center justify-between gap-3" style={{ borderColor: `${accent}66` }}>
-          <a href={url} target="_blank" rel="noreferrer" className="font-mono hover:underline truncate" style={{ color: accent }}>{url}</a>
+          <a href={url} target="_blank" rel="noopener noreferrer" className="font-mono hover:underline truncate" style={{ color: accent }}>{url}</a>
           <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(url); toast.success("Link copied"); }}>
             <Copy className="h-3 w-3 mr-1" /> Copy
           </Button>
@@ -1219,7 +1219,7 @@ function _NewsScoutSpawnerImpl() {
         <div className="mt-3 rounded-lg border bg-black/40 p-3 text-xs space-y-2" style={{ borderColor: `${accent}44` }}>
           <div className="flex items-center justify-between gap-2">
             <span className="uppercase tracking-[0.3em] text-muted-foreground">0G-Cinema · Veo 3.1 Background</span>
-            {cineUrl && <a href={cineUrl} target="_blank" rel="noreferrer" className="underline truncate" style={{ color: accent }}>preview .mp4</a>}
+            {cineUrl && <a href={cineUrl} target="_blank" rel="noopener noreferrer" className="underline truncate" style={{ color: accent }}>preview .mp4</a>}
           </div>
           <div className="flex gap-2">
             <Button size="sm" disabled={!!cineBusy} onClick={() => onCinema("16:9")} style={{ background: accent, color: "#000" }} className="flex-1">
@@ -1297,7 +1297,7 @@ function _TradeSpawnerPanelImpl() {
       </Button>
       {last && url && (
         <div className="mt-4 rounded-lg border border-[#39ff14]/40 bg-black/40 p-3 text-xs flex items-center justify-between gap-3">
-          <a href={url} target="_blank" rel="noreferrer" className="font-mono text-[#39ff14] hover:underline truncate">{url}</a>
+          <a href={url} target="_blank" rel="noopener noreferrer" className="font-mono text-[#39ff14] hover:underline truncate">{url}</a>
           <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(url); toast.success("Link copied"); }}>
             <Copy className="h-3 w-3 mr-1" /> Copy
           </Button>
@@ -1373,7 +1373,7 @@ function ToolSpawnerPanel() {
       {last && (
         <p className="mt-3 text-sm text-muted-foreground">
           Live at{" "}
-          <a href={`/t/${last.slug}`} target="_blank" rel="noreferrer" className="underline text-white inline-flex items-center gap-1">
+          <a href={`/t/${last.slug}`} target="_blank" rel="noopener noreferrer" className="underline text-white inline-flex items-center gap-1">
             /t/{last.slug} <ExternalLink className="h-3 w-3" />
           </a>
         </p>
@@ -1487,7 +1487,7 @@ function SpawnerPanel() {
             <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard?.writeText(url); toast.success("URL copied"); }}>
               <Copy className="h-3.5 w-3.5 mr-1" />Copy
             </Button>
-            <a href={`/p/${created.slug}`} target="_blank" rel="noreferrer" className="inline-flex items-center text-xs underline">
+            <a href={`/p/${created.slug}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-xs underline">
               <ExternalLink className="h-3.5 w-3.5 mr-1" />Open
             </a>
           </div>
@@ -1650,7 +1650,7 @@ function TelegramSocialsPanel() {
                   Deploy to Telegram
                 </Button>
                 {cfg.botUsername && (
-                  <a href={`https://t.me/${cfg.botUsername}`} target="_blank" rel="noreferrer" className="text-xs underline inline-flex items-center">
+                  <a href={`https://t.me/${cfg.botUsername}`} target="_blank" rel="noopener noreferrer" className="text-xs underline inline-flex items-center">
                     <ExternalLink className="h-3 w-3 mr-1" />@{cfg.botUsername}
                   </a>
                 )}
@@ -1850,7 +1850,7 @@ function MusicSpawnerPanel() {
             <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard?.writeText(url); toast.success("URL copied"); }}>
               <Copy className="h-3.5 w-3.5 mr-1" />Copy
             </Button>
-            <a href={`/m/${created.slug}`} target="_blank" rel="noreferrer" className="inline-flex items-center text-xs underline">
+            <a href={`/m/${created.slug}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-xs underline">
               <ExternalLink className="h-3.5 w-3.5 mr-1" />Open
             </a>
           </div>

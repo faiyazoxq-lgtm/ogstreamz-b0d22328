@@ -297,7 +297,7 @@ function ConnectHubPage() {
               <div className="rounded-lg border border-border/40 bg-background/40 p-3 space-y-1">
                 <div className="text-xs font-semibold text-primary flex items-center gap-1"><Search className="h-3 w-3" /> Buying signals</div>
                 {active.scout_news.slice(0, 5).map((n: any, i: number) => (
-                  <a key={i} href={n.url} target="_blank" rel="noreferrer" className="block text-xs text-muted-foreground hover:text-foreground line-clamp-1">
+                  <a key={i} href={n.url} target="_blank" rel="noopener noreferrer" className="block text-xs text-muted-foreground hover:text-foreground line-clamp-1">
                     • {n.title}
                   </a>
                 ))}
