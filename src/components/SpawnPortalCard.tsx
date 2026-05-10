@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Loader2, Wand2, Sparkles, ExternalLink, Coins, Check, AlertTriangle, RotateCcw, Lock, UserPlus, LogIn, Gift } from "lucide-react";
+import { Loader2, Wand2, Sparkles, ExternalLink, Coins, Check, AlertTriangle, RotateCcw, Lock, UserPlus, LogIn, Gift, Languages, Tag, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -55,9 +55,37 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
   const credits = profile?.credits ?? 0;
   const hasCredits = credits >= 1;
 
+  // Trimmed values + lightweight per-field validation. Mirrors the server
+  // schema (name + niche required) and powers the confirm-dialog gating.
+  const nameTrim = name.trim();
+  const nicheTrim = niche.trim();
+  const langTrim = language.trim();
+  const NAME_MAX = 60;
+  const NICHE_MAX = 240;
+  const LANG_MAX = 40;
+  const fieldErrors = {
+    name:
+      nameTrim.length === 0 ? "Portal name is required"
+      : nameTrim.length > NAME_MAX ? `Max ${NAME_MAX} characters`
+      : null,
+    niche:
+      nicheTrim.length === 0 ? "Niche / theme is required"
+      : nicheTrim.length < 4 ? "Add a few more words"
+      : nicheTrim.length > NICHE_MAX ? `Max ${NICHE_MAX} characters`
+      : null,
+    language:
+      langTrim.length === 0 ? "Language is required"
+      : langTrim.length > LANG_MAX ? `Max ${LANG_MAX} characters`
+      : null,
+  };
+  const isValid = !fieldErrors.name && !fieldErrors.niche && !fieldErrors.language;
+
   const requestSpawn = () => {
     if (!user) { toast.error("Sign in to spawn a portal"); return; }
-    if (!name.trim() || !niche.trim()) { toast.error("Name and niche required"); return; }
+    if (!isValid) {
+      toast.error(fieldErrors.name || fieldErrors.niche || fieldErrors.language || "Check the form");
+      return;
+    }
     if (!hasCredits) { toast.error("Not enough credits — top up to spawn"); return; }
     setConfirmOpen(true);
   };
