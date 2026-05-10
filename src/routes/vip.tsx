@@ -554,7 +554,7 @@ function VipPage() {
               to="/store"
               className="inline-flex items-center gap-2 h-14 px-6 rounded-md border border-amber-300/50 bg-amber-400/10 hover:bg-amber-400/20 text-amber-100 font-bold uppercase tracking-[0.2em] text-sm"
             >
-              <Sparkles className="h-4 w-4" /> Or £20 Lifetime
+              <Sparkles className="h-4 w-4" /> Or £20 Lifetime (20 🪙)
             </Link>
           </div>
         </div>
