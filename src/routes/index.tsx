@@ -17,6 +17,7 @@ import { RealOgPromoCard } from "@/components/RealOgPromoCard";
 import { CoinsBulkPromoCard } from "@/components/CoinsBulkPromoCard";
 import { RealOgBundlesCard } from "@/components/RealOgBundlesCard";
 import { VaultLoginModal } from "@/components/VaultLoginModal";
+import { StreamLinkCard } from "@/components/StreamLinkCard";
 import { Flame } from "lucide-react";
 
 const ICONS: Record<string, any> = {
@@ -46,6 +47,9 @@ const portals = [
 function Index() {
   const [customHubs, setCustomHubs] = useState<any[]>([]);
   const { user, profile } = useAuth();
+  const rank = profile?.rank;
+  const streamLinked = rank === "stream_user" || rank === "vip" || rank === "boss";
+  const showStreamConnect = !!user && !streamLinked;
   const [pendingTo, setPendingTo] = useState<string | null>(null);
   const [vaultOpen, setVaultOpen] = useState(false);
   const isNavigating = useRouterState({
@@ -110,6 +114,12 @@ function Index() {
 
       {/* VIP Bundles — Real OG + Coins at a discounted total */}
       <RealOgBundlesCard />
+
+      {showStreamConnect && (
+        <section className="relative max-w-3xl mx-auto px-5 sm:px-8 -mt-2 pb-6">
+          <StreamLinkCard />
+        </section>
+      )}
 
       {/* Intro / promo strip — free signup CTA for guests, members entrance for signed-in users */}
       <section className="relative max-w-5xl mx-auto px-5 sm:px-8 -mt-4 pb-10">
