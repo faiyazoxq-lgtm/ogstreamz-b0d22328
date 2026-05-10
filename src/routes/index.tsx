@@ -246,7 +246,14 @@ function Index() {
               {title}
             </h2>
             <p className="mt-3 text-base sm:text-base font-semibold text-foreground/95 leading-relaxed">{desc}</p>
-            <div className="mt-8 btn-glass-blue btn-magnetic inline-flex items-center gap-2 px-5 py-3 rounded-lg text-xs uppercase tracking-[0.25em] font-bold text-white">
+            <div
+              className="mt-8 btn-glass-blue btn-magnetic inline-flex items-center gap-2 px-4 sm:px-5 py-3 rounded-lg uppercase font-bold text-white whitespace-nowrap max-w-full"
+              style={{
+                fontSize: "clamp(0.62rem, 2.4vw, 0.75rem)",
+                lineHeight: 1,
+                letterSpacing: "clamp(0.08em, 0.6vw, 0.25em)",
+              }}
+            >
               {thisPending ? (
                 "Opening…"
               ) : (
