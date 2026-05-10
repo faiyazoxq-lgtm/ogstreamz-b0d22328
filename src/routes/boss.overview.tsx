@@ -107,6 +107,7 @@ const TILE_CATEGORIES: { id: string; label: string; tint: string; labels: string
 ];
 
 function BossOverview() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastSync, setLastSync] = useState<Date | null>(null);
@@ -129,6 +130,62 @@ function BossOverview() {
   const [coinFrozen, setCoinFrozen] = useState<boolean | null>(null);
   const [togglingCoin, setTogglingCoin] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Reverse-purchases tool (merged from /boss/power)
+  type Reversal = {
+    id: string; source_table: string; source_id: string; user_id: string;
+    credits_reversed: number; amount_cents: number; currency: string;
+    reason: string | null; created_at: string;
+  };
+  type ReverseResult = {
+    dry_run: boolean; window_minutes: number; cutoff: string;
+    credit_purchases_reversed: number; track_purchases_reversed: number;
+    credits_refunded: number; amount_cents_affected: number;
+  };
+  const WINDOW_PRESETS = [5, 15, 60, 240, 1440];
+  const [windowMinutes, setWindowMinutes] = useState<string>("60");
+  const [confirmText, setConfirmText] = useState("");
+  const [running, setRunning] = useState(false);
+  const [lastResult, setLastResult] = useState<ReverseResult | null>(null);
+  const [history, setHistory] = useState<Reversal[]>([]);
+  const minutes = useMemo(() => Math.max(0, Math.trunc(Number(windowMinutes) || 0)), [windowMinutes]);
+
+  async function refreshReverseHistory() {
+    const { data } = await supabase
+      .from("purchase_reversals")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(15);
+    setHistory((data ?? []) as Reversal[]);
+  }
+
+  async function runReverse(dryRun: boolean) {
+    if (!minutes) { toast.error("Enter a window in minutes"); return; }
+    if (!dryRun && confirmText.trim().toUpperCase() !== "REVERSE") {
+      toast.error('Type REVERSE to confirm');
+      return;
+    }
+    setRunning(true);
+    const { data, error } = await supabase.rpc("reverse_recent_purchases", {
+      window_minutes: minutes,
+      dry_run: dryRun,
+    });
+    setRunning(false);
+    if (error) { toast.error(error.message); return; }
+    const result = data as unknown as ReverseResult;
+    setLastResult(result);
+    if (dryRun) {
+      toast.success(`Preview: would reverse ${result.credit_purchases_reversed + result.track_purchases_reversed} purchase(s)`);
+    } else {
+      toast.success(`Reversed ${result.credit_purchases_reversed + result.track_purchases_reversed} purchase(s)`);
+      setConfirmText("");
+      await refreshReverseHistory();
+    }
+  }
+
+  useEffect(() => { void refreshReverseHistory(); }, []);
+  // user is referenced via useAuth() so handlers can attribute updates if extended
+  void user;
 
   async function loadStats() {
     setError(null);
