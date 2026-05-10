@@ -11,6 +11,7 @@ export function TrackingEye({
   travelRatio = 0.18,
   touchMode = "idle",
   idleTravelRatio = 0.06,
+  variant = "ice",
   className = "",
   style,
 }: {
@@ -26,11 +27,14 @@ export function TrackingEye({
   touchMode?: "still" | "idle";
   /** Travel ratio used for the subtle idle drift in touch mode. */
   idleTravelRatio?: number;
+  /** Color theme. "ice" = white iris + electric blue pupil; "gold" = legacy electric-gold. */
+  variant?: "ice" | "gold";
   className?: string;
   style?: React.CSSProperties;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [pupil, setPupil] = useState({ x: 0, y: 0 });
+  const [blink, setBlink] = useState(false);
 
   useEffect(() => {
     // Detect touch / coarse pointer devices — skip mousemove (often missing,
@@ -82,18 +86,46 @@ export function TrackingEye({
     return () => window.removeEventListener("mousemove", onMove);
   }, [travel, travelRatio, touchMode, idleTravelRatio]);
 
+  // Blink on any pointer down anywhere on the page.
+  useEffect(() => {
+    let timer = 0;
+    const onDown = () => {
+      setBlink(true);
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => setBlink(false), 180);
+    };
+    window.addEventListener("pointerdown", onDown);
+    return () => {
+      window.removeEventListener("pointerdown", onDown);
+      window.clearTimeout(timer);
+    };
+  }, []);
+
+  const isIce = variant === "ice";
+  const irisBg = isIce
+    ? "linear-gradient(135deg, #ffffff, #e6f4ff)"
+    : "linear-gradient(135deg, var(--electric-gold-100), var(--electric-gold-300))";
+  const irisGlow = isIce
+    ? "0 0 12px -1px oklch(0.78 0.2 240 / 0.85)"
+    : "0 0 12px -1px var(--electric-gold-glow)";
+  const irisRing = isIce
+    ? "color-mix(in oklab, oklch(0.72 0.22 245) 60%, transparent)"
+    : "color-mix(in oklab, var(--electric-gold-500) 60%, transparent)";
+  const pupilBg = isIce ? "oklch(0.55 0.24 255)" : "var(--midnight-pupil)";
+  const pupilRing = isIce
+    ? "color-mix(in oklab, oklch(0.2 0.08 255) 70%, transparent)"
+    : "color-mix(in oklab, var(--electric-gold-900) 70%, transparent)";
+
   return (
     <span
       ref={ref}
       aria-hidden
-      className={`inline-flex items-center justify-center rounded-full ring-1 ${className}`}
+      className={`inline-flex items-center justify-center rounded-full ring-1 transition-transform duration-150 ${className}`}
       style={{
-        background:
-          "linear-gradient(135deg, var(--electric-gold-100), var(--electric-gold-300))",
-        boxShadow: "0 0 12px -1px var(--electric-gold-glow)",
-        // ring color via CSS var (Tailwind ring-1 uses currentColor fallback through --tw-ring-color)
-        ["--tw-ring-color" as string]:
-          "color-mix(in oklab, var(--electric-gold-500) 60%, transparent)",
+        background: irisBg,
+        boxShadow: irisGlow,
+        ["--tw-ring-color" as string]: irisRing,
+        transform: blink ? "scaleY(0.1)" : "scaleY(1)",
         ...(size ? { width: size, height: size } : null),
         ...style,
       }}
@@ -101,9 +133,8 @@ export function TrackingEye({
       <span
         className="block rounded-full ring-1 shadow-[inset_0_0_2px_rgba(0,0,0,0.8)] transition-transform duration-75"
         style={{
-          background: "var(--midnight-pupil)",
-          ["--tw-ring-color" as string]:
-            "color-mix(in oklab, var(--electric-gold-900) 70%, transparent)",
+          background: pupilBg,
+          ["--tw-ring-color" as string]: pupilRing,
           width: `${pupilRatio * 100}%`,
           height: `${pupilRatio * 100}%`,
           transform: `translate(${pupil.x}px, ${pupil.y}px)`,
