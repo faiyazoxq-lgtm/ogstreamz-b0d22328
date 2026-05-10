@@ -1086,6 +1086,47 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_brief_versions: {
+        Row: {
+          brief: Json
+          created_at: string
+          edited_by: string | null
+          halalify: Json
+          id: string
+          metadata: Json
+          portal_id: string
+          version: number
+        }
+        Insert: {
+          brief: Json
+          created_at?: string
+          edited_by?: string | null
+          halalify?: Json
+          id?: string
+          metadata?: Json
+          portal_id: string
+          version: number
+        }
+        Update: {
+          brief?: Json
+          created_at?: string
+          edited_by?: string | null
+          halalify?: Json
+          id?: string
+          metadata?: Json
+          portal_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_brief_versions_portal_id_fkey"
+            columns: ["portal_id"]
+            isOneToOne: false
+            referencedRelation: "portals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_downloads: {
         Row: {
           created_at: string
@@ -1252,14 +1293,19 @@ export type Database = {
           bg_video_aspect: string
           bg_video_prompt: string | null
           bg_video_url: string | null
+          brief: Json
+          brief_updated_at: string | null
+          brief_version: number
           connect_openers: Json
           created_at: string
           created_by: string | null
+          halalify: Json
           id: string
           jokes: Json
           kind: string
           language: string
           lyric_text: string | null
+          metadata: Json
           music_hooks: Json
           name: string
           niche: string
@@ -1290,14 +1336,19 @@ export type Database = {
           bg_video_aspect?: string
           bg_video_prompt?: string | null
           bg_video_url?: string | null
+          brief?: Json
+          brief_updated_at?: string | null
+          brief_version?: number
           connect_openers?: Json
           created_at?: string
           created_by?: string | null
+          halalify?: Json
           id?: string
           jokes?: Json
           kind?: string
           language?: string
           lyric_text?: string | null
+          metadata?: Json
           music_hooks?: Json
           name: string
           niche: string
@@ -1328,14 +1379,19 @@ export type Database = {
           bg_video_aspect?: string
           bg_video_prompt?: string | null
           bg_video_url?: string | null
+          brief?: Json
+          brief_updated_at?: string | null
+          brief_version?: number
           connect_openers?: Json
           created_at?: string
           created_by?: string | null
+          halalify?: Json
           id?: string
           jokes?: Json
           kind?: string
           language?: string
           lyric_text?: string | null
+          metadata?: Json
           music_hooks?: Json
           name?: string
           niche?: string
