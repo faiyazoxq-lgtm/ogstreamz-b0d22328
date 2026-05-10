@@ -315,22 +315,31 @@ Use HIGH CONTRAST hex colors. Heading & body MUST be real Google Fonts. Match mo
 
     const theme = inferTheme(data.vibe, data.niche);
 
+    const seedColumnByKind: Record<string, string> = {
+      jokes: "jokes",
+      music: "music_hooks",
+      trade: "trade_briefs",
+      connect: "connect_openers",
+      tools: "tool_ideas",
+    };
+    const seedColumn = seedColumnByKind[data.kind] ?? "jokes";
+    const insertRow: Record<string, unknown> = {
+      slug,
+      name: data.name,
+      niche: data.niche,
+      language: data.language,
+      vibe: data.vibe,
+      theme,
+      kind: data.kind,
+      vip: data.vip,
+      theme_config: themeConfig ?? {},
+      scout_meta: scoutMeta,
+      [seedColumn]: jokes,
+      created_by: userId,
+    };
     const { data: portal, error } = await supabase
       .from("portals")
-      .insert({
-        slug,
-        name: data.name,
-        niche: data.niche,
-        language: data.language,
-        vibe: data.vibe,
-        theme,
-        kind: data.kind,
-        vip: data.vip,
-        theme_config: themeConfig ?? {},
-        scout_meta: scoutMeta,
-        jokes,
-        created_by: userId,
-      })
+      .insert(insertRow)
       .select("id, slug, name, theme, vip, kind")
       .single();
     if (error) throw new Error(error.message);
