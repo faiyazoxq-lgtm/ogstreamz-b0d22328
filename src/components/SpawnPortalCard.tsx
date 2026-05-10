@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Loader2, Wand2, Sparkles, ExternalLink, Coins } from "lucide-react";
+import { Loader2, Wand2, Sparkles, ExternalLink, Coins, Check, AlertTriangle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -41,6 +41,16 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
   const [loading, setLoading] = useState(false);
   const [created, setCreated] = useState<{ slug: string; name: string } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  // Stage progress: 0=idle, 1=queued, 2=generating, 3=publishing, 4=done
+  const [stage, setStage] = useState<0 | 1 | 2 | 3 | 4>(0);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const stageTimers = useRef<number[]>([]);
+
+  const clearStageTimers = () => {
+    stageTimers.current.forEach((id) => window.clearTimeout(id));
+    stageTimers.current = [];
+  };
+  useEffect(() => () => clearStageTimers(), []);
 
   const credits = profile?.credits ?? 0;
   const hasCredits = credits >= 1;
@@ -56,19 +66,33 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
     setConfirmOpen(false);
     setLoading(true);
     setCreated(null);
+    setErrorMsg(null);
+    clearStageTimers();
+    setStage(1); // queued
+    // Optimistic stage progression — server returns when fully published
+    stageTimers.current.push(window.setTimeout(() => setStage((s) => (s < 2 ? 2 : s)), 600));
+    stageTimers.current.push(window.setTimeout(() => setStage((s) => (s < 3 ? 3 : s)), 6000));
     try {
       const r = await spawn({ data: { name: name.trim(), niche: niche.trim(), vibe: vibe.trim(), language, kind, useScout: true } });
+      clearStageTimers();
+      setStage(4);
       setCreated({ slug: r.portal.slug, name: r.portal.name });
       toast.success(`Spawned "${r.portal.name}" — 1 credit spent`);
       setName(""); setNiche(""); setVibe("");
       // Refresh wallet so the new credit balance shows everywhere immediately
       void refresh();
     } catch (e: any) {
-      toast.error(e?.message ?? "Spawn failed");
+      clearStageTimers();
+      setStage(0);
+      const msg = e?.message ?? "Spawn failed — please try again";
+      setErrorMsg(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
+
+  const retry = () => { setErrorMsg(null); void run(); };
 
   return (
     <section className="mt-10 rounded-2xl border border-[oklch(0.72_0.22_245/0.4)] bg-card p-6 sm:p-8">
@@ -127,6 +151,41 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
               <> · <Link to="/store" className="underline text-foreground">Top up</Link></>
             )}
           </p>
+
+          {(loading || stage === 4) && (
+            <SpawnProgress stage={stage} />
+          )}
+
+          {errorMsg && !loading && (
+            <div
+              role="alert"
+              className="mt-5 rounded-xl border border-destructive/50 bg-destructive/10 p-4 flex items-start gap-3"
+            >
+              <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <div className="text-xs uppercase tracking-[0.3em] text-destructive font-bold">
+                  Spawn failed
+                </div>
+                <p className="text-sm text-foreground mt-1 break-words">{errorMsg}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {/insufficient|not enough credits/i.test(errorMsg)
+                    ? <>Top up credits to continue. <Link to="/store" className="underline text-foreground">Open store</Link>.</>
+                    : /name and niche/i.test(errorMsg)
+                    ? "Add both a portal name and a niche, then try again."
+                    : "No credit was charged. You can retry safely."}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={retry}
+                disabled={!hasCredits}
+                className="shrink-0"
+              >
+                <RotateCcw className="h-3.5 w-3.5 mr-1" /> Retry
+              </Button>
+            </div>
+          )}
 
           {created && (
             <div className="mt-6 p-4 rounded-xl border border-border bg-background/60 flex items-center gap-3 flex-wrap">
