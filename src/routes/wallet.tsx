@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { Coins, Plus, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MusicHubBalance } from "@/components/MusicHubBalance";
 import { CoinActivity } from "@/components/CoinActivity";
+import { CoinTopUpModal } from "@/components/CoinTopUpModal";
 import { requireMember } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/wallet")({
@@ -17,6 +19,7 @@ export const Route = createFileRoute("/wallet")({
 });
 
 function WalletPage() {
+  const [topUpOpen, setTopUpOpen] = useState(false);
   return (
     <main className="mx-auto max-w-3xl px-5 py-10 space-y-6">
       <header className="flex items-center justify-between gap-3">
@@ -36,12 +39,14 @@ function WalletPage() {
           <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Need more 🪙?</p>
           <p className="text-sm text-foreground/80">Grab a coin pack from the store — instant top-up.</p>
         </div>
-        <Button asChild size="lg" className="font-semibold">
-          <Link to="/store"><Plus className="h-4 w-4 mr-1" /> Top up coins</Link>
+        <Button size="lg" className="font-semibold" onClick={() => setTopUpOpen(true)}>
+          <Plus className="h-4 w-4 mr-1" /> Top up coins
         </Button>
       </div>
 
       <CoinActivity loadMore pageSize={20} />
+
+      <CoinTopUpModal open={topUpOpen} onOpenChange={setTopUpOpen} />
     </main>
   );
 }
