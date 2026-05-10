@@ -30,6 +30,7 @@ export type RosterRow = {
   stream_verified_at: string | null;
   stream_expires_at: string | null;
   created_at: string;
+  feature_flags: Record<string, any> | null;
 };
 
 export const listRoster = createServerFn({ method: "GET" })
@@ -44,7 +45,7 @@ export const listRoster = createServerFn({ method: "GET" })
     await assertBoss(supabase);
     let q = supabase
       .from("profiles")
-      .select("id,email,display_name,rank,status,credits,banned,banned_reason,stream_username,stream_status,stream_verified_at,stream_expires_at,created_at")
+      .select("id,email,display_name,rank,status,credits,banned,banned_reason,stream_username,stream_status,stream_verified_at,stream_expires_at,created_at,feature_flags")
       .order("created_at", { ascending: false })
       .limit(data.limit);
     if (data.rank) q = q.eq("rank", data.rank);
@@ -130,4 +131,36 @@ export const forceSignOut = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.auth.admin.signOut(data.userId);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+const INTENSITIES = ["mild", "medium", "chaotic"] as const;
+type Intensity = typeof INTENSITIES[number];
+
+/**
+ * Boss-only: explicitly set the swearing flag and intensity for a user.
+ * Pass `enabled: null` to clear the explicit override (rank-based default returns).
+ */
+export const setUserSwearing = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string; enabled: boolean | null; intensity?: Intensity }) => ({
+    userId: String(d.userId),
+    enabled: d.enabled === null ? null : !!d.enabled,
+    intensity: d.intensity && INTENSITIES.includes(d.intensity) ? d.intensity : undefined,
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context as any;
+    await assertBoss(supabase);
+    const { data: prof, error: readErr } = await supabase
+      .from("profiles").select("feature_flags").eq("id", data.userId).maybeSingle();
+    if (readErr) throw new Error(readErr.message);
+    const flags = { ...(prof?.feature_flags ?? {}) } as Record<string, any>;
+    if (data.enabled === null) {
+      delete flags.swearing;
+    } else {
+      flags.swearing = data.enabled;
+    }
+    if (data.intensity) flags.swearing_intensity = data.intensity;
+    const { error } = await supabase.from("profiles").update({ feature_flags: flags }).eq("id", data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true, feature_flags: flags };
   });
