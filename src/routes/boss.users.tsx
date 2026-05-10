@@ -103,12 +103,20 @@ function BossUsers() {
       <div className="grid grid-cols-1 gap-3">
         {rows.map((r) => {
           const busy = busyId === r.id;
+          const initials = (r.display_name || r.email || "?").trim().slice(0, 2).toUpperCase();
           return (
-            <article key={r.id} className="glass-obsidian-cmd rounded-2xl p-4">
-              <div className="flex flex-wrap items-start gap-3 justify-between">
-                <div className="min-w-0">
+            <article key={r.id} className="glass-obsidian-cmd rounded-2xl p-4 font-sans">
+              {/* Identity row */}
+              <div className="flex items-start gap-3">
+                <div
+                  className="shrink-0 inline-flex h-10 w-10 items-center justify-center rounded-full text-xs font-black"
+                  style={{ background: `${RANK_TINT[r.rank]}22`, color: RANK_TINT[r.rank], border: `1px solid ${RANK_TINT[r.rank]}66` }}
+                >
+                  {initials}
+                </div>
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-bold text-white truncate">{r.display_name || r.email}</span>
+                    <span className="text-base font-bold text-white truncate">{r.display_name || r.email}</span>
                     <span
                       className="text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded font-bold"
                       style={{ background: `${RANK_TINT[r.rank]}1f`, color: RANK_TINT[r.rank], border: `1px solid ${RANK_TINT[r.rank]}55` }}
@@ -119,19 +127,24 @@ function BossUsers() {
                     {r.banned && <span className="text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded font-bold bg-destructive/15 text-destructive border border-destructive/40">Banned</span>}
                     {r.stream_status === "Active" && <span className="text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/40">Stream ✓</span>}
                   </div>
-                  <p className="text-xs text-white/55 mt-0.5 truncate">{r.email}</p>
-                  <p className="text-[11px] text-white/45 mt-0.5">
-                    {r.credits} credits · {r.status.toUpperCase()}
-                    {r.stream_expires_at && <> · stream expires {new Date(r.stream_expires_at).toLocaleDateString()}</>}
-                  </p>
+                  <p className="text-xs text-white/60 mt-0.5 truncate">{r.email}</p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-white/55">
+                    <span className="inline-flex items-center gap-1 text-gold/90"><Coins className="h-3 w-3" /> {r.credits} 🪙</span>
+                    <span>· Status <span className="text-white/80 font-semibold">{r.status.toUpperCase()}</span></span>
+                    {r.stream_expires_at && <span>· stream until {new Date(r.stream_expires_at).toLocaleDateString()}</span>}
+                  </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-1.5">
+              </div>
+
+              {/* Action grid: clearly labelled sections */}
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 border-t border-white/5 pt-3">
+                <Section label="Access">
                   <select
                     aria-label="Set rank"
                     disabled={busy}
                     value={r.rank}
                     onChange={(e) => onAction(r.id, () => setRankRpc({ data: { userId: r.id, rank: e.target.value as any } }))}
-                    className="bg-card border border-border rounded-md px-2 py-1 text-xs"
+                    className="w-full bg-card border border-border rounded-md px-2 py-1.5 text-xs"
                   >
                     {RANK_OPTS.map((rk) => <option key={rk} value={rk}>{RANK_LABEL[rk]}</option>)}
                   </select>
@@ -140,11 +153,14 @@ function BossUsers() {
                     disabled={busy}
                     value={r.status}
                     onChange={(e) => onAction(r.id, () => setStatusRpc({ data: { userId: r.id, status: e.target.value as "free" | "vip" } }))}
-                    className="bg-card border border-border rounded-md px-2 py-1 text-xs"
+                    className="w-full bg-card border border-border rounded-md px-2 py-1.5 text-xs"
                   >
                     <option value="free">Free</option>
                     <option value="vip">VIP</option>
                   </select>
+                </Section>
+
+                <Section label="Coins">
                   <button
                     disabled={busy}
                     onClick={() => {
@@ -162,30 +178,36 @@ function BossUsers() {
                         : `boss:adjust${note.trim() ? ":" + note.trim().slice(0, 100) : ""}`;
                       onAction(r.id, () => creditsRpc({ data: { userId: r.id, delta: n, reason } }));
                     }}
-                    className="inline-flex items-center gap-1 rounded-md border border-gold/40 bg-gold/10 text-gold px-2 py-1 text-xs font-bold hover:bg-gold/15"
+                    className="w-full inline-flex items-center justify-center gap-1 rounded-md border border-gold/40 bg-gold/10 text-gold px-2 py-1.5 text-xs font-bold hover:bg-gold/15"
                   >
-                    <Coins className="h-3.5 w-3.5" /> Gift 🪙
+                    <Coins className="h-3.5 w-3.5" /> Gift / Adjust 🪙
                   </button>
+                </Section>
+
+                <Section label="Stream / Session">
                   <button
                     disabled={busy}
                     onClick={() => onAction(r.id, () => verifyRpc({ data: { userId: r.id } }))}
                     title="Re-verify stream account"
-                    className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary px-2 py-1 text-xs font-bold hover:bg-secondary/80"
+                    className="w-full inline-flex items-center justify-center gap-1 rounded-md border border-border bg-secondary px-2 py-1.5 text-xs font-bold hover:bg-secondary/80"
                   >
-                    <Tv className="h-3.5 w-3.5" /> Verify
+                    <Tv className="h-3.5 w-3.5" /> Re-verify stream
                   </button>
                   <button
                     disabled={busy}
                     onClick={() => onAction(r.id, () => signOutRpc({ data: { userId: r.id } }))}
-                    className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary px-2 py-1 text-xs font-bold hover:bg-secondary/80"
+                    className="w-full inline-flex items-center justify-center gap-1 rounded-md border border-border bg-secondary px-2 py-1.5 text-xs font-bold hover:bg-secondary/80"
                   >
-                    <LogOut className="h-3.5 w-3.5" /> Sign out
+                    <LogOut className="h-3.5 w-3.5" /> Force sign-out
                   </button>
+                </Section>
+
+                <Section label="Moderation">
                   {r.banned ? (
                     <button
                       disabled={busy}
                       onClick={() => onAction(r.id, () => banRpc({ data: { userId: r.id, banned: false } }))}
-                      className="inline-flex items-center gap-1 rounded-md border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 px-2 py-1 text-xs font-bold hover:bg-emerald-500/15"
+                      className="w-full inline-flex items-center justify-center gap-1 rounded-md border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 px-2 py-1.5 text-xs font-bold hover:bg-emerald-500/15"
                     >
                       <ShieldCheck className="h-3.5 w-3.5" /> Unban
                     </button>
@@ -196,13 +218,14 @@ function BossUsers() {
                         const reason = window.prompt(`Reason for banning ${r.email}? (optional)`, "") ?? "";
                         onAction(r.id, () => banRpc({ data: { userId: r.id, banned: true, reason } }));
                       }}
-                      className="inline-flex items-center gap-1 rounded-md border border-destructive/40 bg-destructive/10 text-destructive px-2 py-1 text-xs font-bold hover:bg-destructive/15"
+                      className="w-full inline-flex items-center justify-center gap-1 rounded-md border border-destructive/40 bg-destructive/10 text-destructive px-2 py-1.5 text-xs font-bold hover:bg-destructive/15"
                     >
-                      <ShieldOff className="h-3.5 w-3.5" /> Ban
+                      <ShieldOff className="h-3.5 w-3.5" /> Ban user
                     </button>
                   )}
-                </div>
+                </Section>
               </div>
+
               <SwearingRow row={r} busy={busy} onSet={(enabled, intensity) =>
                 onAction(r.id, () => swearRpc({ data: { userId: r.id, enabled, intensity } }))
               } />
