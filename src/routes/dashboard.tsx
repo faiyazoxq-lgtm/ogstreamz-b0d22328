@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { redeemCode } from "@/lib/overlord.functions";
 import { ZeroGStreamPanel } from "@/components/ZeroGStreamPanel";
+import { VaultRevealCard } from "@/components/VaultRevealCard";
 
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: requireMember,
@@ -123,6 +124,7 @@ function DashboardPage() {
       {/* History */}
       <section className="space-y-6">
         <ZeroGStreamPanel />
+        <VaultRevealCard />
         <h2 className="text-xs uppercase tracking-[0.4em] text-muted-foreground"><History className="inline h-3.5 w-3.5 mr-2" />Transmission History</h2>
 
         <HistoryGroup title="Portals you spawned" empty="You haven't spawned any portals yet." Icon={Sparkles}>
