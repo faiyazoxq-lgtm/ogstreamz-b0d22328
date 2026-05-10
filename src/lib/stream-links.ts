@@ -64,10 +64,42 @@ export function newEntry(platform: StreamPlatform = "twitch"): StreamEntry {
   return { id: uid(), platform, value: "" };
 }
 
+/**
+ * Platform-specific handle rules.
+ * - Twitch:  4-25 chars, letters/digits/underscore, must start with a letter/number.
+ *            Ref: https://help.twitch.tv (username rules)
+ * - YouTube: 3-30 chars, letters/digits, '.', '_', '-'. (handle rules)
+ * - Kick:    3-25 chars, letters/digits/underscore.
+ */
+const HANDLE_RULES: Record<Exclude<StreamPlatform, "custom">, { re: RegExp; hint: string; expectedHost: RegExp }> = {
+  twitch:  { re: /^[a-zA-Z0-9][a-zA-Z0-9_]{3,24}$/, hint: "Twitch handles are 4–25 letters, digits or '_' (must start with a letter/number).", expectedHost: /(^|\.)twitch\.tv$/i },
+  youtube: { re: /^[a-zA-Z0-9._-]{3,30}$/,           hint: "YouTube handles are 3–30 letters, digits, '.', '_' or '-'.",                       expectedHost: /(^|\.)youtube\.com$|(^|\.)youtu\.be$/i },
+  kick:    { re: /^[a-zA-Z0-9_]{3,25}$/,             hint: "Kick handles are 3–25 letters, digits or '_'.",                                    expectedHost: /(^|\.)kick\.com$/i },
+};
+
+function extractHandleFromUrl(platform: Exclude<StreamPlatform, "custom">, raw: string): string | null {
+  const ensured = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  let u: URL;
+  try { u = new URL(ensured); } catch { return null; }
+  const host = u.hostname.toLowerCase().replace(/^www\./, "");
+  if (!HANDLE_RULES[platform].expectedHost.test(host)) return null;
+
+  const segments = u.pathname.replace(/^\/+|\/+$/g, "").split("/").filter(Boolean);
+  if (segments.length === 0) return null;
+
+  if (platform === "youtube") {
+    // Preserve channel-style URLs by returning a sentinel — caller handles them.
+    if (/^(channel|c|user)$/i.test(segments[0]) && segments[1]) return `__path:${segments[0].toLowerCase()}/${decodeURIComponent(segments[1])}`;
+    return decodeURIComponent(segments[0]).replace(/^@/, "");
+  }
+  return decodeURIComponent(segments[0]).replace(/^@/, "");
+}
+
 /** Validate one entry. Returns an error message or null if valid. */
 export function validateEntry(entry: StreamEntry): string | null {
   const v = entry.value.trim();
   if (!v) return "Value is required";
+
   if (entry.platform === "custom") {
     try {
       const u = new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`);
@@ -80,15 +112,23 @@ export function validateEntry(entry: StreamEntry): string | null {
     }
     return null;
   }
-  // Handle-based platforms: allow URL OR a bare handle.
-  if (/^https?:\/\//i.test(v)) {
-    try { new URL(v); } catch { return "Invalid URL"; }
+
+  const rules = HANDLE_RULES[entry.platform];
+  const looksLikeUrl = /^https?:\/\//i.test(v) || /^[\w-]+\.[\w.-]+\//.test(v);
+
+  if (looksLikeUrl) {
+    const handle = extractHandleFromUrl(entry.platform, v);
+    if (handle === null) {
+      const expected = entry.platform === "twitch" ? "twitch.tv" : entry.platform === "kick" ? "kick.com" : "youtube.com";
+      return `Use a ${expected} URL or just your handle.`;
+    }
+    if (handle.startsWith("__path:")) return null; // YouTube channel/c/user path — accepted
+    if (!rules.re.test(handle)) return rules.hint;
     return null;
   }
+
   const handle = v.replace(/^@/, "");
-  if (!/^[a-zA-Z0-9_.-]{2,50}$/.test(handle)) {
-    return "Use 2–50 letters, numbers, '_', '.' or '-' (or paste a full URL)";
-  }
+  if (!rules.re.test(handle)) return rules.hint;
   return null;
 }
 
@@ -116,14 +156,19 @@ export function normalizeEntry(entry: StreamEntry): StreamEntry {
       return { ...entry, value: u.toString().replace(/\/$/, "") };
     }
 
-    // Handle platforms: parse URL if present, otherwise treat as handle.
+    const looksLikeUrl = /^https?:\/\//i.test(raw) || /^[\w-]+\.[\w.-]+\//.test(raw);
     let handle = raw.replace(/^@/, "");
-    let isUrl = /^https?:\/\//i.test(raw) || /^[\w-]+\.[\w.-]+\//.test(raw);
-    if (isUrl) {
-      const u = new URL(ensureUrl(raw));
-      handle = handleFromPath(u.pathname);
+    let preservedYoutubePath: string | null = null;
+    if (looksLikeUrl) {
+      const extracted = extractHandleFromUrl(entry.platform, raw);
+      if (extracted?.startsWith("__path:")) {
+        preservedYoutubePath = extracted.slice("__path:".length);
+      } else if (extracted) {
+        handle = extracted;
+      } else {
+        handle = handleFromPath(new URL(ensureUrl(raw)).pathname).replace(/^@/, "");
+      }
     }
-    handle = handle.replace(/^@/, "");
 
     switch (entry.platform) {
       case "twitch":
@@ -131,13 +176,8 @@ export function normalizeEntry(entry: StreamEntry): StreamEntry {
       case "kick":
         return { ...entry, value: `https://kick.com/${handle.toLowerCase()}` };
       case "youtube": {
-        // Preserve channel-style paths if user pasted a full URL.
-        if (isUrl) {
-          const u = new URL(ensureUrl(raw));
-          const path = u.pathname.replace(/\/+$/, "");
-          if (/^\/(channel|c|user)\//i.test(path)) {
-            return { ...entry, value: `https://youtube.com${path}` };
-          }
+        if (preservedYoutubePath) {
+          return { ...entry, value: `https://youtube.com/${preservedYoutubePath}` };
         }
         return { ...entry, value: `https://youtube.com/@${handle}` };
       }
