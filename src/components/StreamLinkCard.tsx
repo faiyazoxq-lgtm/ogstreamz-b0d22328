@@ -57,7 +57,6 @@ export function StreamLinkCard() {
   const linked = rank === "stream_user" || rank === "vip" || rank === "boss";
   const status = profile?.stream_status ?? undefined;
   const expiresAt = profile?.stream_expires_at ?? undefined;
-  const username = profile?.stream_username ?? undefined;
 
   const expiryDate = expiresAt ? new Date(expiresAt) : null;
   const expired = expiryDate ? expiryDate.getTime() < Date.now() : false;
@@ -118,13 +117,8 @@ export function StreamLinkCard() {
         Link your stream/IPTV username &amp; password. We auto-check it against the server, then submit it to <strong className="text-foreground">Boss</strong> for OGSTREAMZ approval.
       </p>
 
-      {(status || expiryLabel || username) && (
+      {(status || expiryLabel) && (
         <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
-          {username && (
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/50 px-2.5 py-1 font-mono text-foreground/80">
-              <Tv className="h-3.5 w-3.5" /> {username}
-            </span>
-          )}
           {status && (
             <span
               className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 font-bold uppercase tracking-[0.18em] ${
