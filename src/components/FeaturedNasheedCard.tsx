@@ -260,7 +260,7 @@ export function FeaturedNasheedCard() {
         <Button
           type="button"
           onClick={togglePlay}
-          disabled={playState === "loading" || (playState === "idle" && !canPlay && false)}
+          disabled={playState === "loading"}
           aria-busy={playState === "loading"}
           aria-label={
             playState === "playing"
