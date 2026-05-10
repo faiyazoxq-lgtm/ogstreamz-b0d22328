@@ -387,8 +387,8 @@ function VipPage() {
                       </span>
                     )}
                     <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-200/70">{isYear ? "Annual" : "Monthly"}</p>
-                    <p className="mt-1 text-4xl font-black">${isYear ? "149" : "19"}<span className="text-sm font-normal opacity-60">/{isYear ? "yr" : "mo"}</span></p>
-                    <p className="mt-1 text-xs text-cyan-100/70">{isYear ? "$12.42/mo billed yearly" : "Billed monthly"}</p>
+                    <p className="mt-1 text-4xl font-black">£{isYear ? "149" : "19"} <span className="text-base text-yellow-300">({isYear ? "149" : "19"} 🪙)</span><span className="text-sm font-normal opacity-60">/{isYear ? "yr" : "mo"}</span></p>
+                    <p className="mt-1 text-xs text-cyan-100/70">{isYear ? "£12.42 (~12 🪙)/mo billed yearly" : "Billed monthly"}</p>
                     {active && (
                       <span className="mt-3 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.25em] font-bold text-cyan-300">
                         <Check className="h-3 w-3" /> Selected
