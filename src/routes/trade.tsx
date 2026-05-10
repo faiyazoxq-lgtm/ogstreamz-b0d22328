@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Activity, ArrowRight, Crown, ShieldAlert, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BossChatPanel } from "@/components/BossChatPanel";
+import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 
 type TradePortal = {
   id: string; slug: string; name: string; niche: string; vip: boolean;
@@ -118,6 +119,7 @@ function TradeHubPage() {
         <ShieldAlert className="h-3.5 w-3.5 text-gold" />
         Risk Disclosure · Not Financial Advice · Markets carry capital loss risk
       </div>
+      <SpawnPortalCard kind="trade" />
     </main>
   );
 }
