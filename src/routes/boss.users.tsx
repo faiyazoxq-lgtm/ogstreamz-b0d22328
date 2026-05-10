@@ -148,14 +148,23 @@ function BossUsers() {
                   <button
                     disabled={busy}
                     onClick={() => {
-                      const v = window.prompt(`Adjust credits for ${r.email} (e.g. 50 or -10):`, "0");
+                      const v = window.prompt(`Gift / adjust 🪙 for ${r.email} (e.g. 50 or -10):`, "0");
                       const n = Number(v);
                       if (!Number.isFinite(n) || n === 0) return;
-                      onAction(r.id, () => creditsRpc({ data: { userId: r.id, delta: n, reason: "boss:roster" } }));
+                      const note = window.prompt(
+                        n > 0
+                          ? `Optional note — what are these ${n} 🪙 for? (member will see this)`
+                          : `Optional note — reason for removing ${Math.abs(n)} 🪙?`,
+                        ""
+                      ) ?? "";
+                      const reason = n > 0
+                        ? `boss:gift${note.trim() ? ":" + note.trim().slice(0, 100) : ""}`
+                        : `boss:adjust${note.trim() ? ":" + note.trim().slice(0, 100) : ""}`;
+                      onAction(r.id, () => creditsRpc({ data: { userId: r.id, delta: n, reason } }));
                     }}
                     className="inline-flex items-center gap-1 rounded-md border border-gold/40 bg-gold/10 text-gold px-2 py-1 text-xs font-bold hover:bg-gold/15"
                   >
-                    <Coins className="h-3.5 w-3.5" /> Credits
+                    <Coins className="h-3.5 w-3.5" /> Gift 🪙
                   </button>
                   <button
                     disabled={busy}
