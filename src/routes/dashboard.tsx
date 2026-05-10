@@ -127,19 +127,25 @@ function DashboardPage() {
 
         <HistoryGroup title="Portals you spawned" empty="You haven't spawned any portals yet." Icon={Sparkles}>
           {spawns.map((s) => (
-            <HistoryRow key={s.id} title={s.name} sub={`${s.kind} · ${new Date(s.created_at).toLocaleDateString()}`} to={s.kind === "music" ? `/m/${s.slug}` : `/p/${s.slug}`} />
+            <HistoryRow
+              key={s.id}
+              title={s.name}
+              sub={`${s.kind} · ${new Date(s.created_at).toLocaleDateString()}`}
+              to={s.kind === "music" ? "/m/$slug" : "/p/$slug"}
+              slug={s.slug}
+            />
           ))}
         </HistoryGroup>
 
             <HistoryGroup title="VIP portals unlocked" empty="No VIP portal unlocks yet." Icon={Mic2}>
               {unlocks.filter((u) => u.portal).map((u) => (
-                <HistoryRow key={u.id} title={u.portal!.name} sub={new Date(u.created_at).toLocaleDateString()} to={`/p/${u.portal!.slug}`} />
+                <HistoryRow key={u.id} title={u.portal!.name} sub={new Date(u.created_at).toLocaleDateString()} to="/p/$slug" slug={u.portal!.slug} />
               ))}
             </HistoryGroup>
 
             <HistoryGroup title="Tracks you own" empty="No track purchases yet." Icon={Music}>
               {trackBuys.filter((t) => t.track).map((t) => (
-                <HistoryRow key={t.id} title={t.track!.title} sub={`${t.track!.portal_slug} · ${new Date(t.created_at).toLocaleDateString()}`} to={`/m/${t.track!.portal_slug}`} />
+                <HistoryRow key={t.id} title={t.track!.title} sub={`${t.track!.portal_slug} · ${new Date(t.created_at).toLocaleDateString()}`} to="/m/$slug" slug={t.track!.portal_slug} />
               ))}
             </HistoryGroup>
       </section>
@@ -166,14 +172,15 @@ function HistoryGroup({ title, empty, Icon, children }: { title: string; empty: 
   );
 }
 
-function HistoryRow({ title, sub, to }: { title: string; sub: string; to: string }) {
+type PortalLinkRoute = "/p/$slug" | "/m/$slug" | "/td/$slug" | "/t/$slug" | "/b/$slug";
+function HistoryRow({ title, sub, to, slug }: { title: string; sub: string; to: PortalLinkRoute; slug: string }) {
   return (
     <li className="py-2 flex items-center justify-between gap-3">
       <div className="min-w-0">
         <p className="text-sm text-white truncate">{title}</p>
         <p className="text-[11px] text-muted-foreground">{sub}</p>
       </div>
-      <Link to={to} className="text-xs uppercase tracking-widest font-bold text-[color:var(--neon-blue-bright)] inline-flex items-center gap-1">
+      <Link to={to} params={{ slug }} className="text-xs uppercase tracking-widest font-bold text-[color:var(--neon-blue-bright)] inline-flex items-center gap-1">
         Open <ExternalLink className="h-3 w-3" />
       </Link>
     </li>
