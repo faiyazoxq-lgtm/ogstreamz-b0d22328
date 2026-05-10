@@ -25,6 +25,16 @@ function inferTheme(style: string, vibe: string): string {
   return "studio-blue";
 }
 
+/**
+ * Religious / devotional portals must never emit swearing, regardless of the
+ * Boss-level swear toggle. Matches against name, style, vibe and language so
+ * gospel/hymn/nasheed/qawwali studios stay clean.
+ */
+function isReligiousPortal(p: { name?: string | null; style?: string | null; vibe?: string | null; language?: string | null }): boolean {
+  const t = [p.name, p.style, p.vibe, p.language].filter(Boolean).join(" ").toLowerCase();
+  return /(nasheed|naat|hamd|qasida|qawwali|sufi|spirit|mosque|hymn|gospel|sacred|devotional|worship|psalm|bhajan|kirtan|christian|islamic|muslim|catholic|prayer|prayers|holy|gurbani)/.test(t);
+}
+
 export const spawnMusicPortal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { slug: string; language: string; style: string; vibe: string }) => ({
