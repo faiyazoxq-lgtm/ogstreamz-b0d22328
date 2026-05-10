@@ -369,17 +369,17 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
             <Tooltip>
               <TooltipTrigger asChild>
                 {/* span wrapper so tooltip still fires when button is disabled */}
-                <span className="mt-5 inline-block w-full sm:w-auto">
+                <span className="mt-6 inline-block w-full sm:w-auto">
                   <Button
                     onClick={requestSpawn}
                     disabled={loading || !isValid || !hasCredits}
                     aria-disabled={loading || !isValid || !hasCredits}
                     aria-describedby={!hasCredits ? "spawn-credits-hint" : undefined}
-                    className="h-12 px-8 text-xs uppercase tracking-[0.25em] font-bold w-full sm:w-auto min-h-[48px]"
+                    className="h-14 px-10 text-sm sm:text-base uppercase tracking-[0.28em] font-black w-full sm:w-auto min-h-[56px] rounded-xl text-black bg-gradient-to-r from-amber-300 via-yellow-300 to-amber-400 hover:from-amber-200 hover:via-yellow-200 hover:to-amber-300 border border-amber-200/70 shadow-[0_0_0_1px_oklch(0.78_0.18_85/0.35),0_18px_48px_-12px_oklch(0.78_0.18_85/0.55)] hover:shadow-[0_0_0_1px_oklch(0.78_0.18_85/0.55),0_22px_60px_-10px_oklch(0.78_0.18_85/0.7)] transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:translate-y-0 disabled:shadow-none"
                   >
                     {loading
-                      ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Spawning…</>
-                      : <><Wand2 className="h-4 w-4 mr-2" />Generate Portal · {PORTAL_COST} credit</>}
+                      ? <><Loader2 className="h-5 w-5 animate-spin mr-2" />Spawning…</>
+                      : <><Zap className="h-5 w-5 mr-2 fill-black" />Generate Portal · {PORTAL_COST} credit</>}
                   </Button>
                 </span>
               </TooltipTrigger>
