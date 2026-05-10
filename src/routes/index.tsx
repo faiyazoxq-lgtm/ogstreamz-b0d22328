@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.jpg";
 import { TiltCard } from "@/components/TiltCard";
 import { WelcomeAuthPrompt } from "@/components/WelcomeAuthPrompt";
+import { QuickJumpDrawer } from "@/components/QuickJumpDrawer";
 import { useAuth } from "@/hooks/use-auth";
 
 const ICONS: Record<string, any> = {
@@ -258,6 +259,7 @@ function Index() {
 
       <SyndicateGallery />
       <WelcomeAuthPrompt />
+      <QuickJumpDrawer user={!!user} />
     </main>
   );
 }
