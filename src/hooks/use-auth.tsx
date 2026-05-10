@@ -6,7 +6,7 @@ import { getRemember, hasTabSession, markTabSession, clearTabSession } from "@/l
 import { hasStoredAuth } from "@/lib/has-stored-auth";
 
 export type SyndicateRank = "prospect" | "enforcer" | "vip" | "boss";
-export type FeatureFlags = { jokes: boolean; music: boolean; tools: boolean; swearing: boolean };
+export type FeatureFlags = { jokes: boolean; music: boolean; tools: boolean; swearing: boolean; real_og?: boolean };
 
 type Profile = {
   id: string;

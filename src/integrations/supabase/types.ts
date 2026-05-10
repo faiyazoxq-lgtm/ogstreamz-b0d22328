@@ -2300,6 +2300,16 @@ export type Database = {
         Returns: number
       }
       civility_default: { Args: never; Returns: boolean }
+      claim_real_og_pass: {
+        Args: {
+          _amount_cents: number
+          _currency: string
+          _environment: string
+          _stripe_session_id: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       claim_signup_pass: { Args: { _token: string }; Returns: Json }
       has_active_vip: {
         Args: { _env?: string; _user?: string }
