@@ -460,6 +460,29 @@ function AuthPage() {
               </div>
             </TabsContent>
             <TabsContent value="signup" className="space-y-4 mt-0">
+              <div
+                role="status"
+                aria-label={`New accounts start with ${signupBonus} free coins`}
+                className="flex items-center gap-3 rounded-xl border border-amber-300/40 bg-gradient-to-r from-amber-300/15 via-amber-300/5 to-transparent px-4 py-3"
+              >
+                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-amber-300/50 bg-amber-300/15 shadow-[0_0_24px_-6px_rgba(252,211,77,0.7)]">
+                  <Coins className="h-5 w-5 text-amber-200" aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-2xl font-black text-amber-200 tabular-nums leading-none">
+                      +{signupBonus}
+                    </span>
+                    <span className="text-base leading-none" aria-hidden="true">🪙</span>
+                    <span className="text-[10px] uppercase tracking-[0.22em] font-bold text-amber-200/85">
+                      free coins
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    Land in your wallet on first sign-in. No card required.
+                  </p>
+                </div>
+              </div>
               <AuthForm
                 email={email}
                 setEmail={(v) => { setEmail(v); if (emailError) setEmailError(null); }}
