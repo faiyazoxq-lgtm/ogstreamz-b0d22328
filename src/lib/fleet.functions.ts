@@ -46,11 +46,20 @@ export const listFleet = createServerFn({ method: "GET" })
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
     const admin = adminClient();
     const [{ data: bots }, { data: settings }] = await Promise.all([
-      admin.from("bot_factory").select("*").order("created_at", { ascending: false }),
+      // Whitelist columns — never return webhook_secret or full token to the client.
+      admin
+        .from("bot_factory")
+        .select(
+          "id,pair_name,pair_label,bot_username,channel_chat_id,asset_class,bias,active,tier,last_pinged_at,last_broadcast,ping_count,webhook_url,created_at,updated_at,telegram_bot_token"
+        )
+        .order("created_at", { ascending: false }),
       admin.from("fleet_settings").select("*").eq("id", 1).maybeSingle(),
     ]);
     return {
-      bots: (bots || []).map((b: any) => ({ ...b, telegram_bot_token: b.telegram_bot_token ? "•••" + b.telegram_bot_token.slice(-4) : "" })),
+      bots: (bots || []).map((b: any) => ({
+        ...b,
+        telegram_bot_token: b.telegram_bot_token ? "•••" + b.telegram_bot_token.slice(-4) : "",
+      })),
       settings: settings || { global_frequency: "aggressive" },
     };
   });
