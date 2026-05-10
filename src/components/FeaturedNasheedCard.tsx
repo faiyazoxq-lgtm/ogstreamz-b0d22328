@@ -267,7 +267,9 @@ export function FeaturedNasheedCard() {
               ? "Pause preview"
               : playState === "loading"
                 ? "Loading preview"
-                : "Play preview"
+                : canPlay
+                  ? "Play preview"
+                  : "Buffering preview, tap to play"
           }
           className="flex-1 min-h-12 bg-white/5 border border-[hsl(45_85%_60%/0.5)] text-[hsl(45_85%_72%)] hover:bg-[hsl(45_85%_60%/0.12)] hover:text-[hsl(45_85%_80%)] font-bold tracking-wide transition-all active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-[hsl(45_85%_60%/0.7)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
