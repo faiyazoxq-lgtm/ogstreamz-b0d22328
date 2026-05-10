@@ -99,7 +99,7 @@ function JokePortal() {
       const res = await liveFn({ data: { styles: styleIds, custom } });
       if (res.error) {
         if (res.error === "insufficient") {
-          setError("Out of credits. Redirecting to Store…");
+          setError("Out of 🪙. Redirecting to Store…");
           setTimeout(() => { window.location.href = "/store?reason=empty"; }, 900);
         } else {
           setError(res.error);
