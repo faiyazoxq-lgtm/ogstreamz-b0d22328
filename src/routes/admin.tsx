@@ -22,6 +22,7 @@ import { listBots, upsertBot, deleteBot, broadcastGlobalAlert, runSyndicateTickN
 import { generateBrandBible, updateTelegramLinks, deployToTelegram } from "@/lib/telegram.functions";
 import { runAgentTask, getOpsSnapshot, runMaintenance } from "@/lib/command-deck.functions";
 import { TopUpRequestsPanel } from "@/components/TopUpRequestsPanel";
+import { getNerdStats } from "@/lib/nerd-stats.functions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,6 +44,7 @@ const NAV_SECTIONS: { id: string; label: string; tint: string }[] = [
   { id: "homehubs", label: "Homepage Hubs", tint: "#ff00aa" },
   { id: "topups", label: "Top-Ups", tint: "#ff5577" },
   { id: "command", label: "Command Deck", tint: "#ff00aa" },
+  { id: "nerd-stats", label: "Nerd Stats", tint: "#7dd3fc" },
 ];
 
 export const Route = createFileRoute("/admin")({
@@ -183,6 +185,9 @@ function AdminPage() {
         <AgentConsolePanel />
         <MaintenancePanel />
       </div>
+
+      <SectionHeader id="nerd-stats" icon={<Database className="h-4 w-4" />} label="Nerd Stats · Deep Telemetry" tint="#7dd3fc" />
+      <NerdStatsPanel />
         </div>
 
         {/* RIGHT — Users DB + quick actions */}
@@ -441,6 +446,154 @@ function ShapeBridgePanel() {
       {saving && (
         <div className="mt-4 inline-flex items-center gap-2 text-xs text-white/60">
           <Loader2 className="h-3.5 w-3.5 animate-spin" /> Syncing to bridge…
+        </div>
+      )}
+    </section>
+  );
+}
+
+function fmtMoneyCents(cents: number, currency = "usd") {
+  try {
+    return new Intl.NumberFormat(undefined, { style: "currency", currency: currency.toUpperCase() }).format((cents ?? 0) / 100);
+  } catch { return `$${((cents ?? 0) / 100).toFixed(2)}`; }
+}
+
+function StatTile({ label, value, sub, tint = "#7dd3fc" }: { label: string; value: React.ReactNode; sub?: React.ReactNode; tint?: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-background/40 p-3">
+      <div className="text-[9px] uppercase tracking-[0.3em] text-muted-foreground">{label}</div>
+      <div className="mt-1 text-xl font-black font-mono" style={{ color: tint }}>{value}</div>
+      {sub ? <div className="mt-0.5 text-[10px] text-muted-foreground">{sub}</div> : null}
+    </div>
+  );
+}
+
+function NerdStatsPanel() {
+  const fetchStats = useServerFn(getNerdStats);
+  const [data, setData] = useState<Awaited<ReturnType<typeof getNerdStats>> | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const reload = async () => {
+    setLoading(true); setErr(null);
+    try { setData(await fetchStats()); }
+    catch (e: any) { setErr(e?.message ?? "Failed to load stats"); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { reload(); /* eslint-disable-next-line */ }, []);
+
+  return (
+    <section className="mt-10 rounded-2xl border border-[oklch(0.72_0.22_245/0.4)] bg-card p-6 sm:p-8">
+      <header className="flex items-center gap-3 mb-5 flex-wrap">
+        <Database className="h-5 w-5" style={{ color: "var(--neon-blue-bright)" }} />
+        <h2 className="font-[Montserrat] font-black text-xl text-white">Nerd Stats</h2>
+        <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Deep telemetry · live counts</span>
+        <Button size="sm" variant="ghost" onClick={reload} disabled={loading} className="ml-auto text-[10px]">
+          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <><RefreshCw className="h-3 w-3 mr-1" /> Refresh</>}
+        </Button>
+      </header>
+
+      {err ? (
+        <p className="text-sm text-red-400">{err}</p>
+      ) : !data ? (
+        <div className="py-8 text-center"><Loader2 className="h-4 w-4 animate-spin inline" /></div>
+      ) : (
+        <div className="space-y-6">
+          {/* Portals */}
+          <div>
+            <h3 className="text-[11px] uppercase tracking-[0.3em] text-cyan-300 font-bold mb-2 flex items-center gap-2"><Rocket className="h-3 w-3" /> Portals</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <StatTile label="Total" value={data.portals.total} sub={`+${data.portals.new30d} in 30d`} />
+              <StatTile label="VIP" value={data.portals.vip} tint="#a78bfa" />
+              <StatTile label="Zero views" value={data.portals.zeroView} tint="#fb7185" />
+              <StatTile label="Total opens" value={data.portals.totalViews.toLocaleString()} sub={`${data.portals.views24h} / 24h · ${data.portals.views7d} / 7d`} tint="#fbbf24" />
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {Object.entries(data.portals.byKind).map(([k, n]) => (
+                <span key={k} className="text-[10px] uppercase tracking-[0.25em] font-bold px-2 py-1 rounded border border-border bg-background/40">
+                  {k}: <span className="text-white font-mono">{n}</span>
+                </span>
+              ))}
+            </div>
+            {data.portals.top.length > 0 && (
+              <div className="mt-3 rounded-lg border border-border overflow-hidden">
+                <div className="px-3 py-1.5 text-[9px] uppercase tracking-[0.3em] text-muted-foreground bg-background/40">Top 5 by views</div>
+                {data.portals.top.map((p: any) => (
+                  <div key={p.slug} className="grid grid-cols-12 gap-2 px-3 py-1.5 text-xs items-center border-t border-border">
+                    <div className="col-span-7 truncate"><span className="text-white font-bold">{p.name}</span> <span className="text-muted-foreground font-mono">/{p.slug}</span></div>
+                    <div className="col-span-3 text-muted-foreground text-[10px] uppercase tracking-wider">{p.kind}</div>
+                    <div className="col-span-2 text-right font-mono text-yellow-300"><Eye className="inline h-3 w-3 mr-1" />{p.view_count}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Users & credits */}
+          <div>
+            <h3 className="text-[11px] uppercase tracking-[0.3em] text-emerald-300 font-bold mb-2 flex items-center gap-2"><Users className="h-3 w-3" /> Users & Credits</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <StatTile label="Total users" value={data.users.total} sub={`+${data.users.new7d} in 7d`} tint="#34d399" />
+              <StatTile label="VIP" value={data.users.vip} tint="#a78bfa" />
+              <StatTile label="Free" value={data.users.free} />
+              <StatTile label="Credits in circulation" value={data.users.creditsInCirculation.toLocaleString()} tint="#fbbf24" />
+            </div>
+            {data.users.topSpenders.length > 0 && (
+              <div className="mt-3 rounded-lg border border-border overflow-hidden">
+                <div className="px-3 py-1.5 text-[9px] uppercase tracking-[0.3em] text-muted-foreground bg-background/40">Top wallets</div>
+                {data.users.topSpenders.map((u: any, i: number) => (
+                  <div key={i} className="grid grid-cols-12 gap-2 px-3 py-1.5 text-xs items-center border-t border-border">
+                    <div className="col-span-9 truncate text-white">{u.email}</div>
+                    <div className="col-span-1 text-[10px] uppercase tracking-wider text-muted-foreground">{u.status}</div>
+                    <div className="col-span-2 text-right font-mono text-yellow-300">{u.credits}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Revenue & orders */}
+          <div>
+            <h3 className="text-[11px] uppercase tracking-[0.3em] text-yellow-300 font-bold mb-2 flex items-center gap-2"><TrendingUp className="h-3 w-3" /> Revenue & Orders</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <StatTile label="Issued revenue" value={fmtMoneyCents(data.revenue.issuedRevenueCents)} tint="#34d399" />
+              <StatTile label="Pending orders" value={data.revenue.pendingOrders} tint="#fbbf24" />
+              <StatTile label="Credit purchases" value={data.revenue.creditPurchasesTotal} sub={`+${data.revenue.creditPurch30d} in 30d`} />
+              <StatTile label="Credits sold" value={data.revenue.creditsSold.toLocaleString()} sub={fmtMoneyCents(data.revenue.creditRevenueCents)} tint="#7dd3fc" />
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {Object.entries(data.revenue.ordersByStatus).map(([k, n]) => (
+                <span key={k} className="text-[10px] uppercase tracking-[0.25em] font-bold px-2 py-1 rounded border border-border bg-background/40">
+                  {k}: <span className="text-white font-mono">{n}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* System health */}
+          <div>
+            <h3 className="text-[11px] uppercase tracking-[0.3em] text-red-300 font-bold mb-2 flex items-center gap-2"><Activity className="h-3 w-3" /> System Health (24h)</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <StatTile label="Errors" value={data.system.errors24h} tint="#fb7185" />
+              <StatTile label="AI logs" value={data.system.aiLogs24h} />
+              <StatTile label="Trade scans" value={data.system.tradeScans24h} tint="#fbbf24" />
+              <StatTile label="Magic links" value={data.system.magicLinks24h} tint="#a78bfa" />
+            </div>
+            {data.system.recentErrors.length > 0 && (
+              <div className="mt-3 rounded-lg border border-red-900/40 overflow-hidden">
+                <div className="px-3 py-1.5 text-[9px] uppercase tracking-[0.3em] text-red-300 bg-red-950/30">Recent errors / warnings</div>
+                {data.system.recentErrors.map((l: any, i: number) => (
+                  <div key={i} className="px-3 py-1.5 text-[11px] border-t border-red-900/30 font-mono">
+                    <span className={l.level === "error" ? "text-red-400" : "text-yellow-300"}>[{l.level}]</span>{" "}
+                    <span className="text-muted-foreground">{l.source}</span>{" "}
+                    <span className="text-white/80">{(l.message ?? "").slice(0, 200)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <p className="text-[10px] text-muted-foreground text-right">Generated {new Date(data.generatedAt).toLocaleTimeString()}</p>
         </div>
       )}
     </section>
