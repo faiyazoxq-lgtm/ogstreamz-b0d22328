@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Lock, Loader2, Radio, BadgeCheck, Send, Crown, Satellite, RefreshCw, ExternalLink, Gauge, TrendingUp, TrendingDown, Activity, Calculator, Sparkles, Mail, Copy } from "lucide-react";
+import { ArrowLeft, Lock, Loader2, Radio, BadgeCheck, Send, Crown, Satellite, RefreshCw, ExternalLink, Gauge, TrendingUp, TrendingDown, Activity, Calculator, Sparkles, Mail, Copy, Share2, X } from "lucide-react";
 import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -192,6 +192,7 @@ function PortalPage() {
   const [owned, setOwned] = useState<boolean>(!portal.vip);
   const [unlocking, setUnlocking] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [sharedIdea, setSharedIdea] = useState<string | null>(null);
   const controls = useAnimationControls();
   const seedsByKind: Record<string, string[] | undefined> = {
     music: portal.music_hooks,
@@ -417,7 +418,23 @@ function PortalPage() {
                   >
                     {i + 1}
                   </span>
-                  <p className="text-sm leading-relaxed whitespace-pre-line opacity-90">{idea}</p>
+                  <p className="flex-1 text-sm leading-relaxed whitespace-pre-line opacity-90">{idea}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSharedIdea(idea);
+                      toast.success("Idea staged for Telegram", { description: "Scroll to the Telegram block to send it." });
+                      setTimeout(() => {
+                        document.getElementById("telegram-share")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }, 50);
+                    }}
+                    className="shrink-0 inline-flex h-7 items-center gap-1 rounded-md border px-2 text-[10px] uppercase tracking-[0.25em] font-bold hover:opacity-80"
+                    style={{ borderColor: `${T.accent}66`, color: T.accent }}
+                    aria-label={`Share idea ${i + 1} to Telegram`}
+                  >
+                    <Share2 className="h-3 w-3" />
+                    Share
+                  </button>
                 </li>
               ))}
             </ol>
@@ -491,7 +508,52 @@ function PortalPage() {
         )}
 
         {(groupLink || (isVipMember && vipLink)) && (
-          <div className="mt-8 w-full max-w-md flex flex-col gap-3">
+          <div id="telegram-share" className="mt-8 w-full max-w-md flex flex-col gap-3 scroll-mt-24">
+            {sharedIdea && (
+              <div
+                className="rounded-xl border p-3 flex flex-col gap-2"
+                style={{ borderColor: `${T.accent}66`, background: "rgba(0,0,0,0.4)" }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.3em] font-bold" style={{ color: T.accent }}>
+                    <Share2 className="h-3 w-3" /> Idea staged
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSharedIdea(null)}
+                    className="opacity-60 hover:opacity-100"
+                    aria-label="Clear staged idea"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <p className="text-xs leading-relaxed whitespace-pre-line opacity-90">{sharedIdea}</p>
+                <div className="flex flex-wrap gap-2">
+                  <a
+                    href={`https://t.me/share/url?url=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "")}&text=${encodeURIComponent(`💡 Micro-Calculator Idea from ${portal.name}:\n\n${sharedIdea}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[10px] uppercase tracking-[0.25em] font-bold"
+                    style={{ background: T.accent, color: "#000" }}
+                  >
+                    <Send className="h-3 w-3" /> Send via Telegram
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(sharedIdea).then(
+                        () => toast.success("Idea copied"),
+                        () => toast.error("Copy failed"),
+                      );
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-[10px] uppercase tracking-[0.25em] font-bold"
+                    style={{ borderColor: `${T.accent}66`, color: T.accent }}
+                  >
+                    <Copy className="h-3 w-3" /> Copy
+                  </button>
+                </div>
+              </div>
+            )}
             {groupLink && (
               <a href={groupLink} target="_blank" rel="noopener noreferrer" className="group">
                 <motion.div
