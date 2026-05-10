@@ -98,6 +98,10 @@ export function SpotlightEyes() {
     window.addEventListener("mouseleave", onLeave);
 
     let lastBolt = 0;
+    // Slow-motion: throttle the canvas to ~20fps and halve all kinetics
+    // (bolt cadence, spark velocity, gravity) for a cinematic drift.
+    const FRAME_INTERVAL = 1000 / 20;
+    let lastFrame = 0;
 
     const eyePositions = () => [
       { x: 28, y: h * 0.18, side: -1 },
@@ -137,6 +141,11 @@ export function SpotlightEyes() {
     };
 
     const tick = (ts: number) => {
+      if (ts - lastFrame < FRAME_INTERVAL) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+      lastFrame = ts;
       ctx.clearRect(0, 0, w, h);
       const eyes = eyePositions();
       const m = mouseRef.current;
@@ -192,7 +201,7 @@ export function SpotlightEyes() {
 
       // Periodically emit a lightning bolt from each eye to the cursor.
       // Reduced-motion mode: fire ~6× less often, single eye, no edge bolts, no sparks.
-      const boltInterval = reducedRef.current ? 2600 : 420;
+      const boltInterval = reducedRef.current ? 4800 : 1100;
       if (m.active && ts - lastBolt > boltInterval) {
         lastBolt = ts;
         if (reducedRef.current) {
@@ -259,9 +268,10 @@ export function SpotlightEyes() {
       // Draw sparks
       sparksRef.current = sparksRef.current.filter((p) => {
         p.life++;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.04;
+        // Slow-mo: half-speed travel + gravity for a hanging-spark look.
+        p.x += p.vx * 0.5;
+        p.y += p.vy * 0.5;
+        p.vy += 0.02;
         const a = Math.max(0, 1 - p.life / p.max);
         ctx.fillStyle = `rgba(140,210,255,${a})`;
         ctx.shadowBlur = 8;
