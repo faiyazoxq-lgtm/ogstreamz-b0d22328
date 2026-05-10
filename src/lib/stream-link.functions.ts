@@ -170,30 +170,13 @@ export const verifyAndLinkStream = createServerFn({ method: "POST" })
 export const reverifyStream = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { userId?: string } | undefined) => ({ userId: d?.userId ? String(d.userId) : "" }))
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context as any;
-    const targetId = data.userId || userId;
-    const { data: prof, error } = await supabase
-      .from("profiles")
-      .select("stream_username,stream_password,stream_server")
-      .eq("id", targetId)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!prof?.stream_username || !prof?.stream_password) {
-      return { ok: false as const, error: "No stream credentials saved" };
-    }
-    const server = normalizeServer(prof.stream_server || "");
-    const probe = await probeXtream(server, prof.stream_username, prof.stream_password);
-    if ("reason" in probe) {
-      return { ok: false as const, reason: probe.reason, error: REASON_MESSAGES[probe.reason] };
-    }
-    const info = probe.info;
-    const status = (info.status || (info.auth === 1 ? "Active" : "Unknown")).toString();
-    const expUnix = Number(info.exp_date);
-    const expiresAt = Number.isFinite(expUnix) && expUnix > 0 ? new Date(expUnix * 1000).toISOString() : null;
-    const { error: vErr } = await supabase.rpc("mark_stream_verified", {
-      _user_id: targetId, _status: status, _expires_at: expiresAt,
-    });
-    if (vErr) return { ok: false as const, error: vErr.message };
-    return { ok: status === "Active", status, expiresAt };
+  .handler(async () => {
+    // Stream credentials are no longer persisted on the member profile —
+    // the password is discarded after Boss approval. To re-verify, the
+    // member must resubmit their credentials via verifyAndLinkStream.
+    return {
+      ok: false as const,
+      reason: "rpc_error" as const,
+      error: "Re-verification requires the member to resubmit their stream credentials.",
+    };
   });

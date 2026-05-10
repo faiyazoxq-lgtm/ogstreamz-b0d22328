@@ -25,7 +25,6 @@ export type RosterRow = {
   credits: number;
   banned: boolean;
   banned_reason: string | null;
-  stream_username: string | null;
   stream_status: string | null;
   stream_verified_at: string | null;
   stream_expires_at: string | null;
@@ -45,7 +44,7 @@ export const listRoster = createServerFn({ method: "GET" })
     await assertBoss(supabase);
     let q = supabase
       .from("profiles")
-      .select("id,email,display_name,rank,status,credits,banned,banned_reason,stream_username,stream_status,stream_verified_at,stream_expires_at,created_at,feature_flags")
+      .select("id,email,display_name,rank,status,credits,banned,banned_reason,stream_status,stream_verified_at,stream_expires_at,created_at,feature_flags")
       .order("created_at", { ascending: false })
       .limit(data.limit);
     if (data.rank) q = q.eq("rank", data.rank);

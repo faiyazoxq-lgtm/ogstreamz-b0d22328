@@ -14,6 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      _stream_link_key: {
+        Row: {
+          id: number
+          key: string
+        }
+        Insert: {
+          id?: number
+          key: string
+        }
+        Update: {
+          id?: number
+          key?: string
+        }
+        Relationships: []
+      }
       ai_logs: {
         Row: {
           created_at: string
@@ -1358,10 +1373,7 @@ export type Database = {
           status: Database["public"]["Enums"]["account_status"]
           stream_expires_at: string | null
           stream_links: Json
-          stream_password: string | null
-          stream_server: string | null
           stream_status: string | null
-          stream_username: string | null
           stream_verified_at: string | null
           subscription_plan: Database["public"]["Enums"]["subscription_plan"]
           updated_at: string
@@ -1385,10 +1397,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["account_status"]
           stream_expires_at?: string | null
           stream_links?: Json
-          stream_password?: string | null
-          stream_server?: string | null
           stream_status?: string | null
-          stream_username?: string | null
           stream_verified_at?: string | null
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
           updated_at?: string
@@ -1412,10 +1421,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["account_status"]
           stream_expires_at?: string | null
           stream_links?: Json
-          stream_password?: string | null
-          stream_server?: string | null
           stream_status?: string | null
-          stream_username?: string | null
           stream_verified_at?: string | null
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
           updated_at?: string
@@ -1801,6 +1807,42 @@ export type Database = {
           credits_per_song?: number
           id?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      stream_account_links: {
+        Row: {
+          enc_server: string | null
+          enc_username: string
+          expires_at: string | null
+          id: string
+          linked_at: string
+          notes: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          enc_server?: string | null
+          enc_username: string
+          expires_at?: string | null
+          id?: string
+          linked_at?: string
+          notes?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          enc_server?: string | null
+          enc_username?: string
+          expires_at?: string | null
+          id?: string
+          linked_at?: string
+          notes?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -2577,6 +2619,7 @@ export type Database = {
       }
     }
     Functions: {
+      _stream_link_secret: { Args: never; Returns: string }
       admin_adjust_credits: {
         Args: { _delta: number; _reason: string; _user_id: string }
         Returns: number
@@ -2653,6 +2696,32 @@ export type Database = {
         }
         Returns: string
       }
+      boss_link_stream_account: {
+        Args: {
+          _expires_at: string
+          _notes?: string
+          _server: string
+          _status: string
+          _user_id: string
+          _username: string
+        }
+        Returns: string
+      }
+      boss_list_stream_links: {
+        Args: never
+        Returns: {
+          email: string
+          expires_at: string
+          id: string
+          linked_at: string
+          notes: string
+          server: string
+          status: string
+          updated_at: string
+          user_id: string
+          username: string
+        }[]
+      }
       boss_purge_view_events: { Args: never; Returns: number }
       boss_revoke_vip_pass: { Args: { _pass_id: string }; Returns: boolean }
       boss_set_banned: {
@@ -2662,6 +2731,10 @@ export type Database = {
       boss_topup_reseller: {
         Args: { _delta: number; _reason: string; _user_id: string }
         Returns: number
+      }
+      boss_unlink_stream_account: {
+        Args: { _user_id: string }
+        Returns: boolean
       }
       boss_upsert_vault_credential: {
         Args: {
