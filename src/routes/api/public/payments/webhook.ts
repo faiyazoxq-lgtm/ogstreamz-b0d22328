@@ -90,6 +90,28 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
     return;
   }
 
+  // Real OG Bundle — auto-issue lifetime pass AND grant coins atomically.
+  if (session.metadata?.kind === "real_og_bundle") {
+    const amount = Number(session.amount_total ?? 0);
+    const bundleSku = String(session.metadata?.bundleSku || "");
+    const credits = Number(session.metadata?.credits ?? 0);
+    const { data, error } = await getSupabase().rpc("claim_real_og_bundle", {
+      _user_id: userId,
+      _stripe_session_id: session.id,
+      _amount_cents: amount,
+      _currency: (session.currency || "gbp").toLowerCase(),
+      _environment: env,
+      _bundle_sku: bundleSku,
+      _credits: credits,
+    });
+    if (error) {
+      console.error("claim_real_og_bundle failed", error);
+      throw error;
+    }
+    console.log("Real OG bundle issued", { userId, bundleSku, credits, result: data });
+    return;
+  }
+
   // VIP / Streams passes — record a pending_approval order; boss approves.
   if (session.metadata?.kind === "vip_pass" || session.metadata?.kind === "streams_pass") {
     const productId = session.metadata?.productId as string | undefined;
