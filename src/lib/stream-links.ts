@@ -70,13 +70,82 @@ export function validateEntry(entry: StreamEntry): string | null {
   if (!v) return "Value is required";
   if (entry.platform === "custom") {
     try {
-      const u = new URL(v);
-      if (u.protocol !== "http:" && u.protocol !== "https:") return "URL must start with http:// or https://";
+      const u = new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`);
+      if (u.protocol !== "http:" && u.protocol !== "https:") {
+        return "URL must start with http:// or https://";
+      }
+      if (!u.hostname.includes(".")) return "Enter a valid URL (e.g. https://your-stream.example)";
     } catch {
-      return "Custom entries must be a full URL (https://…)";
+      return "Custom entries must be a valid URL";
     }
+    return null;
+  }
+  // Handle-based platforms: allow URL OR a bare handle.
+  if (/^https?:\/\//i.test(v)) {
+    try { new URL(v); } catch { return "Invalid URL"; }
+    return null;
+  }
+  const handle = v.replace(/^@/, "");
+  if (!/^[a-zA-Z0-9_.-]{2,50}$/.test(handle)) {
+    return "Use 2–50 letters, numbers, '_', '.' or '-' (or paste a full URL)";
   }
   return null;
+}
+
+/**
+ * Normalize an entry into a consistent stored format:
+ *  - Twitch:  https://twitch.tv/<handle>
+ *  - YouTube: https://youtube.com/@<handle>  (preserves /channel/UC..., /c/..., /user/...)
+ *  - Kick:    https://kick.com/<handle>
+ *  - Custom:  full https:// URL with lowercase host
+ * Falls back to the trimmed input if it can't be parsed.
+ */
+export function normalizeEntry(entry: StreamEntry): StreamEntry {
+  const raw = entry.value.trim();
+  if (!raw) return { ...entry, value: "" };
+
+  const ensureUrl = (s: string) =>
+    /^https?:\/\//i.test(s) ? s : `https://${s.replace(/^\/+/, "")}`;
+  const handleFromPath = (path: string) =>
+    decodeURIComponent(path.replace(/^\/+|\/+$/g, "").split("/")[0] ?? "");
+
+  try {
+    if (entry.platform === "custom") {
+      const u = new URL(ensureUrl(raw));
+      u.hostname = u.hostname.toLowerCase().replace(/^www\./, "");
+      return { ...entry, value: u.toString().replace(/\/$/, "") };
+    }
+
+    // Handle platforms: parse URL if present, otherwise treat as handle.
+    let handle = raw.replace(/^@/, "");
+    let isUrl = /^https?:\/\//i.test(raw) || /^[\w-]+\.[\w.-]+\//.test(raw);
+    if (isUrl) {
+      const u = new URL(ensureUrl(raw));
+      handle = handleFromPath(u.pathname);
+    }
+    handle = handle.replace(/^@/, "");
+
+    switch (entry.platform) {
+      case "twitch":
+        return { ...entry, value: `https://twitch.tv/${handle.toLowerCase()}` };
+      case "kick":
+        return { ...entry, value: `https://kick.com/${handle.toLowerCase()}` };
+      case "youtube": {
+        // Preserve channel-style paths if user pasted a full URL.
+        if (isUrl) {
+          const u = new URL(ensureUrl(raw));
+          const path = u.pathname.replace(/\/+$/, "");
+          if (/^\/(channel|c|user)\//i.test(path)) {
+            return { ...entry, value: `https://youtube.com${path}` };
+          }
+        }
+        return { ...entry, value: `https://youtube.com/@${handle}` };
+      }
+    }
+  } catch {
+    /* fall through */
+  }
+  return { ...entry, value: raw };
 }
 
 /** Build a click-through URL for an entry (handle or full URL). */
