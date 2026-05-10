@@ -49,7 +49,7 @@ function BossLayout() {
               <ChevronLeft className="h-4 w-4" /> Back to site
             </Link>
             {!user && (
-              <Link to="/login" className="inline-flex items-center gap-1.5 rounded-md border border-gold/40 bg-gold/10 px-3 py-2 text-xs font-bold text-gold hover:bg-gold/15">
+              <Link to="/auth" className="inline-flex items-center gap-1.5 rounded-md border border-gold/40 bg-gold/10 px-3 py-2 text-xs font-bold text-gold hover:bg-gold/15">
                 <LogIn className="h-4 w-4" /> Sign in
               </Link>
             )}
