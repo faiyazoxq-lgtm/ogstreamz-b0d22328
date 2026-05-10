@@ -3,21 +3,24 @@ import { useNavigate } from "@tanstack/react-router";
 import { Search, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, Loader2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
+// Route literals from the generated route tree — keeps navigate() type-safe.
+type HitRoute = "/p/$slug" | "/m/$slug" | "/td/$slug" | "/b/$slug" | "/t/$slug";
+
 type Hit = {
   id: string;
   slug: string;
   name: string;
   subtitle: string;
   kind: "music" | "joke" | "trade" | "news" | "battle" | "tool";
-  to: string;
+  to: HitRoute;
 };
 
 const KIND_ICON: Record<Hit["kind"], React.ComponentType<{ className?: string }>> = {
   music: Music2, joke: Smile, trade: TrendingUp, news: Newspaper, battle: Swords, tool: Wrench,
 };
 
-const KIND_TO_PATH: Record<Exclude<Hit["kind"], "battle" | "tool">, string> = {
-  music: "/m", joke: "/p", trade: "/td", news: "/p",
+const KIND_TO_ROUTE: Record<Exclude<Hit["kind"], "battle" | "tool">, HitRoute> = {
+  music: "/m/$slug", joke: "/p/$slug", trade: "/td/$slug", news: "/p/$slug",
 };
 
 function portalKindToHit(p: { id: string; slug: string; name: string; niche: string | null; kind: string }): Hit | null {
@@ -28,7 +31,7 @@ function portalKindToHit(p: { id: string; slug: string; name: string; niche: str
     id: p.id, slug: p.slug, name: p.name,
     subtitle: p.niche ?? "Portal",
     kind,
-    to: `${KIND_TO_PATH[kind]}/${p.slug}`,
+    to: KIND_TO_ROUTE[kind],
   };
 }
 
@@ -94,10 +97,10 @@ export function SiteSearch({ className = "" }: { className?: string }) {
         if (h) out.push(h);
       }
       for (const b of (battles.data ?? []) as Array<{ id: string; slug: string; name: string; tagline: string | null }>) {
-        out.push({ id: b.id, slug: b.slug, name: b.name, subtitle: b.tagline ?? "Battle", kind: "battle", to: `/b/${b.slug}` });
+        out.push({ id: b.id, slug: b.slug, name: b.name, subtitle: b.tagline ?? "Battle", kind: "battle", to: "/b/$slug" });
       }
       for (const t of (tools.data ?? []) as Array<{ id: string; slug: string; name: string; description: string | null }>) {
-        out.push({ id: t.id, slug: t.slug, name: t.name, subtitle: t.description ?? "Tool", kind: "tool", to: `/t/${t.slug}` });
+        out.push({ id: t.id, slug: t.slug, name: t.name, subtitle: t.description ?? "Tool", kind: "tool", to: "/t/$slug" });
       }
       setHits(out);
       setHighlight(0);
@@ -109,10 +112,15 @@ export function SiteSearch({ className = "" }: { className?: string }) {
   const showPanel = open && (q.trim().length > 0);
   const empty = useMemo(() => !loading && hits.length === 0 && q.trim().length > 0, [loading, hits, q]);
 
-  function go(to: string) {
+  function goHit(h: Hit) {
     setOpen(false);
     setQ("");
-    navigate({ to: to as never });
+    navigate({ to: h.to, params: { slug: h.slug } });
+  }
+  function goPortals() {
+    setOpen(false);
+    setQ("");
+    navigate({ to: "/portals" });
   }
 
   return (
@@ -128,7 +136,7 @@ export function SiteSearch({ className = "" }: { className?: string }) {
           onKeyDown={(e) => {
             if (e.key === "ArrowDown") { e.preventDefault(); setHighlight((h) => Math.min(hits.length - 1, h + 1)); }
             else if (e.key === "ArrowUp") { e.preventDefault(); setHighlight((h) => Math.max(0, h - 1)); }
-            else if (e.key === "Enter" && hits[highlight]) { e.preventDefault(); go(hits[highlight].to); }
+            else if (e.key === "Enter" && hits[highlight]) { e.preventDefault(); goHit(hits[highlight]); }
           }}
           placeholder="Search portals, battles, tools…"
           aria-label="Search portals"
@@ -166,8 +174,8 @@ export function SiteSearch({ className = "" }: { className?: string }) {
                 return (
                   <li key={`${h.kind}:${h.id}`}>
                     <a
-                      href={h.to}
-                      onClick={(e) => { e.preventDefault(); go(h.to); }}
+                      href={`${h.to.replace("$slug", h.slug)}`}
+                      onClick={(e) => { e.preventDefault(); goHit(h); }}
                       onMouseEnter={() => setHighlight(i)}
                       className={`flex items-start gap-3 px-3 py-2 text-sm outline-none ${active ? "bg-secondary" : "hover:bg-secondary/70"}`}
                     >
@@ -185,7 +193,7 @@ export function SiteSearch({ className = "" }: { className?: string }) {
               <li className="border-t border-border mt-1">
                 <a
                   href="/portals"
-                  onClick={(e) => { e.preventDefault(); go("/portals"); }}
+                  onClick={(e) => { e.preventDefault(); goPortals(); }}
                   className="block px-3 py-2 text-xs text-center text-muted-foreground hover:text-foreground hover:bg-secondary/70"
                 >
                   Browse all portals →
