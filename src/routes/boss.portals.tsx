@@ -1,16 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Search, Pencil, Trash2, ArrowUpRight, Loader2, Eye } from "lucide-react";
+import { Search, Pencil, Trash2, ArrowUpRight, Loader2, Eye, ArrowUpDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CostTierControl } from "@/components/CostTierControl";
+import { summarizeCosts, TIER_RANK } from "@/lib/cost-registry";
 
 type Portal = {
   id: string; slug: string; name: string; kind: string;
   niche: string; vibe: string | null; language: string;
   theme: string; vip: boolean; view_count: number;
   created_at: string; created_by: string | null;
+  paid_services: Record<string, boolean>;
 };
 
 const KIND_PATH: Record<string, (s: string) => string> = {
@@ -45,6 +48,7 @@ function PortalsManager() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [hub, setHub] = useState<string>("all");
+  const [costSort, setCostSort] = useState<"none" | "asc" | "desc">("none");
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState<Partial<Portal>>({});
 
@@ -52,11 +56,11 @@ function PortalsManager() {
     setLoading(true);
     const { data, error } = await supabase
       .from("portals")
-      .select("id,slug,name,kind,niche,vibe,language,theme,vip,view_count,created_at,created_by")
+      .select("id,slug,name,kind,niche,vibe,language,theme,vip,view_count,created_at,created_by,paid_services")
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) toast.error(error.message);
-    setRows((data ?? []) as Portal[]);
+    setRows(((data ?? []) as any[]).map((r) => ({ ...r, paid_services: r.paid_services ?? {} })) as Portal[]);
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
@@ -71,12 +75,26 @@ function PortalsManager() {
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return rows.filter((r) => {
+    const out = rows.filter((r) => {
       if (hub !== "all" && r.kind !== hub) return false;
       if (!needle) return true;
       return r.name.toLowerCase().includes(needle) || r.slug.toLowerCase().includes(needle) || (r.niche ?? "").toLowerCase().includes(needle);
     });
-  }, [rows, q, hub]);
+    if (costSort !== "none") {
+      out.sort((a, b) => {
+        const ra = TIER_RANK[summarizeCosts(a.paid_services).tier];
+        const rb = TIER_RANK[summarizeCosts(b.paid_services).tier];
+        return costSort === "asc" ? ra - rb : rb - ra;
+      });
+    }
+    return out;
+  }, [rows, q, hub, costSort]);
+
+  async function setPortalServices(p: Portal, next: Record<string, boolean>) {
+    setRows((rs) => rs.map((r) => (r.id === p.id ? { ...r, paid_services: next } : r)));
+    const { error } = await supabase.from("portals").update({ paid_services: next }).eq("id", p.id);
+    if (error) { toast.error(error.message); load(); }
+  }
 
   async function save(id: string) {
     const { error } = await supabase.from("portals").update({
@@ -125,6 +143,15 @@ function PortalsManager() {
             <option key={b.kind} value={b.kind}>{b.label} ({b.count})</option>
           ))}
         </select>
+        <button
+          type="button"
+          onClick={() => setCostSort((s) => (s === "none" ? "asc" : s === "asc" ? "desc" : "none"))}
+          className={`inline-flex items-center gap-1.5 border rounded-md px-3 py-2 text-sm transition-colors ${costSort !== "none" ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-muted"}`}
+          title="Sort by cost tier (Free → Live $)"
+        >
+          <ArrowUpDown className="h-3.5 w-3.5" />
+          Cost {costSort === "asc" ? "↑" : costSort === "desc" ? "↓" : ""}
+        </button>
       </div>
 
       <div className="flex items-center gap-1.5 flex-wrap">
@@ -183,6 +210,11 @@ function PortalsManager() {
                         <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{p.kind}</span>
                         {p.vip && <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">VIP</span>}
                         <span className="text-[10px] text-muted-foreground inline-flex items-center gap-1"><Eye className="h-3 w-3" />{p.view_count}</span>
+                        <CostTierControl
+                          flags={p.paid_services}
+                          onChange={(next) => setPortalServices(p, next)}
+                          compact
+                        />
                       </div>
                       <p className="text-xs text-muted-foreground truncate mt-0.5">/{p.slug} · {p.theme} · {p.language}</p>
                       <p className="text-xs text-muted-foreground/80 truncate">{p.niche}</p>

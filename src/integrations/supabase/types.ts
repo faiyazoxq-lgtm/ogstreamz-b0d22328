@@ -711,6 +711,7 @@ export type Database = {
           href: string
           icon: string
           id: string
+          paid_services: Json
           published: boolean
           sort_order: number
           swear_chat_enabled: boolean
@@ -726,6 +727,7 @@ export type Database = {
           href: string
           icon?: string
           id?: string
+          paid_services?: Json
           published?: boolean
           sort_order?: number
           swear_chat_enabled?: boolean
@@ -741,6 +743,7 @@ export type Database = {
           href?: string
           icon?: string
           id?: string
+          paid_services?: Json
           published?: boolean
           sort_order?: number
           swear_chat_enabled?: boolean
@@ -1233,6 +1236,7 @@ export type Database = {
           music_hooks: Json
           name: string
           niche: string
+          paid_services: Json
           price_cents: number
           scout_meta: Json
           seo_description: string | null
@@ -1270,6 +1274,7 @@ export type Database = {
           music_hooks?: Json
           name: string
           niche: string
+          paid_services?: Json
           price_cents?: number
           scout_meta?: Json
           seo_description?: string | null
@@ -1307,6 +1312,7 @@ export type Database = {
           music_hooks?: Json
           name?: string
           niche?: string
+          paid_services?: Json
           price_cents?: number
           scout_meta?: Json
           seo_description?: string | null
