@@ -2,6 +2,7 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { Loader2, Lock } from "lucide-react";
 import { isVaultUnlocked } from "@/lib/vault-unlock";
+import { VaultLockButton } from "@/components/VaultLockButton";
 
 type Props = {
   children: ReactNode;
@@ -67,5 +68,10 @@ export function VaultGuard({ children, redirectTo = "/vault-login", fallback }: 
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <VaultLockButton variant="floating" />
+    </>
+  );
 }
