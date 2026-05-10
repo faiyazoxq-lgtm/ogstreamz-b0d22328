@@ -176,20 +176,23 @@ function Index() {
             )}
           </div>
 
-          <div className="mt-5 pt-4 border-t border-white/10">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-2.5">
+          <nav aria-labelledby="quick-jump-label" className="mt-5 pt-4 border-t border-white/10">
+            <h2
+              id="quick-jump-label"
+              className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-2.5 font-bold"
+            >
               Quick jump
-            </p>
-            <div className="flex flex-wrap gap-2">
+            </h2>
+            <ul role="list" className="flex flex-wrap gap-2 list-none p-0 m-0">
               {[
                 { to: "/music" as const, title: "MusicHUB", Icon: Music2, tint: "oklch(0.72_0.22_245)" },
                 { to: "/jokes" as const, title: "JokesHUB", Icon: Smile, tint: "oklch(0.78_0.18_85)" },
                 { to: "/tools" as const, title: "ToolHUB", Icon: Wrench, tint: "oklch(0.70_0.18_180)" },
               ].map(({ to, title, Icon, tint }) => (
+                <li key={to} className="contents">
                 <Link
                   key={to}
                   to={to}
-                  aria-label={`Jump to ${title}`}
                   className="group inline-flex items-center gap-2 rounded-lg border border-white/15 bg-black/40 px-3.5 py-2 text-[11px] uppercase tracking-[0.2em] font-bold text-white/90 hover:border-[var(--ql-tint)] hover:bg-white/5 transition-all focus:outline-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--ql-tint)] focus-visible:ring-offset-4 focus-visible:ring-offset-black focus-visible:border-[var(--ql-tint)] focus-visible:bg-[color-mix(in_oklab,var(--ql-tint)_22%,transparent)] focus-visible:text-white focus-visible:shadow-[0_0_28px_-2px_var(--ql-tint)] focus-visible:-translate-y-0.5 focus-visible:underline focus-visible:underline-offset-4"
                   style={{ ["--ql-tint" as any]: tint }}
                   activeProps={{
@@ -202,9 +205,10 @@ function Index() {
                   {title}
                   <ArrowUpRight aria-hidden="true" focusable="false" className="h-3 w-3 opacity-60 group-hover:opacity-100" />
                 </Link>
+                </li>
               ))}
-            </div>
-          </div>
+            </ul>
+          </nav>
         </div>
       </section>
 
