@@ -17,13 +17,14 @@ function escapeRegex(s: string) {
 function Highlight({ text, term }: { text: string; term: string }) {
   const t = term.trim();
   if (!t || !text) return <>{text}</>;
-  const re = new RegExp(`(${escapeRegex(t)})`, "ig");
-  const parts = text.split(re);
+  const re = new RegExp(`(${escapeRegex(t)})`, "i");
+  const parts = text.split(new RegExp(`(${escapeRegex(t)})`, "ig"));
+  const lower = t.toLowerCase();
   return (
     <>
       {parts.map((p, i) =>
-        re.test(p) && p.toLowerCase() === t.toLowerCase() ? (
-          <mark key={i} className="bg-primary/30 text-primary-foreground rounded-sm px-0.5">
+        p && p.toLowerCase() === lower ? (
+          <mark key={i} className="bg-primary/30 text-foreground rounded-sm px-0.5">
             {p}
           </mark>
         ) : (
