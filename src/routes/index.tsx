@@ -202,7 +202,7 @@ function Index() {
             to={to}
             onClick={() => setPendingTo(to)}
             aria-busy={thisPending || undefined}
-            className={`block relative overflow-hidden rounded-2xl border border-border bg-card p-8 sm:p-10 transition-all duration-500 hover:-translate-y-1 animate-pulse-gold hover:shadow-[0_0_80px_-10px_oklch(0.72_0.22_245_/_0.8)] hover:border-[oklch(0.72_0.22_245/0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.22_245)] ${thisPending ? "border-[oklch(0.72_0.22_245/0.8)] shadow-[0_0_60px_-10px_oklch(0.72_0.22_245/0.8)] animate-pulse" : ""}`}
+            className={`block relative overflow-hidden rounded-2xl border border-border bg-card p-8 sm:p-10 transition-all duration-500 animate-pulse-gold hover:-translate-y-1 hover:shadow-[0_0_80px_-10px_oklch(0.72_0.22_245_/_0.8)] hover:border-[oklch(0.72_0.22_245/0.7)] focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-[oklch(0.72_0.22_245)] focus-visible:-translate-y-1 focus-visible:border-[oklch(0.72_0.22_245/0.7)] focus-visible:shadow-[0_0_80px_-10px_oklch(0.72_0.22_245_/_0.8)] active:translate-y-0 active:scale-[0.98] active:shadow-[0_0_40px_-10px_oklch(0.72_0.22_245_/_0.6)] ${thisPending ? "border-[oklch(0.72_0.22_245/0.8)] shadow-[0_0_60px_-10px_oklch(0.72_0.22_245/0.8)] animate-pulse" : ""}`}
             style={{ transform: "translateZ(40px)" }}
           >
             <div className="absolute -inset-px rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
@@ -230,7 +230,8 @@ function Index() {
           const Icon = ICONS[h.icon] ?? Sparkles;
           const accent = h.accent || "#3ad6ff";
           const isExternal = /^https?:\/\//i.test(h.href);
-          const cardCls = "group relative overflow-hidden rounded-2xl border bg-card p-8 sm:p-10 transition-all duration-500 hover:-translate-y-1";
+          const cardCls =
+            "group relative overflow-hidden rounded-2xl border bg-card p-8 sm:p-10 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_0_60px_-10px_var(--hub-accent)] focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-[var(--hub-accent)] focus-visible:-translate-y-1 focus-visible:shadow-[0_0_60px_-10px_var(--hub-accent)] active:translate-y-0 active:scale-[0.98]";
           const inner = (
             <>
               <div
@@ -259,11 +260,11 @@ function Index() {
           );
           return isExternal ? (
             <a key={h.id} href={h.href} target="_blank" rel="noopener noreferrer"
-              className={cardCls} style={{ borderColor: `${accent}55` }}>
+              className={cardCls} style={{ borderColor: `${accent}55`, ["--hub-accent" as any]: accent }}>
               {inner}
             </a>
           ) : (
-            <Link key={h.id} to={h.href as any} className={cardCls} style={{ borderColor: `${accent}55` }}>
+            <Link key={h.id} to={h.href as any} className={cardCls} style={{ borderColor: `${accent}55`, ["--hub-accent" as any]: accent }}>
               {inner}
             </Link>
           );
