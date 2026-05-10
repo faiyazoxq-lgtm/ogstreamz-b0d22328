@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Upload, Save, User2, Globe, Send, Twitter, Instagram, Youtube, MessageCircle, Music2, Github, Linkedin, Trash2 } from "lucide-react";
+import { Loader2, Upload, Save, User2, Globe, Send, Twitter, Instagram, Youtube, MessageCircle, Music2, Github, Linkedin, Trash2, Twitch, Radio, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +35,33 @@ type ContactCard = {
   email_public?: string;
 };
 
+type StreamLinks = {
+  twitch?: string;
+  youtube?: string;
+  url?: string;
+};
+
+const STREAM_FIELDS: Array<{
+  key: keyof StreamLinks;
+  label: string;
+  placeholder: string;
+  Icon: any;
+  hint: string;
+}> = [
+  { key: "twitch",  label: "Twitch handle / URL", placeholder: "twitch.tv/yourname or yourname", Icon: Twitch, hint: "Just your handle or the full twitch.tv link." },
+  { key: "youtube", label: "YouTube channel",      placeholder: "youtube.com/@yourchannel",       Icon: Youtube, hint: "Channel URL or @handle." },
+  { key: "url",     label: "Other stream URL",     placeholder: "https://kick.com/yourname",       Icon: Radio,   hint: "Any other live stream URL (Kick, Rumble, custom…)." },
+];
+
+function isValidUrl(value: string): boolean {
+  try {
+    const u = new URL(value);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 const SOCIAL_FIELDS: Array<{ key: keyof ContactCard; label: string; placeholder: string; Icon: any }> = [
   { key: "telegram", label: "Telegram", placeholder: "@username or t.me/username", Icon: Send },
   { key: "whatsapp", label: "WhatsApp", placeholder: "+44 7..." , Icon: MessageCircle },
@@ -58,6 +85,7 @@ function SettingsPage() {
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [contact, setContact] = useState<ContactCard>({});
+  const [streams, setStreams] = useState<StreamLinks>({});
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -71,6 +99,7 @@ function SettingsPage() {
     setBio((profile as any).bio ?? "");
     setAvatarUrl((profile as any).avatar_url ?? null);
     setContact(((profile as any).contact_card ?? {}) as ContactCard);
+    setStreams(((profile as any).stream_links ?? {}) as StreamLinks);
   }, [profile]);
 
   if (loading || !user) {
@@ -143,12 +172,22 @@ function SettingsPage() {
         const v = (contact[k] ?? "").toString().trim();
         if (v) (cleanCard as any)[k] = v.slice(0, 300);
       });
+      const cleanStreams: StreamLinks = {};
+      (Object.keys(streams) as (keyof StreamLinks)[]).forEach((k) => {
+        const v = (streams[k] ?? "").toString().trim();
+        if (!v) return;
+        if (k === "url" && !isValidUrl(v)) {
+          throw new Error("Other stream URL must start with http:// or https://");
+        }
+        cleanStreams[k] = v.slice(0, 300);
+      });
       const { error } = await supabase
         .from("profiles")
         .update({
           display_name: displayName.trim().slice(0, 80) || null,
           bio: bio.trim().slice(0, 500) || null,
           contact_card: cleanCard,
+          stream_links: cleanStreams,
         })
         .eq("id", user.id);
       if (error) throw error;
