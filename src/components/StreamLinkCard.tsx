@@ -58,25 +58,64 @@ export function StreamLinkCard() {
     unknown: "Something went wrong on our end. Please try again — if it persists, contact Boss.",
   };
 
+  // Allowed username chars: letters, digits, and . _ - @ + (typical Xtream/IPTV)
+  const USERNAME_RE = /^[A-Za-z0-9._\-@+]+$/;
+  // Hostname label rules: letters/digits/hyphens, no leading/trailing hyphen, multi-label.
+  const HOSTNAME_RE = /^(?=.{1,253}$)(?!-)([A-Za-z0-9-]{1,63}(?<!-)\.)+[A-Za-z]{2,63}$/;
+  // Or a bare IPv4
+  const IPV4_RE = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
+
   const validate = (un: string, pw: string, srv: string) => {
     const errs: { username?: string; password?: string; server?: string } = {};
+
+    // Username — trimmed, length, charset
     const t = un.trim();
     if (!t) errs.username = "Username is required.";
     else if (t.length < 2) errs.username = "Username is too short (min 2).";
     else if (t.length > 120) errs.username = "Username is too long (max 120).";
     else if (/\s/.test(t)) errs.username = "Username cannot contain spaces.";
+    else if (!USERNAME_RE.test(t)) errs.username = "Only letters, digits, and . _ - @ + are allowed.";
+
+    // Password — length only (no charset restriction; trim disallowed leading/trailing space)
     if (!pw) errs.password = "Password is required.";
+    else if (pw !== pw.trim()) errs.password = "Password cannot start or end with a space.";
     else if (pw.length < 2) errs.password = "Password is too short (min 2).";
     else if (pw.length > 200) errs.password = "Password is too long (max 200).";
+
+    // Server — normalize, parse, validate host + port + scheme + path
     const s = srv.trim();
-    if (!s) errs.server = "Server URL is required.";
-    else {
+    if (!s) {
+      errs.server = "Server URL is required.";
+    } else if (s.length > 253 + 16) {
+      errs.server = "Server URL is too long.";
+    } else if (/\s/.test(s)) {
+      errs.server = "Server URL cannot contain spaces.";
+    } else {
       const candidate = /^https?:\/\//i.test(s) ? s : `http://${s}`;
       try {
         const url = new URL(candidate);
-        if (!url.hostname || !/\./.test(url.hostname)) errs.server = "Enter a valid host (e.g. host.tld:80).";
-      } catch { errs.server = "Server URL is not a valid URL."; }
+        if (url.protocol !== "http:" && url.protocol !== "https:") {
+          errs.server = "Server URL must start with http:// or https://.";
+        } else if (!url.hostname) {
+          errs.server = "Enter a valid host (e.g. host.tld:80).";
+        } else if (!HOSTNAME_RE.test(url.hostname) && !IPV4_RE.test(url.hostname)) {
+          errs.server = "Host must be a domain like host.tld or an IPv4 address.";
+        } else if (url.username || url.password) {
+          errs.server = "Don't include credentials in the URL.";
+        } else if (url.port && !/^\d{1,5}$/.test(url.port)) {
+          errs.server = "Port must be numeric.";
+        } else if (url.port && (Number(url.port) < 1 || Number(url.port) > 65535)) {
+          errs.server = "Port must be between 1 and 65535.";
+        } else if (url.search || url.hash) {
+          errs.server = "Remove query string and fragment from the server URL.";
+        } else if (url.pathname && url.pathname !== "/" && url.pathname !== "") {
+          errs.server = "Server URL should not include a path.";
+        }
+      } catch {
+        errs.server = "Server URL is not a valid URL.";
+      }
     }
+
     return errs;
   };
 
@@ -150,6 +189,23 @@ export function StreamLinkCard() {
   };
 
   const onReverify = async () => {
+    // Reverify uses no form input today, but if the user has typed credentials
+    // (e.g. about to resubmit) gate on the same client-side rules so we never
+    // call the server with malformed values.
+    if (u || p) {
+      const errs = validate(u || "x", p || "xx", server);
+      // Only block on username/server format problems (password is optional here).
+      if (errs.username || errs.server) {
+        setErrors(errs);
+        setBanner({
+          reason: "client_validation",
+          title: REASON_TITLES.client_validation,
+          detail: "Fix the highlighted fields before re-verifying.",
+        });
+        setPhase("error"); setPhaseLabel("Validation failed");
+        return;
+      }
+    }
     setReverifying(true);
     setResubmitCta(null);
     setMsg(null);
