@@ -185,6 +185,11 @@ export function NavBar() {
           <li className="hidden md:block w-56 lg:w-72">
             <SiteSearch />
           </li>
+          {user && (
+            <li className="hidden sm:block">
+              <NavDropdown label="Portals" icon={DoorOpen} items={portalSwitcherLinks} hideLabelOnMobile currentPath={pathname} />
+            </li>
+          )}
           <li className="hidden sm:block">
             <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile currentPath={pathname} />
           </li>
