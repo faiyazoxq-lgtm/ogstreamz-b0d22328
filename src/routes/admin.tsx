@@ -48,6 +48,7 @@ const NAV_SECTIONS: { id: string; label: string; tint: string }[] = [
 ];
 
 export const Route = createFileRoute("/admin")({
+  beforeLoad: (await import("@/lib/route-guards")).requireAdmin,
   head: () => ({ meta: [{ title: "Power Console · 0G-PORTAL" }] }),
   component: AdminPage,
 });
