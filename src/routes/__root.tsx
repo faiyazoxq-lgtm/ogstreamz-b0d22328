@@ -24,7 +24,7 @@ import { SpotlightEyes } from "../components/SpotlightEyes";
 import { ReducedMotionToggle } from "../components/ReducedMotionToggle";
 import { AuthGate } from "../components/AuthGate";
 import { VipPromoBanner } from "../components/VipPromoBanner";
-import bgFlame from "../assets/bg-flame.png";
+import { FlameBackdrop } from "../components/FlameBackdrop";
 
 function NotFoundComponent() {
   return (
@@ -143,13 +143,7 @@ function RootComponent() {
           <div className="min-h-screen bg-background text-foreground">
             {/* Brand wallpaper — fixed flame backdrop behind all content */}
             <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-              <img
-                src={bgFlame}
-                alt=""
-                loading="lazy"
-                decoding="async"
-                fetchPriority="low"
-                className="absolute inset-0 h-full w-full object-cover object-bottom opacity-[0.10] mix-blend-overlay sm:opacity-[0.08] sm:object-center"
+              <FlameBackdrop
                 style={{
                   WebkitMaskImage:
                     "radial-gradient(ellipse 70% 55% at 50% 60%, transparent 0%, rgba(0,0,0,0.35) 45%, #000 80%)",
