@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Coins, Gift, ArrowDownRight, ArrowUpRight, RefreshCw, ChevronDown, Loader2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Coins, Gift, ArrowDownRight, ArrowUpRight, RefreshCw, ChevronDown, Loader2, ArrowUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -46,6 +46,7 @@ export function CoinActivity({
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const sectionRef = useRef<HTMLElement | null>(null);
 
   const initialSize = loadMore ? pageSize : limit;
 
@@ -83,8 +84,13 @@ export function CoinActivity({
 
   if (!user) return null;
 
+  const scrollToTop = () => {
+    sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  const skeletonCount = Math.min(6, initialSize);
+
   return (
-    <section className="rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/5 via-card to-card p-5 sm:p-6">
+    <section ref={sectionRef} className="scroll-mt-20 rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/5 via-card to-card p-5 sm:p-6">
       <header className="flex items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
           <Coins className="h-4 w-4 text-gold" />
@@ -99,7 +105,11 @@ export function CoinActivity({
       </header>
 
       {loading && rows.length === 0 ? (
-        <p className="text-xs text-muted-foreground py-3 text-center">Loading…</p>
+        <ol className="space-y-2" aria-busy="true" aria-label="Loading coin activity">
+          {Array.from({ length: skeletonCount }).map((_, i) => (
+            <LedgerSkeleton key={i} />
+          ))}
+        </ol>
       ) : rows.length === 0 ? (
         <p className="text-xs text-muted-foreground py-3 text-center">No activity yet.</p>
       ) : (
@@ -155,6 +165,9 @@ export function CoinActivity({
               </li>
             );
           })}
+          {loadingMore && Array.from({ length: 3 }).map((_, i) => (
+            <LedgerSkeleton key={`more-${i}`} />
+          ))}
         </ol>
         {loadMore && hasMore && (
           <div className="mt-3 flex justify-center">
@@ -172,8 +185,34 @@ export function CoinActivity({
         {loadMore && !hasMore && rows.length > 0 && (
           <p className="mt-3 text-center text-[10px] uppercase tracking-[0.25em] text-muted-foreground">End of ledger</p>
         )}
+        {loadMore && rows.length > pageSize && (
+          <div className="mt-3 flex justify-center">
+            <button
+              type="button"
+              onClick={scrollToTop}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/60 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground hover:text-foreground hover:bg-secondary"
+            >
+              <ArrowUp className="h-3 w-3" /> Back to top
+            </button>
+          </div>
+        )}
         </>
       )}
     </section>
+  );
+}
+
+function LedgerSkeleton() {
+  return (
+    <li className="flex items-start gap-3 rounded-lg border border-border bg-background/40 px-3 py-2.5 animate-pulse">
+      <div className="mt-0.5 h-4 w-4 shrink-0 rounded-full bg-muted/50" />
+      <div className="flex-1 min-w-0 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="h-3 w-1/2 rounded bg-muted/50" />
+          <div className="h-3 w-12 rounded bg-muted/50" />
+        </div>
+        <div className="h-2 w-1/3 rounded bg-muted/40" />
+      </div>
+    </li>
   );
 }
