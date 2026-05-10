@@ -381,7 +381,7 @@ function PortalPage() {
           </p>
         </motion.div>
 
-        {portal.kind === "tools" && owned && portal.jokes && portal.jokes.length > 0 && (
+        {portal.kind === "tools" && owned && jokes.length > 0 && (
           <section
             className="mt-10 w-full rounded-2xl border p-6 backdrop-blur-sm"
             style={{
@@ -401,11 +401,11 @@ function PortalPage() {
                 className="text-[10px] uppercase tracking-[0.3em] px-2 py-0.5 rounded-full border"
                 style={{ color: T.accent, borderColor: `${T.accent}55` }}
               >
-                {portal.jokes.length} seeds
+                {jokes.length} seeds
               </span>
             </header>
             <ol className="space-y-3">
-              {portal.jokes.map((idea: string, i: number) => (
+              {jokes.map((idea: string, i: number) => (
                 <li
                   key={i}
                   className="flex gap-3 rounded-lg border p-3"
