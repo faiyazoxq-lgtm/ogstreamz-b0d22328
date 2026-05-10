@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { BossChatPanel } from "@/components/BossChatPanel";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
+import { ZeroGBadge } from "@/components/ZeroGBadge";
 
 import { requireMember } from "@/lib/route-guards";
 type TradePortal = {
@@ -51,6 +52,7 @@ function TradeHubPage() {
           Slate & Gold trading terminals. Each portal is a dedicated 0G-Agent — bias meters, bento decisives,
           Liquidity Pulse, and one-tap Syndicate signal broadcasts.
         </p>
+        <ZeroGBadge className="mt-4" />
       </header>
 
       {error && (
