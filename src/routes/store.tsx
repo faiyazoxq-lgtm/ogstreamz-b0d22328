@@ -278,6 +278,8 @@ function StorePage() {
       {loadingPacks ? (
         <p className="text-center py-10 text-muted-foreground"><Loader2 className="h-5 w-5 inline animate-spin mr-2" />Loading packs…</p>
       ) : (
+        <>
+        {!isBoss && <PackCompareTable packs={packs} onBuy={(pid) => buy(pid)} />}
         <div className="grid sm:grid-cols-3 gap-5">
           {packs.map((p) => (
             <PackCard
@@ -291,6 +293,7 @@ function StorePage() {
           ))}
           {isBoss && <NewPackCard onCreated={loadAll} />}
         </div>
+        </>
       )}
 
       {isOpen && (
