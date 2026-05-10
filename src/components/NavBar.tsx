@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { TVStaticLogo } from "@/components/TVStaticLogo";
+import { TrackingEye } from "@/components/TrackingEye";
 import {
   Tooltip,
   TooltipContent,
@@ -166,7 +167,18 @@ export function NavBar() {
         <Link to="/" className="flex items-center gap-2 sm:gap-3 group min-w-0 flex-1 sm:flex-initial overflow-hidden">
           <TVStaticLogo className="logo-xl shrink-0" />
           <span className="hidden [@media(min-width:360px)]:inline font-[Montserrat] font-black text-base sm:text-3xl tracking-tight text-aura-blue truncate">
-            0G-PORTAL
+            <span className="relative inline-block align-middle">
+              {/* Hide the "0" glyph but keep its width so the eye sits exactly over it */}
+              <span aria-hidden className="invisible">0</span>
+              <span aria-hidden className="absolute inset-0 flex items-center justify-center">
+                <TrackingEye
+                  className="w-[0.85em] h-[0.85em]"
+                  pupilRatio={0.5}
+                  travel={3}
+                />
+              </span>
+            </span>
+            G-PORTAL
           </span>
         </Link>
         {user && (
