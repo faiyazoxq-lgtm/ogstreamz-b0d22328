@@ -36,7 +36,7 @@ export function CreditWallet({ className }: { className?: string }) {
       >
         <Coins className="h-5 w-5 text-gold" />
         <span className="text-sm text-muted-foreground">
-          Sign in to track your credits.
+          Sign in to track your 🪙.
         </span>
         <Button asChild size="sm" variant="outline" className="ml-auto">
           <Link to="/auth">Sign in</Link>
