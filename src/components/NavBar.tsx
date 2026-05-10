@@ -186,12 +186,12 @@ export function NavBar() {
       <nav className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap px-1.5 sm:px-8 h-16 sm:h-20 gap-1 sm:gap-2">
         <Link
           to="/"
-          className="flex items-center gap-1.5 sm:gap-3 group min-w-0 flex-1 sm:flex-initial overflow-hidden h-full"
+          className="brand-glow flex items-center gap-1.5 sm:gap-3 group min-w-0 flex-1 sm:flex-initial overflow-hidden h-full rounded-md outline-none focus-visible:ring-2 focus-visible:ring-gold/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <TVStaticLogo className="shrink-0 self-center" />
           <OgWordmark
             suffix="-PORTAL"
-            className="inline-flex items-center self-center min-w-0 whitespace-nowrap text-eye-ice--bright bg-transparent leading-none"
+            className="brand-glow__mark inline-flex items-center self-center min-w-0 whitespace-nowrap text-eye-ice--bright bg-transparent leading-none transition-[color,text-shadow,filter] duration-300 ease-out"
             style={{ fontSize: "clamp(0.78rem, 3.6vw, 1.875rem)" }}
           />
         </Link>

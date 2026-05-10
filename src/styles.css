@@ -306,6 +306,24 @@
   }
   .animate-eye-pulse-gold { animation: eye-pulse-gold 1.6s ease-in-out infinite; }
 
+  /* Brand wordmark hover/focus — subtle electric-gold halo that warms up
+     the "0G-PORTAL" lockup on interaction without overpowering the eye. */
+  .brand-glow .brand-glow__mark {
+    text-shadow: 0 0 0 transparent;
+  }
+  .brand-glow:hover .brand-glow__mark,
+  .brand-glow:focus-visible .brand-glow__mark {
+    color: var(--electric-gold-100);
+    text-shadow:
+      0 0 6px color-mix(in oklab, var(--electric-gold-glow) 55%, transparent),
+      0 0 18px color-mix(in oklab, var(--electric-gold-500) 45%, transparent),
+      0 0 32px color-mix(in oklab, var(--electric-gold-700) 30%, transparent);
+    filter: drop-shadow(0 0 10px color-mix(in oklab, var(--electric-gold-glow) 35%, transparent));
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .brand-glow .brand-glow__mark { transition: none; }
+  }
+
   /* Heavy-duty glass blue button */
   .btn-glass-blue {
     position: relative;
