@@ -149,6 +149,7 @@ function RootComponent() {
               <Outlet />
             </AuthGate>
             <TeleportOverlay />
+            <EyeGlowTuner />
             <SystemGlitchOverlay />
             <LiveThinkingFeed />
             <EnforcerConsole />
