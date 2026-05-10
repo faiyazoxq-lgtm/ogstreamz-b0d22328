@@ -1,17 +1,63 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-function getServerUrl(): string {
+export type StreamConfigStatus =
+  | { ok: true; host: string }
+  | { ok: false; code: "missing" | "malformed" | "bad_protocol" | "bad_host" | "has_credentials" | "has_path"; message: string };
+
+function checkServerUrl(): StreamConfigStatus {
   const raw = (process.env.STREAM_SERVER_URL || "").trim();
   if (!raw) {
-    const err: any = new Error("Stream server URL is not configured. Ask Boss to set STREAM_SERVER_URL.");
-    err.reason = "invalid_server";
-    throw err;
+    return { ok: false, code: "missing", message: "Stream server URL is not configured. Boss needs to set the STREAM_SERVER_URL secret." };
   }
   let v = raw;
   if (!/^https?:\/\//i.test(v)) v = "http://" + v;
+  v = v.replace(/\/+$/, "");
+  let url: URL;
+  try {
+    url = new URL(v);
+  } catch {
+    return { ok: false, code: "malformed", message: "STREAM_SERVER_URL is not a valid URL." };
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    return { ok: false, code: "bad_protocol", message: "STREAM_SERVER_URL must use http or https." };
+  }
+  if (!url.hostname) {
+    return { ok: false, code: "bad_host", message: "STREAM_SERVER_URL is missing a hostname." };
+  }
+  if (url.username || url.password) {
+    return { ok: false, code: "has_credentials", message: "STREAM_SERVER_URL must not contain credentials." };
+  }
+  if (url.pathname && url.pathname !== "/" && url.pathname !== "") {
+    return { ok: false, code: "has_path", message: "STREAM_SERVER_URL must not include a path." };
+  }
+  return { ok: true, host: url.host };
+}
+
+function getServerUrl(): string {
+  const status = checkServerUrl();
+  if (!status.ok) {
+    const err: any = new Error(status.message);
+    err.reason = "invalid_server";
+    throw err;
+  }
+  let v = (process.env.STREAM_SERVER_URL || "").trim();
+  if (!/^https?:\/\//i.test(v)) v = "http://" + v;
   return v.replace(/\/+$/, "");
 }
+
+// Boot-time check: log clearly if the secret is missing/misconfigured so it
+// shows up in server logs the first time the module loads.
+{
+  const s = checkServerUrl();
+  if (!s.ok) {
+    console.error(`[stream-link] STREAM_SERVER_URL misconfigured (${s.code}): ${s.message}`);
+  }
+}
+
+export const getStreamConfigStatus = createServerFn({ method: "GET" }).handler(
+  async (): Promise<StreamConfigStatus> => checkServerUrl(),
+);
 
 export type StreamReasonCode =
   | "invalid_username"
