@@ -4,6 +4,7 @@ import { Loader2, Flame, X, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { vaultPortalLogin } from "@/lib/vault-portal-auth.functions";
 import { setVaultUnlocked } from "@/lib/vault-unlock";
+import vaultSafe from "@/assets/og-vault-safe.png";
 
 type Props = { open: boolean; onClose: () => void };
 
@@ -127,17 +128,94 @@ export function VaultLoginModal({ open, onClose }: Props) {
               </p>
 
               {granted ? (
-                <div className="mt-6 rounded-md border border-[oklch(0.72_0.22_245/0.5)] bg-[oklch(0.55_0.28_255/0.12)] p-5 text-center">
-                  <p className="text-[10px] uppercase tracking-[0.4em] font-bold" style={{ color: "var(--neon-blue-bright)" }}>
+                <div className="mt-6 rounded-md border border-[oklch(0.72_0.22_245/0.5)] bg-[oklch(0.55_0.28_255/0.12)] p-5 text-center overflow-hidden">
+                  {/* Animated safe reveal */}
+                  <div className="relative mx-auto h-44 w-full max-w-[320px]">
+                    {/* Pulsing blue flame halo */}
+                    <div
+                      aria-hidden
+                      className="absolute inset-0 rounded-full blur-2xl"
+                      style={{
+                        background:
+                          "radial-gradient(closest-side, oklch(0.72 0.22 245 / 0.85), oklch(0.45 0.30 265 / 0.35) 55%, transparent 75%)",
+                        animation: "vault-flame-pulse 1.6s ease-in-out infinite",
+                      }}
+                    />
+                    {/* Sparks */}
+                    <span aria-hidden className="absolute left-3 top-2 h-1 w-1 rounded-full bg-[oklch(0.85_0.18_235)]"
+                      style={{ animation: "vault-spark 1.4s ease-out infinite", animationDelay: "0.1s" }} />
+                    <span aria-hidden className="absolute right-4 top-6 h-1 w-1 rounded-full bg-[oklch(0.85_0.18_235)]"
+                      style={{ animation: "vault-spark 1.6s ease-out infinite", animationDelay: "0.5s" }} />
+                    <span aria-hidden className="absolute left-8 bottom-4 h-1 w-1 rounded-full bg-[oklch(0.85_0.18_235)]"
+                      style={{ animation: "vault-spark 1.8s ease-out infinite", animationDelay: "0.3s" }} />
+                    {/* Safe image */}
+                    <img
+                      src={vaultSafe}
+                      alt="OG-Vault unlocked"
+                      className="relative mx-auto h-full w-auto object-contain"
+                      style={{
+                        animation:
+                          "vault-safe-open 1.1s cubic-bezier(.2,.8,.2,1) forwards, vault-safe-float 3.2s ease-in-out 1.1s infinite",
+                        filter:
+                          "drop-shadow(0 0 18px oklch(0.55 0.28 260 / 0.85)) drop-shadow(0 0 38px oklch(0.45 0.30 265 / 0.55))",
+                      }}
+                    />
+                    {/* Sweep shine */}
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0"
+                      style={{
+                        background:
+                          "linear-gradient(110deg, transparent 35%, rgba(255,255,255,0.55) 50%, transparent 65%)",
+                        mixBlendMode: "screen",
+                        animation: "vault-shine-sweep 1.4s ease-out 0.3s 1 forwards",
+                        opacity: 0,
+                      }}
+                    />
+                  </div>
+
+                  <p className="mt-3 text-[10px] uppercase tracking-[0.4em] font-bold animate-fade-in"
+                    style={{ color: "var(--neon-blue-bright)", animationDelay: "0.6s", animationFillMode: "both" }}>
                     Access granted
                   </p>
-                  <p className="mt-2 text-sm text-white/80">The vault recognises you. Welcome back.</p>
+                  <p className="mt-2 text-sm text-white/80 animate-fade-in"
+                    style={{ animationDelay: "0.8s", animationFillMode: "both" }}>
+                    The vault recognises you. Welcome back.
+                  </p>
                   <button
                     onClick={onClose}
-                    className="mt-5 inline-flex items-center justify-center px-5 py-2.5 text-[11px] uppercase tracking-[0.3em] font-bold text-white btn-glass-blue rounded-md"
+                    className="mt-5 inline-flex items-center justify-center px-5 py-2.5 text-[11px] uppercase tracking-[0.3em] font-bold text-white btn-glass-blue rounded-md animate-fade-in"
+                    style={{ animationDelay: "1s", animationFillMode: "both" }}
                   >
                     Continue
                   </button>
+
+                  <style>{`
+                    @keyframes vault-safe-open {
+                      0%   { opacity: 0; transform: scale(0.55) rotate(-14deg); filter: blur(6px) drop-shadow(0 0 0 transparent); }
+                      55%  { opacity: 1; transform: scale(1.08) rotate(3deg); filter: blur(0) drop-shadow(0 0 28px oklch(0.72 0.22 245 / 0.95)); }
+                      78%  { transform: scale(0.97) rotate(-1deg); }
+                      100% { opacity: 1; transform: scale(1) rotate(0deg); }
+                    }
+                    @keyframes vault-safe-float {
+                      0%, 100% { transform: translateY(0) scale(1); }
+                      50%      { transform: translateY(-4px) scale(1.015); }
+                    }
+                    @keyframes vault-flame-pulse {
+                      0%, 100% { opacity: 0.55; transform: scale(0.95); }
+                      50%      { opacity: 1;    transform: scale(1.08); }
+                    }
+                    @keyframes vault-shine-sweep {
+                      0%   { opacity: 0; transform: translateX(-60%); }
+                      40%  { opacity: 1; }
+                      100% { opacity: 0; transform: translateX(60%); }
+                    }
+                    @keyframes vault-spark {
+                      0%   { opacity: 0; transform: translateY(0) scale(0.6); }
+                      35%  { opacity: 1; }
+                      100% { opacity: 0; transform: translateY(-22px) scale(1.2); }
+                    }
+                  `}</style>
                 </div>
               ) : (
                 <form onSubmit={submit} className="mt-6 space-y-4">
