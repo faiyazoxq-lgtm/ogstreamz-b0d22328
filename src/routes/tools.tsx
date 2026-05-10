@@ -13,9 +13,9 @@ import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
 import { VipPaywallInline } from "@/components/VipPaywallInline";
 
-import { requireMember } from "@/lib/route-guards";
+import { requireUsageAccess } from "@/lib/route-guards";
 export const Route = createFileRoute("/tools")({
-  beforeLoad: requireMember,
+  beforeLoad: requireUsageAccess,
   head: () => ({
     meta: [
       { title: "ToolHUB · Build Your Tool — 0G-STREAMZ" },
