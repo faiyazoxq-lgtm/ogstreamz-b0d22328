@@ -32,7 +32,7 @@ export const sendVipNotification = createServerFn({ method: "POST" })
     user_id: d.user_id ? String(d.user_id) : null,
   }))
   .handler(async ({ data, context }) => {
-    const { supabase, user } = context as { supabase: any; user: { id: string } };
+    const { supabase, userId } = context as { supabase: any; userId: string };
     if (!data.title || !data.body) throw new Error("Title and message are required");
     const { data: row, error } = await supabase
       .from("vip_notifications")
@@ -42,7 +42,7 @@ export const sendVipNotification = createServerFn({ method: "POST" })
         link_url: data.link_url,
         severity: data.severity,
         user_id: data.user_id,
-        created_by: user.id,
+        created_by: userId,
       })
       .select("id")
       .single();
@@ -76,7 +76,7 @@ export const deleteVipNotification = createServerFn({ method: "POST" })
 export const listInboxNotifications = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<Array<VipNotification & { read: boolean }>> => {
-    const { supabase, user } = context as { supabase: any; user: { id: string } };
+    const { supabase, userId } = context as { supabase: any; userId: string };
     const { data: notifs, error } = await supabase
       .from("vip_notifications")
       .select("id,user_id,title,body,link_url,severity,created_by,created_at")
@@ -89,7 +89,7 @@ export const listInboxNotifications = createServerFn({ method: "GET" })
       const { data: reads } = await supabase
         .from("vip_notification_reads")
         .select("notification_id")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .in("notification_id", ids);
       readSet = new Set((reads ?? []).map((r: any) => r.notification_id));
     }
@@ -100,10 +100,10 @@ export const markNotificationRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
   .handler(async ({ data, context }) => {
-    const { supabase, user } = context as { supabase: any; user: { id: string } };
+    const { supabase, userId } = context as { supabase: any; userId: string };
     const { error } = await supabase
       .from("vip_notification_reads")
-      .upsert({ notification_id: data.id, user_id: user.id }, { onConflict: "notification_id,user_id" });
+      .upsert({ notification_id: data.id, user_id: userId }, { onConflict: "notification_id,user_id" });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -111,13 +111,13 @@ export const markNotificationRead = createServerFn({ method: "POST" })
 export const markAllNotificationsRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase, user } = context as { supabase: any; user: { id: string } };
+    const { supabase, userId } = context as { supabase: any; userId: string };
     const { data: notifs } = await supabase
       .from("vip_notifications")
       .select("id")
       .order("created_at", { ascending: false })
       .limit(50);
-    const rows = (notifs ?? []).map((n: any) => ({ notification_id: n.id, user_id: user.id }));
+    const rows = (notifs ?? []).map((n: any) => ({ notification_id: n.id, user_id: userId }));
     if (rows.length) {
       const { error } = await supabase
         .from("vip_notification_reads")
