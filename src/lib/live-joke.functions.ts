@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { enforceSwearRules, loadLexicon } from "./swear-enforcer.server";
+import { assertVipAccess } from "@/lib/vip-guard";
 
 type Result = { joke: string; headline: string; source?: string; error?: string; balance?: number; trends?: string[] };
 
@@ -42,7 +43,15 @@ export const generateLiveJoke = createServerFn({ method: "POST" })
     custom: typeof data.custom === "string" ? data.custom.slice(0, 200) : "",
   }))
   .handler(async ({ data, context }): Promise<Result> => {
-    const { supabase } = context as { supabase: any };
+    const { supabase, userId } = context as { supabase: any; userId: string };
+
+    // Server-side paywall — Live Roast is a VIP-only feature in the UI.
+    // Enforce here so the front-end gate cannot be bypassed.
+    try {
+      await assertVipAccess(supabase, userId, "Live Roast");
+    } catch (e: any) {
+      return { joke: "", headline: "", error: e?.message ?? "VIP required" };
+    }
 
     // Master Swearing Agent toggle — when ON, we force brutal mode on the joke.
     let brutal = false;
