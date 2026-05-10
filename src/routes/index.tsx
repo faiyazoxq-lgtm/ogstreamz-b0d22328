@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useRouterState } from "@tanstack/react-router";
 import { SyndicateGallery } from "@/components/SyndicateGallery";
+import { OgWordmark } from "@/components/OgWordmark";
 import {
   Music2, Smile, Wrench, ArrowUpRight, TrendingUp, Rocket, Swords,
   Sparkles, Radio, Bot, Brain, Zap, Star, Megaphone, Disc3, Satellite, Radar,
@@ -88,12 +89,8 @@ function Index() {
         <p className="text-xs sm:text-sm tracking-[0.4em] uppercase font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
           Street · Static · Stream
         </p>
-        <h1 className="mt-6 text-5xl sm:text-7xl md:text-8xl leading-[0.95]">
-          <span className="text-eye-ice animate-glitch">
-            {Array.from("0G-PORTAL").map((ch, i) => (
-              <span key={i}>{ch === " " ? "\u00A0" : ch}</span>
-            ))}
-          </span>
+        <h1 className="mt-6 text-5xl sm:text-7xl md:text-8xl leading-[0.95] flex justify-center">
+          <OgWordmark suffix="-PORTAL" className="animate-glitch" />
         </h1>
         <p className="mt-6 max-w-xl mx-auto text-muted-foreground text-base sm:text-lg">
           One frequency. Five portals. Pick your channel.

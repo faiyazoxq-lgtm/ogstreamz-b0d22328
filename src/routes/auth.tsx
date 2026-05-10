@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Mail, Lock, Loader2, Send, Wand2, Coins, ArrowRight, Heart, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { OgWordmark } from "@/components/OgWordmark";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
