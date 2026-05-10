@@ -376,7 +376,32 @@ function PricingPage() {
               value={draft.sku}
               onChange={(e) => setDraft((d) => ({ ...d, sku: e.target.value }))}
               placeholder="e.g. vip_30d"
+              aria-invalid={
+                draft.sku.trim().length > 0 &&
+                (!SKU_PATTERN.test(draft.sku.trim()) ||
+                  rows.some(
+                    (r) =>
+                      r.sku.toLowerCase() === draft.sku.trim().toLowerCase() &&
+                      r.id !== draft.id,
+                  ))
+              }
             />
+            {draft.sku.trim().length > 0 && !SKU_PATTERN.test(draft.sku.trim()) && (
+              <p className="mt-1 text-xs text-destructive">
+                Use 2-40 lowercase letters, numbers, or underscores.
+              </p>
+            )}
+            {draft.sku.trim().length > 0 &&
+              SKU_PATTERN.test(draft.sku.trim()) &&
+              rows.some(
+                (r) =>
+                  r.sku.toLowerCase() === draft.sku.trim().toLowerCase() &&
+                  r.id !== draft.id,
+              ) && (
+                <p className="mt-1 text-xs text-destructive">
+                  This SKU is already in use.
+                </p>
+              )}
           </div>
           <div>
             <Label htmlFor="kind">Kind</Label>
@@ -412,11 +437,24 @@ function PricingPage() {
               id="price"
               type="number"
               min={0}
+              max={PRICE_MAX_CENTS}
               value={draft.price_cents}
-              onChange={(e) => setDraft((d) => ({ ...d, price_cents: Math.max(0, Number(e.target.value) || 0) }))}
+              onChange={(e) =>
+                setDraft((d) => ({
+                  ...d,
+                  price_cents: Math.min(
+                    PRICE_MAX_CENTS,
+                    Math.max(0, Number(e.target.value) || 0),
+                  ),
+                }))
+              }
+              aria-invalid={
+                draft.price_cents < 0 || draft.price_cents > PRICE_MAX_CENTS
+              }
             />
             <p className="mt-1 text-xs text-muted-foreground">
-              {fmt(draft.price_cents, draft.currency)}
+              {fmt(draft.price_cents, draft.currency)} · max{" "}
+              {fmt(PRICE_MAX_CENTS, draft.currency)}
             </p>
           </div>
           <div>
