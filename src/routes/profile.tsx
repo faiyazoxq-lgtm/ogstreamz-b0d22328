@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { RealOgBadge } from "@/components/RealOgBadge";
 import { StreamLinkCard } from "@/components/StreamLinkCard";
 import { CoinActivity } from "@/components/CoinActivity";
+import { OgStatusCard } from "@/components/OgStatusCard";
 
 import { requireMember } from "@/lib/route-guards";
 export const Route = createFileRoute("/profile")({
@@ -103,6 +104,11 @@ function ProfilePage() {
             </div>
           )}
         </header>
+
+        {/* OG Status — manual re-check + VIP & stream subscription snapshot */}
+        <section className="mb-8">
+          <OgStatusCard />
+        </section>
 
         <section className="grid sm:grid-cols-2 gap-5">
           <div className="rounded-2xl border border-[oklch(0.72_0.22_245/0.4)] bg-card p-6 sm:p-8 animate-pulse-gold">
