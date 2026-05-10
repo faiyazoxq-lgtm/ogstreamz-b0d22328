@@ -100,6 +100,9 @@ function Index() {
         </div>
       </section>
 
+      {/* Real OG one-off pass — first thing after the 0G-PORTAL hero */}
+      <RealOgPromoCard />
+
       {/* Intro / promo strip — free signup CTA for guests, members entrance for signed-in users */}
       <section className="relative max-w-5xl mx-auto px-5 sm:px-8 -mt-4 pb-10">
         <div className="relative overflow-hidden rounded-3xl border border-[oklch(0.72_0.22_245/0.35)] bg-card/60 backdrop-blur-xl p-6 sm:p-8">
@@ -192,9 +195,6 @@ function Index() {
           <QuickJumpMenu user={!!user} />
         </div>
       </section>
-
-      {/* Real OG one-off pass — top-of-page promo */}
-      <RealOgPromoCard />
 
       <section className="relative max-w-7xl mx-auto px-5 sm:px-8 pb-28 grid gap-6 md:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {portals.map(({ to, title, desc, Icon }) => {
