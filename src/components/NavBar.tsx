@@ -81,7 +81,7 @@ function NavDropdown({
         data-active={sectionActive ? "true" : undefined}
         className={[
           "inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2 text-sm sm:text-base font-semibold rounded-md transition-colors outline-none",
-          "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary focus-visible:ring-offset-[3px] focus-visible:ring-offset-background focus-visible:shadow-[0_0_0_1px_var(--background)]",
           "active:scale-[0.97]",
           gold
             ? "text-gold hover:bg-gold/10 border border-gold/30 data-[state=open]:bg-gold/15 data-[active=true]:bg-gold/15 data-[active=true]:border-gold/60"
@@ -216,7 +216,7 @@ export function NavBar() {
         <Link
           to="/"
           aria-label="0G-PORTAL — home"
-          className="brand-glow flex items-center gap-3 sm:gap-5 group min-w-0 flex-1 sm:flex-initial overflow-hidden h-full -ml-1 sm:ml-0 px-2 sm:px-1 py-2 min-h-12 sm:min-h-0 rounded-lg outline-none transition-colors active:bg-white/5 hover:bg-white/[0.03] focus-visible:ring-2 focus-visible:ring-gold/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background touch-manipulation"
+          className="brand-glow flex items-center gap-3 sm:gap-5 group min-w-0 flex-1 sm:flex-initial overflow-hidden h-full -ml-1 sm:ml-0 px-2 sm:px-1 py-2 min-h-12 sm:min-h-0 rounded-lg outline-none transition-colors active:bg-white/5 hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-[3px] focus-visible:ring-offset-background focus-visible:shadow-[0_0_24px_-4px_var(--gold)] touch-manipulation"
         >
           <TVStaticLogo className="shrink-0 self-center" />
           <OgWordmark
@@ -230,7 +230,7 @@ export function NavBar() {
             to="/store"
             aria-label={`Coin wallet: ${profile?.credits ?? 0} coins — tap to top up`}
             title={`Your coin balance — ${profile?.credits ?? 0} 🪙. Tap to top up.`}
-            className="shrink inline-flex items-center min-w-0 max-w-[40vw] sm:max-w-none gap-1 sm:gap-2 rounded-full border-2 border-amber-400/60 bg-gradient-to-r from-amber-500/25 via-amber-400/15 to-amber-500/25 hover:from-amber-500/35 hover:to-amber-500/35 px-1.5 py-1 sm:px-4 sm:py-2 font-bold text-amber-100 shadow-[0_0_22px_-4px_oklch(0.82_0.18_85/0.85)] transition-all"
+            className="shrink inline-flex items-center min-w-0 max-w-[40vw] sm:max-w-none gap-1 sm:gap-2 rounded-full border-2 border-amber-400/60 bg-gradient-to-r from-amber-500/25 via-amber-400/15 to-amber-500/25 hover:from-amber-500/35 hover:to-amber-500/35 px-1.5 py-1 sm:px-4 sm:py-2 font-bold text-amber-100 shadow-[0_0_22px_-4px_oklch(0.82_0.18_85/0.85)] transition-all outline-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-amber-300 focus-visible:ring-offset-[3px] focus-visible:ring-offset-background"
           >
             <span className="text-sm sm:text-lg leading-none shrink-0" aria-hidden>🪙</span>
             <AnimatedCredits
@@ -263,7 +263,7 @@ export function NavBar() {
                 to="/boss"
                 aria-label="Boss portal"
                 data-active={pathname === "/boss" || pathname.startsWith("/boss/") ? "true" : undefined}
-                className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-2 text-sm sm:text-base font-semibold rounded-md border border-gold/30 text-gold hover:bg-gold/10 data-[active=true]:bg-gold/15 data-[active=true]:border-gold/60 transition-colors"
+                className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-2 text-sm sm:text-base font-semibold rounded-md border border-gold/30 text-gold hover:bg-gold/10 data-[active=true]:bg-gold/15 data-[active=true]:border-gold/60 transition-colors outline-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-[3px] focus-visible:ring-offset-background"
               >
                 <Crown className="h-4 w-4" />
                 <span className="hidden sm:inline">Boss</span>
