@@ -255,7 +255,7 @@ function Index() {
                     pupilRatio={0.5}
                     travelRatio={0.22}
                     className="align-[-0.18em]"
-                    style={{ width: "1.6em", height: "1.6em" }}
+                    style={{ width: "2.2em", height: "2.2em" }}
                   />
                   <span>pen P</span>
                   <TrackingEye
@@ -264,7 +264,7 @@ function Index() {
                     pupilRatio={0.5}
                     travelRatio={0.22}
                     className="align-[-0.18em]"
-                    style={{ width: "1.6em", height: "1.6em" }}
+                    style={{ width: "2.2em", height: "2.2em" }}
                   />
                   <span>rtal</span>
                 </span>
