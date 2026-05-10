@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { Play, Pause, Lock, Download, Loader2, BadgeCheck, Crown } from "lucide-react";
+import { Play, Pause, Lock, Download, Loader2, BadgeCheck, Crown, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { getTrackDownloadUrl } from "@/lib/tracks.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { TrackUnlockCheckout } from "@/components/TrackUnlockCheckout";
 
 const PREVIEW_SECS = 60;
 
@@ -21,16 +23,34 @@ type Props = {
   onUnlocked: () => void;
 };
 
-export function TrackPlayer({ trackId, title, previewUrl, priceCents: _priceCents, owned, isVip = false, accent, secondary, onUnlocked: _onUnlocked }: Props) {
+export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, isVip = false, accent, secondary, onUnlocked }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0); // 0..1
   const [previewEnded, setPreviewEnded] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
   const { user } = useAuth();
   const downloadFn = useServerFn(getTrackDownloadUrl);
 
   const unlocked = owned || isVip;
+  const priceLabel = `$${(priceCents / 100).toFixed(2)}`;
+  const returnUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}${window.location.pathname}?unlocked=${trackId}&session_id={CHECKOUT_SESSION_ID}`
+      : "";
+
+  const onUnlock = () => {
+    if (!user) return toast.error("Sign in to unlock this track");
+    setCheckoutOpen(true);
+  };
+
+  // When checkout completes, Stripe redirects to returnUrl. If the user closes the
+  // dialog after a successful purchase (or webhook lands while open), refresh.
+  const closeAndRefresh = () => {
+    setCheckoutOpen(false);
+    onUnlocked();
+  };
 
   useEffect(() => {
     const a = audioRef.current;
@@ -125,12 +145,20 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents: _priceCent
           }}
         >
           <p className="text-xs uppercase tracking-[0.3em] mb-2 opacity-80">Preview Ended</p>
+          <Button
+            onClick={onUnlock}
+            className="h-12 w-full text-xs uppercase tracking-[0.3em] font-black border-2 mb-2"
+            style={{ background: accent, color: "#000", borderColor: accent, boxShadow: `0 0 40px ${accent}` }}
+          >
+            <Unlock className="h-4 w-4 mr-2" /> Unlock Track · {priceLabel}
+          </Button>
           <Link to="/vip">
             <Button
-              className="h-12 w-full text-xs uppercase tracking-[0.3em] font-black border-2"
-              style={{ background: accent, color: "#000", borderColor: accent, boxShadow: `0 0 40px ${accent}` }}
+              variant="outline"
+              className="h-10 w-full text-[10px] uppercase tracking-[0.3em] font-bold border"
+              style={{ borderColor: `${accent}66`, color: accent, background: "transparent" }}
             >
-              <Crown className="h-4 w-4 mr-2" /> Unlock Everything · Go VIP
+              <Crown className="h-3.5 w-3.5 mr-2" /> Or Unlock Everything · Go VIP
             </Button>
           </Link>
           <p className="mt-2 text-[10px] uppercase tracking-[0.3em] opacity-60">
@@ -149,6 +177,25 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents: _priceCent
           {downloading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Preparing...</> : <><Download className="h-4 w-4 mr-2" />Download HQ MP3</>}
         </Button>
       )}
+
+      <Dialog open={checkoutOpen} onOpenChange={(o) => (o ? setCheckoutOpen(true) : closeAndRefresh())}>
+        <DialogContent className="max-w-2xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6">
+            <DialogTitle className="text-sm uppercase tracking-[0.3em]">
+              Unlock · {title} · {priceLabel}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="p-2">
+            {checkoutOpen && (
+              <TrackUnlockCheckout
+                trackId={trackId}
+                customerEmail={user?.email ?? undefined}
+                returnUrl={returnUrl}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

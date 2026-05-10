@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Music, Wand2, Loader2, ArrowLeft, Disc3, Lock, BadgeCheck, Layers, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -24,6 +24,10 @@ type MusicPortal = {
 };
 
 export const Route = createFileRoute("/m/$slug")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    unlocked: typeof search.unlocked === "string" ? search.unlocked : undefined,
+    session_id: typeof search.session_id === "string" ? search.session_id : undefined,
+  }),
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals")
@@ -118,6 +122,8 @@ const THEMES: Record<string, { bg: string; accent: string; secondary: string; fo
 
 function MusicPortalPage() {
   const { portal } = Route.useLoaderData();
+  const { unlocked: unlockedParam } = Route.useSearch();
+  const navigate = useNavigate();
   const theme = THEMES[portal.theme] ?? THEMES["studio-blue"];
   const { user, profile, isAdmin } = useAuth();
   const isVip = isAdmin || profile?.status === "vip";
@@ -148,6 +154,54 @@ function MusicPortalPage() {
   };
 
   useEffect(() => { refresh(); /* eslint-disable-next-line */ }, [portal.slug, user?.id]);
+
+  // Realtime: when the user purchases a track for this portal (webhook insert),
+  // refresh ownership so the card flips to "unlocked" without a manual reload.
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`track-purchases-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "track_purchases",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          refresh();
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, portal.slug]);
+
+  // Returning from Stripe checkout: poll briefly until the webhook lands and the
+  // purchase is reflected, then strip the URL params.
+  useEffect(() => {
+    if (!unlockedParam || !user) return;
+    let cancelled = false;
+    let tries = 0;
+    const tick = async () => {
+      tries += 1;
+      await refresh();
+      if (cancelled) return;
+      // Stop after 10 tries (~20s) or once we've rendered ownership.
+      if (tries < 10) setTimeout(tick, 2000);
+    };
+    toast.success("Payment confirmed — unlocking your track…");
+    tick();
+    // Clear the search params so re-renders don't re-trigger.
+    navigate({ to: "/m/$slug", params: { slug: portal.slug }, search: {}, replace: true });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unlockedParam, user?.id]);
 
   // Realtime: when a Suno job for this user finishes, fire a toast.
   useEffect(() => {
