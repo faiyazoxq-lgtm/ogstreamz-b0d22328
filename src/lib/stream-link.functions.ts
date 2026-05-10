@@ -61,15 +61,27 @@ export const verifyAndLinkStream = createServerFn({ method: "POST" })
       if (error) return { ok: false as const, error: error.message };
     }
 
-    if (status !== "Active") {
-      return { ok: false as const, error: `Stream account not active (status: ${status})`, status };
-    }
-
-    const { error: vErr } = await supabase.rpc("mark_stream_verified", {
-      _user_id: userId, _status: status, _expires_at: expiresAt,
+    // Enqueue for Boss approval (no auto-promotion)
+    const { error: qErr } = await supabase.rpc("enqueue_stream_verification", {
+      _user_id: userId,
+      _username: data.username,
+      _password: data.password,
+      _server: data.server,
+      _auto_status: status,
+      _auto_expires_at: expiresAt,
+      _auto_payload: info as never,
     });
-    if (vErr) return { ok: false as const, error: vErr.message };
-    return { ok: true as const, status, expiresAt };
+    if (qErr) return { ok: false as const, error: qErr.message };
+    return {
+      ok: true as const,
+      queued: true as const,
+      status,
+      expiresAt,
+      message:
+        status === "Active"
+          ? "Credentials matched. Submitted to Boss for OGSTREAMZ approval."
+          : `Auto-check status: ${status}. Submitted to Boss for review.`,
+    };
   });
 
 export const reverifyStream = createServerFn({ method: "POST" })

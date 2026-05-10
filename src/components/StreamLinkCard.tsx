@@ -24,7 +24,7 @@ export function StreamLinkCard() {
     try {
       const res = await verify({ data: { username: u, password: p, server } });
       if (res.ok) {
-        setMsg({ ok: true, text: `Stream verified — upgraded to OGSTREAMZ User${res.expiresAt ? ` (expires ${new Date(res.expiresAt).toLocaleDateString()})` : ""}.` });
+        setMsg({ ok: true, text: res.message || "Submitted to Boss for OGSTREAMZ approval." });
         setP("");
         await refresh();
       } else {
@@ -42,7 +42,7 @@ export function StreamLinkCard() {
       </div>
       <h3 className="mt-3 font-[Montserrat] font-black text-2xl text-metallic">OGSTREAMZ Verification</h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        Link your stream/IPTV username &amp; password. We verify it against the server and auto-upgrade you to <strong className="text-foreground">OGSTREAMZ User</strong>.
+        Link your stream/IPTV username &amp; password. We auto-check it against the server, then submit it to <strong className="text-foreground">Boss</strong> for OGSTREAMZ approval.
       </p>
 
       {linked && status === "Active" && (
