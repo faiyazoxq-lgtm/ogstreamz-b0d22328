@@ -27,6 +27,7 @@ import {
 import { bossListResellers, bossCreateReseller, bossTopupReseller } from "@/lib/reseller.functions";
 import { PassShareCardPanel } from "@/components/overlord/PassShareCardPanel";
 import { VaultCredentialsAdmin } from "@/components/boss/VaultCredentialsAdmin";
+import { VipNotificationsAdmin } from "@/components/boss/VipNotificationsAdmin";
 
 const RANKS = ["prospect", "enforcer", "vip", "boss"] as const;
 type Rank = typeof RANKS[number];
@@ -287,6 +288,10 @@ function OverlordPage() {
                 v: "vault", icon: Lock, label: "0G-VAULT Pool",
                 actions: [],
               },
+              {
+                v: "comms", icon: BellRing, label: "VIP Comms",
+                actions: [],
+              },
             ] as Array<{ v: string; icon: any; label: string; actions: Array<{ icon: any; label: string; onClick: () => void }> }>).map(({ v, icon: Icon, label, actions }) => (
               <div key={v} className="relative group">
                 <TabsTrigger
@@ -464,6 +469,7 @@ function OverlordPage() {
           <TabsContent value="resellers" className="mt-4"><ResellerAdminPanel rows={rows} /></TabsContent>
           <TabsContent value="share" className="mt-4"><PassShareCardPanel /></TabsContent>
           <TabsContent value="vault" className="mt-4"><VaultCredentialsAdmin /></TabsContent>
+          <TabsContent value="comms" className="mt-4"><VipNotificationsAdmin rows={rows} /></TabsContent>
         </Tabs>
       </div>
     </main>
