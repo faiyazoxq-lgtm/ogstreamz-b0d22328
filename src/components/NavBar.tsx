@@ -230,12 +230,12 @@ export function NavBar() {
             to="/store"
             aria-label={`Coin wallet: ${profile?.credits ?? 0} coins — tap to top up`}
             title={`Your coin balance — ${profile?.credits ?? 0} 🪙. Tap to top up.`}
-            className="shrink-0 inline-flex items-center gap-1.5 sm:gap-2 rounded-full border-2 border-amber-400/60 bg-gradient-to-r from-amber-500/25 via-amber-400/15 to-amber-500/25 hover:from-amber-500/35 hover:to-amber-500/35 px-2 py-1 sm:px-4 sm:py-2 font-bold text-amber-100 shadow-[0_0_22px_-4px_oklch(0.82_0.18_85/0.85)] transition-all"
+            className="shrink inline-flex items-center min-w-0 max-w-[40vw] sm:max-w-none gap-1 sm:gap-2 rounded-full border-2 border-amber-400/60 bg-gradient-to-r from-amber-500/25 via-amber-400/15 to-amber-500/25 hover:from-amber-500/35 hover:to-amber-500/35 px-1.5 py-1 sm:px-4 sm:py-2 font-bold text-amber-100 shadow-[0_0_22px_-4px_oklch(0.82_0.18_85/0.85)] transition-all"
           >
-            <span className="text-base sm:text-lg leading-none" aria-hidden>🪙</span>
+            <span className="text-sm sm:text-lg leading-none shrink-0" aria-hidden>🪙</span>
             <AnimatedCredits
               value={profile?.credits ?? 0}
-              className="text-amber-50 text-base sm:text-lg font-[Montserrat] font-black tabular-nums leading-none"
+              className="text-amber-50 text-sm sm:text-lg font-[Montserrat] font-black tabular-nums leading-none truncate min-w-0"
             />
             <span className="hidden sm:inline text-[9px] uppercase tracking-[0.25em] text-amber-200/90 leading-none">
               coins
