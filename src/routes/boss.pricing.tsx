@@ -354,6 +354,31 @@ function PricingPage() {
     toast.success("Stream portal updated");
   }
 
+  async function testStreamUrl() {
+    const raw = streamUrl.trim();
+    if (!raw) {
+      toast.error("Enter a URL first");
+      return;
+    }
+    setTestingStream(true);
+    try {
+      const r = await checkUrl({ data: { url: raw } });
+      if (r.ok) {
+        toast.success(`Reachable — ${r.status} in ${r.ms}ms`);
+      } else {
+        toast.error(
+          r.error
+            ? `Unreachable: ${r.error}`
+            : `Unreachable (HTTP ${r.status ?? "?"})`,
+        );
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Test failed");
+    } finally {
+      setTestingStream(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <header className="flex items-center gap-3">
