@@ -77,7 +77,7 @@ function PromoLanding() {
             <div className="min-w-0">
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl sm:text-4xl font-black text-amber-200 tracking-tight">
-                  +{SIGNUP_BONUS_CREDITS}
+                  +{bonus}
                 </span>
                 <span className="text-[11px] uppercase tracking-[0.25em] font-bold text-amber-200/80">
                   credits waiting
@@ -110,7 +110,7 @@ function PromoLanding() {
 
           <ul className="mt-7 grid gap-2.5 sm:grid-cols-3">
             {[
-              { icon: Gift, text: `${SIGNUP_BONUS_CREDITS} free credits on signup` },
+              { icon: Gift, text: `${bonus} free credits on signup` },
               { icon: ShieldCheck, text: "No card required" },
               { icon: Sparkles, text: "All portals unlocked" },
             ].map(({ icon: Icon, text }) => (
