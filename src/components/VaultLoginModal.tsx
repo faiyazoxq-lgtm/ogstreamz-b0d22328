@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Flame, X, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { vaultPortalLogin } from "@/lib/vault-portal-auth.functions";
-import { setVaultUnlocked } from "@/lib/vault-unlock";
+import { setVaultUnlocked, clearVaultUnlock } from "@/lib/vault-unlock";
 import vaultSafe from "@/assets/og-vault-safe.png";
 
 type Props = { open: boolean; onClose: () => void };
@@ -211,6 +211,21 @@ export function VaultLoginModal({ open, onClose }: Props) {
                     style={{ animationDelay: "1s", animationFillMode: "both" }}
                   >
                     Continue
+                  </button>
+                  <button
+                    onClick={() => {
+                      clearVaultUnlock();
+                      setGranted(false);
+                      setExpires(null);
+                      setUsername("");
+                      setPassword("");
+                      toast.success("Vault locked");
+                      onClose();
+                    }}
+                    className="mt-2 ml-2 inline-flex items-center justify-center px-5 py-2.5 text-[11px] uppercase tracking-[0.3em] font-bold text-white/80 rounded-md border border-white/15 bg-black/40 hover:text-white hover:border-white/30 animate-fade-in"
+                    style={{ animationDelay: "1.05s", animationFillMode: "both" }}
+                  >
+                    Log out
                   </button>
 
                   <style>{`
