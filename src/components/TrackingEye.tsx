@@ -212,7 +212,17 @@ export function TrackingEye({
         // proper egg/letter-O silhouette at every font size — `rounded-full`
         // collapses to a stadium shape when width ≠ height.
         borderRadius: "50% / 50%",
-        transform: blink ? "scaleY(0.1)" : "scaleY(1)",
+        // GPU-only blink: composited transform on its own layer + paint
+        // containment so the eyelid scale never invalidates surrounding
+        // text layout. translateZ(0) promotes to a layer; will-change
+        // tells the compositor to keep that layer warm while interactive.
+        transform: blink
+          ? "translateZ(0) scaleY(0.1)"
+          : "translateZ(0) scaleY(1)",
+        transformOrigin: "center",
+        willChange: "transform",
+        backfaceVisibility: "hidden",
+        contain: "layout paint",
         ...(size ? { width: size, height: size } : null),
         ...style,
       }}
