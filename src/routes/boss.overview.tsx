@@ -4,10 +4,13 @@ import {
   Crown, Users, Coins, Ticket, KeyRound, Handshake, Inbox, FileText, ArrowUpRight,
   Share2, ShieldCheck, BarChart3, Skull, Activity, RefreshCw, AlertTriangle, Tv,
   Tags, Music, CheckCircle2, Radio, Zap, Bell, CreditCard, Power, Snowflake, Undo2,
-  Rocket, Boxes, Grid3x3, Settings as SettingsIcon, Sparkles,
+  Rocket, Boxes, Grid3x3, Settings as SettingsIcon, Sparkles, Loader2, ShieldAlert, Gauge,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePaymentMode, setPaymentMode } from "@/hooks/use-payment-mode";
+import { CollapsiblePanel } from "@/components/boss/CollapsiblePanel";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
 import {
   AlertDialog,
   AlertDialogAction,
