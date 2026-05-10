@@ -438,7 +438,11 @@ function PricingPage() {
               onChange={(e) => setStreamUrl(e.target.value)}
             />
           </div>
-          <Button onClick={saveStreamUrl} disabled={savingStream}>
+          <Button variant="outline" onClick={testStreamUrl} disabled={testingStream || savingStream}>
+            {testingStream ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wifi className="h-4 w-4" />}
+            Test link
+          </Button>
+          <Button onClick={saveStreamUrl} disabled={savingStream || testingStream}>
             {savingStream ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Save
           </Button>
