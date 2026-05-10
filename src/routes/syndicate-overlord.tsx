@@ -33,6 +33,7 @@ import { VipNotificationsAdmin } from "@/components/boss/VipNotificationsAdmin";
 import { BossAnnouncementButton } from "@/components/boss/BossAnnouncementButton";
 import { PassOrdersPanel } from "@/components/boss/PassOrdersPanel";
 import { StoreProductsPanel } from "@/components/boss/StoreProductsPanel";
+import { UserEmailPicker } from "@/components/UserEmailPicker";
 
 const RANKS = ["prospect", "enforcer", "vip", "boss"] as const;
 type Rank = typeof RANKS[number];
@@ -483,7 +484,7 @@ function OverlordPage() {
 
           <TabsContent value="codes" className="mt-4"><RedeemCodePanel /></TabsContent>
           <TabsContent value="notes" className="mt-4"><NotesPanel /></TabsContent>
-          <TabsContent value="preload" className="mt-4"><PreLoadPanel onApplied={refreshUsers} /></TabsContent>
+          <TabsContent value="preload" className="mt-4"><PreLoadPanel rows={rows} onApplied={refreshUsers} /></TabsContent>
           <TabsContent value="passes" className="mt-4"><VipPassPanel rows={rows} /></TabsContent>
           <TabsContent value="orders" className="mt-4"><PassOrdersPanel /></TabsContent>
           <TabsContent value="store" className="mt-4"><StoreProductsPanel /></TabsContent>
@@ -1073,7 +1074,7 @@ function ResellerAdminPanel({ rows }: { rows: Row[] }) {
   );
 }
 
-function PreLoadPanel({ onApplied }: { onApplied: () => void }) {
+function PreLoadPanel({ rows, onApplied }: { rows: Row[]; onApplied: () => void }) {
   const grant = useServerFn(grantByEmail);
   const list = useServerFn(listPendingGrants);
   const remove = useServerFn(deletePendingGrant);
@@ -1141,8 +1142,15 @@ function PreLoadPanel({ onApplied }: { onApplied: () => void }) {
         subtitle="If they're a user → credits land instantly. If not → queued, applied on signup."
       />
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Field label="Recipient email" hint="Who to credit" icon={Mail} className="lg:col-span-2">
-          <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="user@example.com" type="email" className={FIELD_INPUT} />
+        <Field label="Recipient" hint="Pick a user or type any email" icon={Mail} className="lg:col-span-2">
+          <UserEmailPicker
+            users={rows}
+            value={email}
+            onChange={(_v, user) => setEmail(user ? user.email : _v)}
+            allowFreeText
+            placeholder="Search users or type email…"
+            triggerClassName={FIELD_INPUT}
+          />
         </Field>
         <Field label="Credits" hint="Amount to grant" icon={Coins}>
           <Input value={credits} onChange={(e) => setCredits(e.target.value)} type="number" min="0" placeholder="50" className={FIELD_INPUT} />

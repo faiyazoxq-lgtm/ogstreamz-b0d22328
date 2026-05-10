@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UserEmailPicker } from "@/components/UserEmailPicker";
 import { Badge } from "@/components/ui/badge";
 import {
   sendVipNotification,
@@ -169,19 +170,13 @@ export function VipNotificationsAdmin({ rows }: { rows: VipRow[] }) {
           <label className="text-[11px] uppercase tracking-[0.2em] text-cyan-300 font-black flex items-center gap-1.5">
             <Users className="h-3.5 w-3.5" /> Target
           </label>
-          <Select value={target} onValueChange={setTarget}>
-            <SelectTrigger className="mt-1 h-11 bg-black/70 border-2 border-emerald-800/50 text-emerald-100 font-bold">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="max-h-64">
-              <SelectItem value="__all__">📣 Broadcast to all VIPs</SelectItem>
-              {vipUsers.map((u) => (
-                <SelectItem key={u.id} value={u.id}>
-                  {u.email}{u.display_name ? ` · ${u.display_name}` : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <UserEmailPicker
+            users={vipUsers}
+            value={target}
+            onChange={(v) => setTarget(v)}
+            allOption={{ value: "__all__", label: "📣 Broadcast to all VIPs" }}
+            triggerClassName="mt-1 h-11 bg-black/70 border-2 border-emerald-800/50 text-emerald-100 font-bold"
+          />
         </div>
         <div className="sm:col-span-2 flex justify-end">
           <Button
