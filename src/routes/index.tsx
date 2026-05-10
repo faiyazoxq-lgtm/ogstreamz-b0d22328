@@ -203,6 +203,7 @@ function Index() {
                 >
                   <Icon aria-hidden="true" focusable="false" className="h-3.5 w-3.5" style={{ color: tint }} />
                   {title}
+                  <span className="sr-only">, open {title} page at {to}</span>
                   <ArrowUpRight aria-hidden="true" focusable="false" className="h-3 w-3 opacity-60 group-hover:opacity-100" />
                 </Link>
                 </li>
