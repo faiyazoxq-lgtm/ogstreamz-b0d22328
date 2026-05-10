@@ -51,7 +51,6 @@ export function PlanChip({
   return (
     <span
       className={`inline-flex items-center justify-center leading-none rounded-full border tracking-[0.25em] uppercase align-middle ${sizeCls} ${toneCls[tone]}`}
-      role="status"
       aria-label={`Subscription plan: ${readable} plan`}
     >
       <span aria-hidden="true" className="leading-none">{planLabel} plan</span>
@@ -96,7 +95,6 @@ export function StatusBadge({
     <span
       className={`inline-flex items-center justify-center leading-none rounded-full border tracking-[0.25em] uppercase align-middle ${sizeCls} ${v.cls}`}
       title={`Subscription status: ${s}`}
-      role="status"
       aria-label={`Subscription status: ${readable}`}
     >
       <span aria-hidden="true" className="leading-none">{v.label}</span>
