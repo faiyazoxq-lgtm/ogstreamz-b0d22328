@@ -254,8 +254,11 @@ function Index() {
                     bloodshot
                     pupilRatio={0.5}
                     travelRatio={0.22}
-                    className="align-[-0.18em]"
-                    style={{ width: "2.2em", height: "2.2em" }}
+                    className="align-[-0.18em] shrink-0"
+                    style={{
+                      width: "clamp(1.75rem, 1.1rem + 2.2vw, 3rem)",
+                      height: "clamp(1.75rem, 1.1rem + 2.2vw, 3rem)",
+                    }}
                   />
                   <span>pen P</span>
                   <TrackingEye
@@ -263,8 +266,11 @@ function Index() {
                     bloodshot
                     pupilRatio={0.5}
                     travelRatio={0.22}
-                    className="align-[-0.18em]"
-                    style={{ width: "2.2em", height: "2.2em" }}
+                    className="align-[-0.18em] shrink-0"
+                    style={{
+                      width: "clamp(1.75rem, 1.1rem + 2.2vw, 3rem)",
+                      height: "clamp(1.75rem, 1.1rem + 2.2vw, 3rem)",
+                    }}
                   />
                   <span>rtal</span>
                 </span>
