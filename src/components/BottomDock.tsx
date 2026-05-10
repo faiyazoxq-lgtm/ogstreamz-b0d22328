@@ -29,20 +29,23 @@ export function BottomDock() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className="mx-2 mb-2 rounded-2xl border border-white/10 bg-black/70 px-1 py-1 backdrop-blur-xl shadow-[0_-12px_40px_-20px_rgba(0,0,0,0.9)]">
-        <ul className={isBoss ? "grid grid-cols-6" : "grid grid-cols-5"}>
+        <ul
+          className={`grid gap-0.5 ${isBoss ? "grid-cols-6" : "grid-cols-5"}`}
+        >
           {items.map(({ to, label, icon: Icon }) => {
             const active =
               to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(to + "/");
             return (
-              <li key={to}>
+              <li key={to} className="min-w-0">
                 <Link
                   to={to as any}
                   aria-current={active ? "page" : undefined}
                   aria-label={label}
-                  className="group relative flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-2 text-[10px] uppercase tracking-[0.18em] transition-all duration-200 active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.22_245)]"
+                  className="group relative flex min-w-0 min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 py-2 uppercase tracking-[0.14em] transition-all duration-200 active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.22_245)]"
                   style={{
                     color: active ? "var(--mood-accent, #ffd166)" : "rgba(255,255,255,0.6)",
                     background: active ? "rgba(255,255,255,0.05)" : "transparent",
+                    fontSize: "clamp(0.55rem, 2.2vw, 0.7rem)",
                   }}
                 >
                   {active && (
@@ -52,8 +55,12 @@ export function BottomDock() {
                       style={{ background: "var(--mood-accent, #ffd166)" }}
                     />
                   )}
-                  <Icon className="h-[18px] w-[18px] transition-transform duration-200 group-active:scale-110" strokeWidth={2.25} />
-                  <span className="font-semibold leading-none">{label}</span>
+                  <Icon
+                    className="transition-transform duration-200 group-active:scale-110 shrink-0"
+                    strokeWidth={2.25}
+                    style={{ width: "clamp(15px, 4.5vw, 19px)", height: "clamp(15px, 4.5vw, 19px)" }}
+                  />
+                  <span className="font-semibold leading-none w-full text-center truncate">{label}</span>
                 </Link>
               </li>
             );
