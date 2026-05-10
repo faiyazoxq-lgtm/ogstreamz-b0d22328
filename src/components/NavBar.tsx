@@ -162,7 +162,7 @@ export function NavBar() {
   const visibleHubs = hubLinks.filter((l) => !l.bossOnly || isBoss);
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border">
+    <header className="sticky top-0 z-50 backdrop-blur-md bg-transparent border-b border-border/40">
       <nav className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap px-2 sm:px-8 h-16 sm:h-20 gap-1 sm:gap-2">
         <Link to="/" className="flex items-center gap-2 sm:gap-3 group min-w-0 flex-1 sm:flex-initial overflow-hidden">
           <TVStaticLogo className="logo-xl shrink-0" />
