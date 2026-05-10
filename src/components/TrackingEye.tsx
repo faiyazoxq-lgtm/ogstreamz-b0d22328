@@ -9,6 +9,8 @@ export function TrackingEye({
   pupilRatio = 0.55,
   travel,
   travelRatio = 0.18,
+  smoothing = 0.22,
+  followGain = 0.5,
   touchMode = "idle",
   idleTravelRatio = 0.06,
   variant = "ice",
@@ -20,6 +22,10 @@ export function TrackingEye({
   pupilRatio?: number;
   travel?: number;
   travelRatio?: number;
+  /** 0–1 lerp factor per frame. Higher = snappier, lower = smoother. */
+  smoothing?: number;
+  /** Pupil offset = min(travel, distance * followGain). */
+  followGain?: number;
   /**
    * How the eye behaves on touch / coarse-pointer devices.
    *  - "still": pupil stays perfectly centered.
@@ -38,6 +44,8 @@ export function TrackingEye({
   const ref = useRef<HTMLSpanElement>(null);
   const [pupil, setPupil] = useState({ x: 0, y: 0 });
   const [blink, setBlink] = useState(false);
+  const targetRef = useRef({ x: 0, y: 0 });
+  const currentRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     // Detect touch / coarse pointer devices — skip mousemove (often missing,
@@ -72,22 +80,51 @@ export function TrackingEye({
       return () => cancelAnimationFrame(raf);
     }
 
-    const onMove = (e: MouseEvent) => {
+    const updateTarget = (clientX: number, clientY: number) => {
       const el = ref.current;
       if (!el) return;
       const r = el.getBoundingClientRect();
       const cx = r.left + r.width / 2;
       const cy = r.top + r.height / 2;
-      const dx = e.clientX - cx;
-      const dy = e.clientY - cy;
+      const dx = clientX - cx;
+      const dy = clientY - cy;
       const dist = Math.hypot(dx, dy) || 1;
-      const k = Math.min(1, dist / 200);
       const t = travel ?? r.width * travelRatio;
-      setPupil({ x: (dx / dist) * t * k, y: (dy / dist) * t * k });
+      // Magnitude scales with distance (so the pupil actually points at the
+      // cursor when nearby) and caps at `travel` when far away.
+      const mag = Math.min(t, dist * followGain);
+      targetRef.current = { x: (dx / dist) * mag, y: (dy / dist) * mag };
     };
-    window.addEventListener("mousemove", onMove);
-    return () => window.removeEventListener("mousemove", onMove);
-  }, [travel, travelRatio, touchMode, idleTravelRatio]);
+
+    const onPointer = (e: PointerEvent) => updateTarget(e.clientX, e.clientY);
+    const onTouch = (e: TouchEvent) => {
+      const t0 = e.touches[0];
+      if (t0) updateTarget(t0.clientX, t0.clientY);
+    };
+    window.addEventListener("pointermove", onPointer, { passive: true });
+    window.addEventListener("touchmove", onTouch, { passive: true });
+
+    // rAF lerp toward the target — smooth motion independent of input rate.
+    let raf = 0;
+    const tick = () => {
+      const tgt = targetRef.current;
+      const cur = currentRef.current;
+      const nx = cur.x + (tgt.x - cur.x) * smoothing;
+      const ny = cur.y + (tgt.y - cur.y) * smoothing;
+      currentRef.current = { x: nx, y: ny };
+      if (Math.abs(nx - cur.x) > 0.02 || Math.abs(ny - cur.y) > 0.02) {
+        setPupil({ x: nx, y: ny });
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener("pointermove", onPointer);
+      window.removeEventListener("touchmove", onTouch);
+      cancelAnimationFrame(raf);
+    };
+  }, [travel, travelRatio, smoothing, followGain, touchMode, idleTravelRatio]);
 
   // Blink on any pointer down anywhere on the page.
   useEffect(() => {
