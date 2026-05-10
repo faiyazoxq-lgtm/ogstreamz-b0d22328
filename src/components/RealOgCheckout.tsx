@@ -1,30 +1,18 @@
-import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
-import { getStripe, getStripeEnvironment } from "@/lib/stripe";
-import { createRealOgCheckout } from "@/lib/real-og.functions";
+import { CoinCheckout } from "@/components/CoinCheckout";
 
 interface Props {
   customerEmail?: string;
-  returnUrl: string;
+  returnUrl?: string;
+  onSuccess?: () => void;
 }
 
-export function RealOgCheckout({ customerEmail, returnUrl }: Props) {
-  const fetchClientSecret = async (): Promise<string> => {
-    const secret = await createRealOgCheckout({
-      data: {
-        returnUrl,
-        environment: getStripeEnvironment(),
-        customerEmail,
-      },
-    });
-    if (!secret) throw new Error("Failed to start Real OG checkout");
-    return secret;
-  };
-
+export function RealOgCheckout({ onSuccess }: Props) {
   return (
-    <div id="real-og-checkout">
-      <EmbeddedCheckoutProvider stripe={getStripe()} options={{ fetchClientSecret }}>
-        <EmbeddedCheckout />
-      </EmbeddedCheckoutProvider>
-    </div>
+    <CoinCheckout
+      kind="real_og"
+      cost={20}
+      itemTitle="Real OG Pass — Lifetime"
+      onSuccess={onSuccess}
+    />
   );
 }

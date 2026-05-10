@@ -1,7 +1,4 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
-import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import {
   Crown, Radio, Image as ImageIcon, Package, ArrowLeft, Loader2,
   ShieldCheck, Clock, ExternalLink, Sparkles,
@@ -9,8 +6,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { getStripe, getStripeEnvironment } from "@/lib/stripe";
-import { createPassCheckoutSession } from "@/lib/pass-checkout.functions";
+import { useEffect, useMemo, useState } from "react";
+import { CoinCheckout } from "@/components/CoinCheckout";
 import { requireMember } from "@/lib/route-guards";
 import { toast } from "sonner";
 import { VaultGuard } from "@/components/VaultGuard";
@@ -267,38 +264,25 @@ function ProductCard({ product, onBuy }: { product: Product; onBuy: () => void }
 function CheckoutDrawer({
   product, email, userId, onClose,
 }: { product: Product; email?: string; userId: string; onClose: () => void }) {
-  const createSession = useServerFn(createPassCheckoutSession);
-
-  const fetchClientSecret = async (): Promise<string> => {
-    const secret = await createSession({
-      data: {
-        productId: product.id,
-        userId,
-        customerEmail: email,
-        returnUrl: `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
-        environment: getStripeEnvironment(),
-      },
-    });
-    if (!secret) throw new Error("Could not start checkout");
-    return secret;
-  };
-
+  const cost = Math.max(1, Math.round(product.price_cents / 100));
   return (
     <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur overflow-y-auto">
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-md mx-auto px-4 py-8">
         <button onClick={onClose} className="text-xs uppercase tracking-[0.3em] font-bold text-muted-foreground hover:text-white mb-4">
           ← Back to catalog
         </button>
         <h2 className="font-[Montserrat] font-black text-2xl text-metallic mb-1">{product.title}</h2>
         <p className="text-xs text-muted-foreground mb-4">
-          {currencySymbol(product.currency)}{(product.price_cents / 100).toFixed(2)} {product.currency.toUpperCase()} ({Math.round(product.price_cents / 100)} 🪙)
+          {currencySymbol(product.currency)}{(product.price_cents / 100).toFixed(2)} {product.currency.toUpperCase()} ({cost} 🪙)
           {product.duration_days ? ` · ${product.duration_days} days` : ""}
         </p>
-        <div id="checkout">
-          <EmbeddedCheckoutProvider stripe={getStripe()} options={{ fetchClientSecret }}>
-            <EmbeddedCheckout />
-          </EmbeddedCheckoutProvider>
-        </div>
+        <CoinCheckout
+          kind="store_pass"
+          ref={product.id}
+          cost={cost}
+          itemTitle={product.title}
+          onSuccess={() => setTimeout(onClose, 1500)}
+        />
       </div>
     </div>
   );

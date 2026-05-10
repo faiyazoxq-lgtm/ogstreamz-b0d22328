@@ -2938,6 +2938,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      purchase_with_coins: {
+        Args: { _kind: string; _ref: string }
+        Returns: Json
+      }
       purge_portal_view_events: { Args: never; Returns: number }
       purge_stream_verification_requests: { Args: never; Returns: Json }
       redeem_code: { Args: { _code: string }; Returns: Json }
