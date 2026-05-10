@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { TVStaticLogo } from "@/components/TVStaticLogo";
-import { TrackingEye } from "@/components/TrackingEye";
 import { OgWordmark } from "@/components/OgWordmark";
 import {
   Tooltip,
