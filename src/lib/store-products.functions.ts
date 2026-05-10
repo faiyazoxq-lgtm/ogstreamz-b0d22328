@@ -4,6 +4,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const KINDS = ["vip_pass", "streams_pass", "digital", "nft"] as const;
 type Kind = typeof KINDS[number];
 
+type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
+
 export type StoreProductRow = {
   id: string;
   sku: string;
@@ -15,7 +17,7 @@ export type StoreProductRow = {
   currency: string;
   duration_days: number | null;
   asset_url: string | null;
-  metadata: Record<string, unknown>;
+  metadata: Json;
   active: boolean;
   sort_order: number;
   created_at: string;
@@ -30,12 +32,12 @@ async function isBoss(supabase: any) {
   return !!data;
 }
 
-function sanitizeMetadata(input: unknown): Record<string, unknown> {
+function sanitizeMetadata(input: unknown): Json {
   if (!input) return {};
   if (typeof input === "string") {
-    try { return JSON.parse(input); } catch { throw new Error("Metadata must be valid JSON"); }
+    try { return JSON.parse(input) as Json; } catch { throw new Error("Metadata must be valid JSON"); }
   }
-  if (typeof input === "object") return input as Record<string, unknown>;
+  if (typeof input === "object") return input as Json;
   return {};
 }
 
