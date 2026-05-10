@@ -6,6 +6,7 @@ import {
   Store, ShoppingBag, Receipt,
   ShieldCheck, LayoutDashboard,
   UserCircle, Settings, LogOut, Menu,
+  Compass, Sparkles, DoorOpen,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { TVStaticLogo } from "@/components/TVStaticLogo";
@@ -49,6 +50,12 @@ const hubLinks: ReadonlyArray<HubLink> = [
 const storeLinks: ReadonlyArray<HubLink> = [
   { to: "/store",            label: "Credit Store",     icon: ShoppingBag, desc: "Top up credits & VIP" },
   { to: "/checkout/return",  label: "Last Receipt",     icon: Receipt,     desc: "Recent purchase status" },
+];
+
+const portalSwitcherLinks: ReadonlyArray<HubLink> = [
+  { to: "/",          label: "The HUB",   icon: Compass,         desc: "Home base — main hub" },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, desc: "Your control room" },
+  { to: "/portals",   label: "0G-PORTAL", icon: Sparkles,        desc: "Browse the full universe" },
 ];
 
 // Boss / admin pages live under their own /boss layout with a sidebar.
@@ -178,6 +185,11 @@ export function NavBar() {
           <li className="hidden md:block w-56 lg:w-72">
             <SiteSearch />
           </li>
+          {user && (
+            <li className="hidden sm:block">
+              <NavDropdown label="Portals" icon={DoorOpen} items={portalSwitcherLinks} hideLabelOnMobile currentPath={pathname} />
+            </li>
+          )}
           <li className="hidden sm:block">
             <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile currentPath={pathname} />
           </li>
@@ -373,6 +385,7 @@ function MobileNavDrawer({
             </div>
           )}
 
+          {user && <Section title="Switch portal" icon={DoorOpen} items={portalSwitcherLinks} />}
           <Section title="HUBS" icon={Rocket} items={hubs} gold />
           <Section title="Store" icon={Store} items={stores} />
           {admin.length > 0 && <Section title="Boss" icon={ShieldCheck} items={admin} />}
