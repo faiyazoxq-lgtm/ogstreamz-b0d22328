@@ -1,32 +1,42 @@
-import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
-import { getStripe, getStripeEnvironment } from "@/lib/stripe";
-import { createTrackUnlockCheckout } from "@/lib/tracks.functions";
+import { useEffect, useState } from "react";
+import { CoinCheckout } from "@/components/CoinCheckout";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   trackId: string;
+  /** Kept for backward compat; ignored in coin-only mode. */
   customerEmail?: string;
-  returnUrl: string;
+  returnUrl?: string;
+  onSuccess?: () => void;
 }
 
-export function TrackUnlockCheckout({ trackId, customerEmail, returnUrl }: Props) {
-  const fetchClientSecret = async (): Promise<string> => {
-    const secret = await createTrackUnlockCheckout({
-      data: {
-        trackId,
-        returnUrl,
-        environment: getStripeEnvironment(),
-        customerEmail,
-      },
-    });
-    if (!secret) throw new Error("Failed to create checkout session");
-    return secret;
-  };
+export function TrackUnlockCheckout({ trackId, onSuccess }: Props) {
+  const [meta, setMeta] = useState<{ title: string; cost: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase.from("tracks").select("title, price_cents").eq("id", trackId).maybeSingle()
+      .then(({ data }) => {
+        if (cancelled || !data) return;
+        setMeta({
+          title: data.title,
+          cost: Math.max(1, Math.ceil((data.price_cents ?? 200) / 100)),
+        });
+      });
+    return () => { cancelled = true; };
+  }, [trackId]);
+
+  if (!meta) {
+    return <div className="rounded-2xl border border-border bg-card p-6 text-center text-xs text-muted-foreground">Loading…</div>;
+  }
 
   return (
-    <div id="track-unlock-checkout">
-      <EmbeddedCheckoutProvider stripe={getStripe()} options={{ fetchClientSecret }}>
-        <EmbeddedCheckout />
-      </EmbeddedCheckoutProvider>
-    </div>
+    <CoinCheckout
+      kind="track_unlock"
+      ref={trackId}
+      cost={meta.cost}
+      itemTitle={meta.title}
+      onSuccess={onSuccess}
+    />
   );
 }
