@@ -261,6 +261,71 @@ function VipPage() {
       </section>
 
       {/* PERKS GRID */}
+      {/* ANNOUNCEMENT — official 0G VIP Pass to the Vault */}
+      <section className="relative max-w-4xl mx-auto px-4 sm:px-6 pt-4 pb-2">
+        <div className="relative overflow-hidden rounded-3xl border border-amber-300/40 bg-gradient-to-br from-amber-500/15 via-cyan-500/10 to-transparent p-6 sm:p-8 shadow-[0_0_80px_-15px_rgba(255,200,80,0.45)]">
+          <div className="pointer-events-none absolute -top-20 -right-20 h-60 w-60 rounded-full bg-amber-400/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-cyan-400/20 blur-3xl" />
+
+          <div className="relative">
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/50 bg-amber-400/10 px-3 py-1.5 text-[10px] uppercase tracking-[0.3em] font-bold text-amber-200">
+              <Sparkles className="h-3 w-3" /> The time has come
+            </div>
+
+            <h2 className="mt-4 font-[Montserrat] font-black text-2xl sm:text-4xl tracking-tight text-white leading-tight">
+              Introducing… the <span className="bg-gradient-to-r from-amber-300 to-cyan-300 bg-clip-text text-transparent">0G VIP Pass to 0G Vault</span> 🎉
+            </h2>
+
+            <div className="mt-5 space-y-4 text-[15px] leading-relaxed text-cyan-50/90">
+              <p>The real 0G's of the group have watched us grow from where we started — and now, we're taking things to the next level. 🚀</p>
+              <p>We <span className="font-bold text-amber-200">THANK YOU</span> for being a part of this incredible journey with us. You've helped us get here, and now we're ready to bring you even more amazing perks and features.</p>
+
+              <div className="rounded-2xl border border-cyan-300/30 bg-black/40 p-4 sm:p-5">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-300/80 font-bold">Unlock now</p>
+                <p className="mt-1 text-lg sm:text-xl font-black text-white">
+                  Your exclusive 0G VIP Access Pass to the Vault — one-time <span className="text-amber-300">£20</span> 🚀
+                </p>
+                <p className="mt-2 text-sm text-cyan-100/80">
+                  Current users <span className="font-bold text-cyan-200">still keep YouTiVi and others</span> — this is just an extra VIP upgrade. 🙌
+                </p>
+              </div>
+
+              <p>This VIP Pass unlocks <span className="font-bold">PREMIUM access</span> to the best apps and features, making your entertainment experience even more extraordinary. The small fee helps us keep the service running smoothly, with a top-notch app store and hosting, all while keeping your subscription price affordable.</p>
+
+              <div>
+                <p className="font-bold text-cyan-100">Why grab the 0G VIP Pass? Here's what you get:</p>
+                <ul className="mt-3 space-y-2.5">
+                  <li className="flex gap-3"><span aria-hidden>✨</span><span><span className="font-semibold text-white">YouTube Premium on TV</span> — ad-free viewing</span></li>
+                  <li className="flex gap-3"><span aria-hidden>🎬</span><span><span className="font-semibold text-white">A variety of new movie apps</span> like OnSTREAM, HD Cinema, and MORE exciting apps on the way (STREMIO 👀)</span></li>
+                  <li className="flex gap-3"><span aria-hidden>📺</span><span><span className="font-semibold text-white">Live TV players</span> such as Sky Streamz, Vu Glass, and more coming soon</span></li>
+                  <li className="flex gap-3"><span aria-hidden>💥</span><span><span className="font-semibold text-white">Referral bonus</span> — for every 2 people you refer, you'll get 3 extra months added to your subscription</span></li>
+                </ul>
+                <p className="mt-3 text-amber-200 font-bold">0G Perkz or what 👆</p>
+              </div>
+
+              <p>It's the ultimate pass for unlocking even more of what you love, while supporting the growth of <span className="font-bold">0G-Streamz</span>. 🎉</p>
+              <p className="font-semibold text-white">Don't miss out — get your 0G VIP Pass today and unlock a world of new possibilities. 🌟</p>
+              <p className="text-xs text-cyan-100/60 italic">P.S. If you don't grab it, no worries — you can still enjoy the already amazing service you know and love. 😎</p>
+            </div>
+
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <Button
+                onClick={scrollToPricing}
+                className="h-12 px-6 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-black uppercase tracking-[0.2em] shadow-[0_0_50px_-5px_rgba(255,200,80,0.7)]"
+              >
+                <Crown className="h-4 w-4 mr-2" /> Grab the £20 Pass
+              </Button>
+              <Link
+                to="/store"
+                className="inline-flex items-center gap-2 h-12 px-5 rounded-md border border-cyan-300/40 bg-black/40 hover:bg-cyan-400/10 text-cyan-100 font-bold uppercase tracking-[0.2em] text-xs"
+              >
+                See store <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="relative max-w-6xl mx-auto px-4 sm:px-6 py-16">
         <div className="text-center mb-10">
           <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-300/80 font-bold">What you get</p>
