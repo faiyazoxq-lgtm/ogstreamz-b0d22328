@@ -308,6 +308,8 @@ function MobileNavDrawer({
                 <span className="inline-flex items-center gap-1 text-gold font-bold">
                   <Crown className="h-3.5 w-3.5" /> BOSS
                 </span>
+              ) : profile?.status === "vip" ? (
+                <RealOgBadge size="sm" />
               ) : (
                 <span className="font-mono text-muted-foreground truncate">
                   {profile?.email ?? user.email}
