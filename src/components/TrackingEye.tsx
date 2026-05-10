@@ -115,6 +115,16 @@ export function TrackingEye({
       if (Math.abs(nx - cur.x) > 0.02 || Math.abs(ny - cur.y) > 0.02) {
         setPupil({ x: nx, y: ny });
       }
+      // Drive a CSS var for glow intensity based on how far the pupil has
+      // travelled toward the cursor. Written directly to the DOM so the glow
+      // updates every frame without triggering React renders.
+      const el = ref.current;
+      if (el) {
+        const r = el.getBoundingClientRect();
+        const tMax = travel ?? r.width * travelRatio;
+        const reach = tMax > 0 ? Math.min(1, Math.hypot(nx, ny) / tMax) : 0;
+        el.style.setProperty("--eye-glow", String(0.35 + reach * 0.65));
+      }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
