@@ -1,7 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { LayoutDashboard, Sparkles, Compass, ArrowRight, Tv, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import logo from "@/assets/logo.jpg";
 
 export const Route = createFileRoute("/welcome")({
@@ -61,6 +62,8 @@ const CHOICES: Choice[] = [
 
 function WelcomePage() {
   const [streamUrl, setStreamUrl] = useState<string>("https://ogstreamz.co.uk");
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     supabase
@@ -116,6 +119,11 @@ function WelcomePage() {
                   } catch {
                     // ignore storage errors (private mode etc.)
                   }
+                }
+                if (user) {
+                  // Already signed in — jump straight to the chosen portal.
+                  try { sessionStorage.removeItem("post_auth_redirect"); } catch { /* ignore */ }
+                  navigate({ to: to as never });
                 }
               }}
               className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
