@@ -121,8 +121,8 @@ type BuyState = "idle" | "opening" | "open";
 
 export function FeaturedDropCard() {
   const { user, profile } = useAuth();
-  // Heart icon = Safe Mode (swearing flag off). Surface inline on reverent drops.
-  const safeMode = !profile?.feature_flags?.swearing;
+  // Heart icon = Safe Mode (swearing agent off). Surface inline on reverent drops.
+  const safeMode = !effectiveSwearing(profile);
   const [dynamicDrops, setDynamicDrops] = useState<DynamicDrop[]>([]);
   const [index, setIndex] = useState(0);
 
