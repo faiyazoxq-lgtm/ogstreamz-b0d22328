@@ -187,8 +187,17 @@ function SubSummary({
   const subWithStatus: SubscriptionRow | null =
     activeSub && activeSub.status ? activeSub : null;
   if (!planLabel && !subWithStatus && !renewalLabel) return null;
+  const summaryParts = [
+    planLabel ? `${planLabel} plan` : null,
+    subWithStatus?.status ? `status ${subWithStatus.status.replace(/_/g, " ")}` : null,
+    renewalLabel,
+  ].filter(Boolean);
   return (
-    <div className="mt-2 sm:mt-3 flex flex-col gap-1 sm:gap-1.5">
+    <div
+      className="mt-2 sm:mt-3 flex flex-col gap-1 sm:gap-1.5"
+      role="group"
+      aria-label={`Subscription summary: ${summaryParts.join(", ")}`}
+    >
       {(planLabel || subWithStatus) && (
         <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 min-h-[18px]">
           {planLabel && <PlanChip planLabel={planLabel} tone="amber" size="sm" />}
