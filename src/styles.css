@@ -210,6 +210,58 @@
   a, button, label, span, li, dd, dt { font-weight: inherit; }
   ::placeholder { color: oklch(0.78 0.02 90); font-weight: 600; opacity: 1; }
 
+  /* ────────────────────────────────────────────────────────────────
+     Global interactive states — keep text legible in every state.
+     hover: brighten foreground, never wash out
+     focus-visible: visible 2px ring + offset, no text dimming
+     disabled:    keep text readable (no opacity:.5 invisibility),
+                  signal state with cursor + saturation instead
+     ──────────────────────────────────────────────────────────────── */
+  a {
+    color: inherit;
+    transition: color .2s ease, opacity .2s ease, text-decoration-color .2s ease;
+  }
+  a:hover { color: oklch(0.95 0.02 240); text-decoration-color: currentColor; }
+
+  a:focus-visible,
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  [role="link"]:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid oklch(0.85 0.18 235);
+    outline-offset: 3px;
+    border-radius: 6px;
+    color: oklch(1 0 0);
+    text-decoration: none;
+  }
+
+  /* Disabled — preserve text contrast, only soften background/border */
+  a[aria-disabled="true"],
+  button:disabled,
+  button[aria-disabled="true"],
+  [role="button"][aria-disabled="true"],
+  input:disabled,
+  textarea:disabled,
+  select:disabled,
+  fieldset:disabled :where(button, a, input, textarea, select) {
+    cursor: not-allowed;
+    opacity: 1 !important;
+    color: oklch(0.86 0.01 240) !important;
+    filter: saturate(0.55);
+    text-shadow: none;
+    pointer-events: none;
+  }
+  button:disabled,
+  button[aria-disabled="true"] {
+    background-color: oklch(0.28 0.01 240) !important;
+    border-color: oklch(0.42 0.01 240) !important;
+  }
+
+  /* Hover should never reduce text contrast on buttons/links */
+  a:hover, button:not(:disabled):hover {
+    text-shadow: 0 0 1px currentColor;
+  }
+
   /* Inputs and form controls — keep them comfortably tappable + readable. */
   input, textarea, select, button {
     font-size: inherit;
