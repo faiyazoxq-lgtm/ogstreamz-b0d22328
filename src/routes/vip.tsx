@@ -85,10 +85,16 @@ function VipPage() {
   const checkoutFn = useServerFn(createCheckoutSession);
 
   // Shared subscription view (env-filtered + realtime). Mirrors /dashboard.
-  const { sub: activeSub, planLabel, renewalLabel } = useSubscription({
+  const { sub: activeSub, planLabel, renewalExact, timezone } = useSubscription({
     userId: user?.id ?? null,
     pollOnSuccess: search.checkout === "success",
   });
+
+  const billingLine = renewalExact
+    ? activeSub?.cancel_at_period_end
+      ? `Access until ${renewalExact}${timezone ? ` (${timezone})` : ""}`
+      : `Next billing ${renewalExact}${timezone ? ` (${timezone})` : ""}`
+    : null;
 
   // Surface a one-time toast on return from Stripe checkout.
   useEffect(() => {
@@ -144,7 +150,7 @@ function VipPage() {
               </p>
               <p className="text-xs text-emerald-100/80 mt-0.5">
                 Your status is live. Every portal, every track, every tool — unlocked.
-                {renewalLabel && <> · {renewalLabel}</>}
+                {billingLine && <> · {billingLine}</>}
                 {search.session_id && <> · Receipt ref: <span className="font-mono text-[10px]">{search.session_id.slice(-12)}</span></>}
               </p>
             </div>
@@ -173,7 +179,7 @@ function VipPage() {
               </p>
               <p className="text-xs text-amber-100/80 mt-0.5">
                 Real 0G status active{user?.email ? <> · <span className="font-mono">{user.email}</span></> : null}. Every portal is unlocked.
-                {renewalLabel && <> · {renewalLabel}</>}
+                {billingLine && <> · {billingLine}</>}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">

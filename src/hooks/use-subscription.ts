@@ -17,6 +17,10 @@ export type SubscriptionView = {
   renewalDate: string | null;
   /** "Renews 12 Mar 2026" or "Access until …" or null */
   renewalLabel: string | null;
+  /** Exact next-billing datetime, e.g. "12 Mar 2026, 14:32 GMT", or null */
+  renewalExact: string | null;
+  /** IANA timezone resolved from the browser, e.g. "Europe/London" */
+  timezone: string | null;
 };
 
 /**
@@ -92,6 +96,16 @@ export function useSubscription(opts: {
       ? `Access until ${renewalDate}`
       : `Renews ${renewalDate}`
     : null;
+  const timezone = sub?.current_period_end
+    ? (Intl.DateTimeFormat().resolvedOptions().timeZone ?? null)
+    : null;
+  const renewalExact = sub?.current_period_end
+    ? new Date(sub.current_period_end).toLocaleString(undefined, {
+        day: "numeric", month: "short", year: "numeric",
+        hour: "2-digit", minute: "2-digit",
+        timeZoneName: "short",
+      })
+    : null;
 
-  return { sub, planLabel, renewalDate, renewalLabel };
+  return { sub, planLabel, renewalDate, renewalLabel, renewalExact, timezone };
 }
