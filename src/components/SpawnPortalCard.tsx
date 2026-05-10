@@ -118,7 +118,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
     clearStageTimers();
     setStage(1); // queued
     const toastId = `spawn-${kind}-${Date.now()}`;
-    toast.loading("Queued — reserving credit & slot", {
+    toast.loading("Queued — reserving 🪙 & slot", {
       id: toastId,
       description: "Stage 1 of 3",
     });
@@ -191,7 +191,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
   };
 
   const STAGES: ReadonlyArray<{ key: 1 | 2 | 3 | 4; label: string; hint: string }> = [
-    { key: 1, label: "Queued",      hint: "Reserving credit & slot" },
+    { key: 1, label: "Queued",      hint: "Reserving 🪙 & slot" },
     { key: 2, label: "Generating",  hint: "Scouting + AI seed content" },
     { key: 3, label: "Publishing",  hint: "Writing portal & going live" },
     { key: 4, label: "Ready",       hint: "Portal is live" },
