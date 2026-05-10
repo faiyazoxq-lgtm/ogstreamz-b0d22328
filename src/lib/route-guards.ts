@@ -2,6 +2,17 @@ import { redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { hasStoredAuth } from "@/lib/has-stored-auth";
 
+type GuardCtx = { location: { href: string; pathname: string } };
+
+function stashRedirect(location: GuardCtx["location"]) {
+  try {
+    const target = location.href || location.pathname;
+    if (target && target.startsWith("/") && !target.startsWith("/auth")) {
+      sessionStorage.setItem("post_auth_redirect", target);
+    }
+  } catch { /* ignore */ }
+}
+
 /**
  * Route guard: only signed-in members can open this route.
  *
@@ -13,17 +24,9 @@ import { hasStoredAuth } from "@/lib/has-stored-auth";
  * Unauthenticated users are redirected to /auth with a `redirect` search
  * param so they bounce back here after sign-in.
  */
-export async function requireMember({ location }: { location: { href: string; pathname: string } }) {
+export async function requireMember({ location }: GuardCtx) {
   if (typeof window === "undefined") return;
-
-  const stash = () => {
-    try {
-      const target = location.href || location.pathname;
-      if (target && target.startsWith("/") && !target.startsWith("/auth")) {
-        sessionStorage.setItem("post_auth_redirect", target);
-      }
-    } catch { /* ignore */ }
-  };
+  const stash = () => stashRedirect(location);
 
   // Fast-path: no stored token at all → block immediately.
   if (!hasStoredAuth()) {
@@ -37,6 +40,13 @@ export async function requireMember({ location }: { location: { href: string; pa
     stash();
     throw redirect({ to: "/auth" });
   }
+
+  const uid = data.session.user.id;
+  const { data: prof } = await supabase
+    .from("profiles").select("banned").eq("id", uid).maybeSingle();
+  if (prof?.banned) {
+    throw redirect({ to: "/", search: { banned: "1" } as never });
+  }
 }
 
 /**
@@ -46,17 +56,9 @@ export async function requireMember({ location }: { location: { href: string; pa
  *
  * SSR-safe: skips on the server; client revalidates on hydration.
  */
-export async function requireUsageAccess({ location }: { location: { href: string; pathname: string } }) {
+export async function requireUsageAccess({ location }: GuardCtx) {
   if (typeof window === "undefined") return;
-
-  const stash = () => {
-    try {
-      const target = location.href || location.pathname;
-      if (target && target.startsWith("/") && !target.startsWith("/auth")) {
-        sessionStorage.setItem("post_auth_redirect", target);
-      }
-    } catch { /* ignore */ }
-  };
+  const stash = () => stashRedirect(location);
 
   if (!hasStoredAuth()) { stash(); throw redirect({ to: "/auth" }); }
 
@@ -87,5 +89,92 @@ export async function requireUsageAccess({ location }: { location: { href: strin
   if (!ok) {
     // Marketing-only members → send to profile so they can link a stream.
     throw redirect({ to: "/profile", search: { upgrade: "stream" } as never });
+  }
+}
+
+/**
+ * Route guard: only Boss-tier users (rank=boss) or admins may enter.
+ * Unauthenticated → /auth (with redirect-back). Signed-in but not boss → /.
+ */
+export async function requireBoss({ location }: GuardCtx) {
+  if (typeof window === "undefined") return;
+  const stash = () => stashRedirect(location);
+
+  if (!hasStoredAuth()) { stash(); throw redirect({ to: "/auth" }); }
+
+  const { data: sess } = await supabase.auth.getSession();
+  const uid = sess.session?.user?.id;
+  if (!uid) { stash(); throw redirect({ to: "/auth" }); }
+
+  const [{ data: prof }, { data: adminRow }] = await Promise.all([
+    supabase.from("profiles").select("rank,banned").eq("id", uid).maybeSingle(),
+    supabase.from("user_roles").select("role").eq("user_id", uid).eq("role", "admin").maybeSingle(),
+  ]);
+
+  if (prof?.banned) {
+    throw redirect({ to: "/", search: { banned: "1" } as never });
+  }
+  const isBoss = prof?.rank === "boss" || !!adminRow;
+  if (!isBoss) {
+    throw redirect({ to: "/", search: { forbidden: "boss" } as never });
+  }
+}
+
+/**
+ * Route guard: admin role only. Unauthenticated → /auth, signed-in non-admin → /.
+ */
+export async function requireAdmin({ location }: GuardCtx) {
+  if (typeof window === "undefined") return;
+  const stash = () => stashRedirect(location);
+
+  if (!hasStoredAuth()) { stash(); throw redirect({ to: "/auth" }); }
+
+  const { data: sess } = await supabase.auth.getSession();
+  const uid = sess.session?.user?.id;
+  if (!uid) { stash(); throw redirect({ to: "/auth" }); }
+
+  const [{ data: prof }, { data: adminRow }] = await Promise.all([
+    supabase.from("profiles").select("rank,banned").eq("id", uid).maybeSingle(),
+    supabase.from("user_roles").select("role").eq("user_id", uid).eq("role", "admin").maybeSingle(),
+  ]);
+
+  if (prof?.banned) {
+    throw redirect({ to: "/", search: { banned: "1" } as never });
+  }
+  const isAdmin = !!adminRow || prof?.rank === "boss";
+  if (!isAdmin) {
+    throw redirect({ to: "/", search: { forbidden: "admin" } as never });
+  }
+}
+
+/**
+ * Route guard: reseller role (or boss/admin override).
+ */
+export async function requireReseller({ location }: GuardCtx) {
+  if (typeof window === "undefined") return;
+  const stash = () => stashRedirect(location);
+
+  if (!hasStoredAuth()) { stash(); throw redirect({ to: "/auth" }); }
+
+  const { data: sess } = await supabase.auth.getSession();
+  const uid = sess.session?.user?.id;
+  if (!uid) { stash(); throw redirect({ to: "/auth" }); }
+
+  const [{ data: prof }, { data: roles }, { data: ra }] = await Promise.all([
+    supabase.from("profiles").select("rank,banned").eq("id", uid).maybeSingle(),
+    supabase.from("user_roles").select("role").eq("user_id", uid),
+    supabase.from("reseller_accounts").select("active").eq("user_id", uid).maybeSingle(),
+  ]);
+
+  if (prof?.banned) {
+    throw redirect({ to: "/", search: { banned: "1" } as never });
+  }
+  const roleSet = new Set((roles ?? []).map((r) => r.role as string));
+  const ok =
+    prof?.rank === "boss" ||
+    roleSet.has("admin") ||
+    (roleSet.has("reseller") && ra?.active !== false);
+  if (!ok) {
+    throw redirect({ to: "/", search: { forbidden: "reseller" } as never });
   }
 }
