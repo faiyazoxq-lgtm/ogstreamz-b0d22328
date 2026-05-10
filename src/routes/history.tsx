@@ -28,13 +28,22 @@ type PortalRow = {
   created_at: string;
 };
 
-const KIND_META: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; viewPath: (slug: string) => string; accent: string }> = {
-  jokes:   { label: "JokesHUB",   icon: Laugh,      viewPath: (s) => `/p/${s}`,  accent: "text-pink-400" },
-  music:   { label: "MusicHUB",   icon: Music,      viewPath: (s) => `/m/${s}`,  accent: "text-violet-400" },
-  trade:   { label: "TradeHUB",   icon: TrendingUp, viewPath: (s) => `/td/${s}`, accent: "text-emerald-400" },
-  connect: { label: "ConnectHUB", icon: Rocket,     viewPath: (s) => `/p/${s}`,  accent: "text-sky-400" },
-  tools:   { label: "ToolHUB",    icon: Wrench,     viewPath: (s) => `/t/${s}`,  accent: "text-amber-400" },
-  joke:    { label: "JokesHUB",   icon: Laugh,      viewPath: (s) => `/p/${s}`,  accent: "text-pink-400" },
+// Use TanStack Router route literals so <Link to> + params={{slug}} stays
+// fully type-checked against the generated route tree.
+type PortalRoute = "/p/$slug" | "/m/$slug" | "/td/$slug" | "/t/$slug";
+type KindMeta = {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  to: PortalRoute;
+  accent: string;
+};
+const KIND_META: Record<string, KindMeta> = {
+  jokes:   { label: "JokesHUB",   icon: Laugh,      to: "/p/$slug",  accent: "text-pink-400" },
+  music:   { label: "MusicHUB",   icon: Music,      to: "/m/$slug",  accent: "text-violet-400" },
+  trade:   { label: "TradeHUB",   icon: TrendingUp, to: "/td/$slug", accent: "text-emerald-400" },
+  connect: { label: "ConnectHUB", icon: Rocket,     to: "/p/$slug",  accent: "text-sky-400" },
+  tools:   { label: "ToolHUB",    icon: Wrench,     to: "/t/$slug",  accent: "text-amber-400" },
+  joke:    { label: "JokesHUB",   icon: Laugh,      to: "/p/$slug",  accent: "text-pink-400" },
 };
 
 const KINDS = ["all", "music", "jokes", "trade", "connect", "tools"] as const;
@@ -154,7 +163,7 @@ function HistoryPage() {
                         </div>
                       </div>
                       <Button asChild size="sm" variant="outline" className="shrink-0">
-                        <Link to={meta.viewPath(p.slug)}>
+                        <Link to={meta.to} params={{ slug: p.slug }}>
                           Open <ExternalLink className="h-3.5 w-3.5 ml-1" />
                         </Link>
                       </Button>
