@@ -14,7 +14,6 @@ type Req = {
   email: string | null;
   rank: string | null;
   username: string;
-  server: string | null;
   has_password: boolean;
   auto_status: string | null;
   auto_expires_at: string | null;
@@ -138,10 +137,6 @@ function StreamQueuePage() {
                         ? (<><KeyRound className="h-3 w-3" /> encrypted at rest</>)
                         : (<><Lock className="h-3 w-3" /> scrubbed</>)}
                     </div>
-                  </div>
-                  <div className="rounded-md bg-secondary/40 border border-border px-3 py-2">
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Server</div>
-                    <div className="font-mono text-xs break-all">{r.server ?? "—"}</div>
                   </div>
                 </div>
 
