@@ -33,6 +33,10 @@ const KINDS = [
 
 type Kind = typeof KINDS[number]["value"];
 
+// Max price = $100,000.00 (10,000,000 cents). Catches typos like extra zeros.
+const PRICE_MAX_CENTS = 10_000_000;
+const SKU_PATTERN = /^[a-z0-9_]{2,40}$/;
+
 type Draft = {
   id: string | null;
   sku: string;
