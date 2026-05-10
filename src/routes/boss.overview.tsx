@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Crown, Users, Coins, Ticket, KeyRound, Handshake, Inbox, FileText, ArrowUpRight,
   Share2, ShieldCheck, BarChart3, Skull, Activity, RefreshCw, AlertTriangle, Tv,
-  Tags, Music, CheckCircle2, Radio, Zap, Bell, CreditCard,
+  Tags, Music, CheckCircle2, Radio, Zap, Bell, CreditCard, Power, Snowflake, Undo2,
+  Rocket, Boxes, Grid3x3, Settings as SettingsIcon, Sparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePaymentMode, setPaymentMode } from "@/hooks/use-payment-mode";
@@ -62,19 +63,44 @@ type Tile = {
 };
 
 const TILES: Tile[] = [
-  { to: "/boss/users",               label: "User Roster",      blurb: "Full control · rank, status, credits, ban, force sign-out, stream verify", Icon: Users,    tint: "#3ad6ff" },
-  { to: "/admin", hash: "roster",    label: "Legacy Roster",    blurb: "Original admin console roster view",                Icon: Users,    tint: "#94a3b8" },
-  { to: "/admin", hash: "topups",    label: "Top-Up Requests",  blurb: "Approve or deny credit top-ups",                     Icon: Inbox,    tint: "#ff5577" },
-  { to: "/admin", hash: "roster",    label: "Adjust Credits",   blurb: "Boss-grant credits by email or user-id",             Icon: Coins,    tint: "#ffd166" },
-  { to: "/admin", hash: "passes",    label: "VIP Passes",       blurb: "Mint, grant, revoke, share signup passes",           Icon: Ticket,   tint: "#a78bfa" },
-  { to: "/admin", hash: "codes",     label: "Redeem Codes",     blurb: "Create, list, expire promo codes",                   Icon: KeyRound, tint: "#00e08a" },
-  { to: "/admin", hash: "resellers", label: "Resellers",        blurb: "Reseller wallets, mark-up, downline",                Icon: Handshake,tint: "#ff7a1a" },
-  { to: "/admin", hash: "share",     label: "Share Cards",      blurb: "Generate share-link cards for passes",               Icon: Share2,   tint: "#ff5acd" },
-  { to: "/admin", hash: "notes",     label: "Boss Notes",       blurb: "Private operational notes",                          Icon: FileText, tint: "#94a3b8" },
-  { to: "/boss/civility",            label: "Civility Controls",blurb: "Toggle Guttermouth swear-chat · keep things civil", Icon: ShieldCheck, tint: "#3ad6ff" },
-  { to: "/boss/analytics",           label: "View Analytics",   blurb: "Anonymous public-view counts for every portal & battle", Icon: BarChart3, tint: "#00e08a" },
-  { to: "/boss/lexicon",             label: "Swear Lexicon",    blurb: "Edit HEAVY/MID/SOFT word lists · refusal patterns · openers", Icon: Skull, tint: "#ff2e55" },
-  { to: "/boss/alerts",              label: "System Alerts",    blurb: "API errors and Perplexity fallback activity, realtime", Icon: Bell, tint: "#ff5577" },
+  // People
+  { to: "/boss/users",               label: "User Roster",       blurb: "Rank, status, credits, ban, force sign-out, stream verify",   Icon: Users,        tint: "#3ad6ff" },
+  { to: "/boss/stream-queue",        label: "Stream Queue",      blurb: "Pending 0G STREAMZ portal verifications",                     Icon: Tv,           tint: "#3ad6ff" },
+  // Money & Power
+  { to: "/boss/power",               label: "Power Controls",    blurb: "Freeze payments, freeze coins, reverse recent purchases",     Icon: Power,        tint: "#ff5577" },
+  { to: "/boss/pricing",             label: "Pricing",           blurb: "Coin packs & store product catalogue",                        Icon: Tags,         tint: "#00e08a" },
+  { to: "/boss/portal-costs",        label: "Coin Costs",        blurb: "Per-hub create & per-portal use costs",                       Icon: Coins,        tint: "#ffd166" },
+  { to: "/admin", hash: "topups",    label: "Top-Up Requests",   blurb: "Approve or deny credit top-ups",                              Icon: Inbox,        tint: "#ff5577" },
+  { to: "/admin", hash: "roster",    label: "Adjust Credits",    blurb: "Boss-grant credits by email or user-id",                      Icon: Coins,        tint: "#ffd166" },
+  { to: "/admin", hash: "passes",    label: "VIP Passes",        blurb: "Mint, grant, revoke, share signup passes",                    Icon: Ticket,       tint: "#a78bfa" },
+  { to: "/admin", hash: "codes",     label: "Redeem Codes",      blurb: "Create, list, expire promo codes",                            Icon: KeyRound,     tint: "#00e08a" },
+  { to: "/admin", hash: "resellers", label: "Resellers",         blurb: "Reseller wallets, mark-up, downline",                         Icon: Handshake,    tint: "#ff7a1a" },
+  { to: "/admin", hash: "share",     label: "Share Cards",       blurb: "Generate share-link cards for passes",                        Icon: Share2,       tint: "#ff5acd" },
+  { to: "/admin", hash: "notes",     label: "Boss Notes",        blurb: "Private operational notes",                                   Icon: FileText,     tint: "#94a3b8" },
+  { to: "/admin",                    label: "Admin Console",     blurb: "Full legacy admin surface — top-ups, passes, vault",          Icon: Sparkles,     tint: "#94a3b8" },
+  // Content
+  { to: "/boss/hubs",                label: "Hubs",              blurb: "Manage built-in & custom hubs",                               Icon: Boxes,        tint: "#a78bfa" },
+  { to: "/boss/portals",             label: "Portals",           blurb: "Browse, edit, regenerate covers for every portal",            Icon: Grid3x3,      tint: "#3ad6ff" },
+  // Moderation
+  { to: "/boss/civility",            label: "Civility Controls", blurb: "Toggle Guttermouth swear-chat default tone",                  Icon: ShieldCheck,  tint: "#3ad6ff" },
+  { to: "/boss/lexicon",             label: "Swear Lexicon",     blurb: "HEAVY / MID / SOFT word lists · refusal patterns · openers", Icon: Skull,        tint: "#ff2e55" },
+  // Insights
+  { to: "/boss/analytics",           label: "Analytics",         blurb: "Anonymous public-view counts for every portal & battle",      Icon: BarChart3,    tint: "#00e08a" },
+  { to: "/syndicate-overlord",       label: "Overlord Deck",     blurb: "Syndicate command deck across the network",                   Icon: Activity,     tint: "#a78bfa" },
+  // Command & System
+  { to: "/boss/alerts",              label: "System Alerts",     blurb: "API errors and Perplexity fallback activity, realtime",       Icon: Bell,         tint: "#ff5577" },
+  { to: "/boss/publish-check",       label: "Publish Check",     blurb: "Pre-publish validation & manual checklist",                   Icon: Rocket,       tint: "#ffd166" },
+  { to: "/boss/api-keys",            label: "Agent Keys",        blurb: "Encrypted vault for AI / integration API keys",               Icon: KeyRound,     tint: "#a78bfa" },
+  { to: "/boss/settings",            label: "Settings",          blurb: "Signup bonus, feature flags & tunables",                      Icon: SettingsIcon, tint: "#94a3b8" },
+];
+
+const TILE_CATEGORIES: { id: string; label: string; tint: string; labels: string[] }[] = [
+  { id: "people",     label: "People",        tint: "#3ad6ff", labels: ["User Roster", "Stream Queue"] },
+  { id: "money",      label: "Money & Power", tint: "#ffd166", labels: ["Power Controls", "Pricing", "Coin Costs", "Top-Up Requests", "Adjust Credits", "VIP Passes", "Redeem Codes", "Resellers", "Share Cards", "Boss Notes", "Admin Console"] },
+  { id: "content",    label: "Content",       tint: "#a78bfa", labels: ["Hubs", "Portals"] },
+  { id: "moderation", label: "Moderation",    tint: "#ff2e55", labels: ["Civility Controls", "Swear Lexicon"] },
+  { id: "insights",   label: "Insights",      tint: "#00e08a", labels: ["Analytics", "Overlord Deck"] },
+  { id: "system",     label: "Command & System", tint: "#94a3b8", labels: ["System Alerts", "Publish Check", "Agent Keys", "Settings"] },
 ];
 
 function BossOverview() {
@@ -97,6 +123,8 @@ function BossOverview() {
   const paymentMode = usePaymentMode();
   const [togglingPayments, setTogglingPayments] = useState(false);
   const [confirmGoLive, setConfirmGoLive] = useState(false);
+  const [coinFrozen, setCoinFrozen] = useState<boolean | null>(null);
+  const [togglingCoin, setTogglingCoin] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function loadStats() {
@@ -142,6 +170,12 @@ function BossOverview() {
         newToday: Math.max(0, newToday),
       });
       setSwearDefault(civ?.data?.swear_default ?? null);
+      const { data: coinRow } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "power.coin_frozen")
+        .maybeSingle();
+      setCoinFrozen(coinRow?.value === true);
       setLastSync(new Date());
     } catch (e: any) {
       setError(e?.message ?? "Failed to load command-center metrics");
@@ -168,6 +202,17 @@ function BossOverview() {
       .eq("id", 1);
     if (!error) setSwearDefault(next);
     setTogglingSwear(false);
+  }
+
+  async function toggleCoinFreeze() {
+    if (coinFrozen === null) return;
+    setTogglingCoin(true);
+    const next = !coinFrozen;
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert({ key: "power.coin_frozen", value: next }, { onConflict: "key" });
+    if (!error) setCoinFrozen(next);
+    setTogglingCoin(false);
   }
 
   async function applyPaymentMode(next: "live" | "test") {
