@@ -10,8 +10,10 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { runPowerPack, listMyPowerPacks } from "@/lib/power-pack.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { requireMember } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/syndicate")({
+  beforeLoad: requireMember,
   head: () => ({
     meta: [
       { title: "0G-Syndicate Mesh — Boss Command" },
