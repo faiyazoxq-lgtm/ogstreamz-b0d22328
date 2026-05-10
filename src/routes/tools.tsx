@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { spawnTool, type ToolAudience } from "@/lib/tools.functions";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
+import { VipPaywallInline } from "@/components/VipPaywallInline";
 
 import { requireMember } from "@/lib/route-guards";
 export const Route = createFileRoute("/tools")({
@@ -49,7 +50,8 @@ const PROMPTS: Prompt[] = [
 ];
 
 function ToolPromptBuilder() {
-  const { user, isAdmin } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
+  const isVip = profile?.status === "vip" || isAdmin;
   const navigate = useNavigate();
   const spawnFn = useServerFn(spawnTool);
 
@@ -212,18 +214,22 @@ function ToolPromptBuilder() {
           <span className="truncate">0G-BRAIN designs the tool around your prompt · audience: {audience} · vibe: {vibe}</span>
         </div>
 
-        <Button
-          onClick={onGenerate}
-          disabled={busy}
-          size="lg"
-          className="mt-3 w-full bg-gold text-primary-foreground hover:bg-gold/90 font-bold tracking-wide"
-        >
-          {busy ? (
-            <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Spawning…</>
-          ) : (
-            <><Wand2 className="h-4 w-4 mr-2" /> Spawn Tool</>
-          )}
-        </Button>
+        {isVip ? (
+          <Button
+            onClick={onGenerate}
+            disabled={busy}
+            size="lg"
+            className="mt-3 w-full bg-gold text-primary-foreground hover:bg-gold/90 font-bold tracking-wide"
+          >
+            {busy ? (
+              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Spawning…</>
+            ) : (
+              <><Wand2 className="h-4 w-4 mr-2" /> Spawn Tool</>
+            )}
+          </Button>
+        ) : (
+          <VipPaywallInline hub="tools" isAuthenticated={!!user} />
+        )}
       </section>
 
       {spawned.length > 0 && (

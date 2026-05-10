@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { VaultLockedDialog } from "@/components/VaultLockedDialog";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
+import { VipPaywallInline } from "@/components/VipPaywallInline";
 
 import { requireMember } from "@/lib/route-guards";
 export type StylePreset = { id: string; label: string; Icon: typeof Skull };
@@ -215,15 +216,19 @@ function JokesPromptBuilder() {
           <span className="truncate">0G-BRAIN designs the portal around your prompt</span>
         </div>
 
-        <Button
-          onClick={launch}
-          disabled={!canLaunch}
-          size="lg"
-          className="mt-3 w-full btn-glass-blue text-white font-black tracking-[0.3em] uppercase"
-        >
-          <Power className="h-4 w-4 mr-2" />
-          Activate Portal
-        </Button>
+        {isVip ? (
+          <Button
+            onClick={launch}
+            disabled={!canLaunch}
+            size="lg"
+            className="mt-3 w-full btn-glass-blue text-white font-black tracking-[0.3em] uppercase"
+          >
+            <Power className="h-4 w-4 mr-2" />
+            Activate Portal
+          </Button>
+        ) : (
+          <VipPaywallInline hub="jokes" isAuthenticated={!!user} />
+        )}
       </section>
 
       <VaultLockedDialog
