@@ -143,8 +143,28 @@ function PricingPage() {
   }
 
   async function onSave() {
-    if (!draft.sku.trim() || !draft.title.trim()) {
+    const sku = draft.sku.trim();
+    if (!sku || !draft.title.trim()) {
       toast.error("SKU and title are required");
+      return;
+    }
+    if (!/^[a-z0-9_]{2,40}$/.test(sku)) {
+      toast.error("SKU must be 2-40 chars: lowercase letters, numbers, underscores");
+      return;
+    }
+    const dupe = rows.some(
+      (r) => r.sku.toLowerCase() === sku.toLowerCase() && r.id !== draft.id,
+    );
+    if (dupe) {
+      toast.error(`SKU "${sku}" is already used by another product`);
+      return;
+    }
+    if (
+      !Number.isFinite(draft.price_cents) ||
+      draft.price_cents < 0 ||
+      draft.price_cents > PRICE_MAX_CENTS
+    ) {
+      toast.error(`Price must be between 0 and ${PRICE_MAX_CENTS.toLocaleString()} cents`);
       return;
     }
     setSaving(true);
@@ -152,7 +172,7 @@ function PricingPage() {
       await upsert({
         data: {
           id: draft.id,
-          sku: draft.sku,
+          sku,
           kind: draft.kind,
           title: draft.title,
           description: draft.description || null,
