@@ -37,14 +37,23 @@ export function BottomDock() {
               <li key={to}>
                 <Link
                   to={to as any}
-                  className="flex flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] uppercase tracking-[0.18em] transition"
+                  aria-current={active ? "page" : undefined}
+                  aria-label={label}
+                  className="group relative flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-2 text-[10px] uppercase tracking-[0.18em] transition-all duration-200 active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.22_245)]"
                   style={{
                     color: active ? "var(--mood-accent, #ffd166)" : "rgba(255,255,255,0.6)",
                     background: active ? "rgba(255,255,255,0.05)" : "transparent",
                   }}
                 >
-                  <Icon className="h-4 w-4" strokeWidth={2.25} />
-                  <span className="font-semibold">{label}</span>
+                  {active && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -top-0.5 left-1/2 -translate-x-1/2 h-1 w-6 rounded-full motion-safe:animate-in motion-safe:fade-in"
+                      style={{ background: "var(--mood-accent, #ffd166)" }}
+                    />
+                  )}
+                  <Icon className="h-[18px] w-[18px] transition-transform duration-200 group-active:scale-110" strokeWidth={2.25} />
+                  <span className="font-semibold leading-none">{label}</span>
                 </Link>
               </li>
             );

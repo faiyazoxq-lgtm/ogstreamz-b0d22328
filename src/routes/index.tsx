@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouterState } from "@tanstack/react-router";
 import { SyndicateGallery } from "@/components/SyndicateGallery";
 import {
   Music2, Smile, Wrench, ArrowUpRight, TrendingUp, Rocket, Swords,
@@ -41,6 +41,13 @@ const portals = [
 function Index() {
   const [customHubs, setCustomHubs] = useState<any[]>([]);
   const { user, profile } = useAuth();
+  const [pendingTo, setPendingTo] = useState<string | null>(null);
+  const isNavigating = useRouterState({
+    select: (s) => s.isLoading || s.isTransitioning,
+  });
+  useEffect(() => {
+    if (!isNavigating && pendingTo) setPendingTo(null);
+  }, [isNavigating, pendingTo]);
   useEffect(() => {
     supabase
       .from("custom_hubs")
@@ -183,14 +190,19 @@ function Index() {
       </section>
 
       <section className="relative max-w-7xl mx-auto px-5 sm:px-8 pb-28 grid gap-6 md:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {portals.map(({ to, title, desc, Icon }) => (
+        {portals.map(({ to, title, desc, Icon }) => {
+          const thisPending = pendingTo === to;
+          const dimmed = pendingTo !== null && !thisPending;
+          return (
           <TiltCard
             key={to}
-            className="group relative overflow-hidden rounded-2xl"
+            className={`group relative overflow-hidden rounded-2xl transition-opacity duration-200 ${dimmed ? "opacity-40 pointer-events-none" : ""}`}
           >
           <Link
             to={to}
-            className="block relative overflow-hidden rounded-2xl border border-border bg-card p-8 sm:p-10 transition-all duration-500 hover:-translate-y-1 animate-pulse-gold hover:shadow-[0_0_80px_-10px_oklch(0.72_0.22_245_/_0.8)] hover:border-[oklch(0.72_0.22_245/0.7)]"
+            onClick={() => setPendingTo(to)}
+            aria-busy={thisPending || undefined}
+            className={`block relative overflow-hidden rounded-2xl border border-border bg-card p-8 sm:p-10 transition-all duration-500 hover:-translate-y-1 animate-pulse-gold hover:shadow-[0_0_80px_-10px_oklch(0.72_0.22_245_/_0.8)] hover:border-[oklch(0.72_0.22_245/0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.22_245)] ${thisPending ? "border-[oklch(0.72_0.22_245/0.8)] shadow-[0_0_60px_-10px_oklch(0.72_0.22_245/0.8)] animate-pulse" : ""}`}
             style={{ transform: "translateZ(40px)" }}
           >
             <div className="absolute -inset-px rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
@@ -207,12 +219,13 @@ function Index() {
             </h2>
             <p className="mt-3 text-base sm:text-base font-semibold text-foreground/95 leading-relaxed">{desc}</p>
             <div className="mt-8 btn-glass-blue btn-magnetic inline-flex items-center gap-2 px-5 py-3 rounded-lg text-xs uppercase tracking-[0.25em] font-bold text-white">
-              Open Portal
+              {thisPending ? "Opening…" : "Open Portal"}
               <ArrowUpRight className="h-3.5 w-3.5" />
             </div>
           </Link>
           </TiltCard>
-        ))}
+          );
+        })}
         {customHubs.map((h) => {
           const Icon = ICONS[h.icon] ?? Sparkles;
           const accent = h.accent || "#3ad6ff";

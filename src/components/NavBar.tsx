@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   User, LogIn, Coins, Crown, Shield, ChevronDown,
-  Music, Laugh, TrendingUp, Rocket, Wrench,
+  Music, Laugh, TrendingUp, Rocket, Wrench, Swords, Radio,
   Store, ShoppingBag, Receipt,
   ShieldCheck, LayoutDashboard,
   UserCircle, Settings, LogOut, Menu,
@@ -38,6 +38,8 @@ const hubLinks: ReadonlyArray<HubLink> = [
   { to: "/jokes",   label: "JokesHUB",   icon: Laugh,       desc: "Live comedy generator" },
   { to: "/trade",   label: "TradeHUB",   icon: TrendingUp,  desc: "Quant signals & whale flows" },
   { to: "/connect", label: "ConnectHUB", icon: Rocket,      desc: "Lead-gen outreach engine", bossOnly: true },
+  { to: "/battle",  label: "BattleHUB",  icon: Swords,      desc: "Pick a side, eat the loss" },
+  { to: "/syndicate", label: "Syndicate", icon: Radio,      desc: "Live frequency & rooms" },
   { to: "/tools",   label: "ToolHUB",    icon: Wrench,      desc: "Spawn calculators & utilities" },
 ];
 
@@ -279,6 +281,12 @@ function MobileNavDrawer({
                 </li>
                 <li>
                   <Link to="/dashboard" onClick={close} className="flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-secondary">
+                    <LayoutDashboard className="h-4 w-4 text-gold" />
+                    <span className="text-sm font-semibold">Dashboard</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/settings" onClick={close} className="flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-secondary">
                     <Settings className="h-4 w-4 text-gold" />
                     <span className="text-sm font-semibold">Settings</span>
                   </Link>
@@ -400,6 +408,12 @@ function AccountMenu({
           </DropdownMenuItem>
           <DropdownMenuItem asChild className="cursor-pointer focus:bg-secondary">
             <Link to="/dashboard" className="flex items-center gap-2">
+              <LayoutDashboard className="h-4 w-4 text-gold" />
+              <span>Dashboard</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild className="cursor-pointer focus:bg-secondary">
+            <Link to="/settings" className="flex items-center gap-2">
               <Settings className="h-4 w-4 text-gold" />
               <span>Settings</span>
             </Link>
