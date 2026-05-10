@@ -25,16 +25,18 @@ export function OgWordmark({
   eyeClassName = EYE_SCALE_CLASS,
   pupilRatio = 0.5,
   travelRatio = 0.18,
+  style,
 }: {
   suffix?: string;
   className?: string;
   eyeClassName?: string;
   pupilRatio?: number;
   travelRatio?: number;
+  style?: React.CSSProperties;
 }) {
   const rest = `G${suffix}`;
   return (
-    <span className={`inline-flex items-center text-eye-ice leading-none ${className}`}>
+    <span className={`inline-flex items-center text-eye-ice leading-none ${className}`} style={style}>
       <span className="relative inline-block align-middle leading-none">
         {/* keep "0" width so the eye sits exactly where the digit would */}
         <span aria-hidden className="invisible">0</span>
