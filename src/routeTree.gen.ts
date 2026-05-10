@@ -51,6 +51,7 @@ import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as BossUsersRouteImport } from './routes/boss.users'
 import { Route as BossStreamQueueRouteImport } from './routes/boss.stream-queue'
 import { Route as BossSettingsRouteImport } from './routes/boss.settings'
+import { Route as BossPublishCheckRouteImport } from './routes/boss.publish-check'
 import { Route as BossPricingRouteImport } from './routes/boss.pricing'
 import { Route as BossPowerRouteImport } from './routes/boss.power'
 import { Route as BossPortalsRouteImport } from './routes/boss.portals'
@@ -282,6 +283,11 @@ const BossSettingsRoute = BossSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => BossRoute,
 } as any)
+const BossPublishCheckRoute = BossPublishCheckRouteImport.update({
+  id: '/publish-check',
+  path: '/publish-check',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossPricingRoute = BossPricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
@@ -432,6 +438,7 @@ export interface FileRoutesByFullPath {
   '/boss/portals': typeof BossPortalsRoute
   '/boss/power': typeof BossPowerRoute
   '/boss/pricing': typeof BossPricingRoute
+  '/boss/publish-check': typeof BossPublishCheckRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/users': typeof BossUsersRoute
@@ -495,6 +502,7 @@ export interface FileRoutesByTo {
   '/boss/portals': typeof BossPortalsRoute
   '/boss/power': typeof BossPowerRoute
   '/boss/pricing': typeof BossPricingRoute
+  '/boss/publish-check': typeof BossPublishCheckRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/users': typeof BossUsersRoute
@@ -560,6 +568,7 @@ export interface FileRoutesById {
   '/boss/portals': typeof BossPortalsRoute
   '/boss/power': typeof BossPowerRoute
   '/boss/pricing': typeof BossPricingRoute
+  '/boss/publish-check': typeof BossPublishCheckRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/users': typeof BossUsersRoute
@@ -626,6 +635,7 @@ export interface FileRouteTypes {
     | '/boss/portals'
     | '/boss/power'
     | '/boss/pricing'
+    | '/boss/publish-check'
     | '/boss/settings'
     | '/boss/stream-queue'
     | '/boss/users'
@@ -689,6 +699,7 @@ export interface FileRouteTypes {
     | '/boss/portals'
     | '/boss/power'
     | '/boss/pricing'
+    | '/boss/publish-check'
     | '/boss/settings'
     | '/boss/stream-queue'
     | '/boss/users'
@@ -753,6 +764,7 @@ export interface FileRouteTypes {
     | '/boss/portals'
     | '/boss/power'
     | '/boss/pricing'
+    | '/boss/publish-check'
     | '/boss/settings'
     | '/boss/stream-queue'
     | '/boss/users'
@@ -1118,6 +1130,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossSettingsRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/publish-check': {
+      id: '/boss/publish-check'
+      path: '/publish-check'
+      fullPath: '/boss/publish-check'
+      preLoaderRoute: typeof BossPublishCheckRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/pricing': {
       id: '/boss/pricing'
       path: '/pricing'
@@ -1284,6 +1303,7 @@ interface BossRouteChildren {
   BossPortalsRoute: typeof BossPortalsRoute
   BossPowerRoute: typeof BossPowerRoute
   BossPricingRoute: typeof BossPricingRoute
+  BossPublishCheckRoute: typeof BossPublishCheckRoute
   BossSettingsRoute: typeof BossSettingsRoute
   BossStreamQueueRoute: typeof BossStreamQueueRoute
   BossUsersRoute: typeof BossUsersRoute
@@ -1301,6 +1321,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossPortalsRoute: BossPortalsRoute,
   BossPowerRoute: BossPowerRoute,
   BossPricingRoute: BossPricingRoute,
+  BossPublishCheckRoute: BossPublishCheckRoute,
   BossSettingsRoute: BossSettingsRoute,
   BossStreamQueueRoute: BossStreamQueueRoute,
   BossUsersRoute: BossUsersRoute,
