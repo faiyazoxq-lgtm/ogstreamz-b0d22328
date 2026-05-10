@@ -1,3 +1,4 @@
+import type { SubscriptionRow } from "@/hooks/use-subscription";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { requireMember } from "@/lib/route-guards";
 import { useEffect, useState } from "react";
@@ -180,16 +181,19 @@ function SubSummary({
   renewalLabel,
 }: {
   planLabel: string | null;
-  activeSub: { status?: string | null } | null;
+  activeSub: SubscriptionRow | null;
   renewalLabel: string | null;
 }) {
-  if (!planLabel && !activeSub?.status && !renewalLabel) return null;
+  const hasStatus = Boolean(activeSub && activeSub.status);
+  if (!planLabel && !hasStatus && !renewalLabel) return null;
   return (
     <div className="mt-3 flex flex-col gap-1.5">
-      <div className="flex flex-wrap items-center gap-1.5">
-        <PlanChip planLabel={planLabel} tone="amber" size="sm" />
-        <StatusBadge sub={activeSub as any} size="sm" />
-      </div>
+      {(planLabel || hasStatus) && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <PlanChip planLabel={planLabel} tone="amber" size="sm" />
+          {hasStatus && <StatusBadge sub={activeSub} size="sm" />}
+        </div>
+      )}
       {renewalLabel && (
         <p className="text-[11px] text-muted-foreground">{renewalLabel}</p>
       )}
