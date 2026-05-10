@@ -116,6 +116,14 @@ export function TrackingEye({
             ),
           ) || 1;
         el.style.setProperty("--eye-glow", String((0.35 + reach * 0.65) * rootMult));
+        // Size-proportional glow radii so the halo grows/shrinks with the
+        // eye itself instead of looking dim at large sizes or blown-out at
+        // tiny ones. Baseline tuned around a ~28px eye (1rem-ish).
+        const sizePx = r.width || 28;
+        el.style.setProperty("--eye-glow-base", `${(sizePx * 0.28).toFixed(2)}px`);
+        el.style.setProperty("--eye-glow-spread", `${(sizePx * 0.65).toFixed(2)}px`);
+        el.style.setProperty("--eye-glow-inner", `${(sizePx * 0.07).toFixed(2)}px`);
+        el.style.setProperty("--eye-glow-inner-spread", `${(sizePx * 0.22).toFixed(2)}px`);
       }
       raf = requestAnimationFrame(tick);
     };
