@@ -52,8 +52,10 @@ import { Route as BossUsersRouteImport } from './routes/boss.users'
 import { Route as BossStreamQueueRouteImport } from './routes/boss.stream-queue'
 import { Route as BossSettingsRouteImport } from './routes/boss.settings'
 import { Route as BossPricingRouteImport } from './routes/boss.pricing'
+import { Route as BossPortalsRouteImport } from './routes/boss.portals'
 import { Route as BossOverviewRouteImport } from './routes/boss.overview'
 import { Route as BossLexiconRouteImport } from './routes/boss.lexicon'
+import { Route as BossHubsRouteImport } from './routes/boss.hubs'
 import { Route as BossCivilityRouteImport } from './routes/boss.civility'
 import { Route as BossAnalyticsRouteImport } from './routes/boss.analytics'
 import { Route as BossAlertsRouteImport } from './routes/boss.alerts'
@@ -283,6 +285,11 @@ const BossPricingRoute = BossPricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => BossRoute,
 } as any)
+const BossPortalsRoute = BossPortalsRouteImport.update({
+  id: '/portals',
+  path: '/portals',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossOverviewRoute = BossOverviewRouteImport.update({
   id: '/overview',
   path: '/overview',
@@ -291,6 +298,11 @@ const BossOverviewRoute = BossOverviewRouteImport.update({
 const BossLexiconRoute = BossLexiconRouteImport.update({
   id: '/lexicon',
   path: '/lexicon',
+  getParentRoute: () => BossRoute,
+} as any)
+const BossHubsRoute = BossHubsRouteImport.update({
+  id: '/hubs',
+  path: '/hubs',
   getParentRoute: () => BossRoute,
 } as any)
 const BossCivilityRoute = BossCivilityRouteImport.update({
@@ -319,9 +331,9 @@ const AccountPassesRoute = AccountPassesRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const BossHubsNewRoute = BossHubsNewRouteImport.update({
-  id: '/hubs/new',
-  path: '/hubs/new',
-  getParentRoute: () => BossRoute,
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => BossHubsRoute,
 } as any)
 const ApiPublicSunoWebhookRoute = ApiPublicSunoWebhookRouteImport.update({
   id: '/api/public/suno-webhook',
@@ -401,8 +413,10 @@ export interface FileRoutesByFullPath {
   '/boss/alerts': typeof BossAlertsRoute
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/civility': typeof BossCivilityRoute
+  '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
+  '/boss/portals': typeof BossPortalsRoute
   '/boss/pricing': typeof BossPricingRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
@@ -460,8 +474,10 @@ export interface FileRoutesByTo {
   '/boss/alerts': typeof BossAlertsRoute
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/civility': typeof BossCivilityRoute
+  '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
+  '/boss/portals': typeof BossPortalsRoute
   '/boss/pricing': typeof BossPricingRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
@@ -521,8 +537,10 @@ export interface FileRoutesById {
   '/boss/alerts': typeof BossAlertsRoute
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/civility': typeof BossCivilityRoute
+  '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
+  '/boss/portals': typeof BossPortalsRoute
   '/boss/pricing': typeof BossPricingRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
@@ -583,8 +601,10 @@ export interface FileRouteTypes {
     | '/boss/alerts'
     | '/boss/analytics'
     | '/boss/civility'
+    | '/boss/hubs'
     | '/boss/lexicon'
     | '/boss/overview'
+    | '/boss/portals'
     | '/boss/pricing'
     | '/boss/settings'
     | '/boss/stream-queue'
@@ -642,8 +662,10 @@ export interface FileRouteTypes {
     | '/boss/alerts'
     | '/boss/analytics'
     | '/boss/civility'
+    | '/boss/hubs'
     | '/boss/lexicon'
     | '/boss/overview'
+    | '/boss/portals'
     | '/boss/pricing'
     | '/boss/settings'
     | '/boss/stream-queue'
@@ -702,8 +724,10 @@ export interface FileRouteTypes {
     | '/boss/alerts'
     | '/boss/analytics'
     | '/boss/civility'
+    | '/boss/hubs'
     | '/boss/lexicon'
     | '/boss/overview'
+    | '/boss/portals'
     | '/boss/pricing'
     | '/boss/settings'
     | '/boss/stream-queue'
@@ -1077,6 +1101,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossPricingRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/portals': {
+      id: '/boss/portals'
+      path: '/portals'
+      fullPath: '/boss/portals'
+      preLoaderRoute: typeof BossPortalsRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/overview': {
       id: '/boss/overview'
       path: '/overview'
@@ -1089,6 +1120,13 @@ declare module '@tanstack/react-router' {
       path: '/lexicon'
       fullPath: '/boss/lexicon'
       preLoaderRoute: typeof BossLexiconRouteImport
+      parentRoute: typeof BossRoute
+    }
+    '/boss/hubs': {
+      id: '/boss/hubs'
+      path: '/hubs'
+      fullPath: '/boss/hubs'
+      preLoaderRoute: typeof BossHubsRouteImport
       parentRoute: typeof BossRoute
     }
     '/boss/civility': {
@@ -1128,10 +1166,10 @@ declare module '@tanstack/react-router' {
     }
     '/boss/hubs/new': {
       id: '/boss/hubs/new'
-      path: '/hubs/new'
+      path: '/new'
       fullPath: '/boss/hubs/new'
       preLoaderRoute: typeof BossHubsNewRouteImport
-      parentRoute: typeof BossRoute
+      parentRoute: typeof BossHubsRoute
     }
     '/api/public/suno-webhook': {
       id: '/api/public/suno-webhook'
@@ -1185,32 +1223,46 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface BossHubsRouteChildren {
+  BossHubsNewRoute: typeof BossHubsNewRoute
+}
+
+const BossHubsRouteChildren: BossHubsRouteChildren = {
+  BossHubsNewRoute: BossHubsNewRoute,
+}
+
+const BossHubsRouteWithChildren = BossHubsRoute._addFileChildren(
+  BossHubsRouteChildren,
+)
+
 interface BossRouteChildren {
   BossAlertsRoute: typeof BossAlertsRoute
   BossAnalyticsRoute: typeof BossAnalyticsRoute
   BossCivilityRoute: typeof BossCivilityRoute
+  BossHubsRoute: typeof BossHubsRouteWithChildren
   BossLexiconRoute: typeof BossLexiconRoute
   BossOverviewRoute: typeof BossOverviewRoute
+  BossPortalsRoute: typeof BossPortalsRoute
   BossPricingRoute: typeof BossPricingRoute
   BossSettingsRoute: typeof BossSettingsRoute
   BossStreamQueueRoute: typeof BossStreamQueueRoute
   BossUsersRoute: typeof BossUsersRoute
   BossIndexRoute: typeof BossIndexRoute
-  BossHubsNewRoute: typeof BossHubsNewRoute
 }
 
 const BossRouteChildren: BossRouteChildren = {
   BossAlertsRoute: BossAlertsRoute,
   BossAnalyticsRoute: BossAnalyticsRoute,
   BossCivilityRoute: BossCivilityRoute,
+  BossHubsRoute: BossHubsRouteWithChildren,
   BossLexiconRoute: BossLexiconRoute,
   BossOverviewRoute: BossOverviewRoute,
+  BossPortalsRoute: BossPortalsRoute,
   BossPricingRoute: BossPricingRoute,
   BossSettingsRoute: BossSettingsRoute,
   BossStreamQueueRoute: BossStreamQueueRoute,
   BossUsersRoute: BossUsersRoute,
   BossIndexRoute: BossIndexRoute,
-  BossHubsNewRoute: BossHubsNewRoute,
 }
 
 const BossRouteWithChildren = BossRoute._addFileChildren(BossRouteChildren)
@@ -1285,3 +1337,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
