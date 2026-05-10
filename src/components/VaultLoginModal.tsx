@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Flame, X, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { vaultPortalLogin } from "@/lib/vault-portal-auth.functions";
+import { setVaultUnlocked } from "@/lib/vault-unlock";
 
 type Props = { open: boolean; onClose: () => void };
 
@@ -36,6 +37,7 @@ export function VaultLoginModal({ open, onClose }: Props) {
       if (r?.ok) {
         setGranted(true);
         setPassword("");
+        setVaultUnlocked();
         toast.success("Vault unlocked");
       } else {
         toast.error(r?.error || "Access denied");
