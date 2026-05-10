@@ -215,7 +215,8 @@ export function NavBar() {
       <nav className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap px-1.5 sm:px-8 h-16 sm:h-20 gap-1 sm:gap-2">
         <Link
           to="/"
-          className="brand-glow flex items-center gap-3 sm:gap-5 group min-w-0 flex-1 sm:flex-initial overflow-hidden h-full rounded-md outline-none focus-visible:ring-2 focus-visible:ring-gold/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          aria-label="0G-PORTAL — home"
+          className="brand-glow flex items-center gap-3 sm:gap-5 group min-w-0 flex-1 sm:flex-initial overflow-hidden h-full -ml-1 sm:ml-0 px-2 sm:px-1 py-2 min-h-12 sm:min-h-0 rounded-lg outline-none transition-colors active:bg-white/5 hover:bg-white/[0.03] focus-visible:ring-2 focus-visible:ring-gold/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background touch-manipulation"
         >
           <TVStaticLogo className="shrink-0 self-center" />
           <OgWordmark
