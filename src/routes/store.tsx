@@ -393,11 +393,11 @@ function PackCard({ pack, isBoss, creditsPerSong, onBuy, onChanged }: {
         <div className="mt-1 text-xs text-muted-foreground space-y-0.5">
           <p className="text-white font-bold">
             <Coins className="inline h-3.5 w-3.5 mr-1 text-yellow-400" />
-            {pack.credits.toLocaleString()} credits
+            {pack.credits.toLocaleString()} Coins 🪙
           </p>
-          <p>~ {songs} AI song{songs === 1 ? "" : "s"} · or {pack.credits.toLocaleString()} jokes / scans / tool runs</p>
-          <p className="text-[10px] text-muted-foreground/70">
-            £{(pack.amount_cents / Math.max(1, pack.credits) / 100).toFixed(3)} per credit
+          <p>£1 per Coin · spend on portals, jokes, scans, tools or VIP pass</p>
+          <p className="text-[10px] text-yellow-300/80 font-bold">
+            £{(pack.amount_cents / 100).toFixed(0)} = {pack.credits.toLocaleString()} Coins 🪙
           </p>
         </div>
       ) : (

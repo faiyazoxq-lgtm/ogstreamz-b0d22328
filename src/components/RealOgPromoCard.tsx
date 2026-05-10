@@ -74,6 +74,9 @@ export function RealOgPromoCard() {
             <div className="flex items-baseline gap-1">
               <span className="text-5xl sm:text-6xl font-black text-white [text-shadow:_0_0_18px_rgba(0,200,255,0.95),_0_0_36px_rgba(0,100,255,0.7),_0_2px_0_rgba(255,30,30,0.6)]">£20</span>
             </div>
+            <div className="text-[13px] font-black text-yellow-300 [text-shadow:_0_0_10px_rgba(255,200,0,0.6)]">
+              = 20 Coins 🪙
+            </div>
             <div className="text-[11px] uppercase tracking-[0.3em] text-red-300/90">Lifetime · No renewal</div>
 
             {isRealOg ? (
