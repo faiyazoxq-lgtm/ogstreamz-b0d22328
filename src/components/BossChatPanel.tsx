@@ -22,7 +22,7 @@ export function BossChatPanel() {
   const [togglingFlag, setTogglingFlag] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const swearing = !!profile?.feature_flags?.swearing;
+  const swearing = effectiveSwearing(profile);
   // BRUTAL MODE default — chaotic unless the user has explicitly chosen otherwise.
   const intensityRaw = String((profile?.feature_flags as any)?.swearing_intensity ?? "chaotic").toLowerCase();
   const intensity: "mild" | "medium" | "chaotic" =
