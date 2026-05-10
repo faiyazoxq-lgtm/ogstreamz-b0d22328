@@ -2232,6 +2232,7 @@ export type Database = {
       }
       vip_notifications: {
         Row: {
+          audience: string
           body: string
           created_at: string
           created_by: string
@@ -2242,6 +2243,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          audience?: string
           body: string
           created_at?: string
           created_by: string
@@ -2252,6 +2254,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          audience?: string
           body?: string
           created_at?: string
           created_by?: string
