@@ -205,7 +205,9 @@ function MobileNavDrawer({
   isBoss: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const close = () => setOpen(false);
+  const isActive = (to: string) => pathname === to || pathname.startsWith(to + "/");
 
   const Section = ({
     title, icon: Icon, items, gold,
@@ -221,26 +223,35 @@ function MobileNavDrawer({
         {title}
       </div>
       <ul className="space-y-1">
-        {items.map((it) => (
-          <li key={it.to}>
-            <Link
-              to={it.to as string}
-              onClick={close}
-              className="flex items-start gap-3 rounded-md px-2 py-2.5 hover:bg-secondary"
-            >
-              <it.icon className="h-4 w-4 mt-0.5 text-gold shrink-0" />
-              <span className="flex-1 min-w-0">
-                <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                  {it.label}
-                  {it.bossOnly && <Crown className="h-3 w-3 text-gold" />}
+        {items.map((it) => {
+          const active = isActive(it.to);
+          return (
+            <li key={it.to}>
+              <Link
+                to={it.to as string}
+                onClick={close}
+                aria-current={active ? "page" : undefined}
+                className={[
+                  "flex items-start gap-3 rounded-md px-2 py-2.5 transition-colors outline-none",
+                  "hover:bg-secondary active:bg-secondary/80 active:scale-[0.99]",
+                  "focus-visible:ring-2 focus-visible:ring-aura-blue",
+                  active ? "bg-gold/10 ring-1 ring-inset ring-gold/40" : "",
+                ].join(" ")}
+              >
+                <it.icon className={`h-4 w-4 mt-0.5 shrink-0 ${active ? "text-gold drop-shadow-[0_0_6px_rgba(255,209,102,0.6)]" : "text-gold/80"}`} />
+                <span className="flex-1 min-w-0">
+                  <span className={`flex items-center gap-1.5 text-sm font-semibold ${active ? "text-gold" : "text-foreground"}`}>
+                    {it.label}
+                    {it.bossOnly && <Crown className="h-3 w-3 text-gold" />}
+                  </span>
+                  {it.desc && (
+                    <span className="block text-[11px] text-muted-foreground truncate">{it.desc}</span>
+                  )}
                 </span>
-                {it.desc && (
-                  <span className="block text-[11px] text-muted-foreground truncate">{it.desc}</span>
-                )}
-              </span>
-            </Link>
-          </li>
-        ))}
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -292,30 +303,32 @@ function MobileNavDrawer({
             </div>
             {user ? (
               <ul className="space-y-1">
-                <li>
-                  <Link to="/profile" onClick={close} className="flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-secondary">
-                    <UserCircle className="h-4 w-4 text-gold" />
-                    <span className="text-sm font-semibold">Vault & Profile</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/store" onClick={close} className="flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-secondary">
-                    <Coins className="h-4 w-4 text-gold" />
-                    <span className="text-sm font-semibold">Buy Credits</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/dashboard" onClick={close} className="flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-secondary">
-                    <LayoutDashboard className="h-4 w-4 text-gold" />
-                    <span className="text-sm font-semibold">Dashboard</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/settings" onClick={close} className="flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-secondary">
-                    <Settings className="h-4 w-4 text-gold" />
-                    <span className="text-sm font-semibold">Settings</span>
-                  </Link>
-                </li>
+                {[
+                  { to: "/profile", label: "Vault & Profile", icon: UserCircle },
+                  { to: "/store", label: "Buy Credits", icon: Coins },
+                  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+                  { to: "/settings", label: "Settings", icon: Settings },
+                ].map(({ to, label, icon: Icon }) => {
+                  const active = isActive(to);
+                  return (
+                    <li key={to}>
+                      <Link
+                        to={to}
+                        onClick={close}
+                        aria-current={active ? "page" : undefined}
+                        className={[
+                          "flex items-center gap-3 rounded-md px-2 py-2.5 transition-colors outline-none",
+                          "hover:bg-secondary active:scale-[0.99]",
+                          "focus-visible:ring-2 focus-visible:ring-aura-blue",
+                          active ? "bg-gold/10 ring-1 ring-inset ring-gold/40 text-gold" : "",
+                        ].join(" ")}
+                      >
+                        <Icon className={`h-4 w-4 ${active ? "text-gold drop-shadow-[0_0_6px_rgba(255,209,102,0.6)]" : "text-gold"}`} />
+                        <span className="text-sm font-semibold">{label}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
                 <li>
                   <button
                     type="button"
@@ -324,7 +337,7 @@ function MobileNavDrawer({
                       await supabase.auth.signOut();
                       window.location.href = "/";
                     }}
-                    className="w-full flex items-center gap-3 rounded-md px-2 py-2.5 text-destructive hover:bg-destructive/10"
+                    className="w-full flex items-center gap-3 rounded-md px-2 py-2.5 text-destructive transition-colors outline-none hover:bg-destructive/10 active:bg-destructive/20 focus-visible:ring-2 focus-visible:ring-destructive"
                   >
                     <LogOut className="h-4 w-4" />
                     <span className="text-sm font-semibold">Sign Out</span>
@@ -335,7 +348,7 @@ function MobileNavDrawer({
               <Link
                 to="/auth"
                 onClick={close}
-                className="flex items-center justify-center gap-2 btn-glass-blue rounded-md px-3 py-2.5 text-xs uppercase tracking-[0.25em] font-bold text-white"
+                className="flex items-center justify-center gap-2 btn-glass-blue rounded-md px-3 py-2.5 text-xs uppercase tracking-[0.25em] font-bold text-white transition-transform active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aura-blue focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <LogIn className="h-4 w-4" />
                 Join the Syndicate
