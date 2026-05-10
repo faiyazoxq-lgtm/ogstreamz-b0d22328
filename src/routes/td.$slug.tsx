@@ -70,7 +70,9 @@ function TradeTerminal() {
   const risk: string = tc.risk || "Balanced";
   const isGold = /gold|xau/i.test(portal.name) || tickers.some(t => /xau|gold/i.test(t));
   const briefs: string[] = Array.isArray(portal.jokes)
-    ? portal.jokes.filter((b): b is string => typeof b === "string" && b.trim().length > 0)
+    ? (portal.jokes as unknown[]).filter(
+        (b): b is string => typeof b === "string" && b.trim().length > 0,
+      )
     : [];
 
   const scan = useServerFn(runTradeScan);
