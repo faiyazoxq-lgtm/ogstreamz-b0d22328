@@ -183,12 +183,11 @@ export const reverifyStream = createServerFn({ method: "POST" })
       return { ok: false as const, error: "No stream credentials saved" };
     }
     const server = normalizeServer(prof.stream_server || "");
-    let info: XtreamUserInfo;
-    try {
-      info = await probeXtream(server, prof.stream_username, prof.stream_password);
-    } catch (e: any) {
-      return { ok: false as const, error: e?.message || "Could not reach stream server" };
+    const probe = await probeXtream(server, prof.stream_username, prof.stream_password);
+    if ("reason" in probe) {
+      return { ok: false as const, reason: probe.reason, error: REASON_MESSAGES[probe.reason] };
     }
+    const info = probe.info;
     const status = (info.status || (info.auth === 1 ? "Active" : "Unknown")).toString();
     const expUnix = Number(info.exp_date);
     const expiresAt = Number.isFinite(expUnix) && expUnix > 0 ? new Date(expUnix * 1000).toISOString() : null;
