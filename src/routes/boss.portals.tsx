@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Search, Pencil, Trash2, ArrowUpRight, Loader2, Eye, ArrowUpDown } from "lucide-react";
+import { Search, Pencil, Trash2, ArrowUpRight, Loader2, Eye, ArrowUpDown, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +51,7 @@ function PortalsManager() {
   const [costSort, setCostSort] = useState<"none" | "asc" | "desc">("none");
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState<Partial<Portal>>({});
+  const [genId, setGenId] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -116,6 +117,23 @@ function PortalsManager() {
     const { error } = await supabase.from("portals").update({ vip: !p.vip }).eq("id", p.id);
     if (error) return toast.error(error.message);
     load();
+  }
+
+  async function generateCover(p: Portal) {
+    setGenId(p.id);
+    const t = toast.loading(`Generating cover for ${p.name}…`);
+    try {
+      const { data, error } = await supabase.functions.invoke("portal-image", {
+        body: { portal_id: p.id },
+      });
+      if (error) throw new Error(error.message);
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success("Cover generated & saved", { id: t });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Image generation failed", { id: t });
+    } finally {
+      setGenId(null);
+    }
   }
 
   return (
@@ -222,6 +240,15 @@ function PortalsManager() {
                     <div className="flex items-center gap-1 shrink-0">
                       <Button variant="ghost" size="sm" onClick={() => toggleVip(p)} title="Toggle VIP">
                         {p.vip ? "Make free" : "Make VIP"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => generateCover(p)}
+                        disabled={genId === p.id}
+                        title="Generate AI cover image"
+                      >
+                        {genId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => { setEditing(p.id); setDraft(p); }} title="Edit">
                         <Pencil className="h-4 w-4" />
