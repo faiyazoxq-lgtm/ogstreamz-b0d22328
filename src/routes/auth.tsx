@@ -579,6 +579,93 @@ function Divider({ label }: { label: string }) {
   );
 }
 
+function ContentModePicker({
+  value,
+  onChange,
+}: {
+  value: "og" | "safe";
+  onChange: (v: "og" | "safe") => void;
+}) {
+  const Card = ({
+    id,
+    active,
+    onSelect,
+    title,
+    blurb,
+    accent,
+    icon,
+  }: {
+    id: "og" | "safe";
+    active: boolean;
+    onSelect: () => void;
+    title: string;
+    blurb: string;
+    accent: string;
+    icon: React.ReactNode;
+  }) => (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      id={`content-mode-${id}`}
+      onClick={onSelect}
+      className={[
+        "group relative flex flex-col items-start gap-2 rounded-xl border px-3 py-3 text-left transition-all",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-card",
+        active
+          ? `${accent} shadow-[0_0_30px_-10px_currentColor]`
+          : "border-border bg-background/40 hover:border-foreground/30 text-muted-foreground",
+      ].join(" ")}
+    >
+      <div className="flex w-full items-start justify-between gap-2">
+        <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-background/60 text-base">
+          {icon}
+        </span>
+        {active && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-current px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em]">
+            <Check className="h-3 w-3" /> Picked
+          </span>
+        )}
+      </div>
+      <div className="space-y-0.5">
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em]">{title}</p>
+        <p className="text-[11px] leading-snug">{blurb}</p>
+      </div>
+    </button>
+  );
+
+  return (
+    <fieldset className="space-y-2">
+      <legend className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-bold">
+        Choose your portal vibe
+      </legend>
+      <div role="radiogroup" aria-label="Content mode" className="grid grid-cols-2 gap-2">
+        <Card
+          id="og"
+          active={value === "og"}
+          onSelect={() => onChange("og")}
+          title="OG Uncensored"
+          blurb="Vulgar swearing, no filters. Full Boss energy."
+          accent="border-rose-500/60 bg-rose-950/40 text-rose-200"
+          icon={<span aria-hidden>🖕</span>}
+        />
+        <Card
+          id="safe"
+          active={value === "safe"}
+          onSelect={() => onChange("safe")}
+          title="Family Friendly"
+          blurb="No swearing. Clean cut across every portal."
+          accent="border-emerald-500/60 bg-emerald-950/40 text-emerald-200"
+          icon={<Heart className="h-4 w-4 fill-emerald-400 text-emerald-400" />}
+        />
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        Toggle any time from the <span className="font-semibold text-foreground">🖕 / 💚</span> button in the header.
+      </p>
+    </fieldset>
+  );
+}
+
 function AuthForm(props: {
   email: string;
   setEmail: (v: string) => void;
