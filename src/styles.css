@@ -393,16 +393,13 @@
      bottom edge — for use on dense surfaces like the sticky nav where
      legibility beats gradient drama. */
   .text-eye-ice--bright {
-    background: linear-gradient(180deg,
-      #ffffff 0%,
-      #ffffff 70%,
-      #f0f8ff 88%,
-      oklch(0.92 0.1 235) 100%);
-    -webkit-text-stroke: 0.4px rgba(255,255,255,0.85);
-    filter:
-      drop-shadow(0 0 1px rgba(255,255,255,1))
-      drop-shadow(0 0 4px rgba(255,255,255,0.6))
-      drop-shadow(0 0 12px oklch(0.78 0.18 240 / 0.45));
+    background: transparent !important;
+    color: #ffffff;
+    -webkit-text-stroke: 0.6px rgba(255,255,255,1);
+    text-shadow:
+      0 0 2px rgba(0,0,0,0.55),
+      0 0 6px rgba(0,0,0,0.4),
+      0 0 14px oklch(0.72 0.22 245 / 0.4);
     animation: none;
   }
 
