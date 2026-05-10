@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   User, LogIn, Coins, Crown, Shield, ChevronDown,
@@ -54,51 +54,75 @@ const adminLinks: ReadonlyArray<HubLink> = [
 ];
 
 function NavDropdown({
-  label, icon: Icon, items, gold, hideLabelOnMobile,
+  label, icon: Icon, items, gold, hideLabelOnMobile, currentPath,
 }: {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   items: ReadonlyArray<{ to: string; label: string; icon: React.ComponentType<{ className?: string }>; desc?: string; bossOnly?: boolean }>;
   gold?: boolean;
   hideLabelOnMobile?: boolean;
+  currentPath: string;
 }) {
+  const sectionActive = items.some(
+    (it) => currentPath === it.to || currentPath.startsWith(it.to + "/"),
+  );
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={label}
-        className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2 text-sm sm:text-base font-semibold rounded-md transition-colors outline-none ${
+        data-active={sectionActive ? "true" : undefined}
+        className={[
+          "inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2 text-sm sm:text-base font-semibold rounded-md transition-colors outline-none",
+          "focus-visible:ring-2 focus-visible:ring-aura-blue focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          "active:scale-[0.97]",
           gold
-            ? "text-gold hover:bg-gold/10 border border-gold/30"
-            : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-        }`}
+            ? "text-gold hover:bg-gold/10 border border-gold/30 data-[state=open]:bg-gold/15 data-[active=true]:bg-gold/15 data-[active=true]:border-gold/60"
+            : "text-muted-foreground hover:text-foreground hover:bg-secondary data-[state=open]:bg-secondary data-[state=open]:text-foreground data-[active=true]:bg-secondary data-[active=true]:text-foreground",
+        ].join(" ")}
       >
         <Icon className="h-4 w-4" />
         <span className={hideLabelOnMobile ? "hidden sm:inline" : ""}>{label}</span>
-        <ChevronDown className="h-3.5 w-3.5 opacity-70 hidden sm:inline" />
+        <ChevronDown className="h-3.5 w-3.5 opacity-70 hidden sm:inline transition-transform group-data-[state=open]:rotate-180" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64 bg-card border-border">
         <DropdownMenuLabel className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
           {label}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {items.map((it) => (
-          <DropdownMenuItem key={it.to} asChild className="cursor-pointer focus:bg-secondary">
-            <Link to={it.to as string} className="flex items-start gap-3 py-2">
-              <it.icon className="h-4 w-4 mt-0.5 text-gold" />
-              <span className="flex-1">
-                <span className="flex items-center gap-1.5 font-semibold text-foreground">
-                  {it.label}
-                  {it.bossOnly && (
-                    <Crown className="h-3 w-3 text-gold" />
+        {items.map((it) => {
+          const isActive = currentPath === it.to || currentPath.startsWith(it.to + "/");
+          return (
+            <DropdownMenuItem
+              key={it.to}
+              asChild
+              className="cursor-pointer focus:bg-secondary data-[active=true]:bg-gold/10"
+            >
+              <Link
+                to={it.to as string}
+                aria-current={isActive ? "page" : undefined}
+                data-active={isActive ? "true" : undefined}
+                className={[
+                  "group/item flex items-start gap-3 py-2 rounded-sm outline-none",
+                  "hover:bg-secondary focus-visible:ring-2 focus-visible:ring-aura-blue",
+                  isActive ? "bg-gold/10 ring-1 ring-inset ring-gold/40" : "",
+                ].join(" ")}
+              >
+                <it.icon className={`h-4 w-4 mt-0.5 ${isActive ? "text-gold drop-shadow-[0_0_6px_rgba(255,209,102,0.6)]" : "text-gold/80 group-hover/item:text-gold"}`} />
+                <span className="flex-1">
+                  <span className={`flex items-center gap-1.5 font-semibold ${isActive ? "text-gold" : "text-foreground"}`}>
+                    {it.label}
+                    {it.bossOnly && (
+                      <Crown className="h-3 w-3 text-gold" />
+                    )}
+                  </span>
+                  {it.desc && (
+                    <span className="block text-[11px] text-muted-foreground">{it.desc}</span>
                   )}
                 </span>
-                {it.desc && (
-                  <span className="block text-[11px] text-muted-foreground">{it.desc}</span>
-                )}
-              </span>
-            </Link>
-          </DropdownMenuItem>
-        ))}
+              </Link>
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -106,6 +130,7 @@ function NavDropdown({
 
 export function NavBar() {
   const { user, profile, isAdmin } = useAuth();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isBoss = isAdmin || profile?.rank === "boss";
   const statusLabel = !user ? "GUEST" : isBoss ? "BOSS" : (profile?.rank?.toUpperCase() ?? "MEMBER");
   const statusColor = !user
@@ -127,14 +152,14 @@ export function NavBar() {
         </Link>
         <ul className="flex items-center flex-nowrap gap-0.5 sm:gap-1.5 shrink-0 ml-auto">
           <li className="hidden sm:block">
-            <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile />
+            <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile currentPath={pathname} />
           </li>
           <li className="hidden sm:block">
-            <NavDropdown label="Store" icon={Store} items={storeLinks} hideLabelOnMobile />
+            <NavDropdown label="Store" icon={Store} items={storeLinks} hideLabelOnMobile currentPath={pathname} />
           </li>
           {isBoss && (
             <li className="hidden sm:block">
-              <NavDropdown label="Admin" icon={ShieldCheck} items={adminLinks} hideLabelOnMobile />
+              <NavDropdown label="Admin" icon={ShieldCheck} items={adminLinks} hideLabelOnMobile currentPath={pathname} />
             </li>
           )}
           <li className="hidden sm:block">
@@ -224,7 +249,7 @@ function MobileNavDrawer({
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         aria-label="Open navigation menu"
-        className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-secondary/40 text-foreground hover:bg-secondary"
+        className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-secondary/40 text-foreground transition-colors hover:bg-secondary hover:border-aura-blue/50 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aura-blue focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[state=open]:bg-secondary data-[state=open]:border-aura-blue/60"
       >
         <Menu className="h-5 w-5" />
       </SheetTrigger>
