@@ -9,6 +9,7 @@ import { VaultLockedDialog } from "@/components/VaultLockedDialog";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
 import { VipPaywallInline } from "@/components/VipPaywallInline";
+import { ZeroGBadge } from "@/components/ZeroGBadge";
 
 import { requireMember } from "@/lib/route-guards";
 export type StylePreset = { id: string; label: string; Icon: typeof Skull };
@@ -132,6 +133,7 @@ function JokesPromptBuilder() {
         <p className="mt-2 text-sm text-muted-foreground">
           Describe your style. Tap prompts to stack ideas — they vanish as you use them.
         </p>
+        <ZeroGBadge className="mt-3" />
       </header>
 
       <section className="rounded-3xl border border-[oklch(0.72_0.22_245/0.4)] bg-gradient-to-br from-card to-background p-4 sm:p-6 shadow-[0_0_80px_oklch(0.72_0.22_245/0.1)] backdrop-blur-xl">

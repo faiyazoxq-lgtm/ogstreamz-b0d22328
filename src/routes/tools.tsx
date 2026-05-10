@@ -12,6 +12,7 @@ import { spawnTool, type ToolAudience } from "@/lib/tools.functions";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
 import { VipPaywallInline } from "@/components/VipPaywallInline";
+import { ZeroGBadge } from "@/components/ZeroGBadge";
 
 import { requireUsageAccess } from "@/lib/route-guards";
 export const Route = createFileRoute("/tools")({
@@ -130,6 +131,7 @@ function ToolPromptBuilder() {
         <p className="mt-2 text-sm text-muted-foreground">
           Describe the logic. Tap prompts to stack ideas — they vanish as you use them.
         </p>
+        <ZeroGBadge className="mt-3" />
       </header>
 
       <section className="rounded-3xl border border-gold/40 bg-gradient-to-br from-card to-background p-4 sm:p-6 shadow-[0_0_80px_oklch(0.82_0.16_88_/_0.1)] backdrop-blur-xl">

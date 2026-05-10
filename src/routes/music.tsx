@@ -12,6 +12,7 @@ import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { MusicHubBalance } from "@/components/MusicHubBalance";
 import { FeaturedDropCard } from "@/components/FeaturedDropCard";
 import { VipPaywallInline } from "@/components/VipPaywallInline";
+import { ZeroGBadge } from "@/components/ZeroGBadge";
 
 import { requireMember } from "@/lib/route-guards";
 export const Route = createFileRoute("/music")({
@@ -119,6 +120,7 @@ function MusicPromptBuilder() {
         <p className="mt-2 text-sm text-muted-foreground">
           Describe your track. Tap prompts to stack ideas — they vanish as you use them.
         </p>
+        <ZeroGBadge className="mt-3" />
       </header>
 
       <MusicHubBalance className="mb-6" />
