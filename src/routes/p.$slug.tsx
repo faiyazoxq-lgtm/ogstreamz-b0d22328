@@ -418,7 +418,23 @@ function PortalPage() {
                   >
                     {i + 1}
                   </span>
-                  <p className="text-sm leading-relaxed whitespace-pre-line opacity-90">{idea}</p>
+                  <p className="flex-1 text-sm leading-relaxed whitespace-pre-line opacity-90">{idea}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSharedIdea(idea);
+                      toast.success("Idea staged for Telegram", { description: "Scroll to the Telegram block to send it." });
+                      setTimeout(() => {
+                        document.getElementById("telegram-share")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }, 50);
+                    }}
+                    className="shrink-0 inline-flex h-7 items-center gap-1 rounded-md border px-2 text-[10px] uppercase tracking-[0.25em] font-bold hover:opacity-80"
+                    style={{ borderColor: `${T.accent}66`, color: T.accent }}
+                    aria-label={`Share idea ${i + 1} to Telegram`}
+                  >
+                    <Share2 className="h-3 w-3" />
+                    Share
+                  </button>
                 </li>
               ))}
             </ol>
