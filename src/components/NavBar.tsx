@@ -247,6 +247,59 @@ function MobileNavDrawer({
   const close = () => setOpen(false);
   const isActive = (to: string) => pathname === to || pathname.startsWith(to + "/");
 
+  // Wide, thumb-friendly row (≥56px tap target).
+  const Row = ({
+    to, label, Icon, desc, danger,
+  }: {
+    to?: string;
+    label: string;
+    Icon: React.ComponentType<{ className?: string }>;
+    desc?: string;
+    danger?: boolean;
+  }) => {
+    const active = to ? isActive(to) : false;
+    const base =
+      "relative flex items-center gap-3 min-h-14 w-full rounded-xl px-3 py-3 text-left transition-colors outline-none active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary";
+    const tone = danger
+      ? "text-destructive hover:bg-destructive/10 active:bg-destructive/20"
+      : active
+        ? "bg-gold/10 text-gold ring-1 ring-inset ring-gold/40"
+        : "text-foreground hover:bg-secondary active:bg-secondary/80";
+    const inner = (
+      <>
+        {active && (
+          <span aria-hidden className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-gold shadow-[0_0_10px_rgba(255,209,102,0.6)]" />
+        )}
+        <span
+          className={[
+            "h-9 w-9 shrink-0 rounded-lg flex items-center justify-center",
+            danger
+              ? "bg-destructive/10 text-destructive"
+              : active
+                ? "bg-gold/15 text-gold ring-1 ring-gold/40"
+                : "bg-secondary text-gold/80",
+          ].join(" ")}
+        >
+          <Icon className="h-4.5 w-4.5" />
+        </span>
+        <span className="flex-1 min-w-0">
+          <span className={`block text-[15px] font-semibold leading-tight ${danger ? "text-destructive" : active ? "text-gold" : "text-foreground"}`}>
+            {label}
+          </span>
+          {desc && (
+            <span className="block text-[11px] text-muted-foreground truncate mt-0.5">{desc}</span>
+          )}
+        </span>
+      </>
+    );
+    if (!to) return <div className={`${base} ${tone}`}>{inner}</div>;
+    return (
+      <Link to={to} onClick={close} aria-current={active ? "page" : undefined} className={`${base} ${tone}`}>
+        {inner}
+      </Link>
+    );
+  };
+
   const Section = ({
     title, icon: Icon, items, gold,
   }: {
@@ -255,41 +308,17 @@ function MobileNavDrawer({
     items: ReadonlyArray<HubLink>;
     gold?: boolean;
   }) => (
-    <div className="mb-4">
-      <div className={`flex items-center gap-2 px-1 mb-2 text-[10px] uppercase tracking-[0.3em] ${gold ? "text-gold" : "text-muted-foreground"}`}>
+    <div className="mb-5">
+      <div className={`flex items-center gap-2 px-1.5 mb-2 text-[10px] uppercase tracking-[0.3em] ${gold ? "text-gold" : "text-muted-foreground"}`}>
         <Icon className="h-3.5 w-3.5" />
         {title}
       </div>
-      <ul className="space-y-1">
-        {items.map((it) => {
-          const active = isActive(it.to);
-          return (
-            <li key={it.to}>
-              <Link
-                to={it.to as string}
-                onClick={close}
-                aria-current={active ? "page" : undefined}
-                className={[
-                  "flex items-start gap-3 rounded-md px-2 py-2.5 transition-colors outline-none",
-                  "hover:bg-secondary active:bg-secondary/80 active:scale-[0.99]",
-                  "focus-visible:ring-2 focus-visible:ring-primary",
-                  active ? "bg-gold/10 ring-1 ring-inset ring-gold/40" : "",
-                ].join(" ")}
-              >
-                <it.icon className={`h-4 w-4 mt-0.5 shrink-0 ${active ? "text-gold drop-shadow-[0_0_6px_rgba(255,209,102,0.6)]" : "text-gold/80"}`} />
-                <span className="flex-1 min-w-0">
-                  <span className={`flex items-center gap-1.5 text-sm font-semibold ${active ? "text-gold" : "text-foreground"}`}>
-                    {it.label}
-                    {it.bossOnly && <Crown className="h-3 w-3 text-gold" />}
-                  </span>
-                  {it.desc && (
-                    <span className="block text-[11px] text-muted-foreground truncate">{it.desc}</span>
-                  )}
-                </span>
-              </Link>
-            </li>
-          );
-        })}
+      <ul className="space-y-1.5">
+        {items.map((it) => (
+          <li key={it.to}>
+            <Row to={it.to} label={it.label} Icon={it.icon} desc={it.desc} />
+          </li>
+        ))}
       </ul>
     </div>
   );
@@ -298,115 +327,98 @@ function MobileNavDrawer({
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         aria-label="Open navigation menu"
-        className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-secondary/40 text-foreground transition-colors hover:bg-secondary hover:border-primary/50 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[state=open]:bg-secondary data-[state=open]:border-primary/60"
+        className="inline-flex items-center justify-center h-11 w-11 rounded-xl border border-border bg-secondary/40 text-foreground transition-colors hover:bg-secondary hover:border-primary/50 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[state=open]:bg-secondary data-[state=open]:border-primary/60"
       >
-        <Menu className="h-5 w-5" />
+        <Menu className="h-5.5 w-5.5" />
       </SheetTrigger>
-      <SheetContent side="right" className="w-[88vw] max-w-sm bg-card p-0 flex flex-col">
-        <SheetHeader className="px-4 pt-4 pb-3 border-b border-border">
-          <SheetTitle className="text-left text-sm uppercase tracking-[0.3em] text-aura-blue">
-            0G-PORTAL · Menu
-          </SheetTitle>
-          {user ? (
-            <div className="flex items-center gap-2 text-xs">
-              {isBoss ? (
-                <span className="inline-flex items-center gap-1 text-gold font-bold">
-                  <Crown className="h-3.5 w-3.5" /> BOSS
-                </span>
-              ) : profile?.status === "vip" ? (
-                <RealOgBadge size="sm" />
+      <SheetContent side="right" className="w-[92vw] max-w-sm bg-card p-0 flex flex-col">
+        {/* Identity strip — large, glanceable */}
+        <SheetHeader className="px-4 pt-4 pb-3 border-b border-border space-y-3">
+          <SheetTitle className="sr-only">Navigation menu</SheetTitle>
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-gold/30 to-gold/5 ring-1 ring-gold/40 flex items-center justify-center">
+              {isBoss ? <Crown className="h-5 w-5 text-gold" /> : profile?.status === "vip" ? <Crown className="h-5 w-5 text-gold" /> : <UserCircle className="h-5 w-5 text-gold" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-aura-blue font-bold">0G-Portal</p>
+              {user ? (
+                <p className="text-sm font-semibold truncate">
+                  {isBoss ? "Boss" : profile?.status === "vip" ? "Real OG" : (profile?.email ?? user.email)}
+                </p>
               ) : (
-                <span className="font-mono text-muted-foreground truncate">
-                  {profile?.email ?? user.email}
-                </span>
-              )}
-              {!isBoss && (
-                <span className="inline-flex items-center gap-1 ml-auto text-gold font-bold">
-                  <Coins className="h-3.5 w-3.5" /> <AnimatedCredits value={profile?.credits ?? 0} />
-                </span>
+                <p className="text-sm font-semibold text-muted-foreground">Not signed in</p>
               )}
             </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">Not signed in</p>
-          )}
-        </SheetHeader>
-
-        <div className="flex-1 overflow-y-auto px-3 py-4">
-          <div className="mb-4">
-            <SiteSearch />
-          </div>
-          {user && (
-            <div className="mb-4 flex items-center justify-between gap-3 px-1">
-              <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-                Swearing Agent
-              </span>
-              <MasterSwearToggle />
-            </div>
-          )}
-          <Section title="HUBS" icon={Rocket} items={hubs} gold />
-          <Section title="Store" icon={Store} items={stores} />
-          {admin.length > 0 && <Section title="Admin" icon={ShieldCheck} items={admin} />}
-
-          <div className="mt-2">
-            <div className="flex items-center gap-2 px-1 mb-2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-              <User className="h-3.5 w-3.5" />
-              Account
-            </div>
-            {user ? (
-              <ul className="space-y-1">
-                {[
-                  { to: "/profile", label: "Vault & Profile", icon: UserCircle },
-                  { to: "/store", label: "Buy Credits", icon: Coins },
-                  { to: "/history", label: "Portal History", icon: History },
-                  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-                  { to: "/settings", label: "Settings", icon: Settings },
-                ].map(({ to, label, icon: Icon }) => {
-                  const active = isActive(to);
-                  return (
-                    <li key={to}>
-                      <Link
-                        to={to}
-                        onClick={close}
-                        aria-current={active ? "page" : undefined}
-                        className={[
-                          "flex items-center gap-3 rounded-md px-2 py-2.5 transition-colors outline-none",
-                          "hover:bg-secondary active:scale-[0.99]",
-                          "focus-visible:ring-2 focus-visible:ring-primary",
-                          active ? "bg-gold/10 ring-1 ring-inset ring-gold/40 text-gold" : "",
-                        ].join(" ")}
-                      >
-                        <Icon className={`h-4 w-4 ${active ? "text-gold drop-shadow-[0_0_6px_rgba(255,209,102,0.6)]" : "text-gold"}`} />
-                        <span className="text-sm font-semibold">{label}</span>
-                      </Link>
-                    </li>
-                  );
-                })}
-                <li>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      close();
-                      await supabase.auth.signOut();
-                      window.location.href = "/";
-                    }}
-                    className="w-full flex items-center gap-3 rounded-md px-2 py-2.5 text-destructive transition-colors outline-none hover:bg-destructive/10 active:bg-destructive/20 focus-visible:ring-2 focus-visible:ring-destructive"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span className="text-sm font-semibold">Sign Out</span>
-                  </button>
-                </li>
-              </ul>
-            ) : (
+            {user && !isBoss && (
               <Link
-                to="/auth"
+                to="/store"
                 onClick={close}
-                className="flex items-center justify-center gap-2 btn-glass-blue rounded-md px-3 py-2.5 text-xs uppercase tracking-[0.25em] font-bold text-white transition-transform active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/10 px-2.5 py-1.5 text-xs font-bold text-amber-200"
               >
-                <LogIn className="h-4 w-4" />
-                Join the Syndicate
+                <Coins className="h-3.5 w-3.5" />
+                <AnimatedCredits value={profile?.credits ?? 0} />
               </Link>
             )}
           </div>
+          <div><SiteSearch /></div>
+        </SheetHeader>
+
+        <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-4 pb-6">
+          {user && (
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-border bg-secondary/40 px-3 py-2.5">
+              <span className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">Swearing Agent</span>
+              <MasterSwearToggle />
+            </div>
+          )}
+
+          <Section title="HUBS" icon={Rocket} items={hubs} gold />
+          <Section title="Store" icon={Store} items={stores} />
+          {admin.length > 0 && <Section title="Boss" icon={ShieldCheck} items={admin} />}
+
+          {user && (
+            <div className="mb-2">
+              <div className="flex items-center gap-2 px-1.5 mb-2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                <User className="h-3.5 w-3.5" /> Account
+              </div>
+              <ul className="space-y-1.5">
+                <li><Row to="/profile"   label="Vault & Profile" Icon={UserCircle} /></li>
+                <li><Row to="/store"     label="Buy Credits"     Icon={Coins} /></li>
+                <li><Row to="/history"   label="Portal History"  Icon={History} /></li>
+                <li><Row to="/dashboard" label="Dashboard"       Icon={LayoutDashboard} /></li>
+                <li><Row to="/settings"  label="Settings"        Icon={Settings} /></li>
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {/* Sticky thumb-zone action bar */}
+        <div
+          className="border-t border-border bg-card/95 backdrop-blur px-3 py-3"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
+        >
+          {user ? (
+            <button
+              type="button"
+              onClick={async () => {
+                close();
+                await supabase.auth.signOut();
+                window.location.href = "/";
+              }}
+              className="w-full inline-flex items-center justify-center gap-2 min-h-12 rounded-xl border border-destructive/40 bg-destructive/10 hover:bg-destructive/20 active:scale-[0.99] text-destructive font-bold uppercase tracking-[0.2em] text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </button>
+          ) : (
+            <Link
+              to="/auth"
+              onClick={close}
+              className="w-full inline-flex items-center justify-center gap-2 min-h-12 btn-glass-blue rounded-xl px-3 text-xs uppercase tracking-[0.25em] font-bold text-white active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <LogIn className="h-4 w-4" />
+              Join the Syndicate
+            </Link>
+          )}
         </div>
       </SheetContent>
     </Sheet>
