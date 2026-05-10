@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, RefreshCw, CheckCircle2, XCircle, Clock, Crown, Tv, Receipt } from "lucide-react";
+import { Loader2, RefreshCw, CheckCircle2, XCircle, Clock, Crown, Tv, Receipt, CheckSquare, Square } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -42,12 +43,22 @@ export function PassOrdersPanel() {
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkNote, setBulkNote] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
 
   const refresh = async () => {
     setLoading(true);
     try {
       const r = await list({ data: { status } });
       setRows(r.orders);
+      setSelected((prev) => {
+        const ids = new Set(r.orders.filter(o => o.status === "pending_approval").map(o => o.id));
+        const next = new Set<string>();
+        prev.forEach((id) => { if (ids.has(id)) next.add(id); });
+        return next;
+      });
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to load pass orders");
     } finally {
@@ -58,6 +69,57 @@ export function PassOrdersPanel() {
   useEffect(() => { refresh(); /* eslint-disable-next-line */ }, [status]);
 
   const pendingCount = useMemo(() => rows.filter(r => r.status === "pending_approval").length, [rows]);
+  const pendingRows = useMemo(() => rows.filter(r => r.status === "pending_approval"), [rows]);
+  const allPendingSelected = pendingRows.length > 0 && pendingRows.every(r => selected.has(r.id));
+  const somePendingSelected = selected.size > 0 && !allPendingSelected;
+
+  const toggleOne = (id: string, on: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id); else next.delete(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (allPendingSelected) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(pendingRows.map(r => r.id)));
+    }
+  };
+
+  const bulkAct = async (approve: boolean) => {
+    if (selected.size === 0) return;
+    const ids = pendingRows.filter(r => selected.has(r.id)).map(r => r.id);
+    if (ids.length === 0) {
+      toast.error("No pending orders selected");
+      return;
+    }
+    const verb = approve ? "Issue" : "Deny";
+    if (!window.confirm(`${verb} ${ids.length} pass order${ids.length === 1 ? "" : "s"}?`)) return;
+    setBulkBusy(true);
+    setBulkProgress({ done: 0, total: ids.length });
+    let ok = 0, fail = 0;
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
+      try {
+        await decide({ data: { orderId: id, approve, note: bulkNote || (notes[id] ?? "") } });
+        ok++;
+      } catch (e: any) {
+        fail++;
+        console.error("bulk decide failed", id, e);
+      }
+      setBulkProgress({ done: i + 1, total: ids.length });
+    }
+    setBulkBusy(false);
+    setBulkProgress(null);
+    setSelected(new Set());
+    setBulkNote("");
+    if (fail === 0) toast.success(`${approve ? "Issued" : "Denied"} ${ok} order${ok === 1 ? "" : "s"}`);
+    else toast.warning(`${ok} done · ${fail} failed`);
+    await refresh();
+  };
 
   const act = async (orderId: string, approve: boolean) => {
     setBusy(orderId);
@@ -126,16 +188,74 @@ export function PassOrdersPanel() {
         </div>
       ) : (
         <div className="space-y-3">
+          {pendingRows.length > 0 && (
+            <div className="rounded-xl border-2 border-cyan-800/40 bg-cyan-950/20 p-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleAll}
+                className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] font-black text-cyan-200 hover:text-cyan-100"
+              >
+                {allPendingSelected ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
+                {allPendingSelected ? "Clear" : somePendingSelected ? "Select all pending" : "Select all pending"}
+              </button>
+              <span className="text-[11px] text-cyan-400/80 font-bold">
+                {selected.size} selected / {pendingRows.length} pending
+              </span>
+              <Input
+                value={bulkNote}
+                onChange={(e) => setBulkNote(e.target.value)}
+                placeholder="Bulk note (overrides per-row notes)"
+                className="flex-1 min-w-[180px] h-9 bg-black/70 border-2 border-emerald-800/50 text-emerald-100 placeholder:text-emerald-700 text-xs"
+                disabled={bulkBusy}
+              />
+              <Button
+                onClick={() => bulkAct(true)}
+                disabled={bulkBusy || selected.size === 0}
+                className="h-9 bg-emerald-600 hover:bg-emerald-500 text-black font-black uppercase tracking-wider text-xs"
+              >
+                {bulkBusy ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
+                Approve {selected.size > 0 ? `(${selected.size})` : ""}
+              </Button>
+              <Button
+                onClick={() => bulkAct(false)}
+                disabled={bulkBusy || selected.size === 0}
+                variant="outline"
+                className="h-9 border-red-700/60 text-red-200 hover:bg-red-900/30 font-black uppercase tracking-wider text-xs"
+              >
+                <XCircle className="h-4 w-4 mr-1" /> Deny {selected.size > 0 ? `(${selected.size})` : ""}
+              </Button>
+              {bulkProgress && (
+                <span className="w-full text-[10px] uppercase tracking-[0.3em] text-cyan-300 font-bold">
+                  Processing {bulkProgress.done} / {bulkProgress.total}…
+                </span>
+              )}
+            </div>
+          )}
           {rows.map((o) => {
             const meta = kindMeta(o.kind);
             const KindIcon = meta.icon;
             const isPending = o.status === "pending_approval";
+            const isSelected = selected.has(o.id);
             return (
               <div
                 key={o.id}
-                className="rounded-xl border-2 border-emerald-800/40 bg-emerald-950/30 p-4 hover:border-cyan-700/50 transition-colors"
+                className={`rounded-xl border-2 p-4 transition-colors ${
+                  isSelected
+                    ? "border-cyan-500/70 bg-cyan-950/30"
+                    : "border-emerald-800/40 bg-emerald-950/30 hover:border-cyan-700/50"
+                }`}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
+                  {isPending && (
+                    <div className="pt-1">
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={(v) => toggleOne(o.id, !!v)}
+                        disabled={bulkBusy}
+                        aria-label="Select order"
+                      />
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
                       <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md border ${meta.tint} text-[10px] uppercase tracking-[0.3em] font-black`}>
