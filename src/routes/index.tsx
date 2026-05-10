@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useRouterState } from "@tanstack/react-router";
 import { SyndicateGallery } from "@/components/SyndicateGallery";
 import { OgWordmark } from "@/components/OgWordmark";
+import { EYE_SCALE_CLASS } from "@/components/OgWordmark";
 import {
   Music2, Smile, Wrench, ArrowUpRight, TrendingUp, Rocket, Swords,
   Sparkles, Radio, Bot, Brain, Zap, Star, Megaphone, Disc3, Satellite, Radar,
@@ -255,11 +256,7 @@ function Index() {
                     bloodshot
                     pupilRatio={0.5}
                     travelRatio={0.22}
-                    className="align-[-0.18em] shrink-0"
-                    style={{
-                      width: "clamp(1.75rem, 1.1rem + 2.2vw, 3rem)",
-                      height: "clamp(1.75rem, 1.1rem + 2.2vw, 3rem)",
-                    }}
+                    className={`align-[-0.18em] ${EYE_SCALE_CLASS}`}
                   />
                   <span>pen P</span>
                   <TrackingEye
@@ -267,11 +264,7 @@ function Index() {
                     bloodshot
                     pupilRatio={0.5}
                     travelRatio={0.22}
-                    className="align-[-0.18em] shrink-0"
-                    style={{
-                      width: "clamp(1.75rem, 1.1rem + 2.2vw, 3rem)",
-                      height: "clamp(1.75rem, 1.1rem + 2.2vw, 3rem)",
-                    }}
+                    className={`align-[-0.18em] ${EYE_SCALE_CLASS}`}
                   />
                   <span>rtal</span>
                 </span>
