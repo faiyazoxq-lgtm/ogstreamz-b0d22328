@@ -569,7 +569,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>Balance after</span>
                   <span className="font-mono">
-                    {credits} → {Math.max(0, credits - 1)} credits
+                    {credits} → {Math.max(0, credits - 1)} 🪙
                   </span>
                 </div>
                 {!isValid && (
@@ -589,7 +589,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
             >
               {loading
                 ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Spawning…</>
-                : <><Wand2 className="h-4 w-4 mr-2" />Confirm · spend 1</>}
+                : <><Wand2 className="h-4 w-4 mr-2" />Confirm · spend 1 🪙</>}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
