@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Tv, CheckCircle2, Loader2, AlertTriangle } from "lucide-react";
+import { Tv, CheckCircle2, Loader2, AlertTriangle, Clock, CalendarClock } from "lucide-react";
 import { verifyAndLinkStream } from "@/lib/stream-link.functions";
 import { useAuth } from "@/hooks/use-auth";
 
-export function StreamLinkCard() {
+export function StreamLinkCard({ compact = false }: { compact?: boolean } = {}) {
   const { profile, refresh } = useAuth();
   const verify = useServerFn(verifyAndLinkStream);
   const [u, setU] = useState("");
@@ -15,8 +15,16 @@ export function StreamLinkCard() {
 
   const rank = (profile?.rank as string | undefined) ?? "";
   const linked = rank === "stream_user" || rank === "vip" || rank === "boss";
-  const status = (profile as any)?.stream_status as string | undefined;
-  const expiresAt = (profile as any)?.stream_expires_at as string | undefined;
+  const status = profile?.stream_status ?? undefined;
+  const expiresAt = profile?.stream_expires_at ?? undefined;
+  const username = profile?.stream_username ?? undefined;
+
+  const expiryDate = expiresAt ? new Date(expiresAt) : null;
+  const expired = expiryDate ? expiryDate.getTime() < Date.now() : false;
+  const daysLeft = expiryDate ? Math.ceil((expiryDate.getTime() - Date.now()) / 86_400_000) : null;
+  const expiryLabel = expiryDate
+    ? expiryDate.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
+    : null;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,10 +53,48 @@ export function StreamLinkCard() {
         Link your stream/IPTV username &amp; password. We auto-check it against the server, then submit it to <strong className="text-foreground">Boss</strong> for OGSTREAMZ approval.
       </p>
 
-      {linked && status === "Active" && (
-        <p className="mt-4 inline-flex items-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-sm text-emerald-400">
-          <CheckCircle2 className="h-4 w-4" /> Verified · {status}{expiresAt ? ` · expires ${new Date(expiresAt).toLocaleDateString()}` : ""}
-        </p>
+      {(status || expiryLabel || username) && (
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+          {username && (
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/50 px-2.5 py-1 font-mono text-foreground/80">
+              <Tv className="h-3.5 w-3.5" /> {username}
+            </span>
+          )}
+          {status && (
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 font-bold uppercase tracking-[0.18em] ${
+                expired
+                  ? "border-destructive/50 bg-destructive/10 text-destructive"
+                  : status === "Active"
+                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                    : "border-amber-400/40 bg-amber-400/10 text-amber-300"
+              }`}
+            >
+              {expired ? <AlertTriangle className="h-3.5 w-3.5" /> : status === "Active" ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Clock className="h-3.5 w-3.5" />}
+              {expired ? "Expired" : status}
+            </span>
+          )}
+          {expiryLabel && (
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 ${
+                expired
+                  ? "border-destructive/50 bg-destructive/10 text-destructive"
+                  : daysLeft !== null && daysLeft <= 7
+                    ? "border-amber-400/40 bg-amber-400/10 text-amber-300"
+                    : "border-border bg-background/50 text-foreground/80"
+              }`}
+              title={`Stream profile expiry: ${expiryLabel}`}
+            >
+              <CalendarClock className="h-3.5 w-3.5" />
+              {expired
+                ? `Expired ${expiryLabel}`
+                : `Expires ${expiryLabel}${daysLeft !== null ? ` · ${daysLeft}d left` : ""}`}
+            </span>
+          )}
+        </div>
+      )}
+      {linked && !status && (
+        <p className="mt-3 text-xs text-muted-foreground">Linked — awaiting fresh status check.</p>
       )}
 
       <form onSubmit={submit} className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
