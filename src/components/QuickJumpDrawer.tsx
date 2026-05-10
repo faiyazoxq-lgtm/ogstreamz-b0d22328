@@ -81,7 +81,7 @@ export function QuickJumpDrawer({ user }: { user: boolean }) {
           Jump
         </button>
       </DrawerTrigger>
-      <DrawerContent className="border-white/10 bg-black/95 px-3 pb-[max(env(safe-area-inset-bottom),12px)] backdrop-blur-xl will-change-transform [transition:transform_280ms_cubic-bezier(0.22,1,0.36,1)] data-[vaul-dragging=true]:transition-none data-[vaul-dragging=true]:[transform:translate3d(0,var(--drawer-translate,0),0)_scale(0.995)]">
+      <DrawerContent className="border-white/10 bg-black/95 px-3 pb-[max(env(safe-area-inset-bottom),12px)] backdrop-blur-xl will-change-transform [transition:transform_280ms_cubic-bezier(0.22,1,0.36,1)] data-[vaul-dragging=true]:transition-none motion-safe:data-[vaul-dragging=true]:[transform:translate3d(0,var(--drawer-translate,0),0)_scale(0.995)] motion-reduce:[transition:none]">
         <DrawerHeader className="px-2 pt-2 pb-3 text-left">
           <div className="flex items-start justify-between gap-3">
             <div>
