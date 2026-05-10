@@ -11,6 +11,7 @@ import { spawnMusicPortal } from "@/lib/music-spawn.functions";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
 import { FeaturedNasheedCard } from "@/components/FeaturedNasheedCard";
+import { VipPaywallInline } from "@/components/VipPaywallInline";
 
 import { requireMember } from "@/lib/route-guards";
 export const Route = createFileRoute("/music")({
@@ -47,7 +48,8 @@ const PROMPTS: Prompt[] = [
 ];
 
 function MusicPromptBuilder() {
-  const { user } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
+  const isVip = profile?.status === "vip" || isAdmin;
   const navigate = useNavigate();
   const spawnFn = useServerFn(spawnMusicPortal);
 
@@ -180,18 +182,22 @@ function MusicPromptBuilder() {
           <span className="truncate">0G-BRAIN designs the studio around your prompt</span>
         </div>
 
-        <Button
-          onClick={onGenerate}
-          disabled={busy}
-          size="lg"
-          className="mt-3 w-full bg-gold text-primary-foreground hover:bg-gold/90 font-bold tracking-wide"
-        >
-          {busy ? (
-            <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Spawning…</>
-          ) : (
-            <><Wand2 className="h-4 w-4 mr-2" /> Spawn Studio</>
-          )}
-        </Button>
+        {isVip ? (
+          <Button
+            onClick={onGenerate}
+            disabled={busy}
+            size="lg"
+            className="mt-3 w-full bg-gold text-primary-foreground hover:bg-gold/90 font-bold tracking-wide"
+          >
+            {busy ? (
+              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Spawning…</>
+            ) : (
+              <><Wand2 className="h-4 w-4 mr-2" /> Spawn Studio</>
+            )}
+          </Button>
+        ) : (
+          <VipPaywallInline hub="music" isAuthenticated={!!user} />
+        )}
       </section>
       <CreditWallet className="mt-10" />
       <SpawnPortalCard kind="music" />
