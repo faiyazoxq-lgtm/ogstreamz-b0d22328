@@ -188,15 +188,15 @@ function SubSummary({
     activeSub && activeSub.status ? activeSub : null;
   if (!planLabel && !subWithStatus && !renewalLabel) return null;
   return (
-    <div className="mt-3 flex flex-col gap-1.5">
+    <div className="mt-2 sm:mt-3 flex flex-col gap-1 sm:gap-1.5">
       {(planLabel || subWithStatus) && (
-        <div className="flex flex-wrap items-center gap-1.5 min-h-[18px]">
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 min-h-[18px]">
           {planLabel && <PlanChip planLabel={planLabel} tone="amber" size="sm" />}
           {subWithStatus && <StatusBadge sub={subWithStatus} size="sm" />}
         </div>
       )}
       {renewalLabel && (
-        <p className="text-[11px] leading-tight text-muted-foreground">{renewalLabel}</p>
+        <p className="text-[11px] leading-tight text-muted-foreground break-words">{renewalLabel}</p>
       )}
     </div>
   );
