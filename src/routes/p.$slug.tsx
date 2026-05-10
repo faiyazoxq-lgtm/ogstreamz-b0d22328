@@ -428,6 +428,68 @@ function PortalPage() {
           </section>
         )}
 
+        {portal.kind === "connect" && owned && jokes.length > 0 && (
+          <section
+            className="mt-10 w-full rounded-2xl border p-6 backdrop-blur-sm"
+            style={{
+              borderColor: `${T.accent}55`,
+              background: `linear-gradient(135deg, ${T.accent}10, ${T.secondary}06)`,
+              boxShadow: `inset 0 0 30px ${T.accent}11`,
+            }}
+          >
+            <header className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4" style={{ color: T.accent }} />
+                <p className="text-[10px] uppercase tracking-[0.4em] font-bold" style={{ color: T.accent }}>
+                  Cold-Outreach Openers
+                </p>
+              </div>
+              <span
+                className="text-[10px] uppercase tracking-[0.3em] px-2 py-0.5 rounded-full border"
+                style={{ color: T.accent, borderColor: `${T.accent}55` }}
+              >
+                {jokes.length} lines
+              </span>
+            </header>
+            <ol className="space-y-3">
+              {jokes.map((opener: string, i: number) => (
+                <li
+                  key={i}
+                  className="flex gap-3 rounded-lg border p-3"
+                  style={{ borderColor: `${T.accent}33`, background: "rgba(0,0,0,0.25)" }}
+                >
+                  <span
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-black"
+                    style={{ background: T.accent, color: "#000" }}
+                  >
+                    {i + 1}
+                  </span>
+                  <p className="flex-1 text-sm leading-relaxed whitespace-pre-line opacity-90">{opener}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(opener).then(
+                        () => toast.success("Opener copied"),
+                        () => toast.error("Copy failed"),
+                      );
+                    }}
+                    className="shrink-0 inline-flex h-7 items-center gap-1 rounded-md border px-2 text-[10px] uppercase tracking-[0.25em] font-bold hover:opacity-80"
+                    style={{ borderColor: `${T.accent}66`, color: T.accent }}
+                    aria-label={`Copy opener ${i + 1}`}
+                  >
+                    <Copy className="h-3 w-3" />
+                    Copy
+                  </button>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-4 text-[10px] uppercase tracking-[0.3em] opacity-60 flex items-center gap-2">
+              <Sparkles className="h-3 w-3" style={{ color: T.accent }} />
+              AI-spawned openers · personalize before you send
+            </p>
+          </section>
+        )}
+
         {(groupLink || (isVipMember && vipLink)) && (
           <div className="mt-8 w-full max-w-md flex flex-col gap-3">
             {groupLink && (
