@@ -67,12 +67,29 @@ function Index() {
     if (!isNavigating && pendingTo) setPendingTo(null);
   }, [isNavigating, pendingTo]);
   useEffect(() => {
-    supabase
-      .from("custom_hubs")
-      .select("id,title,tagline,href,icon,accent,sort_order,published")
-      .eq("published", true)
-      .order("sort_order", { ascending: true })
-      .then(({ data }) => setCustomHubs(data ?? []));
+    let cancelled = false;
+    const refresh = async () => {
+      const { data } = await supabase
+        .from("custom_hubs")
+        .select("id,title,tagline,href,icon,accent,sort_order,published")
+        .eq("published", true)
+        .order("sort_order", { ascending: true });
+      if (!cancelled) setCustomHubs(data ?? []);
+    };
+    void refresh();
+    // Live-update the portal count when hubs are added/edited/removed.
+    const channel = supabase
+      .channel("custom_hubs:index")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "custom_hubs" },
+        () => { void refresh(); },
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      void supabase.removeChannel(channel);
+    };
   }, []);
 
   return (
