@@ -14,26 +14,103 @@ async function isAdmin(supabase: any, userId: string): Promise<boolean> {
 }
 
 /**
+ * Hard cap for any single user's credit balance. Postgres `integer` tops out
+ * at ~2.1B but we keep wallets well under that to prevent abuse and overflow.
+ */
+const MAX_CREDIT_BALANCE = 1_000_000;
+/** Largest single refund we'll ever process in one call. */
+const MAX_SINGLE_REFUND = 10_000;
+
+/**
  * Refund credits previously charged via spend_credits when a downstream step
  * fails. Uses the admin client because the user's RLS-bound update on profiles
  * is blocked by `guard_profile_self_update` (privileged-column guard).
+ *
+ * Server-side safety guards (silently no-op + log on violation so a failed
+ * refund never blocks the surrounding error path that triggered it):
+ *   - amount must be a finite positive integer
+ *   - amount must not exceed MAX_SINGLE_REFUND
+ *   - userId must be a non-empty string
+ *   - resulting balance must stay within [0, MAX_CREDIT_BALANCE]
  */
 async function refundCredits(userId: string, amount: number, reason: string) {
-  if (amount <= 0) return;
+  // ── Input validation ─────────────────────────────────────────────────────
+  if (typeof userId !== "string" || userId.length === 0) {
+    console.error("refundCredits rejected: invalid userId", { userId, amount, reason });
+    return;
+  }
+  if (
+    typeof amount !== "number" ||
+    !Number.isFinite(amount) ||
+    !Number.isInteger(amount) ||
+    amount <= 0
+  ) {
+    // Non-positive / NaN / Infinity / float — nothing to refund.
+    if (amount !== 0) {
+      console.error("refundCredits rejected: invalid amount", { userId, amount, reason });
+    }
+    return;
+  }
+  if (amount > MAX_SINGLE_REFUND) {
+    console.error("refundCredits rejected: amount exceeds MAX_SINGLE_REFUND", {
+      userId, amount, reason, max: MAX_SINGLE_REFUND,
+    });
+    return;
+  }
+
   try {
-    const { data: prof } = await supabaseAdmin
+    const { data: prof, error: readErr } = await supabaseAdmin
       .from("profiles")
       .select("credits")
       .eq("id", userId)
       .maybeSingle();
-    const current = Number(prof?.credits ?? 0);
-    await supabaseAdmin
+    if (readErr) throw readErr;
+    if (!prof) {
+      console.error("refundCredits rejected: profile not found", { userId, amount, reason });
+      return;
+    }
+
+    const currentRaw = Number(prof.credits ?? 0);
+    // Sanity-check the existing balance — corrupt data shouldn't get worse.
+    const current =
+      Number.isFinite(currentRaw) && Number.isInteger(currentRaw) && currentRaw >= 0
+        ? currentRaw
+        : 0;
+
+    // Overflow / over-cap guard. Refund is capped to whatever fits under the
+    // ceiling; if there is no headroom at all, abort and log for reconciliation.
+    const headroom = MAX_CREDIT_BALANCE - current;
+    if (headroom <= 0) {
+      console.error("refundCredits rejected: balance already at cap", {
+        userId, amount, reason, current, cap: MAX_CREDIT_BALANCE,
+      });
+      return;
+    }
+    const applied = Math.min(amount, headroom);
+    if (applied < amount) {
+      console.warn("refundCredits clamped to balance cap", {
+        userId, requested: amount, applied, current, cap: MAX_CREDIT_BALANCE, reason,
+      });
+    }
+    const next = current + applied;
+    // Defensive: should be impossible after the headroom check, but never write
+    // a value that would violate our invariants.
+    if (next < 0 || next > MAX_CREDIT_BALANCE || !Number.isSafeInteger(next)) {
+      console.error("refundCredits aborted: computed balance out of range", {
+        userId, current, applied, next, reason,
+      });
+      return;
+    }
+
+    const { error: updErr } = await supabaseAdmin
       .from("profiles")
-      .update({ credits: current + amount, updated_at: new Date().toISOString() })
+      .update({ credits: next, updated_at: new Date().toISOString() })
       .eq("id", userId);
+    if (updErr) throw updErr;
+
     await supabaseAdmin
       .from("credit_ledger")
-      .insert({ user_id: userId, delta: amount, reason: `refund:${reason}` });
+      .insert({ user_id: userId, delta: applied, reason: `refund:${reason}` });
   } catch (e) {
     // Best-effort: log so admins can manually reconcile if both writes fail.
     console.error("refundCredits failed", { userId, amount, reason, error: e });
