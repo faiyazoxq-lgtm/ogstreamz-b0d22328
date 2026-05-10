@@ -41,7 +41,7 @@ function WalletPage() {
         </Button>
       </div>
 
-      <CoinActivity limit={20} />
+      <CoinActivity loadMore pageSize={20} />
     </main>
   );
 }
