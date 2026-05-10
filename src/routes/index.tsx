@@ -19,6 +19,7 @@ import { RealOgBundlesCard } from "@/components/RealOgBundlesCard";
 import { VaultLoginModal } from "@/components/VaultLoginModal";
 import { StreamLinkCard } from "@/components/StreamLinkCard";
 import { Flame } from "lucide-react";
+import { TrackingEye } from "@/components/TrackingEye";
 
 const ICONS: Record<string, any> = {
   Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
@@ -244,7 +245,30 @@ function Index() {
             </h2>
             <p className="mt-3 text-base sm:text-base font-semibold text-foreground/95 leading-relaxed">{desc}</p>
             <div className="mt-8 btn-glass-blue btn-magnetic inline-flex items-center gap-2 px-5 py-3 rounded-lg text-xs uppercase tracking-[0.25em] font-bold text-white">
-              {thisPending ? "Opening…" : "Open Portal"}
+              {thisPending ? (
+                "Opening…"
+              ) : (
+                <span className="inline-flex items-center gap-[0.15em]">
+                  <TrackingEye
+                    variant="ice"
+                    bloodshot
+                    pupilRatio={0.5}
+                    travelRatio={0.22}
+                    className="align-[-0.18em]"
+                    style={{ width: "1.6em", height: "1.6em" }}
+                  />
+                  <span>pen P</span>
+                  <TrackingEye
+                    variant="ice"
+                    bloodshot
+                    pupilRatio={0.5}
+                    travelRatio={0.22}
+                    className="align-[-0.18em]"
+                    style={{ width: "1.6em", height: "1.6em" }}
+                  />
+                  <span>rtal</span>
+                </span>
+              )}
               <ArrowUpRight className="h-3.5 w-3.5" />
             </div>
           </Link>
