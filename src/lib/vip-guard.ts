@@ -52,3 +52,43 @@ export async function assertVipAccess(
     `VIP membership required for ${feature}. Visit the store to unlock — your credit was not charged.`,
   );
 }
+
+/**
+ * Server-side gate for "usage" features (anything beyond marketing).
+ * Allows: stream_user, vip, boss, admin, or anyone with an active VIP pass.
+ * Blocks: visitors, banned users, plain members (prospect/enforcer).
+ */
+export async function assertUsageAccess(
+  supabase: any,
+  userId: string,
+  feature = "this action",
+): Promise<void> {
+  if (!userId) throw new Error("Sign in required.");
+
+  const [profileRes, roleRes, passRes] = await Promise.all([
+    supabase.from("profiles").select("status, rank, banned").eq("id", userId).maybeSingle(),
+    supabase.from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle(),
+    supabase.from("vip_passes")
+      .select("id").eq("user_id", userId).is("revoked_at", null)
+      .gt("expires_at", new Date().toISOString()).limit(1).maybeSingle(),
+  ]);
+
+  const profile = profileRes?.data ?? null;
+  if (profile?.banned) throw new Error("Account suspended.");
+
+  const isAdmin = !!roleRes?.data;
+  const rank = profile?.rank as string | undefined;
+  const allowed =
+    isAdmin ||
+    rank === "boss" ||
+    rank === "vip" ||
+    rank === "stream_user" ||
+    profile?.status === "vip" ||
+    !!passRes?.data;
+
+  if (!allowed) {
+    throw new Error(
+      `OGSTREAMZ approval required for ${feature}. Link your stream account on the profile page so Boss can promote you.`,
+    );
+  }
+}
