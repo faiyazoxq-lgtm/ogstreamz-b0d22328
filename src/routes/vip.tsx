@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import {
   Crown, Check, Loader2, Lock, Flame, Send, Youtube, Instagram, Music2,
   Star, Zap, Headphones, Download, Radio, ShieldCheck, Sparkles, KeyRound,
-  Infinity as InfinityIcon, Trophy, MessageCircle, ArrowRight, Quote,
+  Infinity as InfinityIcon, Trophy, MessageCircle, ArrowRight, Quote, PartyPopper, XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -16,6 +16,10 @@ import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/vip")({
   component: VipPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    checkout: typeof search.checkout === "string" ? search.checkout : undefined,
+    session_id: typeof search.session_id === "string" ? search.session_id : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "VIP Pass · 0G-VAULT — All Your Apps. One Vault." },
