@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
+import { shouldPromoteToBoss, normalizeEmail } from "./boss-policy";
 
 function adminClient() {
   return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
@@ -18,10 +19,9 @@ export const promoteBossIfNeeded = createServerFn({ method: "POST" })
     const { data: u, error } = await admin.auth.getUser(data.accessToken);
     if (error || !u?.user) return { boss: false };
     const userId = u.user.id;
-    const userEmail = String(u.user.email || "").trim().toLowerCase();
-    const bossEmail = (process.env.BOSS_EMAIL || "").trim().toLowerCase();
-    if (!userEmail) return { boss: false };
-    const isBoss = !!bossEmail && bossEmail === userEmail;
+    const userEmail = normalizeEmail(u.user.email);
+    const bossEmail = normalizeEmail(process.env.BOSS_EMAIL);
+    const isBoss = shouldPromoteToBoss(userEmail, bossEmail);
     if (!isBoss) return { boss: false };
 
     await admin.from("profiles").update({
