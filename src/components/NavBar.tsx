@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  User, LogIn, Coins, Crown, Shield, ChevronDown,
+  User, LogIn, Coins, Crown, Shield, ChevronDown, History,
   Music, Laugh, TrendingUp, Rocket, Wrench, Swords, Radio,
   Store, ShoppingBag, Receipt,
   ShieldCheck, LayoutDashboard,
@@ -306,6 +306,7 @@ function MobileNavDrawer({
                 {[
                   { to: "/profile", label: "Vault & Profile", icon: UserCircle },
                   { to: "/store", label: "Buy Credits", icon: Coins },
+                  { to: "/history", label: "Portal History", icon: History },
                   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
                   { to: "/settings", label: "Settings", icon: Settings },
                 ].map(({ to, label, icon: Icon }) => {
