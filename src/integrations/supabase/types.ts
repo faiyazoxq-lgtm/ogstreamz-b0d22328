@@ -1002,6 +1002,27 @@ export type Database = {
           },
         ]
       }
+      payments_settings: {
+        Row: {
+          id: number
+          mode: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: number
+          mode?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: number
+          mode?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       pending_credit_grants: {
         Row: {
           claimed_at: string | null
