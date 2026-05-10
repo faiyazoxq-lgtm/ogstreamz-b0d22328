@@ -280,6 +280,12 @@ function MobileNavDrawer({
                   </Link>
                 </li>
                 <li>
+                  <Link to="/dashboard" onClick={close} className="flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-secondary">
+                    <LayoutDashboard className="h-4 w-4 text-gold" />
+                    <span className="text-sm font-semibold">Dashboard</span>
+                  </Link>
+                </li>
+                <li>
                   <Link to="/settings" onClick={close} className="flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-secondary">
                     <Settings className="h-4 w-4 text-gold" />
                     <span className="text-sm font-semibold">Settings</span>
@@ -398,6 +404,12 @@ function AccountMenu({
             <Link to="/store" className="flex items-center gap-2">
               <Coins className="h-4 w-4 text-gold" />
               <span>Buy Credits</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild className="cursor-pointer focus:bg-secondary">
+            <Link to="/dashboard" className="flex items-center gap-2">
+              <LayoutDashboard className="h-4 w-4 text-gold" />
+              <span>Dashboard</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild className="cursor-pointer focus:bg-secondary">
