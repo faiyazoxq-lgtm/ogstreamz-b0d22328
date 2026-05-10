@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { LayoutDashboard, Sparkles, Compass, ArrowRight } from "lucide-react";
+import { LayoutDashboard, Sparkles, Compass, ArrowRight, Tv, ExternalLink } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.jpg";
 
 export const Route = createFileRoute("/welcome")({
@@ -58,6 +60,27 @@ const CHOICES: Choice[] = [
 ];
 
 function WelcomePage() {
+  const [streamUrl, setStreamUrl] = useState<string>("https://ogstreamz.co.uk");
+
+  useEffect(() => {
+    supabase
+      .from("store_settings")
+      .select("stream_portal_url")
+      .eq("id", 1)
+      .maybeSingle()
+      .then(({ data }) => {
+        const u = (data as { stream_portal_url?: string } | null)?.stream_portal_url;
+        if (u && /^https?:\/\//i.test(u)) setStreamUrl(u);
+      });
+  }, []);
+
+  let streamHost = "";
+  try {
+    streamHost = new URL(streamUrl).host.replace(/^www\./, "");
+  } catch {
+    streamHost = streamUrl;
+  }
+
   return (
     <div className="min-h-dvh bg-background text-foreground">
       <div className="mx-auto flex max-w-5xl flex-col gap-10 px-4 py-10 sm:py-16">
@@ -119,6 +142,39 @@ function WelcomePage() {
               </div>
             </Link>
           ))}
+
+          {/* External 0G STREAMZ profile sign-in */}
+          <a
+            href={streamUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <div
+              className="pointer-events-none absolute inset-0 bg-gradient-to-br from-destructive/30 to-destructive/5 opacity-60 transition group-hover:opacity-100"
+              aria-hidden
+            />
+            <div className="relative flex items-center justify-between">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-background/80 ring-1 ring-border">
+                <Tv className="h-5 w-5" aria-hidden />
+              </span>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Streaming portal
+              </span>
+            </div>
+            <div className="relative space-y-1">
+              <h2 className="text-xl font-semibold tracking-tight">0G STREAMZ Profile</h2>
+              <p className="text-sm text-muted-foreground">
+                Sign in on the streaming domain to manage your line, expiry and devices.
+              </p>
+            </div>
+            <div className="relative mt-auto flex items-center justify-between text-sm font-medium text-primary">
+              <span className="inline-flex items-center gap-1">
+                Open {streamHost}
+                <ExternalLink className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
+              </span>
+            </div>
+          </a>
         </section>
 
         <footer className="flex flex-col items-center gap-2 text-center text-xs text-muted-foreground">
