@@ -65,25 +65,55 @@ export function newEntry(platform: StreamPlatform = "twitch"): StreamEntry {
 }
 
 /**
- * Detect which platform a pasted value belongs to based on its host (or a bare
- * "twitch.tv/..." style string). Returns null if the value is not a known
- * platform URL — bare handles cannot be auto-detected.
+ * Detect which platform a pasted value belongs to based on its host. Accepts
+ * many shapes: bare `twitch.tv/foo`, `https://www.twitch.tv/foo?lang=en`,
+ * `youtu.be/abc`, `m.youtube.com/@x`, `kick.com/@handle`, etc.
+ * Returns null when the value is not URL-shaped (bare handles can't be detected).
  */
 export function detectPlatformFromValue(raw: string): Exclude<StreamPlatform, "custom"> | null {
+  const r = inspectPlatformValue(raw);
+  return r?.platform ?? null;
+}
+
+export type PlatformInspection =
+  | { kind: "not-url" }
+  | { kind: "unknown-host"; host: string }
+  | { kind: "invalid-url" }
+  | { kind: "no-handle"; platform: Exclude<StreamPlatform, "custom">; host: string }
+  | { kind: "ok"; platform: Exclude<StreamPlatform, "custom">; host: string; handle: string };
+
+/**
+ * Rich version of detectPlatformFromValue. Tries to identify the platform AND
+ * pull a handle/path out of the URL. Use this when you want to surface a
+ * specific error if extraction fails.
+ */
+export function inspectPlatformValue(raw: string): (PlatformInspection & { platform?: Exclude<StreamPlatform, "custom"> }) | null {
   const v = raw.trim();
   if (!v) return null;
-  const looksLikeUrl = /^https?:\/\//i.test(v) || /^[\w-]+\.[\w.-]+\//.test(v);
-  if (!looksLikeUrl) return null;
-  let host: string;
-  try {
-    host = new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`).hostname.toLowerCase().replace(/^www\./, "");
-  } catch {
-    return null;
+  const looksLikeUrl = /^https?:\/\//i.test(v) || /^[\w-]+\.[\w.-]+(\/|$)/.test(v);
+  if (!looksLikeUrl) return { kind: "not-url" };
+  let url: URL;
+  try { url = new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`); } catch { return { kind: "invalid-url" }; }
+  const host = url.hostname.toLowerCase().replace(/^www\./, "");
+  let platform: Exclude<StreamPlatform, "custom"> | null = null;
+  if (/(^|\.)twitch\.tv$/.test(host)) platform = "twitch";
+  else if (/(^|\.)youtube\.com$|(^|\.)youtu\.be$/.test(host)) platform = "youtube";
+  else if (/(^|\.)kick\.com$/.test(host)) platform = "kick";
+  if (!platform) return { kind: "unknown-host", host };
+  const handle = extractHandleFromUrl(platform, v);
+  if (!handle) return { kind: "no-handle", platform, host };
+  return { kind: "ok", platform, host, handle: handle.replace(/^__path:/, "") };
+}
+
+/** Human-readable reason for an inspection that didn't yield an `ok` result. */
+export function inspectionError(r: PlatformInspection): string | null {
+  switch (r.kind) {
+    case "not-url":      return null; // bare handles aren't an error here
+    case "invalid-url":  return "Couldn't parse that as a URL. Check for typos or stray spaces.";
+    case "unknown-host": return `Unrecognised host "${r.host}". Supported: twitch.tv, youtube.com, youtu.be, kick.com.`;
+    case "no-handle":    return `Couldn't extract a handle from that ${r.platform} URL — paste the channel page link or use just your handle.`;
+    case "ok":           return null;
   }
-  if (/(^|\.)twitch\.tv$/.test(host)) return "twitch";
-  if (/(^|\.)youtube\.com$|(^|\.)youtu\.be$/.test(host)) return "youtube";
-  if (/(^|\.)kick\.com$/.test(host)) return "kick";
-  return null;
 }
 
 /**
@@ -123,12 +153,36 @@ function extractHandleFromUrl(platform: Exclude<StreamPlatform, "custom">, raw: 
   if (!HANDLE_RULES[platform].expectedHost.test(host)) return null;
 
   const segments = u.pathname.replace(/^\/+|\/+$/g, "").split("/").filter(Boolean);
-  if (segments.length === 0) return null;
 
   if (platform === "youtube") {
-    // Preserve channel-style URLs by returning a sentinel — caller handles them.
-    if (/^(channel|c|user)$/i.test(segments[0]) && segments[1]) return `__path:${segments[0].toLowerCase()}/${decodeURIComponent(segments[1])}`;
+    // youtu.be/<videoId>
+    if (/(^|\.)youtu\.be$/i.test(host) && segments[0]) {
+      return `__path:watch?v=${decodeURIComponent(segments[0])}`;
+    }
+    if (segments.length === 0) {
+      // bare ?v= on youtube.com
+      const v = u.searchParams.get("v");
+      return v ? `__path:watch?v=${v}` : null;
+    }
+    // Channel-style and video-style URLs are preserved verbatim.
+    if (/^(channel|c|user)$/i.test(segments[0]) && segments[1]) {
+      return `__path:${segments[0].toLowerCase()}/${decodeURIComponent(segments[1])}`;
+    }
+    if (/^(shorts|live|embed)$/i.test(segments[0]) && segments[1]) {
+      return `__path:${segments[0].toLowerCase()}/${decodeURIComponent(segments[1])}`;
+    }
+    if (/^watch$/i.test(segments[0])) {
+      const v = u.searchParams.get("v");
+      return v ? `__path:watch?v=${v}` : null;
+    }
     return decodeURIComponent(segments[0]).replace(/^@/, "");
+  }
+
+  if (segments.length === 0) return null;
+  // Twitch: /videos/123 or /<user>/clips → take first segment unless it's a known section.
+  if (platform === "twitch" && /^(videos|directory|p|popout)$/i.test(segments[0])) {
+    if (segments[0].toLowerCase() === "videos" && segments[1]) return `__path:videos/${decodeURIComponent(segments[1])}`;
+    return null;
   }
   return decodeURIComponent(segments[0]).replace(/^@/, "");
 }

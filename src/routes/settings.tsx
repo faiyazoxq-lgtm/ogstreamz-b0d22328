@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Upload, Save, User2, Globe, Send, Twitter, Instagram, Youtube, MessageCircle, Music2, Github, Linkedin, Trash2, Radio, Lock, Plus, X, Copy, Check, Wand2, ArrowRightLeft } from "lucide-react";
+import { Loader2, Upload, Save, User2, Globe, Send, Twitter, Instagram, Youtube, MessageCircle, Music2, Github, Linkedin, Trash2, Radio, Lock, Plus, X, Copy, Check, Wand2, ArrowRightLeft, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,8 @@ import {
   readEntries,
   validateEntry,
   detectPlatformFromValue,
+  inspectPlatformValue,
+  inspectionError,
   type StreamEntry,
   type StreamPlatform,
 } from "@/lib/stream-links";
@@ -343,6 +345,11 @@ function SettingsPage() {
               const otherRowIdx = mismatch
                 ? streamEntries.findIndex((x, i) => i !== idx && x.platform === mismatch)
                 : -1;
+              const inspect = inspectPlatformValue(entry.value);
+              const extractErr =
+                inspect && inspect.kind !== "ok" && inspect.kind !== "not-url"
+                  ? inspectionError(inspect)
+                  : null;
               return (
                 <div key={entry.id} className="space-y-1.5">
                 <div className="grid grid-cols-[140px_1fr_auto_auto] gap-2 items-center">
@@ -478,6 +485,12 @@ function SettingsPage() {
                         <Wand2 className="h-3 w-3 mr-1" /> Auto-fix → {mismatch}
                       </Button>
                     )}
+                  </div>
+                )}
+                {!mismatch && extractErr && (
+                  <div className="ml-[148px] flex items-start gap-2 text-[11px] text-rose-300">
+                    <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                    <span>{extractErr}</span>
                   </div>
                 )}
                 </div>
