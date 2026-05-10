@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
 
 async function isAdmin(supabase: any, userId: string): Promise<boolean> {
@@ -10,6 +11,33 @@ async function isAdmin(supabase: any, userId: string): Promise<boolean> {
     .eq("role", "admin")
     .maybeSingle();
   return !!data;
+}
+
+/**
+ * Refund credits previously charged via spend_credits when a downstream step
+ * fails. Uses the admin client because the user's RLS-bound update on profiles
+ * is blocked by `guard_profile_self_update` (privileged-column guard).
+ */
+async function refundCredits(userId: string, amount: number, reason: string) {
+  if (amount <= 0) return;
+  try {
+    const { data: prof } = await supabaseAdmin
+      .from("profiles")
+      .select("credits")
+      .eq("id", userId)
+      .maybeSingle();
+    const current = Number(prof?.credits ?? 0);
+    await supabaseAdmin
+      .from("profiles")
+      .update({ credits: current + amount, updated_at: new Date().toISOString() })
+      .eq("id", userId);
+    await supabaseAdmin
+      .from("credit_ledger")
+      .insert({ user_id: userId, delta: amount, reason: `refund:${reason}` });
+  } catch (e) {
+    // Best-effort: log so admins can manually reconcile if both writes fail.
+    console.error("refundCredits failed", { userId, amount, reason, error: e });
+  }
 }
 
 function slugify(s: string): string {
@@ -44,6 +72,7 @@ export const spawnPortal = createServerFn({ method: "POST" })
 
     // Members pay 1 credit per spawn; admins spawn free.
     const admin = await isAdmin(supabase, userId);
+    let charged = 0;
     if (!admin) {
       const { error: spendErr } = await supabase.rpc("spend_credits", {
         _amount: 1,
@@ -54,8 +83,12 @@ export const spawnPortal = createServerFn({ method: "POST" })
         if (msg.includes("insufficient")) throw new Error("Not enough credits — top up to spawn a portal");
         throw new Error(spendErr.message || "Could not charge credits");
       }
+      charged = 1;
     }
 
+    // From here on, any thrown error must refund `charged` credits before
+    // bubbling up so the user is not billed for a failed spawn.
+    try {
     const PERPLEXITY = process.env.PERPLEXITY_API_KEY;
     if (!PERPLEXITY) throw new Error("PERPLEXITY_API_KEY missing");
     const FIRECRAWL = process.env.FIRECRAWL_API_KEY;
@@ -226,6 +259,13 @@ Use HIGH CONTRAST hex colors. Heading & body MUST be real Google Fonts. Match mo
     if (error) throw new Error(error.message);
 
     return { portal, jokeCount: jokes.length, scout: scoutMeta };
+    } catch (err: any) {
+      if (charged > 0) {
+        await refundCredits(userId, charged, `spawn_portal:${data.kind}`);
+      }
+      const orig = err?.message ?? "Spawn failed";
+      throw new Error(charged > 0 ? `${orig} — your credit was refunded.` : orig);
+    }
   });
 
 // ───── VIP unlock: Stripe embedded checkout ─────
