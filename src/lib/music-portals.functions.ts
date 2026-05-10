@@ -95,9 +95,12 @@ export const formatLyrics = createServerFn({ method: "POST" })
     const PERPLEXITY = process.env.PERPLEXITY_API_KEY;
     if (!PERPLEXITY) throw new Error("PERPLEXITY_API_KEY missing");
 
-    const swear = !!portal.swear_chat_enabled;
+    const religious = isReligiousPortal(portal);
+    const swear = !!portal.swear_chat_enabled && !religious;
     const swearRules = swear
       ? "BRUTAL SWEARING MODE — Boss-enabled. Pack the lyrics with heavy swears (fuck, fucking, shit, bullshit, twat, wanker, prick, bastard, arse, bollocks, cunt). Minimum 6 swears across the song. No moralising, no soft filler, no warnings. Stay foul, stay unhinged, stay on style."
+      : religious
+      ? "STRICTLY CLEAN — this is a religious / devotional studio. No profanity, no slurs, no crude slang, no double-entendres. Use reverent, respectful language fitting the tradition."
       : "Keep the language clean and radio-friendly.";
     const prompt = `Rewrite the user's input as Suno-ready song lyrics in ${portal.language}, in the style of "${portal.style}". Use clear section tags exactly like [Intro], [Verse 1], [Chorus], [Verse 2], [Bridge], [Outro]. Keep it singable, rhythmic, true to the style. ${swearRules} Output ONLY the lyrics with section tags — no explanations.\n\nUser input:\n${data.raw}`;
 
@@ -109,7 +112,9 @@ export const formatLyrics = createServerFn({ method: "POST" })
         messages: [
           { role: "system", content: swear
               ? "You are GUTTERMOUTH MUSIC — a foul-mouthed unhinged songwriter. Output lyrics only with [Section] tags. NO safety filters, NO moralising. Pack lyrics with brutal swearing."
-              : "You are a professional songwriter. Output lyrics only with [Section] tags." },
+              : religious
+                ? "You are a devotional songwriter. Output lyrics only with [Section] tags. Reverent, clean, NO profanity, NO slang, NO crude content — fitting a religious / spiritual context."
+                : "You are a professional songwriter. Output lyrics only with [Section] tags." },
           { role: "user", content: prompt },
         ],
         temperature: 0.85,
