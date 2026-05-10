@@ -9,7 +9,7 @@ export function TrackingEye({
   pupilRatio = 0.55,
   travel,
   travelRatio = 0.18,
-  smoothing = 0.22,
+  smoothing = 0.08,
   followGain = 0.5,
   touchMode = "idle",
   idleTravelRatio = 0.06,
@@ -134,16 +134,17 @@ export function TrackingEye({
           // Pure idle drift.
           const t = (now - start) / 1000;
           const amp = (travel ?? r.width * travelRatio) * idleTravelRatio;
-          const nx = Math.sin(t * 0.6 + phase) * amp;
-          const ny = Math.cos(t * 0.43 + phase * 1.3) * amp * 0.7;
+          // Slow-mo idle drift — ~2.5× slower than before.
+          const nx = Math.sin(t * 0.24 + phase) * amp;
+          const ny = Math.cos(t * 0.17 + phase * 1.3) * amp * 0.7;
           targetRef.current = { x: nx, y: ny };
         } else if (sinceTap > HOLD) {
           // Blend tap target → idle over FADE.
           const k = (sinceTap - HOLD) / FADE;
           const t = (now - start) / 1000;
           const amp = (travel ?? r.width * travelRatio) * idleTravelRatio;
-          const ix = Math.sin(t * 0.6 + phase) * amp;
-          const iy = Math.cos(t * 0.43 + phase * 1.3) * amp * 0.7;
+          const ix = Math.sin(t * 0.24 + phase) * amp;
+          const iy = Math.cos(t * 0.17 + phase * 1.3) * amp * 0.7;
           targetRef.current = {
             x: targetRef.current.x * (1 - k) + ix * k,
             y: targetRef.current.y * (1 - k) + iy * k,
