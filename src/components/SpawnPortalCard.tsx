@@ -331,15 +331,34 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
               <Input value={language} onChange={(e) => setLanguage(e.target.value)} placeholder="English" className="mt-1 h-11 bg-background" disabled={loading} />
             </div>
             <div className="sm:col-span-2">
-              <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Niche / Theme</label>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Niche / Theme</label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={autoDescribe}
+                  disabled={describing || loading}
+                  aria-label="Auto-generate a richer description from your keywords"
+                  title="Use your name + keywords to draft a richer description"
+                  className="h-7 px-2.5 text-[10px] uppercase tracking-[0.22em] font-bold border-[oklch(0.72_0.22_245/0.5)] hover:border-[oklch(0.72_0.22_245)] hover:bg-[oklch(0.72_0.22_245/0.08)]"
+                >
+                  {describing
+                    ? <><Loader2 className="h-3 w-3 animate-spin mr-1.5" />Drafting…</>
+                    : <><Sparkles className="h-3 w-3 mr-1.5 text-[oklch(0.72_0.22_245)]" />Auto-describe</>}
+                </Button>
+              </div>
               <textarea
                 value={niche}
                 onChange={(e) => setNiche(e.target.value)}
                 placeholder={copy.nichePh}
                 rows={2}
-                disabled={loading}
+                disabled={loading || describing}
                 className="mt-1 w-full bg-background border border-border rounded-md px-3 py-2 text-sm resize-y disabled:opacity-50"
               />
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Tip: drop a few keywords then tap <span className="font-bold text-foreground">Auto-describe</span> for a richer prompt.
+              </p>
             </div>
             <div className="sm:col-span-2">
               <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Mood / Visual Vibe</label>
