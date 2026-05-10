@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteSearch } from "@/components/SiteSearch";
+import { MasterSwearToggle } from "@/components/MasterSwearToggle";
 import {
   Sheet,
   SheetContent,
@@ -173,6 +174,11 @@ export function NavBar() {
               isBoss={isBoss}
             />
           </li>
+          {user && (
+            <li className="hidden md:block">
+              <MasterSwearToggle />
+            </li>
+          )}
           <li className="sm:hidden">
             <MobileNavDrawer
               hubs={visibleHubs}
@@ -299,6 +305,14 @@ function MobileNavDrawer({
           <div className="mb-4">
             <SiteSearch />
           </div>
+          {user && (
+            <div className="mb-4 flex items-center justify-between gap-3 px-1">
+              <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                Swearing Agent
+              </span>
+              <MasterSwearToggle />
+            </div>
+          )}
           <Section title="HUBS" icon={Rocket} items={hubs} gold />
           <Section title="Store" icon={Store} items={stores} />
           {admin.length > 0 && <Section title="Admin" icon={ShieldCheck} items={admin} />}

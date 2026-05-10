@@ -4,7 +4,6 @@ import { Loader2, Send, Skull, Crown, Flame, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { setFeatureFlags } from "@/lib/overlord.functions";
@@ -35,32 +34,6 @@ export function BossChatPanel() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
-
-  const toggleSwearing = async (next: boolean) => {
-    if (!user || !profile) {
-      toast.error("Sign in to use Boss Chat");
-      return;
-    }
-    setTogglingFlag(true);
-    try {
-      if (isBoss) {
-        // Boss can flip via the privileged server fn (audited).
-        const flags = { ...profile.feature_flags, swearing: next };
-        await setF({ data: { userId: user.id, flags } });
-      } else {
-        // Non-boss users flip their own flag directly via RLS-protected profile update.
-        const merged = { ...(profile.feature_flags ?? {}), swearing: next };
-        const { error } = await supabase.from("profiles").update({ feature_flags: merged }).eq("id", user.id);
-        if (error) throw new Error(error.message);
-      }
-      await refresh();
-      toast.success(next ? "Swearing Agent: ON 🔥" : "Swearing Agent: OFF");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to toggle");
-    } finally {
-      setTogglingFlag(false);
-    }
-  };
 
   const setIntensity = async (next: "mild" | "medium" | "chaotic") => {
     if (!user || !profile || next === intensity) return;
@@ -139,25 +112,17 @@ export function BossChatPanel() {
           </div>
         </div>
 
-        <label
-          className={`flex items-center gap-3 px-3 py-2 rounded-xl border-2 ${
-            swearing ? "border-rose-600/60 bg-rose-950/30" : "border-emerald-700/40 bg-black/40"
+        <div
+          className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 ${
+            swearing ? "border-rose-600/60 bg-rose-950/30 text-rose-200" : "border-emerald-700/40 bg-black/40 text-emerald-300"
           }`}
+          title="Toggle the Swearing Agent from the master switch in the header."
         >
-          <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.25em] font-black">
-            {swearing ? <Flame className="h-3.5 w-3.5 text-rose-300" /> : <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />}
-            Swearing Agent
+          {swearing ? <Flame className="h-3.5 w-3.5 text-rose-300" /> : <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />}
+          <span className="text-[11px] uppercase tracking-[0.25em] font-black">
+            Swearing Agent · {swearing ? "ON" : "OFF"}
           </span>
-          <Switch
-            checked={swearing}
-            disabled={togglingFlag || !canToggleSelf}
-            onCheckedChange={toggleSwearing}
-            className="data-[state=checked]:bg-rose-500"
-          />
-          <span className={`text-[10px] font-black uppercase tracking-widest ${swearing ? "text-rose-300" : "text-emerald-500"}`}>
-            {swearing ? "ON" : "OFF"}
-          </span>
-        </label>
+        </div>
       </header>
 
       {swearing && (
