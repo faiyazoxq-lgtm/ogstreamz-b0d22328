@@ -52,13 +52,16 @@ import { Route as BossUsersRouteImport } from './routes/boss.users'
 import { Route as BossStreamQueueRouteImport } from './routes/boss.stream-queue'
 import { Route as BossSettingsRouteImport } from './routes/boss.settings'
 import { Route as BossPricingRouteImport } from './routes/boss.pricing'
+import { Route as BossPortalsRouteImport } from './routes/boss.portals'
 import { Route as BossOverviewRouteImport } from './routes/boss.overview'
 import { Route as BossLexiconRouteImport } from './routes/boss.lexicon'
+import { Route as BossHubsRouteImport } from './routes/boss.hubs'
 import { Route as BossCivilityRouteImport } from './routes/boss.civility'
 import { Route as BossAnalyticsRouteImport } from './routes/boss.analytics'
 import { Route as BossAlertsRouteImport } from './routes/boss.alerts'
 import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as AccountPassesRouteImport } from './routes/account.passes'
+import { Route as BossHubsNewRouteImport } from './routes/boss.hubs.new'
 import { Route as ApiPublicSunoWebhookRouteImport } from './routes/api/public/suno-webhook'
 import { Route as ApiPublic0gOrchestratorRouteImport } from './routes/api/public/0g-orchestrator'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
@@ -282,6 +285,11 @@ const BossPricingRoute = BossPricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => BossRoute,
 } as any)
+const BossPortalsRoute = BossPortalsRouteImport.update({
+  id: '/portals',
+  path: '/portals',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossOverviewRoute = BossOverviewRouteImport.update({
   id: '/overview',
   path: '/overview',
@@ -290,6 +298,11 @@ const BossOverviewRoute = BossOverviewRouteImport.update({
 const BossLexiconRoute = BossLexiconRouteImport.update({
   id: '/lexicon',
   path: '/lexicon',
+  getParentRoute: () => BossRoute,
+} as any)
+const BossHubsRoute = BossHubsRouteImport.update({
+  id: '/hubs',
+  path: '/hubs',
   getParentRoute: () => BossRoute,
 } as any)
 const BossCivilityRoute = BossCivilityRouteImport.update({
@@ -316,6 +329,11 @@ const AccountPassesRoute = AccountPassesRouteImport.update({
   id: '/account/passes',
   path: '/account/passes',
   getParentRoute: () => rootRouteImport,
+} as any)
+const BossHubsNewRoute = BossHubsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => BossHubsRoute,
 } as any)
 const ApiPublicSunoWebhookRoute = ApiPublicSunoWebhookRouteImport.update({
   id: '/api/public/suno-webhook',
@@ -395,8 +413,10 @@ export interface FileRoutesByFullPath {
   '/boss/alerts': typeof BossAlertsRoute
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/civility': typeof BossCivilityRoute
+  '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
+  '/boss/portals': typeof BossPortalsRoute
   '/boss/pricing': typeof BossPricingRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
@@ -411,6 +431,7 @@ export interface FileRoutesByFullPath {
   '/boss/': typeof BossIndexRoute
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
+  '/boss/hubs/new': typeof BossHubsNewRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
   '/api/public/hooks/telegram-reminders': typeof ApiPublicHooksTelegramRemindersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -453,8 +474,10 @@ export interface FileRoutesByTo {
   '/boss/alerts': typeof BossAlertsRoute
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/civility': typeof BossCivilityRoute
+  '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
+  '/boss/portals': typeof BossPortalsRoute
   '/boss/pricing': typeof BossPricingRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
@@ -469,6 +492,7 @@ export interface FileRoutesByTo {
   '/boss': typeof BossIndexRoute
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
+  '/boss/hubs/new': typeof BossHubsNewRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
   '/api/public/hooks/telegram-reminders': typeof ApiPublicHooksTelegramRemindersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -513,8 +537,10 @@ export interface FileRoutesById {
   '/boss/alerts': typeof BossAlertsRoute
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/civility': typeof BossCivilityRoute
+  '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
+  '/boss/portals': typeof BossPortalsRoute
   '/boss/pricing': typeof BossPricingRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
@@ -529,6 +555,7 @@ export interface FileRoutesById {
   '/boss/': typeof BossIndexRoute
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
+  '/boss/hubs/new': typeof BossHubsNewRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
   '/api/public/hooks/telegram-reminders': typeof ApiPublicHooksTelegramRemindersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -574,8 +601,10 @@ export interface FileRouteTypes {
     | '/boss/alerts'
     | '/boss/analytics'
     | '/boss/civility'
+    | '/boss/hubs'
     | '/boss/lexicon'
     | '/boss/overview'
+    | '/boss/portals'
     | '/boss/pricing'
     | '/boss/settings'
     | '/boss/stream-queue'
@@ -590,6 +619,7 @@ export interface FileRouteTypes {
     | '/boss/'
     | '/api/public/0g-orchestrator'
     | '/api/public/suno-webhook'
+    | '/boss/hubs/new'
     | '/api/public/hooks/syndicate-tick'
     | '/api/public/hooks/telegram-reminders'
     | '/api/public/payments/webhook'
@@ -632,8 +662,10 @@ export interface FileRouteTypes {
     | '/boss/alerts'
     | '/boss/analytics'
     | '/boss/civility'
+    | '/boss/hubs'
     | '/boss/lexicon'
     | '/boss/overview'
+    | '/boss/portals'
     | '/boss/pricing'
     | '/boss/settings'
     | '/boss/stream-queue'
@@ -648,6 +680,7 @@ export interface FileRouteTypes {
     | '/boss'
     | '/api/public/0g-orchestrator'
     | '/api/public/suno-webhook'
+    | '/boss/hubs/new'
     | '/api/public/hooks/syndicate-tick'
     | '/api/public/hooks/telegram-reminders'
     | '/api/public/payments/webhook'
@@ -691,8 +724,10 @@ export interface FileRouteTypes {
     | '/boss/alerts'
     | '/boss/analytics'
     | '/boss/civility'
+    | '/boss/hubs'
     | '/boss/lexicon'
     | '/boss/overview'
+    | '/boss/portals'
     | '/boss/pricing'
     | '/boss/settings'
     | '/boss/stream-queue'
@@ -707,6 +742,7 @@ export interface FileRouteTypes {
     | '/boss/'
     | '/api/public/0g-orchestrator'
     | '/api/public/suno-webhook'
+    | '/boss/hubs/new'
     | '/api/public/hooks/syndicate-tick'
     | '/api/public/hooks/telegram-reminders'
     | '/api/public/payments/webhook'
@@ -1065,6 +1101,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossPricingRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/portals': {
+      id: '/boss/portals'
+      path: '/portals'
+      fullPath: '/boss/portals'
+      preLoaderRoute: typeof BossPortalsRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/overview': {
       id: '/boss/overview'
       path: '/overview'
@@ -1077,6 +1120,13 @@ declare module '@tanstack/react-router' {
       path: '/lexicon'
       fullPath: '/boss/lexicon'
       preLoaderRoute: typeof BossLexiconRouteImport
+      parentRoute: typeof BossRoute
+    }
+    '/boss/hubs': {
+      id: '/boss/hubs'
+      path: '/hubs'
+      fullPath: '/boss/hubs'
+      preLoaderRoute: typeof BossHubsRouteImport
       parentRoute: typeof BossRoute
     }
     '/boss/civility': {
@@ -1113,6 +1163,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/account/passes'
       preLoaderRoute: typeof AccountPassesRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/boss/hubs/new': {
+      id: '/boss/hubs/new'
+      path: '/new'
+      fullPath: '/boss/hubs/new'
+      preLoaderRoute: typeof BossHubsNewRouteImport
+      parentRoute: typeof BossHubsRoute
     }
     '/api/public/suno-webhook': {
       id: '/api/public/suno-webhook'
@@ -1166,12 +1223,26 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface BossHubsRouteChildren {
+  BossHubsNewRoute: typeof BossHubsNewRoute
+}
+
+const BossHubsRouteChildren: BossHubsRouteChildren = {
+  BossHubsNewRoute: BossHubsNewRoute,
+}
+
+const BossHubsRouteWithChildren = BossHubsRoute._addFileChildren(
+  BossHubsRouteChildren,
+)
+
 interface BossRouteChildren {
   BossAlertsRoute: typeof BossAlertsRoute
   BossAnalyticsRoute: typeof BossAnalyticsRoute
   BossCivilityRoute: typeof BossCivilityRoute
+  BossHubsRoute: typeof BossHubsRouteWithChildren
   BossLexiconRoute: typeof BossLexiconRoute
   BossOverviewRoute: typeof BossOverviewRoute
+  BossPortalsRoute: typeof BossPortalsRoute
   BossPricingRoute: typeof BossPricingRoute
   BossSettingsRoute: typeof BossSettingsRoute
   BossStreamQueueRoute: typeof BossStreamQueueRoute
@@ -1183,8 +1254,10 @@ const BossRouteChildren: BossRouteChildren = {
   BossAlertsRoute: BossAlertsRoute,
   BossAnalyticsRoute: BossAnalyticsRoute,
   BossCivilityRoute: BossCivilityRoute,
+  BossHubsRoute: BossHubsRouteWithChildren,
   BossLexiconRoute: BossLexiconRoute,
   BossOverviewRoute: BossOverviewRoute,
+  BossPortalsRoute: BossPortalsRoute,
   BossPricingRoute: BossPricingRoute,
   BossSettingsRoute: BossSettingsRoute,
   BossStreamQueueRoute: BossStreamQueueRoute,
