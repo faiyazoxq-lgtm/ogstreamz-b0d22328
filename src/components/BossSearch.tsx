@@ -10,6 +10,30 @@ type Hit = TrackHit | JokeHit | ToolHit;
 
 const KIND_ICON = { track: Music2, joke: Smile, tool: Wrench } as const;
 
+function escapeRegex(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function Highlight({ text, term }: { text: string; term: string }) {
+  const t = term.trim();
+  if (!t || !text) return <>{text}</>;
+  const re = new RegExp(`(${escapeRegex(t)})`, "ig");
+  const parts = text.split(re);
+  return (
+    <>
+      {parts.map((p, i) =>
+        re.test(p) && p.toLowerCase() === t.toLowerCase() ? (
+          <mark key={i} className="bg-primary/30 text-primary-foreground rounded-sm px-0.5">
+            {p}
+          </mark>
+        ) : (
+          <span key={i}>{p}</span>
+        ),
+      )}
+    </>
+  );
+}
+
 export function BossSearch({ className = "" }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -159,9 +183,12 @@ export function BossSearch({ className = "" }: { className?: string }) {
                     >
                       <Icon className="h-4 w-4 mt-0.5 text-gold/80 shrink-0" />
                       <span className="flex-1 min-w-0">
-                        <span className="block font-semibold text-foreground line-clamp-2">{title}</span>
+                        <span className="block font-semibold text-foreground line-clamp-2">
+                          <Highlight text={title} term={q} />
+                        </span>
                         <span className="block text-[11px] text-muted-foreground truncate">
-                          <span className="uppercase tracking-wider mr-1.5">{h.kind}</span>{sub}
+                          <span className="uppercase tracking-wider mr-1.5">{h.kind}</span>
+                          <Highlight text={sub} term={q} />
                         </span>
                       </span>
                     </button>
