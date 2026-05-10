@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useRouterState } from "@tanstack/react-router";
 import { SyndicateGallery } from "@/components/SyndicateGallery";
 import { OgWordmark } from "@/components/OgWordmark";
+import { EYE_SCALE_CLASS } from "@/components/OgWordmark";
 import {
   Music2, Smile, Wrench, ArrowUpRight, TrendingUp, Rocket, Swords,
   Sparkles, Radio, Bot, Brain, Zap, Star, Megaphone, Disc3, Satellite, Radar,
