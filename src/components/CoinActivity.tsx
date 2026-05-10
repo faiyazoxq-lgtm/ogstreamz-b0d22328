@@ -139,6 +139,38 @@ export function CoinActivity({
         </button>
       </header>
 
+      {showDateFilter && (
+        <div
+          role="radiogroup"
+          aria-label="Filter by date range"
+          className="mb-4 flex items-center gap-1.5 flex-wrap"
+        >
+          <span className="text-[10px] uppercase tracking-[0.25em] font-bold text-muted-foreground mr-1">
+            Range
+          </span>
+          {RANGE_OPTIONS.map((opt) => {
+            const active = range === opt.value;
+            return (
+              <button
+                key={opt.value}
+                role="radio"
+                aria-checked={active}
+                disabled={loading}
+                onClick={() => setRange(opt.value)}
+                className={[
+                  "rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] border transition-colors",
+                  active
+                    ? "border-gold/60 bg-gold/15 text-gold"
+                    : "border-border bg-background/40 text-muted-foreground hover:text-foreground hover:bg-secondary",
+                ].join(" ")}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {loading && rows.length === 0 ? (
         <ol className="space-y-2" aria-busy="true" aria-label="Loading coin activity">
           {Array.from({ length: skeletonCount }).map((_, i) => (
