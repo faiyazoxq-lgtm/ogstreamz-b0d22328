@@ -132,6 +132,12 @@ export function QuickJumpDrawer({ user }: { user: boolean }) {
                 tabIndex={isPending ? -1 : 0}
                 className={`group relative flex min-h-[88px] flex-col justify-between rounded-2xl border border-white/15 bg-black/50 p-3.5 text-left transition-all active:scale-[0.97] hover:border-[var(--ql-tint)] hover:shadow-[0_0_30px_-8px_var(--ql-tint)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ql-tint)] ${dimmed ? "pointer-events-none opacity-40" : ""} ${thisPending ? "pointer-events-none border-[var(--ql-tint)] shadow-[0_0_30px_-8px_var(--ql-tint)]" : ""}`}
                 style={{ ["--ql-tint" as any]: tint }}
+                activeProps={{
+                  "aria-current": "page",
+                  "data-active": "true",
+                  className:
+                    "group relative flex min-h-[88px] flex-col justify-between rounded-2xl border p-3.5 text-left transition-all active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ql-tint)] border-[var(--ql-tint)] bg-[color-mix(in_oklab,var(--ql-tint)_18%,transparent)] shadow-[0_0_24px_-6px_var(--ql-tint)] ring-1 ring-inset ring-[var(--ql-tint)]",
+                }}
               >
                 {thisPending ? (
                   <>
