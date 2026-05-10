@@ -16,6 +16,7 @@ import {
   listSendingDomains, upsertSendingDomain, deleteSendingDomain,
 } from "@/lib/connect.functions";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
+import { CreditWallet } from "@/components/CreditWallet";
 
 export const Route = createFileRoute("/connect")({
   head: () => ({
@@ -337,6 +338,7 @@ function ConnectHubPage() {
             ConnectHUB stores only business-context data necessary for the outreach and is not financial, medical, or legal advice.
           </div>
         </footer>
+        <CreditWallet className="mt-10" />
         <SpawnPortalCard kind="connect" />
       </main>
     </div>
