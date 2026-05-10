@@ -975,7 +975,7 @@ function NewsHubView({ portal }: { portal: Portal }) {
                   </div>
                 </div>
                 <Button onClick={startUnlock} disabled={unlocking} className="font-black uppercase tracking-[0.25em]" style={{ background: accent, color: "#000" }}>
-                  {unlocking ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Unlock Alpha · ${(portal.price_cents / 100).toFixed(2)}</>}
+                  {unlocking ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Unlock Alpha · £{(portal.price_cents / 100).toFixed(2)} ({Math.round(portal.price_cents / 100)} 🪙)</>}
                 </Button>
               </div>
             )}
@@ -1060,7 +1060,7 @@ function ConflictColumn({ side, articles, headingFont, text, showVip, startUnloc
                 <div className="mt-2.5 rounded p-2 border border-dashed flex items-center justify-between gap-2 text-[10px]" style={{ borderColor: `${c}66` }}>
                   <span className="flex items-center gap-1.5"><Lock className="h-3 w-3" style={{ color: c }} />VIP analysis locked</span>
                   <Button size="sm" onClick={startUnlock} disabled={unlocking} className="h-6 text-[10px] px-2" style={{ background: c, color: "#000" }}>
-                    {unlocking ? <Loader2 className="h-3 w-3 animate-spin" /> : `$${(priceCents / 100).toFixed(2)}`}
+                    {unlocking ? <Loader2 className="h-3 w-3 animate-spin" /> : `£${(priceCents / 100).toFixed(2)} (${Math.round(priceCents / 100)} 🪙)`}
                   </Button>
                 </div>
               )}
