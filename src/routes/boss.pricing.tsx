@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, Plus, Save, Trash2, Tags, Coins, Power, Tv, GripVertical, X } from "lucide-react";
+import { Loader2, Plus, Save, Trash2, Tags, Coins, Power, Tv, GripVertical, X, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,7 @@ import {
   type StoreProductRow,
 } from "@/lib/store-products.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { checkUrlReachable } from "@/lib/url-check.functions";
 
 export const Route = createFileRoute("/boss/pricing")({
   head: () => ({ meta: [{ title: "Pricing — Boss" }] }),
@@ -95,6 +96,8 @@ function PricingPage() {
 
   const [streamUrl, setStreamUrl] = useState<string>("https://ogstreamz.co.uk");
   const [savingStream, setSavingStream] = useState(false);
+  const [testingStream, setTestingStream] = useState(false);
+  const checkUrl = useServerFn(checkUrlReachable);
 
   async function refresh() {
     setLoading(true);
@@ -351,6 +354,31 @@ function PricingPage() {
     toast.success("Stream portal updated");
   }
 
+  async function testStreamUrl() {
+    const raw = streamUrl.trim();
+    if (!raw) {
+      toast.error("Enter a URL first");
+      return;
+    }
+    setTestingStream(true);
+    try {
+      const r = await checkUrl({ data: { url: raw } });
+      if (r.ok) {
+        toast.success(`Reachable — ${r.status} in ${r.ms}ms`);
+      } else {
+        toast.error(
+          r.error
+            ? `Unreachable: ${r.error}`
+            : `Unreachable (HTTP ${r.status ?? "?"})`,
+        );
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Test failed");
+    } finally {
+      setTestingStream(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <header className="flex items-center gap-3">
@@ -410,7 +438,11 @@ function PricingPage() {
               onChange={(e) => setStreamUrl(e.target.value)}
             />
           </div>
-          <Button onClick={saveStreamUrl} disabled={savingStream}>
+          <Button variant="outline" onClick={testStreamUrl} disabled={testingStream || savingStream}>
+            {testingStream ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wifi className="h-4 w-4" />}
+            Test link
+          </Button>
+          <Button onClick={saveStreamUrl} disabled={savingStream || testingStream}>
             {savingStream ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Save
           </Button>
