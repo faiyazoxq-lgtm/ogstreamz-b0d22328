@@ -903,6 +903,90 @@ export type Database = {
         }
         Relationships: []
       }
+      pass_orders: {
+        Row: {
+          amount_cents: number
+          boss_decision_note: string | null
+          created_at: string
+          currency: string
+          decided_at: string | null
+          decided_by: string | null
+          duration_days: number
+          environment: string
+          id: string
+          issued_pass_id: string | null
+          kind: string
+          pass_number: string | null
+          product_id: string
+          status: string
+          stripe_payment_intent: string | null
+          stripe_session_id: string
+          telegram_alert_msg_id: string | null
+          updated_at: string
+          user_chat_id: number | null
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          boss_decision_note?: string | null
+          created_at?: string
+          currency?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          duration_days: number
+          environment?: string
+          id?: string
+          issued_pass_id?: string | null
+          kind: string
+          pass_number?: string | null
+          product_id: string
+          status?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id: string
+          telegram_alert_msg_id?: string | null
+          updated_at?: string
+          user_chat_id?: number | null
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          boss_decision_note?: string | null
+          created_at?: string
+          currency?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          duration_days?: number
+          environment?: string
+          id?: string
+          issued_pass_id?: string | null
+          kind?: string
+          pass_number?: string | null
+          product_id?: string
+          status?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string
+          telegram_alert_msg_id?: string | null
+          updated_at?: string
+          user_chat_id?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pass_orders_issued_pass_id_fkey"
+            columns: ["issued_pass_id"]
+            isOneToOne: false
+            referencedRelation: "vip_passes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pass_orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "store_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pending_credit_grants: {
         Row: {
           claimed_at: string | null
@@ -1606,6 +1690,60 @@ export type Database = {
         }
         Relationships: []
       }
+      store_products: {
+        Row: {
+          active: boolean
+          asset_url: string | null
+          created_at: string
+          currency: string
+          description: string | null
+          duration_days: number | null
+          id: string
+          image_url: string | null
+          kind: string
+          metadata: Json
+          price_cents: number
+          sku: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          asset_url?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          duration_days?: number | null
+          id?: string
+          image_url?: string | null
+          kind: string
+          metadata?: Json
+          price_cents: number
+          sku: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          asset_url?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          duration_days?: number | null
+          id?: string
+          image_url?: string | null
+          kind?: string
+          metadata?: Json
+          price_cents?: number
+          sku?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       store_settings: {
         Row: {
           credits_per_song: number
@@ -1797,6 +1935,30 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_link_tokens: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       topup_requests: {
         Row: {
           created_at: string
@@ -1982,6 +2144,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_telegram_links: {
+        Row: {
+          chat_id: number
+          first_name: string | null
+          linked_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          chat_id: number
+          first_name?: string | null
+          linked_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          chat_id?: number
+          first_name?: string | null
+          linked_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
       vip_passes: {
         Row: {
           created_at: string
@@ -2080,6 +2266,10 @@ export type Database = {
           _user_id: string
         }
         Returns: string
+      }
+      boss_decide_pass_order: {
+        Args: { _approve: boolean; _note?: string; _order_id: string }
+        Returns: Json
       }
       boss_deny_topup: {
         Args: { _id: string; _note: string }
