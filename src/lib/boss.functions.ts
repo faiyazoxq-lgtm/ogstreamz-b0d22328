@@ -22,17 +22,14 @@ export const promoteBossIfNeeded = createServerFn({ method: "POST" })
     const bossEmail = (process.env.BOSS_EMAIL || "").trim().toLowerCase();
     if (!userEmail) return { boss: false };
     const isBoss = !!bossEmail && bossEmail === userEmail;
-    const isKin = /(^|[^a-z])faiyaz([^a-z]|$)/.test(userEmail.split("@")[0] || "");
-    if (!isBoss && !isKin) return { boss: false };
+    if (!isBoss) return { boss: false };
 
     await admin.from("profiles").update({
       status: "vip",
-      rank: isBoss ? "boss" : "vip",
+      rank: "boss",
       credits: 999999,
       updated_at: new Date().toISOString(),
     }).eq("id", userId);
-    if (isBoss) {
-      await admin.from("user_roles").upsert({ user_id: userId, role: "admin" }, { onConflict: "user_id,role" });
-    }
+    await admin.from("user_roles").upsert({ user_id: userId, role: "admin" }, { onConflict: "user_id,role" });
     return { boss: isBoss };
   });
