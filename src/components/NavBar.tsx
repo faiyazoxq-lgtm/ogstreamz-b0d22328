@@ -112,7 +112,9 @@ function NavDropdown({
                 className={[
                   "group/item flex items-start gap-3 py-2 rounded-sm outline-none",
                   "hover:bg-secondary focus-visible:ring-2 focus-visible:ring-primary",
-                  isActive ? "bg-gold/10 ring-1 ring-inset ring-gold/40" : "",
+                  isActive
+                    ? "bg-gold/15 ring-1 ring-inset ring-gold/60 shadow-[inset_2px_0_0_0_var(--gold)]"
+                    : "",
                 ].join(" ")}
               >
                 <it.icon className={`h-4 w-4 mt-0.5 ${isActive ? "text-gold drop-shadow-[0_0_6px_rgba(255,209,102,0.6)]" : "text-gold/80 group-hover/item:text-gold"}`} />
@@ -121,6 +123,12 @@ function NavDropdown({
                     {it.label}
                     {it.bossOnly && (
                       <Crown className="h-3 w-3 text-gold" />
+                    )}
+                    {isActive && (
+                      <span className="ml-auto inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.25em] text-gold/90 font-black">
+                        <span className="h-1.5 w-1.5 rounded-full bg-gold shadow-[0_0_6px_rgba(255,209,102,0.8)] animate-pulse" />
+                        Now
+                      </span>
                     )}
                   </span>
                   {it.desc && (
