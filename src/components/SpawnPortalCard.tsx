@@ -333,20 +333,36 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
             <div className="sm:col-span-2">
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Niche / Theme</label>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={autoDescribe}
-                  disabled={describing || loading}
-                  aria-label="Auto-generate a richer description from your keywords"
-                  title="Use your name + keywords to draft a richer description"
-                  className="h-7 px-2.5 text-[10px] uppercase tracking-[0.22em] font-bold border-[oklch(0.72_0.22_245/0.5)] hover:border-[oklch(0.72_0.22_245)] hover:bg-[oklch(0.72_0.22_245/0.08)]"
-                >
-                  {describing
-                    ? <><Loader2 className="h-3 w-3 animate-spin mr-1.5" />Drafting…</>
-                    : <><Sparkles className="h-3 w-3 mr-1.5 text-[oklch(0.72_0.22_245)]" />Auto-describe</>}
-                </Button>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={autoDescribe}
+                    disabled={describing || loading}
+                    aria-label="Auto-generate a richer description from your keywords"
+                    title="Use your name + keywords to draft a richer description"
+                    className="h-7 px-2.5 text-[10px] uppercase tracking-[0.22em] font-bold border-[oklch(0.72_0.22_245/0.5)] hover:border-[oklch(0.72_0.22_245)] hover:bg-[oklch(0.72_0.22_245/0.08)]"
+                  >
+                    {describing
+                      ? <><Loader2 className="h-3 w-3 animate-spin mr-1.5" />Drafting…</>
+                      : <><Sparkles className="h-3 w-3 mr-1.5 text-[oklch(0.72_0.22_245)]" />Auto-describe</>}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={autoDescribe}
+                    disabled={describing || loading || (!niche.trim() && !name.trim() && !vibe.trim())}
+                    aria-label="Regenerate description from the same keywords"
+                    title="Draft a fresh description using your existing keywords"
+                    className="h-7 px-2.5 text-[10px] uppercase tracking-[0.22em] font-bold border-amber-300/50 hover:border-amber-300 hover:bg-amber-300/10"
+                  >
+                    {describing
+                      ? <Loader2 className="h-3 w-3 animate-spin" />
+                      : <><RotateCcw className="h-3 w-3 mr-1.5 text-amber-300" />Regenerate</>}
+                  </Button>
+                </div>
               </div>
               <textarea
                 value={niche}
