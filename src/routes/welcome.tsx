@@ -66,15 +66,45 @@ function WelcomePage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase
-      .from("store_settings")
-      .select("stream_portal_url")
-      .eq("id", 1)
-      .maybeSingle()
-      .then(({ data }) => {
-        const u = (data as { stream_portal_url?: string } | null)?.stream_portal_url;
-        if (u && /^https?:\/\//i.test(u)) setStreamUrl(u);
-      });
+    let cancelled = false;
+    async function loadStreamUrl() {
+      const { data } = await supabase
+        .from("store_settings")
+        .select("stream_portal_url")
+        .eq("id", 1)
+        .maybeSingle();
+      if (cancelled) return;
+      const u = (data as { stream_portal_url?: string } | null)?.stream_portal_url;
+      if (u && /^https?:\/\//i.test(u)) setStreamUrl(u);
+    }
+    loadStreamUrl();
+
+    // Live updates: re-read whenever the boss saves a new portal URL.
+    const channel = supabase
+      .channel("store_settings_welcome")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "store_settings" },
+        (payload) => {
+          const next = (payload.new as { stream_portal_url?: string } | null)
+            ?.stream_portal_url;
+          if (next && /^https?:\/\//i.test(next)) setStreamUrl(next);
+          else loadStreamUrl();
+        },
+      )
+      .subscribe();
+
+    // Safety net: refetch when the tab regains focus.
+    const onVisible = () => {
+      if (document.visibilityState === "visible") loadStreamUrl();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   let streamHost = "";
