@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Upload, Save, User2, Globe, Send, Twitter, Instagram, Youtube, MessageCircle, Music2, Github, Linkedin, Trash2, Radio, Lock, Plus, X, Copy, Check } from "lucide-react";
+import { Loader2, Upload, Save, User2, Globe, Send, Twitter, Instagram, Youtube, MessageCircle, Music2, Github, Linkedin, Trash2, Radio, Lock, Plus, X, Copy, Check, Wand2, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,7 @@ import {
   platformMeta,
   readEntries,
   validateEntry,
+  detectPlatformFromValue,
   type StreamEntry,
   type StreamPlatform,
 } from "@/lib/stream-links";
@@ -337,11 +338,14 @@ function SettingsPage() {
             {streamEntries.map((entry, idx) => {
               const meta = platformMeta(entry.platform);
               const PlatformIcon = meta.Icon;
+              const detected = detectPlatformFromValue(entry.value);
+              const mismatch = detected && detected !== entry.platform ? detected : null;
+              const otherRowIdx = mismatch
+                ? streamEntries.findIndex((x, i) => i !== idx && x.platform === mismatch)
+                : -1;
               return (
-                <div
-                  key={entry.id}
-                  className="grid grid-cols-[140px_1fr_auto_auto] gap-2 items-center"
-                >
+                <div key={entry.id} className="space-y-1.5">
+                <div className="grid grid-cols-[140px_1fr_auto_auto] gap-2 items-center">
                   <Select
                     value={entry.platform}
                     onValueChange={(v) =>
@@ -426,6 +430,56 @@ function SettingsPage() {
                   >
                     <X className="h-4 w-4" />
                   </Button>
+                </div>
+                {mismatch && (
+                  <div className="ml-[148px] flex flex-wrap items-center gap-2 text-[11px] text-amber-300">
+                    <Wand2 className="h-3 w-3" />
+                    <span>
+                      Looks like a <span className="font-semibold uppercase">{mismatch}</span> URL in the {meta.label} row.
+                    </span>
+                    {otherRowIdx >= 0 ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-6 px-2 text-[10px] uppercase tracking-[0.15em] border-amber-300/50 text-amber-200 hover:bg-amber-300/10"
+                        onClick={() => {
+                          setStreamEntries((list) => {
+                            const next = [...list];
+                            const target = next[otherRowIdx];
+                            const movedValue = entry.value;
+                            const candidate: StreamEntry = { ...target, value: movedValue };
+                            next[otherRowIdx] = validateEntry(candidate) ? candidate : normalizeEntry(candidate);
+                            next[idx] = { ...entry, value: "" };
+                            return next;
+                          });
+                          toast.success(`Moved to ${mismatch} row`);
+                        }}
+                      >
+                        <ArrowRightLeft className="h-3 w-3 mr-1" /> Move to {mismatch} row
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-6 px-2 text-[10px] uppercase tracking-[0.15em] border-amber-300/50 text-amber-200 hover:bg-amber-300/10"
+                        onClick={() => {
+                          setStreamEntries((list) =>
+                            list.map((x, i) => {
+                              if (i !== idx) return x;
+                              const switched: StreamEntry = { ...x, platform: mismatch };
+                              return validateEntry(switched) ? switched : normalizeEntry(switched);
+                            }),
+                          );
+                          toast.success(`Switched row to ${mismatch}`);
+                        }}
+                      >
+                        <Wand2 className="h-3 w-3 mr-1" /> Auto-fix → {mismatch}
+                      </Button>
+                    )}
+                  </div>
+                )}
                 </div>
               );
             })}
