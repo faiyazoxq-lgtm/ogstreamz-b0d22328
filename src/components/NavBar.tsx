@@ -172,7 +172,7 @@ export function NavBar() {
               <span aria-hidden className="invisible">0</span>
               <span aria-hidden className="absolute inset-0 flex items-center justify-center">
                 <TrackingEye
-                  className="w-[0.78em] h-[0.78em]"
+                  className="w-[0.78em] h-[0.78em] transition-shadow duration-300 group-hover:animate-eye-pulse-gold"
                   pupilRatio={0.5}
                   travelRatio={0.18}
                 />
