@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Play, Pause, Loader2, ShoppingBag, Crown, BadgeCheck, Moon, Volume2, VolumeX,
-  Shuffle, Sparkles, ArrowRight, Music2,
+  Shuffle, Sparkles, ArrowRight, Music2, Heart,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -120,7 +120,9 @@ type PlayState = "idle" | "loading" | "playing" | "paused";
 type BuyState = "idle" | "opening" | "open";
 
 export function FeaturedDropCard() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  // Heart icon = Safe Mode (swearing flag off). Surface inline on reverent drops.
+  const safeMode = !profile?.feature_flags?.swearing;
   const [dynamicDrops, setDynamicDrops] = useState<DynamicDrop[]>([]);
   const [index, setIndex] = useState(0);
 
@@ -388,6 +390,16 @@ export function FeaturedDropCard() {
             <BadgeCheck className="h-3.5 w-3.5" />
             {sd ? sd.badge : "Featured · Community Studio"}
           </div>
+          {sd?.reverent && safeMode && (
+            <div
+              role="status"
+              aria-label="Safe Mode active"
+              className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-400/50 bg-emerald-950/40 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.25em] text-emerald-200 shadow-[0_0_12px_-2px_rgba(16,185,129,0.5)]"
+            >
+              <Heart aria-hidden className="h-3 w-3 fill-emerald-400 text-emerald-400" />
+              Safe Mode active
+            </div>
+          )}
           <h2
             className="mt-2 text-2xl sm:text-3xl font-black tracking-tight text-white truncate"
             style={{ fontFamily: sd?.fontFamily ?? "'Montserrat', system-ui, sans-serif" }}
