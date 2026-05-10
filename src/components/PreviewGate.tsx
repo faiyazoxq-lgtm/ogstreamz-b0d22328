@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Coins, Crown, Lock, Loader2, Play, X } from "lucide-react";
 import {
@@ -21,6 +21,13 @@ type Props = {
   /** Render-prop for the trigger. `start` opens the preview countdown + paywall. */
   children: (api: { start: () => void; busy: boolean; locked: boolean }) => React.ReactNode;
   /**
+   * Optional ref to an HTMLMediaElement (audio/video) playing the preview.
+   * When the 30-second timer expires, the element is paused, its currentTime
+   * is clamped to the cutoff, and `controls`/seeking is locked until the user
+   * pays. This enforces the cutoff at the media layer, not just in the UI.
+   */
+  mediaRef?: RefObject<HTMLMediaElement | null>;
+  /**
    * When true (default), automatically charge / burn a VIP pass the moment the
    * 30-second preview ends — no extra confirmation tap. If the balance is too
    * low we swap in the friendly InsufficientBalanceModal instead.
@@ -38,6 +45,7 @@ export function PreviewGate({
   children,
   autoCharge = true,
   onTopUp,
+  mediaRef,
 }: Props) {
   const peek = useServerFn(peekPortalDownload);
   const claim = useServerFn(claimPortalDownload);
@@ -51,6 +59,48 @@ export function PreviewGate({
   const [unlocked, setUnlocked] = useState(false);
   const [insufficientOpen, setInsufficientOpen] = useState(false);
   const tickRef = useRef<number | null>(null);
+  const cutoffEnforcedRef = useRef(false);
+
+  // Hard-cutoff enforcement on the media element: pause, clamp time, block seek.
+  const enforceCutoff = () => {
+    const el = mediaRef?.current;
+    if (!el) return;
+    cutoffEnforcedRef.current = true;
+    try {
+      el.pause();
+      if (Number.isFinite(el.duration) && el.currentTime > PREVIEW_SECONDS) {
+        el.currentTime = PREVIEW_SECONDS;
+      }
+    } catch {
+      /* ignore — element might not be ready */
+    }
+  };
+
+  // While the preview is running, also clamp playback if the user fast-forwards
+  // past the 30s mark, and re-pause if they hit play after the cutoff.
+  useEffect(() => {
+    const el = mediaRef?.current;
+    if (!el) return;
+    const onTimeUpdate = () => {
+      if (unlocked) return;
+      if (el.currentTime >= PREVIEW_SECONDS) {
+        enforceCutoff();
+      }
+    };
+    const onPlay = () => {
+      if (unlocked) return;
+      if (cutoffEnforcedRef.current || el.currentTime >= PREVIEW_SECONDS) {
+        el.pause();
+      }
+    };
+    el.addEventListener("timeupdate", onTimeUpdate);
+    el.addEventListener("play", onPlay);
+    return () => {
+      el.removeEventListener("timeupdate", onTimeUpdate);
+      el.removeEventListener("play", onPlay);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mediaRef?.current, unlocked]);
 
   const stopTick = () => {
     if (tickRef.current) { window.clearInterval(tickRef.current); tickRef.current = null; }
@@ -62,6 +112,7 @@ export function PreviewGate({
     setPhase("preview");
     setSecondsLeft(PREVIEW_SECONDS);
     setError(null);
+    cutoffEnforcedRef.current = false;
     try {
       const i = await peek({ data: { portalId, cost } });
       setInfo(i);
@@ -73,6 +124,7 @@ export function PreviewGate({
       setSecondsLeft((s) => {
         if (s <= 1) {
           stopTick();
+          enforceCutoff();
           if (autoCharge) {
             // Fire and forget — confirm() handles its own state transitions.
             void confirm();
