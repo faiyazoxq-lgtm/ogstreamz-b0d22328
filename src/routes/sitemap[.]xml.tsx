@@ -53,8 +53,8 @@ export const Route = createFileRoute("/sitemap.xml")({
     handlers: {
       GET: async () => {
         const supabase = createClient(
-          process.env.VITE_SUPABASE_URL!,
-          process.env.VITE_SUPABASE_PUBLISHABLE_KEY!,
+          process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL!,
+          process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY!,
           { auth: { persistSession: false, autoRefreshToken: false } },
         );
 
