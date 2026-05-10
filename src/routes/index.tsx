@@ -14,6 +14,7 @@ import { WelcomeAuthPrompt } from "@/components/WelcomeAuthPrompt";
 import { QuickJumpDrawer } from "@/components/QuickJumpDrawer";
 import { useAuth } from "@/hooks/use-auth";
 import { RealOgPromoCard } from "@/components/RealOgPromoCard";
+import { CoinsBulkPromoCard } from "@/components/CoinsBulkPromoCard";
 import { VaultLoginModal } from "@/components/VaultLoginModal";
 import { Flame } from "lucide-react";
 
@@ -100,7 +101,10 @@ function Index() {
         </div>
       </section>
 
-      {/* Real OG one-off pass — first thing after the 0G-PORTAL hero */}
+      {/* Best bulk-buy Coins deal — shown above the VIP pass on welcome page */}
+      <CoinsBulkPromoCard />
+
+      {/* Real OG one-off pass */}
       <RealOgPromoCard />
 
       {/* Intro / promo strip — free signup CTA for guests, members entrance for signed-in users */}
