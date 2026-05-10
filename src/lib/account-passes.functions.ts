@@ -13,7 +13,7 @@ export const getMyPurchases = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context as { supabase: any };
-    const { data, error } = await supabase.rpc("get_user_purchases_summary");
+    const { data, error } = await (supabase as any).rpc("get_user_purchases_summary");
     if (error) throw new Error(error.message);
     return data ?? { passes: [], orders: [], credit_purchases: [] };
   });
