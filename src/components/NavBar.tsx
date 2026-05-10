@@ -26,6 +26,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { SiteSearch } from "@/components/SiteSearch";
 import { MasterSwearToggle } from "@/components/MasterSwearToggle";
+import { AnimatedCredits } from "@/components/AnimatedCredits";
 import {
   Sheet,
   SheetContent,
@@ -292,7 +293,7 @@ function MobileNavDrawer({
               )}
               {!isBoss && (
                 <span className="inline-flex items-center gap-1 ml-auto text-gold font-bold">
-                  <Coins className="h-3.5 w-3.5" /> {profile?.credits ?? 0}
+                  <Coins className="h-3.5 w-3.5" /> <AnimatedCredits value={profile?.credits ?? 0} />
                 </span>
               )}
             </div>
@@ -427,7 +428,7 @@ function AccountMenu({
               {!isBoss && (
                 <div className="flex items-center gap-1.5 pt-1 border-t border-border/50">
                   <Coins className="h-3.5 w-3.5 text-gold" />
-                  <span className="text-sm font-bold text-gold">{profile?.credits ?? 0}</span>
+                  <AnimatedCredits value={profile?.credits ?? 0} className="text-sm font-bold text-gold" />
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground">credits</span>
                 </div>
               )}
@@ -446,7 +447,7 @@ function AccountMenu({
             </span>
             {!isBoss && (
               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-gold">
-                <Coins className="h-3 w-3" /> {profile?.credits ?? 0}
+                <Coins className="h-3 w-3" /> <AnimatedCredits value={profile?.credits ?? 0} />
               </span>
             )}
           </DropdownMenuLabel>
