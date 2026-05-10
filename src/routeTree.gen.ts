@@ -46,6 +46,7 @@ import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as BossUsersRouteImport } from './routes/boss.users'
+import { Route as BossStreamQueueRouteImport } from './routes/boss.stream-queue'
 import { Route as BossOverviewRouteImport } from './routes/boss.overview'
 import { Route as BossLexiconRouteImport } from './routes/boss.lexicon'
 import { Route as BossCivilityRouteImport } from './routes/boss.civility'
@@ -245,6 +246,11 @@ const BossUsersRoute = BossUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => BossRoute,
 } as any)
+const BossStreamQueueRoute = BossStreamQueueRouteImport.update({
+  id: '/stream-queue',
+  path: '/stream-queue',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossOverviewRoute = BossOverviewRouteImport.update({
   id: '/overview',
   path: '/overview',
@@ -351,6 +357,7 @@ export interface FileRoutesByFullPath {
   '/boss/civility': typeof BossCivilityRoute
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
+  '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -402,6 +409,7 @@ export interface FileRoutesByTo {
   '/boss/civility': typeof BossCivilityRoute
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
+  '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -455,6 +463,7 @@ export interface FileRoutesById {
   '/boss/civility': typeof BossCivilityRoute
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
+  '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -509,6 +518,7 @@ export interface FileRouteTypes {
     | '/boss/civility'
     | '/boss/lexicon'
     | '/boss/overview'
+    | '/boss/stream-queue'
     | '/boss/users'
     | '/checkout/return'
     | '/jokes/portal'
@@ -560,6 +570,7 @@ export interface FileRouteTypes {
     | '/boss/civility'
     | '/boss/lexicon'
     | '/boss/overview'
+    | '/boss/stream-queue'
     | '/boss/users'
     | '/checkout/return'
     | '/jokes/portal'
@@ -612,6 +623,7 @@ export interface FileRouteTypes {
     | '/boss/civility'
     | '/boss/lexicon'
     | '/boss/overview'
+    | '/boss/stream-queue'
     | '/boss/users'
     | '/checkout/return'
     | '/jokes/portal'
@@ -936,6 +948,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossUsersRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/stream-queue': {
+      id: '/boss/stream-queue'
+      path: '/stream-queue'
+      fullPath: '/boss/stream-queue'
+      preLoaderRoute: typeof BossStreamQueueRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/overview': {
       id: '/boss/overview'
       path: '/overview'
@@ -1035,6 +1054,7 @@ interface BossRouteChildren {
   BossCivilityRoute: typeof BossCivilityRoute
   BossLexiconRoute: typeof BossLexiconRoute
   BossOverviewRoute: typeof BossOverviewRoute
+  BossStreamQueueRoute: typeof BossStreamQueueRoute
   BossUsersRoute: typeof BossUsersRoute
   BossIndexRoute: typeof BossIndexRoute
 }
@@ -1044,6 +1064,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossCivilityRoute: BossCivilityRoute,
   BossLexiconRoute: BossLexiconRoute,
   BossOverviewRoute: BossOverviewRoute,
+  BossStreamQueueRoute: BossStreamQueueRoute,
   BossUsersRoute: BossUsersRoute,
   BossIndexRoute: BossIndexRoute,
 }
@@ -1117,3 +1138,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
