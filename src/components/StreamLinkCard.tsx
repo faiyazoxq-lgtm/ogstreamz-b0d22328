@@ -287,6 +287,73 @@ export function StreamLinkCard() {
         Link your stream/IPTV username &amp; password. We auto-check it against the server, then submit it to <strong className="text-foreground">Boss</strong> for OGSTREAMZ approval.
       </p>
 
+      {(linked || status || expiryLabel) && (() => {
+        // Derive a single, clear "state" for the prominent banner.
+        type State = "expired" | "critical" | "warning" | "active" | "pending" | "unknown";
+        const state: State = !linked
+          ? "unknown"
+          : expired
+            ? "expired"
+            : status === "Active"
+              ? (daysLeft !== null && daysLeft <= 1
+                  ? "critical"
+                  : daysLeft !== null && daysLeft <= 7
+                    ? "warning"
+                    : "active")
+              : "pending";
+
+        const STATE_UI: Record<State, { tone: string; icon: any; title: string; sub: string }> = {
+          expired:  { tone: "border-destructive/60 bg-destructive/10 text-destructive",
+                      icon: XCircle, title: "Stream profile expired",
+                      sub: expiryLabel ? `Ended ${expiryLabel} — re-verify to keep streaming.` : "Re-link your credentials to resume." },
+          critical: { tone: "border-destructive/50 bg-destructive/5 text-destructive",
+                      icon: AlertTriangle, title: "Expires within 24 hours",
+                      sub: expiryLabel ? `Renew before ${expiryLabel} to avoid downtime.` : "Renew immediately." },
+          warning:  { tone: "border-amber-400/40 bg-amber-400/10 text-amber-200",
+                      icon: Clock, title: `Expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}`,
+                      sub: expiryLabel ? `Heads up — renew before ${expiryLabel}.` : "Renew soon." },
+          active:   { tone: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
+                      icon: CheckCircle2, title: "Stream profile active",
+                      sub: expiryLabel ? `Valid until ${expiryLabel}.` : "All good — streaming enabled." },
+          pending:  { tone: "border-amber-400/40 bg-amber-400/10 text-amber-200",
+                      icon: CircleDashed, title: status ? `Status: ${status}` : "Awaiting verification",
+                      sub: "Boss is reviewing your credentials." },
+          unknown:  { tone: "border-border bg-background/50 text-muted-foreground",
+                      icon: CircleDashed, title: "Not linked yet",
+                      sub: "Submit your stream credentials below." },
+        };
+
+        const { tone, icon: Icon, title, sub } = STATE_UI[state];
+
+        return (
+          <div
+            role="status"
+            aria-live="polite"
+            className={`mt-5 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between ${tone}`}
+          >
+            <div className="flex items-start gap-3 min-w-0">
+              <Icon className="mt-0.5 h-5 w-5 shrink-0" />
+              <div className="min-w-0">
+                <p className="font-bold text-sm leading-tight">{title}</p>
+                <p className="mt-0.5 text-xs opacity-90 break-words">{sub}</p>
+              </div>
+            </div>
+            {linked && (
+              <button
+                type="button"
+                onClick={onReverify}
+                disabled={inFlight}
+                aria-label="Refresh stream profile status now"
+                className="inline-flex shrink-0 items-center justify-center gap-1.5 self-start rounded-md border border-current/40 bg-background/60 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-foreground hover:bg-background disabled:opacity-60 sm:self-auto"
+              >
+                {reverifying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                {reverifying ? "Refreshing…" : "Refresh now"}
+              </button>
+            )}
+          </div>
+        );
+      })()}
+
       {(status || expiryLabel) && (
         <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
           {status && (
