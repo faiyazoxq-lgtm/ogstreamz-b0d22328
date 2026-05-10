@@ -31,8 +31,8 @@ export const swearChat = createServerFn({ method: "POST" })
     });
     // PRIORITY SWEARING OVERRIDE — guarantee brutal output even if the model softens.
     const sb = createClient(
-      process.env.VITE_SUPABASE_URL!,
-      process.env.VITE_SUPABASE_PUBLISHABLE_KEY!,
+      process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL!,
+      process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY!,
     );
     const lex = await loadLexicon(sb);
     const reply = enforceSwearRules(raw, "chaotic", lex);
