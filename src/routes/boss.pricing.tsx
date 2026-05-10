@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, Plus, Save, Trash2, Tags, Coins, Power, Tv, GripVertical, CheckSquare, Square, X } from "lucide-react";
+import { Loader2, Plus, Save, Trash2, Tags, Coins, Power, Tv, GripVertical, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
