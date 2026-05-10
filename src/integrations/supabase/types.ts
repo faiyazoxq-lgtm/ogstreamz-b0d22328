@@ -1482,6 +1482,45 @@ export type Database = {
         }
         Relationships: []
       }
+      purchase_reversals: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          credits_reversed: number
+          currency: string
+          id: string
+          reason: string | null
+          reversed_by: string | null
+          source_id: string
+          source_table: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents?: number
+          created_at?: string
+          credits_reversed?: number
+          currency?: string
+          id?: string
+          reason?: string | null
+          reversed_by?: string | null
+          source_id: string
+          source_table: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          credits_reversed?: number
+          currency?: string
+          id?: string
+          reason?: string | null
+          reversed_by?: string | null
+          source_id?: string
+          source_table?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       redeem_codes: {
         Row: {
           code: string
@@ -3027,6 +3066,10 @@ export type Database = {
       }
       reveal_vault_credential: { Args: never; Returns: Json }
       reveal_vip_pass: { Args: never; Returns: Json }
+      reverse_recent_purchases: {
+        Args: { dry_run?: boolean; window_minutes: number }
+        Returns: Json
+      }
       set_stream_credentials: {
         Args: {
           _password: string
