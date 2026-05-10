@@ -152,6 +152,10 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
       const msg = e?.message ?? "Spawn failed — please try again";
       setErrorMsg(msg);
       toast.error("Spawn failed", { id: toastId, description: msg });
+      // If the server refunded credits, surface the new balance immediately.
+      if (/refunded\s+\d+\s+credit/i.test(msg)) {
+        void refresh();
+      }
     } finally {
       setLoading(false);
     }
@@ -394,13 +398,35 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                   Spawn failed
                 </div>
                 <p className="text-sm text-foreground mt-1 break-words">{errorMsg}</p>
-                <p className="text-[11px] text-muted-foreground mt-1">
-                  {/insufficient|not enough credits/i.test(errorMsg)
-                    ? <>Top up credits to continue. <Link to="/store" className="underline text-foreground">Open store</Link>.</>
-                    : /name and niche/i.test(errorMsg)
-                    ? "Add both a portal name and a niche, then try again."
-                    : "No credit was charged. You can retry safely."}
-                </p>
+                {(() => {
+                  const refundMatch = errorMsg.match(/refunded\s+(\d+)\s+credit/i);
+                  if (refundMatch) {
+                    const n = Number(refundMatch[1]);
+                    return (
+                      <>
+                        <div
+                          className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400"
+                          aria-label={`Refunded ${n} credit${n === 1 ? "" : "s"}`}
+                        >
+                          <RotateCcw className="h-3 w-3" aria-hidden="true" />
+                          Refunded {n} credit{n === 1 ? "" : "s"}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-2">
+                          The spawn didn't complete, so we returned your credit{n === 1 ? "" : "s"} to your balance. You can retry safely — you won't be double-charged.
+                        </p>
+                      </>
+                    );
+                  }
+                  return (
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      {/insufficient|not enough credits/i.test(errorMsg)
+                        ? <>Top up credits to continue. <Link to="/store" className="underline text-foreground">Open store</Link>.</>
+                        : /name and niche/i.test(errorMsg)
+                        ? "Add both a portal name and a niche, then try again."
+                        : "No credit was charged. You can retry safely."}
+                    </p>
+                  );
+                })()}
               </div>
               <Button
                 ref={retryBtnRef}

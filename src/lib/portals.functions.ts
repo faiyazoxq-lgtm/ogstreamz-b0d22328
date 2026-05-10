@@ -350,7 +350,11 @@ Use HIGH CONTRAST hex colors. Heading & body MUST be real Google Fonts. Match mo
         await refundCredits(userId, charged, `spawn_portal:${data.kind}`);
       }
       const orig = err?.message ?? "Spawn failed";
-      throw new Error(charged > 0 ? `${orig} — your credit was refunded.` : orig);
+      throw new Error(
+        charged > 0
+          ? `${orig} — refunded ${charged} credit${charged === 1 ? "" : "s"} to your balance.`
+          : orig,
+      );
     }
   });
 
