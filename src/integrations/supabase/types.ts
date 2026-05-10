@@ -3225,6 +3225,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      publish_check_policy_counts: {
+        Args: never
+        Returns: {
+          policy_count: number
+          table_name: string
+        }[]
+      }
+      publish_check_rls_status: {
+        Args: never
+        Returns: {
+          rls_enabled: boolean
+          table_name: string
+        }[]
+      }
       purchase_with_coins: {
         Args: { _kind: string; _ref: string }
         Returns: Json
