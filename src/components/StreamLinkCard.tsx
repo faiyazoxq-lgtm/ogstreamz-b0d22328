@@ -394,7 +394,7 @@ export function StreamLinkCard() {
             ref={usernameRef}
             required value={u}
             onChange={(e) => { setU(e.target.value); if (errors.username) setErrors({ ...errors, username: undefined }); }}
-            onBlur={() => setErrors({ ...errors, ...validate(u, p, server), password: errors.password, server: errors.server })}
+            onBlur={() => setErrors({ ...errors, ...validate(u, p), password: errors.password })}
             placeholder="Stream username" autoComplete="username"
             aria-invalid={!!errors.username}
             className={`w-full bg-background/60 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 ${errors.username ? "border-destructive focus:ring-destructive" : "border-border focus:ring-primary"}`}
@@ -411,18 +411,11 @@ export function StreamLinkCard() {
           />
           {errors.password && <p className="mt-1 text-xs text-destructive">{errors.password}</p>}
         </div>
-        <div className="sm:col-span-2">
-          <input
-            value={server}
-            onChange={(e) => { setServer(e.target.value); if (errors.server) setErrors({ ...errors, server: undefined }); }}
-            placeholder="Server URL (e.g. http://host.tld:80)"
-            aria-invalid={!!errors.server}
-            className={`w-full bg-background/60 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 ${errors.server ? "border-destructive focus:ring-destructive" : "border-border focus:ring-primary"}`}
-          />
-          {errors.server
-            ? <p className="mt-1 text-xs text-destructive">{errors.server}</p>
-            : <p className="mt-1 text-xs text-muted-foreground">Include protocol and port if non-standard.</p>}
-        </div>
+        {errors.server && (
+          <div className="sm:col-span-2">
+            <p className="text-xs text-destructive">{errors.server}</p>
+          </div>
+        )}
         <button
           type="submit" disabled={inFlight}
           className="sm:col-span-2 inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-bold hover:opacity-90 disabled:opacity-60"
