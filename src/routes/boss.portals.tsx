@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CostTierControl } from "@/components/CostTierControl";
-import { summarizeCosts, TIER_RANK, TIER_LABEL } from "@/lib/cost-registry";
+import { summarizeCosts, TIER_RANK } from "@/lib/cost-registry";
 
 type Portal = {
   id: string; slug: string; name: string; kind: string;
