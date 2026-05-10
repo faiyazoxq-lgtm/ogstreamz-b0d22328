@@ -513,6 +513,7 @@ function AuthPage() {
                   </p>
                 </div>
               </div>
+              <ContentModePicker value={contentMode} onChange={setContentMode} />
               <AuthForm
                 email={email}
                 setEmail={(v) => { setEmail(v); if (emailError) setEmailError(null); }}
