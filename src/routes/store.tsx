@@ -643,7 +643,7 @@ function PackCompareTable({ packs, onBuy }: { packs: Pack[]; onBuy: (priceId: st
                     </div>
                   </td>
                   <td className="px-3 py-3 text-right tabular-nums font-bold text-white">{credits}</td>
-                  <td className="px-3 py-3 text-right tabular-nums font-bold text-white">£{(p.amount_cents / 100).toFixed(2)}</td>
+                  <td className="px-3 py-3 text-right tabular-nums font-bold text-white">£{(p.amount_cents / 100).toFixed(2)} <span className="text-yellow-300 font-bold">({Math.round(p.amount_cents / 100)} 🪙)</span></td>
                   <td className="px-3 py-3 text-right tabular-nums text-cyan-200">£{cpp.toFixed(3).replace(/\.?0+$/, "")}</td>
                   <td className="px-3 py-3 text-right tabular-nums">
                     {savePctVsBase > 0 ? (
