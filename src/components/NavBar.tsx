@@ -52,10 +52,7 @@ const storeLinks: ReadonlyArray<HubLink> = [
   { to: "/checkout/return",  label: "Last Receipt",     icon: Receipt,     desc: "Recent purchase status" },
 ];
 
-const adminLinks: ReadonlyArray<HubLink> = [
-  { to: "/admin",              label: "Admin Console",         icon: ShieldCheck,     desc: "Users · credits · codes" },
-  { to: "/syndicate-overlord", label: "Boss Control Center",   icon: LayoutDashboard, desc: "Ultimate command deck" },
-];
+// Boss / admin pages live under their own /boss layout with a sidebar.
 
 function NavDropdown({
   label, icon: Icon, items, gold, hideLabelOnMobile, currentPath,
@@ -187,7 +184,15 @@ export function NavBar() {
           </li>
           {isBoss && (
             <li className="hidden sm:block">
-              <NavDropdown label="Admin" icon={ShieldCheck} items={adminLinks} hideLabelOnMobile currentPath={pathname} />
+              <Link
+                to="/boss"
+                aria-label="Boss portal"
+                data-active={pathname === "/boss" || pathname.startsWith("/boss/") ? "true" : undefined}
+                className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-2 text-sm sm:text-base font-semibold rounded-md border border-gold/30 text-gold hover:bg-gold/10 data-[active=true]:bg-gold/15 data-[active=true]:border-gold/60 transition-colors"
+              >
+                <Crown className="h-4 w-4" />
+                <span className="hidden sm:inline">Boss</span>
+              </Link>
             </li>
           )}
           <li className="hidden sm:block">
@@ -206,7 +211,7 @@ export function NavBar() {
             <MobileNavDrawer
               hubs={visibleHubs}
               stores={storeLinks}
-              admin={isBoss ? adminLinks : []}
+              admin={isBoss ? [{ to: "/boss", label: "Boss Portal", icon: Crown, desc: "Admin · Civility · Analytics · Lexicon" }] : []}
               user={user}
               profile={profile}
               isBoss={isBoss}
