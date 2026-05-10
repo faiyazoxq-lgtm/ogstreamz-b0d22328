@@ -73,16 +73,14 @@ export const bossChat = createServerFn({ method: "POST" })
     const lookupId = data.targetUserId || userId;
     const { data: prof } = await supabase
       .from("profiles")
-      .select("feature_flags")
+      .select("rank, feature_flags")
       .eq("id", lookupId)
       .maybeSingle();
 
-    const flags = (prof?.feature_flags ?? {}) as Record<string, any>;
-    const swearing = !!flags.swearing;
-    // BRUTAL MODE: default to chaotic everywhere unless explicitly muzzled.
-    const rawIntensity = String(flags.swearing_intensity ?? "chaotic").toLowerCase();
-    const intensity: SwearIntensity =
-      rawIntensity === "mild" || rawIntensity === "medium" ? rawIntensity : "chaotic";
+    // Per-user defaults: streamers / VIPs / boss start in Safe Mode unless they
+    // (or boss) explicitly flip swearing back on. Everyone else defaults to ON.
+    const swearing = effectiveSwearing(prof as any);
+    const intensity = effectiveIntensity(prof as any);
     const system = swearing ? buildSwearingSystem(intensity) : NORMAL_SYSTEM;
 
     // Route swearing chats through the Shapes API "swearing agent",
