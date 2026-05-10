@@ -193,3 +193,84 @@ export const deletePendingGrant = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export type PassOrderRow = {
+  id: string;
+  user_id: string;
+  email: string | null;
+  display_name: string | null;
+  kind: string;
+  status: string;
+  duration_days: number;
+  amount_cents: number;
+  currency: string;
+  environment: string;
+  pass_number: string | null;
+  stripe_session_id: string;
+  boss_decision_note: string | null;
+  created_at: string;
+  decided_at: string | null;
+};
+
+export const listPassOrders = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { status?: string } | undefined) => ({
+    status: d?.status && ["pending_approval", "issued", "denied", "all"].includes(d.status)
+      ? d.status
+      : "pending_approval",
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context as any;
+    if (!(await isBoss(supabase))) throw new Error("Boss only");
+    let q = supabase
+      .from("pass_orders")
+      .select("id,user_id,kind,status,duration_days,amount_cents,currency,environment,pass_number,stripe_session_id,boss_decision_note,created_at,decided_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (data.status !== "all") q = q.eq("status", data.status);
+    const { data: orders, error } = await q;
+    if (error) throw new Error(error.message);
+    const userIds = Array.from(new Set((orders ?? []).map((o: any) => o.user_id)));
+    let profileMap = new Map<string, { email: string; display_name: string | null }>();
+    if (userIds.length) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id,email,display_name")
+        .in("id", userIds);
+      for (const p of profs ?? []) profileMap.set(p.id, { email: p.email, display_name: p.display_name });
+    }
+    const rows: PassOrderRow[] = (orders ?? []).map((o: any) => ({
+      ...o,
+      email: profileMap.get(o.user_id)?.email ?? null,
+      display_name: profileMap.get(o.user_id)?.display_name ?? null,
+    }));
+    return { orders: rows };
+  });
+
+export const decidePassOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { orderId: string; approve: boolean; note?: string }) => ({
+    orderId: String(d.orderId),
+    approve: !!d.approve,
+    note: d.note ? String(d.note).slice(0, 500) : null,
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context as any;
+    if (!(await isBoss(supabase))) throw new Error("Boss only");
+    const { data: result, error } = await supabase.rpc("boss_decide_pass_order", {
+      _order_id: data.orderId,
+      _approve: data.approve,
+      _note: data.note,
+    });
+    if (error) throw new Error(error.message);
+    return result as {
+      status: "issued" | "denied";
+      order_id: string;
+      user_id: string;
+      pass_number?: string;
+      pass_id?: string;
+      expires_at?: string;
+      kind?: string;
+      chat_id?: number | null;
+    };
+  });
