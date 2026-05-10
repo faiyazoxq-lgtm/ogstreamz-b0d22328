@@ -7,13 +7,15 @@ import { useEffect, useRef, useState } from "react";
 export function TrackingEye({
   size,
   pupilRatio = 0.55,
-  travel = 3,
+  travel,
+  travelRatio = 0.18,
   className = "",
   style,
 }: {
   size?: number;
   pupilRatio?: number;
   travel?: number;
+  travelRatio?: number;
   className?: string;
   style?: React.CSSProperties;
 }) {
@@ -31,11 +33,12 @@ export function TrackingEye({
       const dy = e.clientY - cy;
       const dist = Math.hypot(dx, dy) || 1;
       const k = Math.min(1, dist / 200);
-      setPupil({ x: (dx / dist) * travel * k, y: (dy / dist) * travel * k });
+      const t = travel ?? r.width * travelRatio;
+      setPupil({ x: (dx / dist) * t * k, y: (dy / dist) * t * k });
     };
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
-  }, [travel]);
+  }, [travel, travelRatio]);
 
   return (
     <span
