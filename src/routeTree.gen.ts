@@ -45,6 +45,7 @@ import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as BossOverviewRouteImport } from './routes/boss.overview'
 import { Route as BossLexiconRouteImport } from './routes/boss.lexicon'
 import { Route as BossCivilityRouteImport } from './routes/boss.civility'
 import { Route as BossAnalyticsRouteImport } from './routes/boss.analytics'
@@ -238,6 +239,11 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   path: '/checkout/return',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BossOverviewRoute = BossOverviewRouteImport.update({
+  id: '/overview',
+  path: '/overview',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossLexiconRoute = BossLexiconRouteImport.update({
   id: '/lexicon',
   path: '/lexicon',
@@ -338,6 +344,7 @@ export interface FileRoutesByFullPath {
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/civility': typeof BossCivilityRoute
   '/boss/lexicon': typeof BossLexiconRoute
+  '/boss/overview': typeof BossOverviewRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -387,6 +394,7 @@ export interface FileRoutesByTo {
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/civility': typeof BossCivilityRoute
   '/boss/lexicon': typeof BossLexiconRoute
+  '/boss/overview': typeof BossOverviewRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -438,6 +446,7 @@ export interface FileRoutesById {
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/civility': typeof BossCivilityRoute
   '/boss/lexicon': typeof BossLexiconRoute
+  '/boss/overview': typeof BossOverviewRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -490,6 +499,7 @@ export interface FileRouteTypes {
     | '/boss/analytics'
     | '/boss/civility'
     | '/boss/lexicon'
+    | '/boss/overview'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -539,6 +549,7 @@ export interface FileRouteTypes {
     | '/boss/analytics'
     | '/boss/civility'
     | '/boss/lexicon'
+    | '/boss/overview'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -589,6 +600,7 @@ export interface FileRouteTypes {
     | '/boss/analytics'
     | '/boss/civility'
     | '/boss/lexicon'
+    | '/boss/overview'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -905,6 +917,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/boss/overview': {
+      id: '/boss/overview'
+      path: '/overview'
+      fullPath: '/boss/overview'
+      preLoaderRoute: typeof BossOverviewRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/lexicon': {
       id: '/boss/lexicon'
       path: '/lexicon'
@@ -996,6 +1015,7 @@ interface BossRouteChildren {
   BossAnalyticsRoute: typeof BossAnalyticsRoute
   BossCivilityRoute: typeof BossCivilityRoute
   BossLexiconRoute: typeof BossLexiconRoute
+  BossOverviewRoute: typeof BossOverviewRoute
   BossIndexRoute: typeof BossIndexRoute
 }
 
@@ -1003,6 +1023,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossAnalyticsRoute: BossAnalyticsRoute,
   BossCivilityRoute: BossCivilityRoute,
   BossLexiconRoute: BossLexiconRoute,
+  BossOverviewRoute: BossOverviewRoute,
   BossIndexRoute: BossIndexRoute,
 }
 
