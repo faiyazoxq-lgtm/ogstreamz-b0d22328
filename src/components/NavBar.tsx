@@ -259,7 +259,7 @@ export function NavBar() {
             <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile currentPath={pathname} />
           </li>
           <li className="hidden sm:block">
-            <NavDropdown label="Store" icon={Store} items={storeLinks} hideLabelOnMobile currentPath={pathname} />
+            <NavDropdown label={isBoss ? "Manage Store" : "Store"} icon={Store} items={storeLinks} hideLabelOnMobile currentPath={pathname} />
           </li>
           {isBoss && (
             <li className="hidden sm:block">
@@ -452,7 +452,7 @@ function MobileNavDrawer({
 
           {user && <Section title="Switch portal" icon={DoorOpen} items={portalSwitcherLinks} />}
           <Section title="HUBS" icon={Rocket} items={hubs} gold />
-          <Section title="Store" icon={Store} items={stores} />
+          <Section title={isBoss ? "Manage Store" : "Store"} icon={Store} items={stores} />
           {admin.length > 0 && <Section title="Boss" icon={ShieldCheck} items={admin} />}
 
           {user && (
