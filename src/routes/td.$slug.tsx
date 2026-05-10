@@ -15,6 +15,7 @@ type Portal = {
   id: string; slug: string; name: string; niche: string; vip: boolean;
   theme_config: any;
   jokes: string[] | null;
+  trade_briefs: string[] | null;
 };
 
 // ── Executive Slate & Gold palette
@@ -28,7 +29,7 @@ export const Route = createFileRoute("/td/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals")
-      .select("id, slug, name, niche, vip, theme_config, kind, jokes")
+      .select("id, slug, name, niche, vip, theme_config, kind, jokes, trade_briefs")
       .eq("slug", params.slug)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -69,8 +70,11 @@ function TradeTerminal() {
   const assetClass: string = tc.assetClass || "Crypto";
   const risk: string = tc.risk || "Balanced";
   const isGold = /gold|xau/i.test(portal.name) || tickers.some(t => /xau|gold/i.test(t));
-  const briefs: string[] = Array.isArray(portal.jokes)
-    ? (portal.jokes as unknown[]).filter(
+  const seedSource = Array.isArray(portal.trade_briefs) && portal.trade_briefs.length > 0
+    ? portal.trade_briefs
+    : portal.jokes;
+  const briefs: string[] = Array.isArray(seedSource)
+    ? (seedSource as unknown[]).filter(
         (b): b is string => typeof b === "string" && b.trim().length > 0,
       )
     : [];
