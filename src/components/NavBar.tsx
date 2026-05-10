@@ -405,6 +405,7 @@ function MobileNavDrawer({
                 <li><Row to="/store"     label="Buy Credits"     Icon={Coins} /></li>
                 <li><Row to="/history"   label="Portal History"  Icon={History} /></li>
                 <li><Row to="/dashboard" label="Dashboard"       Icon={LayoutDashboard} /></li>
+                <li><Row to="/noticeboard" label="VIP Noticeboard" Icon={Crown} /></li>
                 <li><Row to="/settings"  label="Settings"        Icon={Settings} /></li>
               </ul>
             </div>

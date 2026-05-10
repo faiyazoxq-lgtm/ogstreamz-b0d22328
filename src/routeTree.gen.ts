@@ -25,6 +25,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ResellerRouteImport } from './routes/reseller'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PortalsRouteImport } from './routes/portals'
+import { Route as NoticeboardRouteImport } from './routes/noticeboard'
 import { Route as MusicRouteImport } from './routes/music'
 import { Route as JokesRouteImport } from './routes/jokes'
 import { Route as HistoryRouteImport } from './routes/history'
@@ -144,6 +145,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const PortalsRoute = PortalsRouteImport.update({
   id: '/portals',
   path: '/portals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NoticeboardRoute = NoticeboardRouteImport.update({
+  id: '/noticeboard',
+  path: '/noticeboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MusicRoute = MusicRouteImport.update({
@@ -367,6 +373,7 @@ export interface FileRoutesByFullPath {
   '/history': typeof HistoryRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
+  '/noticeboard': typeof NoticeboardRoute
   '/portals': typeof PortalsRoute
   '/profile': typeof ProfileRoute
   '/reseller': typeof ResellerRoute
@@ -424,6 +431,7 @@ export interface FileRoutesByTo {
   '/history': typeof HistoryRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
+  '/noticeboard': typeof NoticeboardRoute
   '/portals': typeof PortalsRoute
   '/profile': typeof ProfileRoute
   '/reseller': typeof ResellerRoute
@@ -483,6 +491,7 @@ export interface FileRoutesById {
   '/history': typeof HistoryRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
+  '/noticeboard': typeof NoticeboardRoute
   '/portals': typeof PortalsRoute
   '/profile': typeof ProfileRoute
   '/reseller': typeof ResellerRoute
@@ -543,6 +552,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/jokes'
     | '/music'
+    | '/noticeboard'
     | '/portals'
     | '/profile'
     | '/reseller'
@@ -600,6 +610,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/jokes'
     | '/music'
+    | '/noticeboard'
     | '/portals'
     | '/profile'
     | '/reseller'
@@ -658,6 +669,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/jokes'
     | '/music'
+    | '/noticeboard'
     | '/portals'
     | '/profile'
     | '/reseller'
@@ -717,6 +729,7 @@ export interface RootRouteChildren {
   HistoryRoute: typeof HistoryRoute
   JokesRoute: typeof JokesRouteWithChildren
   MusicRoute: typeof MusicRoute
+  NoticeboardRoute: typeof NoticeboardRoute
   PortalsRoute: typeof PortalsRoute
   ProfileRoute: typeof ProfileRoute
   ResellerRoute: typeof ResellerRoute
@@ -861,6 +874,13 @@ declare module '@tanstack/react-router' {
       path: '/portals'
       fullPath: '/portals'
       preLoaderRoute: typeof PortalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/noticeboard': {
+      id: '/noticeboard'
+      path: '/noticeboard'
+      fullPath: '/noticeboard'
+      preLoaderRoute: typeof NoticeboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/music': {
@@ -1209,6 +1229,7 @@ const rootRouteChildren: RootRouteChildren = {
   HistoryRoute: HistoryRoute,
   JokesRoute: JokesRouteWithChildren,
   MusicRoute: MusicRoute,
+  NoticeboardRoute: NoticeboardRoute,
   PortalsRoute: PortalsRoute,
   ProfileRoute: ProfileRoute,
   ResellerRoute: ResellerRoute,
