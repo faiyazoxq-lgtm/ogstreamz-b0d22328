@@ -4,7 +4,6 @@ import { Loader2, Send, Skull, Crown, Flame, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { setFeatureFlags } from "@/lib/overlord.functions";
@@ -35,32 +34,6 @@ export function BossChatPanel() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
-
-  const toggleSwearing = async (next: boolean) => {
-    if (!user || !profile) {
-      toast.error("Sign in to use Boss Chat");
-      return;
-    }
-    setTogglingFlag(true);
-    try {
-      if (isBoss) {
-        // Boss can flip via the privileged server fn (audited).
-        const flags = { ...profile.feature_flags, swearing: next };
-        await setF({ data: { userId: user.id, flags } });
-      } else {
-        // Non-boss users flip their own flag directly via RLS-protected profile update.
-        const merged = { ...(profile.feature_flags ?? {}), swearing: next };
-        const { error } = await supabase.from("profiles").update({ feature_flags: merged }).eq("id", user.id);
-        if (error) throw new Error(error.message);
-      }
-      await refresh();
-      toast.success(next ? "Swearing Agent: ON 🔥" : "Swearing Agent: OFF");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to toggle");
-    } finally {
-      setTogglingFlag(false);
-    }
-  };
 
   const setIntensity = async (next: "mild" | "medium" | "chaotic") => {
     if (!user || !profile || next === intensity) return;
