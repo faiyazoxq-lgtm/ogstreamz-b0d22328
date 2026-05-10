@@ -146,9 +146,14 @@ function RootComponent() {
               <img
                 src={bgFlame}
                 alt=""
-                className="absolute inset-0 h-full w-full object-cover opacity-[0.08] mix-blend-overlay"
+                className="absolute inset-0 h-full w-full object-cover object-bottom opacity-[0.10] mix-blend-overlay sm:opacity-[0.08] sm:object-center"
+                style={{
+                  WebkitMaskImage:
+                    "radial-gradient(ellipse 70% 55% at 50% 60%, transparent 0%, rgba(0,0,0,0.35) 45%, #000 80%)",
+                  maskImage:
+                    "radial-gradient(ellipse 70% 55% at 50% 60%, transparent 0%, rgba(0,0,0,0.35) 45%, #000 80%)",
+                }}
               />
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,oklch(var(--background)/0.6)_100%)]" />
             </div>
             <div className="relative z-10">
             <PaymentTestModeBanner />
