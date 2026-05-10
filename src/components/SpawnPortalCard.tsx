@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { spawnPortal } from "@/lib/portals.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type Kind = "jokes" | "music" | "trade" | "connect" | "tools";
 
@@ -53,7 +54,9 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
   useEffect(() => () => clearStageTimers(), []);
 
   const credits = profile?.credits ?? 0;
-  const hasCredits = credits >= 1;
+  const PORTAL_COST = 1;
+  const hasCredits = credits >= PORTAL_COST;
+  const creditsNeeded = Math.max(0, PORTAL_COST - credits);
 
   // Trimmed values + lightweight per-field validation. Mirrors the server
   // schema (name + niche required) and powers the confirm-dialog gating.
@@ -279,16 +282,54 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
               <Input value={vibe} onChange={(e) => setVibe(e.target.value)} placeholder={copy.vibePh} className="mt-1 h-11 bg-background" disabled={loading} />
             </div>
           </div>
-          <Button
-            onClick={requestSpawn}
-            disabled={loading || !isValid || !hasCredits}
-            className="mt-5 h-12 px-8 text-xs uppercase tracking-[0.25em] font-bold w-full sm:w-auto min-h-[48px]"
-            title={!isValid ? "Fill in the required fields" : !hasCredits ? "Top up credits to spawn" : ""}
-          >
-            {loading
-              ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Spawning…</>
-              : <><Wand2 className="h-4 w-4 mr-2" />Generate Portal · 1 credit</>}
-          </Button>
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {/* span wrapper so tooltip still fires when button is disabled */}
+                <span className="mt-5 inline-block w-full sm:w-auto">
+                  <Button
+                    onClick={requestSpawn}
+                    disabled={loading || !isValid || !hasCredits}
+                    aria-disabled={loading || !isValid || !hasCredits}
+                    aria-describedby={!hasCredits ? "spawn-credits-hint" : undefined}
+                    className="h-12 px-8 text-xs uppercase tracking-[0.25em] font-bold w-full sm:w-auto min-h-[48px]"
+                  >
+                    {loading
+                      ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Spawning…</>
+                      : <><Wand2 className="h-4 w-4 mr-2" />Generate Portal · {PORTAL_COST} credit</>}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[260px] text-xs leading-snug">
+                {!hasCredits ? (
+                  <div className="space-y-1.5">
+                    <p className="font-bold uppercase tracking-[0.18em] text-amber-300">
+                      Not enough credits
+                    </p>
+                    <p>
+                      Spawning costs <span className="font-bold">{PORTAL_COST} credit</span>.
+                      You have <span className="font-bold">{credits}</span> — need{" "}
+                      <span className="font-bold text-amber-300">
+                        {creditsNeeded} more credit{creditsNeeded === 1 ? "" : "s"}
+                      </span>.
+                    </p>
+                    <Link to="/store" className="block underline text-foreground">
+                      Top up in the store →
+                    </Link>
+                  </div>
+                ) : !isValid ? (
+                  <p>{fieldErrors.name || fieldErrors.niche || fieldErrors.language}</p>
+                ) : (
+                  <p>Spawn this portal · {PORTAL_COST} credit</p>
+                )}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          {!hasCredits && (
+            <p id="spawn-credits-hint" className="sr-only">
+              You need {creditsNeeded} more credit{creditsNeeded === 1 ? "" : "s"} to spawn a portal.
+            </p>
+          )}
           {!isValid && (
             <p className="mt-2 text-[11px] text-destructive">
               {fieldErrors.name || fieldErrors.niche || fieldErrors.language}
