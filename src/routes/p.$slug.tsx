@@ -342,7 +342,7 @@ function PortalPage() {
             <div className="text-center">
               <Lock className="h-8 w-8 mx-auto mb-3" style={{ color: T.accent }} />
               <p className="text-lg font-bold" style={{ fontFamily: T.fontFamily }}>VIP Portal Locked</p>
-              <p className="text-sm opacity-70 mt-1">Unlock for ${(portal.price_cents / 100).toFixed(2)}</p>
+              <p className="text-sm opacity-70 mt-1">Unlock for £{(portal.price_cents / 100).toFixed(2)} ({Math.round(portal.price_cents / 100)} 🪙)</p>
             </div>
           ) : (
             <AnimatePresence mode="wait">
@@ -375,7 +375,7 @@ function PortalPage() {
               boxShadow: `0 0 80px ${T.accent}99, inset 0 0 30px rgba(255,255,255,0.25)`,
             }}
           >
-            {unlocking ? <><Loader2 className="h-6 w-6 mr-2 animate-spin" />…</> : (!owned && portal.vip ? `UNLOCK · $${(portal.price_cents/100).toFixed(2)}` : T.hitButton)}
+            {unlocking ? <><Loader2 className="h-6 w-6 mr-2 animate-spin" />…</> : (!owned && portal.vip ? `UNLOCK · £${(portal.price_cents/100).toFixed(2)} (${Math.round(portal.price_cents/100)} 🪙)` : T.hitButton)}
           </Button>
           <p className="mt-3 text-center text-[10px] uppercase tracking-[0.3em] opacity-60">
             {owned ? `${hits} hits · ${idx + 1}/${jokes.length}` : "Tap to unlock"}
