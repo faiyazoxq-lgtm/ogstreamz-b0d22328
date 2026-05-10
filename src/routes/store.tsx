@@ -408,6 +408,9 @@ function PackCard({ pack, isBoss, creditsPerSong, onBuy, onChanged }: {
       )}
       <p className="mt-4 font-[Montserrat] font-black text-3xl text-metallic">
         £{(pack.amount_cents / 100).toFixed(2)}
+        <span className="ml-2 text-base text-yellow-300 font-bold align-middle">
+          ({Math.round(pack.amount_cents / 100).toLocaleString()} 🪙)
+        </span>
         {pack.recurring && <span className="text-sm text-muted-foreground font-normal">/mo</span>}
       </p>
 
