@@ -69,15 +69,35 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
     setErrorMsg(null);
     clearStageTimers();
     setStage(1); // queued
+    const toastId = `spawn-${kind}-${Date.now()}`;
+    toast.loading("Queued — reserving credit & slot", {
+      id: toastId,
+      description: "Stage 1 of 3",
+    });
     // Optimistic stage progression — server returns when fully published
-    stageTimers.current.push(window.setTimeout(() => setStage((s) => (s < 2 ? 2 : s)), 600));
-    stageTimers.current.push(window.setTimeout(() => setStage((s) => (s < 3 ? 3 : s)), 6000));
+    stageTimers.current.push(window.setTimeout(() => {
+      setStage((s) => (s < 2 ? 2 : s));
+      toast.loading("Spawning — scouting + AI seed content", {
+        id: toastId,
+        description: "Stage 2 of 3",
+      });
+    }, 600));
+    stageTimers.current.push(window.setTimeout(() => {
+      setStage((s) => (s < 3 ? 3 : s));
+      toast.loading("Publishing — writing portal & going live", {
+        id: toastId,
+        description: "Stage 3 of 3",
+      });
+    }, 6000));
     try {
       const r = await spawn({ data: { name: name.trim(), niche: niche.trim(), vibe: vibe.trim(), language, kind, useScout: true } });
       clearStageTimers();
       setStage(4);
       setCreated({ slug: r.portal.slug, name: r.portal.name });
-      toast.success(`Spawned "${r.portal.name}" — 1 credit spent`);
+      toast.success(`Spawned "${r.portal.name}"`, {
+        id: toastId,
+        description: "Portal is live · 1 credit spent",
+      });
       setName(""); setNiche(""); setVibe("");
       // Refresh wallet so the new credit balance shows everywhere immediately
       void refresh();
@@ -86,7 +106,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
       setStage(0);
       const msg = e?.message ?? "Spawn failed — please try again";
       setErrorMsg(msg);
-      toast.error(msg);
+      toast.error("Spawn failed", { id: toastId, description: msg });
     } finally {
       setLoading(false);
     }
