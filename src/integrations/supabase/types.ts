@@ -83,6 +83,27 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       battle_plays: {
         Row: {
           battle_id: string
@@ -2900,6 +2921,7 @@ export type Database = {
         }
         Returns: string
       }
+      get_signup_bonus_credits: { Args: never; Returns: number }
       get_user_purchases_summary: { Args: never; Returns: Json }
       has_active_vip: {
         Args: { _env?: string; _user?: string }
