@@ -1162,6 +1162,7 @@ export type Database = {
           bg_video_aspect: string
           bg_video_prompt: string | null
           bg_video_url: string | null
+          connect_openers: Json
           created_at: string
           created_by: string | null
           id: string
@@ -1169,6 +1170,7 @@ export type Database = {
           kind: string
           language: string
           lyric_text: string | null
+          music_hooks: Json
           name: string
           niche: string
           price_cents: number
@@ -1183,6 +1185,8 @@ export type Database = {
           telegram_config: Json
           theme: string
           theme_config: Json
+          tool_ideas: Json
+          trade_briefs: Json
           updated_at: string
           vibe: string | null
           view_count: number
@@ -1194,6 +1198,7 @@ export type Database = {
           bg_video_aspect?: string
           bg_video_prompt?: string | null
           bg_video_url?: string | null
+          connect_openers?: Json
           created_at?: string
           created_by?: string | null
           id?: string
@@ -1201,6 +1206,7 @@ export type Database = {
           kind?: string
           language?: string
           lyric_text?: string | null
+          music_hooks?: Json
           name: string
           niche: string
           price_cents?: number
@@ -1215,6 +1221,8 @@ export type Database = {
           telegram_config?: Json
           theme?: string
           theme_config?: Json
+          tool_ideas?: Json
+          trade_briefs?: Json
           updated_at?: string
           vibe?: string | null
           view_count?: number
@@ -1226,6 +1234,7 @@ export type Database = {
           bg_video_aspect?: string
           bg_video_prompt?: string | null
           bg_video_url?: string | null
+          connect_openers?: Json
           created_at?: string
           created_by?: string | null
           id?: string
@@ -1233,6 +1242,7 @@ export type Database = {
           kind?: string
           language?: string
           lyric_text?: string | null
+          music_hooks?: Json
           name?: string
           niche?: string
           price_cents?: number
@@ -1247,6 +1257,8 @@ export type Database = {
           telegram_config?: Json
           theme?: string
           theme_config?: Json
+          tool_ideas?: Json
+          trade_briefs?: Json
           updated_at?: string
           vibe?: string | null
           view_count?: number
