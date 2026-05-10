@@ -89,6 +89,45 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_api_keys: {
+        Row: {
+          agent_group: string
+          created_at: string
+          description: string
+          enc_value: string
+          id: string
+          key_name: string
+          label: string
+          last_set_at: string
+          last_set_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          agent_group?: string
+          created_at?: string
+          description?: string
+          enc_value: string
+          id?: string
+          key_name: string
+          label?: string
+          last_set_at?: string
+          last_set_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agent_group?: string
+          created_at?: string
+          description?: string
+          enc_value?: string
+          id?: string
+          key_name?: string
+          label?: string
+          last_set_at?: string
+          last_set_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_logs: {
         Row: {
           created_at: string
@@ -2972,6 +3011,7 @@ export type Database = {
         Args: { _approve: boolean; _id: string; _note?: string }
         Returns: Json
       }
+      boss_delete_agent_key: { Args: { _key_name: string }; Returns: undefined }
       boss_delete_vault_credential: { Args: { _id: string }; Returns: boolean }
       boss_delete_vip_pass_pool: { Args: { _id: string }; Returns: boolean }
       boss_deny_topup: {
@@ -3020,6 +3060,21 @@ export type Database = {
             }
             Returns: string
           }
+      boss_list_agent_keys: {
+        Args: never
+        Returns: {
+          agent_group: string
+          description: string
+          has_value: boolean
+          id: string
+          key_name: string
+          label: string
+          last_set_at: string
+          last_set_by: string
+          preview: string
+          updated_at: string
+        }[]
+      }
       boss_list_stream_links: {
         Args: never
         Returns: {
@@ -3067,6 +3122,7 @@ export type Database = {
         }[]
       }
       boss_purge_view_events: { Args: never; Returns: number }
+      boss_reveal_agent_key: { Args: { _key_name: string }; Returns: string }
       boss_revoke_vip_pass: { Args: { _pass_id: string }; Returns: boolean }
       boss_set_banned: {
         Args: { _banned: boolean; _reason?: string; _user_id: string }
@@ -3079,6 +3135,25 @@ export type Database = {
       boss_unlink_stream_account: {
         Args: { _user_id: string }
         Returns: boolean
+      }
+      boss_update_agent_key_meta: {
+        Args: {
+          _agent_group?: string
+          _description?: string
+          _key_name: string
+          _label?: string
+        }
+        Returns: undefined
+      }
+      boss_upsert_agent_key: {
+        Args: {
+          _agent_group?: string
+          _description?: string
+          _key_name: string
+          _label?: string
+          _value: string
+        }
+        Returns: string
       }
       boss_upsert_vault_credential: {
         Args: {

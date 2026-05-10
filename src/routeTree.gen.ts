@@ -60,6 +60,7 @@ import { Route as BossOverviewRouteImport } from './routes/boss.overview'
 import { Route as BossLexiconRouteImport } from './routes/boss.lexicon'
 import { Route as BossHubsRouteImport } from './routes/boss.hubs'
 import { Route as BossCivilityRouteImport } from './routes/boss.civility'
+import { Route as BossApiKeysRouteImport } from './routes/boss.api-keys'
 import { Route as BossAnalyticsRouteImport } from './routes/boss.analytics'
 import { Route as BossAlertsRouteImport } from './routes/boss.alerts'
 import { Route as BSlugRouteImport } from './routes/b.$slug'
@@ -328,6 +329,11 @@ const BossCivilityRoute = BossCivilityRouteImport.update({
   path: '/civility',
   getParentRoute: () => BossRoute,
 } as any)
+const BossApiKeysRoute = BossApiKeysRouteImport.update({
+  id: '/api-keys',
+  path: '/api-keys',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossAnalyticsRoute = BossAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -430,6 +436,7 @@ export interface FileRoutesByFullPath {
   '/b/$slug': typeof BSlugRoute
   '/boss/alerts': typeof BossAlertsRoute
   '/boss/analytics': typeof BossAnalyticsRoute
+  '/boss/api-keys': typeof BossApiKeysRoute
   '/boss/civility': typeof BossCivilityRoute
   '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
@@ -494,6 +501,7 @@ export interface FileRoutesByTo {
   '/b/$slug': typeof BSlugRoute
   '/boss/alerts': typeof BossAlertsRoute
   '/boss/analytics': typeof BossAnalyticsRoute
+  '/boss/api-keys': typeof BossApiKeysRoute
   '/boss/civility': typeof BossCivilityRoute
   '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
@@ -560,6 +568,7 @@ export interface FileRoutesById {
   '/b/$slug': typeof BSlugRoute
   '/boss/alerts': typeof BossAlertsRoute
   '/boss/analytics': typeof BossAnalyticsRoute
+  '/boss/api-keys': typeof BossApiKeysRoute
   '/boss/civility': typeof BossCivilityRoute
   '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
@@ -627,6 +636,7 @@ export interface FileRouteTypes {
     | '/b/$slug'
     | '/boss/alerts'
     | '/boss/analytics'
+    | '/boss/api-keys'
     | '/boss/civility'
     | '/boss/hubs'
     | '/boss/lexicon'
@@ -691,6 +701,7 @@ export interface FileRouteTypes {
     | '/b/$slug'
     | '/boss/alerts'
     | '/boss/analytics'
+    | '/boss/api-keys'
     | '/boss/civility'
     | '/boss/hubs'
     | '/boss/lexicon'
@@ -756,6 +767,7 @@ export interface FileRouteTypes {
     | '/b/$slug'
     | '/boss/alerts'
     | '/boss/analytics'
+    | '/boss/api-keys'
     | '/boss/civility'
     | '/boss/hubs'
     | '/boss/lexicon'
@@ -1193,6 +1205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossCivilityRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/api-keys': {
+      id: '/boss/api-keys'
+      path: '/api-keys'
+      fullPath: '/boss/api-keys'
+      preLoaderRoute: typeof BossApiKeysRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/analytics': {
       id: '/boss/analytics'
       path: '/analytics'
@@ -1295,6 +1314,7 @@ const BossHubsRouteWithChildren = BossHubsRoute._addFileChildren(
 interface BossRouteChildren {
   BossAlertsRoute: typeof BossAlertsRoute
   BossAnalyticsRoute: typeof BossAnalyticsRoute
+  BossApiKeysRoute: typeof BossApiKeysRoute
   BossCivilityRoute: typeof BossCivilityRoute
   BossHubsRoute: typeof BossHubsRouteWithChildren
   BossLexiconRoute: typeof BossLexiconRoute
@@ -1313,6 +1333,7 @@ interface BossRouteChildren {
 const BossRouteChildren: BossRouteChildren = {
   BossAlertsRoute: BossAlertsRoute,
   BossAnalyticsRoute: BossAnalyticsRoute,
+  BossApiKeysRoute: BossApiKeysRoute,
   BossCivilityRoute: BossCivilityRoute,
   BossHubsRoute: BossHubsRouteWithChildren,
   BossLexiconRoute: BossLexiconRoute,
