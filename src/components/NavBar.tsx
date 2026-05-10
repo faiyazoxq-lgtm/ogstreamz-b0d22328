@@ -110,8 +110,12 @@ function NavDropdown({
                 aria-current={isActive ? "page" : undefined}
                 data-active={isActive ? "true" : undefined}
                 className={[
-                  "group/item flex items-start gap-3 px-2 py-3 sm:py-2 min-h-12 sm:min-h-0 rounded-md outline-none touch-manipulation",
-                  "hover:bg-secondary focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card",
+                  "group/item flex items-start gap-3 px-2 py-3 sm:py-2 min-h-12 sm:min-h-0 rounded-md outline-none touch-manipulation transition-shadow",
+                  // Gold focus + tap ring so MusicHUB / JokesHUB / ToolHUB
+                  // (and every hub item) light up with the brand's HUBS
+                  // accent on keyboard focus AND on touch tap-hold.
+                  "hover:bg-secondary focus:outline-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-card focus-visible:shadow-[0_0_18px_-4px_var(--gold)]",
+                  "active:ring-[3px] active:ring-gold/70 active:ring-offset-2 active:ring-offset-card",
                   isActive
                     ? "bg-gold/15 ring-1 ring-inset ring-gold/60 shadow-[inset_2px_0_0_0_var(--gold)]"
                     : "",
