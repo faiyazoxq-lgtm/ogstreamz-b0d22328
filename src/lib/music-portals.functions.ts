@@ -202,11 +202,16 @@ export const generateSunoStack = createServerFn({ method: "POST" })
     const PERPLEXITY = process.env.PERPLEXITY_API_KEY;
     if (!PERPLEXITY) throw new Error("PERPLEXITY_API_KEY missing");
 
-    const swear = !!portal.swear_chat_enabled;
+    const religious = isReligiousPortal(portal);
+    const swear = !!portal.swear_chat_enabled && !religious;
     const sys =
       "You are a Suno V5.5 prompt engineer. Output STRICT JSON only — no markdown, no preamble. " +
       "Build a 4-layer Style Vector Stack for Suno Custom Mode." +
-      (swear ? " BRUTAL MODE: lean into aggressive, raw, explicit, swearing, underground sub-genres. Push vocal texture toward gritty/shouty/aggressive delivery." : "");
+      (swear
+        ? " BRUTAL MODE: lean into aggressive, raw, explicit, swearing, underground sub-genres. Push vocal texture toward gritty/shouty/aggressive delivery."
+        : religious
+        ? " RELIGIOUS / DEVOTIONAL PORTAL: keep the stack reverent and clean — no explicit, no swearing, no aggressive sub-genres. Vocal texture: pure, sincere, choral or call-to-prayer style as fits the tradition."
+        : "");
 
     const user = `Portal style: ${portal.style}
 Language: ${portal.language}
