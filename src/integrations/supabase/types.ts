@@ -1341,6 +1341,9 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          banned: boolean
+          banned_at: string | null
+          banned_reason: string | null
           bio: string | null
           contact_card: Json
           created_at: string
@@ -1353,12 +1356,21 @@ export type Database = {
           rank: Database["public"]["Enums"]["syndicate_rank"]
           referred_by_reseller: string | null
           status: Database["public"]["Enums"]["account_status"]
+          stream_expires_at: string | null
           stream_links: Json
+          stream_password: string | null
+          stream_server: string | null
+          stream_status: string | null
+          stream_username: string | null
+          stream_verified_at: string | null
           subscription_plan: Database["public"]["Enums"]["subscription_plan"]
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          banned?: boolean
+          banned_at?: string | null
+          banned_reason?: string | null
           bio?: string | null
           contact_card?: Json
           created_at?: string
@@ -1371,12 +1383,21 @@ export type Database = {
           rank?: Database["public"]["Enums"]["syndicate_rank"]
           referred_by_reseller?: string | null
           status?: Database["public"]["Enums"]["account_status"]
+          stream_expires_at?: string | null
           stream_links?: Json
+          stream_password?: string | null
+          stream_server?: string | null
+          stream_status?: string | null
+          stream_username?: string | null
+          stream_verified_at?: string | null
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          banned?: boolean
+          banned_at?: string | null
+          banned_reason?: string | null
           bio?: string | null
           contact_card?: Json
           created_at?: string
@@ -1389,7 +1410,13 @@ export type Database = {
           rank?: Database["public"]["Enums"]["syndicate_rank"]
           referred_by_reseller?: string | null
           status?: Database["public"]["Enums"]["account_status"]
+          stream_expires_at?: string | null
           stream_links?: Json
+          stream_password?: string | null
+          stream_server?: string | null
+          stream_status?: string | null
+          stream_username?: string | null
+          stream_verified_at?: string | null
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
           updated_at?: string
         }
@@ -2552,6 +2579,10 @@ export type Database = {
       }
       boss_purge_view_events: { Args: never; Returns: number }
       boss_revoke_vip_pass: { Args: { _pass_id: string }; Returns: boolean }
+      boss_set_banned: {
+        Args: { _banned: boolean; _reason?: string; _user_id: string }
+        Returns: undefined
+      }
       boss_topup_reseller: {
         Args: { _delta: number; _reason: string; _user_id: string }
         Returns: number
@@ -2620,6 +2651,10 @@ export type Database = {
       increment_portal_view: { Args: { _slug: string }; Returns: number }
       is_boss: { Args: { _uid: string }; Returns: boolean }
       is_real_og: { Args: { _uid?: string }; Returns: boolean }
+      mark_stream_verified: {
+        Args: { _expires_at: string; _status: string; _user_id: string }
+        Returns: undefined
+      }
       plan_includes_tier: {
         Args: {
           _plan: Database["public"]["Enums"]["subscription_plan"]
@@ -2648,6 +2683,15 @@ export type Database = {
       }
       reveal_vault_credential: { Args: never; Returns: Json }
       reveal_vip_pass: { Args: never; Returns: Json }
+      set_stream_credentials: {
+        Args: {
+          _password: string
+          _server: string
+          _user_id: string
+          _username: string
+        }
+        Returns: undefined
+      }
       spend_credits: {
         Args: { _amount: number; _reason: string }
         Returns: number
@@ -2657,7 +2701,7 @@ export type Database = {
       account_status: "free" | "vip"
       app_role: "admin" | "user" | "reseller"
       subscription_plan: "free" | "metal" | "energy" | "syndicate"
-      syndicate_rank: "prospect" | "enforcer" | "vip" | "boss"
+      syndicate_rank: "prospect" | "enforcer" | "vip" | "boss" | "stream_user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2788,7 +2832,7 @@ export const Constants = {
       account_status: ["free", "vip"],
       app_role: ["admin", "user", "reseller"],
       subscription_plan: ["free", "metal", "energy", "syndicate"],
-      syndicate_rank: ["prospect", "enforcer", "vip", "boss"],
+      syndicate_rank: ["prospect", "enforcer", "vip", "boss", "stream_user"],
     },
   },
 } as const
