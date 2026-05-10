@@ -465,59 +465,97 @@ function BossOverview() {
               </span>
               <ArrowUpRight className="h-4 w-4 text-white/40" />
             </Link>
-            <Link
-              to="/boss/analytics"
-              className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-3 hover:bg-white/[0.05] transition"
+            <div className="flex items-center justify-between gap-3 rounded-xl border p-3"
+              style={{
+                borderColor: coinFrozen ? "#ff557755" : "#00e08a55",
+                background: coinFrozen ? "rgba(255,85,119,0.05)" : "rgba(0,224,138,0.04)",
+              }}
             >
-              <span className="text-sm font-semibold text-white/90 flex items-center gap-1.5">
-                <BarChart3 className="h-3.5 w-3.5" style={{ color: "#00e08a" }} /> View analytics
-              </span>
-              <ArrowUpRight className="h-4 w-4 text-white/40" />
-            </Link>
-            <Link
-              to="/console"
-              className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-3 hover:bg-white/[0.05] transition"
-            >
-              <span className="text-sm font-semibold text-white/90 flex items-center gap-1.5">
-                <Activity className="h-3.5 w-3.5 text-cyan-300" /> 0G-Console
-              </span>
-              <ArrowUpRight className="h-4 w-4 text-white/40" />
-            </Link>
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-white/90 flex items-center gap-1.5">
+                  {coinFrozen ? <Snowflake className="h-3.5 w-3.5" style={{ color: "#ff5577" }} /> : <Coins className="h-3.5 w-3.5" style={{ color: "#00e08a" }} />}
+                  Coin transactions
+                </div>
+                <div className="text-[11px] text-white/50">
+                  {coinFrozen ? "Earn / spend flows are frozen site-wide." : "Coin spend & earn flowing normally."}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={toggleCoinFreeze}
+                disabled={coinFrozen === null || togglingCoin}
+                aria-pressed={!!coinFrozen}
+                className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-50"
+                style={{
+                  background: coinFrozen ? "#ff5577" : "#00e08a",
+                  boxShadow: coinFrozen ? "0 0 14px -2px #ff557799" : "0 0 14px -2px #00e08a99",
+                }}
+              >
+                <span
+                  className="inline-block h-5 w-5 transform rounded-full bg-white transition"
+                  style={{ transform: `translateX(${coinFrozen ? "22px" : "2px"})` }}
+                />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <Link to="/boss/power" className="flex items-center justify-center gap-1.5 rounded-lg border border-rose-500/40 bg-rose-500/10 px-2.5 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-rose-300 hover:bg-rose-500/15 transition">
+                <Undo2 className="h-3.5 w-3.5" /> Reverse
+              </Link>
+              <Link to="/boss/publish-check" className="flex items-center justify-center gap-1.5 rounded-lg border border-gold/40 bg-gold/10 px-2.5 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-gold hover:bg-gold/15 transition">
+                <Rocket className="h-3.5 w-3.5" /> Publish
+              </Link>
+              <Link to="/boss/analytics" className="flex items-center justify-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-300 hover:bg-emerald-500/15 transition">
+                <BarChart3 className="h-3.5 w-3.5" /> Analytics
+              </Link>
+              <Link to="/boss/api-keys" className="flex items-center justify-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 px-2.5 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-violet-300 hover:bg-violet-500/15 transition">
+                <KeyRound className="h-3.5 w-3.5" /> Keys
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      <div>
-        <h2 className="syndicate-header text-sm text-white/70 mb-3 flex items-center gap-2">
-          <Crown className="h-3.5 w-3.5" style={{ color: "#ffd166" }} /> All Modules
-        </h2>
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {TILES.map((t) => (
-          <Link
-            key={t.label + (t.hash ?? "")}
-            to={t.to}
-            hash={t.hash}
-            className="group glass-obsidian-cmd rounded-2xl p-5 transition-all hover:-translate-y-0.5"
-            style={{ borderColor: `${t.tint}66` }}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div
-                className="h-10 w-10 rounded-xl flex items-center justify-center"
-                style={{ background: `${t.tint}1f`, border: `1px solid ${t.tint}55` }}
-              >
-                <t.Icon className="h-5 w-5" style={{ color: t.tint }} />
-              </div>
-              <ArrowUpRight
-                className="h-4 w-4 opacity-50 group-hover:opacity-100 transition"
-                style={{ color: t.tint }}
-              />
-            </div>
-            <h2 className="mt-4 syndicate-header text-base text-white/95">{t.label}</h2>
-            <p className="mt-1 text-xs text-white/60 leading-relaxed">{t.blurb}</p>
-          </Link>
-        ))}
-      </section>
-      </div>
+      {TILE_CATEGORIES.map((cat) => {
+        const tiles = cat.labels
+          .map((l) => TILES.find((t) => t.label === l))
+          .filter((t): t is Tile => Boolean(t));
+        if (tiles.length === 0) return null;
+        return (
+          <div key={cat.id}>
+            <h2 className="syndicate-header text-sm text-white/80 mb-3 flex items-center gap-2">
+              <span className="inline-block h-2 w-2 rounded-full" style={{ background: cat.tint, boxShadow: `0 0 10px ${cat.tint}` }} />
+              {cat.label}
+              <span className="text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/35">{tiles.length}</span>
+            </h2>
+            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {tiles.map((t) => (
+                <Link
+                  key={t.label + (t.hash ?? "")}
+                  to={t.to}
+                  hash={t.hash}
+                  className="group glass-obsidian-cmd rounded-2xl p-4 transition-all hover:-translate-y-0.5"
+                  style={{ borderColor: `${t.tint}55` }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div
+                      className="h-9 w-9 rounded-xl flex items-center justify-center"
+                      style={{ background: `${t.tint}1f`, border: `1px solid ${t.tint}55` }}
+                    >
+                      <t.Icon className="h-4 w-4" style={{ color: t.tint }} />
+                    </div>
+                    <ArrowUpRight
+                      className="h-4 w-4 opacity-40 group-hover:opacity-100 transition"
+                      style={{ color: t.tint }}
+                    />
+                  </div>
+                  <h3 className="mt-3 syndicate-header text-sm text-white/95">{t.label}</h3>
+                  <p className="mt-1 text-[11px] text-white/55 leading-relaxed">{t.blurb}</p>
+                </Link>
+              ))}
+            </section>
+          </div>
+        );
+      })}
       <AlertDialog open={confirmGoLive} onOpenChange={setConfirmGoLive}>
         <AlertDialogContent className="border-destructive/40">
           <AlertDialogHeader>
