@@ -102,27 +102,19 @@ function DashboardPage() {
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Rank</p>
               <p className={`mt-1 text-3xl font-black ${meta.color}`}><Crown className="inline h-6 w-6 mr-2" />{meta.label}</p>
               <p className="mt-1 text-xs text-muted-foreground">{meta.perks}</p>
-              {(planLabel || activeSub?.status || renewalLabel) && (
-                <div className="mt-3 flex flex-col gap-1.5">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <PlanChip planLabel={planLabel} tone="amber" size="sm" />
-                    <StatusBadge sub={activeSub} size="sm" />
-                  </div>
-                  {renewalLabel && (
-                    <p className="text-[11px] text-muted-foreground">{renewalLabel}</p>
-                  )}
-                </div>
-              )}
+              <SubSummary planLabel={planLabel} activeSub={activeSub} renewalLabel={renewalLabel} />
             </Card>
             <Card>
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Credits</p>
               <p className="mt-1 text-3xl font-black text-metallic"><Coins className="inline h-6 w-6 mr-2 text-yellow-400" />{profile.credits}</p>
               <Link to="/store" className="mt-1 inline-block text-xs underline text-[color:var(--neon-blue-bright)]">Buy Credits →</Link>
+              <SubSummary planLabel={planLabel} activeSub={activeSub} renewalLabel={renewalLabel} />
             </Card>
             <Card>
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Hit-Button (free)</p>
               <p className="mt-1 text-3xl font-black text-metallic"><Flame className="inline h-6 w-6 mr-2 text-orange-400" />{profile.rank === "prospect" ? `${freeLeft}/5` : "∞"}</p>
               <p className="mt-1 text-xs text-muted-foreground">{profile.rank === "prospect" ? "Upgrade for unlimited" : "Unlimited access unlocked"}</p>
+              <SubSummary planLabel={planLabel} activeSub={activeSub} renewalLabel={renewalLabel} />
             </Card>
           </section>
 
@@ -180,6 +172,29 @@ function DashboardPage() {
 
 function Card({ children }: { children: React.ReactNode }) {
   return <div className="rounded-2xl border border-border bg-card p-5">{children}</div>;
+}
+
+function SubSummary({
+  planLabel,
+  activeSub,
+  renewalLabel,
+}: {
+  planLabel: string | null;
+  activeSub: { status?: string | null } | null;
+  renewalLabel: string | null;
+}) {
+  if (!planLabel && !activeSub?.status && !renewalLabel) return null;
+  return (
+    <div className="mt-3 flex flex-col gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <PlanChip planLabel={planLabel} tone="amber" size="sm" />
+        <StatusBadge sub={activeSub as any} size="sm" />
+      </div>
+      {renewalLabel && (
+        <p className="text-[11px] text-muted-foreground">{renewalLabel}</p>
+      )}
+    </div>
+  );
 }
 
 function HistoryGroup({ title, empty, Icon, children }: { title: string; empty: string; Icon: any; children: React.ReactNode }) {
