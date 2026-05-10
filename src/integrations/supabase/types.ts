@@ -115,6 +115,33 @@ export type Database = {
           },
         ]
       }
+      battlehub_votes: {
+        Row: {
+          created_at: string
+          id: string
+          round_key: number
+          side: string
+          user_id: string | null
+          visitor_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          round_key: number
+          side: string
+          user_id?: string | null
+          visitor_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          round_key?: number
+          side?: string
+          user_id?: string | null
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       battles: {
         Row: {
           accent: string

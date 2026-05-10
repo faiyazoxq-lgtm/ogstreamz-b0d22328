@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Swords, Crown, Shield, TrendingUp, Timer, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/battlehub")({
   head: () => ({
@@ -17,13 +18,23 @@ export const Route = createFileRoute("/battlehub")({
 
 type Side = "gold" | "shadow";
 
-const INITIAL = { gold: 1284, shadow: 1176 };
 // Round window: rolls over at the next 10-minute boundary so the same end
-// time is shared across tabs / reloads without needing a backend.
+// time is shared across tabs / reloads and used as the round bucket key.
 const ROUND_WINDOW_MS = 10 * 60 * 1000;
 
 function nextBoundary(from: number, windowMs: number) {
   return Math.ceil((from + 1) / windowMs) * windowMs;
+}
+
+function getVisitorId(): string {
+  if (typeof window === "undefined") return "ssr";
+  const KEY = "battlehub_visitor_id";
+  let v = window.localStorage.getItem(KEY);
+  if (!v) {
+    v = (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    window.localStorage.setItem(KEY, v);
+  }
+  return v;
 }
 
 function formatRemaining(ms: number) {
@@ -36,16 +47,70 @@ function formatRemaining(ms: number) {
 
 function BattleHubPage() {
   const [pick, setPick] = useState<Side | null>(null);
-  const [votes, setVotes] = useState(INITIAL);
+  const [votes, setVotes] = useState({ gold: 0, shadow: 0 });
+  const [voteError, setVoteError] = useState<string | null>(null);
 
   // Anchor the round end to a deterministic boundary so reloading doesn't
   // restart the timer from scratch.
   const endsAt = useMemo(() => nextBoundary(Date.now(), ROUND_WINDOW_MS), []);
+  const roundKey = endsAt; // bucket key shared by all clients in this window
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, []);
+
+  // Fetch initial counts + subscribe to realtime inserts for this round.
+  useEffect(() => {
+    let cancelled = false;
+    const visitorId = getVisitorId();
+
+    async function loadCounts() {
+      const { data, error } = await supabase
+        .from("battlehub_votes")
+        .select("side")
+        .eq("round_key", roundKey);
+      if (cancelled || error || !data) return;
+      const next = { gold: 0, shadow: 0 };
+      for (const row of data as { side: Side }[]) {
+        if (row.side === "gold" || row.side === "shadow") next[row.side]++;
+      }
+      setVotes(next);
+      // Restore "already voted" state across reloads
+      const { data: mine } = await supabase
+        .from("battlehub_votes")
+        .select("side")
+        .eq("round_key", roundKey)
+        .eq("visitor_id", visitorId)
+        .maybeSingle();
+      if (!cancelled && mine?.side) setPick(mine.side as Side);
+    }
+    loadCounts();
+
+    const channel = supabase
+      .channel(`battlehub-${roundKey}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "battlehub_votes",
+          filter: `round_key=eq.${roundKey}`,
+        },
+        (payload) => {
+          const side = (payload.new as { side?: Side })?.side;
+          if (side === "gold" || side === "shadow") {
+            setVotes((v) => ({ ...v, [side]: v[side] + 1 }));
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, [roundKey]);
 
   const remainingMs = endsAt - now;
   const roundEnded = remainingMs <= 0;
@@ -54,8 +119,8 @@ function BattleHubPage() {
   const lowTime = !roundEnded && remainingMs <= 30_000;
 
   const total = votes.gold + votes.shadow;
-  const goldPct = Math.round((votes.gold / total) * 100);
-  const shadowPct = 100 - goldPct;
+  const goldPct = total === 0 ? 0 : Math.round((votes.gold / total) * 100);
+  const shadowPct = total === 0 ? 0 : 100 - goldPct;
   const winner: Side | "tie" | null = !roundEnded
     ? null
     : votes.gold === votes.shadow
@@ -64,10 +129,27 @@ function BattleHubPage() {
         ? "gold"
         : "shadow";
 
-  const cast = (side: Side) => {
+  const cast = async (side: Side) => {
     if (pick || roundEnded) return;
+    // Optimistic UI
     setPick(side);
-    setVotes((v) => ({ ...v, [side]: v[side] + 1 }));
+    setVoteError(null);
+    const visitorId = getVisitorId();
+    const { data: sess } = await supabase.auth.getSession();
+    const userId = sess.session?.user?.id ?? null;
+    const { error } = await supabase.from("battlehub_votes").insert({
+      round_key: roundKey,
+      side,
+      user_id: userId,
+      visitor_id: visitorId,
+    });
+    if (error) {
+      // Unique violation → already voted (e.g., from another tab); keep pick.
+      if ((error as { code?: string }).code !== "23505") {
+        setPick(null);
+        setVoteError("Couldn't record your vote. Try again.");
+      }
+    }
   };
 
   return (
@@ -198,6 +280,9 @@ function BattleHubPage() {
               <span className="text-[#f5e8c7]/60">Round closed before you voted.</span>
             )}
           </div>
+          {voteError && (
+            <div className="mt-2 text-sm text-[#ff6b6b]">{voteError}</div>
+          )}
         </div>
 
         {/* Results preview */}
