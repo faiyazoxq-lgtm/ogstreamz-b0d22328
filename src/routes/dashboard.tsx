@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
+import { requireMember } from "@/lib/route-guards";
   Crown, Coins, Ticket, History, Loader2, Sparkles, ExternalLink, Music, Mic2,
   Flame,
 } from "lucide-react";
@@ -14,6 +15,7 @@ import { redeemCode } from "@/lib/overlord.functions";
 import { ZeroGStreamPanel } from "@/components/ZeroGStreamPanel";
 
 export const Route = createFileRoute("/dashboard")({
+  beforeLoad: requireMember,
   head: () => ({ meta: [{ title: "Dashboard · 0G-PORTAL" }] }),
   component: DashboardPage,
 });

@@ -12,7 +12,9 @@ import { spawnTool, type ToolAudience } from "@/lib/tools.functions";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
 
+import { requireMember } from "@/lib/route-guards";
 export const Route = createFileRoute("/tools")({
+  beforeLoad: requireMember,
   head: () => ({
     meta: [
       { title: "ToolHUB · Build Your Tool — 0G-STREAMZ" },

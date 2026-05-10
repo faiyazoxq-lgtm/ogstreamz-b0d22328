@@ -9,6 +9,7 @@ import { VaultLockedDialog } from "@/components/VaultLockedDialog";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
 
+import { requireMember } from "@/lib/route-guards";
 export type StylePreset = { id: string; label: string; Icon: typeof Skull };
 
 export const STYLE_PRESETS: StylePreset[] = [
@@ -49,6 +50,7 @@ const PROMPTS: Prompt[] = [
 ];
 
 export const Route = createFileRoute("/jokes")({
+  beforeLoad: requireMember,
   head: () => ({
     meta: [
       { title: "JokesHUB · Build Your Mix — 0G-STREAMZ" },

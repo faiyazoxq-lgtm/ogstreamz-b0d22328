@@ -5,7 +5,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
+import { requireMember } from "@/lib/route-guards";
 export const Route = createFileRoute("/history")({
+  beforeLoad: requireMember,
   head: () => ({
     meta: [
       { title: "Portal History — 0G-STREAMZ" },

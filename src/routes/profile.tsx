@@ -12,7 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
+import { requireMember } from "@/lib/route-guards";
 export const Route = createFileRoute("/profile")({
+  beforeLoad: requireMember,
   head: () => ({
     meta: [
       { title: "Vault · 0G-PORTAL" },

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import {
+import { requireMember } from "@/lib/route-guards";
   Loader2, Rocket, Search, Mail, Eye, MousePointerClick, Reply,
   Globe, Trash2, Plus, RefreshCw, ShieldCheck, Sparkles,
 } from "lucide-react";
@@ -19,6 +20,7 @@ import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
 
 export const Route = createFileRoute("/connect")({
+  beforeLoad: requireMember,
   head: () => ({
     meta: [
       { title: "ConnectHUB · Signal-Based Outreach" },
