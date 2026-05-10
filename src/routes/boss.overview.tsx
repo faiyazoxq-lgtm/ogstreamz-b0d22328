@@ -100,10 +100,10 @@ function BossOverview() {
         head(supabase.from("stream_verification_requests").select("*", { count: "exact", head: true }).eq("status", "pending")),
         head(supabase.from("custom_track_requests").select("*", { count: "exact", head: true }).eq("status", "pending")),
         head(supabase.from("pending_credit_grants").select("*", { count: "exact", head: true })),
-        head(supabase.from("store_products").select("*", { count: "exact", head: true }).eq("enabled", true)),
+        head(supabase.from("store_products").select("*", { count: "exact", head: true }).eq("active", true)),
         head(supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", since)),
         supabase.from("civility_settings").select("swear_default").limit(1).maybeSingle(),
-        supabase.rpc("sum_total_credits").then((r: any) => r),
+        Promise.resolve({ data: null, error: { message: "no-rpc" } } as any),
       ]);
 
       // credits fallback: if RPC missing, query directly via edge-safe aggregate
@@ -356,7 +356,7 @@ function BossOverview() {
               className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-3 hover:bg-white/[0.05] transition"
             >
               <span className="text-sm font-semibold text-white/90 flex items-center gap-1.5">
-                <Activity className="h-3.5 w-3.5" style={{ color: "var(--syndicate-glow)" }} /> 0G-Console
+                <Activity className="h-3.5 w-3.5 text-cyan-300" /> 0G-Console
               </span>
               <ArrowUpRight className="h-4 w-4 text-white/40" />
             </Link>
