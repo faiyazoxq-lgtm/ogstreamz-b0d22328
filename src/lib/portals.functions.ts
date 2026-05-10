@@ -462,3 +462,30 @@ export const getMorePortalJokes = createServerFn({ method: "POST" })
     await supabase.from("portals").update({ [seedColumn]: merged }).eq("id", portal.id);
     return { added: fresh.length, total: merged.length };
   });
+
+export const bossDeletePortal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { slug: string }) => ({
+    slug: String(data?.slug || "").trim().slice(0, 200),
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    if (!data.slug) throw new Error("Slug required");
+
+    const { data: bossRow } = await supabase
+      .from("profiles").select("rank").eq("id", userId).maybeSingle();
+    const isBoss = bossRow?.rank === "boss";
+    const admin = await isAdmin(supabase, userId);
+    if (!isBoss && !admin) throw new Error("Boss only");
+
+    const { data: portal, error: findErr } = await supabaseAdmin
+      .from("portals").select("id, slug, name").eq("slug", data.slug).maybeSingle();
+    if (findErr) throw new Error(findErr.message);
+    if (!portal) throw new Error("Portal not found");
+
+    const { error: delErr } = await supabaseAdmin
+      .from("portals").delete().eq("id", portal.id);
+    if (delErr) throw new Error(delErr.message);
+
+    return { deleted: true, slug: portal.slug, name: portal.name };
+  });
