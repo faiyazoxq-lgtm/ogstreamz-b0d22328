@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { Mail, Lock, Loader2, Send, Wand2, Coins, ArrowRight } from "lucide-react";
+import { Mail, Lock, Loader2, Send, Wand2, Coins, ArrowRight, Heart, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,7 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [passToken, setPassToken] = useState<string | null>(null);
+  const [contentMode, setContentMode] = useState<"og" | "safe">("og");
   const [remember, setRememberState] = useState<boolean>(true);
   const [signedInDest, setSignedInDest] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -141,6 +142,29 @@ function AuthPage() {
           });
         }
       } catch { /* ignore */ }
+      // Apply chosen content mode (uncensored vs family-friendly) on first sign-in.
+      try {
+        const pref = sessionStorage.getItem("signup_content_mode");
+        if (pref === "og" || pref === "safe") {
+          sessionStorage.removeItem("signup_content_mode");
+          const wantSwearing = pref === "og";
+          void supabase
+            .from("profiles")
+            .select("feature_flags")
+            .eq("id", user.id)
+            .maybeSingle()
+            .then(({ data }) => {
+              const merged = { ...((data?.feature_flags as Record<string, unknown> | null) ?? {}), swearing: wantSwearing };
+              return supabase.from("profiles").update({ feature_flags: merged }).eq("id", user.id);
+            })
+            .then(() => {
+              toast.message(
+                wantSwearing ? "OG uncensored mode set 🖕" : "Family-friendly mode set 💚",
+                { description: "Switch any time from the toggle in the header." },
+              );
+            }, (e) => console.warn("[content-mode] update failed", e));
+        }
+      } catch { /* ignore */ }
       // Surface the live credit balance on this screen for ~2.2s before
       // redirecting, so members can see what they have to spend.
       setSignedInDest(dest);
@@ -178,6 +202,7 @@ function AuthPage() {
       if (mode === "signup") {
         const ref = new URLSearchParams(window.location.search).get("ref") || undefined;
         const dest = peekRedirect();
+        try { sessionStorage.setItem("signup_content_mode", contentMode); } catch { /* ignore */ }
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -216,6 +241,11 @@ function AuthPage() {
     setLoading(true);
     try {
       const dest = peekRedirect();
+      // Persist the content-mode choice across the OAuth round-trip so it
+      // applies as soon as the new account lands back on this device.
+      if (mode === "signup") {
+        try { sessionStorage.setItem("signup_content_mode", contentMode); } catch { /* ignore */ }
+      }
       const result = await lovable.auth.signInWithOAuth(provider, {
         redirect_uri: `${window.location.origin}${dest}`,
       });
@@ -483,6 +513,7 @@ function AuthPage() {
                   </p>
                 </div>
               </div>
+              <ContentModePicker value={contentMode} onChange={setContentMode} />
               <AuthForm
                 email={email}
                 setEmail={(v) => { setEmail(v); if (emailError) setEmailError(null); }}
@@ -545,6 +576,93 @@ function Divider({ label }: { label: string }) {
       </span>
       <div className="h-px flex-1 bg-border" />
     </div>
+  );
+}
+
+function ContentModePicker({
+  value,
+  onChange,
+}: {
+  value: "og" | "safe";
+  onChange: (v: "og" | "safe") => void;
+}) {
+  const Card = ({
+    id,
+    active,
+    onSelect,
+    title,
+    blurb,
+    accent,
+    icon,
+  }: {
+    id: "og" | "safe";
+    active: boolean;
+    onSelect: () => void;
+    title: string;
+    blurb: string;
+    accent: string;
+    icon: React.ReactNode;
+  }) => (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      id={`content-mode-${id}`}
+      onClick={onSelect}
+      className={[
+        "group relative flex flex-col items-start gap-2 rounded-xl border px-3 py-3 text-left transition-all",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-card",
+        active
+          ? `${accent} shadow-[0_0_30px_-10px_currentColor]`
+          : "border-border bg-background/40 hover:border-foreground/30 text-muted-foreground",
+      ].join(" ")}
+    >
+      <div className="flex w-full items-start justify-between gap-2">
+        <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-background/60 text-base">
+          {icon}
+        </span>
+        {active && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-current px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em]">
+            <Check className="h-3 w-3" /> Picked
+          </span>
+        )}
+      </div>
+      <div className="space-y-0.5">
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em]">{title}</p>
+        <p className="text-[11px] leading-snug">{blurb}</p>
+      </div>
+    </button>
+  );
+
+  return (
+    <fieldset className="space-y-2">
+      <legend className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-bold">
+        Choose your portal vibe
+      </legend>
+      <div role="radiogroup" aria-label="Content mode" className="grid grid-cols-2 gap-2">
+        <Card
+          id="og"
+          active={value === "og"}
+          onSelect={() => onChange("og")}
+          title="OG Uncensored"
+          blurb="Vulgar swearing, no filters. Full Boss energy."
+          accent="border-rose-500/60 bg-rose-950/40 text-rose-200"
+          icon={<span aria-hidden>🖕</span>}
+        />
+        <Card
+          id="safe"
+          active={value === "safe"}
+          onSelect={() => onChange("safe")}
+          title="Family Friendly"
+          blurb="No swearing. Clean cut across every portal."
+          accent="border-emerald-500/60 bg-emerald-950/40 text-emerald-200"
+          icon={<Heart className="h-4 w-4 fill-emerald-400 text-emerald-400" />}
+        />
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        Toggle any time from the <span className="font-semibold text-foreground">🖕 / 💚</span> button in the header.
+      </p>
+    </fieldset>
   );
 }
 
