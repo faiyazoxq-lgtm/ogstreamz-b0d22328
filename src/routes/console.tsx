@@ -10,8 +10,10 @@ import { SyndicateProtocolSwitch } from "@/components/SyndicateProtocolSwitch";
 import { TVStaticLogo } from "@/components/TVStaticLogo";
 import { SkeletonShimmer } from "@/components/SkeletonShimmer";
 import { useAuth } from "@/hooks/use-auth";
+import { requireMember } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/console")({
+  beforeLoad: requireMember,
   head: () => ({
     meta: [
       { title: "0G-Console · AI Agents & Hub Controls" },
