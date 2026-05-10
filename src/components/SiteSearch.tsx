@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { Search, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, Loader2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -165,9 +165,9 @@ export function SiteSearch({ className = "" }: { className?: string }) {
                 const active = i === highlight;
                 return (
                   <li key={`${h.kind}:${h.id}`}>
-                    <Link
-                      to={h.to}
-                      onClick={() => { setOpen(false); setQ(""); }}
+                    <a
+                      href={h.to}
+                      onClick={(e) => { e.preventDefault(); go(h.to); }}
                       onMouseEnter={() => setHighlight(i)}
                       className={`flex items-start gap-3 px-3 py-2 text-sm outline-none ${active ? "bg-secondary" : "hover:bg-secondary/70"}`}
                     >
@@ -178,18 +178,18 @@ export function SiteSearch({ className = "" }: { className?: string }) {
                           <span className="uppercase tracking-wider mr-1.5">{h.kind}</span>{h.subtitle}
                         </span>
                       </span>
-                    </Link>
+                    </a>
                   </li>
                 );
               })}
               <li className="border-t border-border mt-1">
-                <Link
-                  to="/portals"
-                  onClick={() => { setOpen(false); setQ(""); }}
+                <a
+                  href="/portals"
+                  onClick={(e) => { e.preventDefault(); go("/portals"); }}
                   className="block px-3 py-2 text-xs text-center text-muted-foreground hover:text-foreground hover:bg-secondary/70"
                 >
                   Browse all portals →
-                </Link>
+                </a>
               </li>
             </ul>
           )}
