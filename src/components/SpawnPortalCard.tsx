@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Loader2, Wand2, Sparkles, ExternalLink, Coins, Check, AlertTriangle, RotateCcw } from "lucide-react";
+import { Loader2, Wand2, Sparkles, ExternalLink, Coins, Check, AlertTriangle, RotateCcw, Lock, UserPlus, LogIn, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -151,8 +151,58 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
       <p className="text-xs text-muted-foreground mb-4">{copy.subtitle}. Public on the home grid.</p>
 
       {!user ? (
-        <div className="rounded-xl border border-border bg-background/60 p-4 text-sm text-muted-foreground">
-          <Link to="/auth" className="underline text-foreground">Sign in</Link> to spawn portals with credits.
+        <div className="relative rounded-xl border border-amber-300/40 bg-gradient-to-br from-amber-300/10 via-background/60 to-[oklch(0.72_0.22_245/0.12)] p-5 sm:p-6 overflow-hidden">
+          <div className="pointer-events-none absolute -top-16 -right-12 h-40 w-40 rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.78_0.18_85/0.4),transparent)]" />
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 shrink-0 rounded-lg bg-amber-300/15 border border-amber-300/40 flex items-center justify-center">
+              <Lock className="h-5 w-5 text-amber-300" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-amber-200/90 font-bold">Members only</p>
+              <h3 className="mt-1 font-[Montserrat] font-black text-lg text-foreground">
+                Sign in to spawn portals
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Spawning a portal costs 1 credit. Create a free account and we&apos;ll drop{" "}
+                <span className="text-amber-200 font-bold">5 credits</span> in your wallet — no card needed.
+              </p>
+            </div>
+          </div>
+
+          {/* Disabled preview of the form so the gating is obvious */}
+          <fieldset
+            disabled
+            aria-hidden="true"
+            className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 opacity-50 pointer-events-none select-none"
+          >
+            <div>
+              <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Portal Name</label>
+              <Input value="" placeholder={copy.namePh} className="mt-1 h-11 bg-background" readOnly />
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Language</label>
+              <Input value="English" className="mt-1 h-11 bg-background" readOnly />
+            </div>
+          </fieldset>
+
+          <div className="mt-5 flex flex-wrap gap-2.5">
+            <Link
+              to="/auth"
+              search={{ mode: "signup" } as never}
+              className="inline-flex items-center gap-2 rounded-lg bg-amber-300 hover:bg-amber-200 text-black px-5 py-2.5 text-[11px] uppercase tracking-[0.25em] font-bold transition-colors"
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              Create free account
+              <Gift className="h-3.5 w-3.5" />
+            </Link>
+            <Link
+              to="/auth"
+              className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-black/40 px-5 py-2.5 text-[11px] uppercase tracking-[0.25em] font-bold text-foreground hover:border-amber-300/60"
+            >
+              <LogIn className="h-3.5 w-3.5" />
+              Sign in
+            </Link>
+          </div>
         </div>
       ) : (
         <>
