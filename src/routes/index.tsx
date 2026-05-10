@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useRouterState } from "@tanstack/react-router";
 import { SyndicateGallery } from "@/components/SyndicateGallery";
 import { OgWordmark } from "@/components/OgWordmark";
-import { EYE_SCALE_CLASS } from "@/components/OgWordmark";
 import {
   Music2, Smile, Wrench, ArrowUpRight, TrendingUp, Rocket, Swords,
   Sparkles, Radio, Bot, Brain, Zap, Star, Megaphone, Disc3, Satellite, Radar,
@@ -257,28 +256,28 @@ function Index() {
               {thisPending ? (
                 "Opening…"
               ) : (
-                <span className="inline-flex items-center whitespace-nowrap">
-                  <span className="inline-flex items-center">
+                <span className="inline-flex items-center whitespace-nowrap leading-none">
+                  <span className="inline-flex items-center leading-none">
                     <TrackingEye
                       variant="ice"
                       bloodshot
                       pupilRatio={0.5}
                       travelRatio={0.22}
-                      className={`align-[-0.18em] ${EYE_SCALE_CLASS}`}
+                      className="w-[0.78em] h-[0.78em] shrink-0 -mt-px"
                     />
-                    <span>pen</span>
+                    <span className="leading-none">pen</span>
                   </span>
                   <span aria-hidden>&nbsp;</span>
-                  <span className="inline-flex items-center">
-                    <span>P</span>
+                  <span className="inline-flex items-center leading-none">
+                    <span className="leading-none">P</span>
                     <TrackingEye
                       variant="ice"
                       bloodshot
                       pupilRatio={0.5}
                       travelRatio={0.22}
-                      className={`align-[-0.18em] ${EYE_SCALE_CLASS}`}
+                      className="w-[0.78em] h-[0.78em] shrink-0 -mt-px"
                     />
-                    <span>rtal</span>
+                    <span className="leading-none">rtal</span>
                   </span>
                 </span>
               )}
