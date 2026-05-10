@@ -339,6 +339,8 @@ function MusicPortalPage() {
           <p className="mt-3 text-sm opacity-70">{portal.style} · {portal.language}</p>
         </header>
 
+        <MusicHooksSection portal={portal} theme={theme} onUseHook={(text) => setRaw(text)} />
+
         {tracks.length > 0 && (
           <section className="mb-10">
             <p className="text-xs uppercase tracking-[0.4em] mb-4 opacity-70" style={{ color: theme.accent }}>
