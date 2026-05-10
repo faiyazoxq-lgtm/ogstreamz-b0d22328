@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
-import { Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft, Menu, X, ShieldAlert, LogIn, ChevronRight, Home, Tv, Tags, Bell, ChevronDown, ShoppingBag, Sparkles, Settings } from "lucide-react";
+import { Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft, Menu, X, ShieldAlert, LogIn, ChevronRight, Home, Tv, Tags, Bell, ChevronDown, ShoppingBag, Sparkles, Settings, Boxes, Grid3x3 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { BossSearch } from "@/components/BossSearch";
 import { requireBoss } from "@/lib/route-guards";
@@ -59,6 +59,15 @@ const GROUPS: NavGroup[] = [
     items: [
       { to: "/boss/analytics", label: "Analytics", Icon: BarChart3, desc: "Portal & spend metrics" },
       { to: "/syndicate-overlord", label: "Overlord Deck", Icon: LayoutDashboard, desc: "Syndicate command" },
+    ],
+  },
+  {
+    id: "content",
+    label: "Content",
+    Icon: Boxes,
+    items: [
+      { to: "/boss/hubs", label: "Hubs", Icon: Boxes, desc: "Manage built-in & custom hubs" },
+      { to: "/boss/portals", label: "Portals", Icon: Grid3x3, desc: "Manage all portals" },
     ],
   },
 ];
