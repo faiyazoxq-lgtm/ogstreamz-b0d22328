@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import {
   STREAM_PLATFORMS,
   newEntry,
+  normalizeEntry,
   platformMeta,
   readEntries,
   validateEntry,
@@ -161,7 +162,12 @@ function SettingsPage() {
         if (!value) continue;
         const err = validateEntry({ ...e, value });
         if (err) throw new Error(`${platformMeta(e.platform).label}: ${err}`);
-        cleanedEntries.push({ id: e.id, platform: e.platform, value: value.slice(0, 300) });
+        const normalized = normalizeEntry({ ...e, value });
+        cleanedEntries.push({
+          id: e.id,
+          platform: e.platform,
+          value: normalized.value.slice(0, 300),
+        });
       }
       const { error } = await supabase
         .from("profiles")
@@ -362,6 +368,16 @@ function SettingsPage() {
                     onChange={(e) =>
                       setStreamEntries((list) =>
                         list.map((x, i) => (i === idx ? { ...x, value: e.target.value } : x)),
+                      )
+                    }
+                    onBlur={() =>
+                      setStreamEntries((list) =>
+                        list.map((x, i) => {
+                          if (i !== idx) return x;
+                          if (!x.value.trim()) return x;
+                          if (validateEntry(x)) return x; // don't normalize invalid input — let the error surface on save
+                          return normalizeEntry(x);
+                        }),
                       )
                     }
                   />
