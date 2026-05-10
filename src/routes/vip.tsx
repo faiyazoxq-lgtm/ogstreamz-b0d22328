@@ -83,104 +83,11 @@ function VipPage() {
   const [loading, setLoading] = useState(false);
   const checkoutFn = useServerFn(createCheckoutSession);
 
-  // Latest subscription for this user (in current env). Used to label the
-  // status banner with Monthly vs Yearly after checkout.
-  const [activeSub, setActiveSub] = useState<{
-    price_id: string | null;
-    status: string;
-    current_period_end: string | null;
-    cancel_at_period_end: boolean;
-  } | null>(null);
-
-  useEffect(() => {
-    if (!user) { setActiveSub(null); return; }
-    let cancelled = false;
-    const env = getStripeEnvironment();
-    const fetchSub = async () => {
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("price_id,status,current_period_end,cancel_at_period_end")
-        .eq("user_id", user.id)
-        .eq("environment", env)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (!cancelled) setActiveSub((data as any) ?? null);
-    };
-    void fetchSub();
-
-    // Webhook may write the row a moment after Stripe redirects back.
-    // Poll briefly on a successful checkout return until we see it.
-    let pollTimer: ReturnType<typeof setInterval> | null = null;
-    if (search.checkout === "success") {
-      let tries = 0;
-      pollTimer = setInterval(() => {
-        tries += 1;
-        if (tries > 8 || activeSub) { if (pollTimer) clearInterval(pollTimer); return; }
-        void fetchSub();
-      }, 1500);
-    }
-
-    const channel = supabase
-      .channel(`vip_sub_${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "subscriptions", filter: `user_id=eq.${user.id}` },
-        () => { void fetchSub(); },
-      )
-      .subscribe();
-
-    return () => {
-      cancelled = true;
-      if (pollTimer) clearInterval(pollTimer);
-      supabase.removeChannel(channel);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, search.checkout]);
-
-  const planLabel = (() => {
-    const id = activeSub?.price_id ?? "";
-    if (/year|annual/i.test(id)) return "Yearly";
-    if (/month/i.test(id)) return "Monthly";
-    return null;
-  })();
-  const renewalDate = activeSub?.current_period_end
-    ? new Date(activeSub.current_period_end).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
-    : null;
-  const renewalLabel = renewalDate
-    ? activeSub?.cancel_at_period_end
-      ? `Access until ${renewalDate}`
-      : `Renews ${renewalDate}`
-    : null;
-
-  const statusBadge = (() => {
-    const s = activeSub?.status;
-    if (!s) return null;
-    const cancelling = activeSub?.cancel_at_period_end;
-    type Variant = { label: string; cls: string };
-    const map: Record<string, Variant> = {
-      active:               { label: cancelling ? "Cancelling" : "Active",
-                              cls: cancelling
-                                ? "border-amber-300/60 bg-amber-400/15 text-amber-100"
-                                : "border-emerald-300/60 bg-emerald-400/15 text-emerald-100" },
-      trialing:             { label: "Trialing",   cls: "border-cyan-300/60 bg-cyan-400/15 text-cyan-100" },
-      past_due:             { label: "Past due",   cls: "border-amber-300/70 bg-amber-400/20 text-amber-100" },
-      unpaid:               { label: "Unpaid",     cls: "border-rose-300/60 bg-rose-500/15 text-rose-100" },
-      canceled:             { label: "Canceled",   cls: "border-rose-300/60 bg-rose-500/15 text-rose-100" },
-      incomplete:           { label: "Incomplete", cls: "border-white/30 bg-white/10 text-white/80" },
-      incomplete_expired:   { label: "Expired",    cls: "border-white/30 bg-white/10 text-white/70" },
-      paused:               { label: "Paused",     cls: "border-white/30 bg-white/10 text-white/80" },
-    };
-    const v = map[s] ?? { label: s.replace(/_/g, " "), cls: "border-white/30 bg-white/10 text-white/80" };
-    return (
-      <span
-        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.25em] ${v.cls}`}
-        title={`Subscription status: ${s}`}
-      >
-        {v.label}
-      </span>
-    );
-  })();
+  // Shared subscription view (env-filtered + realtime). Mirrors /dashboard.
+  const { sub: activeSub, planLabel, renewalLabel } = useSubscription({
+    userId: user?.id ?? null,
+    pollOnSuccess: search.checkout === "success",
+  });
 
   // Surface a one-time toast on return from Stripe checkout.
   useEffect(() => {
@@ -231,12 +138,8 @@ function VipPage() {
             <div className="flex-1">
               <p className="text-sm font-black uppercase tracking-[0.2em] text-emerald-200 flex flex-wrap items-center gap-2">
                 VIP Pass activated
-                {planLabel && (
-                  <span className="inline-flex items-center rounded-full border border-emerald-300/60 bg-emerald-400/15 px-2 py-0.5 text-[10px] tracking-[0.25em] text-emerald-100">
-                    {planLabel} plan
-                  </span>
-                )}
-                {statusBadge}
+                <PlanChip planLabel={planLabel} tone="emerald" />
+                <StatusBadge sub={activeSub} />
               </p>
               <p className="text-xs text-emerald-100/80 mt-0.5">
                 Your status is live. Every portal, every track, every tool — unlocked.
@@ -264,12 +167,8 @@ function VipPage() {
             <div className="flex-1">
               <p className="text-sm font-black uppercase tracking-[0.2em] text-amber-200 flex flex-wrap items-center gap-2">
                 You're VIP
-                {planLabel && (
-                  <span className="inline-flex items-center rounded-full border border-amber-300/60 bg-amber-400/15 px-2 py-0.5 text-[10px] tracking-[0.25em] text-amber-100">
-                    {planLabel} plan
-                  </span>
-                )}
-                {statusBadge}
+                <PlanChip planLabel={planLabel} tone="amber" />
+                <StatusBadge sub={activeSub} />
               </p>
               <p className="text-xs text-amber-100/80 mt-0.5">
                 Real 0G status active{user?.email ? <> · <span className="font-mono">{user.email}</span></> : null}. Every portal is unlocked.
