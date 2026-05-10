@@ -1419,6 +1419,8 @@ export type Database = {
           rank: Database["public"]["Enums"]["syndicate_rank"]
           referred_by_reseller: string | null
           status: Database["public"]["Enums"]["account_status"]
+          stream_auto_checked_at: string | null
+          stream_boss_verified_at: string | null
           stream_expires_at: string | null
           stream_links: Json
           stream_status: string | null
@@ -1443,6 +1445,8 @@ export type Database = {
           rank?: Database["public"]["Enums"]["syndicate_rank"]
           referred_by_reseller?: string | null
           status?: Database["public"]["Enums"]["account_status"]
+          stream_auto_checked_at?: string | null
+          stream_boss_verified_at?: string | null
           stream_expires_at?: string | null
           stream_links?: Json
           stream_status?: string | null
@@ -1467,6 +1471,8 @@ export type Database = {
           rank?: Database["public"]["Enums"]["syndicate_rank"]
           referred_by_reseller?: string | null
           status?: Database["public"]["Enums"]["account_status"]
+          stream_auto_checked_at?: string | null
+          stream_boss_verified_at?: string | null
           stream_expires_at?: string | null
           stream_links?: Json
           stream_status?: string | null
@@ -1863,6 +1869,7 @@ export type Database = {
       }
       stream_account_links: {
         Row: {
+          enc_password: string | null
           enc_server: string | null
           enc_username: string
           expires_at: string | null
@@ -1874,6 +1881,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          enc_password?: string | null
           enc_server?: string | null
           enc_username: string
           expires_at?: string | null
@@ -1885,6 +1893,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          enc_password?: string | null
           enc_server?: string | null
           enc_username?: string
           expires_at?: string | null
@@ -2723,6 +2732,10 @@ export type Database = {
         Args: { _delta: number; _reason: string; _user_id: string }
         Returns: number
       }
+      apply_auto_stream_status: {
+        Args: { _expires_at: string; _status: string; _user_id: string }
+        Returns: undefined
+      }
       apply_credit_purchase: {
         Args: {
           _amount_cents: number
@@ -2795,17 +2808,30 @@ export type Database = {
         }
         Returns: string
       }
-      boss_link_stream_account: {
-        Args: {
-          _expires_at: string
-          _notes?: string
-          _server: string
-          _status: string
-          _user_id: string
-          _username: string
-        }
-        Returns: string
-      }
+      boss_link_stream_account:
+        | {
+            Args: {
+              _expires_at: string
+              _notes?: string
+              _password: string
+              _server: string
+              _status: string
+              _user_id: string
+              _username: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _expires_at: string
+              _notes?: string
+              _server: string
+              _status: string
+              _user_id: string
+              _username: string
+            }
+            Returns: string
+          }
       boss_list_stream_links: {
         Args: never
         Returns: {
@@ -2927,6 +2953,14 @@ export type Database = {
           _username: string
         }
         Returns: string
+      }
+      get_my_stream_creds: {
+        Args: never
+        Returns: {
+          password: string
+          server: string
+          username: string
+        }[]
       }
       get_signup_bonus_credits: { Args: never; Returns: number }
       get_user_purchases_summary: { Args: never; Returns: Json }
