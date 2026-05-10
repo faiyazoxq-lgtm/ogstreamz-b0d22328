@@ -46,6 +46,20 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
   const [stage, setStage] = useState<0 | 1 | 2 | 3 | 4>(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const stageTimers = useRef<number[]>([]);
+  const errorRef = useRef<HTMLDivElement | null>(null);
+  const retryBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  // Move keyboard focus to the error panel when a new error appears so
+  // screen-reader and keyboard users land on the message immediately.
+  useEffect(() => {
+    if (errorMsg && !loading) {
+      // Defer to next tick so the panel is mounted before focusing.
+      const id = window.setTimeout(() => {
+        (errorRef.current ?? retryBtnRef.current)?.focus();
+      }, 0);
+      return () => window.clearTimeout(id);
+    }
+  }, [errorMsg, loading]);
 
   const clearStageTimers = () => {
     stageTimers.current.forEach((id) => window.clearTimeout(id));
@@ -153,10 +167,25 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
   ];
 
   const SpawnProgress = ({ stage }: { stage: 0 | 1 | 2 | 3 | 4 }) => (
-    <ol
+    <div
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
       aria-label="Spawn progress"
-      className="mt-5 rounded-xl border border-border bg-background/60 p-3 grid grid-cols-1 sm:grid-cols-4 gap-2"
+      className="mt-5 rounded-xl border border-border bg-background/60 p-3"
     >
+      {/* Visually hidden, plain-language description that the live region
+          announces whenever the stage changes. */}
+      <p className="sr-only">
+        {stage === 0
+          ? "Spawn idle."
+          : stage === 4
+          ? "Spawn complete. Portal is live."
+          : `Step ${stage} of 4: ${
+              STAGES.find((s) => s.key === stage)?.label ?? ""
+            } — ${STAGES.find((s) => s.key === stage)?.hint ?? ""}.`}
+      </p>
+      <ol className="grid grid-cols-1 sm:grid-cols-4 gap-2">
       {STAGES.map((s) => {
         const done = stage > s.key;
         const active = stage === s.key;
@@ -164,6 +193,9 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
           <li
             key={s.key}
             aria-current={active ? "step" : undefined}
+            aria-label={`Step ${s.key} of 4: ${s.label}. ${
+              done ? "Complete." : active ? "In progress." : "Pending."
+            } ${s.hint}.`}
             className={[
               "flex items-center gap-2 rounded-md px-3 py-2 border text-xs",
               done
@@ -173,21 +205,22 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                 : "border-border text-muted-foreground",
             ].join(" ")}
           >
-            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-current shrink-0">
+            <span aria-hidden="true" className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-current shrink-0">
               {done
                 ? <Check className="h-3 w-3" />
                 : active
                 ? <Loader2 className="h-3 w-3 animate-spin" />
                 : <span className="text-[10px] font-bold">{s.key}</span>}
             </span>
-            <div className="leading-tight min-w-0">
+            <div aria-hidden="true" className="leading-tight min-w-0">
               <div className="font-bold uppercase tracking-[0.18em] truncate">{s.label}</div>
               <div className="text-[10px] text-muted-foreground truncate">{s.hint}</div>
             </div>
           </li>
         );
       })}
-    </ol>
+      </ol>
+    </div>
   );
 
   return (
@@ -348,7 +381,11 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
 
           {errorMsg && !loading && (
             <div
+              ref={errorRef}
               role="alert"
+              aria-live="assertive"
+              aria-atomic="true"
+              tabIndex={-1}
               className="mt-5 rounded-xl border border-destructive/50 bg-destructive/10 p-4 flex items-start gap-3"
             >
               <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
@@ -366,11 +403,13 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                 </p>
               </div>
               <Button
+                ref={retryBtnRef}
                 size="sm"
                 variant="outline"
                 onClick={retry}
                 disabled={!hasCredits}
                 className="shrink-0"
+                aria-label="Retry spawning the portal"
               >
                 <RotateCcw className="h-3.5 w-3.5 mr-1" /> Retry
               </Button>
