@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { RealOgBadge } from "@/components/RealOgBadge";
 import { StreamLinkCard } from "@/components/StreamLinkCard";
+import { CoinActivity } from "@/components/CoinActivity";
 
 import { requireMember } from "@/lib/route-guards";
 export const Route = createFileRoute("/profile")({
@@ -137,6 +138,11 @@ function ProfilePage() {
         {/* Stream Account Link */}
         <section className="mt-10">
           <StreamLinkCard />
+        </section>
+
+        {/* Recent coin activity — gifts, top-ups, spends */}
+        <section className="mt-10">
+          <CoinActivity limit={8} />
         </section>
 
         <section className="mt-12">
