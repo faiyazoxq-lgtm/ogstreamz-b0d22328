@@ -1,5 +1,5 @@
-import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
   Music2, Smile, Wrench, TrendingUp, Rocket, Swords, ArrowUpRight,
   LayoutDashboard, Store, Crown, Users, Gift, Compass, X,
@@ -46,7 +46,22 @@ const MEMBER_ITEMS: QuickItem[] = [
 export function QuickJumpDrawer({ user }: { user: boolean }) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"portals" | "member">("portals");
+  const [pendingTo, setPendingTo] = useState<string | null>(null);
   const items = tab === "portals" || !user ? PORTAL_ITEMS : MEMBER_ITEMS;
+
+  const isNavigating = useRouterState({
+    select: (s) => s.isLoading || s.isTransitioning,
+  });
+  useEffect(() => {
+    if (!isNavigating && pendingTo) setPendingTo(null);
+  }, [isNavigating, pendingTo]);
+  const isPending = pendingTo !== null;
+
+  function handleJump(to: string) {
+    if (isPending) return;
+    setPendingTo(to);
+    setTimeout(() => setOpen(false), 180);
+  }
 
   return (
     <Drawer
@@ -103,15 +118,45 @@ export function QuickJumpDrawer({ user }: { user: boolean }) {
         </DrawerHeader>
 
         <ul role="list" className="grid grid-cols-2 gap-2.5 px-2 pb-3 list-none m-0">
-          {items.map(({ to, title, desc, Icon, tint, badge }) => (
+          {items.map(({ to, title, desc, Icon, tint, badge }) => {
+            const thisPending = pendingTo === to;
+            const dimmed = isPending && !thisPending;
+            return (
             <li key={to} className="contents">
               <Link
                 to={to as never}
-                onClick={() => setOpen(false)}
+                onClick={() => handleJump(to)}
                 aria-label={`${title} — ${desc}`}
-                className="group relative flex min-h-[88px] flex-col justify-between rounded-2xl border border-white/15 bg-black/50 p-3.5 text-left transition-all active:scale-[0.97] hover:border-[var(--ql-tint)] hover:shadow-[0_0_30px_-8px_var(--ql-tint)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ql-tint)]"
+                aria-disabled={isPending || undefined}
+                aria-busy={thisPending || undefined}
+                tabIndex={isPending ? -1 : 0}
+                className={`group relative flex min-h-[88px] flex-col justify-between rounded-2xl border border-white/15 bg-black/50 p-3.5 text-left transition-all active:scale-[0.97] hover:border-[var(--ql-tint)] hover:shadow-[0_0_30px_-8px_var(--ql-tint)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ql-tint)] ${dimmed ? "pointer-events-none opacity-40" : ""} ${thisPending ? "pointer-events-none border-[var(--ql-tint)] shadow-[0_0_30px_-8px_var(--ql-tint)]" : ""}`}
                 style={{ ["--ql-tint" as any]: tint }}
               >
+                {thisPending ? (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <span
+                        className="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center animate-pulse"
+                        style={{ background: `color-mix(in oklab, ${tint} 22%, transparent)`, color: tint }}
+                      >
+                        <Icon aria-hidden="true" className="h-5 w-5" />
+                      </span>
+                      <span
+                        className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded animate-pulse"
+                        style={{ background: `color-mix(in oklab, ${tint} 25%, transparent)`, color: tint }}
+                      >
+                        Loading
+                      </span>
+                    </div>
+                    <div className="mt-3 space-y-1.5" aria-hidden="true">
+                      <span className="block h-3 w-3/4 rounded bg-white/15 animate-pulse" />
+                      <span className="block h-2.5 w-1/2 rounded bg-white/10 animate-pulse" />
+                    </div>
+                    <span className="sr-only">Loading {title}…</span>
+                  </>
+                ) : (
+                <>
                 <div className="flex items-center justify-between">
                   <span
                     className="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center"
@@ -138,17 +183,23 @@ export function QuickJumpDrawer({ user }: { user: boolean }) {
                     {desc}
                   </span>
                 </div>
+                </>
+                )}
               </Link>
             </li>
-          ))}
+            );
+          })}
           {!user && (
             <li className="contents">
               <Link
                 to="/auth"
                 search={{ mode: "signup" } as never}
-                onClick={() => setOpen(false)}
+                onClick={() => handleJump("/auth")}
                 aria-label="Create a free account — 5 credits on signup"
-                className="group relative flex min-h-[88px] flex-col justify-between rounded-2xl border border-amber-300/40 bg-amber-300/10 p-3.5 text-left transition-all active:scale-[0.97] hover:bg-amber-300/20 hover:shadow-[0_0_30px_-8px_oklch(0.78_0.18_85)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 col-span-2"
+                aria-disabled={isPending || undefined}
+                aria-busy={pendingTo === "/auth" || undefined}
+                tabIndex={isPending ? -1 : 0}
+                className={`group relative flex min-h-[88px] flex-col justify-between rounded-2xl border border-amber-300/40 bg-amber-300/10 p-3.5 text-left transition-all active:scale-[0.97] hover:bg-amber-300/20 hover:shadow-[0_0_30px_-8px_oklch(0.78_0.18_85)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 col-span-2 ${isPending && pendingTo !== "/auth" ? "pointer-events-none opacity-40" : ""} ${pendingTo === "/auth" ? "pointer-events-none animate-pulse" : ""}`}
               >
                 <div className="flex items-center justify-between">
                   <span className="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center bg-amber-300/20 text-amber-200">
@@ -158,7 +209,7 @@ export function QuickJumpDrawer({ user }: { user: boolean }) {
                 </div>
                 <div className="mt-3">
                   <span className="block text-[12px] font-black uppercase tracking-[0.15em] text-amber-100 truncate">
-                    Free signup
+                    {pendingTo === "/auth" ? "Loading…" : "Free signup"}
                   </span>
                   <span className="block text-[11px] font-semibold text-amber-200/80 truncate">
                     +5 credits, no card
