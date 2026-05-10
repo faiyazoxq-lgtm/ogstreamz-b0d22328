@@ -44,11 +44,11 @@ export function TrackingEye({
     <span
       ref={ref}
       aria-hidden
-      className={`inline-flex items-center justify-center rounded-full bg-white/90 shadow-[0_0_10px_rgba(120,200,255,0.85)] ring-1 ring-black/40 ${className}`}
+      className={`inline-flex items-center justify-center rounded-full bg-gradient-to-br from-amber-100 to-amber-300 shadow-[0_0_12px_-1px_oklch(0.82_0.18_85/0.95)] ring-1 ring-amber-500/60 ${className}`}
       style={{ ...(size ? { width: size, height: size } : null), ...style }}
     >
       <span
-        className="block rounded-full bg-black transition-transform duration-75"
+        className="block rounded-full bg-[oklch(0.18_0.04_260)] ring-1 ring-amber-900/70 shadow-[inset_0_0_2px_rgba(0,0,0,0.8)] transition-transform duration-75"
         style={{
           width: `${pupilRatio * 100}%`,
           height: `${pupilRatio * 100}%`,
