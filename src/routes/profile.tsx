@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { RealOgBadge } from "@/components/RealOgBadge";
+import { StreamLinkCard } from "@/components/StreamLinkCard";
 
 import { requireMember } from "@/lib/route-guards";
 export const Route = createFileRoute("/profile")({
@@ -131,6 +132,14 @@ function ProfilePage() {
               Buy 0G Credits
             </h2>
           </header>
+        </section>
+
+        {/* Stream Account Link */}
+        <section className="mt-10">
+          <StreamLinkCard />
+        </section>
+
+        <section className="mt-12">
           <div className="grid sm:grid-cols-3 gap-4">
             {CREDIT_PACK_LIST.map((p) => {
               const Icon = p.priceId === "starter_pack_10" ? Zap : p.priceId === "enforcer_pack_50" ? Flame : Skull;
