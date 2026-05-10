@@ -3,8 +3,10 @@ import { useEffect, useState } from "react";
 import { Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft, Menu, X, ShieldAlert, LogIn, ChevronRight, Home, Tv, Tags } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { BossSearch } from "@/components/BossSearch";
+import { requireBoss } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/boss")({
+  beforeLoad: requireBoss,
   component: BossLayout,
 });
 
