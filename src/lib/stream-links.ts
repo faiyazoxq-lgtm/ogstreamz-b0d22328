@@ -65,25 +65,55 @@ export function newEntry(platform: StreamPlatform = "twitch"): StreamEntry {
 }
 
 /**
- * Detect which platform a pasted value belongs to based on its host (or a bare
- * "twitch.tv/..." style string). Returns null if the value is not a known
- * platform URL — bare handles cannot be auto-detected.
+ * Detect which platform a pasted value belongs to based on its host. Accepts
+ * many shapes: bare `twitch.tv/foo`, `https://www.twitch.tv/foo?lang=en`,
+ * `youtu.be/abc`, `m.youtube.com/@x`, `kick.com/@handle`, etc.
+ * Returns null when the value is not URL-shaped (bare handles can't be detected).
  */
 export function detectPlatformFromValue(raw: string): Exclude<StreamPlatform, "custom"> | null {
+  const r = inspectPlatformValue(raw);
+  return r?.platform ?? null;
+}
+
+export type PlatformInspection =
+  | { kind: "not-url" }
+  | { kind: "unknown-host"; host: string }
+  | { kind: "invalid-url" }
+  | { kind: "no-handle"; platform: Exclude<StreamPlatform, "custom">; host: string }
+  | { kind: "ok"; platform: Exclude<StreamPlatform, "custom">; host: string; handle: string };
+
+/**
+ * Rich version of detectPlatformFromValue. Tries to identify the platform AND
+ * pull a handle/path out of the URL. Use this when you want to surface a
+ * specific error if extraction fails.
+ */
+export function inspectPlatformValue(raw: string): (PlatformInspection & { platform?: Exclude<StreamPlatform, "custom"> }) | null {
   const v = raw.trim();
   if (!v) return null;
-  const looksLikeUrl = /^https?:\/\//i.test(v) || /^[\w-]+\.[\w.-]+\//.test(v);
-  if (!looksLikeUrl) return null;
-  let host: string;
-  try {
-    host = new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`).hostname.toLowerCase().replace(/^www\./, "");
-  } catch {
-    return null;
+  const looksLikeUrl = /^https?:\/\//i.test(v) || /^[\w-]+\.[\w.-]+(\/|$)/.test(v);
+  if (!looksLikeUrl) return { kind: "not-url" };
+  let url: URL;
+  try { url = new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`); } catch { return { kind: "invalid-url" }; }
+  const host = url.hostname.toLowerCase().replace(/^www\./, "");
+  let platform: Exclude<StreamPlatform, "custom"> | null = null;
+  if (/(^|\.)twitch\.tv$/.test(host)) platform = "twitch";
+  else if (/(^|\.)youtube\.com$|(^|\.)youtu\.be$/.test(host)) platform = "youtube";
+  else if (/(^|\.)kick\.com$/.test(host)) platform = "kick";
+  if (!platform) return { kind: "unknown-host", host };
+  const handle = extractHandleFromUrl(platform, v);
+  if (!handle) return { kind: "no-handle", platform, host };
+  return { kind: "ok", platform, host, handle: handle.replace(/^__path:/, "") };
+}
+
+/** Human-readable reason for an inspection that didn't yield an `ok` result. */
+export function inspectionError(r: PlatformInspection): string | null {
+  switch (r.kind) {
+    case "not-url":      return null; // bare handles aren't an error here
+    case "invalid-url":  return "Couldn't parse that as a URL. Check for typos or stray spaces.";
+    case "unknown-host": return `Unrecognised host "${r.host}". Supported: twitch.tv, youtube.com, youtu.be, kick.com.`;
+    case "no-handle":    return `Couldn't extract a handle from that ${r.platform} URL — paste the channel page link or use just your handle.`;
+    case "ok":           return null;
   }
-  if (/(^|\.)twitch\.tv$/.test(host)) return "twitch";
-  if (/(^|\.)youtube\.com$|(^|\.)youtu\.be$/.test(host)) return "youtube";
-  if (/(^|\.)kick\.com$/.test(host)) return "kick";
-  return null;
 }
 
 /**
