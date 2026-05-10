@@ -149,6 +149,7 @@ function RootComponent() {
               <Outlet />
             </AuthGate>
             <TeleportOverlay />
+            <EyeGlowTuner />
             <SystemGlitchOverlay />
             <LiveThinkingFeed />
             <EnforcerConsole />
@@ -165,6 +166,7 @@ function RootComponent() {
 
 function TeleportOverlay() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // see EyeGlowTuner below — separate component to keep state-changes scoped.
   const [show, setShow] = useState(false);
   const [pulseKey, setPulseKey] = useState(0);
 
@@ -200,4 +202,26 @@ function TeleportOverlay() {
       `}</style>
     </div>
   );
+}
+
+/**
+ * Per-hub tuning of the TrackingEye glow intensity. Sets a CSS variable on
+ * the document root that TrackingEye multiplies into its `--eye-glow` value,
+ * so the same component reads slightly different on each hub:
+ *   MusicHUB → louder, JokesHUB → softer, ToolHUB → balanced.
+ */
+function EyeGlowTuner() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useEffect(() => {
+    const p = pathname || "/";
+    let mult = 1;
+    if (p.startsWith("/music")) mult = 1.25;
+    else if (p.startsWith("/jokes")) mult = 0.8;
+    else if (p.startsWith("/tools")) mult = 1.05;
+    document.documentElement.style.setProperty("--eye-glow-multiplier", String(mult));
+    return () => {
+      document.documentElement.style.removeProperty("--eye-glow-multiplier");
+    };
+  }, [pathname]);
+  return null;
 }
