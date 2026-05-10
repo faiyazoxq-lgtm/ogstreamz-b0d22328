@@ -13,7 +13,8 @@ export function StreamLinkCard() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
-  const linked = !!profile?.rank && (profile.rank === "stream_user" || profile.rank === "vip" || profile.rank === "boss");
+  const rank = (profile?.rank as string | undefined) ?? "";
+  const linked = rank === "stream_user" || rank === "vip" || rank === "boss";
   const status = (profile as any)?.stream_status as string | undefined;
   const expiresAt = (profile as any)?.stream_expires_at as string | undefined;
 
