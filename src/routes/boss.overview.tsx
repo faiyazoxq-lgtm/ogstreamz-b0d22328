@@ -836,16 +836,18 @@ function PowerToggle({
 }
 
 function QuickJump({
-  to, Icon, label, tint,
+  to, Icon, label, tint, hash,
 }: {
   to: string;
   Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   label: string;
   tint: string;
+  hash?: string;
 }) {
   return (
     <Link
       to={to}
+      hash={hash}
       className="group flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-[11px] font-extrabold uppercase tracking-[0.2em] transition active:scale-[0.97] hover:-translate-y-0.5"
       style={{
         borderColor: `${tint}55`,
@@ -857,5 +859,14 @@ function QuickJump({
       {label}
       <ArrowUpRight className="h-3 w-3 opacity-50 group-hover:opacity-100 transition" />
     </Link>
+  );
+}
+
+function ReverseStat({ label, value }: { label: string; value: number }) {
+  return (
+    <li className="rounded-md border border-white/10 bg-white/5 px-2 py-1.5">
+      <div className="text-[10px] uppercase tracking-[0.2em] terminal-mono text-white/45 font-bold">{label}</div>
+      <div className="text-sm font-extrabold text-white/95 tabular-nums mt-0.5">{value}</div>
+    </li>
   );
 }
