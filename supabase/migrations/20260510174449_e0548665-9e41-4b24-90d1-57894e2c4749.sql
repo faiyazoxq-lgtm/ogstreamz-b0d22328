@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ALTER COLUMN credits SET DEFAULT 2;

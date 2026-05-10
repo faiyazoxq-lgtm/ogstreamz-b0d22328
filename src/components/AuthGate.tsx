@@ -3,7 +3,7 @@ import { useAuth } from "../hooks/use-auth";
 import { UserPlus, LogIn, Gift, ShieldCheck, Sparkles, Music2, Smile, Wrench, Zap, Lock, ArrowRight, Coins } from "lucide-react";
 
 // Mirrors the +5 grant in handle_new_user(); update both if it changes.
-export const SIGNUP_BONUS_CREDITS = 5;
+export const SIGNUP_BONUS_CREDITS = 2;
 import { useEffect, type ReactNode } from "react";
 
 const PUBLIC_PATHS = ["/auth", "/forgot-password", "/reset-password"];
