@@ -29,18 +29,32 @@ function inferTheme(vibe: string, niche: string): string {
 
 export const spawnPortal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { name: string; niche: string; language: string; vibe: string; vip?: boolean; useScout?: boolean }) => ({
+  .inputValidator((data: { name: string; niche: string; language: string; vibe: string; vip?: boolean; useScout?: boolean; kind?: string }) => ({
     name: String(data.name || "").trim().slice(0, 80),
     niche: String(data.niche || "").trim().slice(0, 400),
     language: String(data.language || "English").trim().slice(0, 40),
     vibe: String(data.vibe || "").trim().slice(0, 200),
     vip: !!data.vip,
     useScout: data.useScout !== false,
+    kind: (["jokes","music","trade","connect","tools"].includes(String(data.kind || "")) ? String(data.kind) : "jokes") as "jokes"|"music"|"trade"|"connect"|"tools",
   }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
-    if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
     if (!data.name || !data.niche) throw new Error("Name and niche required");
+
+    // Members pay 1 credit per spawn; admins spawn free.
+    const admin = await isAdmin(supabase, userId);
+    if (!admin) {
+      const { error: spendErr } = await supabase.rpc("spend_credits", {
+        _amount: 1,
+        _reason: `spawn_portal:${data.kind}`,
+      });
+      if (spendErr) {
+        const msg = (spendErr.message || "").toLowerCase();
+        if (msg.includes("insufficient")) throw new Error("Not enough credits — top up to spawn a portal");
+        throw new Error(spendErr.message || "Could not charge credits");
+      }
+    }
 
     const PERPLEXITY = process.env.PERPLEXITY_API_KEY;
     if (!PERPLEXITY) throw new Error("PERPLEXITY_API_KEY missing");
@@ -69,29 +83,33 @@ export const spawnPortal = createServerFn({ method: "POST" })
     const ctx = scoutMeta.headlines.length
       ? `\nRecent intel:\n- ${scoutMeta.headlines.join("\n- ")}\nContext: ${scoutMeta.summary}`
       : "";
-    const prompt = `Generate exactly 5 short original SAVAGE jokes in ${data.language}. Niche/theme: ${data.niche}. Vibe: ${data.vibe || "n/a"}.${ctx}\nEach joke 1-3 sentences. Punchy, sharp, on-trend. Return STRICT JSON ONLY: { "jokes": ["...", "..."] }. No commentary.`;
-
-    const res = await fetch("https://api.perplexity.ai/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${PERPLEXITY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "sonar",
-        messages: [
-          { role: "system", content: "You output strict JSON only. No markdown." },
-          { role: "user", content: prompt },
-        ],
-        temperature: 0.8,
-        max_tokens: 800,
-      }),
-    });
-    if (!res.ok) throw new Error(`Perplexity ${res.status}`);
-    const json = await res.json();
-    const raw: string = json?.choices?.[0]?.message?.content ?? "{}";
-    const match = raw.match(/\{[\s\S]*\}/);
-    let parsed: { jokes?: string[] } = {};
-    try { parsed = JSON.parse(match ? match[0] : raw); } catch { /* */ }
-    const jokes = (parsed.jokes ?? []).filter((s) => typeof s === "string" && s.trim()).slice(0, 5);
-    if (jokes.length === 0) throw new Error("No jokes generated");
+    // Hub-specific seed content. Only jokes-hub gets the 5 jokes pre-baked;
+    // other hubs reserve `jokes` for their own seeds (kept empty for now).
+    let jokes: string[] = [];
+    if (data.kind === "jokes") {
+      const prompt = `Generate exactly 5 short original SAVAGE jokes in ${data.language}. Niche/theme: ${data.niche}. Vibe: ${data.vibe || "n/a"}.${ctx}\nEach joke 1-3 sentences. Punchy, sharp, on-trend. Return STRICT JSON ONLY: { "jokes": ["...", "..."] }. No commentary.`;
+      const res = await fetch("https://api.perplexity.ai/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${PERPLEXITY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "sonar",
+          messages: [
+            { role: "system", content: "You output strict JSON only. No markdown." },
+            { role: "user", content: prompt },
+          ],
+          temperature: 0.8,
+          max_tokens: 800,
+        }),
+      });
+      if (!res.ok) throw new Error(`Perplexity ${res.status}`);
+      const json = await res.json();
+      const raw: string = json?.choices?.[0]?.message?.content ?? "{}";
+      const match = raw.match(/\{[\s\S]*\}/);
+      let parsed: { jokes?: string[] } = {};
+      try { parsed = JSON.parse(match ? match[0] : raw); } catch { /* */ }
+      jokes = (parsed.jokes ?? []).filter((s) => typeof s === "string" && s.trim()).slice(0, 5);
+      if (jokes.length === 0) throw new Error("No jokes generated");
+    }
 
     // ───── Creative Director: Perplexity-generated Style Dictionary ─────
     let themeConfig: any = null;
@@ -162,13 +180,14 @@ Use HIGH CONTRAST hex colors. Heading & body MUST be real Google Fonts. Match mo
         language: data.language,
         vibe: data.vibe,
         theme,
+        kind: data.kind,
         vip: data.vip,
         theme_config: themeConfig ?? {},
         scout_meta: scoutMeta,
         jokes,
         created_by: userId,
       })
-      .select("id, slug, name, theme, vip")
+      .select("id, slug, name, theme, vip, kind")
       .single();
     if (error) throw new Error(error.message);
 
