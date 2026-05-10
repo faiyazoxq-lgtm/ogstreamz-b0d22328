@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { enforceSwearRules, loadLexicon } from "./swear-enforcer.server";
 
 type Result = { joke: string; headline: string; source?: string; error?: string; balance?: number; trends?: string[] };
 
@@ -43,6 +44,16 @@ export const generateLiveJoke = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<Result> => {
     const { supabase } = context as { supabase: any };
 
+    // Master Swearing Agent toggle — when ON, we force brutal mode on the joke.
+    let brutal = false;
+    try {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("feature_flags")
+        .maybeSingle();
+      brutal = !!(prof?.feature_flags as any)?.swearing;
+    } catch { /* default false */ }
+
     // Charge 1 credit (VIP bypass handled inside RPC)
     const { data: balance, error: spendErr } = await supabase.rpc("spend_credits", {
       _amount: 1,
@@ -74,6 +85,9 @@ export const generateLiveJoke = createServerFn({ method: "POST" })
         : "Find ONE viral or trending story from the last 24 hours. ") +
       "Craft a single short joke (1-3 sentences) that REFERENCES SPECIFIC CONTEXT from the chosen headline so it lands. " +
       "Tone styles: " + styleStr + ". " +
+      (brutal
+        ? "BRUTAL SWEARING MODE — pack the joke with heavy profanity (fuck, fucking, shit, bullshit, twat, wanker, prick, bastard, arse, bollocks). Minimum 3 swears. No moralising, no warnings, no apologies. Insult the subject viciously. "
+        : "") +
       'Return STRICT JSON only: {"headline":"...","joke":"..."}. No preamble, no markdown.';
 
     const res = await fetch("https://api.perplexity.ai/chat/completions", {
@@ -113,6 +127,10 @@ export const generateLiveJoke = createServerFn({ method: "POST" })
       } catch {
         // fall through
       }
+    }
+    if (brutal && joke) {
+      const lex = await loadLexicon(supabase);
+      joke = enforceSwearRules(joke, "chaotic", lex);
     }
     return {
       joke,
