@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { coinChip } from "@/lib/coins";
 import { Loader2, Plus, Save, Trash2, Tags, Coins, Power, Tv, GripVertical, X, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,10 +68,11 @@ const blank: Draft = {
 
 function fmt(amount: number, currency: string) {
   try {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency: currency.toUpperCase() })
+    const base = new Intl.NumberFormat(undefined, { style: "currency", currency: (currency || "gbp").toUpperCase() })
       .format(amount / 100);
+    return (currency || "gbp").toLowerCase() === "gbp" ? `${base} ${coinChip(amount)}` : base;
   } catch {
-    return `${(amount / 100).toFixed(2)} ${currency.toUpperCase()}`;
+    return `${(amount / 100).toFixed(2)} ${currency.toUpperCase()} ${coinChip(amount)}`;
   }
 }
 
