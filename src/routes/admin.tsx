@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { SyndicateProtocolSwitch } from "@/components/SyndicateProtocolSwitch";
 import { useServerFn } from "@tanstack/react-start";
+import { requireAdmin } from "@/lib/route-guards";
 import { scoutUrl } from "@/lib/firecrawl.functions";
 import { spawnPortal, bossDeletePortal } from "@/lib/portals.functions";
 import { spawnMusicPortal } from "@/lib/music-portals.functions";
@@ -48,6 +49,7 @@ const NAV_SECTIONS: { id: string; label: string; tint: string }[] = [
 ];
 
 export const Route = createFileRoute("/admin")({
+  beforeLoad: requireAdmin,
   head: () => ({ meta: [{ title: "Power Console · 0G-PORTAL" }] }),
   component: AdminPage,
 });

@@ -16,8 +16,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PlanChip, StatusBadge } from "@/components/SubscriptionBadges";
 import { VaultGuard } from "@/components/VaultGuard";
+import { requireMember } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/vip")({
+  beforeLoad: requireMember,
   component: () => (
     <VaultGuard>
       <VipPage />

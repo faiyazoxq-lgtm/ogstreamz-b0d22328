@@ -12,8 +12,10 @@ import {
   mintResellerCode,
   updateResellerMarkup,
 } from "@/lib/reseller.functions";
+import { requireReseller } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/reseller")({
+  beforeLoad: requireReseller,
   head: () => ({ meta: [{ title: "Reseller Console · 0G-PORTAL" }] }),
   component: ResellerPage,
 });
