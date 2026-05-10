@@ -161,9 +161,9 @@ export function TrackingEye({
     : "linear-gradient(135deg, var(--electric-gold-100), var(--electric-gold-300))";
   const irisGlow = isIce
     ? bloodshot
-      ? "0 0 14px -1px oklch(0.65 0.22 25 / 0.7), 0 0 calc(14px + var(--eye-glow, 0.35) * 18px) -2px color-mix(in oklab, oklch(0.78 0.2 240) calc(var(--eye-glow, 0.35) * 95%), transparent)"
-      : "0 0 calc(8px + var(--eye-glow, 0.35) * 18px) -1px color-mix(in oklab, oklch(0.78 0.2 240) calc(var(--eye-glow, 0.35) * 100%), transparent), 0 0 calc(2px + var(--eye-glow, 0.35) * 6px) color-mix(in oklab, oklch(0.85 0.18 235) calc(var(--eye-glow, 0.35) * 70%), transparent)"
-    : "0 0 calc(8px + var(--eye-glow, 0.35) * 16px) -1px var(--electric-gold-glow)";
+      ? "0 0 var(--eye-glow-base, 8px) -1px oklch(0.65 0.22 25 / 0.7), 0 0 calc(var(--eye-glow-base, 8px) + var(--eye-glow, 0.35) * var(--eye-glow-spread, 18px)) -2px color-mix(in oklab, oklch(0.78 0.2 240) calc(var(--eye-glow, 0.35) * 95%), transparent)"
+      : "0 0 calc(var(--eye-glow-base, 8px) + var(--eye-glow, 0.35) * var(--eye-glow-spread, 18px)) -1px color-mix(in oklab, oklch(0.78 0.2 240) calc(var(--eye-glow, 0.35) * 100%), transparent), 0 0 calc(var(--eye-glow-inner, 2px) + var(--eye-glow, 0.35) * var(--eye-glow-inner-spread, 6px)) color-mix(in oklab, oklch(0.85 0.18 235) calc(var(--eye-glow, 0.35) * 70%), transparent)"
+    : "0 0 calc(var(--eye-glow-base, 8px) + var(--eye-glow, 0.35) * var(--eye-glow-spread, 16px)) -1px var(--electric-gold-glow)";
   const irisRing = isIce
     ? "color-mix(in oklab, oklch(0.72 0.22 245) 60%, transparent)"
     : "color-mix(in oklab, var(--electric-gold-500) 60%, transparent)";
