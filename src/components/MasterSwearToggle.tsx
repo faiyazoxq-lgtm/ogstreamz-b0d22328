@@ -3,6 +3,7 @@ import { Heart } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { effectiveSwearing } from "@/lib/swearing";
 
 /**
  * Header-level master toggle for the Swearing Agent.
@@ -14,7 +15,7 @@ export function MasterSwearToggle({ compact: _compact = false }: { compact?: boo
   const [busy, setBusy] = useState(false);
 
   if (!user || !profile) return null;
-  const swearing = !!profile.feature_flags?.swearing;
+  const swearing = effectiveSwearing(profile);
 
   const toggle = async () => {
     if (busy) return;
