@@ -130,7 +130,7 @@ function NavDropdown({
                     )}
                     {isActive && (
                       <span className="ml-auto inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.25em] text-gold/90 font-black">
-                        <span className="h-1.5 w-1.5 rounded-full bg-gold shadow-[0_0_6px_rgba(255,209,102,0.8)] animate-pulse" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-gold shadow-[0_0_6px_rgba(255,209,102,0.8)] motion-safe:animate-pulse" />
                         Now
                       </span>
                     )}
