@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
  * Positioned absolutely by the parent (parent must be `relative`).
  */
 export function TrackingEye({
-  size = 18,
+  size,
   pupilRatio = 0.55,
   travel = 3,
   className = "",
@@ -42,13 +42,13 @@ export function TrackingEye({
       ref={ref}
       aria-hidden
       className={`inline-flex items-center justify-center rounded-full bg-white/90 shadow-[0_0_10px_rgba(120,200,255,0.85)] ring-1 ring-black/40 ${className}`}
-      style={{ width: size, height: size, ...style }}
+      style={{ ...(size ? { width: size, height: size } : null), ...style }}
     >
       <span
         className="block rounded-full bg-black transition-transform duration-75"
         style={{
-          width: size * pupilRatio,
-          height: size * pupilRatio,
+          width: `${pupilRatio * 100}%`,
+          height: `${pupilRatio * 100}%`,
           transform: `translate(${pupil.x}px, ${pupil.y}px)`,
         }}
       />
