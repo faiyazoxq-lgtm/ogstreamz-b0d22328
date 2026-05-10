@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { spawnMusicPortal } from "@/lib/music-spawn.functions";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
-import { CreditWallet } from "@/components/CreditWallet";
+import { MusicHubBalance } from "@/components/MusicHubBalance";
 import { FeaturedDropCard } from "@/components/FeaturedDropCard";
 import { VipPaywallInline } from "@/components/VipPaywallInline";
 
@@ -121,6 +121,8 @@ function MusicPromptBuilder() {
         </p>
       </header>
 
+      <MusicHubBalance className="mb-6" />
+
       <FeaturedDropCard />
 
       {/* The writing area — main focus */}
@@ -199,7 +201,6 @@ function MusicPromptBuilder() {
           <VipPaywallInline hub="music" isAuthenticated={!!user} />
         )}
       </section>
-      <CreditWallet className="mt-10" />
       <SpawnPortalCard kind="music" />
     </main>
   );
