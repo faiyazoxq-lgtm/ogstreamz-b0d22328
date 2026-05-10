@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { enforceSwearRules, loadLexicon, type SwearMode } from "./swear-enforcer.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { perplexityChat, shapesChat } from "./ai-providers.server";
+import { effectiveSwearing, effectiveIntensity } from "./swearing";
 
 // Boss-chat now routes to Shapes API (swearing agent) when swearing is on,
 // and Perplexity Sonar when the boss is in normal/clean mode.
