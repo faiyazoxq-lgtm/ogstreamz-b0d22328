@@ -168,10 +168,31 @@ export function NavBar() {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
+    // rAF-throttled scroll handler — coalesces a burst of scroll events
+    // into a single state update per animation frame so the
+    // background/blur class swap stays jank-free during fast scrolling.
+    let raf = 0;
+    let ticking = false;
+    let last = window.scrollY > 8;
+    setScrolled(last);
+    const read = () => {
+      ticking = false;
+      const next = window.scrollY > 8;
+      if (next !== last) {
+        last = next;
+        setScrolled(next);
+      }
+    };
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      raf = requestAnimationFrame(read);
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, []);
 
   return (
