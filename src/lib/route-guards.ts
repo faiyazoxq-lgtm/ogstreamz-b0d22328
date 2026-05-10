@@ -16,20 +16,25 @@ import { hasStoredAuth } from "@/lib/has-stored-auth";
 export async function requireMember({ location }: { location: { href: string; pathname: string } }) {
   if (typeof window === "undefined") return;
 
+  const stash = () => {
+    try {
+      const target = location.href || location.pathname;
+      if (target && target.startsWith("/") && !target.startsWith("/auth")) {
+        sessionStorage.setItem("post_auth_redirect", target);
+      }
+    } catch { /* ignore */ }
+  };
+
   // Fast-path: no stored token at all → block immediately.
   if (!hasStoredAuth()) {
-    throw redirect({
-      to: "/auth",
-      search: { redirect: location.href } as never,
-    });
+    stash();
+    throw redirect({ to: "/auth" });
   }
 
   // Verify a real session exists.
   const { data, error } = await supabase.auth.getSession();
   if (error || !data.session?.user) {
-    throw redirect({
-      to: "/auth",
-      search: { redirect: location.href } as never,
-    });
+    stash();
+    throw redirect({ to: "/auth" });
   }
 }
