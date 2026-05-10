@@ -118,7 +118,7 @@ export function CoinsBulkPromoCard() {
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="font-bold">£{(p.amount_cents / 100).toFixed(0)}</span>
+                      <span className="font-bold">£{(p.amount_cents / 100).toFixed(0)} <span className="text-yellow-300/80">({Math.round(p.amount_cents / 100)} 🪙)</span></span>
                       <span className="opacity-70">→</span>
                       <span className="font-black text-yellow-200">
                         {p.credits!.toLocaleString()} 🪙
