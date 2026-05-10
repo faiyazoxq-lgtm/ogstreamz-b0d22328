@@ -18,6 +18,7 @@ import { VaultRevealCard } from "@/components/VaultRevealCard";
 import { VipPassRevealCard } from "@/components/VipPassRevealCard";
 import { VipNotificationsInbox } from "@/components/VipNotificationsInbox";
 import { PassesPanel } from "@/components/PassesPanel";
+import { LiveCostEstimator } from "@/components/LiveCostEstimator";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PlanChip, StatusBadge, formatSubscriptionTerm } from "@/components/SubscriptionBadges";
 import { readEntries, entryHref, entryLabel, platformMeta } from "@/lib/stream-links";
@@ -149,6 +150,7 @@ function DashboardPage() {
       <section className="space-y-6">
         <ZeroGStreamPanel />
         <PassesPanel compact />
+        <LiveCostEstimator />
         <StreamLinksCard streams={(profile as any).stream_links ?? {}} />
         <VipNotificationsInbox />
         <VaultRevealCard />
