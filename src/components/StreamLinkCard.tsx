@@ -184,6 +184,41 @@ export function StreamLinkCard() {
         <p className="mt-3 text-xs text-muted-foreground">Linked — awaiting fresh status check.</p>
       )}
 
+      {linked && (
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={onReverify}
+            disabled={reverifying || busy}
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-background/60 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-foreground/80 hover:text-foreground hover:border-foreground/40 disabled:opacity-60"
+          >
+            {reverifying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+            {reverifying ? "Checking…" : "Re-verify status"}
+          </button>
+        </div>
+      )}
+
+      {resubmitCta && (
+        <div
+          role="status"
+          className="mt-4 flex items-start gap-3 rounded-md border border-amber-400/40 bg-amber-400/10 px-3 py-2.5 text-sm text-amber-200"
+        >
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="font-bold leading-tight">{resubmitCta.title}</p>
+            <p className="mt-0.5 text-xs text-amber-200/90 break-words">{resubmitCta.detail}</p>
+            <button
+              type="button"
+              onClick={() => { setResubmitCta(null); requestAnimationFrame(() => usernameRef.current?.focus()); }}
+              className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-amber-400 px-2.5 py-1 text-xs font-bold text-background hover:opacity-90"
+            >
+              <Tv className="h-3.5 w-3.5" />
+              Resubmit credentials
+            </button>
+          </div>
+        </div>
+      )}
+
       {banner && (
         <div
           role="alert"
@@ -202,6 +237,7 @@ export function StreamLinkCard() {
       <form onSubmit={submit} className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <input
+            ref={usernameRef}
             required value={u}
             onChange={(e) => { setU(e.target.value); if (errors.username) setErrors({ ...errors, username: undefined }); }}
             onBlur={() => setErrors({ ...errors, ...validate(u, p, server), password: errors.password, server: errors.server })}
