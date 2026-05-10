@@ -36,7 +36,7 @@ export function CreditWallet({ className }: { className?: string }) {
       >
         <Coins className="h-5 w-5 text-gold" />
         <span className="text-sm text-muted-foreground">
-          Sign in to track your credits.
+          Sign in to track your 🪙.
         </span>
         <Button asChild size="sm" variant="outline" className="ml-auto">
           <Link to="/auth">Sign in</Link>
@@ -58,7 +58,7 @@ export function CreditWallet({ className }: { className?: string }) {
         className ?? "",
       ].join(" ")}
       aria-live="polite"
-      aria-label={`Credit wallet: ${credits} credits`}
+      aria-label={`Coin wallet: ${credits} 🪙`}
     >
       <div className="flex items-center gap-3">
         <div className="rounded-full bg-gold/15 border border-gold/40 p-2">
@@ -66,13 +66,11 @@ export function CreditWallet({ className }: { className?: string }) {
         </div>
         <div className="leading-tight">
           <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-            Credit wallet
+            Coin wallet
           </div>
           <div className="font-[Montserrat] font-black text-2xl text-foreground">
             {credits}
-            <span className="text-xs font-semibold text-muted-foreground ml-1">
-              {credits === 1 ? "credit" : "credits"}
-            </span>
+            <span className="text-xs font-semibold text-muted-foreground ml-1">🪙</span>
           </div>
         </div>
       </div>
