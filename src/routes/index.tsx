@@ -22,6 +22,7 @@ import { StreamLinkCard } from "@/components/StreamLinkCard";
 import { Flame } from "lucide-react";
 import { TrackingEye } from "@/components/TrackingEye";
 import { VipPortalExplorer } from "@/components/VipPortalExplorer";
+import { usePortalCount } from "@/hooks/use-portal-count";
 
 const ICONS: Record<string, any> = {
   Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
@@ -50,8 +51,7 @@ const portals = [
 function Index() {
   const [customHubs, setCustomHubs] = useState<any[]>([]);
   const { user, profile } = useAuth();
-  const totalPortals = portals.length + customHubs.length;
-  const portalsLabel = `${totalPortals} portal${totalPortals === 1 ? "" : "s"}`;
+  const { total: totalPortals, label: portalsLabel } = usePortalCount(portals, customHubs);
   const rank = profile?.rank;
   const streamLinked = rank === "stream_user" || rank === "vip" || rank === "boss";
   // VIPs (and the boss) already own the perks these promos are pitching —
