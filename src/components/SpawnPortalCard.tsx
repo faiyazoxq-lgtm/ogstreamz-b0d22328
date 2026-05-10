@@ -30,7 +30,7 @@ const COPY: Record<Kind, Copy> = {
 };
 
 export function SpawnPortalCard({ kind }: { kind: Kind }) {
-  const { user, profile } = useAuth();
+  const { user, profile, refresh } = useAuth();
   const spawn = useServerFn(spawnPortal);
   const copy = COPY[kind];
 
@@ -61,6 +61,8 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
       setCreated({ slug: r.portal.slug, name: r.portal.name });
       toast.success(`Spawned "${r.portal.name}" — 1 credit spent`);
       setName(""); setNiche(""); setVibe("");
+      // Refresh wallet so the new credit balance shows everywhere immediately
+      void refresh();
     } catch (e: any) {
       toast.error(e?.message ?? "Spawn failed");
     } finally {
