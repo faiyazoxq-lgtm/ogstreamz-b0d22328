@@ -72,6 +72,24 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
     return;
   }
 
+  // Real OG lifetime pass — auto-issue.
+  if (session.metadata?.kind === "real_og") {
+    const amount = Number(session.amount_total ?? 0);
+    const { data, error } = await getSupabase().rpc("claim_real_og_pass", {
+      _user_id: userId,
+      _stripe_session_id: session.id,
+      _amount_cents: amount,
+      _currency: (session.currency || "gbp").toLowerCase(),
+      _environment: env,
+    });
+    if (error) {
+      console.error("claim_real_og_pass failed", error);
+      throw error;
+    }
+    console.log("Real OG pass issued", { userId, result: data });
+    return;
+  }
+
   // Re-fetch the session with line items expanded so we can read lookup_key.
   const stripe = createStripeClient(env);
   const full = await stripe.checkout.sessions.retrieve(session.id, {
