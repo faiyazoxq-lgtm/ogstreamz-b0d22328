@@ -395,7 +395,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                   >
                     {loading
                       ? <><Loader2 className="h-5 w-5 animate-spin mr-2" />Spawning…</>
-                      : <><Zap className="h-5 w-5 mr-2 fill-black" />Generate Portal · {PORTAL_COST} 🪙</>}
+                      : <><Zap className="h-5 w-5 mr-2 fill-black" />Spawn Portal — Spend {PORTAL_COST} 🪙</>}
                   </Button>
                 </span>
               </TooltipTrigger>
@@ -419,7 +419,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                 ) : !isValid ? (
                   <p>{fieldErrors.name || fieldErrors.niche || fieldErrors.language}</p>
                 ) : (
-                  <p>Spawn this portal · {PORTAL_COST} 🪙</p>
+                  <p>Spawn this portal — Spend {PORTAL_COST} 🪙</p>
                 )}
               </TooltipContent>
             </Tooltip>
@@ -589,7 +589,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
             >
               {loading
                 ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Spawning…</>
-                : <><Wand2 className="h-4 w-4 mr-2" />Confirm · spend 1 🪙</>}
+                : <><Wand2 className="h-4 w-4 mr-2" />Confirm — Spend {PORTAL_COST} 🪙</>}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
