@@ -368,7 +368,19 @@ function BossOverview() {
       </header>
 
       {/* Live metric strip */}
-      <section aria-label="Key metrics" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <CollapsiblePanel
+        id="metrics"
+        title="Live Metrics"
+        Icon={Gauge}
+        tint="#3ad6ff"
+        subtitle="Snapshot across members, credits, products, portals & queues"
+        badge={
+          <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/55">
+            {metrics.length} cards
+          </span>
+        }
+      >
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {metrics.map((m) => {
           const body = (
             <>
@@ -389,19 +401,17 @@ function BossOverview() {
             <div key={m.key} className={cls} style={style}>{body}</div>
           );
         })}
-      </section>
+      </div>
+      </CollapsiblePanel>
 
       {/* Power Bar — large tactile toggles */}
-      <section aria-label="Power controls" className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="syndicate-header text-base md:text-lg text-white/95 flex items-center gap-2">
-            <Power className="h-4 w-4" style={{ color: "#ffd166" }} /> Power Bar
-            <span className="text-[10px] uppercase tracking-[0.3em] terminal-mono text-white/35 font-normal">One-tap controls</span>
-          </h2>
-          <Link to="/boss/power" className="hidden sm:inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/45 hover:text-gold transition">
-            Full controls <ArrowUpRight className="h-3 w-3" />
-          </Link>
-        </div>
+      <CollapsiblePanel
+        id="power"
+        title="Power Bar"
+        Icon={Power}
+        tint="#ffd166"
+        subtitle="One-tap master switches for payments, coins & chat tone"
+      >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <PowerToggle
             title="Payments"
@@ -446,24 +456,166 @@ function BossOverview() {
             ready={swearDefault !== null}
           />
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <QuickJump to="/boss/power" Icon={Undo2} label="Reverse" tint="#ff5577" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+          <QuickJump to="/boss/overview" hash="reverse" Icon={Undo2} label="Reverse" tint="#ff5577" />
           <QuickJump to="/boss/publish-check" Icon={Rocket} label="Publish" tint="#ffd166" />
           <QuickJump to="/boss/analytics" Icon={BarChart3} label="Analytics" tint="#00e08a" />
           <QuickJump to="/boss/api-keys" Icon={KeyRound} label="Agent Keys" tint="#a78bfa" />
         </div>
-      </section>
+      </CollapsiblePanel>
+
+      {/* Reverse purchases (merged from /boss/power) */}
+      <CollapsiblePanel
+        id="reverse"
+        title="Reverse Recent Purchases"
+        Icon={Undo2}
+        tint="#ff5577"
+        defaultOpen={false}
+        subtitle="Refund credit purchases & log track reversals — always dry-run first"
+        badge={
+          <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/15 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-[0.2em] text-rose-200 ring-1 ring-rose-400/40">
+            destructive
+          </span>
+        }
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/55 font-bold mr-1">Window</span>
+            {WINDOW_PRESETS.map((m) => {
+              const active = minutes === m;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setWindowMinutes(String(m))}
+                  className={[
+                    "inline-flex items-center rounded-full px-3 py-1 text-xs font-bold tabular-nums transition active:scale-[0.96]",
+                    active
+                      ? "bg-rose-500/25 text-rose-200 ring-1 ring-rose-400/60 shadow-[0_0_18px_-6px_rgba(244,63,94,0.7)]"
+                      : "bg-white/5 text-white/55 hover:text-white/90 ring-1 ring-white/10",
+                  ].join(" ")}
+                >
+                  {m < 60 ? `${m}m` : m < 1440 ? `${m / 60}h` : `${m / 1440}d`}
+                </button>
+              );
+            })}
+            <input
+              type="number"
+              min={1}
+              max={10080}
+              value={windowMinutes}
+              onChange={(e) => setWindowMinutes(e.target.value)}
+              className="w-20 rounded-md border border-white/10 bg-black/30 px-2 py-1 text-xs text-white/90 tabular-nums"
+              aria-label="Custom window in minutes"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="flex flex-col gap-1 text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/55 font-bold flex-1 min-w-[180px]">
+              Confirm — type <span className="text-rose-300">REVERSE</span>
+              <input
+                type="text"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="REVERSE"
+                className="rounded-md border border-white/10 bg-black/30 px-3 py-2 text-sm text-white/95 font-mono tracking-widest"
+              />
+            </label>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => runReverse(true)}
+                disabled={running || !minutes}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-bold text-white/90 hover:bg-white/10 disabled:opacity-50 active:scale-[0.97] transition"
+              >
+                {running ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldAlert className="h-3.5 w-3.5" />} Dry run
+              </button>
+              <button
+                type="button"
+                onClick={() => runReverse(false)}
+                disabled={running || !minutes || confirmText.trim().toUpperCase() !== "REVERSE"}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-rose-400/60 bg-rose-500/20 px-4 py-2.5 text-xs font-extrabold text-rose-100 hover:bg-rose-500/30 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition shadow-[0_0_18px_-8px_rgba(244,63,94,0.8)]"
+              >
+                {running ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Undo2 className="h-3.5 w-3.5" />} Reverse now
+              </button>
+            </div>
+          </div>
+
+          {lastResult && (
+            <div className="rounded-xl border border-white/10 bg-black/30 p-3 space-y-2">
+              <div className="flex items-center gap-2 text-white/90 text-xs">
+                <AlertTriangle className="h-3.5 w-3.5" style={{ color: "#ffd166" }} />
+                <span className="font-extrabold uppercase tracking-[0.2em]">
+                  {lastResult.dry_run ? "Dry-run preview" : "Reversal complete"}
+                </span>
+                <span className="text-white/45">· cutoff {new Date(lastResult.cutoff).toLocaleString()}</span>
+              </div>
+              <ul className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <ReverseStat label="Credit purchases" value={lastResult.credit_purchases_reversed} />
+                <ReverseStat label="Track purchases" value={lastResult.track_purchases_reversed} />
+                <ReverseStat label="Coins refunded" value={lastResult.credits_refunded} />
+                <ReverseStat label="Amount (¢)" value={lastResult.amount_cents_affected} />
+              </ul>
+            </div>
+          )}
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/55 font-bold">Recent reversals</h3>
+              <span className="text-[10px] terminal-mono text-white/35 tabular-nums">{history.length} shown</span>
+            </div>
+            {history.length === 0 ? (
+              <p className="text-xs text-white/40 py-3 text-center">No reversals yet.</p>
+            ) : (
+              <div className="overflow-x-auto -mx-1">
+                <table className="w-full text-xs">
+                  <thead className="text-[10px] uppercase tracking-[0.2em] text-white/45">
+                    <tr>
+                      <th className="text-left py-2 px-1">When</th>
+                      <th className="text-left py-2 px-1">Source</th>
+                      <th className="text-left py-2 px-1 hidden sm:table-cell">User</th>
+                      <th className="text-right py-2 px-1">Coins</th>
+                      <th className="text-right py-2 px-1">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {history.map((r) => (
+                      <tr key={r.id} className="hover:bg-white/5 transition-colors">
+                        <td className="py-2 px-1 text-white/55">{new Date(r.created_at).toLocaleString()}</td>
+                        <td className="py-2 px-1 font-mono text-[11px] text-white/85">{r.source_table}</td>
+                        <td className="py-2 px-1 font-mono text-[11px] text-white/55 hidden sm:table-cell" title={r.user_id}>{r.user_id.slice(0, 8)}…</td>
+                        <td className="py-2 px-1 text-right tabular-nums text-gold font-bold">-{r.credits_reversed}</td>
+                        <td className="py-2 px-1 text-right tabular-nums text-white/85">{(r.amount_cents / 100).toFixed(2)} {r.currency.toUpperCase()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </CollapsiblePanel>
 
       {/* Action queue */}
-      <section className="glass-obsidian-cmd rounded-2xl p-4 md:p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="syndicate-header text-sm md:text-base text-white/95 flex items-center gap-2">
-            <Inbox className="h-4 w-4" style={{ color: "#ff5577" }} /> Action Queue
-          </h2>
-          <span className="text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/45 font-bold">
+      <CollapsiblePanel
+        id="queue"
+        title="Action Queue"
+        Icon={Inbox}
+        tint="#ff5577"
+        subtitle="Outstanding requests waiting on a Boss decision"
+        badge={
+          <span
+            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-[0.2em] tabular-nums"
+            style={{
+              background: totalQueue > 0 ? "rgba(255,85,119,0.18)" : "rgba(0,224,138,0.12)",
+              color: totalQueue > 0 ? "#ff8aa3" : "#7be3b6",
+              border: `1px solid ${totalQueue > 0 ? "#ff557766" : "#00e08a55"}`,
+            }}
+          >
             {totalQueue} open
           </span>
-        </div>
+        }
+      >
         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {actionQueue.map((a) => {
             const urgent = a.count > 0;
@@ -505,8 +657,17 @@ function BossOverview() {
             );
           })}
         </ul>
-      </section>
+      </CollapsiblePanel>
 
+      <CollapsiblePanel
+        id="modules"
+        title="Modules"
+        Icon={Boxes}
+        tint="#a78bfa"
+        subtitle="Every Boss surface, grouped by domain"
+        defaultOpen={false}
+      >
+      <div className="space-y-5">
       {TILE_CATEGORIES.map((cat) => {
         const tiles = cat.labels
           .map((l) => TILES.find((t) => t.label === l))
@@ -514,12 +675,12 @@ function BossOverview() {
         if (tiles.length === 0) return null;
         return (
           <div key={cat.id}>
-            <h2 className="syndicate-header text-sm text-white/80 mb-3 flex items-center gap-2">
+            <h3 className="syndicate-header text-sm text-white/80 mb-3 flex items-center gap-2">
               <span className="inline-block h-2 w-2 rounded-full" style={{ background: cat.tint, boxShadow: `0 0 10px ${cat.tint}` }} />
               {cat.label}
               <span className="text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/35">{tiles.length}</span>
-            </h2>
-            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {tiles.map((t) => (
                 <Link
                   key={t.label + (t.hash ?? "")}
@@ -544,10 +705,12 @@ function BossOverview() {
                   <p className="mt-1 text-[11px] text-white/55 leading-relaxed">{t.blurb}</p>
                 </Link>
               ))}
-            </section>
+            </div>
           </div>
         );
       })}
+      </div>
+      </CollapsiblePanel>
       <AlertDialog open={confirmGoLive} onOpenChange={setConfirmGoLive}>
         <AlertDialogContent className="border-destructive/40">
           <AlertDialogHeader>
