@@ -122,7 +122,7 @@ function WelcomePage() {
         src={bgFlame}
         alt=""
         aria-hidden
-        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-15 mix-blend-screen"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-[0.08] mix-blend-overlay"
       />
       <div className="relative mx-auto flex max-w-5xl flex-col gap-10 px-4 py-10 sm:py-16">
         <header className="flex flex-col items-center gap-4 text-center">
