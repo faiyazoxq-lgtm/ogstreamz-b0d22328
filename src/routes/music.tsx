@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { spawnMusicPortal } from "@/lib/music-spawn.functions";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
-import { FeaturedNasheedCard } from "@/components/FeaturedNasheedCard";
+import { FeaturedDropCard } from "@/components/FeaturedDropCard";
 import { VipPaywallInline } from "@/components/VipPaywallInline";
 
 import { requireMember } from "@/lib/route-guards";
@@ -121,7 +121,7 @@ function MusicPromptBuilder() {
         </p>
       </header>
 
-      <FeaturedNasheedCard />
+      <FeaturedDropCard />
 
       {/* The writing area — main focus */}
       <section className="rounded-3xl border border-gold/40 bg-gradient-to-br from-card to-background p-4 sm:p-6 shadow-[0_0_80px_oklch(0.82_0.16_88_/_0.1)] backdrop-blur-xl">

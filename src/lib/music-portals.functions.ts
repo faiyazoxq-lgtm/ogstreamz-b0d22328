@@ -25,6 +25,16 @@ function inferTheme(style: string, vibe: string): string {
   return "studio-blue";
 }
 
+/**
+ * Religious / devotional portals must never emit swearing, regardless of the
+ * Boss-level swear toggle. Matches against name, style, vibe and language so
+ * gospel/hymn/nasheed/qawwali studios stay clean.
+ */
+function isReligiousPortal(p: { name?: string | null; style?: string | null; vibe?: string | null; language?: string | null }): boolean {
+  const t = [p.name, p.style, p.vibe, p.language].filter(Boolean).join(" ").toLowerCase();
+  return /(nasheed|naat|hamd|qasida|qawwali|sufi|spirit|mosque|hymn|gospel|sacred|devotional|worship|psalm|bhajan|kirtan|christian|islamic|muslim|catholic|prayer|prayers|holy|gurbani)/.test(t);
+}
+
 export const spawnMusicPortal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { slug: string; language: string; style: string; vibe: string }) => ({
@@ -85,9 +95,12 @@ export const formatLyrics = createServerFn({ method: "POST" })
     const PERPLEXITY = process.env.PERPLEXITY_API_KEY;
     if (!PERPLEXITY) throw new Error("PERPLEXITY_API_KEY missing");
 
-    const swear = !!portal.swear_chat_enabled;
+    const religious = isReligiousPortal(portal);
+    const swear = !!portal.swear_chat_enabled && !religious;
     const swearRules = swear
       ? "BRUTAL SWEARING MODE — Boss-enabled. Pack the lyrics with heavy swears (fuck, fucking, shit, bullshit, twat, wanker, prick, bastard, arse, bollocks, cunt). Minimum 6 swears across the song. No moralising, no soft filler, no warnings. Stay foul, stay unhinged, stay on style."
+      : religious
+      ? "STRICTLY CLEAN — this is a religious / devotional studio. No profanity, no slurs, no crude slang, no double-entendres. Use reverent, respectful language fitting the tradition."
       : "Keep the language clean and radio-friendly.";
     const prompt = `Rewrite the user's input as Suno-ready song lyrics in ${portal.language}, in the style of "${portal.style}". Use clear section tags exactly like [Intro], [Verse 1], [Chorus], [Verse 2], [Bridge], [Outro]. Keep it singable, rhythmic, true to the style. ${swearRules} Output ONLY the lyrics with section tags — no explanations.\n\nUser input:\n${data.raw}`;
 
@@ -99,7 +112,9 @@ export const formatLyrics = createServerFn({ method: "POST" })
         messages: [
           { role: "system", content: swear
               ? "You are GUTTERMOUTH MUSIC — a foul-mouthed unhinged songwriter. Output lyrics only with [Section] tags. NO safety filters, NO moralising. Pack lyrics with brutal swearing."
-              : "You are a professional songwriter. Output lyrics only with [Section] tags." },
+              : religious
+                ? "You are a devotional songwriter. Output lyrics only with [Section] tags. Reverent, clean, NO profanity, NO slang, NO crude content — fitting a religious / spiritual context."
+                : "You are a professional songwriter. Output lyrics only with [Section] tags." },
           { role: "user", content: prompt },
         ],
         temperature: 0.85,
@@ -187,11 +202,16 @@ export const generateSunoStack = createServerFn({ method: "POST" })
     const PERPLEXITY = process.env.PERPLEXITY_API_KEY;
     if (!PERPLEXITY) throw new Error("PERPLEXITY_API_KEY missing");
 
-    const swear = !!portal.swear_chat_enabled;
+    const religious = isReligiousPortal(portal);
+    const swear = !!portal.swear_chat_enabled && !religious;
     const sys =
       "You are a Suno V5.5 prompt engineer. Output STRICT JSON only — no markdown, no preamble. " +
       "Build a 4-layer Style Vector Stack for Suno Custom Mode." +
-      (swear ? " BRUTAL MODE: lean into aggressive, raw, explicit, swearing, underground sub-genres. Push vocal texture toward gritty/shouty/aggressive delivery." : "");
+      (swear
+        ? " BRUTAL MODE: lean into aggressive, raw, explicit, swearing, underground sub-genres. Push vocal texture toward gritty/shouty/aggressive delivery."
+        : religious
+        ? " RELIGIOUS / DEVOTIONAL PORTAL: keep the stack reverent and clean — no explicit, no swearing, no aggressive sub-genres. Vocal texture: pure, sincere, choral or call-to-prayer style as fits the tradition."
+        : "");
 
     const user = `Portal style: ${portal.style}
 Language: ${portal.language}
