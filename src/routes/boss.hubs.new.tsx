@@ -5,8 +5,6 @@ import { ArrowLeft, ArrowUpRight, Sparkles, Music2, Smile, Wrench, TrendingUp, R
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-
 const ICONS: Record<string, any> = {
   Sparkles, Music2, Smile, Wrench, TrendingUp, Rocket, Radio, Bot, Brain,
   Zap, Star, Megaphone, Disc3, Satellite, Radar,
