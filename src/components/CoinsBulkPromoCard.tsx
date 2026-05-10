@@ -63,7 +63,7 @@ export function CoinsBulkPromoCard() {
             </h2>
 
             <p className="mt-3 text-sm sm:text-base text-yellow-100/85 max-w-xl">
-              Pay <span className="font-black text-white">£{(best.amount_cents / 100).toFixed(0)}</span>, walk away with{" "}
+              Pay <span className="font-black text-white">£{(best.amount_cents / 100).toFixed(0)} ({Math.round(best.amount_cents / 100)} 🪙)</span>, walk away with{" "}
               <span className="font-black text-yellow-300">
                 <Coins className="inline h-4 w-4 mb-0.5 mr-0.5 text-yellow-400" />
                 {best.credits!.toLocaleString()} Coins 🪙
