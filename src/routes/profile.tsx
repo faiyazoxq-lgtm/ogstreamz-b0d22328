@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Crown, Coins, LogOut, Shield, Sparkles, Zap, Flame, Skull, Settings, Heart, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import bgFlame from "@/assets/bg-flame.png";
+import { FlameBackdrop } from "@/components/FlameBackdrop";
 import { CREDIT_PACK_LIST } from "@/lib/credit-packs";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { useServerFn } from "@tanstack/react-start";
@@ -72,7 +72,7 @@ function ProfilePage() {
   return (
     <main className="relative min-h-[calc(100vh-4rem)]">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <img src={bgFlame} alt="" aria-hidden loading="lazy" decoding="async" fetchPriority="low" className="absolute inset-0 w-full h-full object-cover opacity-15 mix-blend-screen" />
+        <FlameBackdrop className="absolute inset-0 w-full h-full object-cover opacity-15 mix-blend-screen" />
         <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/85 to-background" />
       </div>
 
