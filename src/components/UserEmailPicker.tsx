@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Check, ChevronsUpDown, Search, UserPlus } from "lucide-react";
+import { Check, ChevronsUpDown, UserPlus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
@@ -100,15 +100,11 @@ export function UserEmailPicker({
       </PopoverTrigger>
       <PopoverContent className={cn("w-[--radix-popover-trigger-width] p-0", className)} align="start">
         <Command shouldFilter={false}>
-          <div className="flex items-center border-b px-3">
-            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-            <CommandInput
-              value={query}
-              onValueChange={setQuery}
-              placeholder="Search by email or name…"
-              className="flex h-10 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
-            />
-          </div>
+          <CommandInput
+            value={query}
+            onValueChange={setQuery}
+            placeholder="Search by email or name…"
+          />
           <CommandList className="max-h-72">
             <CommandEmpty>
               {showFreeText ? "No match — use typed email below." : "No users found."}
