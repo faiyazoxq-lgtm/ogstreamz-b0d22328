@@ -123,6 +123,22 @@ function segMatch(pSeg, uSeg) {
   return pSeg === uSeg;
 }
 
+/**
+ * Compare two route patterns by shape: same segment count, literals must
+ * match exactly, and any "$..." segment on either side acts as a wildcard.
+ */
+function matchesShape(a, b) {
+  const A = a.split("/").filter(Boolean);
+  const B = b.split("/").filter(Boolean);
+  if (A.length !== B.length) return false;
+  for (let i = 0; i < A.length; i++) {
+    const x = A[i], y = B[i];
+    if (x.startsWith("$") || y.startsWith("$")) continue;
+    if (x !== y) return false;
+  }
+  return true;
+}
+
 // --------------------------------------------------------------------------
 // 2. Scan source files for internal link references
 // --------------------------------------------------------------------------
