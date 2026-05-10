@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { Swords, Crown, Shield, TrendingUp } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Swords, Crown, Shield, TrendingUp, Timer, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/battlehub")({
@@ -18,17 +18,54 @@ export const Route = createFileRoute("/battlehub")({
 type Side = "gold" | "shadow";
 
 const INITIAL = { gold: 1284, shadow: 1176 };
+// Round window: rolls over at the next 10-minute boundary so the same end
+// time is shared across tabs / reloads without needing a backend.
+const ROUND_WINDOW_MS = 10 * 60 * 1000;
+
+function nextBoundary(from: number, windowMs: number) {
+  return Math.ceil((from + 1) / windowMs) * windowMs;
+}
+
+function formatRemaining(ms: number) {
+  const safe = Math.max(0, ms);
+  const total = Math.floor(safe / 1000);
+  const m = Math.floor(total / 60).toString().padStart(2, "0");
+  const s = (total % 60).toString().padStart(2, "0");
+  return `${m}:${s}`;
+}
 
 function BattleHubPage() {
   const [pick, setPick] = useState<Side | null>(null);
   const [votes, setVotes] = useState(INITIAL);
 
+  // Anchor the round end to a deterministic boundary so reloading doesn't
+  // restart the timer from scratch.
+  const endsAt = useMemo(() => nextBoundary(Date.now(), ROUND_WINDOW_MS), []);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const remainingMs = endsAt - now;
+  const roundEnded = remainingMs <= 0;
+  const totalMs = ROUND_WINDOW_MS;
+  const elapsedPct = Math.min(100, Math.max(0, ((totalMs - remainingMs) / totalMs) * 100));
+  const lowTime = !roundEnded && remainingMs <= 30_000;
+
   const total = votes.gold + votes.shadow;
   const goldPct = Math.round((votes.gold / total) * 100);
   const shadowPct = 100 - goldPct;
+  const winner: Side | "tie" | null = !roundEnded
+    ? null
+    : votes.gold === votes.shadow
+      ? "tie"
+      : votes.gold > votes.shadow
+        ? "gold"
+        : "shadow";
 
   const cast = (side: Side) => {
-    if (pick) return;
+    if (pick || roundEnded) return;
     setPick(side);
     setVotes((v) => ({ ...v, [side]: v[side] + 1 }));
   };
@@ -58,15 +95,75 @@ function BattleHubPage() {
           gilded and who fades into the shadow.
         </p>
 
+        {/* Countdown */}
+        <div
+          role="timer"
+          aria-live={lowTime ? "assertive" : "polite"}
+          aria-atomic="true"
+          className={[
+            "mt-8 rounded-2xl border p-4 sm:p-5 backdrop-blur transition-colors",
+            roundEnded
+              ? "border-[#5a5a5a]/50 bg-[#0f0f0f]/80"
+              : lowTime
+                ? "border-[#ff6b6b]/50 bg-[#1a0a0a]/80"
+                : "border-[#c9a84c]/30 bg-[#141414]/80",
+          ].join(" ")}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#c9a84c]">
+              {roundEnded ? <Lock className="h-3.5 w-3.5" /> : <Timer className="h-3.5 w-3.5" />}
+              {roundEnded ? "Round closed" : "Round ends in"}
+            </div>
+            <div
+              className={[
+                "tabular-nums font-mono text-2xl sm:text-3xl font-black",
+                roundEnded
+                  ? "text-[#f5e8c7]/50 line-through decoration-[#5a5a5a]"
+                  : lowTime
+                    ? "text-[#ff6b6b] animate-pulse"
+                    : "text-[#f0d78c]",
+              ].join(" ")}
+            >
+              {formatRemaining(remainingMs)}
+            </div>
+          </div>
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#1a1a1a]">
+            <div
+              className={[
+                "h-full transition-[width] duration-1000 ease-linear",
+                roundEnded
+                  ? "bg-[#5a5a5a]"
+                  : lowTime
+                    ? "bg-[#ff6b6b]"
+                    : "bg-gradient-to-r from-[#c9a84c] to-[#f0d78c]",
+              ].join(" ")}
+              style={{ width: `${elapsedPct}%` }}
+            />
+          </div>
+          {roundEnded && (
+            <div className="mt-3 text-sm text-[#f5e8c7]/80">
+              {winner === "tie"
+                ? "Stalemate — the crowd split clean down the middle."
+                : winner === "gold"
+                  ? "House of Gold takes the round."
+                  : "House of Shadow takes the round."}
+              <span className="ml-2 text-[11px] uppercase tracking-[0.2em] text-[#f5e8c7]/40">
+                Voting locked
+              </span>
+            </div>
+          )}
+        </div>
+
         {/* Sides */}
-        <div className="mt-10 grid gap-4 sm:grid-cols-2">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <SideCard
             side="gold"
             label="House of Gold"
             tagline="Bright, brash, unbothered."
             icon={<Crown className="h-6 w-6" />}
             picked={pick === "gold"}
-            disabled={!!pick && pick !== "gold"}
+            disabled={roundEnded || (!!pick && pick !== "gold")}
+            locked={roundEnded}
             onPick={() => cast("gold")}
           />
           <SideCard
@@ -75,7 +172,8 @@ function BattleHubPage() {
             tagline="Quiet, patient, lethal."
             icon={<Shield className="h-6 w-6" />}
             picked={pick === "shadow"}
-            disabled={!!pick && pick !== "shadow"}
+            disabled={roundEnded || (!!pick && pick !== "shadow")}
+            locked={roundEnded}
             onPick={() => cast("shadow")}
           />
         </div>
@@ -93,8 +191,11 @@ function BattleHubPage() {
           <div className="mt-2 text-lg font-semibold">
             {pick === "gold" && "House of Gold — locked in."}
             {pick === "shadow" && "House of Shadow — locked in."}
-            {!pick && (
+            {!pick && !roundEnded && (
               <span className="text-[#f5e8c7]/60">No vote cast yet.</span>
+            )}
+            {!pick && roundEnded && (
+              <span className="text-[#f5e8c7]/60">Round closed before you voted.</span>
             )}
           </div>
         </div>
