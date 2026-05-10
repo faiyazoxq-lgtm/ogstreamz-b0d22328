@@ -38,6 +38,11 @@ function AuthPage() {
   const [remember, setRememberState] = useState<boolean>(true);
   const [signedInDest, setSignedInDest] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [magicLinkNotice, setMagicLinkNotice] = useState<
+    | { kind: "consumed"; email: string }
+    | { kind: "failed"; reason: string }
+    | null
+  >(null);
 
   useEffect(() => { setRememberState(getRemember()); }, []);
 
@@ -111,6 +116,7 @@ function AuthPage() {
       try {
         const hash = typeof window !== "undefined" ? window.location.hash : "";
         if (/type=magiclink|type=email/.test(hash)) {
+          setMagicLinkNotice({ kind: "consumed", email: user.email ?? "" });
           void supabase
             .from("magic_link_audit")
             .insert({
@@ -144,6 +150,25 @@ function AuthPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  // Detect magic-link callback errors (Supabase appends them to the URL hash
+  // when the link is expired, already used, or opened on the wrong device).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash || "";
+    if (!hash || !hash.includes("error")) return;
+    const params = new URLSearchParams(hash.replace(/^#/, ""));
+    const err = params.get("error") || params.get("error_code");
+    if (!err) return;
+    const desc = params.get("error_description") || "";
+    let reason = desc.replace(/\+/g, " ");
+    if (!reason) {
+      if (/expired/i.test(err)) reason = "This magic link has expired.";
+      else if (/otp|invalid/i.test(err)) reason = "This magic link is invalid or was already used.";
+      else reason = "This magic link could not be used on this device.";
+    }
+    setMagicLinkNotice({ kind: "failed", reason });
+  }, []);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -299,6 +324,24 @@ function AuthPage() {
             <h1 className="text-2xl font-bold text-metallic">Join the Syndicate</h1>
             <p className="text-sm text-muted-foreground">Tune in. The frequency is private.</p>
           </header>
+
+          {magicLinkNotice?.kind === "failed" && (
+            <div
+              role="alert"
+              className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-3 text-xs text-destructive-foreground space-y-1.5"
+            >
+              <p className="font-bold uppercase tracking-widest text-[10px] text-destructive">
+                Magic link not consumed on this device
+              </p>
+              <p className="text-foreground/90">{magicLinkNotice.reason}</p>
+              <p className="text-muted-foreground">
+                Enter your email below and tap{" "}
+                <span className="font-semibold text-foreground">Email me a magic link</span>{" "}
+                to request a fresh one. Open the new link on the same device and browser
+                where you requested it.
+              </p>
+            </div>
+          )}
 
           {passToken && (
             <div className="rounded-lg border border-yellow-500/40 bg-yellow-500/5 px-3 py-2 text-xs text-yellow-300 text-center">
