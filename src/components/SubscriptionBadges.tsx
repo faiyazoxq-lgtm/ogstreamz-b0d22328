@@ -43,11 +43,14 @@ export function PlanChip({
     amber:   "border-amber-300/60 bg-amber-400/15 text-amber-100",
     cyan:    "border-cyan-300/60 bg-cyan-400/15 text-cyan-100",
   };
-  const sizeCls = size === "sm" ? "text-[9px] px-2 py-0.5" : "text-[10px] px-2 py-0.5";
+  const sizeCls =
+    size === "sm"
+      ? "text-[9px] px-2.5 py-[3px] min-h-[20px] sm:min-h-[18px]"
+      : "text-[10px] px-2.5 py-[3px] min-h-[22px] sm:min-h-[20px]";
   const readable = formatSubscriptionTerm(planLabel);
   return (
     <span
-      className={`inline-flex items-center justify-center leading-none h-[18px] rounded-full border tracking-[0.25em] uppercase ${sizeCls} ${toneCls[tone]}`}
+      className={`inline-flex items-center justify-center leading-none rounded-full border tracking-[0.25em] uppercase align-middle ${sizeCls} ${toneCls[tone]}`}
       role="status"
       aria-label={`Subscription plan: ${readable} plan`}
     >
@@ -84,11 +87,14 @@ export function StatusBadge({
     paused:             { label: "Paused",     cls: "border-white/30 bg-white/10 text-white/80" },
   };
   const v = map[s] ?? { label: s.replace(/_/g, " "), cls: "border-white/30 bg-white/10 text-white/80" };
-  const sizeCls = size === "sm" ? "text-[9px] px-2 py-0.5" : "text-[10px] px-2 py-0.5";
+  const sizeCls =
+    size === "sm"
+      ? "text-[9px] px-2.5 py-[3px] min-h-[20px] sm:min-h-[18px]"
+      : "text-[10px] px-2.5 py-[3px] min-h-[22px] sm:min-h-[20px]";
   const readable = formatSubscriptionTerm(v.label);
   return (
     <span
-      className={`inline-flex items-center justify-center leading-none h-[18px] rounded-full border tracking-[0.25em] uppercase ${sizeCls} ${v.cls}`}
+      className={`inline-flex items-center justify-center leading-none rounded-full border tracking-[0.25em] uppercase align-middle ${sizeCls} ${v.cls}`}
       title={`Subscription status: ${s}`}
       role="status"
       aria-label={`Subscription status: ${readable}`}
