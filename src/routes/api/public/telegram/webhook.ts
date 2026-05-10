@@ -43,7 +43,7 @@ async function handleCommand(text: string, chatId: number, username: string) {
     return;
   }
 
-  const { data, error } = await getSupabase().rpc("claim_telegram_link_code", {
+  const { data, error } = await (getSupabase() as any).rpc("claim_telegram_link_code", {
     _code: code.toUpperCase(),
     _chat_id: chatId,
     _tg_username: username || null,

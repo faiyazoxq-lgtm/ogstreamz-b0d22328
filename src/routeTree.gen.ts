@@ -49,6 +49,7 @@ import { Route as BossAnalyticsRouteImport } from './routes/boss.analytics'
 import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as ApiPublicSunoWebhookRouteImport } from './routes/api/public/suno-webhook'
 import { Route as ApiPublic0gOrchestratorRouteImport } from './routes/api/public/0g-orchestrator'
+import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicHooksSyndicateTickRouteImport } from './routes/api/public/hooks/syndicate-tick'
 import { Route as ApiPublicFleetWebhookBotIdRouteImport } from './routes/api/public/fleet/webhook/$botId'
@@ -253,6 +254,12 @@ const ApiPublic0gOrchestratorRoute = ApiPublic0gOrchestratorRouteImport.update({
   path: '/api/public/0g-orchestrator',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTelegramWebhookRoute =
+  ApiPublicTelegramWebhookRouteImport.update({
+    id: '/api/public/telegram/webhook',
+    path: '/api/public/telegram/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -315,6 +322,7 @@ export interface FileRoutesByFullPath {
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/api/public/fleet/webhook/$botId': typeof ApiPublicFleetWebhookBotIdRoute
 }
 export interface FileRoutesByTo {
@@ -360,6 +368,7 @@ export interface FileRoutesByTo {
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/api/public/fleet/webhook/$botId': typeof ApiPublicFleetWebhookBotIdRoute
 }
 export interface FileRoutesById {
@@ -406,6 +415,7 @@ export interface FileRoutesById {
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/api/public/fleet/webhook/$botId': typeof ApiPublicFleetWebhookBotIdRoute
 }
 export interface FileRouteTypes {
@@ -453,6 +463,7 @@ export interface FileRouteTypes {
     | '/api/public/suno-webhook'
     | '/api/public/hooks/syndicate-tick'
     | '/api/public/payments/webhook'
+    | '/api/public/telegram/webhook'
     | '/api/public/fleet/webhook/$botId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -498,6 +509,7 @@ export interface FileRouteTypes {
     | '/api/public/suno-webhook'
     | '/api/public/hooks/syndicate-tick'
     | '/api/public/payments/webhook'
+    | '/api/public/telegram/webhook'
     | '/api/public/fleet/webhook/$botId'
   id:
     | '__root__'
@@ -543,6 +555,7 @@ export interface FileRouteTypes {
     | '/api/public/suno-webhook'
     | '/api/public/hooks/syndicate-tick'
     | '/api/public/payments/webhook'
+    | '/api/public/telegram/webhook'
     | '/api/public/fleet/webhook/$botId'
   fileRoutesById: FileRoutesById
 }
@@ -585,6 +598,7 @@ export interface RootRouteChildren {
   ApiPublicSunoWebhookRoute: typeof ApiPublicSunoWebhookRoute
   ApiPublicHooksSyndicateTickRoute: typeof ApiPublicHooksSyndicateTickRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
+  ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
   ApiPublicFleetWebhookBotIdRoute: typeof ApiPublicFleetWebhookBotIdRoute
 }
 
@@ -870,6 +884,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublic0gOrchestratorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/telegram/webhook': {
+      id: '/api/public/telegram/webhook'
+      path: '/api/public/telegram/webhook'
+      fullPath: '/api/public/telegram/webhook'
+      preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -957,6 +978,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicSunoWebhookRoute: ApiPublicSunoWebhookRoute,
   ApiPublicHooksSyndicateTickRoute: ApiPublicHooksSyndicateTickRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
+  ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
   ApiPublicFleetWebhookBotIdRoute: ApiPublicFleetWebhookBotIdRoute,
 }
 export const routeTree = rootRouteImport
