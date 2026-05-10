@@ -18,7 +18,7 @@ import { VaultRevealCard } from "@/components/VaultRevealCard";
 import { VipNotificationsInbox } from "@/components/VipNotificationsInbox";
 import { PassesPanel } from "@/components/PassesPanel";
 import { useSubscription } from "@/hooks/use-subscription";
-import { PlanChip, StatusBadge } from "@/components/SubscriptionBadges";
+import { PlanChip, StatusBadge, formatSubscriptionTerm } from "@/components/SubscriptionBadges";
 
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: requireMember,
@@ -188,8 +188,8 @@ function SubSummary({
     activeSub && activeSub.status ? activeSub : null;
   if (!planLabel && !subWithStatus && !renewalLabel) return null;
   const summaryParts = [
-    planLabel ? `${planLabel} plan` : null,
-    subWithStatus?.status ? `status ${subWithStatus.status.replace(/_/g, " ")}` : null,
+    planLabel ? `${formatSubscriptionTerm(planLabel)} plan` : null,
+    subWithStatus?.status ? `status ${formatSubscriptionTerm(subWithStatus.status)}` : null,
     renewalLabel,
   ].filter(Boolean);
   return (

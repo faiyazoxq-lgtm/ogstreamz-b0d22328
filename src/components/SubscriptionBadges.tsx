@@ -3,6 +3,28 @@ import type { SubscriptionRow } from "@/hooks/use-subscription";
 type Tone = "emerald" | "amber" | "cyan";
 
 /**
+ * Convert raw plan/status tokens (e.g. "past_due", "VIP", "incomplete_expired")
+ * into natural sentence-case labels for screen readers, while preserving
+ * common abbreviations like VIP/OG/AI.
+ */
+const KEEP_UPPER = new Set(["vip", "og", "ai", "pro", "id", "url"]);
+export function formatSubscriptionTerm(value: string | null | undefined): string {
+  if (!value) return "";
+  const spaced = value.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!spaced) return "";
+  return spaced
+    .split(" ")
+    .map((w, i) => {
+      const lower = w.toLowerCase();
+      if (KEEP_UPPER.has(lower)) return lower.toUpperCase();
+      return i === 0
+        ? lower.charAt(0).toUpperCase() + lower.slice(1)
+        : lower;
+    })
+    .join(" ");
+}
+
+/**
  * Plan chip ("Monthly plan" / "Yearly plan"). Tone matches the surrounding
  * status banner so it visually aligns with VIP/post-checkout/dashboard cards.
  */
@@ -22,11 +44,12 @@ export function PlanChip({
     cyan:    "border-cyan-300/60 bg-cyan-400/15 text-cyan-100",
   };
   const sizeCls = size === "sm" ? "text-[9px] px-2 py-0.5" : "text-[10px] px-2 py-0.5";
+  const readable = formatSubscriptionTerm(planLabel);
   return (
     <span
       className={`inline-flex items-center justify-center leading-none h-[18px] rounded-full border tracking-[0.25em] uppercase ${sizeCls} ${toneCls[tone]}`}
       role="status"
-      aria-label={`Subscription plan: ${planLabel}`}
+      aria-label={`Subscription plan: ${readable} plan`}
     >
       <span aria-hidden="true" className="leading-none">{planLabel} plan</span>
     </span>
@@ -62,12 +85,13 @@ export function StatusBadge({
   };
   const v = map[s] ?? { label: s.replace(/_/g, " "), cls: "border-white/30 bg-white/10 text-white/80" };
   const sizeCls = size === "sm" ? "text-[9px] px-2 py-0.5" : "text-[10px] px-2 py-0.5";
+  const readable = formatSubscriptionTerm(v.label);
   return (
     <span
       className={`inline-flex items-center justify-center leading-none h-[18px] rounded-full border tracking-[0.25em] uppercase ${sizeCls} ${v.cls}`}
       title={`Subscription status: ${s}`}
       role="status"
-      aria-label={`Subscription status: ${v.label}`}
+      aria-label={`Subscription status: ${readable}`}
     >
       <span aria-hidden="true" className="leading-none">{v.label}</span>
     </span>
