@@ -5,12 +5,13 @@ import { Plus, Pencil, Trash2, Eye, EyeOff, ArrowUpRight, Sparkles, Music2, Smil
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { validateHubForm, HUB_TITLE_MAX, HUB_TAGLINE_MAX, HUB_ICON_KEYS, type HubFieldErrors } from "@/lib/hub-style";
 
 const ICONS: Record<string, any> = {
   Sparkles, Music2, Smile, Wrench, TrendingUp, Rocket, Radio, Bot, Brain,
   Zap, Star, Megaphone, Disc3, Satellite, Radar,
 };
-const ICON_KEYS = Object.keys(ICONS);
+const ICON_KEYS = HUB_ICON_KEYS;
 
 const BUILTINS = [
   { title: "MusicHUB",   tagline: "Stream. Own. Repeat.",       href: "/music",   icon: "Music2",     accent: "oklch(0.72 0.22 245)" },
@@ -35,6 +36,7 @@ function HubsManager() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState<Partial<Hub>>({});
+  const [editErrors, setEditErrors] = useState<HubFieldErrors>({});
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
@@ -48,6 +50,18 @@ function HubsManager() {
   useEffect(() => { load(); }, []);
 
   async function save(id: string) {
+    const errs = validateHubForm({
+      title: draft.title ?? "",
+      tagline: draft.tagline ?? "",
+      href: draft.href ?? "",
+      icon: draft.icon ?? "",
+      accent: draft.accent ?? "",
+    });
+    setEditErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      toast.error("Fix the highlighted fields");
+      return;
+    }
     const { error } = await supabase.from("custom_hubs").update({
       title: draft.title, tagline: draft.tagline, href: draft.href,
       icon: draft.icon, accent: draft.accent,
@@ -55,7 +69,7 @@ function HubsManager() {
     }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Saved");
-    setEditing(null); setDraft({}); load();
+    setEditing(null); setDraft({}); setEditErrors({}); load();
   }
 
   async function togglePublished(h: Hub) {
@@ -161,19 +175,69 @@ function HubsManager() {
                   {isEdit ? (
                     <div className="space-y-2">
                       <div className="grid grid-cols-2 gap-2">
-                        <Input value={draft.title ?? ""} maxLength={24} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="Title" />
-                        <Input value={draft.href ?? ""} onChange={(e) => setDraft({ ...draft, href: e.target.value })} placeholder="Link" />
+                        <div>
+                          <Input
+                            value={draft.title ?? ""}
+                            maxLength={HUB_TITLE_MAX}
+                            onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+                            placeholder="Title (PascalCase + HUB)"
+                            aria-invalid={!!editErrors.title}
+                            className={editErrors.title ? "border-destructive focus-visible:ring-destructive" : ""}
+                          />
+                          {editErrors.title && <p className="mt-1 text-[11px] text-destructive">{editErrors.title}</p>}
+                        </div>
+                        <div>
+                          <Input
+                            value={draft.href ?? ""}
+                            onChange={(e) => setDraft({ ...draft, href: e.target.value })}
+                            placeholder="Link"
+                            aria-invalid={!!editErrors.href}
+                            className={editErrors.href ? "border-destructive focus-visible:ring-destructive" : ""}
+                          />
+                          {editErrors.href && <p className="mt-1 text-[11px] text-destructive">{editErrors.href}</p>}
+                        </div>
                       </div>
-                      <Input value={draft.tagline ?? ""} maxLength={60} onChange={(e) => setDraft({ ...draft, tagline: e.target.value })} placeholder="Tagline" />
+                      <div>
+                        <Input
+                          value={draft.tagline ?? ""}
+                          maxLength={HUB_TAGLINE_MAX}
+                          onChange={(e) => setDraft({ ...draft, tagline: e.target.value })}
+                          placeholder="Tagline"
+                          aria-invalid={!!editErrors.tagline}
+                          className={editErrors.tagline ? "border-destructive focus-visible:ring-destructive" : ""}
+                        />
+                        <div className="mt-1 flex items-center justify-between text-[11px]">
+                          {editErrors.tagline
+                            ? <span className="text-destructive">{editErrors.tagline}</span>
+                            : <span />}
+                          <span className="text-muted-foreground tabular-nums">{(draft.tagline ?? "").length}/{HUB_TAGLINE_MAX}</span>
+                        </div>
+                      </div>
                       <div className="grid grid-cols-3 gap-2">
-                        <select className="border rounded-md bg-background px-2 py-2 text-sm" value={draft.icon} onChange={(e) => setDraft({ ...draft, icon: e.target.value })}>
-                          {ICON_KEYS.map((k) => <option key={k} value={k}>{k}</option>)}
-                        </select>
-                        <Input value={draft.accent ?? ""} onChange={(e) => setDraft({ ...draft, accent: e.target.value })} placeholder="oklch(...)" />
+                        <div>
+                          <select
+                            className={`w-full border rounded-md bg-background px-2 py-2 text-sm ${editErrors.icon ? "border-destructive" : ""}`}
+                            value={draft.icon}
+                            onChange={(e) => setDraft({ ...draft, icon: e.target.value })}
+                          >
+                            {ICON_KEYS.map((k) => <option key={k} value={k}>{k}</option>)}
+                          </select>
+                          {editErrors.icon && <p className="mt-1 text-[11px] text-destructive">{editErrors.icon}</p>}
+                        </div>
+                        <div>
+                          <Input
+                            value={draft.accent ?? ""}
+                            onChange={(e) => setDraft({ ...draft, accent: e.target.value })}
+                            placeholder="oklch(0.7 0.2 245)"
+                            aria-invalid={!!editErrors.accent}
+                            className={editErrors.accent ? "border-destructive focus-visible:ring-destructive" : ""}
+                          />
+                          {editErrors.accent && <p className="mt-1 text-[11px] text-destructive">{editErrors.accent}</p>}
+                        </div>
                         <Input type="number" value={draft.sort_order ?? 0} onChange={(e) => setDraft({ ...draft, sort_order: Number(e.target.value) || 0 })} />
                       </div>
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => { setEditing(null); setDraft({}); }}>Cancel</Button>
+                        <Button variant="ghost" size="sm" onClick={() => { setEditing(null); setDraft({}); setEditErrors({}); }}>Cancel</Button>
                         <Button size="sm" onClick={() => save(h.id)}>Save</Button>
                       </div>
                     </div>
