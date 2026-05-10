@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { spawnTool, type ToolAudience } from "@/lib/tools.functions";
+import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 
 export const Route = createFileRoute("/tools")({
   head: () => ({
@@ -248,6 +249,7 @@ function ToolPromptBuilder() {
           </div>
         </section>
       )}
+      <SpawnPortalCard kind="tools" />
     </main>
   );
 }

@@ -15,6 +15,7 @@ import {
   listConnectCampaigns, listCampaignLeads,
   listSendingDomains, upsertSendingDomain, deleteSendingDomain,
 } from "@/lib/connect.functions";
+import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 
 export const Route = createFileRoute("/connect")({
   head: () => ({
@@ -336,6 +337,7 @@ function ConnectHubPage() {
             ConnectHUB stores only business-context data necessary for the outreach and is not financial, medical, or legal advice.
           </div>
         </footer>
+        <SpawnPortalCard kind="connect" />
       </main>
     </div>
   );

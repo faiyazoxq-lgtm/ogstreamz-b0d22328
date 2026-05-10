@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { VaultLockedDialog } from "@/components/VaultLockedDialog";
+import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 
 export type StylePreset = { id: string; label: string; Icon: typeof Skull };
 
@@ -228,6 +229,7 @@ function JokesPromptBuilder() {
         itemName={liveRoast ? "Live Roast (VIP)" : "Portal Activation"}
         isAuthenticated={!!user}
       />
+      <SpawnPortalCard kind="jokes" />
     </main>
   );
 }
