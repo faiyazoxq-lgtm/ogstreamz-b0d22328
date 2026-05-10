@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
+import { SiteSearch } from "@/components/SiteSearch";
 import {
   Sheet,
   SheetContent,
@@ -151,6 +152,9 @@ export function NavBar() {
           </span>
         </Link>
         <ul className="flex items-center flex-nowrap gap-0.5 sm:gap-1.5 shrink-0 ml-auto">
+          <li className="hidden md:block w-56 lg:w-72">
+            <SiteSearch />
+          </li>
           <li className="hidden sm:block">
             <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile currentPath={pathname} />
           </li>
@@ -292,6 +296,9 @@ function MobileNavDrawer({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-3 py-4">
+          <div className="mb-4">
+            <SiteSearch />
+          </div>
           <Section title="HUBS" icon={Rocket} items={hubs} gold />
           <Section title="Store" icon={Store} items={stores} />
           {admin.length > 0 && <Section title="Admin" icon={ShieldCheck} items={admin} />}

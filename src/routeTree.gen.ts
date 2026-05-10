@@ -15,7 +15,9 @@ import { Route as ToolsRouteImport } from './routes/tools'
 import { Route as SyndicateOverlordRouteImport } from './routes/syndicate-overlord'
 import { Route as SyndicateRouteImport } from './routes/syndicate'
 import { Route as StoreRouteImport } from './routes/store'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ResellerRouteImport } from './routes/reseller'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -80,9 +82,19 @@ const StoreRoute = StoreRouteImport.update({
   path: '/store',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -273,7 +285,9 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/reseller': typeof ResellerRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/settings': typeof SettingsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/store': typeof StoreRoute
   '/syndicate': typeof SyndicateRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
@@ -315,7 +329,9 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/reseller': typeof ResellerRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/settings': typeof SettingsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/store': typeof StoreRoute
   '/syndicate': typeof SyndicateRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
@@ -358,7 +374,9 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/reseller': typeof ResellerRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/settings': typeof SettingsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/store': typeof StoreRoute
   '/syndicate': typeof SyndicateRoute
   '/syndicate-overlord': typeof SyndicateOverlordRoute
@@ -402,7 +420,9 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reseller'
     | '/reset-password'
+    | '/robots.txt'
     | '/settings'
+    | '/sitemap.xml'
     | '/store'
     | '/syndicate'
     | '/syndicate-overlord'
@@ -444,7 +464,9 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reseller'
     | '/reset-password'
+    | '/robots.txt'
     | '/settings'
+    | '/sitemap.xml'
     | '/store'
     | '/syndicate'
     | '/syndicate-overlord'
@@ -486,7 +508,9 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reseller'
     | '/reset-password'
+    | '/robots.txt'
     | '/settings'
+    | '/sitemap.xml'
     | '/store'
     | '/syndicate'
     | '/syndicate-overlord'
@@ -529,7 +553,9 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   ResellerRoute: typeof ResellerRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
   SettingsRoute: typeof SettingsRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StoreRoute: typeof StoreRoute
   SyndicateRoute: typeof SyndicateRoute
   SyndicateOverlordRoute: typeof SyndicateOverlordRoute
@@ -593,11 +619,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoreRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -877,7 +917,9 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   ResellerRoute: ResellerRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
   SettingsRoute: SettingsRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   StoreRoute: StoreRoute,
   SyndicateRoute: SyndicateRoute,
   SyndicateOverlordRoute: SyndicateOverlordRoute,
