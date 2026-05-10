@@ -76,10 +76,23 @@ const TESTIMONIALS = [
 function VipPage() {
   const { user, profile, isAdmin } = useAuth();
   const isVip = isAdmin || profile?.status === "vip";
+  const search = Route.useSearch();
   const [plan, setPlan] = useState<"vip_monthly" | "vip_yearly">("vip_yearly");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const checkoutFn = useServerFn(createCheckoutSession);
+
+  // Surface a one-time toast on return from Stripe checkout.
+  useEffect(() => {
+    if (search.checkout === "success") {
+      toast.success("VIP Pass activated", {
+        description: "Welcome to the syndicate. Every portal is open.",
+      });
+    } else if (search.checkout === "canceled") {
+      toast.message("Checkout canceled — no charge made");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.checkout]);
 
   const start = async () => {
     if (!user) { toast.error("Sign in first to unlock VIP"); return; }
@@ -91,7 +104,7 @@ function VipPage() {
           environment: getStripeEnvironment(),
           customerEmail: user.email,
           userId: user.id,
-          returnUrl: `${window.location.origin}/dashboard?vip=success&session_id={CHECKOUT_SESSION_ID}`,
+          returnUrl: `${window.location.origin}/vip?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
         },
       });
       setClientSecret(cs);
