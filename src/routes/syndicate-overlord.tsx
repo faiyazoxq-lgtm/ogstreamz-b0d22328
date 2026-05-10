@@ -33,6 +33,7 @@ import { VipNotificationsAdmin } from "@/components/boss/VipNotificationsAdmin";
 import { BossAnnouncementButton } from "@/components/boss/BossAnnouncementButton";
 import { PassOrdersPanel } from "@/components/boss/PassOrdersPanel";
 import { StoreProductsPanel } from "@/components/boss/StoreProductsPanel";
+import { UserEmailPicker } from "@/components/UserEmailPicker";
 
 const RANKS = ["prospect", "enforcer", "vip", "boss"] as const;
 type Rank = typeof RANKS[number];
