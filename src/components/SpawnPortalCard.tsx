@@ -106,7 +106,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
       toast.error(fieldErrors.name || fieldErrors.niche || fieldErrors.language || "Check the form");
       return;
     }
-    if (!hasCredits) { toast.error("Not enough credits — top up to spawn"); return; }
+    if (!hasCredits) { toast.error("Not enough 🪙 — top up to spawn"); return; }
     setConfirmOpen(true);
   };
 
@@ -144,7 +144,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
       setCreated({ slug: r.portal.slug, name: r.portal.name });
       toast.success(`Spawned "${r.portal.name}"`, {
         id: toastId,
-        description: "Portal is live · 1 credit spent",
+        description: "Portal is live · 1 🪙 spent",
       });
       setName(""); setNiche(""); setVibe("");
       // Refresh wallet so the new credit balance shows everywhere immediately
@@ -260,7 +260,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
         <Sparkles className="h-5 w-5 text-[oklch(0.72_0.22_245)]" />
         <h2 className="font-[Montserrat] font-black text-xl text-foreground">{copy.title}</h2>
         <span className="ml-auto inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.3em] text-muted-foreground border border-border rounded-full px-2 py-1">
-          <Coins className="h-3 w-3" /> 1 credit
+          <Coins className="h-3 w-3" /> 1 🪙
         </span>
       </header>
       <p className="text-xs text-muted-foreground mb-4">{copy.subtitle}. Public on the home grid.</p>
@@ -278,8 +278,8 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                 Sign in to spawn portals
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Spawning a portal costs 1 credit. Create a free account and we&apos;ll drop{" "}
-                <span className="text-amber-200 font-bold">5 credits</span> in your wallet — no card needed.
+                Spawning a portal costs 1 🪙. Create a free account and we&apos;ll drop{" "}
+                <span className="text-amber-200 font-bold">5 🪙</span> in your wallet — no card needed.
               </p>
             </div>
           </div>
@@ -395,7 +395,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                   >
                     {loading
                       ? <><Loader2 className="h-5 w-5 animate-spin mr-2" />Spawning…</>
-                      : <><Zap className="h-5 w-5 mr-2 fill-black" />Generate Portal · {PORTAL_COST} credit</>}
+                      : <><Zap className="h-5 w-5 mr-2 fill-black" />Generate Portal · {PORTAL_COST} 🪙</>}
                   </Button>
                 </span>
               </TooltipTrigger>
@@ -406,7 +406,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                       Not enough credits
                     </p>
                     <p>
-                      Spawning costs <span className="font-bold">{PORTAL_COST} credit</span>.
+                      Spawning costs <span className="font-bold">{PORTAL_COST} 🪙</span>.
                       You have <span className="font-bold">{credits}</span> — need{" "}
                       <span className="font-bold text-amber-300">
                         {creditsNeeded} more credit{creditsNeeded === 1 ? "" : "s"}
@@ -419,7 +419,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                 ) : !isValid ? (
                   <p>{fieldErrors.name || fieldErrors.niche || fieldErrors.language}</p>
                 ) : (
-                  <p>Spawn this portal · {PORTAL_COST} credit</p>
+                  <p>Spawn this portal · {PORTAL_COST} 🪙</p>
                 )}
               </TooltipContent>
             </Tooltip>
@@ -564,7 +564,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                   <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.25em]">
                     <Coins className="h-3.5 w-3.5 text-gold" /> Cost
                   </span>
-                  <span className="font-mono text-sm font-bold">1 credit</span>
+                  <span className="font-mono text-sm font-bold">1 🪙</span>
                 </div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>Balance after</span>
