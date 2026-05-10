@@ -200,11 +200,16 @@ export function TrackingEye({
     <span
       ref={ref}
       aria-hidden
-      className={`relative inline-flex items-center justify-center overflow-hidden rounded-full ring-1 transition-transform duration-150 ${className}`}
+      className={`relative inline-flex items-center justify-center overflow-hidden ring-1 transition-transform duration-150 ${className}`}
       style={{
         background: irisBg,
         boxShadow: irisGlow,
         ["--tw-ring-color" as string]: irisRing,
+        // True ellipse (50% on both axes) so non-square eyes render as a
+        // proper egg/letter-O silhouette at every font size — `rounded-full`
+        // collapses to a stadium shape when width ≠ height.
+        borderRadius: "50% / 50%",
+        ringWidth: "max(1px, 0.04em)",
         transform: blink ? "scaleY(0.1)" : "scaleY(1)",
         ...(size ? { width: size, height: size } : null),
         ...style,
@@ -213,8 +218,9 @@ export function TrackingEye({
       {bloodshot && (
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-full"
+          className="pointer-events-none absolute inset-0"
           style={{
+            borderRadius: "50% / 50%",
             background: [
               "radial-gradient(circle at 18% 30%, transparent 38%, oklch(0.55 0.27 25 / 0.85) 39%, transparent 41%)",
               "radial-gradient(circle at 78% 22%, transparent 34%, oklch(0.5 0.27 22 / 0.8) 35%, transparent 37%)",
