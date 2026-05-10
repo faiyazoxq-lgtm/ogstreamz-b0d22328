@@ -29,6 +29,7 @@ import { PassShareCardPanel } from "@/components/overlord/PassShareCardPanel";
 import { VaultCredentialsAdmin } from "@/components/boss/VaultCredentialsAdmin";
 import { VipNotificationsAdmin } from "@/components/boss/VipNotificationsAdmin";
 import { BossAnnouncementButton } from "@/components/boss/BossAnnouncementButton";
+import { PassOrdersPanel } from "@/components/boss/PassOrdersPanel";
 
 const RANKS = ["prospect", "enforcer", "vip", "boss"] as const;
 type Rank = typeof RANKS[number];
@@ -279,6 +280,10 @@ function OverlordPage() {
                 actions: [{ icon: Plus, label: "Grant pass", onClick: () => window.dispatchEvent(new CustomEvent("boss:focus-passes")) }],
               },
               {
+                v: "orders", icon: Ticket, label: "Pass Orders",
+                actions: [],
+              },
+              {
                 v: "resellers", icon: Wallet, label: "Resellers",
                 actions: [{ icon: Plus, label: "New reseller", onClick: () => window.dispatchEvent(new CustomEvent("boss:focus-resellers")) }],
               },
@@ -468,6 +473,7 @@ function OverlordPage() {
           <TabsContent value="notes" className="mt-4"><NotesPanel /></TabsContent>
           <TabsContent value="preload" className="mt-4"><PreLoadPanel onApplied={refreshUsers} /></TabsContent>
           <TabsContent value="passes" className="mt-4"><VipPassPanel rows={rows} /></TabsContent>
+          <TabsContent value="orders" className="mt-4"><PassOrdersPanel /></TabsContent>
           <TabsContent value="resellers" className="mt-4"><ResellerAdminPanel rows={rows} /></TabsContent>
           <TabsContent value="share" className="mt-4"><PassShareCardPanel /></TabsContent>
           <TabsContent value="vault" className="mt-4"><VaultCredentialsAdmin /></TabsContent>
