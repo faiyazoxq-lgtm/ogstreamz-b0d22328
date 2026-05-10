@@ -60,24 +60,6 @@ export function TrackingEye({
         setPupil({ x: 0, y: 0 });
         return;
       }
-      // Gentle idle drift — slow Lissajous loop, scaled to the eye's width.
-      let raf = 0;
-      const start = performance.now();
-      const tick = (now: number) => {
-        const el = ref.current;
-        if (el) {
-          const r = el.getBoundingClientRect();
-          const t = travel ?? r.width * idleTravelRatio;
-          const a = (now - start) / 1000;
-          setPupil({
-            x: Math.sin(a * 0.9) * t,
-            y: Math.cos(a * 0.6) * t * 0.6,
-          });
-        }
-        raf = requestAnimationFrame(tick);
-      };
-      raf = requestAnimationFrame(tick);
-      return () => cancelAnimationFrame(raf);
     }
 
     const updateTarget = (clientX: number, clientY: number) => {
