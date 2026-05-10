@@ -122,8 +122,7 @@ function BossUsers() {
                   <p className="text-xs text-white/55 mt-0.5 truncate">{r.email}</p>
                   <p className="text-[11px] text-white/45 mt-0.5">
                     {r.credits} credits · {r.status.toUpperCase()}
-                    {r.stream_username && <> · stream: <span className="text-white/70">{r.stream_username}</span></>}
-                    {r.stream_expires_at && <> · expires {new Date(r.stream_expires_at).toLocaleDateString()}</>}
+                    {r.stream_expires_at && <> · stream expires {new Date(r.stream_expires_at).toLocaleDateString()}</>}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
