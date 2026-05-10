@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Loader2, Wand2, Sparkles, ExternalLink, Coins, Check, AlertTriangle, RotateCcw, Lock, UserPlus, LogIn, Gift, Languages, Tag, Palette } from "lucide-react";
+import { Loader2, Wand2, Sparkles, ExternalLink, Coins, Check, AlertTriangle, RotateCcw, Lock, UserPlus, LogIn, Gift, Languages, Tag, Palette, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { spawnPortal } from "@/lib/portals.functions";
+import { describePortal } from "@/lib/portal-describe.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -33,6 +34,7 @@ const COPY: Record<Kind, Copy> = {
 export function SpawnPortalCard({ kind }: { kind: Kind }) {
   const { user, profile, refresh } = useAuth();
   const spawn = useServerFn(spawnPortal);
+  const describe = useServerFn(describePortal);
   const copy = COPY[kind];
 
   const [name, setName] = useState("");
@@ -42,6 +44,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
   const [loading, setLoading] = useState(false);
   const [created, setCreated] = useState<{ slug: string; name: string } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [describing, setDescribing] = useState(false);
   // Stage progress: 0=idle, 1=queued, 2=generating, 3=publishing, 4=done
   const [stage, setStage] = useState<0 | 1 | 2 | 3 | 4>(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -162,6 +165,30 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
   };
 
   const retry = () => { setErrorMsg(null); void run(); };
+
+  const autoDescribe = async () => {
+    if (describing) return;
+    if (!user) { toast.error("Sign in to use AI auto-describe"); return; }
+    const seedName = name.trim();
+    const seedNiche = niche.trim();
+    const seedVibe = vibe.trim();
+    if (!seedName && !seedNiche && !seedVibe) {
+      toast.error("Type a name or a few keywords first");
+      return;
+    }
+    setDescribing(true);
+    const tid = `describe-${kind}-${Date.now()}`;
+    toast.loading("Generating richer description…", { id: tid });
+    try {
+      const r = await describe({ data: { kind, name: seedName, niche: seedNiche, vibe: seedVibe, language } });
+      setNiche(r.description);
+      toast.success("Description expanded", { id: tid, description: "Edit anything you don't like" });
+    } catch (e: any) {
+      toast.error("Auto-describe failed", { id: tid, description: e?.message ?? "Try again in a moment" });
+    } finally {
+      setDescribing(false);
+    }
+  };
 
   const STAGES: ReadonlyArray<{ key: 1 | 2 | 3 | 4; label: string; hint: string }> = [
     { key: 1, label: "Queued",      hint: "Reserving credit & slot" },
@@ -304,15 +331,34 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
               <Input value={language} onChange={(e) => setLanguage(e.target.value)} placeholder="English" className="mt-1 h-11 bg-background" disabled={loading} />
             </div>
             <div className="sm:col-span-2">
-              <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Niche / Theme</label>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Niche / Theme</label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={autoDescribe}
+                  disabled={describing || loading}
+                  aria-label="Auto-generate a richer description from your keywords"
+                  title="Use your name + keywords to draft a richer description"
+                  className="h-7 px-2.5 text-[10px] uppercase tracking-[0.22em] font-bold border-[oklch(0.72_0.22_245/0.5)] hover:border-[oklch(0.72_0.22_245)] hover:bg-[oklch(0.72_0.22_245/0.08)]"
+                >
+                  {describing
+                    ? <><Loader2 className="h-3 w-3 animate-spin mr-1.5" />Drafting…</>
+                    : <><Sparkles className="h-3 w-3 mr-1.5 text-[oklch(0.72_0.22_245)]" />Auto-describe</>}
+                </Button>
+              </div>
               <textarea
                 value={niche}
                 onChange={(e) => setNiche(e.target.value)}
                 placeholder={copy.nichePh}
                 rows={2}
-                disabled={loading}
+                disabled={loading || describing}
                 className="mt-1 w-full bg-background border border-border rounded-md px-3 py-2 text-sm resize-y disabled:opacity-50"
               />
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Tip: drop a few keywords then tap <span className="font-bold text-foreground">Auto-describe</span> for a richer prompt.
+              </p>
             </div>
             <div className="sm:col-span-2">
               <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Mood / Visual Vibe</label>
@@ -323,17 +369,17 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
             <Tooltip>
               <TooltipTrigger asChild>
                 {/* span wrapper so tooltip still fires when button is disabled */}
-                <span className="mt-5 inline-block w-full sm:w-auto">
+                <span className="mt-6 inline-block w-full sm:w-auto">
                   <Button
                     onClick={requestSpawn}
                     disabled={loading || !isValid || !hasCredits}
                     aria-disabled={loading || !isValid || !hasCredits}
                     aria-describedby={!hasCredits ? "spawn-credits-hint" : undefined}
-                    className="h-12 px-8 text-xs uppercase tracking-[0.25em] font-bold w-full sm:w-auto min-h-[48px]"
+                    className="h-14 px-10 text-sm sm:text-base uppercase tracking-[0.28em] font-black w-full sm:w-auto min-h-[56px] rounded-xl text-black bg-gradient-to-r from-amber-300 via-yellow-300 to-amber-400 hover:from-amber-200 hover:via-yellow-200 hover:to-amber-300 border border-amber-200/70 shadow-[0_0_0_1px_oklch(0.78_0.18_85/0.35),0_18px_48px_-12px_oklch(0.78_0.18_85/0.55)] hover:shadow-[0_0_0_1px_oklch(0.78_0.18_85/0.55),0_22px_60px_-10px_oklch(0.78_0.18_85/0.7)] transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:translate-y-0 disabled:shadow-none"
                   >
                     {loading
-                      ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Spawning…</>
-                      : <><Wand2 className="h-4 w-4 mr-2" />Generate Portal · {PORTAL_COST} credit</>}
+                      ? <><Loader2 className="h-5 w-5 animate-spin mr-2" />Spawning…</>
+                      : <><Zap className="h-5 w-5 mr-2 fill-black" />Generate Portal · {PORTAL_COST} credit</>}
                   </Button>
                 </span>
               </TooltipTrigger>
