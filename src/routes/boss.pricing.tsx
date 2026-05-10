@@ -33,6 +33,10 @@ const KINDS = [
 
 type Kind = typeof KINDS[number]["value"];
 
+// Max price = $100,000.00 (10,000,000 cents). Catches typos like extra zeros.
+const PRICE_MAX_CENTS = 10_000_000;
+const SKU_PATTERN = /^[a-z0-9_]{2,40}$/;
+
 type Draft = {
   id: string | null;
   sku: string;
@@ -143,8 +147,28 @@ function PricingPage() {
   }
 
   async function onSave() {
-    if (!draft.sku.trim() || !draft.title.trim()) {
+    const sku = draft.sku.trim();
+    if (!sku || !draft.title.trim()) {
       toast.error("SKU and title are required");
+      return;
+    }
+    if (!/^[a-z0-9_]{2,40}$/.test(sku)) {
+      toast.error("SKU must be 2-40 chars: lowercase letters, numbers, underscores");
+      return;
+    }
+    const dupe = rows.some(
+      (r) => r.sku.toLowerCase() === sku.toLowerCase() && r.id !== draft.id,
+    );
+    if (dupe) {
+      toast.error(`SKU "${sku}" is already used by another product`);
+      return;
+    }
+    if (
+      !Number.isFinite(draft.price_cents) ||
+      draft.price_cents < 0 ||
+      draft.price_cents > PRICE_MAX_CENTS
+    ) {
+      toast.error(`Price must be between 0 and ${PRICE_MAX_CENTS.toLocaleString()} cents`);
       return;
     }
     setSaving(true);
@@ -152,7 +176,7 @@ function PricingPage() {
       await upsert({
         data: {
           id: draft.id,
-          sku: draft.sku,
+          sku,
           kind: draft.kind,
           title: draft.title,
           description: draft.description || null,
@@ -352,7 +376,32 @@ function PricingPage() {
               value={draft.sku}
               onChange={(e) => setDraft((d) => ({ ...d, sku: e.target.value }))}
               placeholder="e.g. vip_30d"
+              aria-invalid={
+                draft.sku.trim().length > 0 &&
+                (!SKU_PATTERN.test(draft.sku.trim()) ||
+                  rows.some(
+                    (r) =>
+                      r.sku.toLowerCase() === draft.sku.trim().toLowerCase() &&
+                      r.id !== draft.id,
+                  ))
+              }
             />
+            {draft.sku.trim().length > 0 && !SKU_PATTERN.test(draft.sku.trim()) && (
+              <p className="mt-1 text-xs text-destructive">
+                Use 2-40 lowercase letters, numbers, or underscores.
+              </p>
+            )}
+            {draft.sku.trim().length > 0 &&
+              SKU_PATTERN.test(draft.sku.trim()) &&
+              rows.some(
+                (r) =>
+                  r.sku.toLowerCase() === draft.sku.trim().toLowerCase() &&
+                  r.id !== draft.id,
+              ) && (
+                <p className="mt-1 text-xs text-destructive">
+                  This SKU is already in use.
+                </p>
+              )}
           </div>
           <div>
             <Label htmlFor="kind">Kind</Label>
@@ -388,11 +437,24 @@ function PricingPage() {
               id="price"
               type="number"
               min={0}
+              max={PRICE_MAX_CENTS}
               value={draft.price_cents}
-              onChange={(e) => setDraft((d) => ({ ...d, price_cents: Math.max(0, Number(e.target.value) || 0) }))}
+              onChange={(e) =>
+                setDraft((d) => ({
+                  ...d,
+                  price_cents: Math.min(
+                    PRICE_MAX_CENTS,
+                    Math.max(0, Number(e.target.value) || 0),
+                  ),
+                }))
+              }
+              aria-invalid={
+                draft.price_cents < 0 || draft.price_cents > PRICE_MAX_CENTS
+              }
             />
             <p className="mt-1 text-xs text-muted-foreground">
-              {fmt(draft.price_cents, draft.currency)}
+              {fmt(draft.price_cents, draft.currency)} · max{" "}
+              {fmt(PRICE_MAX_CENTS, draft.currency)}
             </p>
           </div>
           <div>
