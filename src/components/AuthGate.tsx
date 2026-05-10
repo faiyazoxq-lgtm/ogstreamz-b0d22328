@@ -2,9 +2,11 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "../hooks/use-auth";
 import { UserPlus, LogIn, Gift, ShieldCheck, Sparkles, Music2, Smile, Wrench, Zap, Lock, ArrowRight, Coins } from "lucide-react";
 
-// Mirrors the +5 grant in handle_new_user(); update both if it changes.
+// Fallback used while the live value loads or if the request fails.
+// Live value comes from public.app_settings (key: signup_bonus_credits).
 export const SIGNUP_BONUS_CREDITS = 2;
 import { useEffect, type ReactNode } from "react";
+import { useSignupBonus } from "@/hooks/use-signup-bonus";
 
 const PUBLIC_PATHS = ["/auth", "/forgot-password", "/reset-password"];
 
@@ -43,6 +45,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
 }
 
 function PromoLanding() {
+  const bonus = useSignupBonus();
   return (
     <main className="relative mx-auto w-full max-w-5xl px-5 py-10 sm:py-14">
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#001a33] via-[#000914] to-black p-6 sm:p-10 shadow-[0_30px_120px_-20px_rgba(0,170,255,0.45)]">
