@@ -330,11 +330,26 @@ function PricingPage() {
 
   async function saveStreamUrl() {
     const raw = streamUrl.trim();
+    if (!raw) {
+      toast.error("Enter a URL");
+      return;
+    }
+    if (/\s/.test(raw)) {
+      toast.error("URL cannot contain spaces or whitespace");
+      return;
+    }
     let normalized = raw;
     if (!/^https?:\/\//i.test(normalized)) normalized = `https://${normalized}`;
     try {
       const u = new URL(normalized);
-      if (!/^https?:$/.test(u.protocol)) throw new Error("bad protocol");
+      if (u.protocol !== "http:" && u.protocol !== "https:") {
+        toast.error("URL must start with http:// or https://");
+        return;
+      }
+      if (!u.hostname || !u.hostname.includes(".")) {
+        toast.error("Enter a valid hostname (e.g. ogstreamz.co.uk)");
+        return;
+      }
       normalized = u.origin + (u.pathname === "/" ? "" : u.pathname.replace(/\/+$/, ""));
     } catch {
       toast.error("Enter a valid URL (e.g. https://ogstreamz.co.uk)");
