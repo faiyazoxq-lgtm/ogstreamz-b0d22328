@@ -356,7 +356,7 @@ function VipPage() {
         <div className="text-center mb-8">
           <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-300/80 font-bold">Pick your pass</p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-black text-white">One sub. Every portal.</h2>
-          <p className="mt-2 text-sm text-cyan-100/70">Or grab the £20 lifetime <Link to="/store" className="underline text-amber-300">Real 0G one-off</Link>.</p>
+          <p className="mt-2 text-sm text-cyan-100/70">Or grab the £20 (20 🪙) lifetime <Link to="/store" className="underline text-amber-300">Real 0G one-off</Link>.</p>
         </div>
 
         {isVip ? (
