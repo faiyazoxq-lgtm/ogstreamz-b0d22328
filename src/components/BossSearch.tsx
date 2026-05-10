@@ -17,7 +17,6 @@ function escapeRegex(s: string) {
 function Highlight({ text, term }: { text: string; term: string }) {
   const t = term.trim();
   if (!t || !text) return <>{text}</>;
-  const re = new RegExp(`(${escapeRegex(t)})`, "i");
   const parts = text.split(new RegExp(`(${escapeRegex(t)})`, "ig"));
   const lower = t.toLowerCase();
   return (
