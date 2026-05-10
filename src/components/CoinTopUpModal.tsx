@@ -69,7 +69,7 @@ export function CoinTopUpModal({
                   type="button"
                   onClick={() => setSelected(p.priceId)}
                   className={[
-                    "w-full text-left flex items-center gap-3 rounded-xl border p-4 transition-all",
+                    "relative w-full text-left flex items-center gap-3 rounded-xl border p-4 transition-all",
                     active
                       ? "border-gold/70 bg-gold/10 ring-2 ring-gold/40 shadow-[0_0_30px_-12px_oklch(0.82_0.16_88_/_0.6)]"
                       : "border-border bg-background/40 hover:border-gold/40 hover:bg-gold/5",
