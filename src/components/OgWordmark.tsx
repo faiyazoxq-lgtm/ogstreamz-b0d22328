@@ -3,13 +3,14 @@ import { TrackingEye } from "./TrackingEye";
 /**
  * Single source of truth for TrackingEye sizing across the brand surface.
  * Em-based so the eye scales 1:1 with whatever font-size its parent sets —
- * navbar wordmark (`text-base sm:text-3xl`) and homepage hero wordmark
- * (`text-5xl sm:text-7xl md:text-8xl`) both inherit this exact formula.
+ * navbar wordmark and homepage hero wordmark both inherit this exact formula.
  *
- * Use this class on any standalone TrackingEye that should follow the same
- * responsive scale as the wordmark eye.
+ * The eye is intentionally *taller than wide* so its `rounded-full` shape
+ * becomes an upright ellipse — reading as the letter "O" inside the
+ * wordmark instead of a perfect circle disc. Tuned against JetBrains Mono
+ * cap height so it sits flush with the adjacent "G".
  */
-export const EYE_SCALE_CLASS = "w-[1.1em] h-[1.1em] shrink-0";
+export const EYE_SCALE_CLASS = "w-[0.82em] h-[1em] shrink-0";
 
 /**
  * Shared brand wordmark: a TrackingEye standing in for the leading "0"/"O",
@@ -36,20 +37,29 @@ export function OgWordmark({
 }) {
   const rest = `G${suffix}`;
   return (
-    <span className={`inline-flex items-center text-eye-ice leading-none ${className}`} style={style}>
-      <span className="relative inline-block align-middle leading-none">
-        {/* keep "0" width so the eye sits exactly where the digit would */}
-        <span aria-hidden className="invisible">0</span>
-        <span aria-hidden className="absolute inset-0 flex items-center justify-center">
-          <TrackingEye
-            className={eyeClassName}
-            pupilRatio={pupilRatio}
-            travelRatio={travelRatio}
-          />
-        </span>
+    <span
+      className={`inline-flex items-center text-eye-ice leading-none tracking-[-0.02em] ${className}`}
+      style={style}
+    >
+      {/* Eye stands in for the leading "O". Sized to the wordmark's own
+          cap height (em-based) and shaped as an upright ellipse so it
+          reads as a letter, not a disc. */}
+      <span className="relative inline-flex items-center justify-center align-middle leading-none w-[0.82em] h-[1em]">
+        <TrackingEye
+          className={eyeClassName}
+          pupilRatio={pupilRatio}
+          travelRatio={travelRatio}
+        />
       </span>
       {Array.from(rest).map((ch, i) => (
-        <span key={i} style={i === 0 ? { fontWeight: 900, letterSpacing: "-0.04em" } : undefined}>
+        <span
+          key={i}
+          style={
+            i === 0
+              ? { fontWeight: 900, letterSpacing: "-0.05em", marginLeft: "-0.04em" }
+              : undefined
+          }
+        >
           {ch}
         </span>
       ))}
