@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft, Menu, X, ShieldAlert, LogIn, ChevronRight, Home, Tv } from "lucide-react";
+import { Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft, Menu, X, ShieldAlert, LogIn, ChevronRight, Home, Tv, Tags } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { BossSearch } from "@/components/BossSearch";
 
@@ -14,6 +14,7 @@ const NAV: NavItem[] = [
   { to: "/boss/overview",   label: "Overview",      Icon: Crown, exact: true },
   { to: "/boss/users",      label: "Users",         Icon: Users },
   { to: "/boss/stream-queue", label: "Stream Queue", Icon: Tv },
+  { to: "/boss/pricing",    label: "Pricing",       Icon: Tags },
   { to: "/admin",           label: "Admin Console", Icon: Users },
   { to: "/boss/civility",   label: "Civility",      Icon: ShieldCheck },
   { to: "/boss/analytics",  label: "Analytics",     Icon: BarChart3 },
