@@ -10,7 +10,7 @@ export const Route = createFileRoute("/boss")({
 type NavItem = { to: string; label: string; Icon: React.ComponentType<{ className?: string }>; exact?: boolean };
 
 const NAV: NavItem[] = [
-  { to: "/boss",            label: "Overview",      Icon: Crown, exact: true },
+  { to: "/boss/overview",   label: "Overview",      Icon: Crown, exact: true },
   { to: "/admin",           label: "Admin Console", Icon: Users },
   { to: "/boss/civility",   label: "Civility",      Icon: ShieldCheck },
   { to: "/boss/analytics",  label: "Analytics",     Icon: BarChart3 },
