@@ -2406,34 +2406,34 @@ export type Database = {
           active: boolean
           created_at: string
           created_by: string | null
+          enc_password: string
+          enc_username: string
           id: string
           label: string
-          password: string
           sort_order: number
           updated_at: string
-          username: string
         }
         Insert: {
           active?: boolean
           created_at?: string
           created_by?: string | null
+          enc_password: string
+          enc_username: string
           id?: string
           label?: string
-          password: string
           sort_order?: number
           updated_at?: string
-          username: string
         }
         Update: {
           active?: boolean
           created_at?: string
           created_by?: string | null
+          enc_password?: string
+          enc_username?: string
           id?: string
           label?: string
-          password?: string
           sort_order?: number
           updated_at?: string
-          username?: string
         }
         Relationships: []
       }
@@ -2740,6 +2740,19 @@ export type Database = {
           server: string
           status: string
           user_id: string
+          username: string
+        }[]
+      }
+      boss_list_vault_credentials: {
+        Args: never
+        Returns: {
+          active: boolean
+          created_at: string
+          id: string
+          label: string
+          password: string
+          sort_order: number
+          updated_at: string
           username: string
         }[]
       }
