@@ -310,3 +310,12 @@ function SwearingRow({
     </div>
   );
 }
+
+function Section({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[10px] uppercase tracking-[0.25em] text-white/45 font-bold">{label}</p>
+      <div className="space-y-1.5">{children}</div>
+    </div>
+  );
+}
