@@ -112,7 +112,7 @@ export function SiteSearch({ className = "" }: { className?: string }) {
   function go(to: string) {
     setOpen(false);
     setQ("");
-    navigate({ to });
+    navigate({ to: to as never });
   }
 
   return (
