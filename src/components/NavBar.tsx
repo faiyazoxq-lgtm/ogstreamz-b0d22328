@@ -280,7 +280,7 @@ function MobileNavDrawer({
                 : "bg-secondary text-gold/80",
           ].join(" ")}
         >
-          <Icon className="h-4.5 w-4.5" />
+          <Icon className="h-5 w-5" />
         </span>
         <span className="flex-1 min-w-0">
           <span className={`block text-[15px] font-semibold leading-tight ${danger ? "text-destructive" : active ? "text-gold" : "text-foreground"}`}>
@@ -329,7 +329,7 @@ function MobileNavDrawer({
         aria-label="Open navigation menu"
         className="inline-flex items-center justify-center h-11 w-11 rounded-xl border border-border bg-secondary/40 text-foreground transition-colors hover:bg-secondary hover:border-primary/50 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[state=open]:bg-secondary data-[state=open]:border-primary/60"
       >
-        <Menu className="h-5.5 w-5.5" />
+        <Menu className="h-5 w-5" />
       </SheetTrigger>
       <SheetContent side="right" className="w-[92vw] max-w-sm bg-card p-0 flex flex-col">
         {/* Identity strip — large, glanceable */}
