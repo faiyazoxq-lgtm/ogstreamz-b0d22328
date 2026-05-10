@@ -15,11 +15,13 @@ export function VaultLoginModal({ open, onClose }: Props) {
   const [showPwd, setShowPwd] = useState(false);
   const [busy, setBusy] = useState(false);
   const [granted, setGranted] = useState(false);
+  const [expires, setExpires] = useState<string | number | null>(null);
   const firstRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setGranted(false);
+    setExpires(null);
     setPassword("");
     const t = setTimeout(() => firstRef.current?.focus(), 50);
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -37,6 +39,7 @@ export function VaultLoginModal({ open, onClose }: Props) {
       const r: any = await login({ data: { username: username.trim(), password } });
       if (r?.ok) {
         setGranted(true);
+        setExpires(r?.expires ?? null);
         setPassword("");
         setVaultUnlocked();
         toast.success("Vault unlocked");
@@ -182,6 +185,26 @@ export function VaultLoginModal({ open, onClose }: Props) {
                     style={{ animationDelay: "0.8s", animationFillMode: "both" }}>
                     The vault recognises you. Welcome back.
                   </p>
+                  {(() => {
+                    const formatted = formatExpiry(expires);
+                    if (!formatted) return null;
+                    return (
+                      <div
+                        className="mt-3 inline-flex flex-col items-center gap-0.5 rounded-md border border-[oklch(0.72_0.22_245/0.45)] bg-black/40 px-3 py-2 animate-fade-in"
+                        style={{ animationDelay: "0.9s", animationFillMode: "both" }}
+                      >
+                        <span className="text-[9px] uppercase tracking-[0.4em] font-bold text-white/55">
+                          Session expires
+                        </span>
+                        <span
+                          className="text-[12px] font-mono tracking-wider"
+                          style={{ color: "var(--neon-blue-bright)" }}
+                        >
+                          {formatted}
+                        </span>
+                      </div>
+                    );
+                  })()}
                   <button
                     onClick={onClose}
                     className="mt-5 inline-flex items-center justify-center px-5 py-2.5 text-[11px] uppercase tracking-[0.3em] font-bold text-white btn-glass-blue rounded-md animate-fade-in"
@@ -281,6 +304,29 @@ export function VaultLoginModal({ open, onClose }: Props) {
       </div>
     </div>
   );
+}
+
+function formatExpiry(value: string | number | null | undefined): string | null {
+  if (value === null || value === undefined || value === "") return null;
+  let date: Date | null = null;
+  if (typeof value === "number" || /^\d+$/.test(String(value))) {
+    const n = Number(value);
+    // exp_date from xtream is seconds since epoch
+    const ms = n < 1e12 ? n * 1000 : n;
+    date = new Date(ms);
+  } else {
+    const d = new Date(String(value));
+    if (!isNaN(d.getTime())) date = d;
+  }
+  if (!date || isNaN(date.getTime())) return String(value);
+  try {
+    return date.toLocaleString(undefined, {
+      year: "numeric", month: "short", day: "2-digit",
+      hour: "2-digit", minute: "2-digit",
+    });
+  } catch {
+    return date.toISOString();
+  }
 }
 
 function Field({
