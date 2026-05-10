@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, Plus, Save, Trash2, Tags, Coins, Power, Tv } from "lucide-react";
+import { Loader2, Plus, Save, Trash2, Tags, Coins, Power, Tv, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,7 @@ import {
   listStoreProducts,
   upsertStoreProduct,
   setStoreProductActive,
+  setStoreProductSort,
   deleteStoreProduct,
   type StoreProductRow,
 } from "@/lib/store-products.functions";
@@ -71,12 +72,16 @@ function PricingPage() {
   const list = useServerFn(listStoreProducts);
   const upsert = useServerFn(upsertStoreProduct);
   const toggle = useServerFn(setStoreProductActive);
+  const sortFn = useServerFn(setStoreProductSort);
   const del = useServerFn(deleteStoreProduct);
 
   const [rows, setRows] = useState<StoreProductRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<Draft>(blank);
   const [saving, setSaving] = useState(false);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [reordering, setReordering] = useState(false);
 
   const [creditsPerSong, setCreditsPerSong] = useState<number>(5);
   const [savingCredits, setSavingCredits] = useState(false);
@@ -185,6 +190,37 @@ function PricingPage() {
       await refresh();
     } catch (e: any) {
       toast.error(e?.message ?? "Delete failed");
+    }
+  }
+
+  // Reorder rows within a kind group via drag & drop. New sort_order values
+  // are assigned in steps of 10 so manual edits still slot cleanly between
+  // items, then persisted in parallel via setStoreProductSort.
+  async function reorderWithinKind(kind: string, draggedId: string, targetId: string) {
+    if (draggedId === targetId) return;
+    const inKind = rows.filter((r) => r.kind === kind);
+    const others = rows.filter((r) => r.kind !== kind);
+    const fromIdx = inKind.findIndex((r) => r.id === draggedId);
+    const toIdx = inKind.findIndex((r) => r.id === targetId);
+    if (fromIdx < 0 || toIdx < 0) return;
+    const next = [...inKind];
+    const [moved] = next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, moved);
+    const renumbered = next.map((r, i) => ({ ...r, sort_order: (i + 1) * 10 }));
+    // Optimistic update
+    setRows([...others, ...renumbered]);
+    setReordering(true);
+    try {
+      const changed = renumbered.filter((r, i) => inKind[i]?.id !== r.id || inKind[i]?.sort_order !== r.sort_order);
+      await Promise.all(
+        changed.map((r) => sortFn({ data: { id: r.id, sort_order: r.sort_order } })),
+      );
+      toast.success("Order updated");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Reorder failed");
+      await refresh(); // revert to server truth
+    } finally {
+      setReordering(false);
     }
   }
 
@@ -416,7 +452,13 @@ function PricingPage() {
             No products yet. Create one above.
           </div>
         ) : (
-          KINDS.filter((k) => grouped.has(k.value)).map((k) => (
+          <>
+          <p className="text-xs text-muted-foreground flex items-center gap-2">
+            <GripVertical className="h-3.5 w-3.5" />
+            Drag rows to reorder within each section.
+            {reordering && <Loader2 className="h-3 w-3 animate-spin" />}
+          </p>
+          {KINDS.filter((k) => grouped.has(k.value)).map((k) => (
             <div key={k.value} className="rounded-2xl border border-border bg-card overflow-hidden">
               <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 <span>{k.label}</span>
@@ -424,7 +466,50 @@ function PricingPage() {
               </div>
               <ul className="divide-y divide-border">
                 {grouped.get(k.value)!.map((row) => (
-                  <li key={row.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                  <li
+                    key={row.id}
+                    draggable
+                    onDragStart={(e) => {
+                      setDragId(row.id);
+                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("text/plain", row.id);
+                    }}
+                    onDragOver={(e) => {
+                      // Only allow drop within the same kind group.
+                      if (dragId && rows.find((r) => r.id === dragId)?.kind === row.kind) {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = "move";
+                        if (dragOverId !== row.id) setDragOverId(row.id);
+                      }
+                    }}
+                    onDragLeave={() => {
+                      if (dragOverId === row.id) setDragOverId(null);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const id = e.dataTransfer.getData("text/plain") || dragId;
+                      setDragOverId(null);
+                      setDragId(null);
+                      if (id) void reorderWithinKind(row.kind, id, row.id);
+                    }}
+                    onDragEnd={() => { setDragId(null); setDragOverId(null); }}
+                    aria-grabbed={dragId === row.id || undefined}
+                    className={[
+                      "flex flex-wrap items-center gap-3 px-4 py-3 transition-colors",
+                      dragId === row.id ? "opacity-50" : "",
+                      dragOverId === row.id ? "bg-primary/10 ring-1 ring-inset ring-primary/40" : "",
+                    ].join(" ")}
+                  >
+                    <button
+                      type="button"
+                      aria-label={`Drag to reorder ${row.title}`}
+                      title="Drag to reorder"
+                      className="cursor-grab touch-none rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground active:cursor-grabbing"
+                      // Pointer-down ensures the parent <li> picks up the drag on touch
+                      onPointerDown={(e) => e.currentTarget.parentElement?.setAttribute("draggable", "true")}
+                    >
+                      <GripVertical className="h-4 w-4" />
+                    </button>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{row.title}</span>
@@ -435,7 +520,7 @@ function PricingPage() {
                         )}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {row.sku} · {fmt(row.price_cents, row.currency)}
+                        #{row.sort_order} · {row.sku} · {fmt(row.price_cents, row.currency)}
                         {row.duration_days ? ` · ${row.duration_days}d` : ""}
                       </div>
                     </div>
@@ -454,7 +539,8 @@ function PricingPage() {
                 ))}
               </ul>
             </div>
-          ))
+          ))}
+          </>
         )}
       </section>
     </div>
