@@ -28,6 +28,7 @@ import { bossListResellers, bossCreateReseller, bossTopupReseller } from "@/lib/
 import { PassShareCardPanel } from "@/components/overlord/PassShareCardPanel";
 import { VaultCredentialsAdmin } from "@/components/boss/VaultCredentialsAdmin";
 import { VipNotificationsAdmin } from "@/components/boss/VipNotificationsAdmin";
+import { BossAnnouncementButton } from "@/components/boss/BossAnnouncementButton";
 
 const RANKS = ["prospect", "enforcer", "vip", "boss"] as const;
 type Rank = typeof RANKS[number];
@@ -209,6 +210,7 @@ function OverlordPage() {
             <span className="px-2 py-1 rounded border border-emerald-700/50 text-emerald-300 flex items-center gap-1.5">
               <Activity className="h-3 w-3 text-emerald-400 animate-pulse" /> live data
             </span>
+            <BossAnnouncementButton />
           </div>
         </header>
 
