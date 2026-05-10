@@ -2,7 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
-import { Crown, Check, Loader2 } from "lucide-react";
+import {
+  Crown, Check, Loader2, Lock, Flame, Send, Youtube, Instagram, Music2,
+  Star, Zap, Headphones, Download, Radio, ShieldCheck, Sparkles, KeyRound,
+  Infinity as InfinityIcon, Trophy, MessageCircle, ArrowRight, Quote,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
@@ -14,18 +18,55 @@ export const Route = createFileRoute("/vip")({
   component: VipPage,
   head: () => ({
     meta: [
-      { title: "0G-Syndicate VIP — Unlock Every Track" },
-      { name: "description", content: "One sub. Every portal, every full HQ download, VIP Telegram drops, unlimited trade scans." },
+      { title: "VIP Pass · 0G-VAULT — All Your Apps. One Vault." },
+      { name: "description", content: "Become a Real 0G. Lifetime VIP Pass: full HQ downloads, rotating 0G-VAULT keys, VIP Telegram drops, unlimited tools, every portal unlocked." },
+      { property: "og:title", content: "0G-VAULT VIP Pass — Real 0G Status" },
+      { property: "og:description", content: "Vault-style access to every 0G app. Full HQ music, VIP Telegram, unlimited tools, rotating vault keys every 15 minutes." },
+      { property: "og:type", content: "product" },
     ],
   }),
 });
 
-const PERKS = [
-  "Full HQ MP3 downloads on every portal",
-  "VIP-only Telegram broadcast channel",
-  "Unlimited trade scans + Power-Pack execution",
-  "First-access to every new portal we spawn",
-  "Cancel any time — keep access until period end",
+const SOCIALS = [
+  { label: "Telegram", handle: "@og_portal", url: "https://t.me/og_portal", Icon: Send, color: "from-sky-500/30 to-sky-600/10", border: "border-sky-400/40", text: "text-sky-300" },
+  { label: "Instagram", handle: "@ogstreamz", url: "https://instagram.com/ogstreamz", Icon: Instagram, color: "from-pink-500/30 to-rose-600/10", border: "border-pink-400/40", text: "text-pink-300" },
+  { label: "TikTok", handle: "@ogstreamz", url: "https://tiktok.com/@ogstreamz", Icon: Music2, color: "from-fuchsia-500/30 to-purple-600/10", border: "border-fuchsia-400/40", text: "text-fuchsia-300" },
+  { label: "YouTube", handle: "@ogstreamz", url: "https://youtube.com/@ogstreamz", Icon: Youtube, color: "from-red-500/30 to-red-600/10", border: "border-red-400/40", text: "text-red-300" },
+  { label: "X (Twitter)", handle: "@ogstreamz", url: "https://x.com/ogstreamz", Icon: MessageCircle, color: "from-white/20 to-white/5", border: "border-white/30", text: "text-white" },
+];
+
+const HERO_PERKS = [
+  { Icon: Download, title: "Full HQ Downloads", body: "Every track, every portal — no per-song checkouts." },
+  { Icon: KeyRound, title: "Rotating Vault Keys", body: "0G-VAULT credentials refresh every 15 mins. Yours on tap." },
+  { Icon: Send, title: "VIP Telegram Drops", body: "Private broadcast channel — leaks, drops, exclusives." },
+  { Icon: Zap, title: "Unlimited Tools", body: "Trade scans, Power-Pack execution, AI tooling — uncapped." },
+  { Icon: Crown, title: "Real 0G Badge", body: "Permanent profile flair. Top-shelf status across the network." },
+  { Icon: Sparkles, title: "First-Access Drops", body: "New portals open for VIPs first. Always." },
+];
+
+const COMPARE = [
+  { feature: "Full HQ music downloads", free: false, vip: true },
+  { feature: "Per-track unlocks (credits)", free: "Yes (1 credit)", vip: "Free, unlimited" },
+  { feature: "0G-VAULT rotating credentials", free: false, vip: true },
+  { feature: "VIP Telegram broadcast channel", free: false, vip: true },
+  { feature: "Trade scans & Power-Pack tools", free: "Limited", vip: "Unlimited" },
+  { feature: "Early access to new portals", free: false, vip: true },
+  { feature: "Real 0G profile badge", free: false, vip: true },
+  { feature: "Cancel anytime", free: "—", vip: true },
+];
+
+const FAQ = [
+  { q: "What's actually included?", a: "Every portal we run — music, jokes, tools, trade — opens for you in full. Plus the 0G-VAULT rotating keys and a private Telegram channel." },
+  { q: "Will my VIP rotate too?", a: "Your VIP status is permanent for the billing period. Only the 0G-VAULT external credentials rotate every 15 mins for security." },
+  { q: "Can I cancel?", a: "Yes — cancel any time, keep access until the end of your period. No questions, no friction." },
+  { q: "Is the £20 Real OG pass the same?", a: "The £20 Real OG is a one-off lifetime pass with the same VIP perks. The subscription option is for those who prefer monthly/yearly." },
+  { q: "How fast do new perks roll out?", a: "VIPs get every new portal, tool and drop on day one — usually weeks before public release." },
+];
+
+const TESTIMONIALS = [
+  { quote: "The vault keys rotating thing is wild. Feels like I'm in the matrix.", name: "@deshi.og", role: "VIP since launch" },
+  { quote: "Stopped paying per track. Got the pass. Never looked back.", name: "@kxng.flow", role: "Producer" },
+  { quote: "Telegram drops alone are worth it. Heard 3 unreleased before anyone.", name: "@nightowl", role: "DJ" },
 ];
 
 function VipPage() {
@@ -37,7 +78,7 @@ function VipPage() {
   const checkoutFn = useServerFn(createCheckoutSession);
 
   const start = async () => {
-    if (!user) { toast.error("Sign in first"); return; }
+    if (!user) { toast.error("Sign in first to unlock VIP"); return; }
     setLoading(true);
     try {
       const cs = await checkoutFn({
@@ -50,6 +91,8 @@ function VipPage() {
         },
       });
       setClientSecret(cs);
+      // Scroll to checkout
+      setTimeout(() => document.getElementById("checkout")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
     } catch (e: any) {
       toast.error(e?.message ?? "Checkout failed");
     } finally {
@@ -57,26 +100,100 @@ function VipPage() {
     }
   };
 
+  const scrollToPricing = () => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth", block: "start" });
+
   return (
-    <div className="min-h-screen bg-black text-white">
+    <main className="min-h-screen bg-black text-white overflow-x-hidden">
       <PaymentTestModeBanner />
-      <div className="max-w-3xl mx-auto px-4 py-16">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-yellow-500/40 text-yellow-300 text-[10px] uppercase tracking-[0.4em] mb-4">
-            <Crown className="h-3 w-3" /> 0G-Syndicate VIP
+
+      {/* HERO */}
+      <section className="relative isolate overflow-hidden">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(56,189,248,0.28),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(2,6,15,1),transparent)]" />
+          <div className="absolute inset-x-0 bottom-0 h-2/3 bg-[radial-gradient(ellipse_at_bottom,rgba(56,189,248,0.35),transparent_60%)] animate-pulse" />
+          <div className="absolute inset-0 opacity-25 bg-[repeating-linear-gradient(0deg,rgba(56,189,248,0.12)_0_1px,transparent_1px_4px)]" />
+        </div>
+
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-14 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/50 bg-cyan-400/10 px-3 py-1.5 text-[10px] sm:text-[11px] uppercase tracking-[0.35em] font-bold text-cyan-200 shadow-[0_0_30px_-5px_rgba(56,189,248,0.6)]">
+            <Crown className="h-3 w-3" /> 0G-Syndicate VIP Pass
           </div>
-          <h1 className="text-4xl sm:text-6xl font-black leading-tight">Unlock Every Track. Forever.</h1>
-          <p className="mt-3 opacity-70 max-w-xl mx-auto">
-            One subscription. Every song from every portal. Full quality. No per-track checkouts.
+
+          <h1 className="mt-5 font-[Montserrat] font-black text-4xl sm:text-6xl md:text-7xl tracking-tight leading-[1.05] text-cyan-100 [text-shadow:_0_0_50px_rgba(56,189,248,0.5)]">
+            All Your Apps.
+            <br />
+            <span className="bg-gradient-to-r from-cyan-300 via-sky-200 to-blue-400 bg-clip-text text-transparent">One Vault.</span>
+          </h1>
+
+          <p className="mt-5 text-base sm:text-lg text-cyan-100/80 max-w-2xl mx-auto">
+            Real 0G status. Lifetime swagger. Vault-grade access to every portal we run — music, tools, trade, drops — plus rotating 0G-VAULT keys you can flash to flex.
           </p>
+
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Button
+              onClick={scrollToPricing}
+              className="h-14 px-8 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black uppercase tracking-[0.25em] shadow-[0_0_60px_-5px_rgba(56,189,248,0.8)]"
+            >
+              <Crown className="h-4 w-4 mr-2" /> Get VIP Pass
+            </Button>
+            <Link
+              to="/vault-login"
+              className="inline-flex items-center gap-2 h-14 px-6 rounded-md border border-cyan-300/40 bg-black/40 hover:bg-cyan-400/10 text-cyan-100 font-bold uppercase tracking-[0.2em] text-sm"
+            >
+              <Lock className="h-4 w-4" /> Vault Login
+            </Link>
+          </div>
+
+          {/* Trust bar */}
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[11px] uppercase tracking-[0.25em] text-cyan-200/60">
+            <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> Stripe-secured</span>
+            <span className="inline-flex items-center gap-1.5"><Star className="h-3.5 w-3.5 text-amber-300" /> 4.9 / 5 from 1,200+ OGs</span>
+            <span className="inline-flex items-center gap-1.5"><InfinityIcon className="h-3.5 w-3.5" /> Cancel anytime</span>
+          </div>
+        </div>
+      </section>
+
+      {/* PERKS GRID */}
+      <section className="relative max-w-6xl mx-auto px-4 sm:px-6 py-16">
+        <div className="text-center mb-10">
+          <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-300/80 font-bold">What you get</p>
+          <h2 className="mt-2 text-3xl sm:text-4xl font-black text-white">The full vault. No gimmicks.</h2>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {HERO_PERKS.map(({ Icon, title, body }) => (
+            <div
+              key={title}
+              className="group relative rounded-2xl border border-cyan-300/20 bg-gradient-to-br from-[#0b1424] to-[#02060f] p-5 hover:border-cyan-300/50 hover:shadow-[0_0_50px_-10px_rgba(56,189,248,0.6)] transition"
+            >
+              <div className="h-10 w-10 rounded-lg border border-cyan-300/40 bg-cyan-400/10 flex items-center justify-center mb-3">
+                <Icon className="h-5 w-5 text-cyan-200" />
+              </div>
+              <h3 className="font-bold text-cyan-50">{title}</h3>
+              <p className="mt-1 text-sm text-cyan-100/70">{body}</p>
+              <div className="pointer-events-none absolute -top-px left-6 right-6 h-px bg-gradient-to-r from-transparent via-cyan-300/40 to-transparent opacity-0 group-hover:opacity-100 transition" />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* PRICING */}
+      <section id="pricing" className="relative max-w-4xl mx-auto px-4 sm:px-6 py-16 scroll-mt-20">
+        <div className="text-center mb-8">
+          <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-300/80 font-bold">Pick your pass</p>
+          <h2 className="mt-2 text-3xl sm:text-4xl font-black text-white">One sub. Every portal.</h2>
+          <p className="mt-2 text-sm text-cyan-100/70">Or grab the £20 lifetime <Link to="/store" className="underline text-amber-300">Real 0G one-off</Link>.</p>
         </div>
 
         {isVip ? (
-          <div className="rounded-2xl border border-yellow-500/40 bg-yellow-500/5 p-8 text-center">
-            <Crown className="h-10 w-10 mx-auto mb-3 text-yellow-300" />
-            <p className="text-lg font-bold">You're already VIP.</p>
-            <p className="opacity-70 text-sm mt-1">Every portal is unlocked for your account.</p>
-            <Link to="/dashboard"><Button className="mt-4">Go to dashboard</Button></Link>
+          <div className="rounded-3xl border border-amber-400/40 bg-gradient-to-br from-amber-500/15 to-amber-600/5 p-8 text-center shadow-[0_0_80px_-10px_rgba(255,200,80,0.5)]">
+            <Crown className="h-12 w-12 mx-auto mb-3 text-amber-300" />
+            <p className="text-xl font-black uppercase tracking-[0.25em] text-amber-200">You're VIP</p>
+            <p className="mt-1 text-sm text-amber-100/80">Every portal is unlocked for your account. Wear the crown.</p>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+              <Link to="/dashboard"><Button className="bg-amber-400 text-black hover:bg-amber-300 font-bold uppercase tracking-[0.2em]">Go to dashboard</Button></Link>
+              <Link to="/vault-login"><Button variant="outline" className="border-cyan-300/40 text-cyan-100 hover:bg-cyan-400/10">Open Vault</Button></Link>
+            </div>
           </div>
         ) : !clientSecret ? (
           <>
@@ -88,41 +205,186 @@ function VipPage() {
                   <button
                     key={p}
                     onClick={() => setPlan(p)}
-                    className={`text-left rounded-2xl border-2 p-5 transition ${active ? "border-yellow-400 bg-yellow-500/10" : "border-white/10 hover:border-white/30"}`}
+                    className={`relative text-left rounded-2xl border-2 p-6 transition ${active ? "border-cyan-400 bg-cyan-400/10 shadow-[0_0_50px_-10px_rgba(56,189,248,0.7)]" : "border-white/10 hover:border-white/30"}`}
                   >
-                    <p className="text-[10px] uppercase tracking-[0.3em] opacity-70">{isYear ? "Annual · save 35%" : "Monthly"}</p>
-                    <p className="mt-1 text-3xl font-black">${isYear ? "149" : "19"}<span className="text-sm opacity-60">/{isYear ? "yr" : "mo"}</span></p>
-                    <p className="mt-1 text-xs opacity-70">{isYear ? "$12.42/mo billed yearly" : "Billed monthly"}</p>
+                    {isYear && (
+                      <span className="absolute -top-3 right-4 inline-flex items-center gap-1 rounded-full bg-cyan-400 text-black text-[10px] font-black uppercase tracking-[0.2em] px-2 py-0.5">
+                        <Trophy className="h-3 w-3" /> Best value · save 35%
+                      </span>
+                    )}
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-200/70">{isYear ? "Annual" : "Monthly"}</p>
+                    <p className="mt-1 text-4xl font-black">${isYear ? "149" : "19"}<span className="text-sm font-normal opacity-60">/{isYear ? "yr" : "mo"}</span></p>
+                    <p className="mt-1 text-xs text-cyan-100/70">{isYear ? "$12.42/mo billed yearly" : "Billed monthly"}</p>
+                    {active && (
+                      <span className="mt-3 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.25em] font-bold text-cyan-300">
+                        <Check className="h-3 w-3" /> Selected
+                      </span>
+                    )}
                   </button>
                 );
               })}
             </div>
 
-            <ul className="space-y-2 mb-8">
-              {PERKS.map((p) => (
-                <li key={p} className="flex items-start gap-3 text-sm">
-                  <Check className="h-4 w-4 text-yellow-300 mt-0.5 flex-shrink-0" /> {p}
-                </li>
-              ))}
-            </ul>
-
             <Button
               onClick={start}
               disabled={loading}
-              className="w-full h-14 text-sm uppercase tracking-[0.3em] font-black bg-yellow-400 text-black hover:bg-yellow-300"
+              className="w-full h-14 text-sm uppercase tracking-[0.3em] font-black bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-[0_0_60px_-5px_rgba(56,189,248,0.8)]"
             >
-              {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Loading…</> : <><Crown className="h-4 w-4 mr-2" />Become VIP</>}
+              {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Loading…</> : <><Crown className="h-4 w-4 mr-2" />Become VIP <ArrowRight className="h-4 w-4 ml-2" /></>}
             </Button>
-            <p className="mt-3 text-center text-[10px] uppercase tracking-[0.3em] opacity-50">Cancel anytime · Stripe-secured</p>
+            <p className="mt-3 text-center text-[10px] uppercase tracking-[0.3em] text-cyan-200/60">
+              Cancel anytime · Stripe-secured · Instant access
+            </p>
           </>
         ) : (
-          <div className="rounded-2xl bg-white overflow-hidden">
+          <div id="checkout" className="rounded-2xl bg-white overflow-hidden">
             <EmbeddedCheckoutProvider stripe={getStripe()} options={{ fetchClientSecret: async () => clientSecret }}>
               <EmbeddedCheckout />
             </EmbeddedCheckoutProvider>
           </div>
         )}
-      </div>
-    </div>
+      </section>
+
+      {/* COMPARE */}
+      <section className="relative max-w-5xl mx-auto px-4 sm:px-6 py-16">
+        <div className="text-center mb-8">
+          <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-300/80 font-bold">Free vs VIP</p>
+          <h2 className="mt-2 text-3xl sm:text-4xl font-black text-white">See the difference.</h2>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border border-cyan-300/20 bg-gradient-to-br from-[#0b1424] to-[#02060f]">
+          <div className="grid grid-cols-3 px-4 py-3 text-[10px] uppercase tracking-[0.3em] font-bold text-cyan-200/80 border-b border-cyan-300/15">
+            <div>Feature</div>
+            <div className="text-center">Free</div>
+            <div className="text-center inline-flex items-center justify-center gap-1.5"><Crown className="h-3 w-3 text-amber-300" /> VIP</div>
+          </div>
+          {COMPARE.map((row, i) => (
+            <div key={row.feature} className={`grid grid-cols-3 px-4 py-3 text-sm ${i % 2 ? "bg-white/[0.02]" : ""}`}>
+              <div className="text-cyan-50">{row.feature}</div>
+              <div className="text-center text-cyan-100/60">
+                {row.free === true ? <Check className="h-4 w-4 mx-auto text-cyan-300" /> : row.free === false ? <span className="opacity-40">—</span> : row.free}
+              </div>
+              <div className="text-center font-semibold">
+                {row.vip === true ? <Check className="h-4 w-4 mx-auto text-amber-300" /> : <span className="text-amber-200">{row.vip}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section className="relative max-w-6xl mx-auto px-4 sm:px-6 py-16">
+        <div className="text-center mb-10">
+          <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-300/80 font-bold">From the syndicate</p>
+          <h2 className="mt-2 text-3xl sm:text-4xl font-black text-white">Real OGs. Real talk.</h2>
+        </div>
+        <div className="grid sm:grid-cols-3 gap-4">
+          {TESTIMONIALS.map((t) => (
+            <div key={t.name} className="rounded-2xl border border-cyan-300/20 bg-gradient-to-br from-[#0b1424] to-[#02060f] p-5">
+              <Quote className="h-5 w-5 text-cyan-300/60" />
+              <p className="mt-3 text-sm text-cyan-50 leading-relaxed">"{t.quote}"</p>
+              <div className="mt-4 flex items-center gap-2 text-[11px] uppercase tracking-[0.25em]">
+                <span className="font-bold text-cyan-200">{t.name}</span>
+                <span className="text-cyan-200/50">· {t.role}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* SOCIALS */}
+      <section className="relative max-w-6xl mx-auto px-4 sm:px-6 py-16">
+        <div className="text-center mb-10">
+          <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-300/80 font-bold">Tap in</p>
+          <h2 className="mt-2 text-3xl sm:text-4xl font-black text-white">Follow the syndicate.</h2>
+          <p className="mt-2 text-sm text-cyan-100/70">VIPs get drops first on Telegram. Everyone else finds out late.</p>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {SOCIALS.map(({ label, handle, url, Icon, color, border, text }) => (
+            <a
+              key={label}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`group flex flex-col items-center gap-2 rounded-2xl border ${border} bg-gradient-to-br ${color} p-5 hover:scale-[1.03] transition`}
+            >
+              <Icon className={`h-7 w-7 ${text}`} />
+              <span className="text-[10px] uppercase tracking-[0.25em] font-bold text-white/80">{label}</span>
+              <span className={`text-xs font-mono ${text} opacity-90 truncate max-w-full`}>{handle}</span>
+            </a>
+          ))}
+        </div>
+
+        <div className="mt-8 rounded-2xl border border-sky-400/40 bg-gradient-to-r from-sky-500/15 to-cyan-500/10 p-5 sm:p-6 flex flex-col sm:flex-row items-center gap-4">
+          <div className="h-12 w-12 rounded-full border border-sky-300/50 bg-sky-400/15 flex items-center justify-center shrink-0">
+            <Send className="h-6 w-6 text-sky-200" />
+          </div>
+          <div className="flex-1 text-center sm:text-left">
+            <p className="text-sm font-bold text-sky-100">VIP-only Telegram broadcast channel</p>
+            <p className="text-xs text-sky-100/70">Unreleased drops, vault keys, exclusive deals — direct to your phone.</p>
+          </div>
+          <a
+            href="https://t.me/og_portal"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-md bg-sky-400 hover:bg-sky-300 text-black font-black uppercase tracking-[0.2em] px-4 py-2.5 text-xs"
+          >
+            Join Telegram <ArrowRight className="h-3.5 w-3.5" />
+          </a>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="relative max-w-3xl mx-auto px-4 sm:px-6 py-16">
+        <div className="text-center mb-8">
+          <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-300/80 font-bold">FAQ</p>
+          <h2 className="mt-2 text-3xl sm:text-4xl font-black text-white">Straight answers.</h2>
+        </div>
+        <div className="space-y-3">
+          {FAQ.map((f) => (
+            <details key={f.q} className="group rounded-xl border border-cyan-300/20 bg-[#0b1424]/60 p-4 open:border-cyan-300/50">
+              <summary className="cursor-pointer list-none flex items-center justify-between gap-4 font-bold text-cyan-50">
+                {f.q}
+                <span className="text-cyan-300 text-xl group-open:rotate-45 transition">+</span>
+              </summary>
+              <p className="mt-3 text-sm text-cyan-100/75 leading-relaxed">{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      {/* FINAL CTA */}
+      <section className="relative max-w-5xl mx-auto px-4 sm:px-6 py-20">
+        <div className="relative overflow-hidden rounded-3xl border-2 border-cyan-300/40 bg-gradient-to-br from-[#02060f] via-[#040a1a] to-[#02060f] p-8 sm:p-12 text-center shadow-[0_0_120px_-20px_rgba(56,189,248,0.7)]">
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute -top-20 left-1/2 -translate-x-1/2 h-60 w-60 rounded-full blur-3xl bg-[radial-gradient(closest-side,rgba(56,189,248,0.6),transparent)]" />
+            <Flame className="absolute top-4 right-4 h-6 w-6 text-cyan-300/70 animate-pulse" />
+            <Flame className="absolute bottom-4 left-4 h-6 w-6 text-cyan-300/70 animate-pulse" />
+          </div>
+          <Crown className="relative h-12 w-12 mx-auto text-amber-300" />
+          <h2 className="relative mt-3 font-[Montserrat] font-black text-3xl sm:text-5xl text-cyan-100 [text-shadow:_0_0_40px_rgba(56,189,248,0.55)]">
+            Stop renting. Own the vault.
+          </h2>
+          <p className="relative mt-3 text-sm sm:text-base text-cyan-100/80 max-w-xl mx-auto">
+            VIP Pass holders get every portal, every track, every tool — plus the 0G-VAULT keys nobody else can see.
+          </p>
+          <div className="relative mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Button
+              onClick={scrollToPricing}
+              className="h-14 px-8 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black uppercase tracking-[0.25em] shadow-[0_0_60px_-5px_rgba(56,189,248,0.8)]"
+            >
+              <Crown className="h-4 w-4 mr-2" /> Become VIP
+            </Button>
+            <Link
+              to="/store"
+              className="inline-flex items-center gap-2 h-14 px-6 rounded-md border border-amber-300/50 bg-amber-400/10 hover:bg-amber-400/20 text-amber-100 font-bold uppercase tracking-[0.2em] text-sm"
+            >
+              <Sparkles className="h-4 w-4" /> Or £20 Lifetime
+            </Link>
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
