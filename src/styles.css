@@ -181,9 +181,26 @@
     font-weight: 900;
     line-height: 1.15;
     letter-spacing: -0.02em;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+    text-wrap: balance;
   }
-  p { line-height: 1.6; font-weight: 600; }
-  small, .text-xs { font-weight: 700; }
+
+  /* Fluid responsive type scale — clamp(min, preferred-vw, max) so headings
+     stay bold and proportional from 320px up to desktop without overflow. */
+  h1 { font-size: clamp(1.875rem, 5.2vw + 0.5rem, 3.75rem); line-height: 1.08; }
+  h2 { font-size: clamp(1.5rem,  3.6vw + 0.5rem, 2.75rem); line-height: 1.12; }
+  h3 { font-size: clamp(1.25rem, 2.2vw + 0.5rem, 2rem);    line-height: 1.18; }
+  h4 { font-size: clamp(1.125rem,1.4vw + 0.5rem, 1.5rem);  line-height: 1.25; }
+  h5 { font-size: clamp(1rem,    0.8vw + 0.5rem, 1.25rem); line-height: 1.3; }
+  h6 { font-size: clamp(0.9375rem,0.5vw + 0.5rem,1.125rem);line-height: 1.35; }
+
+  p { font-size: clamp(0.9375rem, 0.3vw + 0.85rem, 1.0625rem); line-height: 1.6; font-weight: 600; text-wrap: pretty; }
+  small, .text-xs { font-size: clamp(0.75rem, 0.15vw + 0.7rem, 0.8125rem); font-weight: 700; line-height: 1.45; }
+
+  /* Prevent long unbroken strings (URLs, IDs) from blowing out narrow phones */
+  p, li, dd, figcaption { overflow-wrap: anywhere; }
 
   /* Readability boost: ensure low-contrast utilities stay legible and bold */
   .text-muted-foreground { color: var(--muted-foreground); font-weight: 600; }
