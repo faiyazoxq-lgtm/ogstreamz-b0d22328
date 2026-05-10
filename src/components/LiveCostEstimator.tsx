@@ -43,10 +43,40 @@ export function LiveCostEstimator({ className = "" }: Props) {
   const [vipUsedToday, setVipUsedToday] = useState(0);
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState<Record<string, number>>({});
+  const [liveBalance, setLiveBalance] = useState<number | null>(null);
 
-  const balance = profile?.credits ?? 0;
+  const balance = liveBalance ?? profile?.credits ?? 0;
   const isRealOg = !!profile?.feature_flags?.real_og;
   const tier = profile?.status === "vip" ? "VIP" : isRealOg ? "Real OG" : "Free";
+
+  // Live wallet balance: hydrate + subscribe to realtime profile updates.
+  useEffect(() => {
+    if (!profile?.id) return;
+    let cancelled = false;
+    supabase
+      .from("profiles")
+      .select("credits")
+      .eq("id", profile.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled && typeof data?.credits === "number") setLiveBalance(data.credits);
+      });
+    const channel = supabase
+      .channel(`wallet:${profile.id}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${profile.id}` },
+        (payload) => {
+          const next = (payload.new as { credits?: number } | null)?.credits;
+          if (typeof next === "number") setLiveBalance(next);
+        },
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -101,7 +131,8 @@ export function LiveCostEstimator({ className = "" }: Props) {
     let total = 0;
     let vipApplied = 0;
     let freePassesLeft = isRealOg && vipUsedToday < 1 ? 1 : 0;
-    const lines: Array<{ key: string; label: string; qty: number; charged: number; saved: number }> = [];
+    let running = balance;
+    const lines: Array<{ key: string; label: string; qty: number; charged: number; saved: number; remaining: number }> = [];
     for (const a of actions) {
       const rule = ACTION_RULES[a.key];
       if (rule && !access.atLeast(rule.min)) continue;
@@ -116,10 +147,11 @@ export function LiveCostEstimator({ className = "" }: Props) {
       }
       const charged = q * a.cost - saved;
       total += charged;
-      lines.push({ key: a.key, label: a.label, qty: q, charged, saved });
+      running -= charged;
+      lines.push({ key: a.key, label: a.label, qty: q, charged, saved, remaining: running });
     }
     return { total, vipApplied, lines };
-  }, [actions, qty, isRealOg, vipUsedToday, access]);
+  }, [actions, qty, isRealOg, vipUsedToday, access, balance]);
 
   const after = Math.max(0, balance - breakdown.total);
   const overdraft = breakdown.total > balance;
@@ -218,13 +250,23 @@ export function LiveCostEstimator({ className = "" }: Props) {
       {anySelected && (
         <div className="mt-3 space-y-1 rounded-md border border-border bg-secondary/30 p-2.5 text-xs">
           {breakdown.lines.map((l) => (
-            <div key={l.key} className="flex items-center justify-between font-mono">
+            <div key={l.key} className="flex items-center justify-between gap-2 font-mono">
               <span className="truncate pr-2 text-foreground/80">
                 {l.qty}× {l.label}
               </span>
-              <span className="inline-flex items-center gap-1">
+              <span className="inline-flex items-center gap-2 whitespace-nowrap">
                 {l.saved > 0 && <span className="text-emerald-400">−{l.saved}</span>}
-                <span className="font-bold">{l.charged} 🪙</span>
+                <span className="font-bold">−{l.charged} 🪙</span>
+                <span
+                  className={`rounded px-1.5 py-0.5 text-[10px] ${
+                    l.remaining < 0
+                      ? "bg-destructive/15 text-destructive"
+                      : "bg-secondary text-muted-foreground"
+                  }`}
+                  title="Projected remaining balance after this action"
+                >
+                  → {l.remaining} 🪙
+                </span>
               </span>
             </div>
           ))}
