@@ -474,7 +474,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                           Refunded {n} 🪙
                         </div>
                         <p className="text-[11px] text-muted-foreground mt-2">
-                          The spawn didn't complete, so we returned your credit{n === 1 ? "" : "s"} to your balance. You can retry safely — you won't be double-charged.
+                          The spawn didn't complete, so we returned your 🪙 to your balance. You can retry safely — you won't be double-charged.
                         </p>
                       </>
                     );
