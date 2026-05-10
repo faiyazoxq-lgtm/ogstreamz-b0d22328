@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  User, LogIn, Coins, Crown, Shield, ChevronDown,
+  User, LogIn, Coins, Crown, Shield, ChevronDown, History,
   Music, Laugh, TrendingUp, Rocket, Wrench, Swords, Radio,
   Store, ShoppingBag, Receipt,
   ShieldCheck, LayoutDashboard,
@@ -306,6 +306,7 @@ function MobileNavDrawer({
                 {[
                   { to: "/profile", label: "Vault & Profile", icon: UserCircle },
                   { to: "/store", label: "Buy Credits", icon: Coins },
+                  { to: "/history", label: "Portal History", icon: History },
                   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
                   { to: "/settings", label: "Settings", icon: Settings },
                 ].map(({ to, label, icon: Icon }) => {
@@ -442,6 +443,12 @@ function AccountMenu({
             <Link to="/store" className="flex items-center gap-2">
               <Coins className="h-4 w-4 text-gold" />
               <span>Buy Credits</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild className="cursor-pointer focus:bg-secondary">
+            <Link to="/history" className="flex items-center gap-2">
+              <History className="h-4 w-4 text-gold" />
+              <span>Portal History</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild className="cursor-pointer focus:bg-secondary">

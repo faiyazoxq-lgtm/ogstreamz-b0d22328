@@ -22,6 +22,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PortalsRouteImport } from './routes/portals'
 import { Route as MusicRouteImport } from './routes/music'
 import { Route as JokesRouteImport } from './routes/jokes'
+import { Route as HistoryRouteImport } from './routes/history'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FleetRouteImport } from './routes/fleet'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -112,6 +113,11 @@ const MusicRoute = MusicRouteImport.update({
 const JokesRoute = JokesRouteImport.update({
   id: '/jokes',
   path: '/jokes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -260,6 +266,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/history': typeof HistoryRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/portals': typeof PortalsRoute
@@ -301,6 +308,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/history': typeof HistoryRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/portals': typeof PortalsRoute
@@ -343,6 +351,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/history': typeof HistoryRoute
   '/jokes': typeof JokesRouteWithChildren
   '/music': typeof MusicRoute
   '/portals': typeof PortalsRoute
@@ -386,6 +395,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/fleet'
     | '/forgot-password'
+    | '/history'
     | '/jokes'
     | '/music'
     | '/portals'
@@ -427,6 +437,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/fleet'
     | '/forgot-password'
+    | '/history'
     | '/jokes'
     | '/music'
     | '/portals'
@@ -468,6 +479,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/fleet'
     | '/forgot-password'
+    | '/history'
     | '/jokes'
     | '/music'
     | '/portals'
@@ -510,6 +522,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   FleetRoute: typeof FleetRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  HistoryRoute: typeof HistoryRoute
   JokesRoute: typeof JokesRouteWithChildren
   MusicRoute: typeof MusicRoute
   PortalsRoute: typeof PortalsRoute
@@ -627,6 +640,13 @@ declare module '@tanstack/react-router' {
       path: '/jokes'
       fullPath: '/jokes'
       preLoaderRoute: typeof JokesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -850,6 +870,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   FleetRoute: FleetRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  HistoryRoute: HistoryRoute,
   JokesRoute: JokesRouteWithChildren,
   MusicRoute: MusicRoute,
   PortalsRoute: PortalsRoute,
