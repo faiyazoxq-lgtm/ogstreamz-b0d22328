@@ -417,3 +417,4 @@ function QuickJumpMenu({ user }: { user: boolean }) {
     </nav>
   );
 }
+
