@@ -185,6 +185,9 @@ function AdminPage() {
         <AgentConsolePanel />
         <MaintenancePanel />
       </div>
+
+      <SectionHeader id="nerd-stats" icon={<Database className="h-4 w-4" />} label="Nerd Stats · Deep Telemetry" tint="#7dd3fc" />
+      <NerdStatsPanel />
         </div>
 
         {/* RIGHT — Users DB + quick actions */}
