@@ -1,13 +1,22 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Tv, CheckCircle2, Loader2, AlertTriangle, Clock, CalendarClock, RefreshCw, CircleDashed, XCircle } from "lucide-react";
-import { verifyAndLinkStream, reverifyStream, type StreamReasonCode, type RpcErrorCause } from "@/lib/stream-link.functions";
+import { verifyAndLinkStream, reverifyStream, getStreamConfigStatus, type StreamReasonCode, type RpcErrorCause, type StreamConfigStatus } from "@/lib/stream-link.functions";
 import { useAuth } from "@/hooks/use-auth";
 
 export function StreamLinkCard() {
   const { profile, refresh } = useAuth();
   const verify = useServerFn(verifyAndLinkStream);
   const reverify = useServerFn(reverifyStream);
+  const checkConfig = useServerFn(getStreamConfigStatus);
+  const [config, setConfig] = useState<StreamConfigStatus | null>(null);
+  useEffect(() => {
+    let alive = true;
+    checkConfig().then((s) => { if (alive) setConfig(s); }).catch(() => {
+      if (alive) setConfig({ ok: false, code: "missing", message: "Couldn't reach the stream config check." });
+    });
+    return () => { alive = false; };
+  }, [checkConfig]);
   const [u, setU] = useState("");
   const [p, setP] = useState("");
   const [busy, setBusy] = useState(false);
