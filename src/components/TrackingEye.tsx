@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 /**
  * A small white eyeball whose pupil follows the cursor.
@@ -46,22 +46,83 @@ export function TrackingEye({
   const [blink, setBlink] = useState(false);
   const targetRef = useRef({ x: 0, y: 0 });
   const currentRef = useRef({ x: 0, y: 0 });
+  // Per-instance phase so multiple eyes on screen don't drift in lockstep
+  // — keeps the page feeling alive without looking robotic.
+  const phase = useMemo(() => Math.random() * Math.PI * 2, []);
 
   useEffect(() => {
-    // Detect touch / coarse pointer devices — skip mousemove (often missing,
-    // or fired only after taps) in favor of a stable pupil or gentle idle drift.
-    const isCoarse =
-      typeof window !== "undefined" &&
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+    // Detect touch / coarse pointer + reduced-motion preference. On those
+    // surfaces we skip pointer/touch listeners entirely (which would
+    // otherwise jitter the pupil during scroll) and either pin the pupil
+    // dead-center ("still") or run a slow time-based idle drift ("idle").
+    const mql =
+      typeof window !== "undefined" && typeof window.matchMedia === "function"
+        ? window.matchMedia("(hover: none) and (pointer: coarse)")
+        : null;
+    const reduced =
+      typeof window !== "undefined" && typeof window.matchMedia === "function"
+        ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        : false;
+    const isCoarse = !!mql?.matches;
 
-    if (isCoarse) {
-      if (touchMode === "still") {
-        setPupil({ x: 0, y: 0 });
+    const writeGlowVars = (nx: number, ny: number) => {
+      const el = ref.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const tMax = travel ?? r.width * travelRatio;
+      const reach = tMax > 0 ? Math.min(1, Math.hypot(nx, ny) / tMax) : 0;
+      const rootMult =
+        parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue(
+            "--eye-glow-multiplier",
+          ),
+        ) || 1;
+      el.style.setProperty("--eye-glow", String((0.35 + reach * 0.65) * rootMult));
+      const sizePx = r.width || 28;
+      el.style.setProperty("--eye-glow-base", `${(sizePx * 0.28).toFixed(2)}px`);
+      el.style.setProperty("--eye-glow-spread", `${(sizePx * 0.65).toFixed(2)}px`);
+      el.style.setProperty("--eye-glow-inner", `${(sizePx * 0.07).toFixed(2)}px`);
+      el.style.setProperty("--eye-glow-inner-spread", `${(sizePx * 0.22).toFixed(2)}px`);
+    };
+
+    // ─── Touch / coarse pointer paths ──────────────────────────────────
+    if (isCoarse || reduced) {
+      // Always pin to centre first so a re-mount doesn't show a stale offset.
+      currentRef.current = { x: 0, y: 0 };
+      setPupil({ x: 0, y: 0 });
+      writeGlowVars(0, 0);
+
+      if (touchMode === "still" || reduced) {
+        // Nothing else to do — no listeners, no rAF, no jank.
         return;
       }
+
+      // Subtle, slow Lissajous drift driven purely by time. Capped tightly
+      // so the pupil never visibly "tracks" anything — it just breathes.
+      let raf = 0;
+      const start = performance.now();
+      const tick = (now: number) => {
+        const el = ref.current;
+        if (!el) {
+          raf = requestAnimationFrame(tick);
+          return;
+        }
+        const r = el.getBoundingClientRect();
+        const t = (now - start) / 1000;
+        const amp = (travel ?? r.width * travelRatio) * idleTravelRatio;
+        // Two slow sine waves at incommensurate periods → organic drift.
+        const nx = Math.sin(t * 0.6 + phase) * amp;
+        const ny = Math.cos(t * 0.43 + phase * 1.3) * amp * 0.7;
+        currentRef.current = { x: nx, y: ny };
+        setPupil({ x: nx, y: ny });
+        writeGlowVars(nx, ny);
+        raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+      return () => cancelAnimationFrame(raf);
     }
 
+    // ─── Desktop / fine pointer path ───────────────────────────────────
     const updateTarget = (clientX: number, clientY: number) => {
       const el = ref.current;
       if (!el) return;
@@ -72,21 +133,12 @@ export function TrackingEye({
       const dy = clientY - cy;
       const dist = Math.hypot(dx, dy) || 1;
       const t = travel ?? r.width * travelRatio;
-      // Magnitude scales with distance (so the pupil actually points at the
-      // cursor when nearby) and caps at `travel` when far away.
       const mag = Math.min(t, dist * followGain);
       targetRef.current = { x: (dx / dist) * mag, y: (dy / dist) * mag };
     };
 
     const onPointer = (e: PointerEvent) => updateTarget(e.clientX, e.clientY);
-    const onTouch = (e: TouchEvent) => {
-      const t0 = e.touches[0] || e.changedTouches[0];
-      if (t0) updateTarget(t0.clientX, t0.clientY);
-    };
     window.addEventListener("pointermove", onPointer, { passive: true });
-    window.addEventListener("pointerdown", onPointer, { passive: true });
-    window.addEventListener("touchstart", onTouch, { passive: true });
-    window.addEventListener("touchmove", onTouch, { passive: true });
 
     // rAF lerp toward the target — smooth motion independent of input rate.
     let raf = 0;
@@ -99,44 +151,16 @@ export function TrackingEye({
       if (Math.abs(nx - cur.x) > 0.02 || Math.abs(ny - cur.y) > 0.02) {
         setPupil({ x: nx, y: ny });
       }
-      // Drive a CSS var for glow intensity based on how far the pupil has
-      // travelled toward the cursor. Written directly to the DOM so the glow
-      // updates every frame without triggering React renders.
-      const el = ref.current;
-      if (el) {
-        const r = el.getBoundingClientRect();
-        const tMax = travel ?? r.width * travelRatio;
-        const reach = tMax > 0 ? Math.min(1, Math.hypot(nx, ny) / tMax) : 0;
-        // Per-hub multiplier (set on :root by EyeGlowTuner) so the same eye
-        // glows a bit louder/softer depending on which HUB is active.
-        const rootMult =
-          parseFloat(
-            getComputedStyle(document.documentElement).getPropertyValue(
-              "--eye-glow-multiplier",
-            ),
-          ) || 1;
-        el.style.setProperty("--eye-glow", String((0.35 + reach * 0.65) * rootMult));
-        // Size-proportional glow radii so the halo grows/shrinks with the
-        // eye itself instead of looking dim at large sizes or blown-out at
-        // tiny ones. Baseline tuned around a ~28px eye (1rem-ish).
-        const sizePx = r.width || 28;
-        el.style.setProperty("--eye-glow-base", `${(sizePx * 0.28).toFixed(2)}px`);
-        el.style.setProperty("--eye-glow-spread", `${(sizePx * 0.65).toFixed(2)}px`);
-        el.style.setProperty("--eye-glow-inner", `${(sizePx * 0.07).toFixed(2)}px`);
-        el.style.setProperty("--eye-glow-inner-spread", `${(sizePx * 0.22).toFixed(2)}px`);
-      }
+      writeGlowVars(nx, ny);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
 
     return () => {
       window.removeEventListener("pointermove", onPointer);
-      window.removeEventListener("pointerdown", onPointer);
-      window.removeEventListener("touchstart", onTouch);
-      window.removeEventListener("touchmove", onTouch);
       cancelAnimationFrame(raf);
     };
-  }, [travel, travelRatio, smoothing, followGain, touchMode, idleTravelRatio]);
+  }, [travel, travelRatio, smoothing, followGain, touchMode, idleTravelRatio, phase]);
 
   // Blink on any pointer down anywhere on the page.
   useEffect(() => {
