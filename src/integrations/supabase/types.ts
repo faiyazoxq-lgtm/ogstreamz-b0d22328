@@ -29,6 +29,66 @@ export type Database = {
         }
         Relationships: []
       }
+      action_billing: {
+        Row: {
+          action_key: string
+          active: boolean
+          allowance_count: number | null
+          allowance_period:
+            | Database["public"]["Enums"]["allowance_period"]
+            | null
+          billing_mode: Database["public"]["Enums"]["billing_mode"]
+          cost_credits: number
+          created_at: string
+          description: string | null
+          hub: string
+          label: string
+          metadata: Json
+          required_tier: Database["public"]["Enums"]["access_tier"]
+          sort_order: number
+          updated_at: string
+          vip_free_eligible: boolean
+        }
+        Insert: {
+          action_key: string
+          active?: boolean
+          allowance_count?: number | null
+          allowance_period?:
+            | Database["public"]["Enums"]["allowance_period"]
+            | null
+          billing_mode?: Database["public"]["Enums"]["billing_mode"]
+          cost_credits?: number
+          created_at?: string
+          description?: string | null
+          hub?: string
+          label: string
+          metadata?: Json
+          required_tier?: Database["public"]["Enums"]["access_tier"]
+          sort_order?: number
+          updated_at?: string
+          vip_free_eligible?: boolean
+        }
+        Update: {
+          action_key?: string
+          active?: boolean
+          allowance_count?: number | null
+          allowance_period?:
+            | Database["public"]["Enums"]["allowance_period"]
+            | null
+          billing_mode?: Database["public"]["Enums"]["billing_mode"]
+          cost_credits?: number
+          created_at?: string
+          description?: string | null
+          hub?: string
+          label?: string
+          metadata?: Json
+          required_tier?: Database["public"]["Enums"]["access_tier"]
+          sort_order?: number
+          updated_at?: string
+          vip_free_eligible?: boolean
+        }
+        Relationships: []
+      }
       ai_logs: {
         Row: {
           created_at: string
@@ -3086,6 +3146,34 @@ export type Database = {
         }
         Returns: string
       }
+      get_action_billing: {
+        Args: { _action_key: string }
+        Returns: {
+          action_key: string
+          active: boolean
+          allowance_count: number | null
+          allowance_period:
+            | Database["public"]["Enums"]["allowance_period"]
+            | null
+          billing_mode: Database["public"]["Enums"]["billing_mode"]
+          cost_credits: number
+          created_at: string
+          description: string | null
+          hub: string
+          label: string
+          metadata: Json
+          required_tier: Database["public"]["Enums"]["access_tier"]
+          sort_order: number
+          updated_at: string
+          vip_free_eligible: boolean
+        }
+        SetofOptions: {
+          from: "*"
+          to: "action_billing"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       get_my_stream_creds: {
         Args: never
         Returns: {
@@ -3182,8 +3270,11 @@ export type Database = {
       }
     }
     Enums: {
+      access_tier: "visitor" | "member" | "stream" | "vip" | "boss"
       account_status: "free" | "vip"
+      allowance_period: "day" | "week" | "month"
       app_role: "admin" | "user" | "reseller"
+      billing_mode: "free" | "pay_per_use" | "subscription" | "allowance"
       subscription_plan: "free" | "metal" | "energy" | "syndicate"
       syndicate_rank: "prospect" | "enforcer" | "vip" | "boss" | "stream_user"
       system_alert_category: "fallback" | "api_error"
@@ -3315,8 +3406,11 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      access_tier: ["visitor", "member", "stream", "vip", "boss"],
       account_status: ["free", "vip"],
+      allowance_period: ["day", "week", "month"],
       app_role: ["admin", "user", "reseller"],
+      billing_mode: ["free", "pay_per_use", "subscription", "allowance"],
       subscription_plan: ["free", "metal", "energy", "syndicate"],
       syndicate_rank: ["prospect", "enforcer", "vip", "boss", "stream_user"],
       system_alert_category: ["fallback", "api_error"],
