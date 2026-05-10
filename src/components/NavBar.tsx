@@ -27,7 +27,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { SiteSearch } from "@/components/SiteSearch";
 import { MasterSwearToggle } from "@/components/MasterSwearToggle";
 import { AnimatedCredits } from "@/components/AnimatedCredits";
-import { RealOgBadge } from "@/components/RealOgBadge";
 import {
   Sheet,
   SheetContent,
