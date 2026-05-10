@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CheckCircle2 } from "lucide-react";
-import bgFlame from "@/assets/bg-flame.png";
+import { FlameBackdrop } from "@/components/FlameBackdrop";
 import { requireMember } from "@/lib/route-guards";
 
 type Search = { session_id?: string };
@@ -19,7 +19,7 @@ function CheckoutReturn() {
   return (
     <main className="relative min-h-[calc(100vh-4rem)]">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <img src={bgFlame} alt="" aria-hidden loading="lazy" decoding="async" fetchPriority="low" className="absolute inset-0 w-full h-full object-cover opacity-15 mix-blend-screen" />
+        <FlameBackdrop className="absolute inset-0 w-full h-full object-cover opacity-15 mix-blend-screen" />
         <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/85 to-background" />
       </div>
       <div className="relative max-w-xl mx-auto px-5 sm:px-8 py-20 text-center">
