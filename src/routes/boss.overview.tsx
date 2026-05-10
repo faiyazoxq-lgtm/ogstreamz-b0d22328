@@ -84,6 +84,8 @@ function BossOverview() {
   });
   const [swearDefault, setSwearDefault] = useState<boolean | null>(null);
   const [togglingSwear, setTogglingSwear] = useState(false);
+  const paymentMode = usePaymentMode();
+  const [togglingPayments, setTogglingPayments] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function loadStats() {
@@ -155,6 +157,17 @@ function BossOverview() {
       .eq("id", 1);
     if (!error) setSwearDefault(next);
     setTogglingSwear(false);
+  }
+
+  async function togglePaymentMode() {
+    setTogglingPayments(true);
+    try {
+      await setPaymentMode(paymentMode === "live" ? "test" : "live");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to switch payment mode");
+    } finally {
+      setTogglingPayments(false);
+    }
   }
 
   const metrics: Metric[] = [
