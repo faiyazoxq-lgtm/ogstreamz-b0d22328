@@ -14,6 +14,8 @@ import { WelcomeAuthPrompt } from "@/components/WelcomeAuthPrompt";
 import { QuickJumpDrawer } from "@/components/QuickJumpDrawer";
 import { useAuth } from "@/hooks/use-auth";
 import { RealOgPromoCard } from "@/components/RealOgPromoCard";
+import { VaultLoginModal } from "@/components/VaultLoginModal";
+import { Flame } from "lucide-react";
 
 const ICONS: Record<string, any> = {
   Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
@@ -43,6 +45,7 @@ function Index() {
   const [customHubs, setCustomHubs] = useState<any[]>([]);
   const { user, profile } = useAuth();
   const [pendingTo, setPendingTo] = useState<string | null>(null);
+  const [vaultOpen, setVaultOpen] = useState(false);
   const isNavigating = useRouterState({
     select: (s) => s.isLoading || s.isTransitioning,
   });
@@ -278,6 +281,17 @@ function Index() {
       <SyndicateGallery />
       <WelcomeAuthPrompt />
       <QuickJumpDrawer user={!!user} />
+
+      <button
+        type="button"
+        onClick={() => setVaultOpen(true)}
+        className="fixed bottom-3 left-3 z-50 inline-flex items-center gap-1.5 rounded-md border border-[oklch(0.72_0.22_245/0.4)] bg-black/60 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.3em] text-white/70 backdrop-blur-md hover:text-white hover:border-[oklch(0.72_0.22_245/0.8)] hover:shadow-[0_0_18px_-4px_oklch(0.72_0.22_245/0.8)]"
+        aria-label="Open vault login"
+      >
+        <Flame className="h-3 w-3" style={{ color: "var(--neon-blue-bright)" }} />
+        vault log in
+      </button>
+      <VaultLoginModal open={vaultOpen} onClose={() => setVaultOpen(false)} />
     </main>
   );
 }
