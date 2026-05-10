@@ -146,6 +146,9 @@ function RootComponent() {
               <img
                 src={bgFlame}
                 alt=""
+                loading="lazy"
+                decoding="async"
+                fetchPriority="low"
                 className="absolute inset-0 h-full w-full object-cover object-bottom opacity-[0.10] mix-blend-overlay sm:opacity-[0.08] sm:object-center"
                 style={{
                   WebkitMaskImage:

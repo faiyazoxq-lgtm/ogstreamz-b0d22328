@@ -139,6 +139,9 @@ function JokePortal() {
           src={bgFlame}
           alt=""
           aria-hidden
+          loading="lazy"
+          decoding="async"
+          fetchPriority="low"
           className="absolute inset-0 w-full h-full object-cover opacity-25 mix-blend-screen"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
