@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as VipRouteImport } from './routes/vip'
 import { Route as VaultLoginRouteImport } from './routes/vault-login'
 import { Route as TradeRouteImport } from './routes/trade'
@@ -61,6 +62,11 @@ import { Route as ApiPublicHooksTelegramRemindersRouteImport } from './routes/ap
 import { Route as ApiPublicHooksSyndicateTickRouteImport } from './routes/api/public/hooks/syndicate-tick'
 import { Route as ApiPublicFleetWebhookBotIdRouteImport } from './routes/api/public/fleet/webhook/$botId'
 
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VipRoute = VipRouteImport.update({
   id: '/vip',
   path: '/vip',
@@ -351,6 +357,7 @@ export interface FileRoutesByFullPath {
   '/trade': typeof TradeRoute
   '/vault-login': typeof VaultLoginRoute
   '/vip': typeof VipRoute
+  '/welcome': typeof WelcomeRoute
   '/account/passes': typeof AccountPassesRoute
   '/b/$slug': typeof BSlugRoute
   '/boss/analytics': typeof BossAnalyticsRoute
@@ -403,6 +410,7 @@ export interface FileRoutesByTo {
   '/trade': typeof TradeRoute
   '/vault-login': typeof VaultLoginRoute
   '/vip': typeof VipRoute
+  '/welcome': typeof WelcomeRoute
   '/account/passes': typeof AccountPassesRoute
   '/b/$slug': typeof BSlugRoute
   '/boss/analytics': typeof BossAnalyticsRoute
@@ -457,6 +465,7 @@ export interface FileRoutesById {
   '/trade': typeof TradeRoute
   '/vault-login': typeof VaultLoginRoute
   '/vip': typeof VipRoute
+  '/welcome': typeof WelcomeRoute
   '/account/passes': typeof AccountPassesRoute
   '/b/$slug': typeof BSlugRoute
   '/boss/analytics': typeof BossAnalyticsRoute
@@ -512,6 +521,7 @@ export interface FileRouteTypes {
     | '/trade'
     | '/vault-login'
     | '/vip'
+    | '/welcome'
     | '/account/passes'
     | '/b/$slug'
     | '/boss/analytics'
@@ -564,6 +574,7 @@ export interface FileRouteTypes {
     | '/trade'
     | '/vault-login'
     | '/vip'
+    | '/welcome'
     | '/account/passes'
     | '/b/$slug'
     | '/boss/analytics'
@@ -617,6 +628,7 @@ export interface FileRouteTypes {
     | '/trade'
     | '/vault-login'
     | '/vip'
+    | '/welcome'
     | '/account/passes'
     | '/b/$slug'
     | '/boss/analytics'
@@ -671,6 +683,7 @@ export interface RootRouteChildren {
   TradeRoute: typeof TradeRoute
   VaultLoginRoute: typeof VaultLoginRoute
   VipRoute: typeof VipRoute
+  WelcomeRoute: typeof WelcomeRoute
   AccountPassesRoute: typeof AccountPassesRoute
   BSlugRoute: typeof BSlugRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
@@ -689,6 +702,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/vip': {
       id: '/vip'
       path: '/vip'
@@ -1120,6 +1140,7 @@ const rootRouteChildren: RootRouteChildren = {
   TradeRoute: TradeRoute,
   VaultLoginRoute: VaultLoginRoute,
   VipRoute: VipRoute,
+  WelcomeRoute: WelcomeRoute,
   AccountPassesRoute: AccountPassesRoute,
   BSlugRoute: BSlugRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
