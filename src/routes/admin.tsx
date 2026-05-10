@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SyndicateProtocolSwitch } from "@/components/SyndicateProtocolSwitch";
 import { useServerFn } from "@tanstack/react-start";
 import { scoutUrl } from "@/lib/firecrawl.functions";
-import { spawnPortal } from "@/lib/portals.functions";
+import { spawnPortal, bossDeletePortal } from "@/lib/portals.functions";
 import { spawnMusicPortal } from "@/lib/music-portals.functions";
 import { createTrack } from "@/lib/tracks.functions";
 import { spawnTool } from "@/lib/tools.functions";
@@ -22,6 +22,16 @@ import { listBots, upsertBot, deleteBot, broadcastGlobalAlert, runSyndicateTickN
 import { generateBrandBible, updateTelegramLinks, deployToTelegram } from "@/lib/telegram.functions";
 import { runAgentTask, getOpsSnapshot, runMaintenance } from "@/lib/command-deck.functions";
 import { TopUpRequestsPanel } from "@/components/TopUpRequestsPanel";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const NAV_SECTIONS: { id: string; label: string; tint: string }[] = [
   { id: "roster", label: "Roster", tint: "#3ad6ff" },
@@ -1902,6 +1912,9 @@ function RoleRow({ row, busy, onSave }: { row: Row; busy: boolean; onSave: (p: P
 function LeadTrackingPanel() {
   const [rows, setRows] = useState<{ slug: string; name: string; niche: string; view_count: number; vip: boolean; created_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingDelete, setPendingDelete] = useState<{ slug: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const deletePortalFn = useServerFn(bossDeletePortal);
 
   const reload = () => {
     setLoading(true);
@@ -1916,6 +1929,21 @@ function LeadTrackingPanel() {
   useEffect(() => { reload(); }, []);
 
   const total = rows.reduce((s, r) => s + (r.view_count || 0), 0);
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    try {
+      await deletePortalFn({ data: { slug: pendingDelete.slug } });
+      toast.success(`Deleted "${pendingDelete.name}"`);
+      setRows((rs) => rs.filter((r) => r.slug !== pendingDelete.slug));
+      setPendingDelete(null);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Delete failed");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <section className="mt-10 rounded-2xl border border-[oklch(0.72_0.22_245/0.4)] bg-card p-6 sm:p-8">
@@ -1936,9 +1964,9 @@ function LeadTrackingPanel() {
         <div className="rounded-xl border border-border overflow-hidden">
           <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground border-b border-border bg-background/40">
             <div className="col-span-5">Portal</div>
-            <div className="col-span-4">Niche</div>
+            <div className="col-span-3">Niche</div>
             <div className="col-span-2 text-right">Opens</div>
-            <div className="col-span-1 text-right">Link</div>
+            <div className="col-span-2 text-right">Actions</div>
           </div>
           {rows.map((r) => {
             const url = typeof window !== "undefined" ? `${window.location.origin}/p/${r.slug}` : `/p/${r.slug}`;
@@ -1950,11 +1978,11 @@ function LeadTrackingPanel() {
                   {r.vip && <span className="ml-2 text-[9px] uppercase tracking-[0.3em] px-1.5 py-0.5 rounded border" style={{ color: "var(--neon-blue-bright)", borderColor: "currentColor" }}>VIP</span>}
                   <div className="text-[10px] text-muted-foreground font-mono">/p/{r.slug}</div>
                 </div>
-                <div className="col-span-4 truncate text-muted-foreground">{r.niche}</div>
+                <div className="col-span-3 truncate text-muted-foreground">{r.niche}</div>
                 <div className={`col-span-2 text-right font-mono font-bold ${heat}`}>
                   <Eye className="inline h-3 w-3 mr-1" />{r.view_count}
                 </div>
-                <div className="col-span-1 text-right">
+                <div className="col-span-2 text-right flex items-center justify-end gap-2">
                   <button
                     onClick={() => { navigator.clipboard?.writeText(url); toast.success("Client link copied"); }}
                     className="opacity-60 hover:opacity-100"
@@ -1962,12 +1990,43 @@ function LeadTrackingPanel() {
                   >
                     <Copy className="h-3.5 w-3.5" />
                   </button>
+                  <button
+                    onClick={() => setPendingDelete({ slug: r.slug, name: r.name })}
+                    className="opacity-70 hover:opacity-100 text-red-400 hover:text-red-300"
+                    title="Delete portal"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
             );
           })}
         </div>
       )}
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(o) => { if (!o && !deleting) setPendingDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete portal?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes <span className="font-bold text-white">{pendingDelete?.name}</span>
+              {pendingDelete ? <> (<span className="font-mono">/p/{pendingDelete.slug}</span>)</> : null}.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmDelete(); }}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-500 text-white"
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Trash2 className="h-4 w-4 mr-1" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }
