@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft, Menu, X, ShieldAlert, LogIn, ChevronRight, Home, Tv, Tags, Bell } from "lucide-react";
+import { Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft, Menu, X, ShieldAlert, LogIn, ChevronRight, Home, Tv, Tags, Bell, ChevronDown, ShoppingBag, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { BossSearch } from "@/components/BossSearch";
 import { requireBoss } from "@/lib/route-guards";
@@ -11,20 +11,58 @@ export const Route = createFileRoute("/boss")({
   component: BossLayout,
 });
 
-type NavItem = { to: string; label: string; Icon: React.ComponentType<{ className?: string }>; exact?: boolean };
+type NavItem = {
+  to: string;
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  exact?: boolean;
+  desc?: string;
+};
+type NavGroup = { id: string; label: string; Icon: React.ComponentType<{ className?: string }>; items: NavItem[] };
 
-const NAV: NavItem[] = [
-  { to: "/boss/overview",   label: "Overview",      Icon: Crown, exact: true },
-  { to: "/boss/users",      label: "Users",         Icon: Users },
-  { to: "/boss/stream-queue", label: "Stream Queue", Icon: Tv },
-  { to: "/boss/pricing",    label: "Pricing",       Icon: Tags },
-  { to: "/boss/alerts",     label: "System Alerts", Icon: Bell },
-  { to: "/admin",           label: "Admin Console", Icon: Users },
-  { to: "/boss/civility",   label: "Civility",      Icon: ShieldCheck },
-  { to: "/boss/analytics",  label: "Analytics",     Icon: BarChart3 },
-  { to: "/boss/lexicon",    label: "Swear Lexicon", Icon: Skull },
-  { to: "/syndicate-overlord", label: "Overlord Deck", Icon: LayoutDashboard },
+const TOP: NavItem = { to: "/boss/overview", label: "Overview", Icon: Crown, exact: true, desc: "Daily snapshot" };
+
+const GROUPS: NavGroup[] = [
+  {
+    id: "members",
+    label: "Members",
+    Icon: Users,
+    items: [
+      { to: "/boss/users", label: "User Roster", Icon: Users, desc: "Rank, credits, bans, swearing" },
+      { to: "/boss/stream-queue", label: "Stream Queue", Icon: Tv, desc: "Pending stream verifications" },
+    ],
+  },
+  {
+    id: "commerce",
+    label: "Commerce",
+    Icon: ShoppingBag,
+    items: [
+      { to: "/boss/pricing", label: "Pricing", Icon: Tags, desc: "Coin packs & store products" },
+      { to: "/admin", label: "Admin Console", Icon: Sparkles, desc: "Top-ups, passes, vault" },
+    ],
+  },
+  {
+    id: "moderation",
+    label: "Moderation",
+    Icon: ShieldCheck,
+    items: [
+      { to: "/boss/alerts", label: "System Alerts", Icon: Bell, desc: "Live incidents", },
+      { to: "/boss/civility", label: "Civility", Icon: ShieldCheck, desc: "Default tone" },
+      { to: "/boss/lexicon", label: "Swear Lexicon", Icon: Skull, desc: "Word lists" },
+    ],
+  },
+  {
+    id: "insights",
+    label: "Insights",
+    Icon: BarChart3,
+    items: [
+      { to: "/boss/analytics", label: "Analytics", Icon: BarChart3, desc: "Portal & spend metrics" },
+      { to: "/syndicate-overlord", label: "Overlord Deck", Icon: LayoutDashboard, desc: "Syndicate command" },
+    ],
+  },
 ];
+
+const ALL_NAV: NavItem[] = [TOP, ...GROUPS.flatMap((g) => g.items)];
 
 function BossLayout() {
   const { user, isAdmin, profile, loading } = useAuth();
@@ -88,48 +126,111 @@ function BossLayout() {
 
   const isActive = (n: NavItem) =>
     n.exact ? pathname === n.to : pathname === n.to || pathname.startsWith(n.to + "/");
+  const groupActive = (g: NavGroup) => g.items.some(isActive);
 
-  const NavList = ({ onClick }: { onClick?: () => void }) => (
-    <nav className="space-y-1">
-      {NAV.map((n) => {
-        const active = isActive(n);
-        const showBadge = n.to === "/boss/alerts" && alertsUnread > 0;
-        return (
-          <Link
-            key={n.to}
-            to={n.to}
-            onClick={onClick}
-            aria-current={active ? "page" : undefined}
-            className={[
-              "relative flex items-center gap-3 rounded-md pl-4 pr-3 py-2.5 text-sm font-semibold transition-colors outline-none",
-              "hover:bg-secondary focus-visible:ring-2 focus-visible:ring-primary",
-              active
-                ? "bg-gold/10 text-gold ring-1 ring-inset ring-gold/40 shadow-[0_0_18px_-10px_rgba(255,209,102,0.9)]"
-                : "text-foreground/80",
-            ].join(" ")}
+  const NavLeaf = ({ n, onClick, compact }: { n: NavItem; onClick?: () => void; compact?: boolean }) => {
+    const active = isActive(n);
+    const showBadge = n.to === "/boss/alerts" && alertsUnread > 0;
+    return (
+      <Link
+        to={n.to}
+        onClick={onClick}
+        aria-current={active ? "page" : undefined}
+        className={[
+          "relative flex items-start gap-3 rounded-md pl-3 pr-3 py-2 text-sm transition-colors outline-none tracking-[0.005em]",
+          "hover:bg-secondary focus-visible:ring-2 focus-visible:ring-primary",
+          active
+            ? "bg-gold/10 text-gold ring-1 ring-inset ring-gold/40"
+            : "text-foreground/85",
+        ].join(" ")}
+      >
+        <n.Icon className={`mt-0.5 h-4 w-4 shrink-0 ${active ? "text-gold" : "text-gold/70"}`} />
+        <span className="min-w-0 flex-1">
+          <span className="block font-semibold leading-tight">{n.label}</span>
+          {!compact && n.desc && (
+            <span className="block text-[11px] text-muted-foreground/80 leading-tight mt-0.5">{n.desc}</span>
+          )}
+        </span>
+        {showBadge && (
+          <span
+            className="self-center inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-[10px] font-bold tabular-nums bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/50"
+            aria-label={`${alertsUnread} unread alerts`}
           >
-            <span
-              aria-hidden="true"
+            {alertsUnread > 99 ? "99+" : alertsUnread}
+          </span>
+        )}
+      </Link>
+    );
+  };
+
+  // Desktop nav: top item + groups with hover/focus dropdown
+  const DesktopNav = () => (
+    <nav className="space-y-1.5 font-sans">
+      <NavLeaf n={TOP} compact />
+      {GROUPS.map((g) => {
+        const active = groupActive(g);
+        const hasAlert = g.id === "moderation" && alertsUnread > 0;
+        return (
+          <div key={g.id} className="relative group">
+            <button
+              type="button"
+              aria-haspopup="menu"
               className={[
-                "absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full transition-all",
-                active ? "bg-gold opacity-100" : "bg-transparent opacity-0",
+                "w-full flex items-center gap-3 rounded-md pl-3 pr-2 py-2 text-sm font-semibold transition-colors outline-none tracking-[0.01em]",
+                "hover:bg-secondary focus-visible:ring-2 focus-visible:ring-primary group-hover:bg-secondary group-focus-within:bg-secondary",
+                active ? "text-gold" : "text-foreground/85",
               ].join(" ")}
-            />
-            <n.Icon className={`h-4 w-4 shrink-0 ${active ? "text-gold drop-shadow-[0_0_6px_rgba(255,209,102,0.6)]" : "text-gold/70"}`} />
-            <span className="truncate">{n.label}</span>
-            {showBadge ? (
-              <span
-                className="ml-auto inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-[10px] font-bold tabular-nums bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/50 shadow-[0_0_10px_-2px_rgba(255,85,119,0.7)]"
-                aria-label={`${alertsUnread} unread alerts`}
-              >
-                {alertsUnread > 99 ? "99+" : alertsUnread}
-              </span>
-            ) : active ? (
-              <span className="ml-auto h-1.5 w-1.5 rounded-full bg-gold shadow-[0_0_8px_rgba(255,209,102,0.9)]" />
-            ) : null}
-          </Link>
+            >
+              <g.Icon className={`h-4 w-4 shrink-0 ${active ? "text-gold" : "text-gold/70"}`} />
+              <span className="truncate flex-1 text-left">{g.label}</span>
+              {hasAlert && (
+                <span className="inline-flex items-center justify-center min-w-[1rem] h-4 px-1 rounded-full text-[9px] font-bold bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/50">
+                  {alertsUnread > 99 ? "99+" : alertsUnread}
+                </span>
+              )}
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform group-hover:rotate-180 group-focus-within:rotate-180" />
+            </button>
+            {/* Hover/focus dropdown — slides out to the right of the sidebar */}
+            <div
+              role="menu"
+              className={[
+                "invisible opacity-0 translate-x-1 pointer-events-none",
+                "group-hover:visible group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto",
+                "group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-x-0 group-focus-within:pointer-events-auto",
+                "absolute left-full top-0 ml-2 z-40 w-64 transition-all duration-150",
+              ].join(" ")}
+            >
+              <div className="rounded-xl border border-gold/30 bg-card/95 backdrop-blur-xl p-1.5 shadow-2xl shadow-black/40">
+                <div className="px-2 py-1.5 mb-1 border-b border-border/60">
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-gold font-bold">{g.label}</p>
+                </div>
+                <div className="space-y-0.5">
+                  {g.items.map((n) => (
+                    <NavLeaf key={n.to} n={n} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         );
       })}
+    </nav>
+  );
+
+  // Mobile drawer: flat with section labels (no hover on touch)
+  const MobileNav = ({ onClick }: { onClick?: () => void }) => (
+    <nav className="space-y-3 font-sans">
+      <div className="space-y-0.5"><NavLeaf n={TOP} onClick={onClick} compact /></div>
+      {GROUPS.map((g) => (
+        <div key={g.id}>
+          <p className="px-3 mb-1 text-[10px] uppercase tracking-[0.3em] text-gold/80 font-bold flex items-center gap-1.5">
+            <g.Icon className="h-3 w-3" /> {g.label}
+          </p>
+          <div className="space-y-0.5">
+            {g.items.map((n) => <NavLeaf key={n.to} n={n} onClick={onClick} compact />)}
+          </div>
+        </div>
+      ))}
     </nav>
   );
 
@@ -157,7 +258,7 @@ function BossLayout() {
 
       {drawerOpen && (
         <div className="md:hidden mb-3 rounded-2xl border border-border bg-card p-3">
-          <NavList onClick={() => setDrawerOpen(false)} />
+          <MobileNav onClick={() => setDrawerOpen(false)} />
         </div>
       )}
 
@@ -173,7 +274,7 @@ function BossLayout() {
             <div className="px-1 pb-3">
               <BossSearch />
             </div>
-            <NavList />
+            <DesktopNav />
             <Link
               to="/"
               className="mt-3 flex items-center gap-2 rounded-md px-3 py-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground hover:bg-secondary"
@@ -193,7 +294,7 @@ function BossLayout() {
 }
 
 function BossBreadcrumbs({ pathname }: { pathname: string }) {
-  const match = NAV.find((n) =>
+  const match = ALL_NAV.find((n) =>
     n.exact ? pathname === n.to : pathname === n.to || pathname.startsWith(n.to + "/"),
   );
   const currentLabel = match?.label
