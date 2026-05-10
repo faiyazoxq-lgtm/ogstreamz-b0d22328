@@ -37,6 +37,7 @@ function AuthPage() {
   const [passToken, setPassToken] = useState<string | null>(null);
   const [remember, setRememberState] = useState<boolean>(true);
   const [signedInDest, setSignedInDest] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   useEffect(() => { setRememberState(getRemember()); }, []);
 
@@ -204,9 +205,12 @@ function AuthPage() {
 
   const magicLink = async () => {
     if (!email) {
+      setEmailError("Enter the email where we should send your magic link.");
       toast.error("Enter your email first");
+      try { document.getElementById("email")?.focus(); } catch { /* noop */ }
       return;
     }
+    setEmailError(null);
     setLoading(true);
     const dest = peekRedirect();
     const redirectTo = `${window.location.origin}${dest}`;
@@ -230,6 +234,8 @@ function AuthPage() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Could not send magic link";
       void logAttempt("failed", msg);
+      setEmailError(msg);
+      try { document.getElementById("email")?.focus(); } catch { /* noop */ }
       toast.error(msg);
     } finally {
       setLoading(false);
