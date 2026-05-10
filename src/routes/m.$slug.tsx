@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Music, Wand2, Loader2, ArrowLeft, Disc3, Lock, BadgeCheck, Layers, Copy, Check } from "lucide-react";
+import { Music, Wand2, Loader2, ArrowLeft, Disc3, Lock, BadgeCheck, Layers, Copy, Check, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
@@ -21,6 +21,7 @@ type MusicPortal = {
   vibe: string | null;
   theme: string;
   swear_chat_enabled?: boolean;
+  jokes: string[] | null;
 };
 
 export const Route = createFileRoute("/m/$slug")({
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/m/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals")
-      .select("id, slug, name, language, style, vibe, theme, kind, swear_chat_enabled")
+      .select("id, slug, name, language, style, vibe, theme, kind, swear_chat_enabled, jokes")
       .eq("slug", params.slug)
       .eq("kind", "music")
       .maybeSingle();
