@@ -18,7 +18,7 @@ interface Props {
 }
 
 export function CoinCheckout({ kind, ref, cost, itemTitle, successLabel, onSuccess }: Props) {
-  const { profile, refreshProfile } = useAuth() as any;
+  const { profile, refresh } = useAuth() as any;
   const purchase = useServerFn(purchaseWithCoins);
   const balance = profile?.credits ?? 0;
   const [busy, setBusy] = useState(false);
@@ -40,7 +40,7 @@ export function CoinCheckout({ kind, ref, cost, itemTitle, successLabel, onSucce
       }
       setDone({ pending: !!res.pending_approval });
       onSuccess?.(res);
-      if (typeof refreshProfile === "function") refreshProfile();
+      if (typeof refresh === "function") refresh();
       toast.success(
         res.pending_approval
           ? `Pass requested — boss will approve. ${res.cost} 🪙 reserved.`
