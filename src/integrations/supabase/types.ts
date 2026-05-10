@@ -1796,16 +1796,19 @@ export type Database = {
         Row: {
           credits_per_song: number
           id: number
+          stream_portal_url: string
           updated_at: string
         }
         Insert: {
           credits_per_song?: number
           id?: number
+          stream_portal_url?: string
           updated_at?: string
         }
         Update: {
           credits_per_song?: number
           id?: number
+          stream_portal_url?: string
           updated_at?: string
         }
         Relationships: []
