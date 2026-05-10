@@ -53,7 +53,6 @@ import { Route as BossStreamQueueRouteImport } from './routes/boss.stream-queue'
 import { Route as BossSettingsRouteImport } from './routes/boss.settings'
 import { Route as BossPublishCheckRouteImport } from './routes/boss.publish-check'
 import { Route as BossPricingRouteImport } from './routes/boss.pricing'
-import { Route as BossPowerRouteImport } from './routes/boss.power'
 import { Route as BossPortalsRouteImport } from './routes/boss.portals'
 import { Route as BossPortalCostsRouteImport } from './routes/boss.portal-costs'
 import { Route as BossOverviewRouteImport } from './routes/boss.overview'
@@ -294,11 +293,6 @@ const BossPricingRoute = BossPricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => BossRoute,
 } as any)
-const BossPowerRoute = BossPowerRouteImport.update({
-  id: '/power',
-  path: '/power',
-  getParentRoute: () => BossRoute,
-} as any)
 const BossPortalsRoute = BossPortalsRouteImport.update({
   id: '/portals',
   path: '/portals',
@@ -443,7 +437,6 @@ export interface FileRoutesByFullPath {
   '/boss/overview': typeof BossOverviewRoute
   '/boss/portal-costs': typeof BossPortalCostsRoute
   '/boss/portals': typeof BossPortalsRoute
-  '/boss/power': typeof BossPowerRoute
   '/boss/pricing': typeof BossPricingRoute
   '/boss/publish-check': typeof BossPublishCheckRoute
   '/boss/settings': typeof BossSettingsRoute
@@ -508,7 +501,6 @@ export interface FileRoutesByTo {
   '/boss/overview': typeof BossOverviewRoute
   '/boss/portal-costs': typeof BossPortalCostsRoute
   '/boss/portals': typeof BossPortalsRoute
-  '/boss/power': typeof BossPowerRoute
   '/boss/pricing': typeof BossPricingRoute
   '/boss/publish-check': typeof BossPublishCheckRoute
   '/boss/settings': typeof BossSettingsRoute
@@ -575,7 +567,6 @@ export interface FileRoutesById {
   '/boss/overview': typeof BossOverviewRoute
   '/boss/portal-costs': typeof BossPortalCostsRoute
   '/boss/portals': typeof BossPortalsRoute
-  '/boss/power': typeof BossPowerRoute
   '/boss/pricing': typeof BossPricingRoute
   '/boss/publish-check': typeof BossPublishCheckRoute
   '/boss/settings': typeof BossSettingsRoute
@@ -643,7 +634,6 @@ export interface FileRouteTypes {
     | '/boss/overview'
     | '/boss/portal-costs'
     | '/boss/portals'
-    | '/boss/power'
     | '/boss/pricing'
     | '/boss/publish-check'
     | '/boss/settings'
@@ -708,7 +698,6 @@ export interface FileRouteTypes {
     | '/boss/overview'
     | '/boss/portal-costs'
     | '/boss/portals'
-    | '/boss/power'
     | '/boss/pricing'
     | '/boss/publish-check'
     | '/boss/settings'
@@ -774,7 +763,6 @@ export interface FileRouteTypes {
     | '/boss/overview'
     | '/boss/portal-costs'
     | '/boss/portals'
-    | '/boss/power'
     | '/boss/pricing'
     | '/boss/publish-check'
     | '/boss/settings'
@@ -1156,13 +1144,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossPricingRouteImport
       parentRoute: typeof BossRoute
     }
-    '/boss/power': {
-      id: '/boss/power'
-      path: '/power'
-      fullPath: '/boss/power'
-      preLoaderRoute: typeof BossPowerRouteImport
-      parentRoute: typeof BossRoute
-    }
     '/boss/portals': {
       id: '/boss/portals'
       path: '/portals'
@@ -1321,7 +1302,6 @@ interface BossRouteChildren {
   BossOverviewRoute: typeof BossOverviewRoute
   BossPortalCostsRoute: typeof BossPortalCostsRoute
   BossPortalsRoute: typeof BossPortalsRoute
-  BossPowerRoute: typeof BossPowerRoute
   BossPricingRoute: typeof BossPricingRoute
   BossPublishCheckRoute: typeof BossPublishCheckRoute
   BossSettingsRoute: typeof BossSettingsRoute
@@ -1340,7 +1320,6 @@ const BossRouteChildren: BossRouteChildren = {
   BossOverviewRoute: BossOverviewRoute,
   BossPortalCostsRoute: BossPortalCostsRoute,
   BossPortalsRoute: BossPortalsRoute,
-  BossPowerRoute: BossPowerRoute,
   BossPricingRoute: BossPricingRoute,
   BossPublishCheckRoute: BossPublishCheckRoute,
   BossSettingsRoute: BossSettingsRoute,
@@ -1421,3 +1400,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
