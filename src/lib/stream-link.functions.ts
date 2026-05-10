@@ -177,6 +177,18 @@ export const verifyAndLinkStream = createServerFn({ method: "POST" })
       _auto_payload: info as never,
     });
     if (qErr) return { ok: false as const, reason: "rpc_error" as const, cause: classifyRpcError(qErr.message), error: qErr.message };
+
+    // Auto-tag the profile right away when the IPTV server says Active.
+    // Boss approval still controls the OGSTREAMZ rank — this just lights up
+    // the badge + expiry on their profile immediately.
+    if (status === "Active") {
+      await supabase.rpc("apply_auto_stream_status", {
+        _user_id: userId,
+        _status: status,
+        _expires_at: expiresAt,
+      });
+    }
+
     return {
       ok: true as const,
       queued: true as const,
