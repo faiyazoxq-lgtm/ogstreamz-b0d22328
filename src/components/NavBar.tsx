@@ -183,16 +183,16 @@ export function NavBar() {
           : "bg-background/35 backdrop-blur-md border-transparent"
       }`}
     >
-      <nav className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap px-2 sm:px-8 h-16 sm:h-20 gap-1 sm:gap-2">
+      <nav className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap px-1.5 sm:px-8 h-16 sm:h-20 gap-1 sm:gap-2">
         <Link
           to="/"
-          className="flex items-center gap-2 sm:gap-3 group min-w-0 flex-1 sm:flex-initial overflow-hidden h-full"
+          className="flex items-center gap-1.5 sm:gap-3 group min-w-0 flex-1 sm:flex-initial overflow-hidden h-full"
         >
           <TVStaticLogo className="shrink-0 self-center" />
           <OgWordmark
             suffix="-PORTAL"
-            className="hidden [@media(min-width:360px)]:inline-flex items-center self-center truncate text-eye-ice--bright bg-transparent leading-none"
-            style={{ fontSize: "clamp(0.95rem, 4.2vw, 1.875rem)" }}
+            className="inline-flex items-center self-center min-w-0 whitespace-nowrap text-eye-ice--bright bg-transparent leading-none"
+            style={{ fontSize: "clamp(0.78rem, 3.6vw, 1.875rem)" }}
           />
         </Link>
         {user && (
@@ -200,7 +200,7 @@ export function NavBar() {
             to="/store"
             aria-label={`Coin wallet: ${profile?.credits ?? 0} coins — tap to top up`}
             title={`Your coin balance — ${profile?.credits ?? 0} 🪙. Tap to top up.`}
-            className="shrink-0 inline-flex items-center gap-2 rounded-full border-2 border-amber-400/60 bg-gradient-to-r from-amber-500/25 via-amber-400/15 to-amber-500/25 hover:from-amber-500/35 hover:to-amber-500/35 px-3 py-1.5 sm:px-4 sm:py-2 font-bold text-amber-100 shadow-[0_0_22px_-4px_oklch(0.82_0.18_85/0.85)] transition-all"
+            className="shrink-0 inline-flex items-center gap-1.5 sm:gap-2 rounded-full border-2 border-amber-400/60 bg-gradient-to-r from-amber-500/25 via-amber-400/15 to-amber-500/25 hover:from-amber-500/35 hover:to-amber-500/35 px-2 py-1 sm:px-4 sm:py-2 font-bold text-amber-100 shadow-[0_0_22px_-4px_oklch(0.82_0.18_85/0.85)] transition-all"
           >
             <span className="text-base sm:text-lg leading-none" aria-hidden>🪙</span>
             <AnimatedCredits
