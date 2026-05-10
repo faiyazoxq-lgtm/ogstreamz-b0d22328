@@ -123,12 +123,36 @@ function extractHandleFromUrl(platform: Exclude<StreamPlatform, "custom">, raw: 
   if (!HANDLE_RULES[platform].expectedHost.test(host)) return null;
 
   const segments = u.pathname.replace(/^\/+|\/+$/g, "").split("/").filter(Boolean);
-  if (segments.length === 0) return null;
 
   if (platform === "youtube") {
-    // Preserve channel-style URLs by returning a sentinel — caller handles them.
-    if (/^(channel|c|user)$/i.test(segments[0]) && segments[1]) return `__path:${segments[0].toLowerCase()}/${decodeURIComponent(segments[1])}`;
+    // youtu.be/<videoId>
+    if (/(^|\.)youtu\.be$/i.test(host) && segments[0]) {
+      return `__path:watch?v=${decodeURIComponent(segments[0])}`;
+    }
+    if (segments.length === 0) {
+      // bare ?v= on youtube.com
+      const v = u.searchParams.get("v");
+      return v ? `__path:watch?v=${v}` : null;
+    }
+    // Channel-style and video-style URLs are preserved verbatim.
+    if (/^(channel|c|user)$/i.test(segments[0]) && segments[1]) {
+      return `__path:${segments[0].toLowerCase()}/${decodeURIComponent(segments[1])}`;
+    }
+    if (/^(shorts|live|embed)$/i.test(segments[0]) && segments[1]) {
+      return `__path:${segments[0].toLowerCase()}/${decodeURIComponent(segments[1])}`;
+    }
+    if (/^watch$/i.test(segments[0])) {
+      const v = u.searchParams.get("v");
+      return v ? `__path:watch?v=${v}` : null;
+    }
     return decodeURIComponent(segments[0]).replace(/^@/, "");
+  }
+
+  if (segments.length === 0) return null;
+  // Twitch: /videos/123 or /<user>/clips → take first segment unless it's a known section.
+  if (platform === "twitch" && /^(videos|directory|p|popout)$/i.test(segments[0])) {
+    if (segments[0].toLowerCase() === "videos" && segments[1]) return `__path:videos/${decodeURIComponent(segments[1])}`;
+    return null;
   }
   return decodeURIComponent(segments[0]).replace(/^@/, "");
 }
