@@ -117,14 +117,18 @@ export function validateEntry(entry: StreamEntry): string | null {
   if (!v) return "Value is required";
 
   if (entry.platform === "custom") {
-    try {
-      const u = new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`);
-      if (u.protocol !== "http:" && u.protocol !== "https:") {
-        return "URL must start with http:// or https://";
-      }
-      if (!u.hostname.includes(".")) return "Enter a valid URL (e.g. https://your-stream.example)";
-    } catch {
-      return "Custom entries must be a valid URL";
+    if (!/^https?:\/\//i.test(v)) {
+      return `Custom URLs must start with http:// or https:// — try: https://${v.replace(/^\/+/, "")}`;
+    }
+    let u: URL;
+    try { u = new URL(v); } catch {
+      return "That doesn't look like a valid URL. Example: https://your-stream.example/live";
+    }
+    if (u.protocol !== "http:" && u.protocol !== "https:") {
+      return `Only http:// or https:// is allowed (got "${u.protocol}//"). Example: https://your-stream.example`;
+    }
+    if (!u.hostname.includes(".")) {
+      return `Hostname "${u.hostname}" is missing a domain (e.g. ".com"). Example: https://your-stream.example`;
     }
     return null;
   }
@@ -133,18 +137,24 @@ export function validateEntry(entry: StreamEntry): string | null {
   const looksLikeUrl = /^https?:\/\//i.test(v) || /^[\w-]+\.[\w.-]+\//.test(v);
 
   if (looksLikeUrl) {
-    const handle = extractHandleFromUrl(entry.platform, v);
-    if (handle === null) {
-      const expected = entry.platform === "twitch" ? "twitch.tv" : entry.platform === "kick" ? "kick.com" : "youtube.com";
-      return `Use a ${expected} URL or just your handle.`;
+    let parsed: URL | null = null;
+    try { parsed = new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`); } catch { /* parsed stays null */ }
+    if (!parsed) {
+      return `That doesn't look like a valid URL. Paste a ${rules.host} link or just your handle. Example: ${rules.example}`;
     }
-    if (handle.startsWith("__path:")) return null; // YouTube channel/c/user path — accepted
-    if (!rules.re.test(handle)) return rules.hint;
+    const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+    if (!rules.expectedHost.test(host)) {
+      return `URL host is "${host}" — expected ${rules.host}. Either paste a ${rules.host} link or remove the URL and enter just your handle.`;
+    }
+    const handle = extractHandleFromUrl(entry.platform, v);
+    if (!handle) return `Couldn't find a handle in that URL. Example: ${rules.example}`;
+    if (handle.startsWith("__path:")) return null;
+    if (!rules.re.test(handle)) return explainHandle(entry.platform, handle);
     return null;
   }
 
   const handle = v.replace(/^@/, "");
-  if (!rules.re.test(handle)) return rules.hint;
+  if (!rules.re.test(handle)) return explainHandle(entry.platform, handle);
   return null;
 }
 
