@@ -53,6 +53,7 @@ import { Route as BossOverviewRouteImport } from './routes/boss.overview'
 import { Route as BossLexiconRouteImport } from './routes/boss.lexicon'
 import { Route as BossCivilityRouteImport } from './routes/boss.civility'
 import { Route as BossAnalyticsRouteImport } from './routes/boss.analytics'
+import { Route as BossAlertsRouteImport } from './routes/boss.alerts'
 import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as AccountPassesRouteImport } from './routes/account.passes'
 import { Route as ApiPublicSunoWebhookRouteImport } from './routes/api/public/suno-webhook'
@@ -283,6 +284,11 @@ const BossAnalyticsRoute = BossAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => BossRoute,
 } as any)
+const BossAlertsRoute = BossAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
+  getParentRoute: () => BossRoute,
+} as any)
 const BSlugRoute = BSlugRouteImport.update({
   id: '/b/$slug',
   path: '/b/$slug',
@@ -366,6 +372,7 @@ export interface FileRoutesByFullPath {
   '/welcome': typeof WelcomeRoute
   '/account/passes': typeof AccountPassesRoute
   '/b/$slug': typeof BSlugRoute
+  '/boss/alerts': typeof BossAlertsRoute
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/civility': typeof BossCivilityRoute
   '/boss/lexicon': typeof BossLexiconRoute
@@ -420,6 +427,7 @@ export interface FileRoutesByTo {
   '/welcome': typeof WelcomeRoute
   '/account/passes': typeof AccountPassesRoute
   '/b/$slug': typeof BSlugRoute
+  '/boss/alerts': typeof BossAlertsRoute
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/civility': typeof BossCivilityRoute
   '/boss/lexicon': typeof BossLexiconRoute
@@ -476,6 +484,7 @@ export interface FileRoutesById {
   '/welcome': typeof WelcomeRoute
   '/account/passes': typeof AccountPassesRoute
   '/b/$slug': typeof BSlugRoute
+  '/boss/alerts': typeof BossAlertsRoute
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/civility': typeof BossCivilityRoute
   '/boss/lexicon': typeof BossLexiconRoute
@@ -533,6 +542,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/account/passes'
     | '/b/$slug'
+    | '/boss/alerts'
     | '/boss/analytics'
     | '/boss/civility'
     | '/boss/lexicon'
@@ -587,6 +597,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/account/passes'
     | '/b/$slug'
+    | '/boss/alerts'
     | '/boss/analytics'
     | '/boss/civility'
     | '/boss/lexicon'
@@ -642,6 +653,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/account/passes'
     | '/b/$slug'
+    | '/boss/alerts'
     | '/boss/analytics'
     | '/boss/civility'
     | '/boss/lexicon'
@@ -1022,6 +1034,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossAnalyticsRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/alerts': {
+      id: '/boss/alerts'
+      path: '/alerts'
+      fullPath: '/boss/alerts'
+      preLoaderRoute: typeof BossAlertsRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/b/$slug': {
       id: '/b/$slug'
       path: '/b/$slug'
@@ -1089,6 +1108,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface BossRouteChildren {
+  BossAlertsRoute: typeof BossAlertsRoute
   BossAnalyticsRoute: typeof BossAnalyticsRoute
   BossCivilityRoute: typeof BossCivilityRoute
   BossLexiconRoute: typeof BossLexiconRoute
@@ -1100,6 +1120,7 @@ interface BossRouteChildren {
 }
 
 const BossRouteChildren: BossRouteChildren = {
+  BossAlertsRoute: BossAlertsRoute,
   BossAnalyticsRoute: BossAnalyticsRoute,
   BossCivilityRoute: BossCivilityRoute,
   BossLexiconRoute: BossLexiconRoute,

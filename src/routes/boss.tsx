@@ -1,9 +1,10 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft, Menu, X, ShieldAlert, LogIn, ChevronRight, Home, Tv, Tags } from "lucide-react";
+import { Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft, Menu, X, ShieldAlert, LogIn, ChevronRight, Home, Tv, Tags, Bell } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { BossSearch } from "@/components/BossSearch";
 import { requireBoss } from "@/lib/route-guards";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/boss")({
   beforeLoad: requireBoss,
@@ -17,6 +18,7 @@ const NAV: NavItem[] = [
   { to: "/boss/users",      label: "Users",         Icon: Users },
   { to: "/boss/stream-queue", label: "Stream Queue", Icon: Tv },
   { to: "/boss/pricing",    label: "Pricing",       Icon: Tags },
+  { to: "/boss/alerts",     label: "System Alerts", Icon: Bell },
   { to: "/admin",           label: "Admin Console", Icon: Users },
   { to: "/boss/civility",   label: "Civility",      Icon: ShieldCheck },
   { to: "/boss/analytics",  label: "Analytics",     Icon: BarChart3 },
@@ -29,6 +31,25 @@ function BossLayout() {
   const isBoss = profile?.rank === "boss" || isAdmin;
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [alertsUnread, setAlertsUnread] = useState(0);
+
+  useEffect(() => {
+    if (!isBoss) return;
+    let cancelled = false;
+    const refresh = async () => {
+      const { count } = await supabase
+        .from("system_alerts")
+        .select("*", { count: "exact", head: true })
+        .is("acknowledged_at", null);
+      if (!cancelled) setAlertsUnread(count ?? 0);
+    };
+    refresh();
+    const ch = supabase
+      .channel("system_alerts_badge")
+      .on("postgres_changes", { event: "*", schema: "public", table: "system_alerts" }, refresh)
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(ch); };
+  }, [isBoss]);
 
   // Close drawer on route change.
   useEffect(() => { setDrawerOpen(false); }, [pathname]);
@@ -72,6 +93,7 @@ function BossLayout() {
     <nav className="space-y-1">
       {NAV.map((n) => {
         const active = isActive(n);
+        const showBadge = n.to === "/boss/alerts" && alertsUnread > 0;
         return (
           <Link
             key={n.to}
@@ -95,9 +117,16 @@ function BossLayout() {
             />
             <n.Icon className={`h-4 w-4 shrink-0 ${active ? "text-gold drop-shadow-[0_0_6px_rgba(255,209,102,0.6)]" : "text-gold/70"}`} />
             <span className="truncate">{n.label}</span>
-            {active && (
+            {showBadge ? (
+              <span
+                className="ml-auto inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-[10px] font-bold tabular-nums bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/50 shadow-[0_0_10px_-2px_rgba(255,85,119,0.7)]"
+                aria-label={`${alertsUnread} unread alerts`}
+              >
+                {alertsUnread > 99 ? "99+" : alertsUnread}
+              </span>
+            ) : active ? (
               <span className="ml-auto h-1.5 w-1.5 rounded-full bg-gold shadow-[0_0_8px_rgba(255,209,102,0.9)]" />
-            )}
+            ) : null}
           </Link>
         );
       })}

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Crown, Users, Coins, Ticket, KeyRound, Handshake, Inbox, FileText, ArrowUpRight,
   Share2, ShieldCheck, BarChart3, Skull, Activity, RefreshCw, AlertTriangle, Tv,
-  Tags, Music, CheckCircle2, Radio, Zap,
+  Tags, Music, CheckCircle2, Radio, Zap, Bell,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -63,6 +63,7 @@ const TILES: Tile[] = [
   { to: "/boss/civility",            label: "Civility Controls",blurb: "Toggle Guttermouth swear-chat · keep things civil", Icon: ShieldCheck, tint: "#3ad6ff" },
   { to: "/boss/analytics",           label: "View Analytics",   blurb: "Anonymous public-view counts for every portal & battle", Icon: BarChart3, tint: "#00e08a" },
   { to: "/boss/lexicon",             label: "Swear Lexicon",    blurb: "Edit HEAVY/MID/SOFT word lists · refusal patterns · openers", Icon: Skull, tint: "#ff2e55" },
+  { to: "/boss/alerts",              label: "System Alerts",    blurb: "API errors and Perplexity fallback activity, realtime", Icon: Bell, tint: "#ff5577" },
 ];
 
 function BossOverview() {
