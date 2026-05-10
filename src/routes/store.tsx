@@ -279,7 +279,7 @@ function StorePage() {
         <p className="text-center py-10 text-muted-foreground"><Loader2 className="h-5 w-5 inline animate-spin mr-2" />Loading packs…</p>
       ) : (
         <>
-        {!isBoss && <PackCompareTable packs={packs} onBuy={(pid) => buy(pid)} />}
+        {!isBoss && <PackCompareTable packs={packs} onBuy={(pid: string) => buy(pid)} />}
         <div className="grid sm:grid-cols-3 gap-5">
           {packs.map((p) => (
             <PackCard
@@ -576,5 +576,97 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">{label}</label>
       <div className="mt-1">{children}</div>
     </div>
+  );
+}
+
+function PackCompareTable({ packs, onBuy }: { packs: Pack[]; onBuy: (priceId: string) => void }) {
+  // One-time coin packs only — recurring (Boss Pack) doesn't fit "cost per credit".
+  const oneTime = packs.filter((p) => p.active && !p.recurring && (p.credits ?? 0) > 0);
+  if (oneTime.length === 0) return null;
+
+  // Baseline = cheapest cost-per-credit (smallest pack at £1/coin).
+  const cppList = oneTime.map((p) => p.amount_cents / (p.credits as number));
+  const baseline = Math.max(...cppList); // worst (highest) cost per credit
+  const best = Math.min(...cppList);
+
+  // Sort by amount ascending so users scan from cheapest -> bulk.
+  const rows = [...oneTime].sort((a, b) => a.amount_cents - b.amount_cents);
+
+  return (
+    <section className="mt-2 mb-8 rounded-2xl border border-[oklch(0.72_0.22_245/0.35)] bg-card/70 backdrop-blur p-4 sm:p-6">
+      <div className="flex items-end justify-between gap-3 mb-4 flex-wrap">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.4em] font-bold" style={{ color: "var(--neon-blue-bright)" }}>
+            Pack Compare
+          </p>
+          <h2 className="mt-1 font-[Montserrat] font-black text-xl sm:text-2xl text-metallic">
+            Coins · Total · Cost per Coin
+          </h2>
+          <p className="text-xs text-muted-foreground mt-1">Side-by-side breakdown so you can spot the best deal fast.</p>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto -mx-4 sm:mx-0">
+        <table className="w-full text-sm border-separate border-spacing-0 min-w-[520px]">
+          <thead>
+            <tr className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+              <th className="text-left font-bold px-3 py-2">Pack</th>
+              <th className="text-right font-bold px-3 py-2">Coins 🪙</th>
+              <th className="text-right font-bold px-3 py-2">Total</th>
+              <th className="text-right font-bold px-3 py-2">Per Coin</th>
+              <th className="text-right font-bold px-3 py-2">Save vs base</th>
+              <th className="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((p) => {
+              const credits = p.credits as number;
+              const cpp = p.amount_cents / credits;
+              const isBest = cpp === best && best < baseline;
+              const savePctVsBase = baseline > 0 ? Math.round(((baseline - cpp) / baseline) * 100) : 0;
+              return (
+                <tr
+                  key={p.id}
+                  className={`border-t border-border/40 ${isBest ? "bg-[oklch(0.72_0.22_245/0.08)]" : ""}`}
+                >
+                  <td className="px-3 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-white">{p.name}</span>
+                      {isBest && (
+                        <span className="text-[9px] font-black uppercase tracking-[0.25em] px-2 py-0.5 rounded-full bg-[var(--neon-blue-bright)] text-black">
+                          Best
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-3 py-3 text-right tabular-nums font-bold text-white">{credits}</td>
+                  <td className="px-3 py-3 text-right tabular-nums font-bold text-white">£{(p.amount_cents / 100).toFixed(2)}</td>
+                  <td className="px-3 py-3 text-right tabular-nums text-cyan-200">£{cpp.toFixed(3).replace(/\.?0+$/, "")}</td>
+                  <td className="px-3 py-3 text-right tabular-nums">
+                    {savePctVsBase > 0 ? (
+                      <span className="font-black text-yellow-300">−{savePctVsBase}%</span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-3 text-right">
+                    <Button
+                      size="sm"
+                      onClick={() => onBuy(p.price_id)}
+                      className="bg-gradient-to-r from-[oklch(0.55_0.24_255)] to-[var(--neon-blue-bright)] text-black font-bold hover:brightness-110"
+                    >
+                      Buy
+                    </Button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-3 text-[11px] text-muted-foreground">
+        Baseline = smallest pack (£1 / Coin). Bigger packs include bonus Coins, lowering the effective cost.
+      </p>
+    </section>
   );
 }
