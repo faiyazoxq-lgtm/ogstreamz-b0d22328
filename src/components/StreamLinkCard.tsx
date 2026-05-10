@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Tv, CheckCircle2, Loader2, AlertTriangle, Clock, CalendarClock, RefreshCw } from "lucide-react";
-import { verifyAndLinkStream, reverifyStream, type StreamReasonCode } from "@/lib/stream-link.functions";
+import { verifyAndLinkStream, reverifyStream, type StreamReasonCode, type RpcErrorCause } from "@/lib/stream-link.functions";
 import { useAuth } from "@/hooks/use-auth";
 
 export function StreamLinkCard() {
@@ -17,6 +17,7 @@ export function StreamLinkCard() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [errors, setErrors] = useState<{ username?: string; password?: string; server?: string }>({});
   const [banner, setBanner] = useState<{ reason: StreamReasonCode | "client_validation"; title: string; detail?: string } | null>(null);
+  const [rpcCause, setRpcCause] = useState<RpcErrorCause | null>(null);
   const usernameRef = useRef<HTMLInputElement | null>(null);
 
   const REASON_TITLES: Record<StreamReasonCode | "client_validation", string> = {
@@ -33,6 +34,26 @@ export function StreamLinkCard() {
     account_banned: "Account banned",
     rpc_error: "Couldn't save your credentials",
     unknown: "Verification failed",
+  };
+
+  const RPC_CAUSE_TITLES: Record<RpcErrorCause, string> = {
+    network: "Network problem saving your credentials",
+    rate_limit: "Too many attempts — slow down",
+    invalid_credentials: "Credentials were rejected",
+    resubmit_required: "Please resubmit your credentials",
+    save_failed: "We couldn't save your credentials",
+    permission_denied: "You don't have permission for that",
+    unknown: "Couldn't save your credentials",
+  };
+
+  const RPC_CAUSE_HELP: Record<RpcErrorCause, string> = {
+    network: "Your connection dropped before we could save the result. Check your internet and try again in a moment.",
+    rate_limit: "You've tried this a lot in the last few minutes. Wait ~60 seconds before trying again to avoid being throttled by the stream server.",
+    invalid_credentials: "The username or password didn't match. Double-check both fields (no spaces, correct case) and resubmit.",
+    resubmit_required: "For security we don't keep your stream password on file. Re-enter your username and password below to re-verify.",
+    save_failed: "Verification worked, but saving the result failed. Try submitting once more — if it keeps failing, message Boss.",
+    permission_denied: "Your account isn't allowed to perform this action right now. Sign out and back in, then try again.",
+    unknown: "Something went wrong on our end. Please try again — if it persists, contact Boss.",
   };
 
   const validate = (un: string, pw: string, srv: string) => {
@@ -75,6 +96,7 @@ export function StreamLinkCard() {
     setErrors(errs);
     if (Object.keys(errs).length) {
       setMsg(null);
+      setRpcCause(null);
       setBanner({
         reason: "client_validation",
         title: REASON_TITLES.client_validation,
@@ -82,7 +104,7 @@ export function StreamLinkCard() {
       });
       return;
     }
-    setBusy(true); setMsg(null); setBanner(null);
+    setBusy(true); setMsg(null); setBanner(null); setRpcCause(null);
     try {
       const res = await verify({ data: { username: u.trim(), password: p, server: server.trim() } });
       if (res.ok) {
@@ -90,15 +112,24 @@ export function StreamLinkCard() {
         setP("");
         setErrors({});
         setBanner(null);
+        setRpcCause(null);
         await refresh();
       } else {
         const field = (res as any).field as "username" | "password" | "server" | undefined;
         if (field) setErrors({ [field]: res.error } as any);
         const reason = ((res as any).reason as StreamReasonCode | undefined) ?? "unknown";
+        const cause = ((res as any).cause as RpcErrorCause | undefined) ?? null;
+        setRpcCause(reason === "rpc_error" ? (cause ?? "unknown") : null);
         setBanner({
           reason,
-          title: REASON_TITLES[reason] ?? REASON_TITLES.unknown,
-          detail: res.error || undefined,
+          title:
+            reason === "rpc_error" && cause
+              ? RPC_CAUSE_TITLES[cause]
+              : (REASON_TITLES[reason] ?? REASON_TITLES.unknown),
+          detail:
+            reason === "rpc_error" && cause
+              ? RPC_CAUSE_HELP[cause]
+              : res.error || undefined,
         });
         setMsg(null);
       }
@@ -108,6 +139,7 @@ export function StreamLinkCard() {
         title: REASON_TITLES.unknown,
         detail: e?.message || undefined,
       });
+      setRpcCause(null);
     } finally { setBusy(false); }
   };
 
@@ -118,13 +150,23 @@ export function StreamLinkCard() {
     try {
       const res = await reverify({ data: {} });
       if (!res.ok && res.reason === "rpc_error") {
-        setResubmitCta({
-          title: "Resubmit credentials to re-verify",
-          detail: res.error || "For security we don't store your stream password. Re-enter your credentials below to re-verify.",
-        });
-        setU("");
-        setP("");
-        requestAnimationFrame(() => usernameRef.current?.focus());
+        const cause = ((res as any).cause as RpcErrorCause | undefined) ?? "unknown";
+        if (cause === "resubmit_required") {
+          setResubmitCta({
+            title: RPC_CAUSE_TITLES.resubmit_required,
+            detail: RPC_CAUSE_HELP.resubmit_required,
+          });
+          setU("");
+          setP("");
+          requestAnimationFrame(() => usernameRef.current?.focus());
+        } else {
+          setRpcCause(cause);
+          setBanner({
+            reason: "rpc_error",
+            title: RPC_CAUSE_TITLES[cause],
+            detail: RPC_CAUSE_HELP[cause],
+          });
+        }
       } else if (!res.ok) {
         setMsg({ ok: false, text: res.error || "Re-verification failed." });
       }
