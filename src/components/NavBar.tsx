@@ -296,6 +296,9 @@ function MobileNavDrawer({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-3 py-4">
+          <div className="mb-4">
+            <SiteSearch />
+          </div>
           <Section title="HUBS" icon={Rocket} items={hubs} gold />
           <Section title="Store" icon={Store} items={stores} />
           {admin.length > 0 && <Section title="Admin" icon={ShieldCheck} items={admin} />}
