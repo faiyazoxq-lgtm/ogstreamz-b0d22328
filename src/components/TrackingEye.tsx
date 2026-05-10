@@ -9,6 +9,8 @@ export function TrackingEye({
   pupilRatio = 0.55,
   travel,
   travelRatio = 0.18,
+  touchMode = "idle",
+  idleTravelRatio = 0.06,
   className = "",
   style,
 }: {
@@ -16,6 +18,14 @@ export function TrackingEye({
   pupilRatio?: number;
   travel?: number;
   travelRatio?: number;
+  /**
+   * How the eye behaves on touch / coarse-pointer devices.
+   *  - "still": pupil stays perfectly centered.
+   *  - "idle": pupil drifts subtly in a slow loop (default).
+   */
+  touchMode?: "still" | "idle";
+  /** Travel ratio used for the subtle idle drift in touch mode. */
+  idleTravelRatio?: number;
   className?: string;
   style?: React.CSSProperties;
 }) {
@@ -23,6 +33,38 @@ export function TrackingEye({
   const [pupil, setPupil] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
+    // Detect touch / coarse pointer devices — skip mousemove (often missing,
+    // or fired only after taps) in favor of a stable pupil or gentle idle drift.
+    const isCoarse =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+
+    if (isCoarse) {
+      if (touchMode === "still") {
+        setPupil({ x: 0, y: 0 });
+        return;
+      }
+      // Gentle idle drift — slow Lissajous loop, scaled to the eye's width.
+      let raf = 0;
+      const start = performance.now();
+      const tick = (now: number) => {
+        const el = ref.current;
+        if (el) {
+          const r = el.getBoundingClientRect();
+          const t = travel ?? r.width * idleTravelRatio;
+          const a = (now - start) / 1000;
+          setPupil({
+            x: Math.sin(a * 0.9) * t,
+            y: Math.cos(a * 0.6) * t * 0.6,
+          });
+        }
+        raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+      return () => cancelAnimationFrame(raf);
+    }
+
     const onMove = (e: MouseEvent) => {
       const el = ref.current;
       if (!el) return;
@@ -38,7 +80,7 @@ export function TrackingEye({
     };
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
-  }, [travel, travelRatio]);
+  }, [travel, travelRatio, touchMode, idleTravelRatio]);
 
   return (
     <span
