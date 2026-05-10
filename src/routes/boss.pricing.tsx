@@ -576,15 +576,47 @@ function PricingPage() {
           </div>
         ) : (
           <>
-          <p className="text-xs text-muted-foreground flex items-center gap-2">
-            <GripVertical className="h-3.5 w-3.5" />
-            Drag rows to reorder within each section.
-            {reordering && <Loader2 className="h-3 w-3 animate-spin" />}
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground flex items-center gap-2">
+              <GripVertical className="h-3.5 w-3.5" />
+              Drag rows to reorder within each section.
+              {reordering && <Loader2 className="h-3 w-3 animate-spin" />}
+            </p>
+            {selected.size > 0 && (
+              <div className="flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/5 px-3 py-2">
+                <span className="text-xs font-medium">
+                  {selected.size} selected
+                </span>
+                <Button size="sm" variant="outline" disabled={bulkBusy} onClick={() => bulkSetActive(true)}>
+                  <Power className="h-3.5 w-3.5" /> Enable
+                </Button>
+                <Button size="sm" variant="outline" disabled={bulkBusy} onClick={() => bulkSetActive(false)}>
+                  <Power className="h-3.5 w-3.5" /> Disable
+                </Button>
+                <Button size="sm" variant="ghost" disabled={bulkBusy} onClick={bulkDelete} className="text-destructive hover:text-destructive">
+                  <Trash2 className="h-3.5 w-3.5" /> Delete
+                </Button>
+                <Button size="sm" variant="ghost" disabled={bulkBusy} onClick={() => setSelected(new Set())}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+                {bulkBusy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              </div>
+            )}
+          </div>
           {KINDS.filter((k) => grouped.has(k.value)).map((k) => (
             <div key={k.value} className="rounded-2xl border border-border bg-card overflow-hidden">
               <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <span>{k.label}</span>
+                <label className="flex items-center gap-2 cursor-pointer normal-case tracking-normal">
+                  <Checkbox
+                    checked={
+                      grouped.get(k.value)!.length > 0 &&
+                      grouped.get(k.value)!.every((r) => selected.has(r.id))
+                    }
+                    onCheckedChange={() => toggleSelectGroup(k.value)}
+                    aria-label={`Select all ${k.label}`}
+                  />
+                  <span className="uppercase tracking-wider">{k.label}</span>
+                </label>
                 <span>{grouped.get(k.value)!.length} item(s)</span>
               </div>
               <ul className="divide-y divide-border">
@@ -621,8 +653,14 @@ function PricingPage() {
                       "flex flex-wrap items-center gap-3 px-4 py-3 transition-colors",
                       dragId === row.id ? "opacity-50" : "",
                       dragOverId === row.id ? "bg-primary/10 ring-1 ring-inset ring-primary/40" : "",
+                      selected.has(row.id) ? "bg-primary/5" : "",
                     ].join(" ")}
                   >
+                    <Checkbox
+                      checked={selected.has(row.id)}
+                      onCheckedChange={() => toggleSelect(row.id)}
+                      aria-label={`Select ${row.title}`}
+                    />
                     <button
                       type="button"
                       aria-label={`Drag to reorder ${row.title}`}
