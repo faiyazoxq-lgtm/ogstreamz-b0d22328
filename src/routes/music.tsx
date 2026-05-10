@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { spawnMusicPortal } from "@/lib/music-spawn.functions";
+import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 
 export const Route = createFileRoute("/music")({
   head: () => ({
@@ -186,6 +187,7 @@ function MusicPromptBuilder() {
           )}
         </Button>
       </section>
+      <SpawnPortalCard kind="music" />
     </main>
   );
 }
