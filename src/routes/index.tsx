@@ -190,12 +190,12 @@ function Index() {
                   key={to}
                   to={to}
                   aria-label={`Jump to ${title}`}
-                  className="group inline-flex items-center gap-2 rounded-lg border border-white/15 bg-black/40 px-3.5 py-2 text-[11px] uppercase tracking-[0.2em] font-bold text-white/90 hover:border-[var(--ql-tint)] hover:bg-white/5 transition-colors focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ql-tint)] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  className="group inline-flex items-center gap-2 rounded-lg border border-white/15 bg-black/40 px-3.5 py-2 text-[11px] uppercase tracking-[0.2em] font-bold text-white/90 hover:border-[var(--ql-tint)] hover:bg-white/5 transition-all focus:outline-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--ql-tint)] focus-visible:ring-offset-4 focus-visible:ring-offset-black focus-visible:border-[var(--ql-tint)] focus-visible:bg-[color-mix(in_oklab,var(--ql-tint)_22%,transparent)] focus-visible:text-white focus-visible:shadow-[0_0_28px_-2px_var(--ql-tint)] focus-visible:-translate-y-0.5 focus-visible:underline focus-visible:underline-offset-4"
                   style={{ ["--ql-tint" as any]: tint }}
                   activeProps={{
                     "aria-current": "page",
                     className:
-                      "group inline-flex items-center gap-2 rounded-lg border px-3.5 py-2 text-[11px] uppercase tracking-[0.2em] font-bold text-white transition-colors border-[var(--ql-tint)] bg-[color-mix(in_oklab,var(--ql-tint)_18%,transparent)] shadow-[0_0_24px_-2px_var(--ql-tint),inset_0_0_18px_-6px_var(--ql-tint)] focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ql-tint)] focus-visible:ring-offset-2 focus-visible:ring-offset-black",
+                      "group inline-flex items-center gap-2 rounded-lg border px-3.5 py-2 text-[11px] uppercase tracking-[0.2em] font-bold text-white transition-all border-[var(--ql-tint)] bg-[color-mix(in_oklab,var(--ql-tint)_18%,transparent)] shadow-[0_0_24px_-2px_var(--ql-tint),inset_0_0_18px_-6px_var(--ql-tint)] focus:outline-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--ql-tint)] focus-visible:ring-offset-4 focus-visible:ring-offset-black focus-visible:-translate-y-0.5 focus-visible:underline focus-visible:underline-offset-4",
                   }}
                 >
                   <Icon aria-hidden="true" focusable="false" className="h-3.5 w-3.5" style={{ color: tint }} />
