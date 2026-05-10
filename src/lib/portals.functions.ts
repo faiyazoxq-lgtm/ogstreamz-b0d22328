@@ -83,32 +83,66 @@ export const spawnPortal = createServerFn({ method: "POST" })
     const ctx = scoutMeta.headlines.length
       ? `\nRecent intel:\n- ${scoutMeta.headlines.join("\n- ")}\nContext: ${scoutMeta.summary}`
       : "";
-    // Hub-specific seed content. Only jokes-hub gets the 5 jokes pre-baked;
-    // other hubs reserve `jokes` for their own seeds (kept empty for now).
+    // Hub-specific seed content. Each kind asks Perplexity for 5 short items
+    // tuned to that hub. We reuse the `jokes` jsonb column as a generic
+    // "items" array so existing renderers keep working for jokes, and the
+    // other hubs get usable seed content out of the box.
     let jokes: string[] = [];
-    if (data.kind === "jokes") {
-      const prompt = `Generate exactly 5 short original SAVAGE jokes in ${data.language}. Niche/theme: ${data.niche}. Vibe: ${data.vibe || "n/a"}.${ctx}\nEach joke 1-3 sentences. Punchy, sharp, on-trend. Return STRICT JSON ONLY: { "jokes": ["...", "..."] }. No commentary.`;
+    {
+      const seedSpecs: Record<typeof data.kind, { system: string; userPrompt: string; jsonKey: string }> = {
+        jokes: {
+          system: "You output strict JSON only. No markdown.",
+          userPrompt: `Generate exactly 5 short original SAVAGE jokes in ${data.language}. Niche/theme: ${data.niche}. Vibe: ${data.vibe || "n/a"}.${ctx}\nEach joke 1-3 sentences. Punchy, sharp, on-trend. Return STRICT JSON ONLY: { "jokes": ["...", "..."] }. No commentary.`,
+          jsonKey: "jokes",
+        },
+        music: {
+          system: "You output strict JSON only. No markdown.",
+          userPrompt: `You are a hit-making A&R. Generate exactly 5 short original song hooks (2-4 lines each) in ${data.language} for a music portal. Niche/style: ${data.niche}. Vibe: ${data.vibe || "n/a"}.${ctx}\nEvery hook must be singable, rhythmic and instantly memorable. Return STRICT JSON ONLY: { "items": ["...", "..."] }. No commentary.`,
+          jsonKey: "items",
+        },
+        trade: {
+          system: "You output strict JSON only. No markdown. You are a sentiment analyst, not a financial advisor. Never give buy/sell instructions.",
+          userPrompt: `Generate exactly 5 short ${data.language} trade-setup briefs for a sentiment-only portal. Asset/sector: ${data.niche}. Vibe: ${data.vibe || "n/a"}.${ctx}\nEach brief: 1 sentence setup + 1 sentence catalyst, neutral wording, ends with "Sentiment only — not financial advice." Return STRICT JSON ONLY: { "items": ["...", "..."] }. No commentary.`,
+          jsonKey: "items",
+        },
+        connect: {
+          system: "You output strict JSON only. No markdown.",
+          userPrompt: `Generate exactly 5 short cold-outreach opener lines in ${data.language} for an outbound campaign portal. ICP / offer: ${data.niche}. Tone / vibe: ${data.vibe || "n/a"}.${ctx}\nEach opener: 1-2 sentences, personal-feeling, no spam tropes ("hope this finds you well"), ends with a soft question. Return STRICT JSON ONLY: { "items": ["...", "..."] }. No commentary.`,
+          jsonKey: "items",
+        },
+        tools: {
+          system: "You output strict JSON only. No markdown.",
+          userPrompt: `Generate exactly 5 short ${data.language} micro-tool / calculator ideas for a tools portal. Niche: ${data.niche}. Vibe: ${data.vibe || "n/a"}.${ctx}\nEach idea: "<Tool name> — <one-sentence what it computes and the inputs>". Practical, single-purpose, no "AI assistant" generic answers. Return STRICT JSON ONLY: { "items": ["...", "..."] }. No commentary.`,
+          jsonKey: "items",
+        },
+      };
+      const spec = seedSpecs[data.kind];
       const res = await fetch("https://api.perplexity.ai/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${PERPLEXITY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "sonar",
           messages: [
-            { role: "system", content: "You output strict JSON only. No markdown." },
-            { role: "user", content: prompt },
+            { role: "system", content: spec.system },
+            { role: "user", content: spec.userPrompt },
           ],
           temperature: 0.8,
-          max_tokens: 800,
+          max_tokens: 900,
         }),
       });
       if (!res.ok) throw new Error(`Perplexity ${res.status}`);
       const json = await res.json();
       const raw: string = json?.choices?.[0]?.message?.content ?? "{}";
       const match = raw.match(/\{[\s\S]*\}/);
-      let parsed: { jokes?: string[] } = {};
+      let parsed: Record<string, unknown> = {};
       try { parsed = JSON.parse(match ? match[0] : raw); } catch { /* */ }
-      jokes = (parsed.jokes ?? []).filter((s) => typeof s === "string" && s.trim()).slice(0, 5);
-      if (jokes.length === 0) throw new Error("No jokes generated");
+      const arr = (parsed[spec.jsonKey] ?? parsed.items ?? parsed.jokes) as unknown;
+      jokes = (Array.isArray(arr) ? arr : [])
+        .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
+        .slice(0, 5);
+      if (jokes.length === 0) {
+        throw new Error(`No ${data.kind} seeds generated — try a more specific niche`);
+      }
     }
 
     // ───── Creative Director: Perplexity-generated Style Dictionary ─────
