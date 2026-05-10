@@ -191,6 +191,34 @@ function Card({ children }: { children: React.ReactNode }) {
   return <div className="rounded-2xl border border-border bg-card p-5">{children}</div>;
 }
 
+function StatTile({
+  label, Icon, iconClass, value, valueClass, hint, action,
+}: {
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  iconClass?: string;
+  value: React.ReactNode;
+  valueClass?: string;
+  hint?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 transition-colors hover:border-primary/40">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className={`inline-flex h-9 w-9 items-center justify-center rounded-xl bg-secondary ring-1 ring-border ${iconClass ?? "text-primary"}`}>
+            <Icon className="h-4.5 w-4.5" />
+          </span>
+          <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{label}</p>
+        </div>
+        {action}
+      </div>
+      <p className={`mt-3 text-3xl font-black leading-none ${valueClass ?? "text-metallic"}`}>{value}</p>
+      {hint && <p className="mt-2 text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
 function StreamLinksCard({ streams }: { streams: unknown }) {
   const entries = readEntries(streams);
 
