@@ -705,6 +705,7 @@ export type Database = {
       custom_hubs: {
         Row: {
           accent: string
+          create_portal_cost: number
           created_at: string
           created_by: string | null
           href: string
@@ -719,6 +720,7 @@ export type Database = {
         }
         Insert: {
           accent?: string
+          create_portal_cost?: number
           created_at?: string
           created_by?: string | null
           href: string
@@ -733,6 +735,7 @@ export type Database = {
         }
         Update: {
           accent?: string
+          create_portal_cost?: number
           created_at?: string
           created_by?: string | null
           href?: string
@@ -1245,6 +1248,7 @@ export type Database = {
           tool_ideas: Json
           trade_briefs: Json
           updated_at: string
+          use_credit_cost: number
           vibe: string | null
           view_count: number
           vip: boolean
@@ -1281,6 +1285,7 @@ export type Database = {
           tool_ideas?: Json
           trade_briefs?: Json
           updated_at?: string
+          use_credit_cost?: number
           vibe?: string | null
           view_count?: number
           vip?: boolean
@@ -1317,6 +1322,7 @@ export type Database = {
           tool_ideas?: Json
           trade_briefs?: Json
           updated_at?: string
+          use_credit_cost?: number
           vibe?: string | null
           view_count?: number
           vip?: boolean
@@ -2881,6 +2887,7 @@ export type Database = {
         }
         Returns: string
       }
+      charge_portal_use: { Args: { _portal_id: string }; Returns: number }
       civility_default: { Args: never; Returns: boolean }
       claim_real_og_bundle: {
         Args: {
