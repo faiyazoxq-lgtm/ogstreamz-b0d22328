@@ -113,6 +113,10 @@ export async function runPeerReview(opts: {
   topic: string;
   analysis: string;
   evidence: DeepSearchResult;
+  /** Optional voice override — e.g. brutally brief + swearing for TradeHUB. */
+  systemOverride?: string;
+  /** Cap output tokens — small for terse outputs. */
+  maxTokens?: number;
 }): Promise<PeerReview> {
   const PPLX = process.env.PERPLEXITY_API_KEY;
   if (!PPLX) {
@@ -151,12 +155,12 @@ Return STRICT JSON only, no markdown:
       body: JSON.stringify({
         model: "sonar-reasoning",
         messages: [
-          { role: "system", content: "Output strict JSON only." },
+          { role: "system", content: opts.systemOverride || "Output strict JSON only." },
           { role: "user", content: prompt },
         ],
         response_format: { type: "json_object" },
         temperature: 0.2,
-        max_tokens: 1200,
+        max_tokens: Math.max(200, Math.min(1200, opts.maxTokens ?? 1200)),
       }),
     });
     if (!r.ok) throw new Error(`perplexity ${r.status}`);
