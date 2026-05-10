@@ -44,7 +44,7 @@ function WalletPage() {
         </Button>
       </div>
 
-      <CoinActivity loadMore pageSize={20} />
+      <CoinActivity loadMore pageSize={20} showDateFilter defaultRange="30d" />
 
       <CoinTopUpModal open={topUpOpen} onOpenChange={setTopUpOpen} />
     </main>
