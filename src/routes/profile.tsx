@@ -11,6 +11,7 @@ import { requestTopup, listMyTopupRequests } from "@/lib/topup-requests.function
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { RealOgBadge } from "@/components/RealOgBadge";
 
 import { requireMember } from "@/lib/route-guards";
 export const Route = createFileRoute("/profile")({
@@ -71,6 +72,11 @@ function ProfilePage() {
             Welcome back
           </h1>
           <p className="mt-3 text-muted-foreground text-sm">{isBoss ? "— BOSS ACCOUNT —" : (profile?.email ?? user.email)}</p>
+          {isVip && !isBoss && (
+            <div className="mt-4 flex justify-center">
+              <RealOgBadge variant="badge" size="lg" />
+            </div>
+          )}
         </header>
 
         <section className="grid sm:grid-cols-2 gap-5">
@@ -85,6 +91,11 @@ function ProfilePage() {
               </span>
               {isVip && <Sparkles className="h-5 w-5" style={{ color: "var(--neon-blue-bright)" }} />}
             </div>
+            {isVip && !isBoss && (
+              <div className="mt-3">
+                <RealOgBadge size="sm" />
+              </div>
+            )}
             <p className="mt-3 text-sm text-muted-foreground">
               {isBoss ? "Sovereign access. All systems unlocked." : isVip ? "All vaults unlocked. Premium frequencies active." : "Unlock VIP for premium tracks and tools."}
             </p>
