@@ -370,18 +370,26 @@ export function WelcomeAuthPrompt() {
               )}
 
               {mode === "login" && (
-                <div className="flex items-center justify-between text-[11px]">
-                  <label className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground">
+                <div className="flex items-start justify-between gap-3 text-[11px]">
+                  <label className="flex items-start gap-2 cursor-pointer text-muted-foreground hover:text-foreground">
                     <Checkbox
                       checked={remember}
                       onCheckedChange={(v) => setRememberState(v === true)}
+                      className="mt-0.5"
                     />
-                    Remember me
+                    <span className="leading-snug">
+                      Keep me signed in
+                      <span className="block text-[10px] text-muted-foreground/80">
+                        {remember
+                          ? "Stay signed in across browser restarts."
+                          : "Sign me out when I close this tab."}
+                      </span>
+                    </span>
                   </label>
                   <Link
                     to="/forgot-password"
                     onClick={() => setOpen(false)}
-                    className="text-muted-foreground hover:text-foreground"
+                    className="text-muted-foreground hover:text-foreground shrink-0"
                   >
                     Forgot password?
                   </Link>

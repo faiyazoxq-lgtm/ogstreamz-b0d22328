@@ -477,15 +477,23 @@ function AuthPage() {
                 </span>
                 . The link expires in ~1 hour and works only on this device.
               </p>
-              <div className="flex items-center justify-between text-xs">
-                <label className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground">
+              <div className="flex items-start justify-between gap-3 text-xs">
+                <label className="flex items-start gap-2 cursor-pointer text-muted-foreground hover:text-foreground">
                   <Checkbox
                     checked={remember}
                     onCheckedChange={(v) => setRememberState(v === true)}
+                    className="mt-0.5"
                   />
-                  Remember me
+                  <span className="leading-snug">
+                    Keep me signed in
+                    <span className="block text-[11px] text-muted-foreground/80">
+                      {remember
+                        ? "Stay signed in on this device across browser restarts."
+                        : "Sign me out automatically when I close this tab or window."}
+                    </span>
+                  </span>
                 </label>
-                <Link to="/forgot-password" className="text-muted-foreground hover:text-foreground">
+                <Link to="/forgot-password" className="text-muted-foreground hover:text-foreground shrink-0">
                   Forgot password?
                 </Link>
               </div>
