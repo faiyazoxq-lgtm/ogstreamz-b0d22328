@@ -51,6 +51,9 @@ function Index() {
   const { user, profile } = useAuth();
   const rank = profile?.rank;
   const streamLinked = rank === "stream_user" || rank === "vip" || rank === "boss";
+  // VIPs (and the boss) already own the perks these promos are pitching —
+  // hide the upsell so the welcome page stays clean for them.
+  const isVipMember = rank === "vip" || rank === "boss" || profile?.status === "vip";
   const showStreamConnect = !!user && !streamLinked;
   const [pendingTo, setPendingTo] = useState<string | null>(null);
   const [vaultOpen, setVaultOpen] = useState(false);
@@ -111,11 +114,11 @@ function Index() {
       {/* Best bulk-buy Coins deal — shown above the VIP pass on welcome page */}
       <CoinsBulkPromoCard />
 
-      {/* Real OG one-off pass */}
-      <RealOgPromoCard />
+      {/* Real OG one-off pass — hidden for existing VIPs */}
+      {!isVipMember && <RealOgPromoCard />}
 
-      {/* VIP Bundles — Real OG + Coins at a discounted total */}
-      <RealOgBundlesCard />
+      {/* VIP Bundles — Real OG + Coins at a discounted total. Hidden for VIPs. */}
+      {!isVipMember && <RealOgBundlesCard />}
 
       {showStreamConnect && (
         <section className="relative max-w-3xl mx-auto px-5 sm:px-8 -mt-2 pb-6">
