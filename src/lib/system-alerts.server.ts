@@ -25,7 +25,7 @@ export async function recordSystemAlert(input: SystemAlertInput): Promise<void> 
       source: input.source,
       title: input.title,
       message: input.message ?? null,
-      metadata: input.metadata ?? {},
+      metadata: (input.metadata ?? {}) as any,
       related_job_id: input.related_job_id ?? null,
     });
     if (error) console.error("[system-alerts] insert failed:", error.message);
