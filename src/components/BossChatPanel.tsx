@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { setFeatureFlags } from "@/lib/overlord.functions";
 import { bossChat } from "@/lib/boss-chat.functions";
+import { effectiveSwearing } from "@/lib/swearing";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
