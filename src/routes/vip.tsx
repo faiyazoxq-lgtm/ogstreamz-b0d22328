@@ -13,6 +13,7 @@ import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { createCheckoutSession } from "@/lib/payments.functions";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/vip")({
   component: VipPage,
@@ -82,6 +83,76 @@ function VipPage() {
   const [loading, setLoading] = useState(false);
   const checkoutFn = useServerFn(createCheckoutSession);
 
+  // Latest subscription for this user (in current env). Used to label the
+  // status banner with Monthly vs Yearly after checkout.
+  const [activeSub, setActiveSub] = useState<{
+    price_id: string | null;
+    status: string;
+    current_period_end: string | null;
+    cancel_at_period_end: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!user) { setActiveSub(null); return; }
+    let cancelled = false;
+    const env = getStripeEnvironment();
+    const fetchSub = async () => {
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("price_id,status,current_period_end,cancel_at_period_end")
+        .eq("user_id", user.id)
+        .eq("environment", env)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!cancelled) setActiveSub((data as any) ?? null);
+    };
+    void fetchSub();
+
+    // Webhook may write the row a moment after Stripe redirects back.
+    // Poll briefly on a successful checkout return until we see it.
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+    if (search.checkout === "success") {
+      let tries = 0;
+      pollTimer = setInterval(() => {
+        tries += 1;
+        if (tries > 8 || activeSub) { if (pollTimer) clearInterval(pollTimer); return; }
+        void fetchSub();
+      }, 1500);
+    }
+
+    const channel = supabase
+      .channel(`vip_sub_${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "subscriptions", filter: `user_id=eq.${user.id}` },
+        () => { void fetchSub(); },
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      if (pollTimer) clearInterval(pollTimer);
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, search.checkout]);
+
+  const planLabel = (() => {
+    const id = activeSub?.price_id ?? "";
+    if (/year|annual/i.test(id)) return "Yearly";
+    if (/month/i.test(id)) return "Monthly";
+    return null;
+  })();
+  const renewalDate = activeSub?.current_period_end
+    ? new Date(activeSub.current_period_end).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
+    : null;
+  const renewalLabel = renewalDate
+    ? activeSub?.cancel_at_period_end
+      ? `Access until ${renewalDate}`
+      : `Renews ${renewalDate}`
+    : null;
+
   // Surface a one-time toast on return from Stripe checkout.
   useEffect(() => {
     if (search.checkout === "success") {
@@ -129,9 +200,17 @@ function VipPage() {
           <div role="status" className="flex flex-col sm:flex-row items-start sm:items-center gap-3 rounded-2xl border border-emerald-400/50 bg-gradient-to-r from-emerald-500/15 to-cyan-500/10 p-4 shadow-[0_0_60px_-10px_rgba(16,185,129,0.5)]">
             <PartyPopper className="h-6 w-6 text-emerald-300 shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-emerald-200">VIP Pass activated</p>
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-emerald-200 flex flex-wrap items-center gap-2">
+                VIP Pass activated
+                {planLabel && (
+                  <span className="inline-flex items-center rounded-full border border-emerald-300/60 bg-emerald-400/15 px-2 py-0.5 text-[10px] tracking-[0.25em] text-emerald-100">
+                    {planLabel} plan
+                  </span>
+                )}
+              </p>
               <p className="text-xs text-emerald-100/80 mt-0.5">
                 Your status is live. Every portal, every track, every tool — unlocked.
+                {renewalLabel && <> · {renewalLabel}</>}
                 {search.session_id && <> · Receipt ref: <span className="font-mono text-[10px]">{search.session_id.slice(-12)}</span></>}
               </p>
             </div>
@@ -153,9 +232,17 @@ function VipPage() {
           <div role="status" className="flex flex-col sm:flex-row items-start sm:items-center gap-3 rounded-2xl border border-amber-400/50 bg-gradient-to-r from-amber-500/15 to-amber-400/5 p-4 shadow-[0_0_60px_-10px_rgba(255,200,80,0.5)]">
             <Crown className="h-6 w-6 text-amber-300 shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-amber-200">You're VIP</p>
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-amber-200 flex flex-wrap items-center gap-2">
+                You're VIP
+                {planLabel && (
+                  <span className="inline-flex items-center rounded-full border border-amber-300/60 bg-amber-400/15 px-2 py-0.5 text-[10px] tracking-[0.25em] text-amber-100">
+                    {planLabel} plan
+                  </span>
+                )}
+              </p>
               <p className="text-xs text-amber-100/80 mt-0.5">
                 Real 0G status active{user?.email ? <> · <span className="font-mono">{user.email}</span></> : null}. Every portal is unlocked.
+                {renewalLabel && <> · {renewalLabel}</>}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
