@@ -2,12 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, Plus, Save, Trash2, Tags, Coins, Power, Tv, GripVertical } from "lucide-react";
+import { Loader2, Plus, Save, Trash2, Tags, Coins, Power, Tv, GripVertical, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   listStoreProducts,
@@ -86,6 +87,8 @@ function PricingPage() {
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [reordering, setReordering] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const [creditsPerSong, setCreditsPerSong] = useState<number>(5);
   const [savingCredits, setSavingCredits] = useState(false);
@@ -214,6 +217,64 @@ function PricingPage() {
       await refresh();
     } catch (e: any) {
       toast.error(e?.message ?? "Delete failed");
+    }
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectGroup(kind: string) {
+    const inKind = rows.filter((r) => r.kind === kind).map((r) => r.id);
+    const allSelected = inKind.every((id) => selected.has(id));
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allSelected) inKind.forEach((id) => next.delete(id));
+      else inKind.forEach((id) => next.add(id));
+      return next;
+    });
+  }
+
+  async function bulkSetActive(active: boolean) {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+    setBulkBusy(true);
+    try {
+      const results = await Promise.allSettled(
+        ids.map((id) => toggle({ data: { id, active } })),
+      );
+      const ok = results.filter((r) => r.status === "fulfilled").length;
+      const fail = results.length - ok;
+      if (fail === 0) toast.success(`${active ? "Enabled" : "Disabled"} ${ok} product(s)`);
+      else toast.error(`${ok} updated, ${fail} failed`);
+      setSelected(new Set());
+      await refresh();
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  async function bulkDelete() {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+    if (!confirm(`Delete ${ids.length} product(s)? This cannot be undone.`)) return;
+    setBulkBusy(true);
+    try {
+      const results = await Promise.allSettled(
+        ids.map((id) => del({ data: { id } })),
+      );
+      const ok = results.filter((r) => r.status === "fulfilled").length;
+      const fail = results.length - ok;
+      if (fail === 0) toast.success(`Deleted ${ok} product(s)`);
+      else toast.error(`${ok} deleted, ${fail} failed`);
+      setSelected(new Set());
+      await refresh();
+    } finally {
+      setBulkBusy(false);
     }
   }
 
@@ -515,15 +576,47 @@ function PricingPage() {
           </div>
         ) : (
           <>
-          <p className="text-xs text-muted-foreground flex items-center gap-2">
-            <GripVertical className="h-3.5 w-3.5" />
-            Drag rows to reorder within each section.
-            {reordering && <Loader2 className="h-3 w-3 animate-spin" />}
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground flex items-center gap-2">
+              <GripVertical className="h-3.5 w-3.5" />
+              Drag rows to reorder within each section.
+              {reordering && <Loader2 className="h-3 w-3 animate-spin" />}
+            </p>
+            {selected.size > 0 && (
+              <div className="flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/5 px-3 py-2">
+                <span className="text-xs font-medium">
+                  {selected.size} selected
+                </span>
+                <Button size="sm" variant="outline" disabled={bulkBusy} onClick={() => bulkSetActive(true)}>
+                  <Power className="h-3.5 w-3.5" /> Enable
+                </Button>
+                <Button size="sm" variant="outline" disabled={bulkBusy} onClick={() => bulkSetActive(false)}>
+                  <Power className="h-3.5 w-3.5" /> Disable
+                </Button>
+                <Button size="sm" variant="ghost" disabled={bulkBusy} onClick={bulkDelete} className="text-destructive hover:text-destructive">
+                  <Trash2 className="h-3.5 w-3.5" /> Delete
+                </Button>
+                <Button size="sm" variant="ghost" disabled={bulkBusy} onClick={() => setSelected(new Set())}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+                {bulkBusy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              </div>
+            )}
+          </div>
           {KINDS.filter((k) => grouped.has(k.value)).map((k) => (
             <div key={k.value} className="rounded-2xl border border-border bg-card overflow-hidden">
               <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <span>{k.label}</span>
+                <label className="flex items-center gap-2 cursor-pointer normal-case tracking-normal">
+                  <Checkbox
+                    checked={
+                      grouped.get(k.value)!.length > 0 &&
+                      grouped.get(k.value)!.every((r) => selected.has(r.id))
+                    }
+                    onCheckedChange={() => toggleSelectGroup(k.value)}
+                    aria-label={`Select all ${k.label}`}
+                  />
+                  <span className="uppercase tracking-wider">{k.label}</span>
+                </label>
                 <span>{grouped.get(k.value)!.length} item(s)</span>
               </div>
               <ul className="divide-y divide-border">
@@ -560,8 +653,14 @@ function PricingPage() {
                       "flex flex-wrap items-center gap-3 px-4 py-3 transition-colors",
                       dragId === row.id ? "opacity-50" : "",
                       dragOverId === row.id ? "bg-primary/10 ring-1 ring-inset ring-primary/40" : "",
+                      selected.has(row.id) ? "bg-primary/5" : "",
                     ].join(" ")}
                   >
+                    <Checkbox
+                      checked={selected.has(row.id)}
+                      onCheckedChange={() => toggleSelect(row.id)}
+                      aria-label={`Select ${row.title}`}
+                    />
                     <button
                       type="button"
                       aria-label={`Drag to reorder ${row.title}`}
