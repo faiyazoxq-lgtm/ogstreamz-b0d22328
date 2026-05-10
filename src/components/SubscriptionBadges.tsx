@@ -24,11 +24,11 @@ export function PlanChip({
   const sizeCls = size === "sm" ? "text-[9px] px-2 py-0.5" : "text-[10px] px-2 py-0.5";
   return (
     <span
-      className={`inline-flex items-center rounded-full border tracking-[0.25em] uppercase ${sizeCls} ${toneCls[tone]}`}
+      className={`inline-flex items-center justify-center leading-none h-[18px] rounded-full border tracking-[0.25em] uppercase ${sizeCls} ${toneCls[tone]}`}
       role="status"
       aria-label={`Subscription plan: ${planLabel}`}
     >
-      <span aria-hidden="true">{planLabel} plan</span>
+      <span aria-hidden="true" className="leading-none">{planLabel} plan</span>
     </span>
   );
 }
@@ -64,12 +64,12 @@ export function StatusBadge({
   const sizeCls = size === "sm" ? "text-[9px] px-2 py-0.5" : "text-[10px] px-2 py-0.5";
   return (
     <span
-      className={`inline-flex items-center rounded-full border tracking-[0.25em] uppercase ${sizeCls} ${v.cls}`}
+      className={`inline-flex items-center justify-center leading-none h-[18px] rounded-full border tracking-[0.25em] uppercase ${sizeCls} ${v.cls}`}
       title={`Subscription status: ${s}`}
       role="status"
       aria-label={`Subscription status: ${v.label}`}
     >
-      <span aria-hidden="true">{v.label}</span>
+      <span aria-hidden="true" className="leading-none">{v.label}</span>
     </span>
   );
 }
