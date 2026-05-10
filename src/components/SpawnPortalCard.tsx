@@ -10,12 +10,13 @@ import { useAuth } from "@/hooks/use-auth";
 
 type Kind = "jokes" | "music" | "trade" | "connect" | "tools";
 
-const COPY: Record<Kind, { title: string; subtitle: string; namePh: string; nichePh: string; vibePh: string; viewPath: (slug: string) => string }> = {
-  jokes:   { title: "Spawn a Jokes Portal",   subtitle: "5 fresh AI jokes + custom theme",        namePh: "Chinese Smelly Jokes",  nichePh: "Traditional Chinese style, smelly humor",       vibePh: "Ancient Chinese architecture",  viewPath: (s) => `/p/${s}` },
-  music:   { title: "Spawn a Music Portal",   subtitle: "Themed landing page for your sound",     namePh: "Late Night Drill",      nichePh: "UK drill, melodic, late-night driving energy",   vibePh: "Foggy neon underpass",          viewPath: (s) => `/m/${s}` },
-  trade:   { title: "Spawn a Trade Portal",   subtitle: "Themed scout for an asset / sector",     namePh: "Gold Bull Watch",       nichePh: "Spot gold momentum + central-bank flow",         vibePh: "Vault chrome, ticker glow",     viewPath: (s) => `/p/${s}` },
-  connect: { title: "Spawn a Connect Portal", subtitle: "Themed outbound landing for an offer",   namePh: "B2B SaaS CMO Outreach", nichePh: "ICP: Series-B SaaS marketing leaders, EU",       vibePh: "Editorial, slate, gold accents",vibe: "" as never, viewPath: (s) => `/p/${s}` } as any,
-  tools:   { title: "Spawn a Tools Portal",   subtitle: "Themed wrapper for a calculator/tool",   namePh: "Position Sizer Pro",    nichePh: "Risk-aware position sizing for FX traders",      vibePh: "Cockpit dashboard, amber HUD",  viewPath: (s) => `/p/${s}` },
+type Copy = { title: string; subtitle: string; namePh: string; nichePh: string; vibePh: string; viewPath: (slug: string) => string };
+const COPY: Record<Kind, Copy> = {
+  jokes:   { title: "Spawn a Jokes Portal",   subtitle: "5 fresh AI jokes + custom theme",      namePh: "Chinese Smelly Jokes",  nichePh: "Traditional Chinese style, smelly humor",      vibePh: "Ancient Chinese architecture",   viewPath: (s: string) => `/p/${s}` },
+  music:   { title: "Spawn a Music Portal",   subtitle: "Themed landing page for your sound",   namePh: "Late Night Drill",      nichePh: "UK drill, melodic, late-night driving energy", vibePh: "Foggy neon underpass",           viewPath: (s: string) => `/m/${s}` },
+  trade:   { title: "Spawn a Trade Portal",   subtitle: "Themed scout for an asset / sector",   namePh: "Gold Bull Watch",       nichePh: "Spot gold momentum + central-bank flow",       vibePh: "Vault chrome, ticker glow",      viewPath: (s: string) => `/p/${s}` },
+  connect: { title: "Spawn a Connect Portal", subtitle: "Themed outbound landing for an offer", namePh: "B2B SaaS CMO Outreach", nichePh: "ICP: Series-B SaaS marketing leaders, EU",     vibePh: "Editorial, slate, gold accents", viewPath: (s: string) => `/p/${s}` },
+  tools:   { title: "Spawn a Tools Portal",   subtitle: "Themed wrapper for a calculator/tool", namePh: "Position Sizer Pro",    nichePh: "Risk-aware position sizing for FX traders",    vibePh: "Cockpit dashboard, amber HUD",   viewPath: (s: string) => `/p/${s}` },
 };
 
 export function SpawnPortalCard({ kind }: { kind: Kind }) {
