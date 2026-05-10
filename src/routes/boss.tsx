@@ -73,15 +73,25 @@ function BossLayout() {
             onClick={onClick}
             aria-current={active ? "page" : undefined}
             className={[
-              "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold transition-colors outline-none",
+              "relative flex items-center gap-3 rounded-md pl-4 pr-3 py-2.5 text-sm font-semibold transition-colors outline-none",
               "hover:bg-secondary focus-visible:ring-2 focus-visible:ring-primary",
               active
-                ? "bg-gold/10 text-gold ring-1 ring-inset ring-gold/40"
+                ? "bg-gold/10 text-gold ring-1 ring-inset ring-gold/40 shadow-[0_0_18px_-10px_rgba(255,209,102,0.9)]"
                 : "text-foreground/80",
             ].join(" ")}
           >
+            <span
+              aria-hidden="true"
+              className={[
+                "absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full transition-all",
+                active ? "bg-gold opacity-100" : "bg-transparent opacity-0",
+              ].join(" ")}
+            />
             <n.Icon className={`h-4 w-4 shrink-0 ${active ? "text-gold drop-shadow-[0_0_6px_rgba(255,209,102,0.6)]" : "text-gold/70"}`} />
             <span className="truncate">{n.label}</span>
+            {active && (
+              <span className="ml-auto h-1.5 w-1.5 rounded-full bg-gold shadow-[0_0_8px_rgba(255,209,102,0.9)]" />
+            )}
           </Link>
         );
       })}
