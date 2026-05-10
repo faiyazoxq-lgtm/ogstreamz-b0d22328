@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Tv, CheckCircle2, Loader2, AlertTriangle, Clock, CalendarClock, RefreshCw } from "lucide-react";
+import { Tv, CheckCircle2, Loader2, AlertTriangle, Clock, CalendarClock, RefreshCw, CircleDashed, XCircle } from "lucide-react";
 import { verifyAndLinkStream, reverifyStream, type StreamReasonCode, type RpcErrorCause } from "@/lib/stream-link.functions";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -17,6 +17,9 @@ export function StreamLinkCard() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [errors, setErrors] = useState<{ username?: string; password?: string; server?: string }>({});
   const [banner, setBanner] = useState<{ reason: StreamReasonCode | "client_validation"; title: string; detail?: string } | null>(null);
+  type Phase = "idle" | "pending" | "checking" | "success" | "error";
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [phaseLabel, setPhaseLabel] = useState<string>("");
   const usernameRef = useRef<HTMLInputElement | null>(null);
 
   const REASON_TITLES: Record<StreamReasonCode | "client_validation", string> = {
@@ -100,16 +103,21 @@ export function StreamLinkCard() {
         title: REASON_TITLES.client_validation,
         detail: "Resolve the highlighted fields below and try again.",
       });
+      setPhase("error");
+      setPhaseLabel("Validation failed");
       return;
     }
     setBusy(true); setMsg(null); setBanner(null);
+    setPhase("pending"); setPhaseLabel("Preparing request");
     try {
+      setPhase("checking"); setPhaseLabel("Checking credentials with stream server");
       const res = await verify({ data: { username: u.trim(), password: p, server: server.trim() } });
       if (res.ok) {
         setMsg({ ok: true, text: res.message || "Submitted to Boss for OGSTREAMZ approval." });
         setP("");
         setErrors({});
         setBanner(null);
+        setPhase("success"); setPhaseLabel("Submitted to Boss for approval");
         await refresh();
       } else {
         const field = (res as any).field as "username" | "password" | "server" | undefined;
@@ -128,6 +136,8 @@ export function StreamLinkCard() {
               : res.error || undefined,
         });
         setMsg(null);
+        setPhase("error");
+        setPhaseLabel(reason === "rpc_error" && cause ? RPC_CAUSE_TITLES[cause] : (REASON_TITLES[reason] ?? REASON_TITLES.unknown));
       }
     } catch (e: any) {
       setBanner({
@@ -135,6 +145,7 @@ export function StreamLinkCard() {
         title: REASON_TITLES.unknown,
         detail: e?.message || undefined,
       });
+      setPhase("error"); setPhaseLabel("Verification failed");
     } finally { setBusy(false); }
   };
 
@@ -142,7 +153,10 @@ export function StreamLinkCard() {
     setReverifying(true);
     setResubmitCta(null);
     setMsg(null);
+    setBanner(null);
+    setPhase("pending"); setPhaseLabel("Preparing re-verification");
     try {
+      setPhase("checking"); setPhaseLabel("Re-checking with stream server");
       const res = await reverify({ data: {} });
       if (!res.ok && res.reason === "rpc_error") {
         const cause = ((res as any).cause as RpcErrorCause | undefined) ?? "unknown";
@@ -153,6 +167,7 @@ export function StreamLinkCard() {
           });
           setU("");
           setP("");
+          setPhase("pending"); setPhaseLabel("Awaiting resubmitted credentials");
           requestAnimationFrame(() => usernameRef.current?.focus());
         } else {
           setBanner({
@@ -160,15 +175,73 @@ export function StreamLinkCard() {
             title: RPC_CAUSE_TITLES[cause],
             detail: RPC_CAUSE_HELP[cause],
           });
+          setPhase("error"); setPhaseLabel(RPC_CAUSE_TITLES[cause]);
         }
       } else if (!res.ok) {
         setMsg({ ok: false, text: res.error || "Re-verification failed." });
+        setPhase("error"); setPhaseLabel("Re-verification failed");
+      } else {
+        setPhase("success"); setPhaseLabel("Re-verified");
       }
     } catch (e: any) {
       setMsg({ ok: false, text: e?.message || "Re-verification failed." });
+      setPhase("error"); setPhaseLabel("Re-verification failed");
     } finally {
       setReverifying(false);
     }
+  };
+
+  const inFlight = busy || reverifying;
+
+  const Stepper = () => {
+    if (phase === "idle") return null;
+    const steps: Array<{ key: Phase; label: string }> = [
+      { key: "pending", label: "Pending" },
+      { key: "checking", label: "Checking" },
+      { key: phase === "error" ? "error" : "success", label: phase === "error" ? "Error" : "Result" },
+    ];
+    const order = ["pending", "checking", "success"] as const;
+    const currentIdx = phase === "error" ? 2 : order.indexOf(phase as any);
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        className="mt-4 rounded-md border border-border bg-background/40 px-3 py-2.5"
+      >
+        <div className="flex items-center gap-2">
+          {steps.map((s, i) => {
+            const isCurrent = i === currentIdx;
+            const isDone = i < currentIdx;
+            const isError = phase === "error" && i === 2;
+            const isSuccess = phase === "success" && i === 2;
+            const Icon = isError ? XCircle : isSuccess ? CheckCircle2 : isCurrent ? Loader2 : isDone ? CheckCircle2 : CircleDashed;
+            const color = isError
+              ? "text-destructive"
+              : isSuccess
+                ? "text-emerald-400"
+                : isCurrent
+                  ? "text-primary"
+                  : isDone
+                    ? "text-emerald-400/80"
+                    : "text-muted-foreground/70";
+            return (
+              <div key={s.label} className="flex items-center gap-2">
+                <span className={`inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.18em] ${color}`}>
+                  <Icon className={`h-3.5 w-3.5 ${isCurrent && !isError && !isSuccess ? "animate-spin" : ""}`} />
+                  {s.label}
+                </span>
+                {i < steps.length - 1 && (
+                  <span className={`h-px w-6 ${i < currentIdx ? "bg-emerald-400/60" : "bg-border"}`} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {phaseLabel && (
+          <p className="mt-1.5 text-xs text-muted-foreground">{phaseLabel}</p>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -225,7 +298,7 @@ export function StreamLinkCard() {
           <button
             type="button"
             onClick={onReverify}
-            disabled={reverifying || busy}
+            disabled={inFlight}
             className="inline-flex items-center gap-2 rounded-md border border-border bg-background/60 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-foreground/80 hover:text-foreground hover:border-foreground/40 disabled:opacity-60"
           >
             {reverifying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
@@ -233,6 +306,8 @@ export function StreamLinkCard() {
           </button>
         </div>
       )}
+
+      <Stepper />
 
       {resubmitCta && (
         <div
@@ -270,7 +345,8 @@ export function StreamLinkCard() {
         </div>
       )}
 
-      <form onSubmit={submit} className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <form onSubmit={submit} className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3" aria-busy={inFlight}>
+        <fieldset disabled={inFlight} className="contents">
         <div>
           <input
             ref={usernameRef}
@@ -306,12 +382,13 @@ export function StreamLinkCard() {
             : <p className="mt-1 text-xs text-muted-foreground">Include protocol and port if non-standard.</p>}
         </div>
         <button
-          type="submit" disabled={busy}
+          type="submit" disabled={inFlight}
           className="sm:col-span-2 inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-bold hover:opacity-90 disabled:opacity-60"
         >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Tv className="h-4 w-4" />}
-          {busy ? "Verifying…" : linked ? "Re-verify Stream Account" : "Verify & Upgrade"}
+          {inFlight ? <Loader2 className="h-4 w-4 animate-spin" /> : <Tv className="h-4 w-4" />}
+          {busy ? "Verifying…" : reverifying ? "Re-verifying…" : linked ? "Re-verify Stream Account" : "Verify & Upgrade"}
         </button>
+        </fieldset>
       </form>
 
       {msg && (
