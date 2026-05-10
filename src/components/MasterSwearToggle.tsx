@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Flame, ShieldCheck } from "lucide-react";
+import { Heart } from "lucide-react";
 import { toast } from "sonner";
-import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -10,14 +9,16 @@ import { supabase } from "@/integrations/supabase/client";
  * Flips `profile.feature_flags.swearing` for the signed-in user.
  * Replaces all per-panel/per-portal swearing on/off switches.
  */
-export function MasterSwearToggle({ compact = false }: { compact?: boolean }) {
+export function MasterSwearToggle({ compact: _compact = false }: { compact?: boolean }) {
   const { user, profile, refresh } = useAuth();
   const [busy, setBusy] = useState(false);
 
   if (!user || !profile) return null;
   const swearing = !!profile.feature_flags?.swearing;
 
-  const onChange = async (next: boolean) => {
+  const toggle = async () => {
+    if (busy) return;
+    const next = !swearing;
     setBusy(true);
     try {
       const merged = { ...(profile.feature_flags ?? {}), swearing: next };
@@ -27,7 +28,7 @@ export function MasterSwearToggle({ compact = false }: { compact?: boolean }) {
         .eq("id", user.id);
       if (error) throw new Error(error.message);
       await refresh();
-      toast.success(next ? "Swearing Agent: ON 🔥" : "Swearing Agent: OFF");
+      toast.success(next ? "Swearing Agent: ON 🖕" : "Safe Mode: ON 💚");
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to toggle swearing");
     } finally {
@@ -36,36 +37,28 @@ export function MasterSwearToggle({ compact = false }: { compact?: boolean }) {
   };
 
   return (
-    <label
+    <button
+      type="button"
+      onClick={toggle}
+      disabled={busy}
+      aria-pressed={swearing}
+      aria-label={swearing ? "Swearing Agent on — tap for Safe Mode" : "Safe Mode on — tap to enable Swearing Agent"}
+      title={swearing ? "Swearing Agent ON — tap for Safe Mode" : "Safe Mode ON — tap to enable Swearing Agent"}
       className={[
-        "inline-flex items-center gap-2 rounded-md border px-2 py-1.5 transition-colors select-none cursor-pointer",
+        "inline-flex h-8 w-8 items-center justify-center rounded-full border transition-all select-none",
+        "active:scale-95 disabled:opacity-60",
         swearing
-          ? "border-rose-600/60 bg-rose-950/30 text-rose-200"
-          : "border-emerald-700/40 bg-black/30 text-emerald-300",
+          ? "border-rose-500/60 bg-rose-950/40 text-rose-200 hover:bg-rose-900/50 shadow-[0_0_12px_-2px_rgba(244,63,94,0.55)]"
+          : "border-emerald-500/50 bg-emerald-950/30 text-emerald-300 hover:bg-emerald-900/40 shadow-[0_0_12px_-2px_rgba(16,185,129,0.5)]",
       ].join(" ")}
-      title={swearing ? "Swearing Agent is ON for your account" : "Swearing Agent is OFF for your account"}
     >
       {swearing ? (
-        <Flame className="h-3.5 w-3.5 text-rose-300" />
+        // Middle finger — lucide has no glyph for this, emoji is the cleanest tiny version.
+        <span aria-hidden className="text-base leading-none">🖕</span>
       ) : (
-        <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+        <Heart aria-hidden className="h-4 w-4 fill-emerald-400 text-emerald-400" />
       )}
-      {!compact && (
-        <span className="text-[10px] uppercase tracking-[0.25em] font-black">
-          Swear
-        </span>
-      )}
-      <Switch
-        checked={swearing}
-        disabled={busy}
-        onCheckedChange={onChange}
-        className="data-[state=checked]:bg-rose-500"
-        aria-label="Toggle Swearing Agent"
-      />
-      <span className="text-[10px] font-black uppercase tracking-widest">
-        {swearing ? "ON" : "OFF"}
-      </span>
-    </label>
+    </button>
   );
 }
 
