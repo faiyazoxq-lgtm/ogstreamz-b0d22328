@@ -220,6 +220,64 @@ function PricingPage() {
     }
   }
 
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectGroup(kind: string) {
+    const inKind = rows.filter((r) => r.kind === kind).map((r) => r.id);
+    const allSelected = inKind.every((id) => selected.has(id));
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allSelected) inKind.forEach((id) => next.delete(id));
+      else inKind.forEach((id) => next.add(id));
+      return next;
+    });
+  }
+
+  async function bulkSetActive(active: boolean) {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+    setBulkBusy(true);
+    try {
+      const results = await Promise.allSettled(
+        ids.map((id) => toggle({ data: { id, active } })),
+      );
+      const ok = results.filter((r) => r.status === "fulfilled").length;
+      const fail = results.length - ok;
+      if (fail === 0) toast.success(`${active ? "Enabled" : "Disabled"} ${ok} product(s)`);
+      else toast.error(`${ok} updated, ${fail} failed`);
+      setSelected(new Set());
+      await refresh();
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  async function bulkDelete() {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+    if (!confirm(`Delete ${ids.length} product(s)? This cannot be undone.`)) return;
+    setBulkBusy(true);
+    try {
+      const results = await Promise.allSettled(
+        ids.map((id) => del({ data: { id } })),
+      );
+      const ok = results.filter((r) => r.status === "fulfilled").length;
+      const fail = results.length - ok;
+      if (fail === 0) toast.success(`Deleted ${ok} product(s)`);
+      else toast.error(`${ok} deleted, ${fail} failed`);
+      setSelected(new Set());
+      await refresh();
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
   // Reorder rows within a kind group via drag & drop. New sort_order values
   // are assigned in steps of 10 so manual edits still slot cleanly between
   // items, then persisted in parallel via setStoreProductSort.
