@@ -123,6 +123,60 @@ function VipPage() {
     <main className="min-h-screen bg-black text-white overflow-x-hidden">
       <PaymentTestModeBanner />
 
+      {/* STATUS BANNER — clear, prominent state of the user's VIP */}
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-6">
+        {search.checkout === "success" ? (
+          <div role="status" className="flex flex-col sm:flex-row items-start sm:items-center gap-3 rounded-2xl border border-emerald-400/50 bg-gradient-to-r from-emerald-500/15 to-cyan-500/10 p-4 shadow-[0_0_60px_-10px_rgba(16,185,129,0.5)]">
+            <PartyPopper className="h-6 w-6 text-emerald-300 shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-emerald-200">VIP Pass activated</p>
+              <p className="text-xs text-emerald-100/80 mt-0.5">
+                Your status is live. Every portal, every track, every tool — unlocked.
+                {search.session_id && <> · Receipt ref: <span className="font-mono text-[10px]">{search.session_id.slice(-12)}</span></>}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link to="/dashboard" className="inline-flex items-center gap-1.5 rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-bold uppercase tracking-[0.2em] px-3 py-2 text-[11px]">
+                Go to dashboard <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+              <Link to="/vault-login" className="inline-flex items-center gap-1.5 rounded-md border border-cyan-300/50 hover:bg-cyan-400/10 text-cyan-100 font-bold uppercase tracking-[0.2em] px-3 py-2 text-[11px]">
+                <Lock className="h-3.5 w-3.5" /> Open Vault
+              </Link>
+            </div>
+          </div>
+        ) : search.checkout === "canceled" ? (
+          <div role="status" className="flex items-center gap-3 rounded-2xl border border-rose-400/40 bg-rose-500/10 p-4">
+            <XCircle className="h-5 w-5 text-rose-300 shrink-0" />
+            <p className="text-sm text-rose-100">Checkout canceled — no charge made. Pick a plan below whenever you're ready.</p>
+          </div>
+        ) : isVip ? (
+          <div role="status" className="flex flex-col sm:flex-row items-start sm:items-center gap-3 rounded-2xl border border-amber-400/50 bg-gradient-to-r from-amber-500/15 to-amber-400/5 p-4 shadow-[0_0_60px_-10px_rgba(255,200,80,0.5)]">
+            <Crown className="h-6 w-6 text-amber-300 shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-amber-200">You're VIP</p>
+              <p className="text-xs text-amber-100/80 mt-0.5">
+                Real 0G status active{user?.email ? <> · <span className="font-mono">{user.email}</span></> : null}. Every portal is unlocked.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link to="/dashboard" className="inline-flex items-center gap-1.5 rounded-md bg-amber-400 hover:bg-amber-300 text-black font-bold uppercase tracking-[0.2em] px-3 py-2 text-[11px]">
+                Dashboard <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+              <Link to="/vault-login" className="inline-flex items-center gap-1.5 rounded-md border border-cyan-300/50 hover:bg-cyan-400/10 text-cyan-100 font-bold uppercase tracking-[0.2em] px-3 py-2 text-[11px]">
+                <Lock className="h-3.5 w-3.5" /> Open Vault
+              </Link>
+            </div>
+          </div>
+        ) : user ? (
+          <div role="status" className="flex items-center gap-3 rounded-2xl border border-cyan-300/30 bg-cyan-400/5 p-3">
+            <ShieldCheck className="h-5 w-5 text-cyan-300 shrink-0" />
+            <p className="text-xs sm:text-sm text-cyan-100/85">
+              Signed in as <span className="font-mono">{user.email}</span> · <span className="text-cyan-300/80">Free tier</span> — upgrade below to unlock the full vault.
+            </p>
+          </div>
+        ) : null}
+      </div>
+
       {/* HERO */}
       <section className="relative isolate overflow-hidden">
         <div className="pointer-events-none absolute inset-0">
