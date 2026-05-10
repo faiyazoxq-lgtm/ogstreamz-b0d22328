@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteSearch } from "@/components/SiteSearch";
+import { MasterSwearToggle } from "@/components/MasterSwearToggle";
 import {
   Sheet,
   SheetContent,
@@ -173,6 +174,11 @@ export function NavBar() {
               isBoss={isBoss}
             />
           </li>
+          {user && (
+            <li className="hidden md:block">
+              <MasterSwearToggle />
+            </li>
+          )}
           <li className="sm:hidden">
             <MobileNavDrawer
               hubs={visibleHubs}
