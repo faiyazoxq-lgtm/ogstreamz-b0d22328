@@ -31,6 +31,5 @@ export const purchaseWithCoins = createServerFn({ method: "POST" })
       kind?: string;
       already?: boolean;
       pending_approval?: boolean;
-      detail?: unknown;
     };
   });
