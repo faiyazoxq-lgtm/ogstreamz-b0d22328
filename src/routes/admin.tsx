@@ -22,6 +22,7 @@ import { listBots, upsertBot, deleteBot, broadcastGlobalAlert, runSyndicateTickN
 import { generateBrandBible, updateTelegramLinks, deployToTelegram } from "@/lib/telegram.functions";
 import { runAgentTask, getOpsSnapshot, runMaintenance } from "@/lib/command-deck.functions";
 import { TopUpRequestsPanel } from "@/components/TopUpRequestsPanel";
+import { getNerdStats } from "@/lib/nerd-stats.functions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,6 +44,7 @@ const NAV_SECTIONS: { id: string; label: string; tint: string }[] = [
   { id: "homehubs", label: "Homepage Hubs", tint: "#ff00aa" },
   { id: "topups", label: "Top-Ups", tint: "#ff5577" },
   { id: "command", label: "Command Deck", tint: "#ff00aa" },
+  { id: "nerd-stats", label: "Nerd Stats", tint: "#7dd3fc" },
 ];
 
 export const Route = createFileRoute("/admin")({
