@@ -37,6 +37,7 @@ function AuthPage() {
   const [passToken, setPassToken] = useState<string | null>(null);
   const [remember, setRememberState] = useState<boolean>(true);
   const [signedInDest, setSignedInDest] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   useEffect(() => { setRememberState(getRemember()); }, []);
 
@@ -204,9 +205,12 @@ function AuthPage() {
 
   const magicLink = async () => {
     if (!email) {
+      setEmailError("Enter the email where we should send your magic link.");
       toast.error("Enter your email first");
+      try { document.getElementById("email")?.focus(); } catch { /* noop */ }
       return;
     }
+    setEmailError(null);
     setLoading(true);
     const dest = peekRedirect();
     const redirectTo = `${window.location.origin}${dest}`;
@@ -230,6 +234,8 @@ function AuthPage() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Could not send magic link";
       void logAttempt("failed", msg);
+      setEmailError(msg);
+      try { document.getElementById("email")?.focus(); } catch { /* noop */ }
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -355,23 +361,32 @@ function AuthPage() {
             <TabsContent value="login" className="space-y-4 mt-0">
               <AuthForm
                 email={email}
-                setEmail={setEmail}
+                setEmail={(v) => { setEmail(v); if (emailError) setEmailError(null); }}
                 password={password}
                 setPassword={setPassword}
                 loading={loading}
                 submit={submit}
                 cta="Sign In"
+                emailError={emailError}
               />
               <Button
                 type="button"
                 variant="outline"
                 disabled={loading || !email}
                 onClick={magicLink}
+                aria-describedby="magic-link-help-login"
                 className="w-full h-12 border-[oklch(0.78_0.18_85/0.5)] hover:bg-[oklch(0.78_0.18_85/0.1)] text-amber-200"
               >
                 <Wand2 className="h-4 w-4 mr-2" />
                 Email me a magic link
               </Button>
+              <p id="magic-link-help-login" className="text-xs text-muted-foreground -mt-1">
+                We'll email a one-tap sign-in link to{" "}
+                <span className="font-semibold text-foreground">
+                  {email || "the address above"}
+                </span>
+                . The link expires in ~1 hour and works only on this device.
+              </p>
               <div className="flex items-center justify-between text-xs">
                 <label className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground">
                   <Checkbox
@@ -388,23 +403,32 @@ function AuthPage() {
             <TabsContent value="signup" className="space-y-4 mt-0">
               <AuthForm
                 email={email}
-                setEmail={setEmail}
+                setEmail={(v) => { setEmail(v); if (emailError) setEmailError(null); }}
                 password={password}
                 setPassword={setPassword}
                 loading={loading}
                 submit={submit}
                 cta="Create Account"
+                emailError={emailError}
               />
               <Button
                 type="button"
                 variant="outline"
                 disabled={loading || !email}
                 onClick={magicLink}
+                aria-describedby="magic-link-help-signup"
                 className="w-full h-12 border-[oklch(0.78_0.18_85/0.5)] hover:bg-[oklch(0.78_0.18_85/0.1)] text-amber-200"
               >
                 <Wand2 className="h-4 w-4 mr-2" />
                 Or email me a magic link
               </Button>
+              <p id="magic-link-help-signup" className="text-xs text-muted-foreground -mt-1">
+                We'll send a sign-in link to{" "}
+                <span className="font-semibold text-foreground">
+                  {email || "the address above"}
+                </span>
+                . No password required — just tap the link from your inbox.
+              </p>
             </TabsContent>
           </Tabs>
 
@@ -450,14 +474,16 @@ function AuthForm(props: {
   loading: boolean;
   submit: (e: FormEvent) => void;
   cta: string;
+  emailError?: string | null;
 }) {
-  const { email, setEmail, password, setPassword, loading, submit, cta } = props;
+  const { email, setEmail, password, setPassword, loading, submit, cta, emailError } = props;
+  const hasError = !!emailError;
   return (
     <form onSubmit={submit} className="space-y-4">
       <div>
         <Label htmlFor="email" className="text-xs uppercase tracking-widest">Email</Label>
         <div className="relative mt-1.5">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${hasError ? "text-destructive" : "text-muted-foreground"}`} />
           <Input
             id="email"
             type="email"
@@ -465,9 +491,16 @@ function AuthForm(props: {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@frequency.com"
-            className="pl-10 h-11"
+            aria-invalid={hasError || undefined}
+            aria-describedby={hasError ? "email-error" : undefined}
+            className={`pl-10 h-11 ${hasError ? "border-destructive ring-2 ring-destructive/40 focus-visible:ring-destructive" : ""}`}
           />
         </div>
+        {hasError && (
+          <p id="email-error" role="alert" className="mt-1.5 text-xs font-semibold text-destructive">
+            {emailError}
+          </p>
+        )}
       </div>
       <div>
         <Label htmlFor="password" className="text-xs uppercase tracking-widest">Password</Label>
