@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   User, LogIn, Coins, Crown, Shield, ChevronDown, History,
   Music, Laugh, TrendingUp, Rocket, Wrench, Swords, Radio,
@@ -161,8 +161,28 @@ export function NavBar() {
 
   const visibleHubs = hubLinks.filter((l) => !l.bossOnly || isBoss);
 
+  // Scroll-aware navbar surface: keep it nearly transparent at the very top
+  // (so the hero glow shows through) and ramp up the scrim + blur as soon as
+  // content starts sliding under it. Guarantees the wordmark stays readable
+  // over photos, videos, and bright sections at every scroll position.
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border">
+    <header
+      data-scrolled={scrolled ? "true" : "false"}
+      className={`sticky top-0 z-50 transition-[background-color,backdrop-filter,border-color,box-shadow] duration-300 ease-out border-b ${
+        scrolled
+          ? "bg-background/85 backdrop-blur-xl border-border shadow-[0_8px_28px_-18px_rgba(0,0,0,0.85)]"
+          : "bg-background/35 backdrop-blur-md border-transparent"
+      }`}
+    >
       <nav className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap px-2 sm:px-8 h-16 sm:h-20 gap-1 sm:gap-2">
         <Link to="/" className="flex items-center gap-2 sm:gap-3 group min-w-0 flex-1 sm:flex-initial overflow-hidden">
           <TVStaticLogo className="logo-xl shrink-0" />
