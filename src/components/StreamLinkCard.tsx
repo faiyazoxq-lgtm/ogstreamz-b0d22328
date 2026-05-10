@@ -4,7 +4,7 @@ import { Tv, CheckCircle2, Loader2, AlertTriangle, Clock, CalendarClock } from "
 import { verifyAndLinkStream } from "@/lib/stream-link.functions";
 import { useAuth } from "@/hooks/use-auth";
 
-export function StreamLinkCard({ compact = false }: { compact?: boolean } = {}) {
+export function StreamLinkCard() {
   const { profile, refresh } = useAuth();
   const verify = useServerFn(verifyAndLinkStream);
   const [u, setU] = useState("");
