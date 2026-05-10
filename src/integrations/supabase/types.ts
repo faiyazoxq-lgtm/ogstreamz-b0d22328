@@ -816,6 +816,36 @@ export type Database = {
         }
         Relationships: []
       }
+      magic_link_audit: {
+        Row: {
+          created_at: string
+          email: string
+          error_message: string | null
+          id: string
+          redirect_to: string | null
+          status: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          error_message?: string | null
+          id?: string
+          redirect_to?: string | null
+          status: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          error_message?: string | null
+          id?: string
+          redirect_to?: string | null
+          status?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       market_pulse: {
         Row: {
           asset: string
