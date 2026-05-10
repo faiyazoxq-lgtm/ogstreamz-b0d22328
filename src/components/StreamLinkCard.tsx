@@ -10,7 +10,6 @@ export function StreamLinkCard() {
   const reverify = useServerFn(reverifyStream);
   const [u, setU] = useState("");
   const [p, setP] = useState("");
-  const [server, setServer] = useState("http://xiu96ctyh6-system.xyz:80");
   const [busy, setBusy] = useState(false);
   const [reverifying, setReverifying] = useState(false);
   const [resubmitCta, setResubmitCta] = useState<{ title: string; detail: string } | null>(null);
@@ -65,7 +64,7 @@ export function StreamLinkCard() {
   // Or a bare IPv4
   const IPV4_RE = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
 
-  const validate = (un: string, pw: string, srv: string) => {
+  const validate = (un: string, pw: string) => {
     const errs: { username?: string; password?: string; server?: string } = {};
 
     // Username — trimmed, length, charset
@@ -81,40 +80,6 @@ export function StreamLinkCard() {
     else if (pw !== pw.trim()) errs.password = "Password cannot start or end with a space.";
     else if (pw.length < 2) errs.password = "Password is too short (min 2).";
     else if (pw.length > 200) errs.password = "Password is too long (max 200).";
-
-    // Server — normalize, parse, validate host + port + scheme + path
-    const s = srv.trim();
-    if (!s) {
-      errs.server = "Server URL is required.";
-    } else if (s.length > 253 + 16) {
-      errs.server = "Server URL is too long.";
-    } else if (/\s/.test(s)) {
-      errs.server = "Server URL cannot contain spaces.";
-    } else {
-      const candidate = /^https?:\/\//i.test(s) ? s : `http://${s}`;
-      try {
-        const url = new URL(candidate);
-        if (url.protocol !== "http:" && url.protocol !== "https:") {
-          errs.server = "Server URL must start with http:// or https://.";
-        } else if (!url.hostname) {
-          errs.server = "Enter a valid host (e.g. host.tld:80).";
-        } else if (!HOSTNAME_RE.test(url.hostname) && !IPV4_RE.test(url.hostname)) {
-          errs.server = "Host must be a domain like host.tld or an IPv4 address.";
-        } else if (url.username || url.password) {
-          errs.server = "Don't include credentials in the URL.";
-        } else if (url.port && !/^\d{1,5}$/.test(url.port)) {
-          errs.server = "Port must be numeric.";
-        } else if (url.port && (Number(url.port) < 1 || Number(url.port) > 65535)) {
-          errs.server = "Port must be between 1 and 65535.";
-        } else if (url.search || url.hash) {
-          errs.server = "Remove query string and fragment from the server URL.";
-        } else if (url.pathname && url.pathname !== "/" && url.pathname !== "") {
-          errs.server = "Server URL should not include a path.";
-        }
-      } catch {
-        errs.server = "Server URL is not a valid URL.";
-      }
-    }
 
     return errs;
   };
@@ -135,7 +100,7 @@ export function StreamLinkCard() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const errs = validate(u, p, server);
+    const errs = validate(u, p);
     setErrors(errs);
     if (Object.keys(errs).length) {
       setMsg(null);
@@ -152,7 +117,7 @@ export function StreamLinkCard() {
     setPhase("pending"); setPhaseLabel("Preparing request");
     try {
       setPhase("checking"); setPhaseLabel("Checking credentials with stream server");
-      const res = await verify({ data: { username: u.trim(), password: p, server: server.trim() } });
+      const res = await verify({ data: { username: u.trim(), password: p } });
       if (res.ok) {
         setMsg({ ok: true, text: res.message || "Submitted to Boss for OGSTREAMZ approval." });
         setP("");
@@ -195,9 +160,9 @@ export function StreamLinkCard() {
     // (e.g. about to resubmit) gate on the same client-side rules so we never
     // call the server with malformed values.
     if (u || p) {
-      const errs = validate(u || "x", p || "xx", server);
-      // Only block on username/server format problems (password is optional here).
-      if (errs.username || errs.server) {
+      const errs = validate(u || "x", p || "xx");
+      // Only block on username format problems (password is optional here).
+      if (errs.username) {
         setErrors(errs);
         setBanner({
           reason: "client_validation",
@@ -429,7 +394,7 @@ export function StreamLinkCard() {
             ref={usernameRef}
             required value={u}
             onChange={(e) => { setU(e.target.value); if (errors.username) setErrors({ ...errors, username: undefined }); }}
-            onBlur={() => setErrors({ ...errors, ...validate(u, p, server), password: errors.password, server: errors.server })}
+            onBlur={() => setErrors({ ...errors, ...validate(u, p), password: errors.password })}
             placeholder="Stream username" autoComplete="username"
             aria-invalid={!!errors.username}
             className={`w-full bg-background/60 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 ${errors.username ? "border-destructive focus:ring-destructive" : "border-border focus:ring-primary"}`}
@@ -446,18 +411,11 @@ export function StreamLinkCard() {
           />
           {errors.password && <p className="mt-1 text-xs text-destructive">{errors.password}</p>}
         </div>
-        <div className="sm:col-span-2">
-          <input
-            value={server}
-            onChange={(e) => { setServer(e.target.value); if (errors.server) setErrors({ ...errors, server: undefined }); }}
-            placeholder="Server URL (e.g. http://host.tld:80)"
-            aria-invalid={!!errors.server}
-            className={`w-full bg-background/60 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 ${errors.server ? "border-destructive focus:ring-destructive" : "border-border focus:ring-primary"}`}
-          />
-          {errors.server
-            ? <p className="mt-1 text-xs text-destructive">{errors.server}</p>
-            : <p className="mt-1 text-xs text-muted-foreground">Include protocol and port if non-standard.</p>}
-        </div>
+        {errors.server && (
+          <div className="sm:col-span-2">
+            <p className="text-xs text-destructive">{errors.server}</p>
+          </div>
+        )}
         <button
           type="submit" disabled={inFlight}
           className="sm:col-span-2 inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-bold hover:opacity-90 disabled:opacity-60"
