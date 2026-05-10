@@ -97,8 +97,27 @@ export function TrackingEye({
         return;
       }
 
-      // Subtle, slow Lissajous drift driven purely by time. Capped tightly
-      // so the pupil never visibly "tracks" anything — it just breathes.
+      // Touch path: pupil snaps toward each tap and holds briefly, then
+      // decays back to a subtle idle drift. Gives the eye real agency on
+      // mobile without chasing scroll-induced pointermove jitter.
+      const updateTouchTarget = (clientX: number, clientY: number) => {
+        const el = ref.current;
+        if (!el) return;
+        const r = el.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        const dx = clientX - cx;
+        const dy = clientY - cy;
+        const dist = Math.hypot(dx, dy) || 1;
+        const t = travel ?? r.width * travelRatio;
+        const mag = Math.min(t, dist * followGain);
+        targetRef.current = { x: (dx / dist) * mag, y: (dy / dist) * mag };
+        lastTapAt = performance.now();
+      };
+      let lastTapAt = -Infinity;
+      const onTap = (e: PointerEvent) => updateTouchTarget(e.clientX, e.clientY);
+      window.addEventListener("pointerdown", onTap, { passive: true });
+
       let raf = 0;
       const start = performance.now();
       const tick = (now: number) => {
@@ -108,18 +127,43 @@ export function TrackingEye({
           return;
         }
         const r = el.getBoundingClientRect();
-        const t = (now - start) / 1000;
-        const amp = (travel ?? r.width * travelRatio) * idleTravelRatio;
-        // Two slow sine waves at incommensurate periods → organic drift.
-        const nx = Math.sin(t * 0.6 + phase) * amp;
-        const ny = Math.cos(t * 0.43 + phase * 1.3) * amp * 0.7;
+        const sinceTap = now - lastTapAt;
+        const HOLD = 900; // ms to look at the tap
+        const FADE = 700; // ms to ease back to idle
+        if (sinceTap > HOLD + FADE) {
+          // Pure idle drift.
+          const t = (now - start) / 1000;
+          const amp = (travel ?? r.width * travelRatio) * idleTravelRatio;
+          const nx = Math.sin(t * 0.6 + phase) * amp;
+          const ny = Math.cos(t * 0.43 + phase * 1.3) * amp * 0.7;
+          targetRef.current = { x: nx, y: ny };
+        } else if (sinceTap > HOLD) {
+          // Blend tap target → idle over FADE.
+          const k = (sinceTap - HOLD) / FADE;
+          const t = (now - start) / 1000;
+          const amp = (travel ?? r.width * travelRatio) * idleTravelRatio;
+          const ix = Math.sin(t * 0.6 + phase) * amp;
+          const iy = Math.cos(t * 0.43 + phase * 1.3) * amp * 0.7;
+          targetRef.current = {
+            x: targetRef.current.x * (1 - k) + ix * k,
+            y: targetRef.current.y * (1 - k) + iy * k,
+          };
+        }
+        // Lerp current → target so motion stays smooth.
+        const tgt = targetRef.current;
+        const cur = currentRef.current;
+        const nx = cur.x + (tgt.x - cur.x) * smoothing;
+        const ny = cur.y + (tgt.y - cur.y) * smoothing;
         currentRef.current = { x: nx, y: ny };
         setPupil({ x: nx, y: ny });
         writeGlowVars(nx, ny);
         raf = requestAnimationFrame(tick);
       };
       raf = requestAnimationFrame(tick);
-      return () => cancelAnimationFrame(raf);
+      return () => {
+        window.removeEventListener("pointerdown", onTap);
+        cancelAnimationFrame(raf);
+      };
     }
 
     // ─── Desktop / fine pointer path ───────────────────────────────────
@@ -138,7 +182,9 @@ export function TrackingEye({
     };
 
     const onPointer = (e: PointerEvent) => updateTarget(e.clientX, e.clientY);
+    const onTap = (e: PointerEvent) => updateTarget(e.clientX, e.clientY);
     window.addEventListener("pointermove", onPointer, { passive: true });
+    window.addEventListener("pointerdown", onTap, { passive: true });
 
     // rAF lerp toward the target — smooth motion independent of input rate.
     let raf = 0;
@@ -158,6 +204,7 @@ export function TrackingEye({
 
     return () => {
       window.removeEventListener("pointermove", onPointer);
+      window.removeEventListener("pointerdown", onTap);
       cancelAnimationFrame(raf);
     };
   }, [travel, travelRatio, smoothing, followGain, touchMode, idleTravelRatio, phase]);
