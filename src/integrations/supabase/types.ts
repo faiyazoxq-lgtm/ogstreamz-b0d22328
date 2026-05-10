@@ -1804,6 +1804,57 @@ export type Database = {
         }
         Relationships: []
       }
+      stream_verification_requests: {
+        Row: {
+          auto_expires_at: string | null
+          auto_payload: Json
+          auto_status: string | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          id: string
+          password: string
+          server: string
+          status: string
+          updated_at: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          auto_expires_at?: string | null
+          auto_payload?: Json
+          auto_status?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          id?: string
+          password: string
+          server: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          auto_expires_at?: string | null
+          auto_payload?: Json
+          auto_status?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          id?: string
+          password?: string
+          server?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean
@@ -2553,6 +2604,10 @@ export type Database = {
         Args: { _approve: boolean; _note?: string; _order_id: string }
         Returns: Json
       }
+      boss_decide_stream_request: {
+        Args: { _approve: boolean; _id: string; _note?: string }
+        Returns: Json
+      }
       boss_delete_vault_credential: { Args: { _id: string }; Returns: boolean }
       boss_delete_vip_pass_pool: { Args: { _id: string }; Returns: boolean }
       boss_deny_topup: {
@@ -2635,6 +2690,18 @@ export type Database = {
       claim_telegram_link_code: {
         Args: { _chat_id: number; _code: string; _tg_username: string }
         Returns: Json
+      }
+      enqueue_stream_verification: {
+        Args: {
+          _auto_expires_at: string
+          _auto_payload: Json
+          _auto_status: string
+          _password: string
+          _server: string
+          _user_id: string
+          _username: string
+        }
+        Returns: string
       }
       get_user_purchases_summary: { Args: never; Returns: Json }
       has_active_vip: {
