@@ -236,7 +236,7 @@ function Index() {
             <h2 className="mt-10 font-[Montserrat] font-black text-3xl sm:text-4xl tracking-tight text-metallic">
               {title}
             </h2>
-            <p className="mt-3 text-sm sm:text-base text-muted-foreground">{desc}</p>
+            <p className="mt-3 text-base sm:text-base font-semibold text-foreground/95 leading-relaxed">{desc}</p>
             <div className="mt-8 btn-glass-blue btn-magnetic inline-flex items-center gap-2 px-5 py-3 rounded-lg text-xs uppercase tracking-[0.25em] font-bold text-white">
               Open Portal
               <ArrowUpRight className="h-3.5 w-3.5" />
@@ -267,7 +267,7 @@ function Index() {
               <h2 className="mt-10 font-[Montserrat] font-black text-3xl sm:text-4xl tracking-tight text-metallic">
                 {h.title}
               </h2>
-              <p className="mt-3 text-sm sm:text-base text-muted-foreground">{h.tagline}</p>
+              <p className="mt-3 text-base sm:text-base font-semibold text-foreground/95 leading-relaxed">{h.tagline}</p>
               <div className="mt-8 inline-flex items-center gap-2 px-5 py-3 rounded-lg text-xs uppercase tracking-[0.25em] font-bold text-white"
                 style={{ background: `${accent}26`, border: `1px solid ${accent}66` }}>
                 Open Hub
