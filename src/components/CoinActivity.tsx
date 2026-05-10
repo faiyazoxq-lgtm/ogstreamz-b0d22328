@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Coins, Gift, ArrowDownRight, ArrowUpRight, RefreshCw } from "lucide-react";
+import { Coins, Gift, ArrowDownRight, ArrowUpRight, RefreshCw, ChevronDown, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -36,10 +36,18 @@ function describeReason(reason: string, delta: number): { label: string; note: s
   return { label: r || "Adjustment", note: null, gift: delta > 0 };
 }
 
-export function CoinActivity({ limit = 8 }: { limit?: number }) {
+export function CoinActivity({
+  limit = 8,
+  loadMore = false,
+  pageSize = 20,
+}: { limit?: number; loadMore?: boolean; pageSize?: number }) {
   const { user } = useAuth();
   const [rows, setRows] = useState<LedgerRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+
+  const initialSize = loadMore ? pageSize : limit;
 
   const load = async () => {
     if (!user) return;
@@ -48,9 +56,27 @@ export function CoinActivity({ limit = 8 }: { limit?: number }) {
       .from("credit_ledger")
       .select("id, delta, reason, created_at")
       .order("created_at", { ascending: false })
-      .limit(limit);
-    setRows((data ?? []) as LedgerRow[]);
+      .limit(initialSize);
+    const next = (data ?? []) as LedgerRow[];
+    setRows(next);
+    setHasMore(loadMore && next.length === initialSize);
     setLoading(false);
+  };
+
+  const loadNext = async () => {
+    if (!user || loadingMore || rows.length === 0) return;
+    setLoadingMore(true);
+    const last = rows[rows.length - 1];
+    const { data } = await supabase
+      .from("credit_ledger")
+      .select("id, delta, reason, created_at")
+      .order("created_at", { ascending: false })
+      .lt("created_at", last.created_at)
+      .limit(pageSize);
+    const next = (data ?? []) as LedgerRow[];
+    setRows((prev) => [...prev, ...next]);
+    setHasMore(next.length === pageSize);
+    setLoadingMore(false);
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [user?.id]);
@@ -77,6 +103,7 @@ export function CoinActivity({ limit = 8 }: { limit?: number }) {
       ) : rows.length === 0 ? (
         <p className="text-xs text-muted-foreground py-3 text-center">No activity yet.</p>
       ) : (
+        <>
         <ol className="space-y-2">
           {rows.map((row) => {
             const meta = describeReason(row.reason, row.delta);
@@ -129,6 +156,23 @@ export function CoinActivity({ limit = 8 }: { limit?: number }) {
             );
           })}
         </ol>
+        {loadMore && hasMore && (
+          <div className="mt-3 flex justify-center">
+            <button
+              type="button"
+              onClick={loadNext}
+              disabled={loadingMore}
+              className="inline-flex items-center gap-1.5 rounded-md border border-gold/40 bg-gold/10 text-gold px-3 py-1.5 text-xs font-bold uppercase tracking-[0.22em] hover:bg-gold/15 disabled:opacity-60"
+            >
+              {loadingMore ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronDown className="h-3.5 w-3.5" />}
+              {loadingMore ? "Loading…" : "Load more"}
+            </button>
+          </div>
+        )}
+        {loadMore && !hasMore && rows.length > 0 && (
+          <p className="mt-3 text-center text-[10px] uppercase tracking-[0.25em] text-muted-foreground">End of ledger</p>
+        )}
+        </>
       )}
     </section>
   );
