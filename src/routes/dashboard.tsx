@@ -16,6 +16,7 @@ import { ZeroGStreamPanel } from "@/components/ZeroGStreamPanel";
 import { VaultRevealCard } from "@/components/VaultRevealCard";
 import { VipNotificationsInbox } from "@/components/VipNotificationsInbox";
 import { PassesPanel } from "@/components/PassesPanel";
+import { getStripeEnvironment } from "@/lib/stripe";
 
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: requireMember,
@@ -33,6 +34,12 @@ const RANK_META: Record<string, { label: string; color: string; perks: string }>
 type SpawnRow = { id: string; name: string; slug: string; created_at: string; kind: string };
 type UnlockRow = { id: string; created_at: string; portal: { name: string; slug: string } | null };
 type TrackRow = { id: string; created_at: string; track: { title: string; portal_slug: string } | null };
+type SubRow = {
+  price_id: string | null;
+  status: string;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+};
 
 function DashboardPage() {
   const { user, profile, loading, refresh } = useAuth();
@@ -43,6 +50,7 @@ function DashboardPage() {
   const [trackBuys, setTrackBuys] = useState<TrackRow[]>([]);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
+  const [activeSub, setActiveSub] = useState<SubRow | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -63,6 +71,35 @@ function DashboardPage() {
     });
   }, [user]);
 
+  // Latest subscription row, mirrored from /vip so the VIP card surfaces
+  // plan + renewal + status consistently across the app.
+  useEffect(() => {
+    if (!user) { setActiveSub(null); return; }
+    let cancelled = false;
+    const env = getStripeEnvironment();
+    const fetchSub = async () => {
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("price_id,status,current_period_end,cancel_at_period_end")
+        .eq("user_id", user.id)
+        .eq("environment", env)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!cancelled) setActiveSub((data as any) ?? null);
+    };
+    void fetchSub();
+    const channel = supabase
+      .channel(`dash_sub_${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "subscriptions", filter: `user_id=eq.${user.id}` },
+        () => { void fetchSub(); },
+      )
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(channel); };
+  }, [user?.id]);
+
   const onRedeem = async () => {
     if (!code.trim()) return;
     setBusy(true);
@@ -81,6 +118,46 @@ function DashboardPage() {
   const meta = RANK_META[profile.rank] ?? RANK_META.prospect;
   const freeLeft = Math.max(0, 5 - (profile.free_clicks_used ?? 0));
 
+  const planLabel = (() => {
+    const id = activeSub?.price_id ?? "";
+    if (/year|annual/i.test(id)) return "Yearly";
+    if (/month/i.test(id)) return "Monthly";
+    return null;
+  })();
+  const renewalDate = activeSub?.current_period_end
+    ? new Date(activeSub.current_period_end).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
+    : null;
+  const renewalLabel = renewalDate
+    ? activeSub?.cancel_at_period_end ? `Access until ${renewalDate}` : `Renews ${renewalDate}`
+    : null;
+  const statusBadge = (() => {
+    const s = activeSub?.status;
+    if (!s) return null;
+    const cancelling = activeSub?.cancel_at_period_end;
+    const map: Record<string, { label: string; cls: string }> = {
+      active:             { label: cancelling ? "Cancelling" : "Active",
+                            cls: cancelling
+                              ? "border-amber-300/60 bg-amber-400/15 text-amber-100"
+                              : "border-emerald-300/60 bg-emerald-400/15 text-emerald-100" },
+      trialing:           { label: "Trialing",   cls: "border-cyan-300/60 bg-cyan-400/15 text-cyan-100" },
+      past_due:           { label: "Past due",   cls: "border-amber-300/70 bg-amber-400/20 text-amber-100" },
+      unpaid:             { label: "Unpaid",     cls: "border-rose-300/60 bg-rose-500/15 text-rose-100" },
+      canceled:           { label: "Canceled",   cls: "border-rose-300/60 bg-rose-500/15 text-rose-100" },
+      incomplete:         { label: "Incomplete", cls: "border-white/30 bg-white/10 text-white/80" },
+      incomplete_expired: { label: "Expired",    cls: "border-white/30 bg-white/10 text-white/70" },
+      paused:             { label: "Paused",     cls: "border-white/30 bg-white/10 text-white/80" },
+    };
+    const v = map[s] ?? { label: s.replace(/_/g, " "), cls: "border-white/30 bg-white/10 text-white/80" };
+    return (
+      <span
+        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] uppercase tracking-[0.25em] ${v.cls}`}
+        title={`Subscription status: ${s}`}
+      >
+        {v.label}
+      </span>
+    );
+  })();
+
   return (
     <main className="relative max-w-5xl mx-auto px-5 sm:px-8 py-12">
       {/* Hero */}
@@ -98,6 +175,21 @@ function DashboardPage() {
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Rank</p>
               <p className={`mt-1 text-3xl font-black ${meta.color}`}><Crown className="inline h-6 w-6 mr-2" />{meta.label}</p>
               <p className="mt-1 text-xs text-muted-foreground">{meta.perks}</p>
+              {(planLabel || statusBadge || renewalLabel) && (
+                <div className="mt-3 flex flex-col gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {planLabel && (
+                      <span className="inline-flex items-center rounded-full border border-yellow-300/50 bg-yellow-400/10 px-2 py-0.5 text-[9px] uppercase tracking-[0.25em] text-yellow-100">
+                        {planLabel} plan
+                      </span>
+                    )}
+                    {statusBadge}
+                  </div>
+                  {renewalLabel && (
+                    <p className="text-[11px] text-muted-foreground">{renewalLabel}</p>
+                  )}
+                </div>
+              )}
             </Card>
             <Card>
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Credits</p>
