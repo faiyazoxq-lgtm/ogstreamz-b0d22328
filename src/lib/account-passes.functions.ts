@@ -1,0 +1,87 @@
+import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+function makeCode(): string {
+  // 8-char URL-safe code, easy to type in Telegram.
+  const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  let s = "";
+  for (let i = 0; i < 8; i++) s += alphabet[Math.floor(Math.random() * alphabet.length)];
+  return s;
+}
+
+export const getMyPurchases = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context as { supabase: any };
+    const { data, error } = await (supabase as any).rpc("get_user_purchases_summary");
+    if (error) throw new Error(error.message);
+    return data ?? { passes: [], orders: [], credit_purchases: [] };
+  });
+
+export const getTelegramLinkStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    const { data } = await supabase
+      .from("telegram_user_links")
+      .select("chat_id, tg_username, link_code, code_expires_at, linked_at, notify_purchases, notify_reminders, notify_live")
+      .eq("user_id", userId)
+      .maybeSingle();
+    return data ?? null;
+  });
+
+export const generateTelegramLinkCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    const code = makeCode();
+    const expires = new Date(Date.now() + 30 * 60_000).toISOString();
+
+    const { error } = await supabase
+      .from("telegram_user_links")
+      .upsert(
+        {
+          user_id: userId,
+          link_code: code,
+          code_expires_at: expires,
+          // Reset chat_id only if not linked yet — keep existing link.
+        },
+        { onConflict: "user_id" }
+      );
+    if (error) throw new Error(error.message);
+    return { code, expires_at: expires };
+  });
+
+export const unlinkTelegram = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    const { error } = await supabase
+      .from("telegram_user_links")
+      .update({ chat_id: null, tg_username: null, linked_at: null, link_code: null, code_expires_at: null })
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const updateTelegramPrefs = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { notify_purchases?: boolean; notify_reminders?: boolean; notify_live?: boolean }) => ({
+    notify_purchases: typeof d.notify_purchases === "boolean" ? d.notify_purchases : undefined,
+    notify_reminders: typeof d.notify_reminders === "boolean" ? d.notify_reminders : undefined,
+    notify_live: typeof d.notify_live === "boolean" ? d.notify_live : undefined,
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    const patch: Record<string, boolean> = {};
+    for (const k of ["notify_purchases", "notify_reminders", "notify_live"] as const) {
+      if (typeof (data as any)[k] === "boolean") patch[k] = (data as any)[k];
+    }
+    if (Object.keys(patch).length === 0) return { ok: true };
+    const { error } = await supabase
+      .from("telegram_user_links")
+      .update(patch)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

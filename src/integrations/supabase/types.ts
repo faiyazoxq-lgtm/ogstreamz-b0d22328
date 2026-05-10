@@ -1971,6 +1971,80 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_pass_reminders: {
+        Row: {
+          id: string
+          kind: string
+          pass_id: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          kind: string
+          pass_id: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          kind?: string
+          pass_id?: string
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_pass_reminders_pass_id_fkey"
+            columns: ["pass_id"]
+            isOneToOne: false
+            referencedRelation: "vip_passes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_user_links: {
+        Row: {
+          chat_id: number | null
+          code_expires_at: string | null
+          created_at: string
+          link_code: string | null
+          linked_at: string | null
+          notify_live: boolean
+          notify_purchases: boolean
+          notify_reminders: boolean
+          tg_username: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chat_id?: number | null
+          code_expires_at?: string | null
+          created_at?: string
+          link_code?: string | null
+          linked_at?: string | null
+          notify_live?: boolean
+          notify_purchases?: boolean
+          notify_reminders?: boolean
+          tg_username?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: number | null
+          code_expires_at?: string | null
+          created_at?: string
+          link_code?: string | null
+          linked_at?: string | null
+          notify_live?: boolean
+          notify_purchases?: boolean
+          notify_reminders?: boolean
+          tg_username?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       topup_requests: {
         Row: {
           created_at: string
@@ -2433,6 +2507,11 @@ export type Database = {
         Returns: Json
       }
       claim_signup_pass: { Args: { _token: string }; Returns: Json }
+      claim_telegram_link_code: {
+        Args: { _chat_id: number; _code: string; _tg_username: string }
+        Returns: Json
+      }
+      get_user_purchases_summary: { Args: never; Returns: Json }
       has_active_vip: {
         Args: { _env?: string; _user?: string }
         Returns: boolean
