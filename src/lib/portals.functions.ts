@@ -315,22 +315,31 @@ Use HIGH CONTRAST hex colors. Heading & body MUST be real Google Fonts. Match mo
 
     const theme = inferTheme(data.vibe, data.niche);
 
+    const seedColumnByKind: Record<string, string> = {
+      jokes: "jokes",
+      music: "music_hooks",
+      trade: "trade_briefs",
+      connect: "connect_openers",
+      tools: "tool_ideas",
+    };
+    const seedColumn = seedColumnByKind[data.kind] ?? "jokes";
+    const insertRow: Record<string, unknown> = {
+      slug,
+      name: data.name,
+      niche: data.niche,
+      language: data.language,
+      vibe: data.vibe,
+      theme,
+      kind: data.kind,
+      vip: data.vip,
+      theme_config: themeConfig ?? {},
+      scout_meta: scoutMeta,
+      [seedColumn]: jokes,
+      created_by: userId,
+    };
     const { data: portal, error } = await supabase
       .from("portals")
-      .insert({
-        slug,
-        name: data.name,
-        niche: data.niche,
-        language: data.language,
-        vibe: data.vibe,
-        theme,
-        kind: data.kind,
-        vip: data.vip,
-        theme_config: themeConfig ?? {},
-        scout_meta: scoutMeta,
-        jokes,
-        created_by: userId,
-      })
+      .insert(insertRow)
       .select("id, slug, name, theme, vip, kind")
       .single();
     if (error) throw new Error(error.message);
@@ -409,10 +418,19 @@ export const getMorePortalJokes = createServerFn({ method: "POST" })
 
     const { data: portal } = await supabase
       .from("portals")
-      .select("id, niche, language, vibe, jokes")
+      .select("id, kind, niche, language, vibe, jokes, music_hooks, trade_briefs, connect_openers, tool_ideas")
       .eq("slug", data.slug)
       .maybeSingle();
     if (!portal) throw new Error("Portal not found");
+    const seedColumnByKind: Record<string, string> = {
+      jokes: "jokes",
+      music: "music_hooks",
+      trade: "trade_briefs",
+      connect: "connect_openers",
+      tools: "tool_ideas",
+    };
+    const seedColumn = seedColumnByKind[portal.kind as string] ?? "jokes";
+    const existing = (portal as Record<string, unknown>)[seedColumn] as string[] | null;
 
     const PERPLEXITY = process.env.PERPLEXITY_API_KEY;
     if (!PERPLEXITY) throw new Error("PERPLEXITY_API_KEY missing");
@@ -435,8 +453,8 @@ export const getMorePortalJokes = createServerFn({ method: "POST" })
     let parsed: { jokes?: string[] } = {};
     try { parsed = JSON.parse(m ? m[0] : raw); } catch { /* */ }
     const fresh = (parsed.jokes ?? []).filter((s) => typeof s === "string" && s.trim()).slice(0, data.count);
-    const merged = [...(portal.jokes as string[] ?? []), ...fresh];
+    const merged = [...(Array.isArray(existing) ? existing : []), ...fresh];
 
-    await supabase.from("portals").update({ jokes: merged }).eq("id", portal.id);
+    await supabase.from("portals").update({ [seedColumn]: merged }).eq("id", portal.id);
     return { added: fresh.length, total: merged.length };
   });
