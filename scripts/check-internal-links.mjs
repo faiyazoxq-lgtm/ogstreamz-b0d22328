@@ -199,11 +199,17 @@ for (const file of files) {
     while ((m = re.exec(text)) !== null) {
       const raw = m[1];
       if (shouldSkipUrl(raw)) continue;
-      // Skip dynamic patterns ($slug etc.) — those ARE the route pattern itself
-      const url = normalize(raw);
+      // Collapse template-literal interpolations (e.g. "/b/${slug}") into a
+      // synthetic param so they validate against routes like "/b/$slug".
+      const collapsed = raw.replace(/\$\{[^}]*\}/g, "$x");
+      const url = normalize(collapsed);
       if (url.includes("$")) {
-        // It's a route pattern like "/m/$slug" — just verify the pattern exists
-        if (!routes.has(url)) {
+        // Verify a registered pattern has the same shape (segment count + literals).
+        let matched = false;
+        for (const pat of routes) {
+          if (matchesShape(url, pat)) { matched = true; break; }
+        }
+        if (!matched) {
           const { line, col } = lineColOf(text, m.index);
           failures.push({ file, line, col, url: raw, hint: name, kind: "pattern-missing" });
         }
