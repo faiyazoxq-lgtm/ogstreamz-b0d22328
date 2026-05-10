@@ -12,7 +12,9 @@ import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
 import { FeaturedNasheedCard } from "@/components/FeaturedNasheedCard";
 
+import { requireMember } from "@/lib/route-guards";
 export const Route = createFileRoute("/music")({
+  beforeLoad: requireMember,
   head: () => ({
     meta: [
       { title: "MusicHUB · Build Your Sound — 0G-STREAMZ" },

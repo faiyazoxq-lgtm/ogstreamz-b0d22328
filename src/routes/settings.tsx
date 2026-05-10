@@ -9,7 +9,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+import { requireMember } from "@/lib/route-guards";
 export const Route = createFileRoute("/settings")({
+  beforeLoad: requireMember,
   head: () => ({
     meta: [
       { title: "Account Settings · 0G-PORTAL" },

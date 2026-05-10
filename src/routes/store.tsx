@@ -9,6 +9,7 @@ import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+import { requireMember } from "@/lib/route-guards";
 type Search = { reason?: "empty" | "topup" };
 type Pack = {
   id: string;
@@ -23,6 +24,7 @@ type Pack = {
 };
 
 export const Route = createFileRoute("/store")({
+  beforeLoad: requireMember,
   validateSearch: (s: Record<string, unknown>): Search => ({
     reason: s.reason === "empty" || s.reason === "topup" ? (s.reason as "empty" | "topup") : undefined,
   }),

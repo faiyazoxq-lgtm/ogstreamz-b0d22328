@@ -6,12 +6,14 @@ import { BossChatPanel } from "@/components/BossChatPanel";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
 
+import { requireMember } from "@/lib/route-guards";
 type TradePortal = {
   id: string; slug: string; name: string; niche: string; vip: boolean;
   theme_config: any;
 };
 
 export const Route = createFileRoute("/trade")({
+  beforeLoad: requireMember,
   head: () => ({
     meta: [
       { title: "TradeHUB — 0G-PORTAL Executive Terminals" },
