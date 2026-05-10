@@ -206,7 +206,8 @@ function SubSummary({
       )}
       {renewalLabel && (
         <p
-          className="text-[11px] leading-snug text-muted-foreground break-words hyphens-auto max-w-full"
+          className="text-[11px] leading-snug text-muted-foreground break-words hyphens-auto max-w-full text-start [unicode-bidi:plaintext]"
+          dir="auto"
           title={renewalLabel}
         >
           {renewalLabel}
