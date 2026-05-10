@@ -258,7 +258,7 @@ function StorePage() {
                     <div className="mt-auto pt-2 flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
                         {fromPrice !== null ? (
-                          <>from <span className="text-white font-bold">£{(fromPrice / 100).toFixed(2)}</span></>
+                          <>from <span className="text-white font-bold">£{(fromPrice / 100).toFixed(2)} <span className="text-yellow-300">({Math.round(fromPrice / 100)} 🪙)</span></span></>
                         ) : (
                           "—"
                         )}
