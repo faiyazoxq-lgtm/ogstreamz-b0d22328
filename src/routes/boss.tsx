@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-r
 import { useEffect, useState } from "react";
 import { Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft, Menu, X, ShieldAlert, LogIn, ChevronRight, Home } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { SiteSearch } from "@/components/SiteSearch";
+import { BossSearch } from "@/components/BossSearch";
 
 export const Route = createFileRoute("/boss")({
   component: BossLayout,
@@ -119,7 +119,7 @@ function BossLayout() {
       </div>
 
       <div className="md:hidden mb-3">
-        <SiteSearch />
+        <BossSearch />
       </div>
 
       {drawerOpen && (
@@ -136,7 +136,7 @@ function BossLayout() {
               <span className="text-[10px] uppercase tracking-[0.3em] text-gold font-bold">Boss</span>
             </div>
             <div className="px-1 pb-3">
-              <SiteSearch />
+              <BossSearch />
             </div>
             <NavList />
             <Link
