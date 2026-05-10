@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   User, LogIn, Coins, Crown, Shield, ChevronDown,
@@ -54,51 +54,75 @@ const adminLinks: ReadonlyArray<HubLink> = [
 ];
 
 function NavDropdown({
-  label, icon: Icon, items, gold, hideLabelOnMobile,
+  label, icon: Icon, items, gold, hideLabelOnMobile, currentPath,
 }: {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   items: ReadonlyArray<{ to: string; label: string; icon: React.ComponentType<{ className?: string }>; desc?: string; bossOnly?: boolean }>;
   gold?: boolean;
   hideLabelOnMobile?: boolean;
+  currentPath: string;
 }) {
+  const sectionActive = items.some(
+    (it) => currentPath === it.to || currentPath.startsWith(it.to + "/"),
+  );
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={label}
-        className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2 text-sm sm:text-base font-semibold rounded-md transition-colors outline-none ${
+        data-active={sectionActive ? "true" : undefined}
+        className={[
+          "inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2 text-sm sm:text-base font-semibold rounded-md transition-colors outline-none",
+          "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          "active:scale-[0.97]",
           gold
-            ? "text-gold hover:bg-gold/10 border border-gold/30"
-            : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-        }`}
+            ? "text-gold hover:bg-gold/10 border border-gold/30 data-[state=open]:bg-gold/15 data-[active=true]:bg-gold/15 data-[active=true]:border-gold/60"
+            : "text-muted-foreground hover:text-foreground hover:bg-secondary data-[state=open]:bg-secondary data-[state=open]:text-foreground data-[active=true]:bg-secondary data-[active=true]:text-foreground",
+        ].join(" ")}
       >
         <Icon className="h-4 w-4" />
         <span className={hideLabelOnMobile ? "hidden sm:inline" : ""}>{label}</span>
-        <ChevronDown className="h-3.5 w-3.5 opacity-70 hidden sm:inline" />
+        <ChevronDown className="h-3.5 w-3.5 opacity-70 hidden sm:inline transition-transform group-data-[state=open]:rotate-180" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64 bg-card border-border">
         <DropdownMenuLabel className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
           {label}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {items.map((it) => (
-          <DropdownMenuItem key={it.to} asChild className="cursor-pointer focus:bg-secondary">
-            <Link to={it.to as string} className="flex items-start gap-3 py-2">
-              <it.icon className="h-4 w-4 mt-0.5 text-gold" />
-              <span className="flex-1">
-                <span className="flex items-center gap-1.5 font-semibold text-foreground">
-                  {it.label}
-                  {it.bossOnly && (
-                    <Crown className="h-3 w-3 text-gold" />
+        {items.map((it) => {
+          const isActive = currentPath === it.to || currentPath.startsWith(it.to + "/");
+          return (
+            <DropdownMenuItem
+              key={it.to}
+              asChild
+              className="cursor-pointer focus:bg-secondary data-[active=true]:bg-gold/10"
+            >
+              <Link
+                to={it.to as string}
+                aria-current={isActive ? "page" : undefined}
+                data-active={isActive ? "true" : undefined}
+                className={[
+                  "group/item flex items-start gap-3 py-2 rounded-sm outline-none",
+                  "hover:bg-secondary focus-visible:ring-2 focus-visible:ring-primary",
+                  isActive ? "bg-gold/10 ring-1 ring-inset ring-gold/40" : "",
+                ].join(" ")}
+              >
+                <it.icon className={`h-4 w-4 mt-0.5 ${isActive ? "text-gold drop-shadow-[0_0_6px_rgba(255,209,102,0.6)]" : "text-gold/80 group-hover/item:text-gold"}`} />
+                <span className="flex-1">
+                  <span className={`flex items-center gap-1.5 font-semibold ${isActive ? "text-gold" : "text-foreground"}`}>
+                    {it.label}
+                    {it.bossOnly && (
+                      <Crown className="h-3 w-3 text-gold" />
+                    )}
+                  </span>
+                  {it.desc && (
+                    <span className="block text-[11px] text-muted-foreground">{it.desc}</span>
                   )}
                 </span>
-                {it.desc && (
-                  <span className="block text-[11px] text-muted-foreground">{it.desc}</span>
-                )}
-              </span>
-            </Link>
-          </DropdownMenuItem>
-        ))}
+              </Link>
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -106,6 +130,7 @@ function NavDropdown({
 
 export function NavBar() {
   const { user, profile, isAdmin } = useAuth();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isBoss = isAdmin || profile?.rank === "boss";
   const statusLabel = !user ? "GUEST" : isBoss ? "BOSS" : (profile?.rank?.toUpperCase() ?? "MEMBER");
   const statusColor = !user
@@ -127,14 +152,14 @@ export function NavBar() {
         </Link>
         <ul className="flex items-center flex-nowrap gap-0.5 sm:gap-1.5 shrink-0 ml-auto">
           <li className="hidden sm:block">
-            <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile />
+            <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile currentPath={pathname} />
           </li>
           <li className="hidden sm:block">
-            <NavDropdown label="Store" icon={Store} items={storeLinks} hideLabelOnMobile />
+            <NavDropdown label="Store" icon={Store} items={storeLinks} hideLabelOnMobile currentPath={pathname} />
           </li>
           {isBoss && (
             <li className="hidden sm:block">
-              <NavDropdown label="Admin" icon={ShieldCheck} items={adminLinks} hideLabelOnMobile />
+              <NavDropdown label="Admin" icon={ShieldCheck} items={adminLinks} hideLabelOnMobile currentPath={pathname} />
             </li>
           )}
           <li className="hidden sm:block">
@@ -180,7 +205,9 @@ function MobileNavDrawer({
   isBoss: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const close = () => setOpen(false);
+  const isActive = (to: string) => pathname === to || pathname.startsWith(to + "/");
 
   const Section = ({
     title, icon: Icon, items, gold,
@@ -196,26 +223,35 @@ function MobileNavDrawer({
         {title}
       </div>
       <ul className="space-y-1">
-        {items.map((it) => (
-          <li key={it.to}>
-            <Link
-              to={it.to as string}
-              onClick={close}
-              className="flex items-start gap-3 rounded-md px-2 py-2.5 hover:bg-secondary"
-            >
-              <it.icon className="h-4 w-4 mt-0.5 text-gold shrink-0" />
-              <span className="flex-1 min-w-0">
-                <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                  {it.label}
-                  {it.bossOnly && <Crown className="h-3 w-3 text-gold" />}
+        {items.map((it) => {
+          const active = isActive(it.to);
+          return (
+            <li key={it.to}>
+              <Link
+                to={it.to as string}
+                onClick={close}
+                aria-current={active ? "page" : undefined}
+                className={[
+                  "flex items-start gap-3 rounded-md px-2 py-2.5 transition-colors outline-none",
+                  "hover:bg-secondary active:bg-secondary/80 active:scale-[0.99]",
+                  "focus-visible:ring-2 focus-visible:ring-primary",
+                  active ? "bg-gold/10 ring-1 ring-inset ring-gold/40" : "",
+                ].join(" ")}
+              >
+                <it.icon className={`h-4 w-4 mt-0.5 shrink-0 ${active ? "text-gold drop-shadow-[0_0_6px_rgba(255,209,102,0.6)]" : "text-gold/80"}`} />
+                <span className="flex-1 min-w-0">
+                  <span className={`flex items-center gap-1.5 text-sm font-semibold ${active ? "text-gold" : "text-foreground"}`}>
+                    {it.label}
+                    {it.bossOnly && <Crown className="h-3 w-3 text-gold" />}
+                  </span>
+                  {it.desc && (
+                    <span className="block text-[11px] text-muted-foreground truncate">{it.desc}</span>
+                  )}
                 </span>
-                {it.desc && (
-                  <span className="block text-[11px] text-muted-foreground truncate">{it.desc}</span>
-                )}
-              </span>
-            </Link>
-          </li>
-        ))}
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -224,7 +260,7 @@ function MobileNavDrawer({
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         aria-label="Open navigation menu"
-        className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-secondary/40 text-foreground hover:bg-secondary"
+        className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-secondary/40 text-foreground transition-colors hover:bg-secondary hover:border-primary/50 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[state=open]:bg-secondary data-[state=open]:border-primary/60"
       >
         <Menu className="h-5 w-5" />
       </SheetTrigger>
@@ -267,30 +303,32 @@ function MobileNavDrawer({
             </div>
             {user ? (
               <ul className="space-y-1">
-                <li>
-                  <Link to="/profile" onClick={close} className="flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-secondary">
-                    <UserCircle className="h-4 w-4 text-gold" />
-                    <span className="text-sm font-semibold">Vault & Profile</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/store" onClick={close} className="flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-secondary">
-                    <Coins className="h-4 w-4 text-gold" />
-                    <span className="text-sm font-semibold">Buy Credits</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/dashboard" onClick={close} className="flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-secondary">
-                    <LayoutDashboard className="h-4 w-4 text-gold" />
-                    <span className="text-sm font-semibold">Dashboard</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/settings" onClick={close} className="flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-secondary">
-                    <Settings className="h-4 w-4 text-gold" />
-                    <span className="text-sm font-semibold">Settings</span>
-                  </Link>
-                </li>
+                {[
+                  { to: "/profile", label: "Vault & Profile", icon: UserCircle },
+                  { to: "/store", label: "Buy Credits", icon: Coins },
+                  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+                  { to: "/settings", label: "Settings", icon: Settings },
+                ].map(({ to, label, icon: Icon }) => {
+                  const active = isActive(to);
+                  return (
+                    <li key={to}>
+                      <Link
+                        to={to}
+                        onClick={close}
+                        aria-current={active ? "page" : undefined}
+                        className={[
+                          "flex items-center gap-3 rounded-md px-2 py-2.5 transition-colors outline-none",
+                          "hover:bg-secondary active:scale-[0.99]",
+                          "focus-visible:ring-2 focus-visible:ring-primary",
+                          active ? "bg-gold/10 ring-1 ring-inset ring-gold/40 text-gold" : "",
+                        ].join(" ")}
+                      >
+                        <Icon className={`h-4 w-4 ${active ? "text-gold drop-shadow-[0_0_6px_rgba(255,209,102,0.6)]" : "text-gold"}`} />
+                        <span className="text-sm font-semibold">{label}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
                 <li>
                   <button
                     type="button"
@@ -299,7 +337,7 @@ function MobileNavDrawer({
                       await supabase.auth.signOut();
                       window.location.href = "/";
                     }}
-                    className="w-full flex items-center gap-3 rounded-md px-2 py-2.5 text-destructive hover:bg-destructive/10"
+                    className="w-full flex items-center gap-3 rounded-md px-2 py-2.5 text-destructive transition-colors outline-none hover:bg-destructive/10 active:bg-destructive/20 focus-visible:ring-2 focus-visible:ring-destructive"
                   >
                     <LogOut className="h-4 w-4" />
                     <span className="text-sm font-semibold">Sign Out</span>
@@ -310,7 +348,7 @@ function MobileNavDrawer({
               <Link
                 to="/auth"
                 onClick={close}
-                className="flex items-center justify-center gap-2 btn-glass-blue rounded-md px-3 py-2.5 text-xs uppercase tracking-[0.25em] font-bold text-white"
+                className="flex items-center justify-center gap-2 btn-glass-blue rounded-md px-3 py-2.5 text-xs uppercase tracking-[0.25em] font-bold text-white transition-transform active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <LogIn className="h-4 w-4" />
                 Join the Syndicate
@@ -334,7 +372,7 @@ function AccountMenu({
     return (
       <Link
         to="/auth"
-        className="ml-0.5 sm:ml-1 inline-flex items-center gap-2 btn-glass-blue px-2.5 sm:px-4 py-2 rounded-md text-xs uppercase tracking-[0.2em] font-bold text-white"
+        className="ml-0.5 sm:ml-1 inline-flex items-center gap-2 btn-glass-blue px-2.5 sm:px-4 py-2 rounded-md text-xs uppercase tracking-[0.2em] font-bold text-white transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         aria-label="Join"
       >
         <LogIn className="h-3.5 w-3.5" />
@@ -349,7 +387,7 @@ function AccountMenu({
           <TooltipTrigger asChild>
             <DropdownMenuTrigger
               aria-label="Account"
-              className="ml-0.5 sm:ml-1 inline-flex items-center gap-1.5 btn-glass-blue px-2.5 sm:px-4 py-2 rounded-md text-xs uppercase tracking-[0.2em] font-bold text-white outline-none"
+              className="ml-0.5 sm:ml-1 inline-flex items-center gap-1.5 btn-glass-blue px-2.5 sm:px-4 py-2 rounded-md text-xs uppercase tracking-[0.2em] font-bold text-white outline-none transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[state=open]:brightness-110 data-[state=open]:ring-2 data-[state=open]:ring-primary/60"
             >
               <User className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Account</span>
