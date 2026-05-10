@@ -188,13 +188,21 @@ export function TrackingEye({
       ? "0 0 var(--eye-glow-base, 8px) -1px oklch(0.65 0.22 25 / 0.7), 0 0 calc(var(--eye-glow-base, 8px) + var(--eye-glow, 0.35) * var(--eye-glow-spread, 18px)) -2px color-mix(in oklab, oklch(0.78 0.2 240) calc(var(--eye-glow, 0.35) * 95%), transparent)"
       : "0 0 calc(var(--eye-glow-base, 8px) + var(--eye-glow, 0.35) * var(--eye-glow-spread, 18px)) -1px color-mix(in oklab, oklch(0.78 0.2 240) calc(var(--eye-glow, 0.35) * 100%), transparent), 0 0 calc(var(--eye-glow-inner, 2px) + var(--eye-glow, 0.35) * var(--eye-glow-inner-spread, 6px)) color-mix(in oklab, oklch(0.85 0.18 235) calc(var(--eye-glow, 0.35) * 70%), transparent)"
     : "0 0 calc(var(--eye-glow-base, 8px) + var(--eye-glow, 0.35) * var(--eye-glow-spread, 16px)) -1px var(--electric-gold-glow)";
+  // Adaptive ring color — borrows luminance from the page foreground so the
+  // outline reads cleanly on any dark surface (cards, hero, modals, photos)
+  // without manual per-context tuning. On light themes the same mix yields
+  // a darker, denser ring against pale backgrounds.
   const irisRing = isIce
-    ? "color-mix(in oklab, oklch(0.72 0.22 245) 60%, transparent)"
-    : "color-mix(in oklab, var(--electric-gold-500) 60%, transparent)";
+    ? "color-mix(in oklab, oklch(0.78 0.2 245) 55%, color-mix(in oklab, var(--foreground) 70%, transparent))"
+    : "color-mix(in oklab, var(--electric-gold-300) 55%, color-mix(in oklab, var(--foreground) 70%, transparent))";
   const pupilBg = isIce ? "oklch(0.55 0.24 255)" : "var(--midnight-pupil)";
+  // Pupil ring needs to stay visible against the pupil itself AND the
+  // surrounding iris on every theme. Mix with foreground so dark-on-dark
+  // pupils still get a bright halo on dark backgrounds, and the inverse
+  // on light backgrounds.
   const pupilRing = isIce
-    ? "color-mix(in oklab, oklch(0.2 0.08 255) 70%, transparent)"
-    : "color-mix(in oklab, var(--electric-gold-900) 70%, transparent)";
+    ? "color-mix(in oklab, oklch(0.35 0.14 255) 60%, color-mix(in oklab, var(--foreground) 60%, transparent))"
+    : "color-mix(in oklab, var(--electric-gold-700) 60%, color-mix(in oklab, var(--foreground) 60%, transparent))";
 
   return (
     <span
