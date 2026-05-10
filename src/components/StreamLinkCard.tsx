@@ -12,6 +12,29 @@ export function StreamLinkCard() {
   const [server, setServer] = useState("http://xiu96ctyh6-system.xyz:80");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [errors, setErrors] = useState<{ username?: string; password?: string; server?: string }>({});
+
+  const validate = (un: string, pw: string, srv: string) => {
+    const errs: { username?: string; password?: string; server?: string } = {};
+    const t = un.trim();
+    if (!t) errs.username = "Username is required.";
+    else if (t.length < 2) errs.username = "Username is too short (min 2).";
+    else if (t.length > 120) errs.username = "Username is too long (max 120).";
+    else if (/\s/.test(t)) errs.username = "Username cannot contain spaces.";
+    if (!pw) errs.password = "Password is required.";
+    else if (pw.length < 2) errs.password = "Password is too short (min 2).";
+    else if (pw.length > 200) errs.password = "Password is too long (max 200).";
+    const s = srv.trim();
+    if (!s) errs.server = "Server URL is required.";
+    else {
+      const candidate = /^https?:\/\//i.test(s) ? s : `http://${s}`;
+      try {
+        const url = new URL(candidate);
+        if (!url.hostname || !/\./.test(url.hostname)) errs.server = "Enter a valid host (e.g. host.tld:80).";
+      } catch { errs.server = "Server URL is not a valid URL."; }
+    }
+    return errs;
+  };
 
   const rank = (profile?.rank as string | undefined) ?? "";
   const linked = rank === "stream_user" || rank === "vip" || rank === "boss";
@@ -28,14 +51,23 @@ export function StreamLinkCard() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const errs = validate(u, p, server);
+    setErrors(errs);
+    if (Object.keys(errs).length) {
+      setMsg({ ok: false, text: "Fix the highlighted fields and try again." });
+      return;
+    }
     setBusy(true); setMsg(null);
     try {
-      const res = await verify({ data: { username: u, password: p, server } });
+      const res = await verify({ data: { username: u.trim(), password: p, server: server.trim() } });
       if (res.ok) {
         setMsg({ ok: true, text: res.message || "Submitted to Boss for OGSTREAMZ approval." });
         setP("");
+        setErrors({});
         await refresh();
       } else {
+        const field = (res as any).field as "username" | "password" | "server" | undefined;
+        if (field) setErrors({ [field]: res.error } as any);
         setMsg({ ok: false, text: res.error || "Verification failed" });
       }
     } catch (e: any) {
@@ -98,18 +130,39 @@ export function StreamLinkCard() {
       )}
 
       <form onSubmit={submit} className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <input
-          required value={u} onChange={(e) => setU(e.target.value)} placeholder="Stream username" autoComplete="username"
-          className="bg-background/60 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-        />
-        <input
-          required type="password" value={p} onChange={(e) => setP(e.target.value)} placeholder="Stream password" autoComplete="current-password"
-          className="bg-background/60 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-        />
-        <input
-          value={server} onChange={(e) => setServer(e.target.value)} placeholder="Server URL"
-          className="sm:col-span-2 bg-background/60 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-        />
+        <div>
+          <input
+            required value={u}
+            onChange={(e) => { setU(e.target.value); if (errors.username) setErrors({ ...errors, username: undefined }); }}
+            onBlur={() => setErrors({ ...errors, ...validate(u, p, server), password: errors.password, server: errors.server })}
+            placeholder="Stream username" autoComplete="username"
+            aria-invalid={!!errors.username}
+            className={`w-full bg-background/60 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 ${errors.username ? "border-destructive focus:ring-destructive" : "border-border focus:ring-primary"}`}
+          />
+          {errors.username && <p className="mt-1 text-xs text-destructive">{errors.username}</p>}
+        </div>
+        <div>
+          <input
+            required type="password" value={p}
+            onChange={(e) => { setP(e.target.value); if (errors.password) setErrors({ ...errors, password: undefined }); }}
+            placeholder="Stream password" autoComplete="current-password"
+            aria-invalid={!!errors.password}
+            className={`w-full bg-background/60 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 ${errors.password ? "border-destructive focus:ring-destructive" : "border-border focus:ring-primary"}`}
+          />
+          {errors.password && <p className="mt-1 text-xs text-destructive">{errors.password}</p>}
+        </div>
+        <div className="sm:col-span-2">
+          <input
+            value={server}
+            onChange={(e) => { setServer(e.target.value); if (errors.server) setErrors({ ...errors, server: undefined }); }}
+            placeholder="Server URL (e.g. http://host.tld:80)"
+            aria-invalid={!!errors.server}
+            className={`w-full bg-background/60 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 ${errors.server ? "border-destructive focus:ring-destructive" : "border-border focus:ring-primary"}`}
+          />
+          {errors.server
+            ? <p className="mt-1 text-xs text-destructive">{errors.server}</p>
+            : <p className="mt-1 text-xs text-muted-foreground">Include protocol and port if non-standard.</p>}
+        </div>
         <button
           type="submit" disabled={busy}
           className="sm:col-span-2 inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-bold hover:opacity-90 disabled:opacity-60"
