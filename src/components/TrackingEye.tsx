@@ -116,6 +116,14 @@ export function TrackingEye({
             ),
           ) || 1;
         el.style.setProperty("--eye-glow", String((0.35 + reach * 0.65) * rootMult));
+        // Size-proportional glow radii so the halo grows/shrinks with the
+        // eye itself instead of looking dim at large sizes or blown-out at
+        // tiny ones. Baseline tuned around a ~28px eye (1rem-ish).
+        const sizePx = r.width || 28;
+        el.style.setProperty("--eye-glow-base", `${(sizePx * 0.28).toFixed(2)}px`);
+        el.style.setProperty("--eye-glow-spread", `${(sizePx * 0.65).toFixed(2)}px`);
+        el.style.setProperty("--eye-glow-inner", `${(sizePx * 0.07).toFixed(2)}px`);
+        el.style.setProperty("--eye-glow-inner-spread", `${(sizePx * 0.22).toFixed(2)}px`);
       }
       raf = requestAnimationFrame(tick);
     };
@@ -153,9 +161,9 @@ export function TrackingEye({
     : "linear-gradient(135deg, var(--electric-gold-100), var(--electric-gold-300))";
   const irisGlow = isIce
     ? bloodshot
-      ? "0 0 14px -1px oklch(0.65 0.22 25 / 0.7), 0 0 calc(14px + var(--eye-glow, 0.35) * 18px) -2px color-mix(in oklab, oklch(0.78 0.2 240) calc(var(--eye-glow, 0.35) * 95%), transparent)"
-      : "0 0 calc(8px + var(--eye-glow, 0.35) * 18px) -1px color-mix(in oklab, oklch(0.78 0.2 240) calc(var(--eye-glow, 0.35) * 100%), transparent), 0 0 calc(2px + var(--eye-glow, 0.35) * 6px) color-mix(in oklab, oklch(0.85 0.18 235) calc(var(--eye-glow, 0.35) * 70%), transparent)"
-    : "0 0 calc(8px + var(--eye-glow, 0.35) * 16px) -1px var(--electric-gold-glow)";
+      ? "0 0 var(--eye-glow-base, 8px) -1px oklch(0.65 0.22 25 / 0.7), 0 0 calc(var(--eye-glow-base, 8px) + var(--eye-glow, 0.35) * var(--eye-glow-spread, 18px)) -2px color-mix(in oklab, oklch(0.78 0.2 240) calc(var(--eye-glow, 0.35) * 95%), transparent)"
+      : "0 0 calc(var(--eye-glow-base, 8px) + var(--eye-glow, 0.35) * var(--eye-glow-spread, 18px)) -1px color-mix(in oklab, oklch(0.78 0.2 240) calc(var(--eye-glow, 0.35) * 100%), transparent), 0 0 calc(var(--eye-glow-inner, 2px) + var(--eye-glow, 0.35) * var(--eye-glow-inner-spread, 6px)) color-mix(in oklab, oklch(0.85 0.18 235) calc(var(--eye-glow, 0.35) * 70%), transparent)"
+    : "0 0 calc(var(--eye-glow-base, 8px) + var(--eye-glow, 0.35) * var(--eye-glow-spread, 16px)) -1px var(--electric-gold-glow)";
   const irisRing = isIce
     ? "color-mix(in oklab, oklch(0.72 0.22 245) 60%, transparent)"
     : "color-mix(in oklab, var(--electric-gold-500) 60%, transparent)";
