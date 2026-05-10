@@ -108,6 +108,9 @@ function Index() {
       {/* Real OG one-off pass */}
       <RealOgPromoCard />
 
+      {/* VIP Bundles — Real OG + Coins at a discounted total */}
+      <RealOgBundlesCard />
+
       {/* Intro / promo strip — free signup CTA for guests, members entrance for signed-in users */}
       <section className="relative max-w-5xl mx-auto px-5 sm:px-8 -mt-4 pb-10">
         <div className="relative overflow-hidden rounded-3xl border border-[oklch(0.72_0.22_245/0.35)] bg-card/60 backdrop-blur-xl p-6 sm:p-8">
