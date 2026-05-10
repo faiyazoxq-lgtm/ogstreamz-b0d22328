@@ -57,6 +57,7 @@ export function CoinActivity({
       .from("credit_ledger")
       .select("id, delta, reason, created_at")
       .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
       .limit(initialSize);
     const next = (data ?? []) as LedgerRow[];
     setRows(next);
@@ -68,15 +69,21 @@ export function CoinActivity({
     if (!user || loadingMore || rows.length === 0) return;
     setLoadingMore(true);
     const last = rows[rows.length - 1];
+    // Keyset pagination on (created_at desc, id desc) so rows that share a
+    // created_at timestamp are neither dropped nor returned twice.
     const { data } = await supabase
       .from("credit_ledger")
       .select("id, delta, reason, created_at")
       .order("created_at", { ascending: false })
-      .lt("created_at", last.created_at)
+      .order("id", { ascending: false })
+      .or(`created_at.lt.${last.created_at},and(created_at.eq.${last.created_at},id.lt.${last.id})`)
       .limit(pageSize);
-    const next = (data ?? []) as LedgerRow[];
+    const fetched = (data ?? []) as LedgerRow[];
+    // Defensive de-dupe in case anything slips through.
+    const seen = new Set(rows.map((r) => r.id));
+    const next = fetched.filter((r) => !seen.has(r.id));
     setRows((prev) => [...prev, ...next]);
-    setHasMore(next.length === pageSize);
+    setHasMore(fetched.length === pageSize);
     setLoadingMore(false);
   };
 
