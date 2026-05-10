@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
-import { Tv, CheckCircle2, XCircle, Loader2, RefreshCw, Clock, AlertTriangle, ShieldCheck } from "lucide-react";
+import { Tv, CheckCircle2, XCircle, Loader2, RefreshCw, Clock, AlertTriangle, ShieldCheck, Lock, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -11,17 +11,17 @@ export const Route = createFileRoute("/boss/stream-queue")({
 type Req = {
   id: string;
   user_id: string;
+  email: string | null;
+  rank: string | null;
   username: string;
-  password: string;
-  server: string;
+  server: string | null;
+  has_password: boolean;
   auto_status: string | null;
   auto_expires_at: string | null;
   status: string;
   decision_note: string | null;
   decided_at: string | null;
   created_at: string;
-  email?: string | null;
-  rank?: string | null;
 };
 
 function fmt(d: string | null | undefined) {
@@ -35,32 +35,15 @@ function StreamQueuePage() {
   const [rows, setRows] = useState<Req[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [reveal, setReveal] = useState<Record<string, boolean>>({});
   const [noteFor, setNoteFor] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("stream_verification_requests")
-      .select("id,user_id,username,password,server,auto_status,auto_expires_at,status,decision_note,decided_at,created_at")
-      .eq("status", tab)
-      .order("created_at", { ascending: false })
-      .limit(100);
+    const { data, error } = await supabase.rpc("boss_list_stream_requests", { _status: tab });
     if (error) {
       setRows([]); setLoading(false); return;
     }
-    const list = (data ?? []) as Req[];
-    const ids = Array.from(new Set(list.map((r) => r.user_id)));
-    if (ids.length) {
-      const { data: profs } = await supabase.from("profiles").select("id,email,rank").in("id", ids);
-      const map = new Map((profs ?? []).map((p: any) => [p.id, p]));
-      list.forEach((r) => {
-        const p = map.get(r.user_id);
-        r.email = p?.email ?? null;
-        r.rank = p?.rank ?? null;
-      });
-    }
-    setRows(list);
+    setRows((data ?? []) as Req[]);
     setLoading(false);
   }, [tab]);
 
@@ -121,7 +104,6 @@ function StreamQueuePage() {
         <ul className="space-y-3">
           {rows.map((r) => {
             const autoOk = (r.auto_status ?? "").toLowerCase() === "active";
-            const showPw = !!reveal[r.id];
             return (
               <li key={r.id} className="rounded-xl border border-border bg-card p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -150,21 +132,16 @@ function StreamQueuePage() {
                     <div className="font-mono text-xs break-all">{r.username}</div>
                   </div>
                   <div className="rounded-md bg-secondary/40 border border-border px-3 py-2">
-                    <div className="flex items-center justify-between">
-                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Password</div>
-                      <button
-                        type="button"
-                        onClick={() => setReveal((s) => ({ ...s, [r.id]: !s[r.id] }))}
-                        className="text-[10px] text-primary hover:underline"
-                      >
-                        {showPw ? "Hide" : "Reveal"}
-                      </button>
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Password</div>
+                    <div className="font-mono text-xs break-all inline-flex items-center gap-1.5 text-muted-foreground">
+                      {r.has_password
+                        ? (<><KeyRound className="h-3 w-3" /> encrypted at rest</>)
+                        : (<><Lock className="h-3 w-3" /> scrubbed</>)}
                     </div>
-                    <div className="font-mono text-xs break-all">{showPw ? r.password : "••••••••"}</div>
                   </div>
                   <div className="rounded-md bg-secondary/40 border border-border px-3 py-2">
                     <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Server</div>
-                    <div className="font-mono text-xs break-all">{r.server}</div>
+                    <div className="font-mono text-xs break-all">{r.server ?? "—"}</div>
                   </div>
                 </div>
 
