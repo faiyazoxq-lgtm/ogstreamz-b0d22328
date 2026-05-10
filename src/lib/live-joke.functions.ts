@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { enforceSwearRules, loadLexicon } from "./swear-enforcer.server";
 import { assertVipAccess } from "@/lib/vip-guard";
+import { effectiveSwearing } from "@/lib/swearing";
 
 type Result = { joke: string; headline: string; source?: string; error?: string; balance?: number; trends?: string[] };
 
