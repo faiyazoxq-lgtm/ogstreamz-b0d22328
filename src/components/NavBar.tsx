@@ -212,7 +212,7 @@ export function NavBar() {
           : "bg-background/80 sm:bg-background/35 backdrop-blur-none sm:backdrop-blur-md border-transparent"
       }`}
     >
-      <nav className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap px-1.5 sm:px-8 h-16 sm:h-20 gap-1 sm:gap-2">
+      <nav className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap min-w-0 px-1.5 sm:px-8 h-16 sm:h-20 gap-1 sm:gap-2">
         <Link
           to="/"
           aria-label="0G-PORTAL — home"
@@ -221,7 +221,7 @@ export function NavBar() {
           <TVStaticLogo className="shrink-0 self-center" />
           <OgWordmark
             suffix="-PORTAL"
-            className="brand-glow__mark inline-flex items-center self-center min-w-0 whitespace-nowrap text-eye-ice--bright bg-transparent leading-none transition-[color,text-shadow,filter] duration-300 ease-out"
+            className="brand-glow__mark hidden [@media(min-width:340px)]:inline-flex items-center self-center min-w-0 whitespace-nowrap overflow-hidden text-eye-ice--bright bg-transparent leading-none transition-[color,text-shadow,filter] duration-300 ease-out"
             style={{ fontSize: "clamp(0.78rem, 3.6vw, 1.875rem)" }}
           />
         </Link>
