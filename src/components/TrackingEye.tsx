@@ -209,7 +209,6 @@ export function TrackingEye({
         // proper egg/letter-O silhouette at every font size — `rounded-full`
         // collapses to a stadium shape when width ≠ height.
         borderRadius: "50% / 50%",
-        ringWidth: "max(1px, 0.04em)",
         transform: blink ? "scaleY(0.1)" : "scaleY(1)",
         ...(size ? { width: size, height: size } : null),
         ...style,
