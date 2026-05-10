@@ -106,7 +106,7 @@ function BossPowerPortal() {
       head(supabase.from("stream_verification_requests").select("*", { count: "exact", head: true }).eq("status", "pending")),
       head(supabase.from("custom_track_requests").select("*", { count: "exact", head: true }).eq("status", "pending")),
       head(supabase.from("pending_credit_grants").select("*", { count: "exact", head: true })),
-      head(supabase.from("system_alerts").select("*", { count: "exact", head: true }).eq("acknowledged", false)),
+      head(supabase.from("system_alerts").select("*", { count: "exact", head: true }).is("acknowledged_at", null)),
       head(supabase.from("portals").select("*", { count: "exact", head: true })),
       supabase.from("purchase_reversals").select("*").order("created_at", { ascending: false }).limit(15),
     ]);
