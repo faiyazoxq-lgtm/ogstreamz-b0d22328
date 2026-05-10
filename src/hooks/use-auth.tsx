@@ -20,6 +20,8 @@ type Profile = {
   banned?: boolean;
   stream_status?: string | null;
   stream_expires_at?: string | null;
+  stream_boss_verified_at?: string | null;
+  stream_auto_checked_at?: string | null;
 };
 
 type AuthCtx = {
@@ -53,11 +55,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (s?.access_token) await promoteBossIfNeeded({ data: { accessToken: s.access_token } });
     } catch { /* non-fatal */ }
     const [{ data: prof }, { data: roles }] = await Promise.all([
-      supabase.from("profiles").select("id,email,status,credits,rank,feature_flags,free_clicks_used,display_name,banned,stream_status,stream_expires_at").eq("id", uid).maybeSingle(),
+      supabase.from("profiles").select("id,email,status,credits,rank,feature_flags,free_clicks_used,display_name,banned,stream_status,stream_expires_at,stream_boss_verified_at,stream_auto_checked_at").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
     setProfile(prof as Profile | null);
     setIsAdmin(!!roles?.some((r) => r.role === "admin"));
+
+    // Background: re-probe IPTV server for users who already have a linked
+    // stream profile. Updates expiry/status silently. Throttled to once per
+    // 10 minutes per browser session to avoid hammering the provider.
+    try {
+      const p = prof as Profile | null;
+      if (p?.stream_status) {
+        const last = Number(sessionStorage.getItem("stream:lastRefresh") || 0);
+        if (Date.now() - last > 10 * 60 * 1000) {
+          sessionStorage.setItem("stream:lastRefresh", String(Date.now()));
+          const { reverifyStream } = await import("@/lib/stream-link.functions");
+          reverifyStream({ data: {} })
+            .then(async (res: any) => {
+              if (res?.ok) {
+                const { data: fresh } = await supabase
+                  .from("profiles")
+                  .select("stream_status,stream_expires_at,stream_auto_checked_at")
+                  .eq("id", uid).maybeSingle();
+                if (fresh) setProfile((cur) => cur ? { ...cur, ...fresh } as Profile : cur);
+              }
+            })
+            .catch(() => { /* silent */ });
+        }
+      }
+    } catch { /* non-fatal */ }
   };
 
   const refresh = async () => {

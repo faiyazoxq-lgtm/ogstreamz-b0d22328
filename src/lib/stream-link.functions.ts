@@ -177,6 +177,18 @@ export const verifyAndLinkStream = createServerFn({ method: "POST" })
       _auto_payload: info as never,
     });
     if (qErr) return { ok: false as const, reason: "rpc_error" as const, cause: classifyRpcError(qErr.message), error: qErr.message };
+
+    // Auto-tag the profile right away when the IPTV server says Active.
+    // Boss approval still controls the OGSTREAMZ rank — this just lights up
+    // the badge + expiry on their profile immediately.
+    if (status === "Active") {
+      await supabase.rpc("apply_auto_stream_status", {
+        _user_id: userId,
+        _status: status,
+        _expires_at: expiresAt,
+      });
+    }
+
     return {
       ok: true as const,
       queued: true as const,
@@ -192,14 +204,40 @@ export const verifyAndLinkStream = createServerFn({ method: "POST" })
 export const reverifyStream = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { userId?: string } | undefined) => ({ userId: d?.userId ? String(d.userId) : "" }))
-  .handler(async () => {
-    // Stream credentials are no longer persisted on the member profile —
-    // the password is discarded after Boss approval. To re-verify, the
-    // member must resubmit their credentials via verifyAndLinkStream.
-    return {
-      ok: false as const,
-      reason: "rpc_error" as const,
-      cause: "resubmit_required" as const,
-      error: "Re-verification requires the member to resubmit their stream credentials.",
-    };
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context as any;
+    // Pull the user's stored encrypted creds (Boss-approved link only).
+    const { data: rows, error } = await supabase.rpc("get_my_stream_creds");
+    if (error) {
+      return { ok: false as const, reason: "rpc_error" as const, cause: classifyRpcError(error.message), error: error.message };
+    }
+    const creds = Array.isArray(rows) && rows[0] ? rows[0] : null;
+    if (!creds || !creds.password || !creds.username || !creds.server) {
+      return {
+        ok: false as const,
+        reason: "rpc_error" as const,
+        cause: "resubmit_required" as const,
+        error: "Re-verification requires you to resubmit your stream credentials.",
+      };
+    }
+    const probe = await probeXtream(creds.server, creds.username, creds.password);
+    if ("reason" in probe) {
+      return {
+        ok: false as const,
+        reason: probe.reason,
+        error: REASON_MESSAGES[probe.reason] + (probe.detail ? ` (${probe.detail})` : ""),
+      };
+    }
+    const info = probe.info;
+    const status = (info.status || (info.auth === 1 ? "Active" : "Unknown")).toString();
+    const expUnix = Number(info.exp_date);
+    const expiresAt = Number.isFinite(expUnix) && expUnix > 0 ? new Date(expUnix * 1000).toISOString() : null;
+
+    await supabase.rpc("apply_auto_stream_status", {
+      _user_id: userId,
+      _status: status,
+      _expires_at: expiresAt,
+    });
+
+    return { ok: true as const, status, expiresAt };
   });

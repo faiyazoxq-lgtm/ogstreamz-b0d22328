@@ -123,6 +123,8 @@ export function StreamLinkCard() {
   const linked = rank === "stream_user" || rank === "vip" || rank === "boss";
   const status = profile?.stream_status ?? undefined;
   const expiresAt = profile?.stream_expires_at ?? undefined;
+  const bossVerifiedAt = (profile as any)?.stream_boss_verified_at ?? undefined;
+  const autoCheckedAt = (profile as any)?.stream_auto_checked_at ?? undefined;
 
   const expiryDate = expiresAt ? new Date(expiresAt) : null;
   const expired = expiryDate ? expiryDate.getTime() < Date.now() : false;
@@ -325,6 +327,25 @@ export function StreamLinkCard() {
               {expired ? <AlertTriangle className="h-3.5 w-3.5" /> : status === "Active" ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Clock className="h-3.5 w-3.5" />}
               {expired ? "Expired" : status}
             </span>
+          )}
+          {status === "Active" && !expired && (
+            bossVerifiedAt ? (
+              <span
+                className="inline-flex items-center gap-1.5 rounded-md border border-primary/50 bg-primary/10 px-2.5 py-1 font-bold uppercase tracking-[0.18em] text-primary"
+                title={`Verified by Boss on ${new Date(bossVerifiedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}`}
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Verified by Boss
+              </span>
+            ) : (
+              <span
+                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/60 px-2.5 py-1 font-bold uppercase tracking-[0.18em] text-muted-foreground"
+                title={autoCheckedAt ? `Auto-checked ${new Date(autoCheckedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}` : "Auto-detected from your stream provider — Boss approval pending"}
+              >
+                <CircleDashed className="h-3.5 w-3.5" />
+                Auto-detected
+              </span>
+            )
           )}
           {expiryLabel && (
             <span
