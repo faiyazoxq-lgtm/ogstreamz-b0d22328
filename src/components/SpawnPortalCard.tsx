@@ -152,6 +152,10 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
       const msg = e?.message ?? "Spawn failed — please try again";
       setErrorMsg(msg);
       toast.error("Spawn failed", { id: toastId, description: msg });
+      // If the server refunded credits, surface the new balance immediately.
+      if (/refunded\s+\d+\s+credit/i.test(msg)) {
+        void refresh();
+      }
     } finally {
       setLoading(false);
     }
