@@ -72,7 +72,7 @@ function ProfilePage() {
   return (
     <main className="relative min-h-[calc(100vh-4rem)]">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <img src={bgFlame} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover opacity-15 mix-blend-screen" />
+        <img src={bgFlame} alt="" aria-hidden loading="lazy" decoding="async" fetchPriority="low" className="absolute inset-0 w-full h-full object-cover opacity-15 mix-blend-screen" />
         <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/85 to-background" />
       </div>
 
