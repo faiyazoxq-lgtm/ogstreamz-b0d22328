@@ -4,7 +4,7 @@ import { requireMember } from "@/lib/route-guards";
 import { useEffect, useState } from "react";
 import {
   Crown, Coins, Ticket, History, Loader2, Sparkles, ExternalLink, Music, Mic2,
-  Flame,
+  Flame, Twitch, Youtube, Radio, Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -135,6 +135,7 @@ function DashboardPage() {
       <section className="space-y-6">
         <ZeroGStreamPanel />
         <PassesPanel compact />
+        <StreamLinksCard streams={(profile as any).stream_links ?? {}} />
         <VipNotificationsInbox />
         <VaultRevealCard />
         <h2 className="text-xs uppercase tracking-[0.4em] text-muted-foreground"><History className="inline h-3.5 w-3.5 mr-2" />Transmission History</h2>
