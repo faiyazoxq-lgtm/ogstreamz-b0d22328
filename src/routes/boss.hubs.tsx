@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Eye, EyeOff, ArrowUpRight, Sparkles, Music2, Smile, Wrench, TrendingUp, Rocket, Radio, Bot, Brain, Zap, Star, Megaphone, Disc3, Satellite, Radar, Lock, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, ArrowUpRight, Sparkles, Music2, Smile, Wrench, TrendingUp, Rocket, Radio, Bot, Brain, Zap, Star, Megaphone, Disc3, Satellite, Radar, Lock, Loader2, GripVertical } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,9 @@ function HubsManager() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState<Partial<Hub>>({});
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -66,6 +69,33 @@ function HubsManager() {
     const { error } = await supabase.from("custom_hubs").delete().eq("id", h.id);
     if (error) return toast.error(error.message);
     toast.success("Deleted"); load();
+  }
+
+  async function persistOrder(next: Hub[]) {
+    setSavingOrder(true);
+    const updates = next.map((h, i) =>
+      supabase.from("custom_hubs").update({ sort_order: i }).eq("id", h.id)
+    );
+    const results = await Promise.all(updates);
+    setSavingOrder(false);
+    const failed = results.find((r) => r.error);
+    if (failed?.error) { toast.error(failed.error.message); load(); return; }
+    toast.success("Order saved");
+  }
+
+  function handleDrop(targetId: string) {
+    if (!dragId || dragId === targetId) { setDragId(null); setOverId(null); return; }
+    const from = hubs.findIndex((h) => h.id === dragId);
+    const to = hubs.findIndex((h) => h.id === targetId);
+    if (from < 0 || to < 0) return;
+    const next = hubs.slice();
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    const reindexed = next.map((h, i) => ({ ...h, sort_order: i }));
+    setHubs(reindexed);
+    setDragId(null);
+    setOverId(null);
+    persistOrder(reindexed);
   }
 
   return (
@@ -117,8 +147,17 @@ function HubsManager() {
               const Icon = ICONS[h.icon] ?? Sparkles;
               const isEdit = editing === h.id;
               return (
-                <div key={h.id} className="rounded-xl border bg-card p-4"
-                  style={{ borderColor: `${h.accent}55` }}>
+                <div
+                  key={h.id}
+                  draggable={!isEdit}
+                  onDragStart={(e) => { setDragId(h.id); e.dataTransfer.effectAllowed = "move"; }}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (overId !== h.id) setOverId(h.id); }}
+                  onDragLeave={() => { if (overId === h.id) setOverId(null); }}
+                  onDrop={(e) => { e.preventDefault(); handleDrop(h.id); }}
+                  onDragEnd={() => { setDragId(null); setOverId(null); }}
+                  className={`rounded-xl border bg-card p-4 transition-all ${dragId === h.id ? "opacity-50" : ""} ${overId === h.id && dragId && dragId !== h.id ? "ring-2 ring-primary" : ""}`}
+                  style={{ borderColor: `${h.accent}55` }}
+                >
                   {isEdit ? (
                     <div className="space-y-2">
                       <div className="grid grid-cols-2 gap-2">
@@ -140,6 +179,9 @@ function HubsManager() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-3">
+                      <span className="cursor-grab active:cursor-grabbing text-muted-foreground touch-none" title="Drag to reorder">
+                        <GripVertical className="h-4 w-4" />
+                      </span>
                       <div className="h-10 w-10 rounded-lg flex items-center justify-center"
                         style={{ background: `${h.accent}1f`, color: h.accent }}>
                         <Icon className="h-5 w-5" />
@@ -173,6 +215,11 @@ function HubsManager() {
           </div>
         )}
       </div>
+      {savingOrder && (
+        <div className="fixed bottom-4 right-4 inline-flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-xs text-muted-foreground shadow">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving order…
+        </div>
+      )}
     </div>
   );
 }
