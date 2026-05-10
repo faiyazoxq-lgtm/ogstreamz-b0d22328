@@ -34,7 +34,8 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, isV
   const downloadFn = useServerFn(getTrackDownloadUrl);
 
   const unlocked = owned || isVip;
-  const priceLabel = `£${(priceCents / 100).toFixed(2)} (${Math.round(priceCents / 100)} 🪙)`;
+  const coinPrice = Math.max(1, Math.round(priceCents / 100));
+  const buyLabel = `Buy for ${coinPrice} 🪙`;
   const returnUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}${window.location.pathname}?unlocked=${trackId}&session_id={CHECKOUT_SESSION_ID}`
@@ -150,7 +151,7 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, isV
             className="h-12 w-full text-xs uppercase tracking-[0.3em] font-black border-2 mb-2"
             style={{ background: accent, color: "#000", borderColor: accent, boxShadow: `0 0 40px ${accent}` }}
           >
-            <Unlock className="h-4 w-4 mr-2" /> Unlock Track · {priceLabel}
+            <Unlock className="h-4 w-4 mr-2" /> {buyLabel}
           </Button>
           <Link to="/vip">
             <Button
@@ -182,7 +183,7 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, isV
         <DialogContent className="max-w-2xl p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6">
             <DialogTitle className="text-sm uppercase tracking-[0.3em]">
-              Unlock · {title} · {priceLabel}
+              Unlock {title} — {buyLabel}
             </DialogTitle>
           </DialogHeader>
           <div className="p-2">
