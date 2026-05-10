@@ -52,6 +52,12 @@ const storeLinks: ReadonlyArray<HubLink> = [
   { to: "/checkout/return",  label: "Last Receipt",     icon: Receipt,     desc: "Recent purchase status" },
 ];
 
+const portalSwitcherLinks: ReadonlyArray<HubLink> = [
+  { to: "/",          label: "The HUB",   icon: Compass,         desc: "Home base — main hub" },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, desc: "Your control room" },
+  { to: "/portals",   label: "0G-PORTAL", icon: Sparkles,        desc: "Browse the full universe" },
+];
+
 // Boss / admin pages live under their own /boss layout with a sidebar.
 
 function NavDropdown({
