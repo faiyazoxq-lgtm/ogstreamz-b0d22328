@@ -194,19 +194,19 @@ function SubSummary({
   ].filter(Boolean);
   return (
     <div
-      className="mt-2 sm:mt-3 flex flex-col gap-1 sm:gap-1.5"
+      className="mt-2.5 flex flex-col gap-1.5 leading-none"
       role="group"
       aria-label={`Subscription summary: ${summaryParts.join(", ")}`}
     >
       {(planLabel || subWithStatus) && (
-        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 min-h-[18px]">
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 min-h-[20px]">
           {planLabel && <PlanChip planLabel={planLabel} tone="amber" size="sm" />}
           {subWithStatus && <StatusBadge sub={subWithStatus} size="sm" />}
         </div>
       )}
       {renewalLabel && (
         <p
-          className="text-[11px] leading-tight text-muted-foreground break-words hyphens-auto max-w-full"
+          className="text-[11px] leading-snug text-muted-foreground break-words hyphens-auto max-w-full"
           title={renewalLabel}
         >
           {renewalLabel}
