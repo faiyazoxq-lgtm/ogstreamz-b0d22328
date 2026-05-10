@@ -107,7 +107,15 @@ export function TrackingEye({
         const r = el.getBoundingClientRect();
         const tMax = travel ?? r.width * travelRatio;
         const reach = tMax > 0 ? Math.min(1, Math.hypot(nx, ny) / tMax) : 0;
-        el.style.setProperty("--eye-glow", String(0.35 + reach * 0.65));
+        // Per-hub multiplier (set on :root by EyeGlowTuner) so the same eye
+        // glows a bit louder/softer depending on which HUB is active.
+        const rootMult =
+          parseFloat(
+            getComputedStyle(document.documentElement).getPropertyValue(
+              "--eye-glow-multiplier",
+            ),
+          ) || 1;
+        el.style.setProperty("--eye-glow", String((0.35 + reach * 0.65) * rootMult));
       }
       raf = requestAnimationFrame(tick);
     };
