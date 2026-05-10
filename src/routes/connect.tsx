@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { requireMember } from "@/lib/route-guards";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -7,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import {
-import { requireMember } from "@/lib/route-guards";
   Loader2, Rocket, Search, Mail, Eye, MousePointerClick, Reply,
   Globe, Trash2, Plus, RefreshCw, ShieldCheck, Sparkles,
 } from "lucide-react";

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { requireMember } from "@/lib/route-guards";
 import { useEffect, useState } from "react";
 import {
-import { requireMember } from "@/lib/route-guards";
   Crown, Coins, Ticket, History, Loader2, Sparkles, ExternalLink, Music, Mic2,
   Flame,
 } from "lucide-react";
