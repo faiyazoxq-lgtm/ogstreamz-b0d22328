@@ -106,6 +106,23 @@ function AuthPage() {
   useEffect(() => {
     if (user) {
       const dest = consumeRedirect();
+      // Audit magic-link consumption when the callback hash signals it
+      try {
+        const hash = typeof window !== "undefined" ? window.location.hash : "";
+        if (/type=magiclink|type=email/.test(hash)) {
+          void supabase
+            .from("magic_link_audit")
+            .insert({
+              email: user.email ?? "",
+              status: "consumed",
+              redirect_to: typeof window !== "undefined" ? window.location.origin + dest : null,
+              user_agent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 500) : null,
+            })
+            .then(() => {}, (e) => console.warn("[magic-link audit] consumed insert failed", e));
+        }
+      } catch {
+        /* non-fatal */
+      }
       // Confirm starting credits when this is the first sign-in after signup.
       try {
         if (sessionStorage.getItem("just_signed_up") === "1") {
