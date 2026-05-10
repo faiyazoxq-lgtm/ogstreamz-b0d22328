@@ -11,6 +11,14 @@ type Hit = TrackHit | JokeHit | ToolHit;
 const KIND_ICON = { track: Music2, joke: Smile, tool: Wrench } as const;
 const TOOL_PAGE_SIZE = 8;
 
+type Category = "all" | "tracks" | "jokes" | "tools";
+const CATEGORIES: { id: Category; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "tracks", label: "Tracks" },
+  { id: "jokes", label: "Jokes" },
+  { id: "tools", label: "Tools" },
+];
+
 function escapeRegex(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -38,6 +46,7 @@ function Highlight({ text, term }: { text: string; term: string }) {
 export function BossSearch({ className = "" }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
+  const [category, setCategory] = useState<Category>("all");
   const [topHits, setTopHits] = useState<Hit[]>([]); // tracks + jokes
   const [toolHits, setToolHits] = useState<ToolHit[]>([]);
   const [toolPage, setToolPage] = useState(0);
@@ -51,7 +60,13 @@ export function BossSearch({ className = "" }: { className?: string }) {
   const reqIdRef = useRef(0);
   const navigate = useNavigate();
 
-  const hits = useMemo<Hit[]>(() => [...topHits, ...toolHits], [topHits, toolHits]);
+  const hits = useMemo<Hit[]>(() => {
+    const all: Hit[] = [...topHits, ...toolHits];
+    if (category === "all") return all;
+    if (category === "tracks") return all.filter((h) => h.kind === "track");
+    if (category === "jokes") return all.filter((h) => h.kind === "joke");
+    return all.filter((h) => h.kind === "tool");
+  }, [topHits, toolHits, category]);
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -84,19 +99,22 @@ export function BossSearch({ className = "" }: { className?: string }) {
     const reqId = ++reqIdRef.current;
     const handle = setTimeout(async () => {
       const like = `%${term.replace(/[%_]/g, "")}%`;
+      const wantTracks = category === "all" || category === "tracks";
+      const wantJokes = category === "all" || category === "jokes";
+      const wantTools = category === "all" || category === "tools";
       const [tracks, jokes, tools] = await Promise.all([
-        supabase.from("tracks")
+        wantTracks ? supabase.from("tracks")
           .select("id, title, portal_slug")
           .or(`title.ilike.${like},portal_slug.ilike.${like}`)
-          .limit(6),
-        supabase.from("jokes")
+          .limit(6) : Promise.resolve({ data: [] as any[] }),
+        wantJokes ? supabase.from("jokes")
           .select("id, content, keyword")
           .or(`content.ilike.${like},keyword.ilike.${like}`)
-          .limit(6),
-        supabase.from("calculators")
+          .limit(6) : Promise.resolve({ data: [] as any[] }),
+        wantTools ? supabase.from("calculators")
           .select("id, slug, name, description")
           .or(`name.ilike.${like},slug.ilike.${like},description.ilike.${like}`)
-          .range(0, TOOL_PAGE_SIZE),
+          .range(0, TOOL_PAGE_SIZE) : Promise.resolve({ data: [] as any[] }),
       ]);
       if (reqId !== reqIdRef.current) return; // stale
       const top: Hit[] = [];
@@ -118,11 +136,12 @@ export function BossSearch({ className = "" }: { className?: string }) {
       setLoading(false);
     }, 200);
     return () => clearTimeout(handle);
-  }, [q]);
+  }, [q, category]);
 
   const loadMoreTools = useCallback(async () => {
     const term = q.trim();
     if (!term || toolsLoadingMore || !toolsHasMore) return;
+    if (category !== "all" && category !== "tools") return;
     setToolsLoadingMore(true);
     const reqId = reqIdRef.current;
     const nextPage = toolPage + 1;
@@ -145,7 +164,7 @@ export function BossSearch({ className = "" }: { className?: string }) {
     setToolPage(nextPage);
     setToolsHasMore(rows.length > TOOL_PAGE_SIZE);
     setToolsLoadingMore(false);
-  }, [q, toolPage, toolsHasMore, toolsLoadingMore]);
+  }, [q, toolPage, toolsHasMore, toolsLoadingMore, category]);
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -211,6 +230,21 @@ export function BossSearch({ className = "" }: { className?: string }) {
 
       {showPanel && (
         <div data-search-panel className="absolute left-0 right-0 mt-2 w-[min(92vw,420px)] max-h-[70vh] overflow-auto rounded-md border border-border bg-popover shadow-lg z-50">
+          <div className="flex items-center gap-1 p-2 border-b border-border sticky top-0 bg-popover/95 backdrop-blur z-10">
+            {CATEGORIES.map((c) => {
+              const active = c.id === category;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => { setCategory(c.id); setHighlight(0); }}
+                  className={`text-[11px] uppercase tracking-wider px-2 py-1 rounded border transition-colors ${active ? "bg-primary/20 border-primary/40 text-foreground" : "border-border text-muted-foreground hover:bg-secondary"}`}
+                >
+                  {c.label}
+                </button>
+              );
+            })}
+          </div>
           {loading && (
             <div className="flex items-center gap-2 p-3 text-sm text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin" /> Searching…
