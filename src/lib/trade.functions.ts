@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { runDeepSearch, runPeerReview } from "./orchestrator.functions";
 import { tgSendMessage } from "./syndicate.functions";
+import { effectiveSwearing } from "@/lib/swearing";
 
 function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48) || "trade";
@@ -119,7 +120,7 @@ export const runTradeScan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { slug: string }) => ({ slug: String(d.slug||"").trim().slice(0,80) }))
   .handler(async ({ data, context }) => {
-    const { supabase } = context as { supabase: any; userId: string };
+    const { supabase, userId } = context as { supabase: any; userId: string };
     const { data: portal } = await supabase
       .from("portals")
       .select("id, slug, name, niche, theme_config, kind")
@@ -130,6 +131,20 @@ export const runTradeScan = createServerFn({ method: "POST" })
     const assetClass: string = tc.assetClass || "Crypto";
     const risk: string = tc.risk || "Balanced";
     const tickers: string[] = Array.isArray(tc.tickers) ? tc.tickers.slice(0, 6) : ["BTC","ETH","TRX"];
+
+    // ── Voice mode: respect Boss-level Swearing Agent toggle on the caller. ──
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("rank, feature_flags")
+      .eq("id", userId)
+      .maybeSingle();
+    const swear = effectiveSwearing(prof);
+    const voiceSystem = swear
+      ? "You are TRADEHUB FLOOR-TRADER — foul-mouthed, terse, no fluff. Pack output with British/US trading-floor swearing (fuck, shit, bollocks, mental, prick). Strict JSON only, no markdown, no preamble."
+      : "You are TRADEHUB SIGNAL — brutally terse, no fluff, no warnings. Strict JSON only, no markdown, no preamble.";
+    const styleRule = swear
+      ? "EXTREMELY BRIEF + SWEARING ON. thesis ≤ 14 words, must contain at least 2 swears. topMove.edge ≤ 8 words with a swear. whaleActivity ≤ 10 words with a swear. riskFlags ≤ 5 words each, at least one with a swear. factCards.headline ≤ 10 words, peppered with swears. volatilityCatalyst ≤ 5 words. NO disclaimers."
+      : "EXTREMELY BRIEF, CLEAN. thesis ≤ 14 words. topMove.edge ≤ 8 words. whaleActivity ≤ 10 words. riskFlags ≤ 5 words each. factCards.headline ≤ 10 words. volatilityCatalyst ≤ 5 words. NO disclaimers, NO swearing.";
 
     const PERPLEXITY = pplxKey();
     const FIRECRAWL = process.env.FIRECRAWL_API_KEY;
@@ -161,21 +176,23 @@ export const runTradeScan = createServerFn({ method: "POST" })
 Risk profile: ${risk}.
 ${headlines.length ? `Latest headlines:\n- ${headlines.join("\n- ")}` : "Use your real-time search."}
 
+VOICE: ${styleRule}
+
 Return STRICT JSON only:
 {
   "signal": "BUY|SELL|HOLD",
   "confidence": 0-100,
-  "thesis": "2 sentence sharp punchy rationale",
-  "topMove": { "ticker": "string", "direction": "LONG|SHORT|FLAT", "edge": "1 sentence" },
+  "thesis": "ONE punchy sentence, ≤14 words",
+  "topMove": { "ticker": "string", "direction": "LONG|SHORT|FLAT", "edge": "≤8 word phrase" },
   "sentiment": "BULLISH|BEARISH|MIXED",
-  "whaleActivity": "1 sentence on large wallet flows",
-  "riskFlags": ["short flag", "short flag"],
+  "whaleActivity": "≤10 word phrase on large wallet flows",
+  "riskFlags": ["≤5 word flag", "≤5 word flag"],
   "price": { "value": number, "currency": "USD", "change24hPct": number, "primaryTicker": "string" },
   "levels": { "resistance": number, "support": number, "target": number, "stop": number },
   "volatilityIndex": "LOW|MEDIUM|HIGH",
-  "volatilityCatalyst": "≤8 word phrase (e.g. Iran Conflict Factor)",
+  "volatilityCatalyst": "≤5 word phrase",
   "biasScore": -100,
-  "factCards": [ { "headline": "≤14 word punchy fact" }, { "headline": "..." }, { "headline": "..." } ]
+  "factCards": [ { "headline": "≤10 word punchy fact" }, { "headline": "..." }, { "headline": "..." } ]
 }`;
     const r = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
@@ -183,10 +200,10 @@ Return STRICT JSON only:
       body: JSON.stringify({
         model: "sonar",
         messages: [
-          { role: "system", content: "Output strict JSON only." },
+          { role: "system", content: voiceSystem },
           { role: "user", content: sigPrompt },
         ],
-        temperature: 0.4, max_tokens: 600,
+        temperature: swear ? 0.7 : 0.4, max_tokens: 380,
         search_recency_filter: "day",
       }),
     });
@@ -200,8 +217,11 @@ Return STRICT JSON only:
     const conf = Math.max(0, Math.min(100, Number(signal.confidence ?? 50)));
 
     // 2b. 0G-BRAIN deep_search — last-hour citations + peer-review
-    const deepQ = `${assetClass} ${tickers.join(", ")} market-moving news, whale flows, and price catalysts in the last hour. Cite at least 5 sources.`;
-    const deep = await runDeepSearch({ query: deepQ, recency: "hour", minSources: 5 }).catch((e) => {
+    const deepQ = `${assetClass} ${tickers.join(", ")} market-moving news, whale flows, and price catalysts in the last hour. Cite at least 5 sources. Reply in ≤ 4 brutally short bullet points, no preamble.`;
+    const deepSystemHint = swear
+      ? "You are 0G-BRAIN deep_search in TRADEHUB mode — sweary trading-floor voice. Output ≤4 ultra-brief bullets, each ≤14 words, peppered with swearing. Cite ≥5 sources. No disclaimers."
+      : "You are 0G-BRAIN deep_search. Output ≤4 ultra-brief bullets, each ≤14 words. Cite ≥5 sources. No disclaimers.";
+    const deep = await runDeepSearch({ query: deepQ, recency: "hour", minSources: 5, systemHint: deepSystemHint }).catch((e) => {
       console.error("trade deep_search failed", e?.message);
       return null;
     });
@@ -210,6 +230,10 @@ Return STRICT JSON only:
           topic: `${assetClass} signal ${sig}`,
           analysis: `Signal=${sig} Conf=${conf}\nThesis: ${signal.thesis ?? ""}\nTopMove: ${JSON.stringify(signal.topMove ?? {})}\nSentiment: ${signal.sentiment ?? ""}`,
           evidence: deep,
+          systemOverride: swear
+            ? "Output strict JSON only. Voice: foul-mouthed trading-floor. Every text field ≤12 words and packed with swears. No disclaimers."
+            : "Output strict JSON only. Voice: brutally brief, ≤12 words per field. No disclaimers, no swearing.",
+          maxTokens: 420,
         }).catch(() => undefined)
       : undefined;
 
