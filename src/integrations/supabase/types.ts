@@ -1353,6 +1353,7 @@ export type Database = {
           rank: Database["public"]["Enums"]["syndicate_rank"]
           referred_by_reseller: string | null
           status: Database["public"]["Enums"]["account_status"]
+          stream_links: Json
           subscription_plan: Database["public"]["Enums"]["subscription_plan"]
           updated_at: string
         }
@@ -1370,6 +1371,7 @@ export type Database = {
           rank?: Database["public"]["Enums"]["syndicate_rank"]
           referred_by_reseller?: string | null
           status?: Database["public"]["Enums"]["account_status"]
+          stream_links?: Json
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
           updated_at?: string
         }
@@ -1387,6 +1389,7 @@ export type Database = {
           rank?: Database["public"]["Enums"]["syndicate_rank"]
           referred_by_reseller?: string | null
           status?: Database["public"]["Enums"]["account_status"]
+          stream_links?: Json
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
           updated_at?: string
         }
