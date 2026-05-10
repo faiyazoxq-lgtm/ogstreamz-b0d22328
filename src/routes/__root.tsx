@@ -146,7 +146,7 @@ function RootComponent() {
               <img
                 src={bgFlame}
                 alt=""
-                className="absolute inset-0 h-full w-full object-cover opacity-15 mix-blend-screen"
+                className="absolute inset-0 h-full w-full object-cover opacity-[0.08] mix-blend-overlay"
               />
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,oklch(var(--background)/0.6)_100%)]" />
             </div>
