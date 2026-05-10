@@ -21,7 +21,8 @@ type Tile = {
 };
 
 const TILES: Tile[] = [
-  { to: "/admin", hash: "roster",    label: "User Roster",      blurb: "View members · adjust credits · change rank/status", Icon: Users,    tint: "#3ad6ff" },
+  { to: "/boss/users",               label: "User Roster",      blurb: "Full control · rank, status, credits, ban, force sign-out, stream verify", Icon: Users,    tint: "#3ad6ff" },
+  { to: "/admin", hash: "roster",    label: "Legacy Roster",    blurb: "Original admin console roster view",                Icon: Users,    tint: "#94a3b8" },
   { to: "/admin", hash: "topups",    label: "Top-Up Requests",  blurb: "Approve or deny credit top-ups",                     Icon: Inbox,    tint: "#ff5577" },
   { to: "/admin", hash: "roster",    label: "Adjust Credits",   blurb: "Boss-grant credits by email or user-id",             Icon: Coins,    tint: "#ffd166" },
   { to: "/admin", hash: "passes",    label: "VIP Passes",       blurb: "Mint, grant, revoke, share signup passes",           Icon: Ticket,   tint: "#a78bfa" },

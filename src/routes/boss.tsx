@@ -12,6 +12,7 @@ type NavItem = { to: string; label: string; Icon: React.ComponentType<{ classNam
 
 const NAV: NavItem[] = [
   { to: "/boss/overview",   label: "Overview",      Icon: Crown, exact: true },
+  { to: "/boss/users",      label: "Users",         Icon: Users },
   { to: "/admin",           label: "Admin Console", Icon: Users },
   { to: "/boss/civility",   label: "Civility",      Icon: ShieldCheck },
   { to: "/boss/analytics",  label: "Analytics",     Icon: BarChart3 },

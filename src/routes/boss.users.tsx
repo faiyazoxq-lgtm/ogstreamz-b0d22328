@@ -1,0 +1,206 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { Users, Search, Coins, ShieldOff, ShieldCheck, LogOut, RefreshCw, Crown, Tv } from "lucide-react";
+import { listRoster, setRank as setRankFn, setStatus as setStatusFn, adjustCredits, setBanned, forceSignOut, type RosterRow } from "@/lib/boss-users.functions";
+import { reverifyStream } from "@/lib/stream-link.functions";
+
+export const Route = createFileRoute("/boss/users")({
+  head: () => ({ meta: [{ title: "Users · Boss" }, { name: "description", content: "Full roster control: rank, status, credits, ban, force sign-out, stream-account verification." }] }),
+  component: BossUsers,
+});
+
+const RANK_OPTS = ["prospect", "enforcer", "stream_user", "vip", "boss"] as const;
+const RANK_LABEL: Record<string, string> = {
+  prospect: "Visitor", enforcer: "Member", stream_user: "Stream User", vip: "VIP / Real OG", boss: "Boss",
+};
+const RANK_TINT: Record<string, string> = {
+  prospect: "#94a3b8", enforcer: "#3ad6ff", stream_user: "#a78bfa", vip: "#ffd166", boss: "#ff2e55",
+};
+
+function BossUsers() {
+  const list = useServerFn(listRoster);
+  const setRankRpc = useServerFn(setRankFn);
+  const setStatusRpc = useServerFn(setStatusFn);
+  const creditsRpc = useServerFn(adjustCredits);
+  const banRpc = useServerFn(setBanned);
+  const signOutRpc = useServerFn(forceSignOut);
+  const verifyRpc = useServerFn(reverifyStream);
+
+  const [rows, setRows] = useState<RosterRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [rankFilter, setRankFilter] = useState<string>("");
+  const [err, setErr] = useState<string | null>(null);
+
+  const refresh = async () => {
+    setLoading(true); setErr(null);
+    try {
+      const { rows } = await list({ data: { search, rank: rankFilter, limit: 200 } });
+      setRows(rows);
+    } catch (e: any) { setErr(e?.message ?? "Failed to load"); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { refresh(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [rankFilter]);
+
+  const counts = useMemo(() => rows.reduce<Record<string, number>>((acc, r) => {
+    acc[r.rank] = (acc[r.rank] ?? 0) + 1; return acc;
+  }, {}), [rows]);
+
+  const onAction = async (id: string, fn: () => Promise<unknown>) => {
+    setBusyId(id); setErr(null);
+    try { await fn(); await refresh(); }
+    catch (e: any) { setErr(e?.message ?? "Action failed"); }
+    finally { setBusyId(null); }
+  };
+
+  return (
+    <div className="space-y-5">
+      <header className="glass-obsidian-cmd rounded-3xl p-5">
+        <div className="flex items-center gap-3">
+          <Users className="h-6 w-6 text-gold" />
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.4em] terminal-mono text-gold">0G · Boss</p>
+            <h1 className="syndicate-header text-2xl text-white/95">User Roster</h1>
+          </div>
+        </div>
+        <p className="mt-2 text-sm text-white/65 max-w-2xl">
+          Full control: rank, status, credits, ban, force sign-out. Stream-verified members auto-graduate to <strong className="text-white/90">Stream User</strong>; from there you can promote to VIP / Real OG.
+        </p>
+      </header>
+
+      {/* Filters */}
+      <div className="glass-obsidian-cmd rounded-2xl p-3 flex flex-wrap items-center gap-2">
+        <form onSubmit={(e) => { e.preventDefault(); refresh(); }} className="flex items-center gap-2 flex-1 min-w-[220px]">
+          <Search className="h-4 w-4 text-white/50" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search email or display name…"
+            className="flex-1 bg-transparent border border-border rounded-md px-3 py-1.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-1 focus:ring-gold"
+          />
+          <button type="submit" className="rounded-md border border-border bg-secondary px-3 py-1.5 text-xs font-bold hover:bg-secondary/80">Search</button>
+        </form>
+        <select
+          value={rankFilter}
+          onChange={(e) => setRankFilter(e.target.value)}
+          className="bg-card border border-border rounded-md px-3 py-1.5 text-xs"
+        >
+          <option value="">All ranks</option>
+          {RANK_OPTS.map((r) => <option key={r} value={r}>{RANK_LABEL[r]}{counts[r] ? ` (${counts[r]})` : ""}</option>)}
+        </select>
+        <button onClick={refresh} className="inline-flex items-center gap-1.5 rounded-md border border-border bg-secondary px-3 py-1.5 text-xs font-bold hover:bg-secondary/80">
+          <RefreshCw className="h-3.5 w-3.5" /> Refresh
+        </button>
+      </div>
+
+      {err && <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</div>}
+      {loading && <p className="text-center text-sm text-white/55 py-6">Loading roster…</p>}
+
+      <div className="grid grid-cols-1 gap-3">
+        {rows.map((r) => {
+          const busy = busyId === r.id;
+          return (
+            <article key={r.id} className="glass-obsidian-cmd rounded-2xl p-4">
+              <div className="flex flex-wrap items-start gap-3 justify-between">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-bold text-white truncate">{r.display_name || r.email}</span>
+                    <span
+                      className="text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded font-bold"
+                      style={{ background: `${RANK_TINT[r.rank]}1f`, color: RANK_TINT[r.rank], border: `1px solid ${RANK_TINT[r.rank]}55` }}
+                    >
+                      {r.rank === "boss" && <Crown className="inline h-3 w-3 mr-0.5 -mt-0.5" />}
+                      {RANK_LABEL[r.rank] ?? r.rank}
+                    </span>
+                    {r.banned && <span className="text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded font-bold bg-destructive/15 text-destructive border border-destructive/40">Banned</span>}
+                    {r.stream_status === "Active" && <span className="text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/40">Stream ✓</span>}
+                  </div>
+                  <p className="text-xs text-white/55 mt-0.5 truncate">{r.email}</p>
+                  <p className="text-[11px] text-white/45 mt-0.5">
+                    {r.credits} credits · {r.status.toUpperCase()}
+                    {r.stream_username && <> · stream: <span className="text-white/70">{r.stream_username}</span></>}
+                    {r.stream_expires_at && <> · expires {new Date(r.stream_expires_at).toLocaleDateString()}</>}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <select
+                    aria-label="Set rank"
+                    disabled={busy}
+                    value={r.rank}
+                    onChange={(e) => onAction(r.id, () => setRankRpc({ data: { userId: r.id, rank: e.target.value as any } }))}
+                    className="bg-card border border-border rounded-md px-2 py-1 text-xs"
+                  >
+                    {RANK_OPTS.map((rk) => <option key={rk} value={rk}>{RANK_LABEL[rk]}</option>)}
+                  </select>
+                  <select
+                    aria-label="Set status"
+                    disabled={busy}
+                    value={r.status}
+                    onChange={(e) => onAction(r.id, () => setStatusRpc({ data: { userId: r.id, status: e.target.value as "free" | "vip" } }))}
+                    className="bg-card border border-border rounded-md px-2 py-1 text-xs"
+                  >
+                    <option value="free">Free</option>
+                    <option value="vip">VIP</option>
+                  </select>
+                  <button
+                    disabled={busy}
+                    onClick={() => {
+                      const v = window.prompt(`Adjust credits for ${r.email} (e.g. 50 or -10):`, "0");
+                      const n = Number(v);
+                      if (!Number.isFinite(n) || n === 0) return;
+                      onAction(r.id, () => creditsRpc({ data: { userId: r.id, delta: n, reason: "boss:roster" } }));
+                    }}
+                    className="inline-flex items-center gap-1 rounded-md border border-gold/40 bg-gold/10 text-gold px-2 py-1 text-xs font-bold hover:bg-gold/15"
+                  >
+                    <Coins className="h-3.5 w-3.5" /> Credits
+                  </button>
+                  <button
+                    disabled={busy}
+                    onClick={() => onAction(r.id, () => verifyRpc({ data: { userId: r.id } }))}
+                    title="Re-verify stream account"
+                    className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary px-2 py-1 text-xs font-bold hover:bg-secondary/80"
+                  >
+                    <Tv className="h-3.5 w-3.5" /> Verify
+                  </button>
+                  <button
+                    disabled={busy}
+                    onClick={() => onAction(r.id, () => signOutRpc({ data: { userId: r.id } }))}
+                    className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary px-2 py-1 text-xs font-bold hover:bg-secondary/80"
+                  >
+                    <LogOut className="h-3.5 w-3.5" /> Sign out
+                  </button>
+                  {r.banned ? (
+                    <button
+                      disabled={busy}
+                      onClick={() => onAction(r.id, () => banRpc({ data: { userId: r.id, banned: false } }))}
+                      className="inline-flex items-center gap-1 rounded-md border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 px-2 py-1 text-xs font-bold hover:bg-emerald-500/15"
+                    >
+                      <ShieldCheck className="h-3.5 w-3.5" /> Unban
+                    </button>
+                  ) : (
+                    <button
+                      disabled={busy}
+                      onClick={() => {
+                        const reason = window.prompt(`Reason for banning ${r.email}? (optional)`, "") ?? "";
+                        onAction(r.id, () => banRpc({ data: { userId: r.id, banned: true, reason } }));
+                      }}
+                      className="inline-flex items-center gap-1 rounded-md border border-destructive/40 bg-destructive/10 text-destructive px-2 py-1 text-xs font-bold hover:bg-destructive/15"
+                    >
+                      <ShieldOff className="h-3.5 w-3.5" /> Ban
+                    </button>
+                  )}
+                </div>
+              </div>
+              {r.banned && r.banned_reason && (
+                <p className="mt-2 text-[11px] text-destructive/80">Ban reason: {r.banned_reason}</p>
+              )}
+            </article>
+          );
+        })}
+        {!loading && rows.length === 0 && <p className="text-center text-sm text-white/55 py-6">No users match.</p>}
+      </div>
+    </div>
+  );
+}

@@ -45,6 +45,7 @@ import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as BossUsersRouteImport } from './routes/boss.users'
 import { Route as BossOverviewRouteImport } from './routes/boss.overview'
 import { Route as BossLexiconRouteImport } from './routes/boss.lexicon'
 import { Route as BossCivilityRouteImport } from './routes/boss.civility'
@@ -239,6 +240,11 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   path: '/checkout/return',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BossUsersRoute = BossUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossOverviewRoute = BossOverviewRouteImport.update({
   id: '/overview',
   path: '/overview',
@@ -345,6 +351,7 @@ export interface FileRoutesByFullPath {
   '/boss/civility': typeof BossCivilityRoute
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
+  '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -395,6 +402,7 @@ export interface FileRoutesByTo {
   '/boss/civility': typeof BossCivilityRoute
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
+  '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -447,6 +455,7 @@ export interface FileRoutesById {
   '/boss/civility': typeof BossCivilityRoute
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
+  '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -500,6 +509,7 @@ export interface FileRouteTypes {
     | '/boss/civility'
     | '/boss/lexicon'
     | '/boss/overview'
+    | '/boss/users'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -550,6 +560,7 @@ export interface FileRouteTypes {
     | '/boss/civility'
     | '/boss/lexicon'
     | '/boss/overview'
+    | '/boss/users'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -601,6 +612,7 @@ export interface FileRouteTypes {
     | '/boss/civility'
     | '/boss/lexicon'
     | '/boss/overview'
+    | '/boss/users'
     | '/checkout/return'
     | '/jokes/portal'
     | '/m/$slug'
@@ -917,6 +929,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/boss/users': {
+      id: '/boss/users'
+      path: '/users'
+      fullPath: '/boss/users'
+      preLoaderRoute: typeof BossUsersRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/overview': {
       id: '/boss/overview'
       path: '/overview'
@@ -1016,6 +1035,7 @@ interface BossRouteChildren {
   BossCivilityRoute: typeof BossCivilityRoute
   BossLexiconRoute: typeof BossLexiconRoute
   BossOverviewRoute: typeof BossOverviewRoute
+  BossUsersRoute: typeof BossUsersRoute
   BossIndexRoute: typeof BossIndexRoute
 }
 
@@ -1024,6 +1044,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossCivilityRoute: BossCivilityRoute,
   BossLexiconRoute: BossLexiconRoute,
   BossOverviewRoute: BossOverviewRoute,
+  BossUsersRoute: BossUsersRoute,
   BossIndexRoute: BossIndexRoute,
 }
 
@@ -1096,13 +1117,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
