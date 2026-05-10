@@ -38,11 +38,9 @@ export const listVaultCredentials = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<VaultCredentialRow[]> => {
     const { supabase } = context as { supabase: any };
-    const { data, error } = await supabase
-      .from("vault_credentials")
-      .select("id,label,username,password,active,sort_order,created_at,updated_at")
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true });
+    // Plain-text username/password are no longer stored — fetch via the
+    // Boss-only RPC that decrypts on the server.
+    const { data, error } = await supabase.rpc("boss_list_vault_credentials");
     if (error) throw new Error(error.message);
     return (data ?? []) as VaultCredentialRow[];
   });
