@@ -6,6 +6,7 @@ import {
   Store, ShoppingBag, Receipt,
   ShieldCheck, LayoutDashboard,
   UserCircle, Settings, LogOut, Menu,
+  Compass, Sparkles, DoorOpen,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { TVStaticLogo } from "@/components/TVStaticLogo";
