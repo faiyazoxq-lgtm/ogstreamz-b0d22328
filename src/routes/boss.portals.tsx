@@ -21,6 +21,21 @@ function viewPath(p: Portal) {
   return (KIND_PATH[p.kind] ?? ((s: string) => `/p/${s}`))(p.slug);
 }
 
+// Friendly hub labels for built-in kinds. Unknown kinds fall back to title-case + "HUB".
+const HUB_LABELS: Record<string, string> = {
+  music: "MusicHUB",
+  joke: "JokesHUB",
+  jokes: "JokesHUB",
+  trade: "TradeHUB",
+  connect: "ConnectHUB",
+  battle: "BattleHUB",
+  tools: "ToolHUB",
+  tool: "ToolHUB",
+};
+function hubLabel(kind: string) {
+  return HUB_LABELS[kind] ?? kind.charAt(0).toUpperCase() + kind.slice(1) + "HUB";
+}
+
 export const Route = createFileRoute("/boss/portals")({
   component: PortalsManager,
 });
@@ -29,7 +44,7 @@ function PortalsManager() {
   const [rows, setRows] = useState<Portal[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
-  const [kind, setKind] = useState<string>("all");
+  const [hub, setHub] = useState<string>("all");
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState<Partial<Portal>>({});
 
@@ -46,19 +61,22 @@ function PortalsManager() {
   }
   useEffect(() => { load(); }, []);
 
-  const kinds = useMemo(() => {
-    const s = new Set(rows.map((r) => r.kind));
-    return ["all", ...Array.from(s).sort()];
+  const hubBuckets = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const r of rows) counts.set(r.kind, (counts.get(r.kind) ?? 0) + 1);
+    return Array.from(counts.entries())
+      .map(([kind, count]) => ({ kind, label: hubLabel(kind), count }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }, [rows]);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return rows.filter((r) => {
-      if (kind !== "all" && r.kind !== kind) return false;
+      if (hub !== "all" && r.kind !== hub) return false;
       if (!needle) return true;
       return r.name.toLowerCase().includes(needle) || r.slug.toLowerCase().includes(needle) || (r.niche ?? "").toLowerCase().includes(needle);
     });
-  }, [rows, q, kind]);
+  }, [rows, q, hub]);
 
   async function save(id: string) {
     const { error } = await supabase.from("portals").update({
@@ -96,9 +114,37 @@ function PortalsManager() {
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input className="pl-8" placeholder="Search name, slug, niche…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
-        <select className="border rounded-md bg-background px-3 py-2 text-sm" value={kind} onChange={(e) => setKind(e.target.value)}>
-          {kinds.map((k) => <option key={k} value={k}>{k}</option>)}
+        <select
+          className="border rounded-md bg-background px-3 py-2 text-sm"
+          value={hub}
+          onChange={(e) => setHub(e.target.value)}
+          aria-label="Filter by hub"
+        >
+          <option value="all">All hubs ({rows.length})</option>
+          {hubBuckets.map((b) => (
+            <option key={b.kind} value={b.kind}>{b.label} ({b.count})</option>
+          ))}
         </select>
+      </div>
+
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <button
+          type="button"
+          onClick={() => setHub("all")}
+          className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${hub === "all" ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground hover:text-foreground"}`}
+        >
+          All <span className="opacity-70">· {rows.length}</span>
+        </button>
+        {hubBuckets.map((b) => (
+          <button
+            key={b.kind}
+            type="button"
+            onClick={() => setHub(b.kind)}
+            className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${hub === b.kind ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground hover:text-foreground"}`}
+          >
+            {b.label} <span className="opacity-70">· {b.count}</span>
+          </button>
+        ))}
       </div>
 
       {loading ? (
