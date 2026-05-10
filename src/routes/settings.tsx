@@ -72,6 +72,7 @@ function SettingsPage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [contact, setContact] = useState<ContactCard>({});
   const [streamEntries, setStreamEntries] = useState<StreamEntry[]>([]);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
