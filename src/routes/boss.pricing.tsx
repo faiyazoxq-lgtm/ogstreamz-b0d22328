@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, Plus, Save, Trash2, Tags, Coins, Power } from "lucide-react";
+import { Loader2, Plus, Save, Trash2, Tags, Coins, Power, Tv } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -81,6 +81,9 @@ function PricingPage() {
   const [creditsPerSong, setCreditsPerSong] = useState<number>(5);
   const [savingCredits, setSavingCredits] = useState(false);
 
+  const [streamUrl, setStreamUrl] = useState<string>("https://ogstreamz.co.uk");
+  const [savingStream, setSavingStream] = useState(false);
+
   async function refresh() {
     setLoading(true);
     try {
@@ -97,11 +100,13 @@ function PricingPage() {
     refresh();
     supabase
       .from("store_settings")
-      .select("credits_per_song")
+      .select("credits_per_song, stream_portal_url")
       .eq("id", 1)
       .maybeSingle()
       .then(({ data }) => {
         if (data?.credits_per_song) setCreditsPerSong(data.credits_per_song);
+        const u = (data as { stream_portal_url?: string } | null)?.stream_portal_url;
+        if (u) setStreamUrl(u);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -199,6 +204,32 @@ function PricingPage() {
     toast.success("Saved");
   }
 
+  async function saveStreamUrl() {
+    const raw = streamUrl.trim();
+    let normalized = raw;
+    if (!/^https?:\/\//i.test(normalized)) normalized = `https://${normalized}`;
+    try {
+      const u = new URL(normalized);
+      if (!/^https?:$/.test(u.protocol)) throw new Error("bad protocol");
+      normalized = u.origin + (u.pathname === "/" ? "" : u.pathname.replace(/\/+$/, ""));
+    } catch {
+      toast.error("Enter a valid URL (e.g. https://ogstreamz.co.uk)");
+      return;
+    }
+    setSavingStream(true);
+    const { error } = await supabase
+      .from("store_settings")
+      .update({ stream_portal_url: normalized })
+      .eq("id", 1);
+    setSavingStream(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setStreamUrl(normalized);
+    toast.success("Stream portal updated");
+  }
+
   return (
     <div className="space-y-6">
       <header className="flex items-center gap-3">
@@ -232,6 +263,34 @@ function PricingPage() {
           </div>
           <Button onClick={saveCreditsPerSong} disabled={savingCredits}>
             {savingCredits ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Save
+          </Button>
+        </div>
+      </section>
+
+      {/* Stream portal domain card */}
+      <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          <Tv className="h-4 w-4" />
+          0G STREAMZ portal domain
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Where the “0G STREAMZ Profile” card on /welcome sends people to sign in.
+        </p>
+        <div className="mt-3 flex flex-wrap items-end gap-3">
+          <div className="flex-1 min-w-[240px]">
+            <Label htmlFor="streamurl">Stream portal URL</Label>
+            <Input
+              id="streamurl"
+              type="url"
+              inputMode="url"
+              placeholder="https://ogstreamz.co.uk"
+              value={streamUrl}
+              onChange={(e) => setStreamUrl(e.target.value)}
+            />
+          </div>
+          <Button onClick={saveStreamUrl} disabled={savingStream}>
+            {savingStream ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Save
           </Button>
         </div>
