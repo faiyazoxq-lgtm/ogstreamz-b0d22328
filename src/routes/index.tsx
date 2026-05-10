@@ -13,6 +13,7 @@ import { TiltCard } from "@/components/TiltCard";
 import { WelcomeAuthPrompt } from "@/components/WelcomeAuthPrompt";
 import { QuickJumpDrawer } from "@/components/QuickJumpDrawer";
 import { useAuth } from "@/hooks/use-auth";
+import { RealOgPromoCard } from "@/components/RealOgPromoCard";
 
 const ICONS: Record<string, any> = {
   Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
