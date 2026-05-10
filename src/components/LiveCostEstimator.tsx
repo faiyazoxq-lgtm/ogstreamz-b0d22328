@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Calculator, Coins, Crown, Loader2, Minus, Plus, TrendingDown, Wallet, AlertTriangle } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Calculator, Coins, Crown, Loader2, Lock, Minus, Plus, TrendingDown, Tv, Wallet, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useAccess, TIER_LABEL } from "@/lib/access";
+import { ACTION_RULES, upgradeCta, upgradeHref, type GatedActionKey } from "@/lib/action-gates";
 
 /**
  * Live, multi-action cost estimator. Pick any combination of actions and
@@ -10,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
  */
 
 type ActionDef = {
-  key: string;
+  key: GatedActionKey;
   label: string;
   hint?: string;
   cost: number;
@@ -35,6 +38,7 @@ type Props = { className?: string };
 
 export function LiveCostEstimator({ className = "" }: Props) {
   const { profile } = useAuth();
+  const access = useAccess();
   const [hubCosts, setHubCosts] = useState<Record<string, number>>(FALLBACK_HUB_COSTS);
   const [vipUsedToday, setVipUsedToday] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -77,12 +81,12 @@ export function LiveCostEstimator({ className = "" }: Props) {
 
   const actions: ActionDef[] = useMemo(() => [
     ...Object.keys(HUB_LABELS).map((k) => ({
-      key: `hub:${k}`,
+      key: `hub:${k}` as GatedActionKey,
       label: HUB_LABELS[k],
       cost: hubCosts[k] ?? 1,
     })),
-    { key: "download", label: "Unlock / download track", hint: "1 free per day for Real OG", cost: 2, vipFreeEligible: true },
-    { key: "vault", label: "Reveal vault item", cost: 5 },
+    { key: "download" as GatedActionKey, label: "Unlock / download track", hint: "1 free per day for Real OG", cost: 2, vipFreeEligible: true },
+    { key: "vault" as GatedActionKey, label: "Reveal vault item", cost: 5 },
   ], [hubCosts]);
 
   const bump = (key: string, delta: number) =>
@@ -92,12 +96,15 @@ export function LiveCostEstimator({ className = "" }: Props) {
     });
 
   // Compute totals — apply Real-OG free pass to the FIRST selected download today.
+  // Locked actions (subscription gate failed) never contribute to the total.
   const breakdown = useMemo(() => {
     let total = 0;
     let vipApplied = 0;
     let freePassesLeft = isRealOg && vipUsedToday < 1 ? 1 : 0;
     const lines: Array<{ key: string; label: string; qty: number; charged: number; saved: number }> = [];
     for (const a of actions) {
+      const rule = ACTION_RULES[a.key];
+      if (rule && !access.atLeast(rule.min)) continue;
       const q = qty[a.key] ?? 0;
       if (!q) continue;
       let saved = 0;
@@ -112,7 +119,7 @@ export function LiveCostEstimator({ className = "" }: Props) {
       lines.push({ key: a.key, label: a.label, qty: q, charged, saved });
     }
     return { total, vipApplied, lines };
-  }, [actions, qty, isRealOg, vipUsedToday]);
+  }, [actions, qty, isRealOg, vipUsedToday, access]);
 
   const after = Math.max(0, balance - breakdown.total);
   const overdraft = breakdown.total > balance;
@@ -142,6 +149,33 @@ export function LiveCostEstimator({ className = "" }: Props) {
         {actions.map((a) => {
           const q = qty[a.key] ?? 0;
           const sel = q > 0;
+          const rule = ACTION_RULES[a.key];
+          const locked = rule ? !access.atLeast(rule.min) : false;
+          if (locked && rule) {
+            const Icon = rule.min === "vip" || rule.min === "boss" ? Crown : rule.min === "stream" ? Tv : Lock;
+            return (
+              <li
+                key={a.key}
+                className="flex items-center justify-between gap-2 rounded-md border border-amber-400/30 bg-amber-400/5 px-2.5 py-1.5 text-sm"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 truncate font-medium">
+                    <Icon className="h-3.5 w-3.5 text-amber-300 shrink-0" />
+                    <span className="truncate">{a.label}</span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {a.cost} 🪙 · {TIER_LABEL[rule.min]} required
+                  </div>
+                </div>
+                <Link
+                  to={upgradeHref(rule.min)}
+                  className="inline-flex items-center gap-1 rounded-md bg-amber-400 px-2.5 py-1 text-[11px] font-bold text-black hover:bg-amber-300 whitespace-nowrap"
+                >
+                  {upgradeCta(rule.min)}
+                </Link>
+              </li>
+            );
+          }
           return (
             <li
               key={a.key}
