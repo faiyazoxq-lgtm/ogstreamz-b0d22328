@@ -191,18 +191,28 @@ function AuthPage() {
       return;
     }
     setLoading(true);
+    const dest = peekRedirect();
+    const redirectTo = `${window.location.origin}${dest}`;
+    const ua = typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 500) : null;
+    const logAttempt = (status: "requested" | "sent" | "failed", error_message?: string) =>
+      supabase
+        .from("magic_link_audit")
+        .insert({ email, status, error_message: error_message ?? null, redirect_to: redirectTo, user_agent: ua })
+        .then(() => {}, (e) => console.warn("[magic-link audit] insert failed", e));
+    void logAttempt("requested");
     try {
-      const dest = peekRedirect();
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: { emailRedirectTo: `${window.location.origin}${dest}` },
       });
       if (error) throw error;
+      void logAttempt("sent");
       toast.success("Magic link sent — check your inbox", {
         description: "Tap the link from this device to sign in instantly.",
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Could not send magic link";
+      void logAttempt("failed", msg);
       toast.error(msg);
     } finally {
       setLoading(false);
