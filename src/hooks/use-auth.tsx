@@ -5,7 +5,7 @@ import { promoteBossIfNeeded } from "@/lib/boss.functions";
 import { getRemember, hasTabSession, markTabSession, clearTabSession } from "@/lib/remember-session";
 import { hasStoredAuth } from "@/lib/has-stored-auth";
 
-export type SyndicateRank = "prospect" | "enforcer" | "vip" | "boss";
+export type SyndicateRank = "prospect" | "enforcer" | "stream_user" | "vip" | "boss";
 export type FeatureFlags = { jokes: boolean; music: boolean; tools: boolean; swearing: boolean; real_og?: boolean };
 
 type Profile = {
@@ -17,6 +17,7 @@ type Profile = {
   feature_flags: FeatureFlags;
   free_clicks_used: number;
   display_name: string | null;
+  banned?: boolean;
 };
 
 type AuthCtx = {
@@ -50,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (s?.access_token) await promoteBossIfNeeded({ data: { accessToken: s.access_token } });
     } catch { /* non-fatal */ }
     const [{ data: prof }, { data: roles }] = await Promise.all([
-      supabase.from("profiles").select("id,email,status,credits,rank,feature_flags,free_clicks_used,display_name").eq("id", uid).maybeSingle(),
+      supabase.from("profiles").select("id,email,status,credits,rank,feature_flags,free_clicks_used,display_name,banned").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
     setProfile(prof as Profile | null);
