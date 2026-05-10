@@ -94,6 +94,12 @@ function StorePage() {
       <Link to="/profile" className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] font-bold text-muted-foreground hover:text-white">
         <ArrowLeft className="h-4 w-4" /> Vault
       </Link>
+      <Link
+        to="/store/catalog"
+        className="ml-3 inline-flex items-center gap-2 rounded-full border border-[oklch(0.72_0.22_245/0.5)] bg-[oklch(0.72_0.22_245/0.1)] px-3 py-1.5 text-[10px] uppercase tracking-[0.3em] font-bold text-white hover:border-[oklch(0.72_0.22_245/0.9)]"
+      >
+        Vault catalog →
+      </Link>
 
       <header className="text-center mt-6 mb-10">
         <p className="text-xs uppercase tracking-[0.4em] font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
