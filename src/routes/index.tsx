@@ -15,6 +15,7 @@ import { QuickJumpDrawer } from "@/components/QuickJumpDrawer";
 import { useAuth } from "@/hooks/use-auth";
 import { RealOgPromoCard } from "@/components/RealOgPromoCard";
 import { CoinsBulkPromoCard } from "@/components/CoinsBulkPromoCard";
+import { RealOgBundlesCard } from "@/components/RealOgBundlesCard";
 import { VaultLoginModal } from "@/components/VaultLoginModal";
 import { Flame } from "lucide-react";
 
@@ -106,6 +107,9 @@ function Index() {
 
       {/* Real OG one-off pass */}
       <RealOgPromoCard />
+
+      {/* VIP Bundles — Real OG + Coins at a discounted total */}
+      <RealOgBundlesCard />
 
       {/* Intro / promo strip — free signup CTA for guests, members entrance for signed-in users */}
       <section className="relative max-w-5xl mx-auto px-5 sm:px-8 -mt-4 pb-10">

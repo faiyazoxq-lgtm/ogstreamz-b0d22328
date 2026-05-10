@@ -2499,6 +2499,18 @@ export type Database = {
         Returns: string
       }
       civility_default: { Args: never; Returns: boolean }
+      claim_real_og_bundle: {
+        Args: {
+          _amount_cents: number
+          _bundle_sku: string
+          _credits: number
+          _currency: string
+          _environment: string
+          _stripe_session_id: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       claim_real_og_pass: {
         Args: {
           _amount_cents: number
