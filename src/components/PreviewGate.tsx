@@ -6,6 +6,7 @@ import {
   claimPortalDownload,
   type DownloadPeek,
 } from "@/lib/portal-downloads.functions";
+import { InsufficientBalanceModal } from "@/components/InsufficientBalanceModal";
 
 const PREVIEW_SECONDS = 30;
 
@@ -19,9 +20,25 @@ type Props = {
   onUnlock: (meta: { mode: "vip_free" | "paid"; cost: number; balance: number }) => void;
   /** Render-prop for the trigger. `start` opens the preview countdown + paywall. */
   children: (api: { start: () => void; busy: boolean; locked: boolean }) => React.ReactNode;
+  /**
+   * When true (default), automatically charge / burn a VIP pass the moment the
+   * 30-second preview ends — no extra confirmation tap. If the balance is too
+   * low we swap in the friendly InsufficientBalanceModal instead.
+   */
+  autoCharge?: boolean;
+  /** Optional handler routed to the InsufficientBalanceModal "Top up" button. */
+  onTopUp?: () => void;
 };
 
-export function PreviewGate({ portalId, cost = 2, itemLabel = "download", onUnlock, children }: Props) {
+export function PreviewGate({
+  portalId,
+  cost = 2,
+  itemLabel = "download",
+  onUnlock,
+  children,
+  autoCharge = true,
+  onTopUp,
+}: Props) {
   const peek = useServerFn(peekPortalDownload);
   const claim = useServerFn(claimPortalDownload);
 
@@ -32,6 +49,7 @@ export function PreviewGate({ portalId, cost = 2, itemLabel = "download", onUnlo
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [unlocked, setUnlocked] = useState(false);
+  const [insufficientOpen, setInsufficientOpen] = useState(false);
   const tickRef = useRef<number | null>(null);
 
   const stopTick = () => {
@@ -53,7 +71,16 @@ export function PreviewGate({ portalId, cost = 2, itemLabel = "download", onUnlo
     stopTick();
     tickRef.current = window.setInterval(() => {
       setSecondsLeft((s) => {
-        if (s <= 1) { stopTick(); setPhase("paywall"); return 0; }
+        if (s <= 1) {
+          stopTick();
+          if (autoCharge) {
+            // Fire and forget — confirm() handles its own state transitions.
+            void confirm();
+          } else {
+            setPhase("paywall");
+          }
+          return 0;
+        }
         return s - 1;
       });
     }, 1000);
@@ -68,11 +95,14 @@ export function PreviewGate({ portalId, cost = 2, itemLabel = "download", onUnlo
     try {
       const res = await claim({ data: { portalId, cost } });
       if (!res.ok) {
-        setError(
-          res.error === "insufficient"
-            ? `You need ${cost} credits to unlock this ${itemLabel}.`
-            : res.message || "Couldn't process payment.",
-        );
+        if (res.error === "insufficient") {
+          // Hand off to the dedicated insufficient-balance flow.
+          stopTick();
+          setOpen(false);
+          setInsufficientOpen(true);
+          return;
+        }
+        setError(res.message || "Couldn't process payment.");
         setPhase("paywall");
         return;
       }
@@ -80,14 +110,29 @@ export function PreviewGate({ portalId, cost = 2, itemLabel = "download", onUnlo
       setOpen(false);
       onUnlock({ mode: res.mode, cost: res.cost, balance: res.balance });
     } catch (e: any) {
-      setError(e?.message || "Couldn't process payment.");
-      setPhase("paywall");
+      const message = String(e?.message || "Couldn't process payment.");
+      if (message.toLowerCase().includes("insufficient")) {
+        stopTick();
+        setOpen(false);
+        setInsufficientOpen(true);
+      } else {
+        setError(message);
+        setPhase("paywall");
+      }
     } finally { setBusy(false); }
   };
 
   return (
     <>
       {children({ start, busy, locked: !unlocked })}
+      <InsufficientBalanceModal
+        open={insufficientOpen}
+        cost={cost}
+        balance={info?.balance ?? null}
+        itemLabel={itemLabel}
+        onClose={() => setInsufficientOpen(false)}
+        onTopUp={onTopUp}
+      />
       {open && (
         <div role="dialog" aria-modal className="fixed inset-0 z-[1000] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
           <div className="relative w-full max-w-md rounded-xl border border-border bg-card p-5 shadow-2xl">
