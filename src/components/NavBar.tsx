@@ -111,7 +111,7 @@ function NavDropdown({
                 data-active={isActive ? "true" : undefined}
                 className={[
                   "group/item flex items-start gap-3 px-2 py-3 sm:py-2 min-h-12 sm:min-h-0 rounded-md outline-none touch-manipulation",
-                  "hover:bg-secondary focus-visible:ring-2 focus-visible:ring-primary",
+                  "hover:bg-secondary focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card",
                   isActive
                     ? "bg-gold/15 ring-1 ring-inset ring-gold/60 shadow-[inset_2px_0_0_0_var(--gold)]"
                     : "",
