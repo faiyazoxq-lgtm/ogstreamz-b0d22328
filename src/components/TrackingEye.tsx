@@ -12,6 +12,7 @@ export function TrackingEye({
   touchMode = "idle",
   idleTravelRatio = 0.06,
   variant = "ice",
+  bloodshot = false,
   className = "",
   style,
 }: {
@@ -29,6 +30,8 @@ export function TrackingEye({
   idleTravelRatio?: number;
   /** Color theme. "ice" = white iris + electric blue pupil; "gold" = legacy electric-gold. */
   variant?: "ice" | "gold";
+  /** Adds red veins + pinkish iris tint for a bloodshot look. */
+  bloodshot?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }) {
@@ -103,10 +106,14 @@ export function TrackingEye({
 
   const isIce = variant === "ice";
   const irisBg = isIce
-    ? "linear-gradient(135deg, #ffffff, #e6f4ff)"
+    ? bloodshot
+      ? "linear-gradient(135deg, #fff5f5, #ffe0e6 55%, #f0d8ff)"
+      : "linear-gradient(135deg, #ffffff, #e6f4ff)"
     : "linear-gradient(135deg, var(--electric-gold-100), var(--electric-gold-300))";
   const irisGlow = isIce
-    ? "0 0 12px -1px oklch(0.78 0.2 240 / 0.85)"
+    ? bloodshot
+      ? "0 0 14px -1px oklch(0.65 0.22 25 / 0.7), 0 0 22px -2px oklch(0.78 0.2 240 / 0.55)"
+      : "0 0 12px -1px oklch(0.78 0.2 240 / 0.85)"
     : "0 0 12px -1px var(--electric-gold-glow)";
   const irisRing = isIce
     ? "color-mix(in oklab, oklch(0.72 0.22 245) 60%, transparent)"
@@ -120,7 +127,7 @@ export function TrackingEye({
     <span
       ref={ref}
       aria-hidden
-      className={`inline-flex items-center justify-center rounded-full ring-1 transition-transform duration-150 ${className}`}
+      className={`relative inline-flex items-center justify-center overflow-hidden rounded-full ring-1 transition-transform duration-150 ${className}`}
       style={{
         background: irisBg,
         boxShadow: irisGlow,
@@ -130,8 +137,26 @@ export function TrackingEye({
         ...style,
       }}
     >
+      {bloodshot && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 rounded-full"
+          style={{
+            background: [
+              "radial-gradient(circle at 18% 30%, transparent 38%, oklch(0.55 0.27 25 / 0.85) 39%, transparent 41%)",
+              "radial-gradient(circle at 78% 22%, transparent 34%, oklch(0.5 0.27 22 / 0.8) 35%, transparent 37%)",
+              "radial-gradient(circle at 25% 78%, transparent 36%, oklch(0.55 0.28 18 / 0.75) 37%, transparent 39%)",
+              "radial-gradient(circle at 82% 72%, transparent 32%, oklch(0.5 0.27 28 / 0.7) 33%, transparent 35%)",
+              "radial-gradient(circle at 50% 12%, transparent 30%, oklch(0.55 0.25 20 / 0.65) 31%, transparent 33%)",
+              "radial-gradient(circle at 50% 88%, transparent 28%, oklch(0.55 0.26 24 / 0.6) 29%, transparent 31%)",
+              "radial-gradient(circle at 50% 50%, oklch(0.6 0.22 20 / 0.18), transparent 70%)",
+            ].join(", "),
+            mixBlendMode: "multiply",
+          }}
+        />
+      )}
       <span
-        className="block rounded-full ring-1 shadow-[inset_0_0_2px_rgba(0,0,0,0.8)] transition-transform duration-75"
+        className="relative block rounded-full ring-1 shadow-[inset_0_0_2px_rgba(0,0,0,0.8)] transition-transform duration-75"
         style={{
           background: pupilBg,
           ["--tw-ring-color" as string]: pupilRing,
