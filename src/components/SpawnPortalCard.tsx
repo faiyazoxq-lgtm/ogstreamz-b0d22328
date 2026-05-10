@@ -403,13 +403,13 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                 {!hasCredits ? (
                   <div className="space-y-1.5">
                     <p className="font-bold uppercase tracking-[0.18em] text-amber-300">
-                      Not enough credits
+                      Not enough 🪙
                     </p>
                     <p>
                       Spawning costs <span className="font-bold">{PORTAL_COST} 🪙</span>.
                       You have <span className="font-bold">{credits}</span> — need{" "}
                       <span className="font-bold text-amber-300">
-                        {creditsNeeded} more credit{creditsNeeded === 1 ? "" : "s"}
+                        {creditsNeeded} more 🪙
                       </span>.
                     </p>
                     <Link to="/store" className="block underline text-foreground">
@@ -426,7 +426,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
           </TooltipProvider>
           {!hasCredits && (
             <p id="spawn-credits-hint" className="sr-only">
-              You need {creditsNeeded} more credit{creditsNeeded === 1 ? "" : "s"} to spawn a portal.
+              You need {creditsNeeded} more 🪙 to spawn a portal.
             </p>
           )}
           {!isValid && (
@@ -435,7 +435,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
             </p>
           )}
           <p className="mt-2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-            Balance: <span className={hasCredits ? "text-foreground" : "text-destructive"}>{credits} credit{credits === 1 ? "" : "s"}</span>
+            Balance: <span className={hasCredits ? "text-foreground" : "text-destructive"}>{credits} 🪙</span>
             {!hasCredits && (
               <> · <Link to="/store" className="underline text-foreground">Top up</Link></>
             )}
@@ -468,10 +468,10 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                       <>
                         <div
                           className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400"
-                          aria-label={`Refunded ${n} credit${n === 1 ? "" : "s"}`}
+                          aria-label={`Refunded ${n} 🪙`}
                         >
                           <RotateCcw className="h-3 w-3" aria-hidden="true" />
-                          Refunded {n} credit{n === 1 ? "" : "s"}
+                          Refunded {n} 🪙
                         </div>
                         <p className="text-[11px] text-muted-foreground mt-2">
                           The spawn didn't complete, so we returned your credit{n === 1 ? "" : "s"} to your balance. You can retry safely — you won't be double-charged.
@@ -482,10 +482,10 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                   return (
                     <p className="text-[11px] text-muted-foreground mt-1">
                       {/insufficient|not enough credits/i.test(errorMsg)
-                        ? <>Top up credits to continue. <Link to="/store" className="underline text-foreground">Open store</Link>.</>
+                        ? <>Top up 🪙 to continue. <Link to="/store" className="underline text-foreground">Open store</Link>.</>
                         : /name and niche/i.test(errorMsg)
                         ? "Add both a portal name and a niche, then try again."
-                        : "No credit was charged. You can retry safely."}
+                        : "No 🪙 was charged. You can retry safely."}
                     </p>
                   );
                 })()}
