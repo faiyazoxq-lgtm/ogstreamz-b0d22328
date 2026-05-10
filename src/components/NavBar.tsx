@@ -168,7 +168,8 @@ export function NavBar() {
           <TVStaticLogo className="logo-xl shrink-0" />
           <OgWordmark
             suffix="-PORTAL"
-            className="hidden [@media(min-width:360px)]:inline-flex text-base sm:text-3xl truncate text-eye-ice--bright bg-transparent"
+            className="hidden [@media(min-width:360px)]:inline-flex truncate text-eye-ice--bright bg-transparent"
+            style={{ fontSize: "clamp(0.95rem, 4.2vw, 1.875rem)" }}
           />
         </Link>
         {user && (
