@@ -224,6 +224,7 @@ export function StreamLinkCard() {
   };
 
   const inFlight = busy || reverifying;
+  const configBlocked = config !== null && !config.ok;
 
   const Stepper = () => {
     if (phase === "idle") return null;
