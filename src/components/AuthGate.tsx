@@ -2,9 +2,11 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "../hooks/use-auth";
 import { UserPlus, LogIn, Gift, ShieldCheck, Sparkles, Music2, Smile, Wrench, Zap, Lock, ArrowRight, Coins } from "lucide-react";
 
-// Mirrors the +5 grant in handle_new_user(); update both if it changes.
+// Fallback used while the live value loads or if the request fails.
+// Live value comes from public.app_settings (key: signup_bonus_credits).
 export const SIGNUP_BONUS_CREDITS = 2;
 import { useEffect, type ReactNode } from "react";
+import { useSignupBonus } from "@/hooks/use-signup-bonus";
 
 const PUBLIC_PATHS = ["/auth", "/forgot-password", "/reset-password"];
 
@@ -43,6 +45,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
 }
 
 function PromoLanding() {
+  const bonus = useSignupBonus();
   return (
     <main className="relative mx-auto w-full max-w-5xl px-5 py-10 sm:py-14">
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#001a33] via-[#000914] to-black p-6 sm:p-10 shadow-[0_30px_120px_-20px_rgba(0,170,255,0.45)]">
@@ -74,7 +77,7 @@ function PromoLanding() {
             <div className="min-w-0">
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl sm:text-4xl font-black text-amber-200 tracking-tight">
-                  +{SIGNUP_BONUS_CREDITS}
+                  +{bonus}
                 </span>
                 <span className="text-[11px] uppercase tracking-[0.25em] font-bold text-amber-200/80">
                   credits waiting
@@ -107,7 +110,7 @@ function PromoLanding() {
 
           <ul className="mt-7 grid gap-2.5 sm:grid-cols-3">
             {[
-              { icon: Gift, text: `${SIGNUP_BONUS_CREDITS} free credits on signup` },
+              { icon: Gift, text: `${bonus} free credits on signup` },
               { icon: ShieldCheck, text: "No card required" },
               { icon: Sparkles, text: "All portals unlocked" },
             ].map(({ icon: Icon, text }) => (

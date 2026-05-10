@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
-import { Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft, Menu, X, ShieldAlert, LogIn, ChevronRight, Home, Tv, Tags, Bell, ChevronDown, ShoppingBag, Sparkles } from "lucide-react";
+import { Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft, Menu, X, ShieldAlert, LogIn, ChevronRight, Home, Tv, Tags, Bell, ChevronDown, ShoppingBag, Sparkles, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { BossSearch } from "@/components/BossSearch";
 import { requireBoss } from "@/lib/route-guards";
@@ -39,6 +39,7 @@ const GROUPS: NavGroup[] = [
     items: [
       { to: "/boss/pricing", label: "Pricing", Icon: Tags, desc: "Coin packs & store products" },
       { to: "/admin", label: "Admin Console", Icon: Sparkles, desc: "Top-ups, passes, vault" },
+      { to: "/boss/settings", label: "Settings", Icon: Settings, desc: "Signup bonus & tunables" },
     ],
   },
   {

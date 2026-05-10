@@ -14,7 +14,7 @@ import { claimSignupPass } from "@/lib/passes.functions";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getRemember, setRemember, markTabSession, clearTabSession } from "@/lib/remember-session";
 import logo from "@/assets/logo.jpg";
-import { SIGNUP_BONUS_CREDITS } from "@/components/AuthGate";
+import { useSignupBonus } from "@/hooks/use-signup-bonus";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -30,6 +30,7 @@ function AuthPage() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const claim = useServerFn(claimSignupPass);
+  const signupBonus = useSignupBonus();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -134,7 +135,7 @@ function AuthPage() {
       try {
         if (sessionStorage.getItem("just_signed_up") === "1") {
           sessionStorage.removeItem("just_signed_up");
-          const credits = profile?.credits ?? SIGNUP_BONUS_CREDITS;
+          const credits = profile?.credits ?? signupBonus;
           toast.success(`Account created · +${credits} credits in your wallet`, {
             description: "Spend them on any portal — no card needed.",
           });
@@ -189,7 +190,7 @@ function AuthPage() {
         try { sessionStorage.setItem("just_signed_up", "1"); } catch { /* ignore */ }
         toast.success(passToken
           ? `Welcome. Confirm your email — your pass ${passToken} will activate on first sign-in.`
-          : `Welcome to the Syndicate. Confirm your inbox — +${SIGNUP_BONUS_CREDITS} credits land on first sign-in.`);
+          : `Welcome to the Syndicate. Confirm your inbox — +${signupBonus} credits land on first sign-in.`);
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
