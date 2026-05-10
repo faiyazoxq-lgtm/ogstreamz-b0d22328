@@ -4,6 +4,7 @@ import {
   Music2, Smile, Wrench, ArrowUpRight, TrendingUp, Rocket, Swords,
   Sparkles, Radio, Bot, Brain, Zap, Star, Megaphone, Disc3, Satellite, Radar,
   UserPlus, LogIn, Gift, ShieldCheck, Coins,
+  LayoutDashboard, Store, Crown, Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -176,40 +177,7 @@ function Index() {
             )}
           </div>
 
-          <nav aria-labelledby="quick-jump-label" className="mt-5 pt-4 border-t border-white/10">
-            <h2
-              id="quick-jump-label"
-              className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-2.5 font-bold"
-            >
-              Quick jump
-            </h2>
-            <ul role="list" className="flex flex-wrap gap-2 list-none p-0 m-0">
-              {[
-                { to: "/music" as const, title: "MusicHUB", Icon: Music2, tint: "oklch(0.72_0.22_245)" },
-                { to: "/jokes" as const, title: "JokesHUB", Icon: Smile, tint: "oklch(0.78_0.18_85)" },
-                { to: "/tools" as const, title: "ToolHUB", Icon: Wrench, tint: "oklch(0.70_0.18_180)" },
-              ].map(({ to, title, Icon, tint }) => (
-                <li key={to} className="contents">
-                <Link
-                  key={to}
-                  to={to}
-                  className="group inline-flex items-center gap-2 rounded-lg border border-white/15 bg-black/40 px-3.5 py-2 text-[11px] uppercase tracking-[0.2em] font-bold text-white/90 hover:border-[var(--ql-tint)] hover:bg-white/5 transition-all focus:outline-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--ql-tint)] focus-visible:ring-offset-4 focus-visible:ring-offset-black focus-visible:border-[var(--ql-tint)] focus-visible:bg-[color-mix(in_oklab,var(--ql-tint)_22%,transparent)] focus-visible:text-white focus-visible:shadow-[0_0_28px_-2px_var(--ql-tint)] focus-visible:-translate-y-0.5 focus-visible:underline focus-visible:underline-offset-4"
-                  style={{ ["--ql-tint" as any]: tint }}
-                  activeProps={{
-                    "aria-current": "page",
-                    className:
-                      "group inline-flex items-center gap-2 rounded-lg border px-3.5 py-2 text-[11px] uppercase tracking-[0.2em] font-bold text-white transition-all border-[var(--ql-tint)] bg-[color-mix(in_oklab,var(--ql-tint)_18%,transparent)] shadow-[0_0_24px_-2px_var(--ql-tint),inset_0_0_18px_-6px_var(--ql-tint)] focus:outline-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--ql-tint)] focus-visible:ring-offset-4 focus-visible:ring-offset-black focus-visible:-translate-y-0.5 focus-visible:underline focus-visible:underline-offset-4",
-                  }}
-                >
-                  <Icon aria-hidden="true" focusable="false" className="h-3.5 w-3.5" style={{ color: tint }} />
-                  {title}
-                  <span className="sr-only">, open {title} page at {to}</span>
-                  <ArrowUpRight aria-hidden="true" focusable="false" className="h-3 w-3 opacity-60 group-hover:opacity-100" />
-                </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <QuickJumpMenu user={!!user} />
         </div>
       </section>
 
@@ -291,5 +259,127 @@ function Index() {
       <SyndicateGallery />
       <WelcomeAuthPrompt />
     </main>
+  );
+}
+
+type QuickItem = {
+  to: string;
+  title: string;
+  desc: string;
+  Icon: typeof Music2;
+  tint: string;
+  badge?: string;
+};
+
+const PORTAL_ITEMS: QuickItem[] = [
+  { to: "/music",   title: "MusicHUB",   desc: "Stream & spawn",   Icon: Music2,      tint: "oklch(0.72 0.22 245)" },
+  { to: "/jokes",   title: "JokesHUB",   desc: "Fast wit",         Icon: Smile,       tint: "oklch(0.78 0.18 85)" },
+  { to: "/trade",   title: "TradeHUB",   desc: "Live signals",     Icon: TrendingUp,  tint: "oklch(0.70 0.20 145)" },
+  { to: "/connect", title: "ConnectHUB", desc: "Scout & reach",    Icon: Rocket,      tint: "oklch(0.65 0.22 295)" },
+  { to: "/battle",  title: "BattleHUB",  desc: "Pick a side",      Icon: Swords,      tint: "oklch(0.65 0.24 25)" },
+  { to: "/tools",   title: "ToolHUB",    desc: "Sharp utilities",  Icon: Wrench,      tint: "oklch(0.70 0.18 180)" },
+];
+
+const MEMBER_ITEMS: QuickItem[] = [
+  { to: "/dashboard", title: "Dashboard", desc: "Your control deck", Icon: LayoutDashboard, tint: "oklch(0.72 0.22 245)" },
+  { to: "/store",     title: "Top up",    desc: "Add credits",       Icon: Store,           tint: "oklch(0.78 0.18 85)", badge: "Buy" },
+  { to: "/vip",       title: "VIP",       desc: "Unlock perks",      Icon: Crown,           tint: "oklch(0.78 0.18 85)" },
+  { to: "/syndicate", title: "Syndicate", desc: "Live frequency",    Icon: Users,           tint: "oklch(0.70 0.18 180)" },
+];
+
+function QuickJumpMenu({ user }: { user: boolean }) {
+  const [tab, setTab] = useState<"portals" | "member">("portals");
+  const items = tab === "portals" ? PORTAL_ITEMS : MEMBER_ITEMS;
+  return (
+    <nav aria-labelledby="quick-jump-label" className="mt-5 pt-4 border-t border-white/10">
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <h2
+          id="quick-jump-label"
+          className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-bold"
+        >
+          Quick jump
+        </h2>
+        {user && (
+          <div role="tablist" aria-label="Quick jump category" className="inline-flex rounded-full border border-white/10 bg-black/40 p-0.5 text-[10px] font-bold uppercase tracking-[0.2em]">
+            {(["portals", "member"] as const).map((t) => (
+              <button
+                key={t}
+                role="tab"
+                aria-selected={tab === t}
+                onClick={() => setTab(t)}
+                className={`px-3 py-1 rounded-full transition-colors ${tab === t ? "bg-white/15 text-white" : "text-white/60 hover:text-white"}`}
+              >
+                {t === "portals" ? "Portals" : "Members"}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      <ul role="list" className="grid grid-cols-2 sm:grid-cols-3 gap-2 list-none p-0 m-0">
+        {items.map(({ to, title, desc, Icon, tint, badge }) => (
+          <li key={to} className="contents">
+            <Link
+              to={to as never}
+              aria-label={`${title} — ${desc}`}
+              className="group relative flex items-center gap-2.5 rounded-xl border border-white/15 bg-black/40 px-3 py-2.5 text-left transition-all hover:-translate-y-0.5 hover:bg-white/5 hover:border-[var(--ql-tint)] hover:shadow-[0_0_24px_-6px_var(--ql-tint)] focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ql-tint)] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              style={{ ["--ql-tint" as any]: tint }}
+              activeProps={{
+                "aria-current": "page",
+                className:
+                  "group relative flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-all border-[var(--ql-tint)] bg-[color-mix(in_oklab,var(--ql-tint)_15%,transparent)] shadow-[0_0_20px_-4px_var(--ql-tint)] focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ql-tint)] focus-visible:ring-offset-2 focus-visible:ring-offset-black",
+              }}
+            >
+              <span
+                className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center"
+                style={{ background: `color-mix(in oklab, ${tint} 18%, transparent)`, color: tint }}
+              >
+                <Icon aria-hidden="true" focusable="false" className="h-4 w-4" />
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[11px] font-black uppercase tracking-[0.15em] text-white truncate">
+                  {title}
+                </span>
+                <span className="block text-[10px] font-semibold text-white/60 truncate">
+                  {desc}
+                </span>
+              </span>
+              {badge ? (
+                <span
+                  className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded"
+                  style={{ background: `color-mix(in oklab, ${tint} 25%, transparent)`, color: tint }}
+                >
+                  {badge}
+                </span>
+              ) : (
+                <ArrowUpRight aria-hidden="true" focusable="false" className="h-3.5 w-3.5 text-white/40 group-hover:text-white transition-colors" />
+              )}
+            </Link>
+          </li>
+        ))}
+        {!user && (
+          <li className="contents">
+            <Link
+              to="/auth"
+              search={{ mode: "signup" } as never}
+              aria-label="Create a free account — 5 credits on signup"
+              className="group relative flex items-center gap-2.5 rounded-xl border border-amber-300/40 bg-amber-300/10 px-3 py-2.5 text-left transition-all hover:-translate-y-0.5 hover:bg-amber-300/20 hover:shadow-[0_0_24px_-6px_oklch(0.78_0.18_85)] focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            >
+              <span className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center bg-amber-300/20 text-amber-200">
+                <Gift aria-hidden="true" focusable="false" className="h-4 w-4" />
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[11px] font-black uppercase tracking-[0.15em] text-amber-100 truncate">
+                  Free signup
+                </span>
+                <span className="block text-[10px] font-semibold text-amber-200/80 truncate">
+                  +5 credits, no card
+                </span>
+              </span>
+              <ArrowUpRight aria-hidden="true" focusable="false" className="h-3.5 w-3.5 text-amber-200" />
+            </Link>
+          </li>
+        )}
+      </ul>
+    </nav>
   );
 }
