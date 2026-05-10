@@ -34,8 +34,6 @@ async function tgDirect(token: string, method: string, body: any) {
 
 function projectBaseUrl(): string {
   // Stable public dev URL — works in preview + published
-  const projectId = process.env.VITE_SUPABASE_PROJECT_ID || "";
-  // Fallback to known Lovable project id
   return `https://project--ae4b10fa-6c9c-44d9-bbd5-85d320d62dff.lovable.app`;
 }
 
