@@ -21,6 +21,7 @@ import { VaultLoginModal } from "@/components/VaultLoginModal";
 import { StreamLinkCard } from "@/components/StreamLinkCard";
 import { Flame } from "lucide-react";
 import { TrackingEye } from "@/components/TrackingEye";
+import { VipPortalExplorer } from "@/components/VipPortalExplorer";
 
 const ICONS: Record<string, any> = {
   Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
@@ -220,6 +221,8 @@ function Index() {
           <QuickJumpMenu user={!!user} />
         </div>
       </section>
+
+      {isVipMember && <VipPortalExplorer customHubs={customHubs} />}
 
       <section className="relative max-w-7xl mx-auto px-5 sm:px-8 pb-28 grid gap-6 md:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {portals.map(({ to, title, desc, Icon }) => {
