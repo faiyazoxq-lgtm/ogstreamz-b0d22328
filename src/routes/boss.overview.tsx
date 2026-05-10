@@ -348,6 +348,50 @@ function BossOverview() {
                 />
               </button>
             </div>
+            <div className="flex items-center justify-between gap-3 rounded-xl border p-3"
+              style={{
+                borderColor: paymentMode === "live" ? "#00e08a55" : "#ff994055",
+                background: paymentMode === "live" ? "rgba(0,224,138,0.04)" : "rgba(255,153,64,0.05)",
+              }}
+            >
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-white/90 flex items-center gap-1.5">
+                  <CreditCard className="h-3.5 w-3.5" style={{ color: paymentMode === "live" ? "#00e08a" : "#ff9940" }} />
+                  Payments mode
+                  <span
+                    className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-[0.2em]"
+                    style={{
+                      background: paymentMode === "live" ? "#00e08a22" : "#ff994022",
+                      color: paymentMode === "live" ? "#00e08a" : "#ff9940",
+                      border: `1px solid ${paymentMode === "live" ? "#00e08a55" : "#ff994055"}`,
+                    }}
+                  >
+                    {paymentMode}
+                  </span>
+                </div>
+                <div className="text-[11px] text-white/50">
+                  {paymentMode === "live"
+                    ? "All checkouts charge real money."
+                    : "Sandbox cards only · banner shown to every member."}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={togglePaymentMode}
+                disabled={togglingPayments}
+                aria-pressed={paymentMode === "live"}
+                className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-50"
+                style={{
+                  background: paymentMode === "live" ? "#00e08a" : "rgba(255,153,64,0.5)",
+                  boxShadow: paymentMode === "live" ? "0 0 14px -2px #00e08a99" : "0 0 14px -2px #ff994099",
+                }}
+              >
+                <span
+                  className="inline-block h-5 w-5 transform rounded-full bg-white transition"
+                  style={{ transform: `translateX(${paymentMode === "live" ? "22px" : "2px"})` }}
+                />
+              </button>
+            </div>
             <Link
               to="/boss/civility"
               className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-3 hover:bg-white/[0.05] transition"
