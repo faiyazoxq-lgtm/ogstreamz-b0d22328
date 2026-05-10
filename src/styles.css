@@ -91,6 +91,14 @@
   --gradient-portal: linear-gradient(135deg, oklch(0.21 0.006 270), oklch(0.16 0.005 270));
   --gradient-gold: linear-gradient(180deg, oklch(0.99 0.005 240) 0%, oklch(0.85 0.02 240) 50%, oklch(0.65 0.03 240) 100%);
   --gradient-blue: linear-gradient(135deg, oklch(0.85 0.18 235), oklch(0.55 0.24 255));
+  /* Electric gold + midnight pupil — shared accents (TrackingEye, gold rings, etc.) */
+  --electric-gold-100: oklch(0.94 0.08 88);
+  --electric-gold-300: oklch(0.85 0.18 88);
+  --electric-gold-500: oklch(0.78 0.2 85);
+  --electric-gold-700: oklch(0.55 0.16 80);
+  --electric-gold-900: oklch(0.32 0.08 75);
+  --electric-gold-glow: oklch(0.82 0.18 85 / 0.95);
+  --midnight-pupil: oklch(0.18 0.04 260);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
