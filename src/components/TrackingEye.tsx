@@ -44,12 +44,24 @@ export function TrackingEye({
     <span
       ref={ref}
       aria-hidden
-      className={`inline-flex items-center justify-center rounded-full bg-gradient-to-br from-amber-100 to-amber-300 shadow-[0_0_12px_-1px_oklch(0.82_0.18_85/0.95)] ring-1 ring-amber-500/60 ${className}`}
-      style={{ ...(size ? { width: size, height: size } : null), ...style }}
+      className={`inline-flex items-center justify-center rounded-full ring-1 ${className}`}
+      style={{
+        background:
+          "linear-gradient(135deg, var(--electric-gold-100), var(--electric-gold-300))",
+        boxShadow: "0 0 12px -1px var(--electric-gold-glow)",
+        // ring color via CSS var (Tailwind ring-1 uses currentColor fallback through --tw-ring-color)
+        ["--tw-ring-color" as string]:
+          "color-mix(in oklab, var(--electric-gold-500) 60%, transparent)",
+        ...(size ? { width: size, height: size } : null),
+        ...style,
+      }}
     >
       <span
-        className="block rounded-full bg-[oklch(0.18_0.04_260)] ring-1 ring-amber-900/70 shadow-[inset_0_0_2px_rgba(0,0,0,0.8)] transition-transform duration-75"
+        className="block rounded-full ring-1 shadow-[inset_0_0_2px_rgba(0,0,0,0.8)] transition-transform duration-75"
         style={{
+          background: "var(--midnight-pupil)",
+          ["--tw-ring-color" as string]:
+            "color-mix(in oklab, var(--electric-gold-900) 70%, transparent)",
           width: `${pupilRatio * 100}%`,
           height: `${pupilRatio * 100}%`,
           transform: `translate(${pupil.x}px, ${pupil.y}px)`,
