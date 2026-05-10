@@ -5,11 +5,12 @@ import { ArrowLeft, ArrowUpRight, Sparkles, Music2, Smile, Wrench, TrendingUp, R
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { validateHubForm, HUB_ICON_KEYS, HUB_TITLE_MAX, HUB_TAGLINE_MAX, type HubFieldErrors } from "@/lib/hub-style";
 const ICONS: Record<string, any> = {
   Sparkles, Music2, Smile, Wrench, TrendingUp, Rocket, Radio, Bot, Brain,
   Zap, Star, Megaphone, Disc3, Satellite, Radar,
 };
-const ICON_KEYS = Object.keys(ICONS);
+const ICON_KEYS = HUB_ICON_KEYS;
 
 const ACCENT_PRESETS = [
   "oklch(0.72 0.22 245)", "oklch(0.78 0.18 85)", "oklch(0.70 0.20 145)",
@@ -31,14 +32,24 @@ function NewHubPage() {
   const [sortOrder, setSortOrder] = useState(0);
   const [published, setPublished] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [errors, setErrors] = useState<HubFieldErrors>({});
+  const [touched, setTouched] = useState(false);
 
   const Icon = ICONS[icon] ?? Sparkles;
 
+  function runValidate() {
+    const errs = validateHubForm({ title, tagline, href, icon, accent });
+    setErrors(errs);
+    return errs;
+  }
+
   async function save() {
-    if (!title.trim()) return toast.error("Title required");
-    if (title.length > 24) return toast.error("Title must be ≤ 24 chars to match HUB style");
-    if (tagline.length > 60) return toast.error("Tagline must be ≤ 60 chars");
-    if (!href.trim()) return toast.error("Link target required");
+    setTouched(true);
+    const errs = runValidate();
+    if (Object.keys(errs).length > 0) {
+      toast.error("Fix the highlighted fields");
+      return;
+    }
     setBusy(true);
     const { error } = await supabase.from("custom_hubs").insert({
       title: title.trim(), tagline: tagline.trim(), href: href.trim(),
@@ -48,6 +59,11 @@ function NewHubPage() {
     if (error) return toast.error(error.message);
     toast.success("Hub created");
     nav({ to: "/boss/hubs" });
+  }
+
+  // Live-revalidate after the user has tried to submit once.
+  function field<T>(setter: (v: T) => void) {
+    return (v: T) => { setter(v); if (touched) setTimeout(runValidate, 0); };
   }
 
   return (
@@ -67,17 +83,53 @@ function NewHubPage() {
         <div className="space-y-4 rounded-2xl border bg-card p-6">
           <div>
             <label className="text-xs uppercase tracking-wider text-muted-foreground">Title</label>
-            <Input value={title} maxLength={24} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. SignalHUB" />
-            <p className="mt-1 text-[11px] text-muted-foreground">Convention: PascalCase + “HUB” suffix · max 24 chars.</p>
+            <Input
+              value={title}
+              maxLength={HUB_TITLE_MAX}
+              onChange={(e) => field(setTitle)(e.target.value)}
+              onBlur={runValidate}
+              placeholder="e.g. SignalHUB"
+              aria-invalid={!!errors.title}
+              className={errors.title ? "border-destructive focus-visible:ring-destructive" : ""}
+            />
+            <div className="mt-1 flex items-center justify-between gap-2 text-[11px]">
+              {errors.title
+                ? <p className="text-destructive">{errors.title}</p>
+                : <p className="text-muted-foreground">PascalCase + “HUB” suffix.</p>}
+              <span className="text-muted-foreground tabular-nums">{title.length}/{HUB_TITLE_MAX}</span>
+            </div>
           </div>
           <div>
             <label className="text-xs uppercase tracking-wider text-muted-foreground">Tagline</label>
-            <Input value={tagline} maxLength={60} onChange={(e) => setTagline(e.target.value)} placeholder="Short. Punchy. ≤ 60 chars." />
+            <Input
+              value={tagline}
+              maxLength={HUB_TAGLINE_MAX}
+              onChange={(e) => field(setTagline)(e.target.value)}
+              onBlur={runValidate}
+              placeholder="Short. Punchy."
+              aria-invalid={!!errors.tagline}
+              className={errors.tagline ? "border-destructive focus-visible:ring-destructive" : ""}
+            />
+            <div className="mt-1 flex items-center justify-between gap-2 text-[11px]">
+              {errors.tagline
+                ? <p className="text-destructive">{errors.tagline}</p>
+                : <p className="text-muted-foreground">Imperative, punchy.</p>}
+              <span className="text-muted-foreground tabular-nums">{tagline.length}/{HUB_TAGLINE_MAX}</span>
+            </div>
           </div>
           <div>
             <label className="text-xs uppercase tracking-wider text-muted-foreground">Link target</label>
-            <Input value={href} onChange={(e) => setHref(e.target.value)} placeholder="/my-hub or https://..." />
-            <p className="mt-1 text-[11px] text-muted-foreground">Internal route (e.g. <code>/signals</code>) or full URL.</p>
+            <Input
+              value={href}
+              onChange={(e) => field(setHref)(e.target.value)}
+              onBlur={runValidate}
+              placeholder="/my-hub or https://..."
+              aria-invalid={!!errors.href}
+              className={errors.href ? "border-destructive focus-visible:ring-destructive" : ""}
+            />
+            {errors.href
+              ? <p className="mt-1 text-[11px] text-destructive">{errors.href}</p>
+              : <p className="mt-1 text-[11px] text-muted-foreground">Internal route (e.g. <code>/signals</code>) or full URL.</p>}
           </div>
           <div>
             <label className="text-xs uppercase tracking-wider text-muted-foreground">Icon</label>
@@ -86,7 +138,7 @@ function NewHubPage() {
                 const I = ICONS[k];
                 const active = k === icon;
                 return (
-                  <button key={k} type="button" onClick={() => setIcon(k)}
+                  <button key={k} type="button" onClick={() => field(setIcon)(k)}
                     className={`aspect-square rounded-lg border flex items-center justify-center transition ${active ? "border-foreground bg-foreground/10" : "border-border hover:border-foreground/40"}`}
                     title={k}>
                     <I className="h-4 w-4" />
@@ -94,18 +146,28 @@ function NewHubPage() {
                 );
               })}
             </div>
+            {errors.icon && <p className="mt-1 text-[11px] text-destructive">{errors.icon}</p>}
           </div>
           <div>
             <label className="text-xs uppercase tracking-wider text-muted-foreground">Accent (OKLCH)</label>
             <div className="mt-1 flex flex-wrap gap-2">
               {ACCENT_PRESETS.map((c) => (
-                <button key={c} type="button" onClick={() => setAccent(c)}
+                <button key={c} type="button" onClick={() => field(setAccent)(c)}
                   className={`h-8 w-8 rounded-full border-2 ${accent === c ? "border-foreground" : "border-transparent"}`}
                   style={{ background: c }} title={c} />
               ))}
             </div>
-            <Input className="mt-2" value={accent} onChange={(e) => setAccent(e.target.value)} placeholder="oklch(...)" />
-            <p className="mt-1 text-[11px] text-muted-foreground">Must be an OKLCH color string to stay on-brand.</p>
+            <Input
+              className={`mt-2 ${errors.accent ? "border-destructive focus-visible:ring-destructive" : ""}`}
+              value={accent}
+              onChange={(e) => field(setAccent)(e.target.value)}
+              onBlur={runValidate}
+              placeholder="oklch(0.7 0.2 245)"
+              aria-invalid={!!errors.accent}
+            />
+            {errors.accent
+              ? <p className="mt-1 text-[11px] text-destructive">{errors.accent}</p>
+              : <p className="mt-1 text-[11px] text-muted-foreground">Must be an OKLCH color string to stay on-brand.</p>}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
