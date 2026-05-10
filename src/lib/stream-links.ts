@@ -65,6 +65,28 @@ export function newEntry(platform: StreamPlatform = "twitch"): StreamEntry {
 }
 
 /**
+ * Detect which platform a pasted value belongs to based on its host (or a bare
+ * "twitch.tv/..." style string). Returns null if the value is not a known
+ * platform URL — bare handles cannot be auto-detected.
+ */
+export function detectPlatformFromValue(raw: string): Exclude<StreamPlatform, "custom"> | null {
+  const v = raw.trim();
+  if (!v) return null;
+  const looksLikeUrl = /^https?:\/\//i.test(v) || /^[\w-]+\.[\w.-]+\//.test(v);
+  if (!looksLikeUrl) return null;
+  let host: string;
+  try {
+    host = new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+  if (/(^|\.)twitch\.tv$/.test(host)) return "twitch";
+  if (/(^|\.)youtube\.com$|(^|\.)youtu\.be$/.test(host)) return "youtube";
+  if (/(^|\.)kick\.com$/.test(host)) return "kick";
+  return null;
+}
+
+/**
  * Platform-specific handle rules.
  * - Twitch:  4-25 chars, letters/digits/underscore, must start with a letter/number.
  *            Ref: https://help.twitch.tv (username rules)
