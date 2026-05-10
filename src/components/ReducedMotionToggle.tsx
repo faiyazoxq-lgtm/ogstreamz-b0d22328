@@ -14,8 +14,12 @@ import {
 export function ReducedMotionToggle() {
   const reduced = useReducedMotion();
   const [mode, setMode] = useState<ReducedMotionMode>("auto");
+  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => { setMode(getReducedMotionMode()); }, [reduced]);
+  useEffect(() => {
+    setMode(getReducedMotionMode());
+    setMounted(true);
+  }, [reduced]);
 
   const cycle = () => {
     const next: ReducedMotionMode = mode === "auto" ? "on" : mode === "on" ? "off" : "auto";
@@ -26,7 +30,9 @@ export function ReducedMotionToggle() {
   const Icon = mode === "off" ? Zap : mode === "on" ? ZapOff : MonitorCog;
   const label =
     mode === "auto"
-      ? `Motion: Auto (${reduced ? "reduced" : "full"})`
+      ? mounted
+        ? `Motion: Auto (${reduced ? "reduced" : "full"})`
+        : "Motion: Auto"
       : mode === "on"
         ? "Motion: Reduced"
         : "Motion: Full";
