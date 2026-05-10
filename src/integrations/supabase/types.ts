@@ -1870,51 +1870,51 @@ export type Database = {
       stream_verification_requests: {
         Row: {
           auto_expires_at: string | null
-          auto_payload: Json
           auto_status: string | null
           created_at: string
           decided_at: string | null
           decided_by: string | null
           decision_note: string | null
+          enc_password: string | null
+          enc_payload: string | null
+          enc_server: string | null
+          enc_username: string | null
           id: string
-          password: string
-          server: string
           status: string
           updated_at: string
           user_id: string
-          username: string
         }
         Insert: {
           auto_expires_at?: string | null
-          auto_payload?: Json
           auto_status?: string | null
           created_at?: string
           decided_at?: string | null
           decided_by?: string | null
           decision_note?: string | null
+          enc_password?: string | null
+          enc_payload?: string | null
+          enc_server?: string | null
+          enc_username?: string | null
           id?: string
-          password: string
-          server: string
           status?: string
           updated_at?: string
           user_id: string
-          username: string
         }
         Update: {
           auto_expires_at?: string | null
-          auto_payload?: Json
           auto_status?: string | null
           created_at?: string
           decided_at?: string | null
           decided_by?: string | null
           decision_note?: string | null
+          enc_password?: string | null
+          enc_payload?: string | null
+          enc_server?: string | null
+          enc_username?: string | null
           id?: string
-          password?: string
-          server?: string
           status?: string
           updated_at?: string
           user_id?: string
-          username?: string
         }
         Relationships: []
       }
@@ -2722,6 +2722,24 @@ export type Database = {
           username: string
         }[]
       }
+      boss_list_stream_requests: {
+        Args: { _status: string }
+        Returns: {
+          auto_expires_at: string
+          auto_status: string
+          created_at: string
+          decided_at: string
+          decision_note: string
+          email: string
+          has_password: boolean
+          id: string
+          rank: string
+          server: string
+          status: string
+          user_id: string
+          username: string
+        }[]
+      }
       boss_purge_view_events: { Args: never; Returns: number }
       boss_revoke_vip_pass: { Args: { _pass_id: string }; Returns: boolean }
       boss_set_banned: {
@@ -2835,6 +2853,7 @@ export type Database = {
         Returns: boolean
       }
       purge_portal_view_events: { Args: never; Returns: number }
+      purge_stream_verification_requests: { Args: never; Returns: Json }
       redeem_code: { Args: { _code: string }; Returns: Json }
       refresh_news_scout: {
         Args: { _meta: Json; _slug: string }
