@@ -7,6 +7,16 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePaymentMode, setPaymentMode } from "@/hooks/use-payment-mode";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/boss/overview")({
   head: () => ({
@@ -86,6 +96,7 @@ function BossOverview() {
   const [togglingSwear, setTogglingSwear] = useState(false);
   const paymentMode = usePaymentMode();
   const [togglingPayments, setTogglingPayments] = useState(false);
+  const [confirmGoLive, setConfirmGoLive] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function loadStats() {
@@ -159,14 +170,22 @@ function BossOverview() {
     setTogglingSwear(false);
   }
 
-  async function togglePaymentMode() {
+  async function applyPaymentMode(next: "live" | "test") {
     setTogglingPayments(true);
     try {
-      await setPaymentMode(paymentMode === "live" ? "test" : "live");
+      await setPaymentMode(next);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to switch payment mode");
     } finally {
       setTogglingPayments(false);
+    }
+  }
+
+  function togglePaymentMode() {
+    if (paymentMode === "live") {
+      void applyPaymentMode("test");
+    } else {
+      setConfirmGoLive(true);
     }
   }
 
