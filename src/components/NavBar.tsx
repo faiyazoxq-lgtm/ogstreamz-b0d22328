@@ -166,7 +166,7 @@ export function NavBar() {
       <nav className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap px-2 sm:px-8 h-16 sm:h-20 gap-1 sm:gap-2">
         <Link to="/" className="flex items-center gap-2 sm:gap-3 group min-w-0 flex-1 sm:flex-initial overflow-hidden">
           <TVStaticLogo className="logo-xl shrink-0" />
-          <span className="hidden [@media(min-width:360px)]:inline font-[Montserrat] font-black text-base sm:text-3xl tracking-tight text-aura-blue truncate">
+          <span className="hidden [@media(min-width:360px)]:inline text-base sm:text-3xl text-eye-ice truncate">
             <span className="relative inline-block align-middle leading-none">
               {/* Hide the "0" glyph but keep its width so the eye sits exactly over it */}
               <span aria-hidden className="invisible">0</span>
@@ -178,7 +178,9 @@ export function NavBar() {
                 />
               </span>
             </span>
-            G-PORTAL
+            {Array.from("G-PORTAL").map((ch, i) => (
+              <span key={i}>{ch}</span>
+            ))}
           </span>
         </Link>
         {user && (
