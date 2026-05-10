@@ -51,6 +51,7 @@ import { Route as ApiPublicSunoWebhookRouteImport } from './routes/api/public/su
 import { Route as ApiPublic0gOrchestratorRouteImport } from './routes/api/public/0g-orchestrator'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicHooksTelegramRemindersRouteImport } from './routes/api/public/hooks/telegram-reminders'
 import { Route as ApiPublicHooksSyndicateTickRouteImport } from './routes/api/public/hooks/syndicate-tick'
 import { Route as ApiPublicFleetWebhookBotIdRouteImport } from './routes/api/public/fleet/webhook/$botId'
 
@@ -266,6 +267,12 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksTelegramRemindersRoute =
+  ApiPublicHooksTelegramRemindersRouteImport.update({
+    id: '/api/public/hooks/telegram-reminders',
+    path: '/api/public/hooks/telegram-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksSyndicateTickRoute =
   ApiPublicHooksSyndicateTickRouteImport.update({
     id: '/api/public/hooks/syndicate-tick',
@@ -321,6 +328,7 @@ export interface FileRoutesByFullPath {
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
+  '/api/public/hooks/telegram-reminders': typeof ApiPublicHooksTelegramRemindersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/api/public/fleet/webhook/$botId': typeof ApiPublicFleetWebhookBotIdRoute
@@ -367,6 +375,7 @@ export interface FileRoutesByTo {
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
+  '/api/public/hooks/telegram-reminders': typeof ApiPublicHooksTelegramRemindersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/api/public/fleet/webhook/$botId': typeof ApiPublicFleetWebhookBotIdRoute
@@ -414,6 +423,7 @@ export interface FileRoutesById {
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
+  '/api/public/hooks/telegram-reminders': typeof ApiPublicHooksTelegramRemindersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/api/public/fleet/webhook/$botId': typeof ApiPublicFleetWebhookBotIdRoute
@@ -462,6 +472,7 @@ export interface FileRouteTypes {
     | '/api/public/0g-orchestrator'
     | '/api/public/suno-webhook'
     | '/api/public/hooks/syndicate-tick'
+    | '/api/public/hooks/telegram-reminders'
     | '/api/public/payments/webhook'
     | '/api/public/telegram/webhook'
     | '/api/public/fleet/webhook/$botId'
@@ -508,6 +519,7 @@ export interface FileRouteTypes {
     | '/api/public/0g-orchestrator'
     | '/api/public/suno-webhook'
     | '/api/public/hooks/syndicate-tick'
+    | '/api/public/hooks/telegram-reminders'
     | '/api/public/payments/webhook'
     | '/api/public/telegram/webhook'
     | '/api/public/fleet/webhook/$botId'
@@ -554,6 +566,7 @@ export interface FileRouteTypes {
     | '/api/public/0g-orchestrator'
     | '/api/public/suno-webhook'
     | '/api/public/hooks/syndicate-tick'
+    | '/api/public/hooks/telegram-reminders'
     | '/api/public/payments/webhook'
     | '/api/public/telegram/webhook'
     | '/api/public/fleet/webhook/$botId'
@@ -597,6 +610,7 @@ export interface RootRouteChildren {
   ApiPublic0gOrchestratorRoute: typeof ApiPublic0gOrchestratorRoute
   ApiPublicSunoWebhookRoute: typeof ApiPublicSunoWebhookRoute
   ApiPublicHooksSyndicateTickRoute: typeof ApiPublicHooksSyndicateTickRoute
+  ApiPublicHooksTelegramRemindersRoute: typeof ApiPublicHooksTelegramRemindersRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
   ApiPublicFleetWebhookBotIdRoute: typeof ApiPublicFleetWebhookBotIdRoute
@@ -898,6 +912,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/telegram-reminders': {
+      id: '/api/public/hooks/telegram-reminders'
+      path: '/api/public/hooks/telegram-reminders'
+      fullPath: '/api/public/hooks/telegram-reminders'
+      preLoaderRoute: typeof ApiPublicHooksTelegramRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/syndicate-tick': {
       id: '/api/public/hooks/syndicate-tick'
       path: '/api/public/hooks/syndicate-tick'
@@ -977,6 +998,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublic0gOrchestratorRoute: ApiPublic0gOrchestratorRoute,
   ApiPublicSunoWebhookRoute: ApiPublicSunoWebhookRoute,
   ApiPublicHooksSyndicateTickRoute: ApiPublicHooksSyndicateTickRoute,
+  ApiPublicHooksTelegramRemindersRoute: ApiPublicHooksTelegramRemindersRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
   ApiPublicFleetWebhookBotIdRoute: ApiPublicFleetWebhookBotIdRoute,
