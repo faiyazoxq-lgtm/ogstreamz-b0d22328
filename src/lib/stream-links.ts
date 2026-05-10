@@ -71,11 +71,27 @@ export function newEntry(platform: StreamPlatform = "twitch"): StreamEntry {
  * - YouTube: 3-30 chars, letters/digits, '.', '_', '-'. (handle rules)
  * - Kick:    3-25 chars, letters/digits/underscore.
  */
-const HANDLE_RULES: Record<Exclude<StreamPlatform, "custom">, { re: RegExp; hint: string; expectedHost: RegExp }> = {
-  twitch:  { re: /^[a-zA-Z0-9][a-zA-Z0-9_]{3,24}$/, hint: "Twitch handles are 4–25 letters, digits or '_' (must start with a letter/number).", expectedHost: /(^|\.)twitch\.tv$/i },
-  youtube: { re: /^[a-zA-Z0-9._-]{3,30}$/,           hint: "YouTube handles are 3–30 letters, digits, '.', '_' or '-'.",                       expectedHost: /(^|\.)youtube\.com$|(^|\.)youtu\.be$/i },
-  kick:    { re: /^[a-zA-Z0-9_]{3,25}$/,             hint: "Kick handles are 3–25 letters, digits or '_'.",                                    expectedHost: /(^|\.)kick\.com$/i },
+const HANDLE_RULES: Record<
+  Exclude<StreamPlatform, "custom">,
+  { re: RegExp; allowed: string; example: string; host: string; expectedHost: RegExp; min: number; max: number }
+> = {
+  twitch:  { re: /^[a-zA-Z0-9][a-zA-Z0-9_]{3,24}$/, allowed: "letters, digits or '_'",          example: "ninja → https://twitch.tv/ninja",                  host: "twitch.tv",   expectedHost: /(^|\.)twitch\.tv$/i,                              min: 4, max: 25 },
+  youtube: { re: /^[a-zA-Z0-9._-]{3,30}$/,           allowed: "letters, digits, '.', '_' or '-'", example: "@mkbhd → https://youtube.com/@mkbhd",              host: "youtube.com", expectedHost: /(^|\.)youtube\.com$|(^|\.)youtu\.be$/i,           min: 3, max: 30 },
+  kick:    { re: /^[a-zA-Z0-9_]{3,25}$/,             allowed: "letters, digits or '_'",          example: "trainwreckstv → https://kick.com/trainwreckstv",   host: "kick.com",    expectedHost: /(^|\.)kick\.com$/i,                              min: 3, max: 25 },
 };
+
+/** Build a precise reason a handle was rejected. */
+function explainHandle(platform: Exclude<StreamPlatform, "custom">, handle: string): string {
+  const r = HANDLE_RULES[platform];
+  if (handle.length < r.min) return `Too short — ${platform} handles need at least ${r.min} characters. Example: ${r.example}`;
+  if (handle.length > r.max) return `Too long — ${platform} handles can be at most ${r.max} characters. Example: ${r.example}`;
+  if (platform === "twitch" && /^[^a-zA-Z0-9]/.test(handle)) {
+    return `Twitch handles must start with a letter or digit. Example: ${r.example}`;
+  }
+  const bad = Array.from(new Set(handle.split("").filter((c) => !/[a-zA-Z0-9._-]/.test(c)))).slice(0, 5).join(" ");
+  if (bad) return `Invalid character${bad.length > 1 ? "s" : ""}: ${bad}. Allowed: ${r.allowed}. Example: ${r.example}`;
+  return `Invalid handle. Allowed: ${r.allowed}. Example: ${r.example}`;
+}
 
 function extractHandleFromUrl(platform: Exclude<StreamPlatform, "custom">, raw: string): string | null {
   const ensured = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
