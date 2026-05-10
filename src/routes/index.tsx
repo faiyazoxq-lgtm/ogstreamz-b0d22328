@@ -15,6 +15,7 @@ import { QuickJumpDrawer } from "@/components/QuickJumpDrawer";
 import { useAuth } from "@/hooks/use-auth";
 import { RealOgPromoCard } from "@/components/RealOgPromoCard";
 import { CoinsBulkPromoCard } from "@/components/CoinsBulkPromoCard";
+import { RealOgBundlesCard } from "@/components/RealOgBundlesCard";
 import { VaultLoginModal } from "@/components/VaultLoginModal";
 import { Flame } from "lucide-react";
 
