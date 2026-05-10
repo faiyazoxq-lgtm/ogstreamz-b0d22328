@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { BossSearch } from "@/components/BossSearch";
 import { requireBoss } from "@/lib/route-guards";
 import { supabase } from "@/integrations/supabase/client";
+import { PowerStatusBar } from "@/components/boss/PowerStatusBar";
 
 export const Route = createFileRoute("/boss")({
   beforeLoad: requireBoss,
@@ -233,6 +234,18 @@ function BossLayout() {
           {drawerOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           Boss menu
         </button>
+      </div>
+
+      {/* Persistent power status bar — visible on every boss page */}
+      <div className="sticky top-[7.5rem] md:top-16 z-20 -mx-3 sm:-mx-6 mb-3 px-3 sm:px-6 py-1.5 backdrop-blur-xl bg-background/70 border-b border-gold/10 flex items-center justify-between gap-2">
+        <PowerStatusBar />
+        <Link
+          to="/boss/overview"
+          hash="power"
+          className="hidden sm:inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/45 hover:text-gold transition shrink-0"
+        >
+          Power Bar →
+        </Link>
       </div>
 
       <div className="md:hidden mb-3">
