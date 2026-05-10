@@ -49,6 +49,8 @@ const portals = [
 function Index() {
   const [customHubs, setCustomHubs] = useState<any[]>([]);
   const { user, profile } = useAuth();
+  const totalPortals = portals.length + customHubs.length;
+  const portalsLabel = `${totalPortals} portal${totalPortals === 1 ? "" : "s"}`;
   const rank = profile?.rank;
   const streamLinked = rank === "stream_user" || rank === "vip" || rank === "boss";
   // VIPs (and the boss) already own the perks these promos are pitching —
@@ -96,7 +98,7 @@ function Index() {
           <OgWordmark suffix="-PORTAL" className="animate-glitch" />
         </h1>
         <p className="mt-6 max-w-xl mx-auto text-muted-foreground text-base sm:text-lg">
-          One frequency. Five portals. Pick your channel.
+          One frequency. {portalsLabel}. Pick your channel.
         </p>
         <div className="mt-6 flex justify-center">
           <Link
@@ -138,17 +140,17 @@ function Index() {
           <h2 className="mt-2 font-[Montserrat] font-black text-2xl sm:text-3xl md:text-4xl tracking-tight text-metallic">
             {user
               ? `Back at the decks${profile?.display_name ? `, ${profile.display_name}` : ""}.`
-              : "One frequency. Six portals. Yours, free."}
+              : `One frequency. ${portalsLabel}. Yours, free.`}
           </h2>
           <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-2xl">
             {user
               ? (() => {
                   const c = profile?.credits ?? 0;
-                  if (c <= 0) return "You're out of credits. Top up to keep spinning the portals — or jump into the free hubs below.";
-                  if (c < 5) return `Only ${c} credit${c === 1 ? "" : "s"} left in the tank — make 'em count, or top up before the next drop.`;
-                  return `You've got ${c} credits loaded and the portals are warm. Pick a hub or hit the dashboard.`;
+                  if (c <= 0) return `You're out of credits. Top up to keep spinning the ${portalsLabel} — or jump into the free hubs below.`;
+                  if (c < 5) return `Only ${c} credit${c === 1 ? "" : "s"} left in the tank — ${portalsLabel} waiting, make 'em count.`;
+                  return `You've got ${c} credits loaded and all ${portalsLabel} are warm. Pick a hub or hit the dashboard.`;
                 })()
-              : "0G-PORTAL fuses music, jokes, trade signals, outreach, battles and tools into one streetwise hub. Free sign-up — keep your credits, lyrics, scans and chats forever. No card, no nonsense."}
+              : `0G-PORTAL fuses ${portalsLabel} — music, jokes, trade signals, outreach, battles, tools and more — into one streetwise hub. Free sign-up — keep your credits, lyrics, scans and chats forever. No card, no nonsense.`}
           </p>
 
           {user && (
@@ -171,7 +173,7 @@ function Index() {
               </li>
               <li className="flex items-center gap-2 rounded-md border border-white/10 bg-black/30 px-3 py-2">
                 <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-                All six portals unlocked
+                All {portalsLabel} unlocked
               </li>
             </ul>
           )}
