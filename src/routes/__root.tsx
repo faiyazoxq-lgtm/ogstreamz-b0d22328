@@ -24,6 +24,7 @@ import { SpotlightEyes } from "../components/SpotlightEyes";
 import { ReducedMotionToggle } from "../components/ReducedMotionToggle";
 import { AuthGate } from "../components/AuthGate";
 import { VipPromoBanner } from "../components/VipPromoBanner";
+import bgFlame from "../assets/bg-flame.png";
 
 function NotFoundComponent() {
   return (
@@ -140,6 +141,16 @@ function RootComponent() {
       <AuthProvider>
         <GlobalMoodProvider>
           <div className="min-h-screen bg-background text-foreground">
+            {/* Brand wallpaper — fixed flame backdrop behind all content */}
+            <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+              <img
+                src={bgFlame}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover opacity-15 mix-blend-screen"
+              />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,oklch(var(--background)/0.6)_100%)]" />
+            </div>
+            <div className="relative z-10">
             <PaymentTestModeBanner />
             <SpotlightEyes />
             <VipPromoBanner />
@@ -154,6 +165,7 @@ function RootComponent() {
             <EnforcerConsole />
             <BottomDock />
             <ReducedMotionToggle />
+            </div>
           </div>
           <Toaster />
         </GlobalMoodProvider>
