@@ -452,7 +452,13 @@ function PricingPage() {
             No products yet. Create one above.
           </div>
         ) : (
-          KINDS.filter((k) => grouped.has(k.value)).map((k) => (
+          <>
+          <p className="text-xs text-muted-foreground flex items-center gap-2">
+            <GripVertical className="h-3.5 w-3.5" />
+            Drag rows to reorder within each section.
+            {reordering && <Loader2 className="h-3 w-3 animate-spin" />}
+          </p>
+          {KINDS.filter((k) => grouped.has(k.value)).map((k) => (
             <div key={k.value} className="rounded-2xl border border-border bg-card overflow-hidden">
               <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 <span>{k.label}</span>
@@ -533,7 +539,8 @@ function PricingPage() {
                 ))}
               </ul>
             </div>
-          ))
+          ))}
+          </>
         )}
       </section>
     </div>
