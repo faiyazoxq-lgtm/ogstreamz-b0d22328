@@ -4,6 +4,7 @@ import {
   Loader2, RefreshCw, Plus, Save, Trash2, X, Crown, Tv, Package, Image as ImageIcon, ArrowUp, ArrowDown,
 } from "lucide-react";
 import { toast } from "sonner";
+import { coinChip } from "@/lib/coins";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -72,10 +73,11 @@ function rowToDraft(r: StoreProductRow): Draft {
 
 function fmtMoney(cents: number, currency: string) {
   try {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency: (currency || "usd").toUpperCase() })
+    const base = new Intl.NumberFormat(undefined, { style: "currency", currency: (currency || "gbp").toUpperCase() })
       .format((cents ?? 0) / 100);
+    return (currency || "gbp").toLowerCase() === "gbp" ? `${base} ${coinChip(cents)}` : base;
   } catch {
-    return `${(cents / 100).toFixed(2)} ${currency?.toUpperCase() ?? ""}`;
+    return `${(cents / 100).toFixed(2)} ${currency?.toUpperCase() ?? ""} ${coinChip(cents)}`;
   }
 }
 
