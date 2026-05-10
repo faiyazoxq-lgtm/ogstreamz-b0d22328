@@ -1,13 +1,23 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Upload, Save, User2, Globe, Send, Twitter, Instagram, Youtube, MessageCircle, Music2, Github, Linkedin, Trash2, Twitch, Radio, Lock } from "lucide-react";
+import { Loader2, Upload, Save, User2, Globe, Send, Twitter, Instagram, Youtube, MessageCircle, Music2, Github, Linkedin, Trash2, Radio, Lock, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  STREAM_PLATFORMS,
+  newEntry,
+  platformMeta,
+  readEntries,
+  validateEntry,
+  type StreamEntry,
+  type StreamPlatform,
+} from "@/lib/stream-links";
 
 import { requireMember } from "@/lib/route-guards";
 export const Route = createFileRoute("/settings")({
@@ -35,33 +45,6 @@ type ContactCard = {
   email_public?: string;
 };
 
-type StreamLinks = {
-  twitch?: string;
-  youtube?: string;
-  url?: string;
-};
-
-const STREAM_FIELDS: Array<{
-  key: keyof StreamLinks;
-  label: string;
-  placeholder: string;
-  Icon: any;
-  hint: string;
-}> = [
-  { key: "twitch",  label: "Twitch handle / URL", placeholder: "twitch.tv/yourname or yourname", Icon: Twitch, hint: "Just your handle or the full twitch.tv link." },
-  { key: "youtube", label: "YouTube channel",      placeholder: "youtube.com/@yourchannel",       Icon: Youtube, hint: "Channel URL or @handle." },
-  { key: "url",     label: "Other stream URL",     placeholder: "https://kick.com/yourname",       Icon: Radio,   hint: "Any other live stream URL (Kick, Rumble, custom…)." },
-];
-
-function isValidUrl(value: string): boolean {
-  try {
-    const u = new URL(value);
-    return u.protocol === "http:" || u.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
 const SOCIAL_FIELDS: Array<{ key: keyof ContactCard; label: string; placeholder: string; Icon: any }> = [
   { key: "telegram", label: "Telegram", placeholder: "@username or t.me/username", Icon: Send },
   { key: "whatsapp", label: "WhatsApp", placeholder: "+44 7..." , Icon: MessageCircle },
@@ -85,7 +68,7 @@ function SettingsPage() {
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [contact, setContact] = useState<ContactCard>({});
-  const [streams, setStreams] = useState<StreamLinks>({});
+  const [streamEntries, setStreamEntries] = useState<StreamEntry[]>([]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -99,7 +82,7 @@ function SettingsPage() {
     setBio((profile as any).bio ?? "");
     setAvatarUrl((profile as any).avatar_url ?? null);
     setContact(((profile as any).contact_card ?? {}) as ContactCard);
-    setStreams(((profile as any).stream_links ?? {}) as StreamLinks);
+    setStreamEntries(readEntries((profile as any).stream_links));
   }, [profile]);
 
   if (loading || !user) {
@@ -172,22 +155,21 @@ function SettingsPage() {
         const v = (contact[k] ?? "").toString().trim();
         if (v) (cleanCard as any)[k] = v.slice(0, 300);
       });
-      const cleanStreams: StreamLinks = {};
-      (Object.keys(streams) as (keyof StreamLinks)[]).forEach((k) => {
-        const v = (streams[k] ?? "").toString().trim();
-        if (!v) return;
-        if (k === "url" && !isValidUrl(v)) {
-          throw new Error("Other stream URL must start with http:// or https://");
-        }
-        cleanStreams[k] = v.slice(0, 300);
-      });
+      const cleanedEntries: StreamEntry[] = [];
+      for (const e of streamEntries) {
+        const value = e.value.trim();
+        if (!value) continue;
+        const err = validateEntry({ ...e, value });
+        if (err) throw new Error(`${platformMeta(e.platform).label}: ${err}`);
+        cleanedEntries.push({ id: e.id, platform: e.platform, value: value.slice(0, 300) });
+      }
       const { error } = await supabase
         .from("profiles")
         .update({
           display_name: displayName.trim().slice(0, 80) || null,
           bio: bio.trim().slice(0, 500) || null,
           contact_card: cleanCard,
-          stream_links: cleanStreams,
+          stream_links: { entries: cleanedEntries },
         })
         .eq("id", user.id);
       if (error) throw error;
@@ -329,23 +311,83 @@ function SettingsPage() {
             <Lock className="h-3 w-3" />
             Private — only you and the boss can see these. Not shown on your public contact card.
           </p>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {STREAM_FIELDS.map(({ key, label, placeholder, Icon, hint }) => (
-              <div key={key} className="space-y-2">
-                <Label htmlFor={`stream_${key}`} className="flex items-center gap-2 text-xs">
-                  <Icon className="h-3.5 w-3.5" style={{ color: "var(--neon-blue-bright)" }} />
-                  {label}
-                </Label>
-                <Input
-                  id={`stream_${key}`}
-                  value={streams[key] ?? ""}
-                  maxLength={300}
-                  placeholder={placeholder}
-                  onChange={(e) => setStreams((s) => ({ ...s, [key]: e.target.value }))}
-                />
-                <p className="text-[10px] text-muted-foreground">{hint}</p>
-              </div>
-            ))}
+          <div className="space-y-3">
+            {streamEntries.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                No stream profiles yet. Add Twitch, YouTube, Kick, or any custom stream URL.
+              </p>
+            )}
+            {streamEntries.map((entry, idx) => {
+              const meta = platformMeta(entry.platform);
+              const PlatformIcon = meta.Icon;
+              return (
+                <div
+                  key={entry.id}
+                  className="grid grid-cols-[140px_1fr_auto] gap-2 items-center"
+                >
+                  <Select
+                    value={entry.platform}
+                    onValueChange={(v) =>
+                      setStreamEntries((list) =>
+                        list.map((x, i) => (i === idx ? { ...x, platform: v as StreamPlatform } : x)),
+                      )
+                    }
+                  >
+                    <SelectTrigger className="text-xs">
+                      <SelectValue>
+                        <span className="flex items-center gap-2">
+                          <PlatformIcon className="h-3.5 w-3.5" />
+                          {meta.label}
+                        </span>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STREAM_PLATFORMS.map((p) => {
+                        const Icon = p.Icon;
+                        return (
+                          <SelectItem key={p.value} value={p.value}>
+                            <span className="flex items-center gap-2">
+                              <Icon className="h-3.5 w-3.5" />
+                              {p.label}
+                            </span>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    value={entry.value}
+                    maxLength={300}
+                    placeholder={meta.placeholder}
+                    onChange={(e) =>
+                      setStreamEntries((list) =>
+                        list.map((x, i) => (i === idx ? { ...x, value: e.target.value } : x)),
+                      )
+                    }
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label="Remove stream"
+                    onClick={() =>
+                      setStreamEntries((list) => list.filter((_, i) => i !== idx))
+                    }
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              );
+            })}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs uppercase tracking-[0.25em]"
+              onClick={() => setStreamEntries((list) => [...list, newEntry("twitch")])}
+            >
+              <Plus className="h-3.5 w-3.5 mr-2" /> Add stream
+            </Button>
           </div>
         </section>
 

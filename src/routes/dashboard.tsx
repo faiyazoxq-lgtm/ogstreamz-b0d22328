@@ -4,7 +4,7 @@ import { requireMember } from "@/lib/route-guards";
 import { useEffect, useState } from "react";
 import {
   Crown, Coins, Ticket, History, Loader2, Sparkles, ExternalLink, Music, Mic2,
-  Flame, Twitch, Youtube, Radio, Lock,
+  Flame, Radio, Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { VipNotificationsInbox } from "@/components/VipNotificationsInbox";
 import { PassesPanel } from "@/components/PassesPanel";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PlanChip, StatusBadge, formatSubscriptionTerm } from "@/components/SubscriptionBadges";
+import { readEntries, entryHref, entryLabel, platformMeta } from "@/lib/stream-links";
 
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: requireMember,
@@ -176,22 +177,8 @@ function Card({ children }: { children: React.ReactNode }) {
   return <div className="rounded-2xl border border-border bg-card p-5">{children}</div>;
 }
 
-function StreamLinksCard({ streams }: { streams: { twitch?: string; youtube?: string; url?: string } }) {
-  const items: Array<{ key: string; label: string; href: string; Icon: any }> = [];
-  const twitch = (streams.twitch ?? "").trim();
-  if (twitch) {
-    const handle = twitch.replace(/^https?:\/\/(www\.)?twitch\.tv\//i, "").replace(/^@/, "");
-    items.push({ key: "twitch", label: `twitch.tv/${handle}`, href: `https://twitch.tv/${handle}`, Icon: Twitch });
-  }
-  const yt = (streams.youtube ?? "").trim();
-  if (yt) {
-    const href = /^https?:\/\//i.test(yt) ? yt : `https://youtube.com/${yt.replace(/^@/, "@")}`;
-    items.push({ key: "youtube", label: yt, href, Icon: Youtube });
-  }
-  const url = (streams.url ?? "").trim();
-  if (url && /^https?:\/\//i.test(url)) {
-    items.push({ key: "url", label: url.replace(/^https?:\/\//i, ""), href: url, Icon: Radio });
-  }
+function StreamLinksCard({ streams }: { streams: unknown }) {
+  const entries = readEntries(streams);
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5">
@@ -207,32 +194,39 @@ function StreamLinksCard({ streams }: { streams: { twitch?: string; youtube?: st
       <p className="text-[11px] text-muted-foreground mb-3 flex items-center gap-1.5">
         <Lock className="h-3 w-3" /> Private — visible only to you and the boss.
       </p>
-      {items.length === 0 ? (
+      {entries.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           No stream profiles linked yet.{" "}
           <Link to="/settings" className="underline text-[color:var(--neon-blue-bright)]">
-            Add Twitch, YouTube, or any stream URL
+            Add Twitch, YouTube, Kick, or any stream URL
           </Link>
           .
         </p>
       ) : (
         <ul className="divide-y divide-border">
-          {items.map(({ key, label, href, Icon }) => (
-            <li key={key} className="py-2 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 min-w-0">
-                <Icon className="h-4 w-4 text-[color:var(--neon-blue-bright)] shrink-0" />
-                <span className="text-sm text-white truncate">{label}</span>
-              </div>
-              <a
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs uppercase tracking-widest font-bold text-[color:var(--neon-blue-bright)] inline-flex items-center gap-1"
-              >
-                Open <ExternalLink className="h-3 w-3" />
-              </a>
-            </li>
-          ))}
+          {entries.map((entry) => {
+            const meta = platformMeta(entry.platform);
+            const Icon = meta.Icon;
+            return (
+              <li key={entry.id} className="py-2 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Icon className="h-4 w-4 text-[color:var(--neon-blue-bright)] shrink-0" />
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground shrink-0">
+                    {meta.label}
+                  </span>
+                  <span className="text-sm text-white truncate">{entryLabel(entry)}</span>
+                </div>
+                <a
+                  href={entryHref(entry)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs uppercase tracking-widest font-bold text-[color:var(--neon-blue-bright)] inline-flex items-center gap-1"
+                >
+                  Open <ExternalLink className="h-3 w-3" />
+                </a>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
