@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Users, Search, Coins, ShieldOff, ShieldCheck, LogOut, RefreshCw, Crown, Tv } from "lucide-react";
-import { listRoster, setRank as setRankFn, setStatus as setStatusFn, adjustCredits, setBanned, forceSignOut, type RosterRow } from "@/lib/boss-users.functions";
+import { Users, Search, Coins, ShieldOff, ShieldCheck, LogOut, RefreshCw, Crown, Tv, Flame } from "lucide-react";
+import { listRoster, setRank as setRankFn, setStatus as setStatusFn, adjustCredits, setBanned, forceSignOut, setUserSwearing, type RosterRow } from "@/lib/boss-users.functions";
 import { reverifyStream } from "@/lib/stream-link.functions";
+import { effectiveSwearing, effectiveIntensity, rankDefaultsToSafe } from "@/lib/swearing";
 
 export const Route = createFileRoute("/boss/users")({
   head: () => ({ meta: [{ title: "Users · Boss" }, { name: "description", content: "Full roster control: rank, status, credits, ban, force sign-out, stream-account verification." }] }),
@@ -26,6 +27,7 @@ function BossUsers() {
   const banRpc = useServerFn(setBanned);
   const signOutRpc = useServerFn(forceSignOut);
   const verifyRpc = useServerFn(reverifyStream);
+  const swearRpc = useServerFn(setUserSwearing);
 
   const [rows, setRows] = useState<RosterRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -193,6 +195,9 @@ function BossUsers() {
                   )}
                 </div>
               </div>
+              <SwearingRow row={r} busy={busy} onSet={(enabled, intensity) =>
+                onAction(r.id, () => swearRpc({ data: { userId: r.id, enabled, intensity } }))
+              } />
               {r.banned && r.banned_reason && (
                 <p className="mt-2 text-[11px] text-destructive/80">Ban reason: {r.banned_reason}</p>
               )}
@@ -200,6 +205,76 @@ function BossUsers() {
           );
         })}
         {!loading && rows.length === 0 && <p className="text-center text-sm text-white/55 py-6">No users match.</p>}
+      </div>
+    </div>
+  );
+}
+
+function SwearingRow({
+  row, busy, onSet,
+}: {
+  row: RosterRow;
+  busy: boolean;
+  onSet: (enabled: boolean | null, intensity?: "mild" | "medium" | "chaotic") => void;
+}) {
+  const explicit = row.feature_flags?.swearing;
+  const isExplicit = explicit === true || explicit === false;
+  const swearing = effectiveSwearing(row);
+  const intensity = effectiveIntensity(row);
+  const defaultsSafe = rankDefaultsToSafe(row.rank);
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-white/5 pt-3 text-[11px] text-white/70">
+      <Flame className="h-3.5 w-3.5 text-rose-300" />
+      <span className="uppercase tracking-[0.2em] text-white/55">Swearing</span>
+      <span
+        className={`px-1.5 py-0.5 rounded font-bold border text-[10px] uppercase tracking-[0.18em] ${
+          swearing
+            ? "bg-rose-500/15 text-rose-300 border-rose-500/40"
+            : "bg-emerald-500/15 text-emerald-300 border-emerald-500/40"
+        }`}
+      >
+        {swearing ? "On" : "Safe"}
+      </span>
+      <span className="text-white/40">
+        {isExplicit ? "(boss override)" : defaultsSafe ? "(default: Safe — streamer/VIP)" : "(default: On)"}
+      </span>
+      <div className="ml-auto flex flex-wrap items-center gap-1.5">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onSet(true, intensity)}
+          className={`rounded-md px-2 py-1 text-[11px] font-bold border ${swearing ? "border-rose-500/60 bg-rose-500/15 text-rose-200" : "border-border bg-secondary hover:bg-secondary/80"}`}
+        >
+          On
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onSet(false)}
+          className={`rounded-md px-2 py-1 text-[11px] font-bold border ${!swearing ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-200" : "border-border bg-secondary hover:bg-secondary/80"}`}
+        >
+          Safe
+        </button>
+        <button
+          type="button"
+          disabled={busy || !isExplicit}
+          onClick={() => onSet(null)}
+          title="Clear override — fall back to rank default"
+          className="rounded-md border border-border bg-secondary px-2 py-1 text-[11px] font-bold hover:bg-secondary/80 disabled:opacity-40"
+        >
+          Auto
+        </button>
+        <select
+          aria-label="Swearing intensity"
+          disabled={busy}
+          value={intensity}
+          onChange={(e) => onSet(explicit ?? swearing, e.target.value as any)}
+          className="bg-card border border-border rounded-md px-2 py-1 text-[11px]"
+        >
+          <option value="mild">Mild</option>
+          <option value="medium">Medium</option>
+          <option value="chaotic">Chaotic</option>
+        </select>
       </div>
     </div>
   );
