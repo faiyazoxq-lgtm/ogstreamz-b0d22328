@@ -86,7 +86,15 @@ function WelcomePage() {
             <Link
               key={to}
               to="/auth"
-              search={{ redirect: to }}
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  try {
+                    sessionStorage.setItem("post_auth_redirect", to);
+                  } catch {
+                    // ignore storage errors (private mode etc.)
+                  }
+                }
+              }}
               className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <div
@@ -122,7 +130,7 @@ function WelcomePage() {
           </p>
           <p>
             New here?{" "}
-            <Link to="/auth" search={{ mode: "signup" }} className="font-medium text-primary hover:underline">
+            <Link to="/auth" className="font-medium text-primary hover:underline">
               Create an account
             </Link>
           </p>
