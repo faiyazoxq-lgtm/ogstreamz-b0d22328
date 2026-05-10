@@ -190,13 +190,13 @@ function SubSummary({
   return (
     <div className="mt-3 flex flex-col gap-1.5">
       {(planLabel || subWithStatus) && (
-        <div className="flex flex-wrap items-center gap-1.5">
-          <PlanChip planLabel={planLabel} tone="amber" size="sm" />
+        <div className="flex flex-wrap items-center gap-1.5 min-h-[18px]">
+          {planLabel && <PlanChip planLabel={planLabel} tone="amber" size="sm" />}
           {subWithStatus && <StatusBadge sub={subWithStatus} size="sm" />}
         </div>
       )}
       {renewalLabel && (
-        <p className="text-[11px] text-muted-foreground">{renewalLabel}</p>
+        <p className="text-[11px] leading-tight text-muted-foreground">{renewalLabel}</p>
       )}
     </div>
   );
