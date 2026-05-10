@@ -28,6 +28,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConsoleRouteImport } from './routes/console'
 import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as BossRouteImport } from './routes/boss'
+import { Route as BattlehubRouteImport } from './routes/battlehub'
 import { Route as BattleRouteImport } from './routes/battle'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -143,6 +144,11 @@ const BossRoute = BossRouteImport.update({
   path: '/boss',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BattlehubRoute = BattlehubRouteImport.update({
+  id: '/battlehub',
+  path: '/battlehub',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BattleRoute = BattleRouteImport.update({
   id: '/battle',
   path: '/battle',
@@ -247,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/battle': typeof BattleRoute
+  '/battlehub': typeof BattlehubRoute
   '/boss': typeof BossRouteWithChildren
   '/connect': typeof ConnectRoute
   '/console': typeof ConsoleRoute
@@ -287,6 +294,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/battle': typeof BattleRoute
+  '/battlehub': typeof BattlehubRoute
   '/boss': typeof BossRouteWithChildren
   '/connect': typeof ConnectRoute
   '/console': typeof ConsoleRoute
@@ -328,6 +336,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/battle': typeof BattleRoute
+  '/battlehub': typeof BattlehubRoute
   '/boss': typeof BossRouteWithChildren
   '/connect': typeof ConnectRoute
   '/console': typeof ConsoleRoute
@@ -370,6 +379,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/battle'
+    | '/battlehub'
     | '/boss'
     | '/connect'
     | '/console'
@@ -410,6 +420,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/battle'
+    | '/battlehub'
     | '/boss'
     | '/connect'
     | '/console'
@@ -450,6 +461,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/battle'
+    | '/battlehub'
     | '/boss'
     | '/connect'
     | '/console'
@@ -491,6 +503,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   BattleRoute: typeof BattleRoute
+  BattlehubRoute: typeof BattlehubRoute
   BossRoute: typeof BossRouteWithChildren
   ConnectRoute: typeof ConnectRoute
   ConsoleRoute: typeof ConsoleRoute
@@ -658,6 +671,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/battlehub': {
+      id: '/battlehub'
+      path: '/battlehub'
+      fullPath: '/battlehub'
+      preLoaderRoute: typeof BattlehubRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/battle': {
       id: '/battle'
       path: '/battle'
@@ -823,6 +843,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   BattleRoute: BattleRoute,
+  BattlehubRoute: BattlehubRoute,
   BossRoute: BossRouteWithChildren,
   ConnectRoute: ConnectRoute,
   ConsoleRoute: ConsoleRoute,
