@@ -18,8 +18,10 @@ import {
   setGlobalFrequency,
   broadcastFleetCommand,
 } from "@/lib/fleet.functions";
+import { requireMember } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/fleet")({
+  beforeLoad: requireMember,
   head: () => ({
     meta: [
       { title: "Fleet Commander — 0G Syndicate" },
