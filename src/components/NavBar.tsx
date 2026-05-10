@@ -73,7 +73,7 @@ function NavDropdown({
         data-active={sectionActive ? "true" : undefined}
         className={[
           "inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2 text-sm sm:text-base font-semibold rounded-md transition-colors outline-none",
-          "focus-visible:ring-2 focus-visible:ring-aura-blue focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           "active:scale-[0.97]",
           gold
             ? "text-gold hover:bg-gold/10 border border-gold/30 data-[state=open]:bg-gold/15 data-[active=true]:bg-gold/15 data-[active=true]:border-gold/60"
@@ -103,7 +103,7 @@ function NavDropdown({
                 data-active={isActive ? "true" : undefined}
                 className={[
                   "group/item flex items-start gap-3 py-2 rounded-sm outline-none",
-                  "hover:bg-secondary focus-visible:ring-2 focus-visible:ring-aura-blue",
+                  "hover:bg-secondary focus-visible:ring-2 focus-visible:ring-primary",
                   isActive ? "bg-gold/10 ring-1 ring-inset ring-gold/40" : "",
                 ].join(" ")}
               >
@@ -234,7 +234,7 @@ function MobileNavDrawer({
                 className={[
                   "flex items-start gap-3 rounded-md px-2 py-2.5 transition-colors outline-none",
                   "hover:bg-secondary active:bg-secondary/80 active:scale-[0.99]",
-                  "focus-visible:ring-2 focus-visible:ring-aura-blue",
+                  "focus-visible:ring-2 focus-visible:ring-primary",
                   active ? "bg-gold/10 ring-1 ring-inset ring-gold/40" : "",
                 ].join(" ")}
               >
@@ -260,7 +260,7 @@ function MobileNavDrawer({
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         aria-label="Open navigation menu"
-        className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-secondary/40 text-foreground transition-colors hover:bg-secondary hover:border-aura-blue/50 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aura-blue focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[state=open]:bg-secondary data-[state=open]:border-aura-blue/60"
+        className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-secondary/40 text-foreground transition-colors hover:bg-secondary hover:border-primary/50 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[state=open]:bg-secondary data-[state=open]:border-primary/60"
       >
         <Menu className="h-5 w-5" />
       </SheetTrigger>
@@ -319,7 +319,7 @@ function MobileNavDrawer({
                         className={[
                           "flex items-center gap-3 rounded-md px-2 py-2.5 transition-colors outline-none",
                           "hover:bg-secondary active:scale-[0.99]",
-                          "focus-visible:ring-2 focus-visible:ring-aura-blue",
+                          "focus-visible:ring-2 focus-visible:ring-primary",
                           active ? "bg-gold/10 ring-1 ring-inset ring-gold/40 text-gold" : "",
                         ].join(" ")}
                       >
@@ -348,7 +348,7 @@ function MobileNavDrawer({
               <Link
                 to="/auth"
                 onClick={close}
-                className="flex items-center justify-center gap-2 btn-glass-blue rounded-md px-3 py-2.5 text-xs uppercase tracking-[0.25em] font-bold text-white transition-transform active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aura-blue focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="flex items-center justify-center gap-2 btn-glass-blue rounded-md px-3 py-2.5 text-xs uppercase tracking-[0.25em] font-bold text-white transition-transform active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <LogIn className="h-4 w-4" />
                 Join the Syndicate
@@ -372,7 +372,7 @@ function AccountMenu({
     return (
       <Link
         to="/auth"
-        className="ml-0.5 sm:ml-1 inline-flex items-center gap-2 btn-glass-blue px-2.5 sm:px-4 py-2 rounded-md text-xs uppercase tracking-[0.2em] font-bold text-white transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aura-blue focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="ml-0.5 sm:ml-1 inline-flex items-center gap-2 btn-glass-blue px-2.5 sm:px-4 py-2 rounded-md text-xs uppercase tracking-[0.2em] font-bold text-white transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         aria-label="Join"
       >
         <LogIn className="h-3.5 w-3.5" />
@@ -387,7 +387,7 @@ function AccountMenu({
           <TooltipTrigger asChild>
             <DropdownMenuTrigger
               aria-label="Account"
-              className="ml-0.5 sm:ml-1 inline-flex items-center gap-1.5 btn-glass-blue px-2.5 sm:px-4 py-2 rounded-md text-xs uppercase tracking-[0.2em] font-bold text-white outline-none transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-aura-blue focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[state=open]:brightness-110 data-[state=open]:ring-2 data-[state=open]:ring-aura-blue/60"
+              className="ml-0.5 sm:ml-1 inline-flex items-center gap-1.5 btn-glass-blue px-2.5 sm:px-4 py-2 rounded-md text-xs uppercase tracking-[0.2em] font-bold text-white outline-none transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[state=open]:brightness-110 data-[state=open]:ring-2 data-[state=open]:ring-primary/60"
             >
               <User className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Account</span>
