@@ -320,8 +320,19 @@
       0 0 32px color-mix(in oklab, var(--electric-gold-700) 30%, transparent);
     filter: drop-shadow(0 0 10px color-mix(in oklab, var(--electric-gold-glow) 35%, transparent));
   }
+  /* Keyboard focus on the entire brand lockup wrapper — paints a thick
+     gold ring + soft outer halo around the icon AND wordmark together so
+     the lockup stays a single visual unit when tabbed to. */
+  .brand-glow:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 3px var(--background),
+      0 0 0 6px var(--gold),
+      0 0 28px -2px color-mix(in oklab, var(--electric-gold-glow) 60%, transparent);
+  }
   @media (prefers-reduced-motion: reduce) {
     .brand-glow .brand-glow__mark { transition: none; }
+    .brand-glow:focus-visible { box-shadow: 0 0 0 3px var(--background), 0 0 0 6px var(--gold); }
   }
 
   /* Heavy-duty glass blue button */
