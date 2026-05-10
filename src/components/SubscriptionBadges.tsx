@@ -23,8 +23,12 @@ export function PlanChip({
   };
   const sizeCls = size === "sm" ? "text-[9px] px-2 py-0.5" : "text-[10px] px-2 py-0.5";
   return (
-    <span className={`inline-flex items-center rounded-full border tracking-[0.25em] uppercase ${sizeCls} ${toneCls[tone]}`}>
-      {planLabel} plan
+    <span
+      className={`inline-flex items-center rounded-full border tracking-[0.25em] uppercase ${sizeCls} ${toneCls[tone]}`}
+      role="status"
+      aria-label={`Subscription plan: ${planLabel}`}
+    >
+      <span aria-hidden="true">{planLabel} plan</span>
     </span>
   );
 }
@@ -62,8 +66,10 @@ export function StatusBadge({
     <span
       className={`inline-flex items-center rounded-full border tracking-[0.25em] uppercase ${sizeCls} ${v.cls}`}
       title={`Subscription status: ${s}`}
+      role="status"
+      aria-label={`Subscription status: ${v.label}`}
     >
-      {v.label}
+      <span aria-hidden="true">{v.label}</span>
     </span>
   );
 }
