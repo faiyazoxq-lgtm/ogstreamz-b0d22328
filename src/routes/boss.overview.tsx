@@ -331,188 +331,120 @@ function BossOverview() {
         })}
       </section>
 
-      {/* Action queue + quick controls */}
-      <section className="grid lg:grid-cols-[2fr_1fr] gap-4">
-        <div className="glass-obsidian-cmd rounded-2xl p-4 md:p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="syndicate-header text-sm md:text-base text-white/95 flex items-center gap-2">
-              <Inbox className="h-4 w-4" style={{ color: "#ff5577" }} /> Action Queue
-            </h2>
-            <span className="text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/45">
-              {totalQueue} open
-            </span>
-          </div>
-          <ul className="divide-y divide-white/5">
-            {actionQueue.map((a) => {
-              const urgent = a.count > 0;
-              return (
-                <li key={a.key}>
-                  <Link
-                    to={a.to}
-                    hash={a.hash}
-                    className="flex items-center gap-3 py-2.5 px-1 group hover:bg-white/[0.03] rounded-md transition"
-                  >
-                    <span
-                      className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0"
-                      style={{ background: `${a.tint}1f`, border: `1px solid ${a.tint}55` }}
-                    >
-                      <a.Icon className="h-4 w-4" style={{ color: a.tint }} />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold text-white/90 truncate">{a.label}</div>
-                      <div className="text-[11px] text-white/50 truncate">{a.hint}</div>
-                    </div>
-                    <span
-                      className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full text-xs font-bold tabular-nums"
-                      style={{
-                        background: urgent ? `${a.tint}22` : "rgba(255,255,255,0.04)",
-                        color: urgent ? a.tint : "rgba(255,255,255,0.45)",
-                        border: `1px solid ${urgent ? a.tint + "66" : "rgba(255,255,255,0.08)"}`,
-                      }}
-                    >
-                      {a.count}
-                    </span>
-                    <ArrowUpRight className="h-4 w-4 text-white/30 group-hover:text-white/70 transition" />
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-
-        <div className="glass-obsidian-cmd rounded-2xl p-4 md:p-5">
-          <h2 className="syndicate-header text-sm md:text-base text-white/95 flex items-center gap-2 mb-3">
-            <Zap className="h-4 w-4" style={{ color: "#ffd166" }} /> Quick Controls
+      {/* Power Bar — large tactile toggles */}
+      <section aria-label="Power controls" className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="syndicate-header text-base md:text-lg text-white/95 flex items-center gap-2">
+            <Power className="h-4 w-4" style={{ color: "#ffd166" }} /> Power Bar
+            <span className="text-[10px] uppercase tracking-[0.3em] terminal-mono text-white/35 font-normal">One-tap controls</span>
           </h2>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-3">
-              <div className="min-w-0">
-                <div className="text-sm font-semibold text-white/90 flex items-center gap-1.5">
-                  <ShieldCheck className="h-3.5 w-3.5" style={{ color: "#3ad6ff" }} />
-                  Guttermouth default
-                </div>
-                <div className="text-[11px] text-white/50">
-                  Site-wide swear-chat default for new sessions.
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={toggleSwear}
-                disabled={swearDefault === null || togglingSwear}
-                aria-pressed={!!swearDefault}
-                className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-50"
-                style={{
-                  background: swearDefault ? "#00e08a" : "rgba(255,255,255,0.15)",
-                  boxShadow: swearDefault ? "0 0 14px -2px #00e08a99" : "none",
-                }}
-              >
-                <span
-                  className="inline-block h-5 w-5 transform rounded-full bg-white transition"
-                  style={{ transform: `translateX(${swearDefault ? "22px" : "2px"})` }}
-                />
-              </button>
-            </div>
-            <div className="flex items-center justify-between gap-3 rounded-xl border p-3"
-              style={{
-                borderColor: paymentMode === "live" ? "#00e08a55" : "#ff994055",
-                background: paymentMode === "live" ? "rgba(0,224,138,0.04)" : "rgba(255,153,64,0.05)",
-              }}
-            >
-              <div className="min-w-0">
-                <div className="text-sm font-semibold text-white/90 flex items-center gap-1.5">
-                  <CreditCard className="h-3.5 w-3.5" style={{ color: paymentMode === "live" ? "#00e08a" : "#ff9940" }} />
-                  Payments mode
+          <Link to="/boss/power" className="hidden sm:inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/45 hover:text-gold transition">
+            Full controls <ArrowUpRight className="h-3 w-3" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <PowerToggle
+            title="Payments"
+            Icon={CreditCard}
+            active={paymentMode === "live"}
+            activeLabel="LIVE"
+            inactiveLabel="TEST"
+            activeTint="#00e08a"
+            inactiveTint="#ff9940"
+            activeHint="Charging real cards site-wide"
+            inactiveHint="Sandbox only · safe to toggle on"
+            onToggle={togglePaymentMode}
+            saving={togglingPayments}
+            ready
+          />
+          <PowerToggle
+            title="Coin transactions"
+            Icon={Coins}
+            active={coinFrozen === false}
+            activeLabel="FLOWING"
+            inactiveLabel="FROZEN"
+            activeTint="#00e08a"
+            inactiveTint="#ff5577"
+            activeHint="Earn / spend live across the site"
+            inactiveHint="All earn / spend halted — tap to thaw"
+            onToggle={toggleCoinFreeze}
+            saving={togglingCoin}
+            ready={coinFrozen !== null}
+          />
+          <PowerToggle
+            title="Guttermouth"
+            Icon={Skull}
+            active={swearDefault === true}
+            activeLabel="ON"
+            inactiveLabel="OFF"
+            activeTint="#ff2e55"
+            inactiveTint="#3ad6ff"
+            activeHint="Foul-mouth chat is default for new sessions"
+            inactiveHint="Civil mode default · tap to unleash"
+            onToggle={toggleSwear}
+            saving={togglingSwear}
+            ready={swearDefault !== null}
+          />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <QuickJump to="/boss/power" Icon={Undo2} label="Reverse" tint="#ff5577" />
+          <QuickJump to="/boss/publish-check" Icon={Rocket} label="Publish" tint="#ffd166" />
+          <QuickJump to="/boss/analytics" Icon={BarChart3} label="Analytics" tint="#00e08a" />
+          <QuickJump to="/boss/api-keys" Icon={KeyRound} label="Agent Keys" tint="#a78bfa" />
+        </div>
+      </section>
+
+      {/* Action queue */}
+      <section className="glass-obsidian-cmd rounded-2xl p-4 md:p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="syndicate-header text-sm md:text-base text-white/95 flex items-center gap-2">
+            <Inbox className="h-4 w-4" style={{ color: "#ff5577" }} /> Action Queue
+          </h2>
+          <span className="text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/45 font-bold">
+            {totalQueue} open
+          </span>
+        </div>
+        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {actionQueue.map((a) => {
+            const urgent = a.count > 0;
+            return (
+              <li key={a.key}>
+                <Link
+                  to={a.to}
+                  hash={a.hash}
+                  className="flex items-center gap-3 p-3 group rounded-xl border transition active:scale-[0.99]"
+                  style={{
+                    borderColor: urgent ? `${a.tint}55` : "rgba(255,255,255,0.06)",
+                    background: urgent ? `${a.tint}10` : "rgba(255,255,255,0.02)",
+                  }}
+                >
                   <span
-                    className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-[0.2em]"
+                    className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ background: `${a.tint}1f`, border: `1px solid ${a.tint}55` }}
+                  >
+                    <a.Icon className="h-4 w-4" style={{ color: a.tint }} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-bold text-white/95 truncate tracking-tight">{a.label}</div>
+                    <div className="text-[11px] text-white/50 truncate">{a.hint}</div>
+                  </div>
+                  <span
+                    className="inline-flex items-center justify-center min-w-[2rem] h-6 px-2 rounded-full text-xs font-extrabold tabular-nums"
                     style={{
-                      background: paymentMode === "live" ? "#00e08a22" : "#ff994022",
-                      color: paymentMode === "live" ? "#00e08a" : "#ff9940",
-                      border: `1px solid ${paymentMode === "live" ? "#00e08a55" : "#ff994055"}`,
+                      background: urgent ? `${a.tint}25` : "rgba(255,255,255,0.04)",
+                      color: urgent ? a.tint : "rgba(255,255,255,0.45)",
+                      border: `1px solid ${urgent ? a.tint + "66" : "rgba(255,255,255,0.08)"}`,
+                      boxShadow: urgent ? `0 0 12px -3px ${a.tint}66` : "none",
                     }}
                   >
-                    {paymentMode}
+                    {a.count}
                   </span>
-                </div>
-                <div className="text-[11px] text-white/50">
-                  {paymentMode === "live"
-                    ? "All checkouts charge real money."
-                    : "Sandbox cards only · banner shown to every member."}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={togglePaymentMode}
-                disabled={togglingPayments}
-                aria-pressed={paymentMode === "live"}
-                className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-50"
-                style={{
-                  background: paymentMode === "live" ? "#00e08a" : "rgba(255,153,64,0.5)",
-                  boxShadow: paymentMode === "live" ? "0 0 14px -2px #00e08a99" : "0 0 14px -2px #ff994099",
-                }}
-              >
-                <span
-                  className="inline-block h-5 w-5 transform rounded-full bg-white transition"
-                  style={{ transform: `translateX(${paymentMode === "live" ? "22px" : "2px"})` }}
-                />
-              </button>
-            </div>
-            <Link
-              to="/boss/civility"
-              className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-3 hover:bg-white/[0.05] transition"
-            >
-              <span className="text-sm font-semibold text-white/90 flex items-center gap-1.5">
-                <ShieldCheck className="h-3.5 w-3.5" style={{ color: "#3ad6ff" }} /> Civility console
-              </span>
-              <ArrowUpRight className="h-4 w-4 text-white/40" />
-            </Link>
-            <div className="flex items-center justify-between gap-3 rounded-xl border p-3"
-              style={{
-                borderColor: coinFrozen ? "#ff557755" : "#00e08a55",
-                background: coinFrozen ? "rgba(255,85,119,0.05)" : "rgba(0,224,138,0.04)",
-              }}
-            >
-              <div className="min-w-0">
-                <div className="text-sm font-semibold text-white/90 flex items-center gap-1.5">
-                  {coinFrozen ? <Snowflake className="h-3.5 w-3.5" style={{ color: "#ff5577" }} /> : <Coins className="h-3.5 w-3.5" style={{ color: "#00e08a" }} />}
-                  Coin transactions
-                </div>
-                <div className="text-[11px] text-white/50">
-                  {coinFrozen ? "Earn / spend flows are frozen site-wide." : "Coin spend & earn flowing normally."}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={toggleCoinFreeze}
-                disabled={coinFrozen === null || togglingCoin}
-                aria-pressed={!!coinFrozen}
-                className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-50"
-                style={{
-                  background: coinFrozen ? "#ff5577" : "#00e08a",
-                  boxShadow: coinFrozen ? "0 0 14px -2px #ff557799" : "0 0 14px -2px #00e08a99",
-                }}
-              >
-                <span
-                  className="inline-block h-5 w-5 transform rounded-full bg-white transition"
-                  style={{ transform: `translateX(${coinFrozen ? "22px" : "2px"})` }}
-                />
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              <Link to="/boss/power" className="flex items-center justify-center gap-1.5 rounded-lg border border-rose-500/40 bg-rose-500/10 px-2.5 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-rose-300 hover:bg-rose-500/15 transition">
-                <Undo2 className="h-3.5 w-3.5" /> Reverse
-              </Link>
-              <Link to="/boss/publish-check" className="flex items-center justify-center gap-1.5 rounded-lg border border-gold/40 bg-gold/10 px-2.5 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-gold hover:bg-gold/15 transition">
-                <Rocket className="h-3.5 w-3.5" /> Publish
-              </Link>
-              <Link to="/boss/analytics" className="flex items-center justify-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-300 hover:bg-emerald-500/15 transition">
-                <BarChart3 className="h-3.5 w-3.5" /> Analytics
-              </Link>
-              <Link to="/boss/api-keys" className="flex items-center justify-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 px-2.5 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-violet-300 hover:bg-violet-500/15 transition">
-                <KeyRound className="h-3.5 w-3.5" /> Keys
-              </Link>
-            </div>
-          </div>
-        </div>
+                  <ArrowUpRight className="h-4 w-4 text-white/30 group-hover:text-white/70 transition" />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
       {TILE_CATEGORIES.map((cat) => {
