@@ -319,6 +319,36 @@ function SettingsPage() {
           </div>
         </section>
 
+        {/* Stream profiles */}
+        <section className="rounded-2xl border border-border bg-card p-6 sm:p-8 mb-6">
+          <h2 className="text-xs uppercase tracking-[0.3em] font-bold text-muted-foreground mb-1 flex items-center gap-2">
+            <Radio className="h-3.5 w-3.5" style={{ color: "var(--neon-blue-bright)" }} />
+            Stream Profiles
+          </h2>
+          <p className="text-xs text-muted-foreground mb-4 flex items-center gap-1.5">
+            <Lock className="h-3 w-3" />
+            Private — only you and the boss can see these. Not shown on your public contact card.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {STREAM_FIELDS.map(({ key, label, placeholder, Icon, hint }) => (
+              <div key={key} className="space-y-2">
+                <Label htmlFor={`stream_${key}`} className="flex items-center gap-2 text-xs">
+                  <Icon className="h-3.5 w-3.5" style={{ color: "var(--neon-blue-bright)" }} />
+                  {label}
+                </Label>
+                <Input
+                  id={`stream_${key}`}
+                  value={streams[key] ?? ""}
+                  maxLength={300}
+                  placeholder={placeholder}
+                  onChange={(e) => setStreams((s) => ({ ...s, [key]: e.target.value }))}
+                />
+                <p className="text-[10px] text-muted-foreground">{hint}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <div className="flex justify-end">
           <Button onClick={save} disabled={saving} className="btn-glass-blue text-white uppercase tracking-[0.25em] font-bold py-6 px-8">
             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
