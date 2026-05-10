@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VipRouteImport } from './routes/vip'
+import { Route as VaultLoginRouteImport } from './routes/vault-login'
 import { Route as TradeRouteImport } from './routes/trade'
 import { Route as ToolsRouteImport } from './routes/tools'
 import { Route as SyndicateOverlordRouteImport } from './routes/syndicate-overlord'
@@ -55,6 +56,11 @@ import { Route as ApiPublicFleetWebhookBotIdRouteImport } from './routes/api/pub
 const VipRoute = VipRouteImport.update({
   id: '/vip',
   path: '/vip',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VaultLoginRoute = VaultLoginRouteImport.update({
+  id: '/vault-login',
+  path: '/vault-login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TradeRoute = TradeRouteImport.update({
@@ -293,6 +299,7 @@ export interface FileRoutesByFullPath {
   '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
   '/trade': typeof TradeRoute
+  '/vault-login': typeof VaultLoginRoute
   '/vip': typeof VipRoute
   '/b/$slug': typeof BSlugRoute
   '/boss/analytics': typeof BossAnalyticsRoute
@@ -337,6 +344,7 @@ export interface FileRoutesByTo {
   '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
   '/trade': typeof TradeRoute
+  '/vault-login': typeof VaultLoginRoute
   '/vip': typeof VipRoute
   '/b/$slug': typeof BSlugRoute
   '/boss/analytics': typeof BossAnalyticsRoute
@@ -382,6 +390,7 @@ export interface FileRoutesById {
   '/syndicate-overlord': typeof SyndicateOverlordRoute
   '/tools': typeof ToolsRoute
   '/trade': typeof TradeRoute
+  '/vault-login': typeof VaultLoginRoute
   '/vip': typeof VipRoute
   '/b/$slug': typeof BSlugRoute
   '/boss/analytics': typeof BossAnalyticsRoute
@@ -428,6 +437,7 @@ export interface FileRouteTypes {
     | '/syndicate-overlord'
     | '/tools'
     | '/trade'
+    | '/vault-login'
     | '/vip'
     | '/b/$slug'
     | '/boss/analytics'
@@ -472,6 +482,7 @@ export interface FileRouteTypes {
     | '/syndicate-overlord'
     | '/tools'
     | '/trade'
+    | '/vault-login'
     | '/vip'
     | '/b/$slug'
     | '/boss/analytics'
@@ -516,6 +527,7 @@ export interface FileRouteTypes {
     | '/syndicate-overlord'
     | '/tools'
     | '/trade'
+    | '/vault-login'
     | '/vip'
     | '/b/$slug'
     | '/boss/analytics'
@@ -561,6 +573,7 @@ export interface RootRouteChildren {
   SyndicateOverlordRoute: typeof SyndicateOverlordRoute
   ToolsRoute: typeof ToolsRoute
   TradeRoute: typeof TradeRoute
+  VaultLoginRoute: typeof VaultLoginRoute
   VipRoute: typeof VipRoute
   BSlugRoute: typeof BSlugRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
@@ -582,6 +595,13 @@ declare module '@tanstack/react-router' {
       path: '/vip'
       fullPath: '/vip'
       preLoaderRoute: typeof VipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vault-login': {
+      id: '/vault-login'
+      path: '/vault-login'
+      fullPath: '/vault-login'
+      preLoaderRoute: typeof VaultLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/trade': {
@@ -925,6 +945,7 @@ const rootRouteChildren: RootRouteChildren = {
   SyndicateOverlordRoute: SyndicateOverlordRoute,
   ToolsRoute: ToolsRoute,
   TradeRoute: TradeRoute,
+  VaultLoginRoute: VaultLoginRoute,
   VipRoute: VipRoute,
   BSlugRoute: BSlugRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,

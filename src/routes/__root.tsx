@@ -24,6 +24,7 @@ import { EnforcerConsole } from "../components/EnforcerConsole";
 import { SpotlightEyes } from "../components/SpotlightEyes";
 import { ReducedMotionToggle } from "../components/ReducedMotionToggle";
 import { AuthGate } from "../components/AuthGate";
+import { VipPromoBanner } from "../components/VipPromoBanner";
 
 function NotFoundComponent() {
   return (
@@ -142,6 +143,7 @@ function RootComponent() {
           <div className="min-h-screen bg-background text-foreground">
             <PaymentTestModeBanner />
             <SpotlightEyes />
+            <VipPromoBanner />
             <NavBar />
             <AuthGate>
               <Outlet />
