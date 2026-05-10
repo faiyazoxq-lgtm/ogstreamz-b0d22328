@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import logo from "@/assets/logo.jpg";
+import bgFlame from "@/assets/bg-flame.png";
 
 export const Route = createFileRoute("/welcome")({
   head: () => ({
@@ -115,8 +116,15 @@ function WelcomePage() {
   }
 
   return (
-    <div className="min-h-dvh bg-background text-foreground">
-      <div className="mx-auto flex max-w-5xl flex-col gap-10 px-4 py-10 sm:py-16">
+    <div className="relative min-h-dvh overflow-hidden bg-background text-foreground">
+      {/* Brand wallpaper */}
+      <img
+        src={bgFlame}
+        alt=""
+        aria-hidden
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-15 mix-blend-screen"
+      />
+      <div className="relative mx-auto flex max-w-5xl flex-col gap-10 px-4 py-10 sm:py-16">
         <header className="flex flex-col items-center gap-4 text-center">
           <img
             src={logo}
