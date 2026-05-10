@@ -1,5 +1,8 @@
 # Project Memory
 
 ## Core
-VIP pass holders are called "Real OGs" — never "VIP". Badge label: "REAL OG". Status copy on profile says "Real 0G User".
-Real OG Pass = £20 one-off (currency GBP, 2000 pence), lifetime. Auto-issued on Stripe payment (no Boss approval for this tier).
+VIP = VIP pass holders = Real OG = OGs = Real OGs. All synonymous — treat as one tier.
+Real OGs are addressed with street OG respect: never sworn at, never patronised, always made to feel like an OG. Free/non-VIP users may get the rougher house tone, but OGs never do.
+
+## Memories
+- [VIP tone & terminology](mem://preferences/vip-tone) — Synonyms for VIP and required respectful tone
