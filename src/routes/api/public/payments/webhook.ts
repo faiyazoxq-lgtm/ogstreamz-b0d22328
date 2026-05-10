@@ -90,6 +90,34 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
     return;
   }
 
+  // VIP / Streams passes — record a pending_approval order; boss approves.
+  if (session.metadata?.kind === "vip_pass" || session.metadata?.kind === "streams_pass") {
+    const productId = session.metadata?.productId as string | undefined;
+    const durationDays = Number(session.metadata?.durationDays ?? 0);
+    if (!productId || !durationDays) {
+      console.error("Pass order missing productId/durationDays", session.id);
+      return;
+    }
+    const amount = Number(session.amount_total ?? 0);
+    const { error } = await getSupabase()
+      .from("pass_orders")
+      .upsert({
+        user_id: userId,
+        product_id: productId,
+        kind: session.metadata.kind,
+        duration_days: durationDays,
+        amount_cents: amount,
+        currency: (session.currency || "usd").toLowerCase(),
+        stripe_session_id: session.id,
+        stripe_payment_intent: session.payment_intent ?? null,
+        environment: env,
+        status: "pending_approval",
+      }, { onConflict: "stripe_session_id" });
+    if (error) console.error("pass_orders upsert failed", error);
+    else console.log("Pass order recorded", { userId, kind: session.metadata.kind, productId });
+    return;
+  }
+
   // Re-fetch the session with line items expanded so we can read lookup_key.
   const stripe = createStripeClient(env);
   const full = await stripe.checkout.sessions.retrieve(session.id, {
