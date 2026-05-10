@@ -11,7 +11,7 @@ async function assertBoss(supabase: any, userId: string) {
 }
 
 const cnt = async (table: string, filter?: (q: any) => any) => {
-  let q = supabaseAdmin.from(table).select("*", { count: "exact", head: true });
+  let q = (supabaseAdmin as any).from(table).select("*", { count: "exact", head: true });
   if (filter) q = filter(q);
   const { count } = await q;
   return count ?? 0;
