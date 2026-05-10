@@ -1,0 +1,90 @@
+import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+export type VaultRevealResult =
+  | {
+      available: true;
+      label: string;
+      username: string;
+      password: string;
+      window_start: string;
+      rotates_at: string;
+      rotates_in: number;
+      pool_size: number;
+    }
+  | { available: false; reason: string; rotates_in: number };
+
+export const revealVaultCredential = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<VaultRevealResult> => {
+    const { supabase } = context as { supabase: any };
+    const { data, error } = await supabase.rpc("reveal_vault_credential");
+    if (error) throw new Error(error.message);
+    return data as VaultRevealResult;
+  });
+
+export type VaultCredentialRow = {
+  id: string;
+  label: string;
+  username: string;
+  password: string;
+  active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export const listVaultCredentials = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<VaultCredentialRow[]> => {
+    const { supabase } = context as { supabase: any };
+    const { data, error } = await supabase
+      .from("vault_credentials")
+      .select("id,label,username,password,active,sort_order,created_at,updated_at")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as VaultCredentialRow[];
+  });
+
+export const upsertVaultCredential = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: {
+    id?: string | null;
+    label?: string;
+    username: string;
+    password: string;
+    active?: boolean;
+    sort_order?: number;
+  }) => ({
+    id: d.id ? String(d.id) : null,
+    label: (d.label ?? "").trim().slice(0, 80),
+    username: String(d.username ?? "").trim().slice(0, 120),
+    password: String(d.password ?? "").trim().slice(0, 120),
+    active: d.active === undefined ? true : !!d.active,
+    sort_order: Math.max(0, Math.trunc(Number(d.sort_order ?? 0))),
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context as { supabase: any };
+    if (!data.username || !data.password) throw new Error("Username and password required");
+    const { data: id, error } = await supabase.rpc("boss_upsert_vault_credential", {
+      _id: data.id,
+      _label: data.label,
+      _username: data.username,
+      _password: data.password,
+      _active: data.active,
+      _sort_order: data.sort_order,
+    });
+    if (error) throw new Error(error.message);
+    return { id: id as string };
+  });
+
+export const deleteVaultCredential = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context as { supabase: any };
+    const { error } = await supabase.rpc("boss_delete_vault_credential", { _id: data.id });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

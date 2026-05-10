@@ -2168,6 +2168,42 @@ export type Database = {
         }
         Relationships: []
       }
+      vault_credentials: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string
+          password: string
+          sort_order: number
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          password: string
+          sort_order?: number
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          password?: string
+          sort_order?: number
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
       vip_passes: {
         Row: {
           created_at: string
@@ -2271,6 +2307,7 @@ export type Database = {
         Args: { _approve: boolean; _note?: string; _order_id: string }
         Returns: Json
       }
+      boss_delete_vault_credential: { Args: { _id: string }; Returns: boolean }
       boss_deny_topup: {
         Args: { _id: string; _note: string }
         Returns: boolean
@@ -2299,6 +2336,17 @@ export type Database = {
         Args: { _delta: number; _reason: string; _user_id: string }
         Returns: number
       }
+      boss_upsert_vault_credential: {
+        Args: {
+          _active: boolean
+          _id: string
+          _label: string
+          _password: string
+          _sort_order: number
+          _username: string
+        }
+        Returns: string
+      }
       civility_default: { Args: never; Returns: boolean }
       claim_real_og_pass: {
         Args: {
@@ -2324,6 +2372,7 @@ export type Database = {
       }
       increment_portal_view: { Args: { _slug: string }; Returns: number }
       is_boss: { Args: { _uid: string }; Returns: boolean }
+      is_real_og: { Args: { _uid?: string }; Returns: boolean }
       plan_includes_tier: {
         Args: {
           _plan: Database["public"]["Enums"]["subscription_plan"]
@@ -2350,6 +2399,7 @@ export type Database = {
         }
         Returns: Json
       }
+      reveal_vault_credential: { Args: never; Returns: Json }
       spend_credits: {
         Args: { _amount: number; _reason: string }
         Returns: number
