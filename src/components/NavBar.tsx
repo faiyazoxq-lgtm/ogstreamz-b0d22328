@@ -131,7 +131,10 @@ function NavDropdown({
 export function NavBar() {
   const { user, profile, isAdmin } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isBoss = isAdmin || profile?.rank === "boss";
+  // Boss / admin links are visibility-gated to admins only. A "boss" rank in
+  // the profile is informational; only verified admins (server-checked) see
+  // the Boss portal entry, the bossOnly hubs, and the admin drawer section.
+  const isBoss = isAdmin;
   const isVip = !isBoss && profile?.status === "vip";
   const statusLabel = !user
     ? "GUEST"
