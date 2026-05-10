@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, ArrowLeft, BadgeCheck, Crown, ExternalLink, Loader2, Lock, Radio, Send, ShieldAlert, TrendingDown, TrendingUp, Zap } from "lucide-react";
+import { Activity, ArrowLeft, BadgeCheck, Crown, ExternalLink, FileText, Loader2, Lock, Radio, Send, ShieldAlert, TrendingDown, TrendingUp, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
@@ -14,6 +14,7 @@ import { toast } from "sonner";
 type Portal = {
   id: string; slug: string; name: string; niche: string; vip: boolean;
   theme_config: any;
+  jokes: string[] | null;
 };
 
 // ── Executive Slate & Gold palette
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/td/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals")
-      .select("id, slug, name, niche, vip, theme_config, kind")
+      .select("id, slug, name, niche, vip, theme_config, kind, jokes")
       .eq("slug", params.slug)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -68,6 +69,9 @@ function TradeTerminal() {
   const assetClass: string = tc.assetClass || "Crypto";
   const risk: string = tc.risk || "Balanced";
   const isGold = /gold|xau/i.test(portal.name) || tickers.some(t => /xau|gold/i.test(t));
+  const briefs: string[] = Array.isArray(portal.jokes)
+    ? portal.jokes.filter((b): b is string => typeof b === "string" && b.trim().length > 0)
+    : [];
 
   const scan = useServerFn(runTradeScan);
   const fetchFees = useServerFn(getTrc20Fees);
@@ -283,6 +287,44 @@ function TradeTerminal() {
           />
           <BentoStat label="Confidence" value={intel?.confidence} subtitle={`Signal: ${intel?.signal || "—"}`} color={GOLD} suffix="%" />
         </div>
+
+        {/* SENTIMENT BRIEFS — generated at spawn time */}
+        {briefs.length > 0 && (
+          <div className="rounded-2xl border p-5 sm:p-6 mb-5" style={{ borderColor: `${GOLD}44`, background: "rgba(0,0,0,0.55)", boxShadow: `0 0 60px -28px ${GOLD}` }}>
+            <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4" style={{ color: GOLD }} />
+                <div>
+                  <div className="text-[10px] tracking-[0.4em] opacity-70">// SENTIMENT-ONLY TRADE BRIEFS</div>
+                  <h2 className="text-lg font-bold" style={{ color: GOLD }}>{portal.name} · Setup Notes</h2>
+                </div>
+              </div>
+              <span className="text-[9px] px-2 py-0.5 border rounded-full uppercase tracking-widest" style={{ borderColor: `${GOLD}66`, color: GOLD }}>
+                {briefs.length} brief{briefs.length === 1 ? "" : "s"}
+              </span>
+            </div>
+            <ol className="space-y-3">
+              {briefs.map((b, i) => (
+                <li
+                  key={i}
+                  className="rounded-xl border p-4 flex gap-3 items-start"
+                  style={{ borderColor: `${GOLD}33`, background: "rgba(0,0,0,0.45)" }}
+                >
+                  <span
+                    className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full font-black text-[11px] tabular-nums"
+                    style={{ background: GOLD, color: SLATE, boxShadow: `0 0 18px -4px ${GOLD}` }}
+                  >
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <p className="text-sm leading-relaxed text-white/90 whitespace-pre-line">{b}</p>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-3 text-[10px] uppercase tracking-[0.3em] opacity-50 flex items-center gap-1">
+              <ShieldAlert className="h-3 w-3" /> Sentiment only — not financial advice.
+            </p>
+          </div>
+        )}
 
         {/* FACT CARDS — Punchy */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
