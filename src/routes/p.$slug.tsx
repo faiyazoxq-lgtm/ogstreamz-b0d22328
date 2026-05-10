@@ -41,6 +41,10 @@ type Portal = {
   vibe: string | null;
   theme: string;
   jokes: string[];
+  music_hooks: string[];
+  trade_briefs: string[];
+  connect_openers: string[];
+  tool_ideas: string[];
   vip: boolean;
   price_cents: number;
   theme_config: ThemeConfig;
@@ -61,7 +65,7 @@ export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals")
-      .select("id, slug, name, niche, language, vibe, theme, jokes, vip, price_cents, theme_config, scout_meta, telegram_config, kind, audio_snippet_url, bg_video_url, bg_video_aspect, swear_chat_enabled")
+      .select("id, slug, name, niche, language, vibe, theme, jokes, music_hooks, trade_briefs, connect_openers, tool_ideas, vip, price_cents, theme_config, scout_meta, telegram_config, kind, audio_snippet_url, bg_video_url, bg_video_aspect, swear_chat_enabled")
       .eq("slug", params.slug)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -189,7 +193,15 @@ function PortalPage() {
   const [unlocking, setUnlocking] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const controls = useAnimationControls();
-  const jokes = portal.jokes?.length ? portal.jokes : ["No jokes loaded yet."];
+  const seedsByKind: Record<string, string[] | undefined> = {
+    music: portal.music_hooks,
+    trade: portal.trade_briefs,
+    connect: portal.connect_openers,
+    tools: portal.tool_ideas,
+  };
+  const kindSeeds = seedsByKind[portal.kind];
+  const seeds = (kindSeeds && kindSeeds.length ? kindSeeds : portal.jokes) ?? [];
+  const jokes = seeds.length ? seeds : ["No content loaded yet."];
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioSnippet = (portal as any).audio_snippet_url as string | null | undefined;
   const hitContainerRef = useRef<HTMLDivElement | null>(null);
