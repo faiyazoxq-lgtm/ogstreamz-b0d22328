@@ -253,6 +253,7 @@ function SideCard({
   icon,
   picked,
   disabled,
+  locked,
   onPick,
 }: {
   side: Side;
@@ -261,6 +262,7 @@ function SideCard({
   icon: React.ReactNode;
   picked: boolean;
   disabled: boolean;
+  locked?: boolean;
   onPick: () => void;
 }) {
   return (
@@ -295,7 +297,7 @@ function SideCard({
         </div>
       </div>
       <div className="mt-6 inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#c9a84c]">
-        {picked ? "Vote cast" : "Tap to pick"}
+        {locked && !picked ? "Voting locked" : picked ? "Vote cast" : "Tap to pick"}
       </div>
     </button>
   );
