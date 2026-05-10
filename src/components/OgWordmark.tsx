@@ -56,7 +56,15 @@ export function OgWordmark({
           key={i}
           style={
             i === 0
-              ? { fontWeight: 900, letterSpacing: "-0.05em", marginLeft: "-0.04em" }
+              ? {
+                  // Pull the G flush against the egg-eye on every breakpoint.
+                  // Negative margin closes the optical gap left by the
+                  // ellipse's curved right edge; tighter letter-spacing keeps
+                  // the rest of "-PORTAL" from drifting away.
+                  fontWeight: 900,
+                  letterSpacing: "-0.06em",
+                  marginLeft: "-0.12em",
+                }
               : undefined
           }
         >
