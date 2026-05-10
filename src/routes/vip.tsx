@@ -285,7 +285,7 @@ function VipPage() {
               <div className="rounded-2xl border border-cyan-300/30 bg-black/40 p-4 sm:p-5">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-300/80 font-bold">Unlock now</p>
                 <p className="mt-1 text-lg sm:text-xl font-black text-white">
-                  Your exclusive 0G VIP Access Pass to the Vault — one-time <span className="text-amber-300">£20</span> 🚀
+                  Your exclusive 0G VIP Access Pass to the Vault — one-time <span className="text-amber-300">£20 (20 🪙)</span> 🚀
                 </p>
                 <p className="mt-2 text-sm text-cyan-100/80">
                   Current users <span className="font-bold text-cyan-200">still keep YouTiVi and others</span> — this is just an extra VIP upgrade. 🙌
@@ -315,7 +315,7 @@ function VipPage() {
                 onClick={scrollToPricing}
                 className="h-12 px-6 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-black uppercase tracking-[0.2em] shadow-[0_0_50px_-5px_rgba(255,200,80,0.7)]"
               >
-                <Crown className="h-4 w-4 mr-2" /> Grab the £20 Pass
+                <Crown className="h-4 w-4 mr-2" /> Grab the £20 Pass (20 🪙)
               </Button>
               <Link
                 to="/store"
@@ -356,7 +356,7 @@ function VipPage() {
         <div className="text-center mb-8">
           <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-300/80 font-bold">Pick your pass</p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-black text-white">One sub. Every portal.</h2>
-          <p className="mt-2 text-sm text-cyan-100/70">Or grab the £20 lifetime <Link to="/store" className="underline text-amber-300">Real 0G one-off</Link>.</p>
+          <p className="mt-2 text-sm text-cyan-100/70">Or grab the £20 (20 🪙) lifetime <Link to="/store" className="underline text-amber-300">Real 0G one-off</Link>.</p>
         </div>
 
         {isVip ? (
@@ -387,8 +387,8 @@ function VipPage() {
                       </span>
                     )}
                     <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-200/70">{isYear ? "Annual" : "Monthly"}</p>
-                    <p className="mt-1 text-4xl font-black">${isYear ? "149" : "19"}<span className="text-sm font-normal opacity-60">/{isYear ? "yr" : "mo"}</span></p>
-                    <p className="mt-1 text-xs text-cyan-100/70">{isYear ? "$12.42/mo billed yearly" : "Billed monthly"}</p>
+                    <p className="mt-1 text-4xl font-black">£{isYear ? "149" : "19"} <span className="text-base text-yellow-300">({isYear ? "149" : "19"} 🪙)</span><span className="text-sm font-normal opacity-60">/{isYear ? "yr" : "mo"}</span></p>
+                    <p className="mt-1 text-xs text-cyan-100/70">{isYear ? "£12.42 (~12 🪙)/mo billed yearly" : "Billed monthly"}</p>
                     {active && (
                       <span className="mt-3 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.25em] font-bold text-cyan-300">
                         <Check className="h-3 w-3" /> Selected
@@ -554,7 +554,7 @@ function VipPage() {
               to="/store"
               className="inline-flex items-center gap-2 h-14 px-6 rounded-md border border-amber-300/50 bg-amber-400/10 hover:bg-amber-400/20 text-amber-100 font-bold uppercase tracking-[0.2em] text-sm"
             >
-              <Sparkles className="h-4 w-4" /> Or £20 Lifetime
+              <Sparkles className="h-4 w-4" /> Or £20 Lifetime (20 🪙)
             </Link>
           </div>
         </div>

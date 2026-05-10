@@ -235,6 +235,7 @@ function ProductCard({ product, onBuy }: { product: Product; onBuy: () => void }
           <p className="font-[Montserrat] font-black text-3xl text-metallic">
             {sym}{price}
             <span className="ml-1 text-xs uppercase text-white/40">{product.currency.toUpperCase()}</span>
+            <span className="ml-2 text-base text-yellow-300 font-bold">({Math.round(product.price_cents / 100)} 🪙)</span>
           </p>
         </div>
 
@@ -290,7 +291,7 @@ function CheckoutDrawer({
         </button>
         <h2 className="font-[Montserrat] font-black text-2xl text-metallic mb-1">{product.title}</h2>
         <p className="text-xs text-muted-foreground mb-4">
-          {currencySymbol(product.currency)}{(product.price_cents / 100).toFixed(2)} {product.currency.toUpperCase()}
+          {currencySymbol(product.currency)}{(product.price_cents / 100).toFixed(2)} {product.currency.toUpperCase()} ({Math.round(product.price_cents / 100)} 🪙)
           {product.duration_days ? ` · ${product.duration_days} days` : ""}
         </p>
         <div id="checkout">

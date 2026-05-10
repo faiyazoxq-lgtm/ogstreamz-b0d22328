@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Crown, Loader2, Ticket, ExternalLink, Coins } from "lucide-react";
 import { getMyPurchases } from "@/lib/account-passes.functions";
+import { coinChip } from "@/lib/coins";
 
 type Pass = { id: string; source: string; expires_at: string; revoked_at: string | null; created_at: string };
 type Order = { id: string; kind: string; pass_number: string | null; status: string; amount_cents: number; currency: string; duration_days: number; created_at: string };
@@ -20,8 +21,9 @@ function passLabel(source: string) {
 
 function fmtMoney(cents: number, currency: string) {
   try {
-    return new Intl.NumberFormat("en-GB", { style: "currency", currency: (currency || "usd").toUpperCase() }).format(cents / 100);
-  } catch { return `${(cents/100).toFixed(2)} ${currency}`; }
+    const base = new Intl.NumberFormat("en-GB", { style: "currency", currency: (currency || "gbp").toUpperCase() }).format(cents / 100);
+    return (currency || "gbp").toLowerCase() === "gbp" ? `${base} ${coinChip(cents)}` : base;
+  } catch { return `${(cents/100).toFixed(2)} ${currency} ${coinChip(cents)}`; }
 }
 
 function daysLeft(iso: string) {

@@ -258,7 +258,7 @@ function StorePage() {
                     <div className="mt-auto pt-2 flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
                         {fromPrice !== null ? (
-                          <>from <span className="text-white font-bold">£{(fromPrice / 100).toFixed(2)}</span></>
+                          <>from <span className="text-white font-bold">£{(fromPrice / 100).toFixed(2)} <span className="text-yellow-300">({Math.round(fromPrice / 100)} 🪙)</span></span></>
                         ) : (
                           "—"
                         )}
@@ -408,6 +408,9 @@ function PackCard({ pack, isBoss, creditsPerSong, onBuy, onChanged }: {
       )}
       <p className="mt-4 font-[Montserrat] font-black text-3xl text-metallic">
         £{(pack.amount_cents / 100).toFixed(2)}
+        <span className="ml-2 text-base text-yellow-300 font-bold align-middle">
+          ({Math.round(pack.amount_cents / 100).toLocaleString()} 🪙)
+        </span>
         {pack.recurring && <span className="text-sm text-muted-foreground font-normal">/mo</span>}
       </p>
 
@@ -640,7 +643,7 @@ function PackCompareTable({ packs, onBuy }: { packs: Pack[]; onBuy: (priceId: st
                     </div>
                   </td>
                   <td className="px-3 py-3 text-right tabular-nums font-bold text-white">{credits}</td>
-                  <td className="px-3 py-3 text-right tabular-nums font-bold text-white">£{(p.amount_cents / 100).toFixed(2)}</td>
+                  <td className="px-3 py-3 text-right tabular-nums font-bold text-white">£{(p.amount_cents / 100).toFixed(2)} <span className="text-yellow-300 font-bold">({Math.round(p.amount_cents / 100)} 🪙)</span></td>
                   <td className="px-3 py-3 text-right tabular-nums text-cyan-200">£{cpp.toFixed(3).replace(/\.?0+$/, "")}</td>
                   <td className="px-3 py-3 text-right tabular-nums">
                     {savePctVsBase > 0 ? (

@@ -123,7 +123,7 @@ export function RealOgPromoCard() {
               Claim your Real OG Pass
             </DialogTitle>
             <DialogDescription className="text-cyan-200/80">
-              £20 · One-off · Lifetime Real OG status. Auto-issued the moment payment clears.
+              £20 (20 🪙) · One-off · Lifetime Real OG status. Auto-issued the moment payment clears.
             </DialogDescription>
           </DialogHeader>
           {open && user && (

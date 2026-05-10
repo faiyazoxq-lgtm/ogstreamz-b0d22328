@@ -124,7 +124,7 @@ function BundleTile({
 
       <div className="mt-4 flex items-baseline gap-2">
         <span className="font-[Montserrat] font-black text-4xl text-white [text-shadow:_0_0_14px_rgba(255,200,0,0.55)]">
-          £{total.toFixed(0)}
+          £{total.toFixed(0)} <span className="text-xl text-yellow-200">({total.toFixed(0)} 🪙)</span>
         </span>
         <span className="text-xs text-white/50 line-through">£{(ogPrice + packPrice).toFixed(0)}</span>
       </div>
