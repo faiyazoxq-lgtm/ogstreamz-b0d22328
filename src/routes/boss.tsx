@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
-import { Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft, Menu, X, ShieldAlert, LogIn, ChevronRight, Home, Tv, Tags, Bell, ChevronDown, ShoppingBag, Sparkles, Settings, Boxes, Grid3x3, Coins, Power, Rocket, KeyRound } from "lucide-react";
+import { Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft, Menu, X, ShieldAlert, LogIn, ChevronRight, Home, Tv, Tags, Bell, ChevronDown, Sparkles, Settings, Boxes, Grid3x3, Coins, Power, Rocket, KeyRound, Wallet, SlidersHorizontal } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { BossSearch } from "@/components/BossSearch";
 import { requireBoss } from "@/lib/route-guards";
@@ -24,8 +24,19 @@ const TOP: NavItem = { to: "/boss/overview", label: "Overview", Icon: Crown, exa
 
 const GROUPS: NavGroup[] = [
   {
-    id: "members",
-    label: "Members",
+    id: "command",
+    label: "Command",
+    Icon: Crown,
+    items: [
+      { to: "/boss/alerts", label: "System Alerts", Icon: Bell, desc: "Live incidents & API errors" },
+      { to: "/boss/publish-check", label: "Publish Check", Icon: Rocket, desc: "Pre-publish validation & checklist" },
+      { to: "/boss/analytics", label: "Analytics", Icon: BarChart3, desc: "Portal & spend metrics" },
+      { to: "/syndicate-overlord", label: "Overlord Deck", Icon: LayoutDashboard, desc: "Syndicate command deck" },
+    ],
+  },
+  {
+    id: "people",
+    label: "People",
     Icon: Users,
     items: [
       { to: "/boss/users", label: "User Roster", Icon: Users, desc: "Rank, credits, bans, swearing" },
@@ -33,35 +44,14 @@ const GROUPS: NavGroup[] = [
     ],
   },
   {
-    id: "commerce",
-    label: "Commerce",
-    Icon: ShoppingBag,
+    id: "money",
+    label: "Money & Power",
+    Icon: Wallet,
     items: [
-      { to: "/boss/pricing", label: "Pricing", Icon: Tags, desc: "Coin packs & store products" },
-      { to: "/admin", label: "Admin Console", Icon: Sparkles, desc: "Top-ups, passes, vault" },
       { to: "/boss/power", label: "Power Controls", Icon: Power, desc: "Freeze payments, coins & reverse" },
-      { to: "/boss/settings", label: "Settings", Icon: Settings, desc: "Signup bonus & tunables" },
-      { to: "/boss/publish-check", label: "Publish Check", Icon: Rocket, desc: "Pre-publish validation & checklist" },
-      { to: "/boss/api-keys", label: "Agent Keys", Icon: KeyRound, desc: "Encrypted vault for AI / integration keys" },
-    ],
-  },
-  {
-    id: "moderation",
-    label: "Moderation",
-    Icon: ShieldCheck,
-    items: [
-      { to: "/boss/alerts", label: "System Alerts", Icon: Bell, desc: "Live incidents", },
-      { to: "/boss/civility", label: "Civility", Icon: ShieldCheck, desc: "Default tone" },
-      { to: "/boss/lexicon", label: "Swear Lexicon", Icon: Skull, desc: "Word lists" },
-    ],
-  },
-  {
-    id: "insights",
-    label: "Insights",
-    Icon: BarChart3,
-    items: [
-      { to: "/boss/analytics", label: "Analytics", Icon: BarChart3, desc: "Portal & spend metrics" },
-      { to: "/syndicate-overlord", label: "Overlord Deck", Icon: LayoutDashboard, desc: "Syndicate command" },
+      { to: "/boss/pricing", label: "Pricing", Icon: Tags, desc: "Coin packs & store products" },
+      { to: "/boss/portal-costs", label: "Coin Costs", Icon: Coins, desc: "Per-hub create & per-portal use" },
+      { to: "/admin", label: "Admin Console", Icon: Sparkles, desc: "Top-ups, passes, codes, vault" },
     ],
   },
   {
@@ -71,7 +61,24 @@ const GROUPS: NavGroup[] = [
     items: [
       { to: "/boss/hubs", label: "Hubs", Icon: Boxes, desc: "Manage built-in & custom hubs" },
       { to: "/boss/portals", label: "Portals", Icon: Grid3x3, desc: "Manage all portals" },
-      { to: "/boss/portal-costs", label: "Coin Costs", Icon: Coins, desc: "Per-hub create & per-portal use costs" },
+    ],
+  },
+  {
+    id: "moderation",
+    label: "Moderation",
+    Icon: ShieldCheck,
+    items: [
+      { to: "/boss/civility", label: "Civility", Icon: ShieldCheck, desc: "Default site tone" },
+      { to: "/boss/lexicon", label: "Swear Lexicon", Icon: Skull, desc: "Word lists & openers" },
+    ],
+  },
+  {
+    id: "system",
+    label: "System",
+    Icon: SlidersHorizontal,
+    items: [
+      { to: "/boss/api-keys", label: "Agent Keys", Icon: KeyRound, desc: "Encrypted AI / integration vault" },
+      { to: "/boss/settings", label: "Settings", Icon: Settings, desc: "Signup bonus & tunables" },
     ],
   },
 ];

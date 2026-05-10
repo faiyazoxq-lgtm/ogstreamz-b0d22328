@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Crown, Users, Coins, Ticket, KeyRound, Handshake, Inbox, FileText, ArrowUpRight,
   Share2, ShieldCheck, BarChart3, Skull, Activity, RefreshCw, AlertTriangle, Tv,
-  Tags, Music, CheckCircle2, Radio, Zap, Bell, CreditCard,
+  Tags, Music, CheckCircle2, Radio, Zap, Bell, CreditCard, Power, Snowflake, Undo2,
+  Rocket, Boxes, Grid3x3, Settings as SettingsIcon, Sparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePaymentMode, setPaymentMode } from "@/hooks/use-payment-mode";
@@ -62,19 +63,44 @@ type Tile = {
 };
 
 const TILES: Tile[] = [
-  { to: "/boss/users",               label: "User Roster",      blurb: "Full control · rank, status, credits, ban, force sign-out, stream verify", Icon: Users,    tint: "#3ad6ff" },
-  { to: "/admin", hash: "roster",    label: "Legacy Roster",    blurb: "Original admin console roster view",                Icon: Users,    tint: "#94a3b8" },
-  { to: "/admin", hash: "topups",    label: "Top-Up Requests",  blurb: "Approve or deny credit top-ups",                     Icon: Inbox,    tint: "#ff5577" },
-  { to: "/admin", hash: "roster",    label: "Adjust Credits",   blurb: "Boss-grant credits by email or user-id",             Icon: Coins,    tint: "#ffd166" },
-  { to: "/admin", hash: "passes",    label: "VIP Passes",       blurb: "Mint, grant, revoke, share signup passes",           Icon: Ticket,   tint: "#a78bfa" },
-  { to: "/admin", hash: "codes",     label: "Redeem Codes",     blurb: "Create, list, expire promo codes",                   Icon: KeyRound, tint: "#00e08a" },
-  { to: "/admin", hash: "resellers", label: "Resellers",        blurb: "Reseller wallets, mark-up, downline",                Icon: Handshake,tint: "#ff7a1a" },
-  { to: "/admin", hash: "share",     label: "Share Cards",      blurb: "Generate share-link cards for passes",               Icon: Share2,   tint: "#ff5acd" },
-  { to: "/admin", hash: "notes",     label: "Boss Notes",       blurb: "Private operational notes",                          Icon: FileText, tint: "#94a3b8" },
-  { to: "/boss/civility",            label: "Civility Controls",blurb: "Toggle Guttermouth swear-chat · keep things civil", Icon: ShieldCheck, tint: "#3ad6ff" },
-  { to: "/boss/analytics",           label: "View Analytics",   blurb: "Anonymous public-view counts for every portal & battle", Icon: BarChart3, tint: "#00e08a" },
-  { to: "/boss/lexicon",             label: "Swear Lexicon",    blurb: "Edit HEAVY/MID/SOFT word lists · refusal patterns · openers", Icon: Skull, tint: "#ff2e55" },
-  { to: "/boss/alerts",              label: "System Alerts",    blurb: "API errors and Perplexity fallback activity, realtime", Icon: Bell, tint: "#ff5577" },
+  // People
+  { to: "/boss/users",               label: "User Roster",       blurb: "Rank, status, credits, ban, force sign-out, stream verify",   Icon: Users,        tint: "#3ad6ff" },
+  { to: "/boss/stream-queue",        label: "Stream Queue",      blurb: "Pending 0G STREAMZ portal verifications",                     Icon: Tv,           tint: "#3ad6ff" },
+  // Money & Power
+  { to: "/boss/power",               label: "Power Controls",    blurb: "Freeze payments, freeze coins, reverse recent purchases",     Icon: Power,        tint: "#ff5577" },
+  { to: "/boss/pricing",             label: "Pricing",           blurb: "Coin packs & store product catalogue",                        Icon: Tags,         tint: "#00e08a" },
+  { to: "/boss/portal-costs",        label: "Coin Costs",        blurb: "Per-hub create & per-portal use costs",                       Icon: Coins,        tint: "#ffd166" },
+  { to: "/admin", hash: "topups",    label: "Top-Up Requests",   blurb: "Approve or deny credit top-ups",                              Icon: Inbox,        tint: "#ff5577" },
+  { to: "/admin", hash: "roster",    label: "Adjust Credits",    blurb: "Boss-grant credits by email or user-id",                      Icon: Coins,        tint: "#ffd166" },
+  { to: "/admin", hash: "passes",    label: "VIP Passes",        blurb: "Mint, grant, revoke, share signup passes",                    Icon: Ticket,       tint: "#a78bfa" },
+  { to: "/admin", hash: "codes",     label: "Redeem Codes",      blurb: "Create, list, expire promo codes",                            Icon: KeyRound,     tint: "#00e08a" },
+  { to: "/admin", hash: "resellers", label: "Resellers",         blurb: "Reseller wallets, mark-up, downline",                         Icon: Handshake,    tint: "#ff7a1a" },
+  { to: "/admin", hash: "share",     label: "Share Cards",       blurb: "Generate share-link cards for passes",                        Icon: Share2,       tint: "#ff5acd" },
+  { to: "/admin", hash: "notes",     label: "Boss Notes",        blurb: "Private operational notes",                                   Icon: FileText,     tint: "#94a3b8" },
+  { to: "/admin",                    label: "Admin Console",     blurb: "Full legacy admin surface — top-ups, passes, vault",          Icon: Sparkles,     tint: "#94a3b8" },
+  // Content
+  { to: "/boss/hubs",                label: "Hubs",              blurb: "Manage built-in & custom hubs",                               Icon: Boxes,        tint: "#a78bfa" },
+  { to: "/boss/portals",             label: "Portals",           blurb: "Browse, edit, regenerate covers for every portal",            Icon: Grid3x3,      tint: "#3ad6ff" },
+  // Moderation
+  { to: "/boss/civility",            label: "Civility Controls", blurb: "Toggle Guttermouth swear-chat default tone",                  Icon: ShieldCheck,  tint: "#3ad6ff" },
+  { to: "/boss/lexicon",             label: "Swear Lexicon",     blurb: "HEAVY / MID / SOFT word lists · refusal patterns · openers", Icon: Skull,        tint: "#ff2e55" },
+  // Insights
+  { to: "/boss/analytics",           label: "Analytics",         blurb: "Anonymous public-view counts for every portal & battle",      Icon: BarChart3,    tint: "#00e08a" },
+  { to: "/syndicate-overlord",       label: "Overlord Deck",     blurb: "Syndicate command deck across the network",                   Icon: Activity,     tint: "#a78bfa" },
+  // Command & System
+  { to: "/boss/alerts",              label: "System Alerts",     blurb: "API errors and Perplexity fallback activity, realtime",       Icon: Bell,         tint: "#ff5577" },
+  { to: "/boss/publish-check",       label: "Publish Check",     blurb: "Pre-publish validation & manual checklist",                   Icon: Rocket,       tint: "#ffd166" },
+  { to: "/boss/api-keys",            label: "Agent Keys",        blurb: "Encrypted vault for AI / integration API keys",               Icon: KeyRound,     tint: "#a78bfa" },
+  { to: "/boss/settings",            label: "Settings",          blurb: "Signup bonus, feature flags & tunables",                      Icon: SettingsIcon, tint: "#94a3b8" },
+];
+
+const TILE_CATEGORIES: { id: string; label: string; tint: string; labels: string[] }[] = [
+  { id: "people",     label: "People",        tint: "#3ad6ff", labels: ["User Roster", "Stream Queue"] },
+  { id: "money",      label: "Money & Power", tint: "#ffd166", labels: ["Power Controls", "Pricing", "Coin Costs", "Top-Up Requests", "Adjust Credits", "VIP Passes", "Redeem Codes", "Resellers", "Share Cards", "Boss Notes", "Admin Console"] },
+  { id: "content",    label: "Content",       tint: "#a78bfa", labels: ["Hubs", "Portals"] },
+  { id: "moderation", label: "Moderation",    tint: "#ff2e55", labels: ["Civility Controls", "Swear Lexicon"] },
+  { id: "insights",   label: "Insights",      tint: "#00e08a", labels: ["Analytics", "Overlord Deck"] },
+  { id: "system",     label: "Command & System", tint: "#94a3b8", labels: ["System Alerts", "Publish Check", "Agent Keys", "Settings"] },
 ];
 
 function BossOverview() {
@@ -97,6 +123,8 @@ function BossOverview() {
   const paymentMode = usePaymentMode();
   const [togglingPayments, setTogglingPayments] = useState(false);
   const [confirmGoLive, setConfirmGoLive] = useState(false);
+  const [coinFrozen, setCoinFrozen] = useState<boolean | null>(null);
+  const [togglingCoin, setTogglingCoin] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function loadStats() {
@@ -142,6 +170,12 @@ function BossOverview() {
         newToday: Math.max(0, newToday),
       });
       setSwearDefault(civ?.data?.swear_default ?? null);
+      const { data: coinRow } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "power.coin_frozen")
+        .maybeSingle();
+      setCoinFrozen(coinRow?.value === true);
       setLastSync(new Date());
     } catch (e: any) {
       setError(e?.message ?? "Failed to load command-center metrics");
@@ -168,6 +202,17 @@ function BossOverview() {
       .eq("id", 1);
     if (!error) setSwearDefault(next);
     setTogglingSwear(false);
+  }
+
+  async function toggleCoinFreeze() {
+    if (coinFrozen === null) return;
+    setTogglingCoin(true);
+    const next = !coinFrozen;
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert({ key: "power.coin_frozen", value: next }, { onConflict: "key" });
+    if (!error) setCoinFrozen(next);
+    setTogglingCoin(false);
   }
 
   async function applyPaymentMode(next: "live" | "test") {
@@ -420,59 +465,97 @@ function BossOverview() {
               </span>
               <ArrowUpRight className="h-4 w-4 text-white/40" />
             </Link>
-            <Link
-              to="/boss/analytics"
-              className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-3 hover:bg-white/[0.05] transition"
+            <div className="flex items-center justify-between gap-3 rounded-xl border p-3"
+              style={{
+                borderColor: coinFrozen ? "#ff557755" : "#00e08a55",
+                background: coinFrozen ? "rgba(255,85,119,0.05)" : "rgba(0,224,138,0.04)",
+              }}
             >
-              <span className="text-sm font-semibold text-white/90 flex items-center gap-1.5">
-                <BarChart3 className="h-3.5 w-3.5" style={{ color: "#00e08a" }} /> View analytics
-              </span>
-              <ArrowUpRight className="h-4 w-4 text-white/40" />
-            </Link>
-            <Link
-              to="/console"
-              className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-3 hover:bg-white/[0.05] transition"
-            >
-              <span className="text-sm font-semibold text-white/90 flex items-center gap-1.5">
-                <Activity className="h-3.5 w-3.5 text-cyan-300" /> 0G-Console
-              </span>
-              <ArrowUpRight className="h-4 w-4 text-white/40" />
-            </Link>
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-white/90 flex items-center gap-1.5">
+                  {coinFrozen ? <Snowflake className="h-3.5 w-3.5" style={{ color: "#ff5577" }} /> : <Coins className="h-3.5 w-3.5" style={{ color: "#00e08a" }} />}
+                  Coin transactions
+                </div>
+                <div className="text-[11px] text-white/50">
+                  {coinFrozen ? "Earn / spend flows are frozen site-wide." : "Coin spend & earn flowing normally."}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={toggleCoinFreeze}
+                disabled={coinFrozen === null || togglingCoin}
+                aria-pressed={!!coinFrozen}
+                className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-50"
+                style={{
+                  background: coinFrozen ? "#ff5577" : "#00e08a",
+                  boxShadow: coinFrozen ? "0 0 14px -2px #ff557799" : "0 0 14px -2px #00e08a99",
+                }}
+              >
+                <span
+                  className="inline-block h-5 w-5 transform rounded-full bg-white transition"
+                  style={{ transform: `translateX(${coinFrozen ? "22px" : "2px"})` }}
+                />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <Link to="/boss/power" className="flex items-center justify-center gap-1.5 rounded-lg border border-rose-500/40 bg-rose-500/10 px-2.5 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-rose-300 hover:bg-rose-500/15 transition">
+                <Undo2 className="h-3.5 w-3.5" /> Reverse
+              </Link>
+              <Link to="/boss/publish-check" className="flex items-center justify-center gap-1.5 rounded-lg border border-gold/40 bg-gold/10 px-2.5 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-gold hover:bg-gold/15 transition">
+                <Rocket className="h-3.5 w-3.5" /> Publish
+              </Link>
+              <Link to="/boss/analytics" className="flex items-center justify-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-300 hover:bg-emerald-500/15 transition">
+                <BarChart3 className="h-3.5 w-3.5" /> Analytics
+              </Link>
+              <Link to="/boss/api-keys" className="flex items-center justify-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 px-2.5 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-violet-300 hover:bg-violet-500/15 transition">
+                <KeyRound className="h-3.5 w-3.5" /> Keys
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      <div>
-        <h2 className="syndicate-header text-sm text-white/70 mb-3 flex items-center gap-2">
-          <Crown className="h-3.5 w-3.5" style={{ color: "#ffd166" }} /> All Modules
-        </h2>
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {TILES.map((t) => (
-          <Link
-            key={t.label + (t.hash ?? "")}
-            to={t.to}
-            hash={t.hash}
-            className="group glass-obsidian-cmd rounded-2xl p-5 transition-all hover:-translate-y-0.5"
-            style={{ borderColor: `${t.tint}66` }}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div
-                className="h-10 w-10 rounded-xl flex items-center justify-center"
-                style={{ background: `${t.tint}1f`, border: `1px solid ${t.tint}55` }}
-              >
-                <t.Icon className="h-5 w-5" style={{ color: t.tint }} />
-              </div>
-              <ArrowUpRight
-                className="h-4 w-4 opacity-50 group-hover:opacity-100 transition"
-                style={{ color: t.tint }}
-              />
-            </div>
-            <h2 className="mt-4 syndicate-header text-base text-white/95">{t.label}</h2>
-            <p className="mt-1 text-xs text-white/60 leading-relaxed">{t.blurb}</p>
-          </Link>
-        ))}
-      </section>
-      </div>
+      {TILE_CATEGORIES.map((cat) => {
+        const tiles = cat.labels
+          .map((l) => TILES.find((t) => t.label === l))
+          .filter((t): t is Tile => Boolean(t));
+        if (tiles.length === 0) return null;
+        return (
+          <div key={cat.id}>
+            <h2 className="syndicate-header text-sm text-white/80 mb-3 flex items-center gap-2">
+              <span className="inline-block h-2 w-2 rounded-full" style={{ background: cat.tint, boxShadow: `0 0 10px ${cat.tint}` }} />
+              {cat.label}
+              <span className="text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/35">{tiles.length}</span>
+            </h2>
+            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {tiles.map((t) => (
+                <Link
+                  key={t.label + (t.hash ?? "")}
+                  to={t.to}
+                  hash={t.hash}
+                  className="group glass-obsidian-cmd rounded-2xl p-4 transition-all hover:-translate-y-0.5"
+                  style={{ borderColor: `${t.tint}55` }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div
+                      className="h-9 w-9 rounded-xl flex items-center justify-center"
+                      style={{ background: `${t.tint}1f`, border: `1px solid ${t.tint}55` }}
+                    >
+                      <t.Icon className="h-4 w-4" style={{ color: t.tint }} />
+                    </div>
+                    <ArrowUpRight
+                      className="h-4 w-4 opacity-40 group-hover:opacity-100 transition"
+                      style={{ color: t.tint }}
+                    />
+                  </div>
+                  <h3 className="mt-3 syndicate-header text-sm text-white/95">{t.label}</h3>
+                  <p className="mt-1 text-[11px] text-white/55 leading-relaxed">{t.blurb}</p>
+                </Link>
+              ))}
+            </section>
+          </div>
+        );
+      })}
       <AlertDialog open={confirmGoLive} onOpenChange={setConfirmGoLive}>
         <AlertDialogContent className="border-destructive/40">
           <AlertDialogHeader>
