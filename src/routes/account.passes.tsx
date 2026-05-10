@@ -3,11 +3,16 @@ import { requireMember } from "@/lib/route-guards";
 import { PassesPanel } from "@/components/PassesPanel";
 import { TelegramLinkCard } from "@/components/TelegramLinkCard";
 import { ChevronLeft } from "lucide-react";
+import { VaultGuard } from "@/components/VaultGuard";
 
 export const Route = createFileRoute("/account/passes")({
   beforeLoad: requireMember,
   head: () => ({ meta: [{ title: "My Passes & Telegram · OG-Streamz" }] }),
-  component: AccountPassesPage,
+  component: () => (
+    <VaultGuard>
+      <AccountPassesPage />
+    </VaultGuard>
+  ),
 });
 
 function AccountPassesPage() {

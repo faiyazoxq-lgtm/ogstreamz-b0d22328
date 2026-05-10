@@ -15,9 +15,14 @@ import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { useAuth } from "@/hooks/use-auth";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PlanChip, StatusBadge } from "@/components/SubscriptionBadges";
+import { VaultGuard } from "@/components/VaultGuard";
 
 export const Route = createFileRoute("/vip")({
-  component: VipPage,
+  component: () => (
+    <VaultGuard>
+      <VipPage />
+    </VaultGuard>
+  ),
   validateSearch: (search: Record<string, unknown>) => ({
     checkout: typeof search.checkout === "string" ? search.checkout : undefined,
     session_id: typeof search.session_id === "string" ? search.session_id : undefined,
