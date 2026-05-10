@@ -147,8 +147,8 @@ function VaultLoginPage() {
               <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-cyan-300/50 bg-cyan-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.35em] font-bold text-cyan-200">
                 <Crown className="h-3 w-3" /> VIP Pass · Vault Login
               </div>
-              <h1 className="mt-3 font-[Montserrat] font-black text-3xl sm:text-4xl tracking-tight text-cyan-100 [text-shadow:_0_0_30px_rgba(56,189,248,0.55)]">
-                0G-VAULT
+              <h1 className="mt-3 text-3xl sm:text-4xl tracking-tight">
+                <OgWordmark suffix="-VAULT" />
               </h1>
               <p className="mt-1 text-xs uppercase tracking-[0.3em] text-cyan-200/70">
                 All your apps. One vault.
