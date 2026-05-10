@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, RefreshCw, CheckCircle2, XCircle, Clock, Crown, Tv, Receipt, CheckSquare, Square } from "lucide-react";
+import { Loader2, RefreshCw, CheckCircle2, XCircle, Clock, Crown, Tv, Receipt, CheckSquare, Square, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +47,11 @@ export function PassOrdersPanel() {
   const [bulkNote, setBulkNote] = useState("");
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+  const [lastRun, setLastRun] = useState<{
+    approve: boolean;
+    note: string;
+    failed: { id: string; error: string }[];
+  } | null>(null);
 
   const refresh = async () => {
     setLoading(true);
@@ -89,6 +94,34 @@ export function PassOrdersPanel() {
     }
   };
 
+  const runBulk = async (approve: boolean, ids: string[], note: string) => {
+    setBulkBusy(true);
+    setBulkProgress({ done: 0, total: ids.length });
+    let ok = 0;
+    const failed: { id: string; error: string }[] = [];
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
+      try {
+        await decide({ data: { orderId: id, approve, note: note || (notes[id] ?? "") } });
+        ok++;
+      } catch (e: any) {
+        failed.push({ id, error: e?.message ?? "Action failed" });
+        console.error("bulk decide failed", id, e);
+      }
+      setBulkProgress({ done: i + 1, total: ids.length });
+    }
+    setBulkBusy(false);
+    setBulkProgress(null);
+    setLastRun({ approve, note, failed });
+    if (failed.length === 0) {
+      toast.success(`${approve ? "Issued" : "Denied"} ${ok} order${ok === 1 ? "" : "s"}`);
+    } else {
+      toast.warning(`${ok} done · ${failed.length} failed — use Retry failed`);
+    }
+    await refresh();
+    return failed;
+  };
+
   const bulkAct = async (approve: boolean) => {
     if (selected.size === 0) return;
     const ids = pendingRows.filter(r => selected.has(r.id)).map(r => r.id);
@@ -98,27 +131,24 @@ export function PassOrdersPanel() {
     }
     const verb = approve ? "Issue" : "Deny";
     if (!window.confirm(`${verb} ${ids.length} pass order${ids.length === 1 ? "" : "s"}?`)) return;
-    setBulkBusy(true);
-    setBulkProgress({ done: 0, total: ids.length });
-    let ok = 0, fail = 0;
-    for (let i = 0; i < ids.length; i++) {
-      const id = ids[i];
-      try {
-        await decide({ data: { orderId: id, approve, note: bulkNote || (notes[id] ?? "") } });
-        ok++;
-      } catch (e: any) {
-        fail++;
-        console.error("bulk decide failed", id, e);
-      }
-      setBulkProgress({ done: i + 1, total: ids.length });
-    }
-    setBulkBusy(false);
-    setBulkProgress(null);
+    const note = bulkNote;
+    await runBulk(approve, ids, note);
     setSelected(new Set());
     setBulkNote("");
-    if (fail === 0) toast.success(`${approve ? "Issued" : "Denied"} ${ok} order${ok === 1 ? "" : "s"}`);
-    else toast.warning(`${ok} done · ${fail} failed`);
-    await refresh();
+  };
+
+  const retryFailed = async () => {
+    if (!lastRun || lastRun.failed.length === 0) return;
+    const stillPending = new Set(pendingRows.map(r => r.id));
+    const ids = lastRun.failed.map(f => f.id).filter(id => stillPending.has(id));
+    if (ids.length === 0) {
+      toast.info("No failed orders are still pending");
+      setLastRun((p) => p ? { ...p, failed: [] } : p);
+      return;
+    }
+    const verb = lastRun.approve ? "re-issue" : "re-deny";
+    if (!window.confirm(`Retry ${verb} on ${ids.length} failed order${ids.length === 1 ? "" : "s"}?`)) return;
+    await runBulk(lastRun.approve, ids, lastRun.note);
   };
 
   const act = async (orderId: string, approve: boolean) => {
@@ -228,6 +258,28 @@ export function PassOrdersPanel() {
                 <span className="w-full text-[10px] uppercase tracking-[0.3em] text-cyan-300 font-bold">
                   Processing {bulkProgress.done} / {bulkProgress.total}…
                 </span>
+              )}
+              {lastRun && lastRun.failed.length > 0 && !bulkBusy && (
+                <div className="w-full flex flex-wrap items-center gap-2 pt-2 border-t border-red-900/40">
+                  <span className="text-[11px] uppercase tracking-[0.25em] font-black text-red-300">
+                    Last run: {lastRun.failed.length} failed ({lastRun.approve ? "issue" : "deny"})
+                  </span>
+                  <Button
+                    onClick={retryFailed}
+                    disabled={bulkBusy}
+                    variant="outline"
+                    className="h-8 border-yellow-700/60 text-yellow-200 hover:bg-yellow-900/30 font-black uppercase tracking-wider text-[11px]"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5 mr-1" /> Retry failed ({lastRun.failed.length})
+                  </Button>
+                  <Button
+                    onClick={() => setLastRun(null)}
+                    variant="ghost"
+                    className="h-8 text-emerald-400/70 hover:text-emerald-200 uppercase tracking-wider text-[11px] font-bold"
+                  >
+                    Dismiss
+                  </Button>
+                </div>
               )}
             </div>
           )}
