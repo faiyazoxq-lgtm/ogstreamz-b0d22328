@@ -285,7 +285,7 @@ function VipPage() {
               <div className="rounded-2xl border border-cyan-300/30 bg-black/40 p-4 sm:p-5">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-300/80 font-bold">Unlock now</p>
                 <p className="mt-1 text-lg sm:text-xl font-black text-white">
-                  Your exclusive 0G VIP Access Pass to the Vault — one-time <span className="text-amber-300">£20</span> 🚀
+                  Your exclusive 0G VIP Access Pass to the Vault — one-time <span className="text-amber-300">£20 (20 🪙)</span> 🚀
                 </p>
                 <p className="mt-2 text-sm text-cyan-100/80">
                   Current users <span className="font-bold text-cyan-200">still keep YouTiVi and others</span> — this is just an extra VIP upgrade. 🙌
@@ -315,7 +315,7 @@ function VipPage() {
                 onClick={scrollToPricing}
                 className="h-12 px-6 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-black uppercase tracking-[0.2em] shadow-[0_0_50px_-5px_rgba(255,200,80,0.7)]"
               >
-                <Crown className="h-4 w-4 mr-2" /> Grab the £20 Pass
+                <Crown className="h-4 w-4 mr-2" /> Grab the £20 Pass (20 🪙)
               </Button>
               <Link
                 to="/store"
