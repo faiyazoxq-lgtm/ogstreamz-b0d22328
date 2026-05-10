@@ -34,7 +34,7 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, isV
   const downloadFn = useServerFn(getTrackDownloadUrl);
 
   const unlocked = owned || isVip;
-  const priceLabel = `$${(priceCents / 100).toFixed(2)}`;
+  const priceLabel = `£${(priceCents / 100).toFixed(2)} (${Math.round(priceCents / 100)} 🪙)`;
   const returnUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}${window.location.pathname}?unlocked=${trackId}&session_id={CHECKOUT_SESSION_ID}`
