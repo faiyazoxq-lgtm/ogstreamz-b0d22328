@@ -47,6 +47,7 @@ import { Route as BossLexiconRouteImport } from './routes/boss.lexicon'
 import { Route as BossCivilityRouteImport } from './routes/boss.civility'
 import { Route as BossAnalyticsRouteImport } from './routes/boss.analytics'
 import { Route as BSlugRouteImport } from './routes/b.$slug'
+import { Route as AccountPassesRouteImport } from './routes/account.passes'
 import { Route as ApiPublicSunoWebhookRouteImport } from './routes/api/public/suno-webhook'
 import { Route as ApiPublic0gOrchestratorRouteImport } from './routes/api/public/0g-orchestrator'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
@@ -245,6 +246,11 @@ const BSlugRoute = BSlugRouteImport.update({
   path: '/b/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountPassesRoute = AccountPassesRouteImport.update({
+  id: '/account/passes',
+  path: '/account/passes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSunoWebhookRoute = ApiPublicSunoWebhookRouteImport.update({
   id: '/api/public/suno-webhook',
   path: '/api/public/suno-webhook',
@@ -315,6 +321,7 @@ export interface FileRoutesByFullPath {
   '/trade': typeof TradeRoute
   '/vault-login': typeof VaultLoginRoute
   '/vip': typeof VipRoute
+  '/account/passes': typeof AccountPassesRoute
   '/b/$slug': typeof BSlugRoute
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/civility': typeof BossCivilityRoute
@@ -362,6 +369,7 @@ export interface FileRoutesByTo {
   '/trade': typeof TradeRoute
   '/vault-login': typeof VaultLoginRoute
   '/vip': typeof VipRoute
+  '/account/passes': typeof AccountPassesRoute
   '/b/$slug': typeof BSlugRoute
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/civility': typeof BossCivilityRoute
@@ -410,6 +418,7 @@ export interface FileRoutesById {
   '/trade': typeof TradeRoute
   '/vault-login': typeof VaultLoginRoute
   '/vip': typeof VipRoute
+  '/account/passes': typeof AccountPassesRoute
   '/b/$slug': typeof BSlugRoute
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/civility': typeof BossCivilityRoute
@@ -459,6 +468,7 @@ export interface FileRouteTypes {
     | '/trade'
     | '/vault-login'
     | '/vip'
+    | '/account/passes'
     | '/b/$slug'
     | '/boss/analytics'
     | '/boss/civility'
@@ -506,6 +516,7 @@ export interface FileRouteTypes {
     | '/trade'
     | '/vault-login'
     | '/vip'
+    | '/account/passes'
     | '/b/$slug'
     | '/boss/analytics'
     | '/boss/civility'
@@ -553,6 +564,7 @@ export interface FileRouteTypes {
     | '/trade'
     | '/vault-login'
     | '/vip'
+    | '/account/passes'
     | '/b/$slug'
     | '/boss/analytics'
     | '/boss/civility'
@@ -601,6 +613,7 @@ export interface RootRouteChildren {
   TradeRoute: typeof TradeRoute
   VaultLoginRoute: typeof VaultLoginRoute
   VipRoute: typeof VipRoute
+  AccountPassesRoute: typeof AccountPassesRoute
   BSlugRoute: typeof BSlugRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   MSlugRoute: typeof MSlugRoute
@@ -884,6 +897,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account/passes': {
+      id: '/account/passes'
+      path: '/account/passes'
+      fullPath: '/account/passes'
+      preLoaderRoute: typeof AccountPassesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/suno-webhook': {
       id: '/api/public/suno-webhook'
       path: '/api/public/suno-webhook'
@@ -989,6 +1009,7 @@ const rootRouteChildren: RootRouteChildren = {
   TradeRoute: TradeRoute,
   VaultLoginRoute: VaultLoginRoute,
   VipRoute: VipRoute,
+  AccountPassesRoute: AccountPassesRoute,
   BSlugRoute: BSlugRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   MSlugRoute: MSlugRoute,
@@ -1006,3 +1027,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
