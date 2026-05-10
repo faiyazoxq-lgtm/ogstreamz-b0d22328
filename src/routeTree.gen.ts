@@ -37,6 +37,7 @@ import { Route as BattleRouteImport } from './routes/battle'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BossIndexRouteImport } from './routes/boss.index'
 import { Route as TdSlugRouteImport } from './routes/td.$slug'
 import { Route as TSlugRouteImport } from './routes/t.$slug'
 import { Route as StoreCatalogRouteImport } from './routes/store.catalog'
@@ -197,6 +198,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BossIndexRoute = BossIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BossRoute,
+} as any)
 const TdSlugRoute = TdSlugRouteImport.update({
   id: '/td/$slug',
   path: '/td/$slug',
@@ -339,6 +345,7 @@ export interface FileRoutesByFullPath {
   '/store/catalog': typeof StoreCatalogRoute
   '/t/$slug': typeof TSlugRoute
   '/td/$slug': typeof TdSlugRoute
+  '/boss/': typeof BossIndexRoute
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
@@ -353,7 +360,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/battle': typeof BattleRoute
   '/battlehub': typeof BattlehubRoute
-  '/boss': typeof BossRouteWithChildren
   '/connect': typeof ConnectRoute
   '/console': typeof ConsoleRoute
   '/dashboard': typeof DashboardRoute
@@ -388,6 +394,7 @@ export interface FileRoutesByTo {
   '/store/catalog': typeof StoreCatalogRoute
   '/t/$slug': typeof TSlugRoute
   '/td/$slug': typeof TdSlugRoute
+  '/boss': typeof BossIndexRoute
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
@@ -438,6 +445,7 @@ export interface FileRoutesById {
   '/store/catalog': typeof StoreCatalogRoute
   '/t/$slug': typeof TSlugRoute
   '/td/$slug': typeof TdSlugRoute
+  '/boss/': typeof BossIndexRoute
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
@@ -489,6 +497,7 @@ export interface FileRouteTypes {
     | '/store/catalog'
     | '/t/$slug'
     | '/td/$slug'
+    | '/boss/'
     | '/api/public/0g-orchestrator'
     | '/api/public/suno-webhook'
     | '/api/public/hooks/syndicate-tick'
@@ -503,7 +512,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/battle'
     | '/battlehub'
-    | '/boss'
     | '/connect'
     | '/console'
     | '/dashboard'
@@ -538,6 +546,7 @@ export interface FileRouteTypes {
     | '/store/catalog'
     | '/t/$slug'
     | '/td/$slug'
+    | '/boss'
     | '/api/public/0g-orchestrator'
     | '/api/public/suno-webhook'
     | '/api/public/hooks/syndicate-tick'
@@ -587,6 +596,7 @@ export interface FileRouteTypes {
     | '/store/catalog'
     | '/t/$slug'
     | '/td/$slug'
+    | '/boss/'
     | '/api/public/0g-orchestrator'
     | '/api/public/suno-webhook'
     | '/api/public/hooks/syndicate-tick'
@@ -839,6 +849,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/boss/': {
+      id: '/boss/'
+      path: '/'
+      fullPath: '/boss/'
+      preLoaderRoute: typeof BossIndexRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/td/$slug': {
       id: '/td/$slug'
       path: '/td/$slug'
@@ -979,12 +996,14 @@ interface BossRouteChildren {
   BossAnalyticsRoute: typeof BossAnalyticsRoute
   BossCivilityRoute: typeof BossCivilityRoute
   BossLexiconRoute: typeof BossLexiconRoute
+  BossIndexRoute: typeof BossIndexRoute
 }
 
 const BossRouteChildren: BossRouteChildren = {
   BossAnalyticsRoute: BossAnalyticsRoute,
   BossCivilityRoute: BossCivilityRoute,
   BossLexiconRoute: BossLexiconRoute,
+  BossIndexRoute: BossIndexRoute,
 }
 
 const BossRouteWithChildren = BossRoute._addFileChildren(BossRouteChildren)
@@ -1056,3 +1075,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

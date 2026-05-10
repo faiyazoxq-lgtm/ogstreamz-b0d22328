@@ -1,99 +1,116 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
-import { Crown, Users, Coins, Ticket, KeyRound, Handshake, Inbox, FileText, ArrowUpRight, Share2, ShieldCheck, BarChart3, Skull } from "lucide-react";
+import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft, Menu, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/boss")({
-  head: () => ({
-    meta: [
-      { title: "Boss Portal · 0G-STREAMZ" },
-      { name: "description", content: "People, credits, passes, codes, resellers, top-ups — the human side of the syndicate." },
-    ],
-  }),
-  component: BossPortal,
+  component: BossLayout,
 });
 
-type Tile = {
-  to: string;
-  hash?: string;
-  label: string;
-  blurb: string;
-  Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
-  tint: string;
-};
+type NavItem = { to: string; label: string; Icon: React.ComponentType<{ className?: string }>; exact?: boolean };
 
-const TILES: Tile[] = [
-  { to: "/admin", hash: "roster",    label: "User Roster",      blurb: "View members · adjust credits · change rank/status", Icon: Users,    tint: "#3ad6ff" },
-  { to: "/admin", hash: "topups",    label: "Top-Up Requests",  blurb: "Approve or deny credit top-ups",                     Icon: Inbox,    tint: "#ff5577" },
-  { to: "/admin", hash: "roster",    label: "Adjust Credits",   blurb: "Boss-grant credits by email or user-id",             Icon: Coins,    tint: "#ffd166" },
-  { to: "/admin", hash: "passes",    label: "VIP Passes",       blurb: "Mint, grant, revoke, share signup passes",           Icon: Ticket,   tint: "#a78bfa" },
-  { to: "/admin", hash: "codes",     label: "Redeem Codes",     blurb: "Create, list, expire promo codes",                   Icon: KeyRound, tint: "#00e08a" },
-  { to: "/admin", hash: "resellers", label: "Resellers",        blurb: "Reseller wallets, mark-up, downline",                Icon: Handshake,tint: "#ff7a1a" },
-  { to: "/admin", hash: "share",     label: "Share Cards",      blurb: "Generate share-link cards for passes",               Icon: Share2,   tint: "#ff5acd" },
-  { to: "/admin", hash: "notes",     label: "Boss Notes",       blurb: "Private operational notes",                          Icon: FileText, tint: "#94a3b8" },
-  { to: "/boss/civility",            label: "Civility Controls",blurb: "Toggle Guttermouth swear-chat · keep things civil", Icon: ShieldCheck, tint: "#3ad6ff" },
-  { to: "/boss/analytics",           label: "View Analytics",   blurb: "Anonymous public-view counts for every portal & battle", Icon: BarChart3, tint: "#00e08a" },
-  { to: "/boss/lexicon",             label: "Swear Lexicon",    blurb: "Edit HEAVY/MID/SOFT word lists · refusal patterns · openers", Icon: Skull, tint: "#ff2e55" },
+const NAV: NavItem[] = [
+  { to: "/boss",            label: "Overview",      Icon: Crown, exact: true },
+  { to: "/admin",           label: "Admin Console", Icon: Users },
+  { to: "/boss/civility",   label: "Civility",      Icon: ShieldCheck },
+  { to: "/boss/analytics",  label: "Analytics",     Icon: BarChart3 },
+  { to: "/boss/lexicon",    label: "Swear Lexicon", Icon: Skull },
+  { to: "/syndicate-overlord", label: "Overlord Deck", Icon: LayoutDashboard },
 ];
 
-function BossPortal() {
+function BossLayout() {
   const { user, isAdmin, profile, loading } = useAuth();
   const navigate = useNavigate();
   const isBoss = profile?.rank === "boss" || isAdmin;
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     if (loading) return;
     if (!user || !isBoss) navigate({ to: "/" });
   }, [user, isBoss, loading, navigate]);
 
+  // Close drawer on route change.
+  useEffect(() => { setDrawerOpen(false); }, [pathname]);
+
   if (loading || !isBoss) {
     return <main className="px-5 py-20 text-center text-muted-foreground">Verifying clearance…</main>;
   }
 
-  return (
-    <main className="mx-auto w-full max-w-6xl px-4 sm:px-6 pt-6 pb-28 md:pb-12 space-y-6">
-      <header className="glass-obsidian-cmd rounded-3xl p-5 md:p-6">
-        <div className="flex items-center gap-3">
-          <Crown className="h-6 w-6" style={{ color: "#ffd166" }} />
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.4em] terminal-mono" style={{ color: "#ffd166" }}>
-              0G · Boss Portal
-            </p>
-            <h1 className="syndicate-header text-2xl md:text-3xl text-white/95">People, Credits & Access</h1>
-          </div>
-        </div>
-        <p className="mt-3 text-sm text-white/65 max-w-2xl">
-          Everything to do with managing humans in the syndicate — members, credits, passes, codes, resellers, top-ups.
-          Need AI agents, hub controls, or model tuning? Open the <Link to="/console" className="underline" style={{ color: "var(--syndicate-glow)" }}>0G-Console</Link>.
-        </p>
-      </header>
+  const isActive = (n: NavItem) =>
+    n.exact ? pathname === n.to : pathname === n.to || pathname.startsWith(n.to + "/");
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {TILES.map((t) => (
+  const NavList = ({ onClick }: { onClick?: () => void }) => (
+    <nav className="space-y-1">
+      {NAV.map((n) => {
+        const active = isActive(n);
+        return (
           <Link
-            key={t.label + t.hash}
-            to={t.to}
-            hash={t.hash}
-            className="group glass-obsidian-cmd rounded-2xl p-5 transition-all hover:-translate-y-0.5"
-            style={{ borderColor: `${t.tint}66` }}
+            key={n.to}
+            to={n.to}
+            onClick={onClick}
+            aria-current={active ? "page" : undefined}
+            className={[
+              "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold transition-colors outline-none",
+              "hover:bg-secondary focus-visible:ring-2 focus-visible:ring-primary",
+              active
+                ? "bg-gold/10 text-gold ring-1 ring-inset ring-gold/40"
+                : "text-foreground/80",
+            ].join(" ")}
           >
-            <div className="flex items-start justify-between gap-3">
-              <div
-                className="h-10 w-10 rounded-xl flex items-center justify-center"
-                style={{ background: `${t.tint}1f`, border: `1px solid ${t.tint}55` }}
-              >
-                <t.Icon className="h-5 w-5" style={{ color: t.tint }} />
-              </div>
-              <ArrowUpRight
-                className="h-4 w-4 opacity-50 group-hover:opacity-100 transition"
-                style={{ color: t.tint }}
-              />
-            </div>
-            <h2 className="mt-4 syndicate-header text-base text-white/95">{t.label}</h2>
-            <p className="mt-1 text-xs text-white/60 leading-relaxed">{t.blurb}</p>
+            <n.Icon className={`h-4 w-4 shrink-0 ${active ? "text-gold drop-shadow-[0_0_6px_rgba(255,209,102,0.6)]" : "text-gold/70"}`} />
+            <span className="truncate">{n.label}</span>
           </Link>
-        ))}
-      </section>
-    </main>
+        );
+      })}
+    </nav>
+  );
+
+  return (
+    <div className="mx-auto w-full max-w-7xl px-3 sm:px-6 pt-4 pb-28 md:pb-12">
+      {/* Mobile bar */}
+      <div className="md:hidden sticky top-16 z-30 -mx-3 mb-3 flex items-center justify-between gap-2 px-3 py-2 backdrop-blur-xl bg-background/80 border-b border-border">
+        <Link to="/" className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground">
+          <ChevronLeft className="h-4 w-4" /> Exit Boss
+        </Link>
+        <button
+          type="button"
+          onClick={() => setDrawerOpen((v) => !v)}
+          aria-label="Toggle Boss menu"
+          className="inline-flex items-center gap-1.5 rounded-md border border-gold/40 bg-gold/10 px-2.5 py-1.5 text-xs font-bold text-gold"
+        >
+          {drawerOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          Boss menu
+        </button>
+      </div>
+
+      {drawerOpen && (
+        <div className="md:hidden mb-3 rounded-2xl border border-border bg-card p-3">
+          <NavList onClick={() => setDrawerOpen(false)} />
+        </div>
+      )}
+
+      <div className="grid md:grid-cols-[220px_1fr] gap-6">
+        <aside className="hidden md:block">
+          <div className="sticky top-24 rounded-2xl border border-border bg-card/60 p-3">
+            <div className="flex items-center gap-2 px-2 py-2 mb-2">
+              <Crown className="h-4 w-4 text-gold" />
+              <span className="text-[10px] uppercase tracking-[0.3em] text-gold font-bold">Boss</span>
+            </div>
+            <NavList />
+            <Link
+              to="/"
+              className="mt-3 flex items-center gap-2 rounded-md px-3 py-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground hover:bg-secondary"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" /> Exit to site
+            </Link>
+          </div>
+        </aside>
+
+        <main className="min-w-0">
+          <Outlet />
+        </main>
+      </div>
+    </div>
   );
 }
