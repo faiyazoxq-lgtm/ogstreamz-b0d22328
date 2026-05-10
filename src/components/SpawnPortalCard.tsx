@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Loader2, Wand2, Sparkles, ExternalLink, Coins, Check, AlertTriangle, RotateCcw, Lock, UserPlus, LogIn, Gift, Languages, Tag, Palette } from "lucide-react";
+import { Loader2, Wand2, Sparkles, ExternalLink, Coins, Check, AlertTriangle, RotateCcw, Lock, UserPlus, LogIn, Gift, Languages, Tag, Palette, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { spawnPortal } from "@/lib/portals.functions";
+import { describePortal } from "@/lib/portal-describe.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -33,6 +34,7 @@ const COPY: Record<Kind, Copy> = {
 export function SpawnPortalCard({ kind }: { kind: Kind }) {
   const { user, profile, refresh } = useAuth();
   const spawn = useServerFn(spawnPortal);
+  const describe = useServerFn(describePortal);
   const copy = COPY[kind];
 
   const [name, setName] = useState("");
@@ -42,6 +44,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
   const [loading, setLoading] = useState(false);
   const [created, setCreated] = useState<{ slug: string; name: string } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [describing, setDescribing] = useState(false);
   // Stage progress: 0=idle, 1=queued, 2=generating, 3=publishing, 4=done
   const [stage, setStage] = useState<0 | 1 | 2 | 3 | 4>(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -162,6 +165,30 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
   };
 
   const retry = () => { setErrorMsg(null); void run(); };
+
+  const autoDescribe = async () => {
+    if (describing) return;
+    if (!user) { toast.error("Sign in to use AI auto-describe"); return; }
+    const seedName = name.trim();
+    const seedNiche = niche.trim();
+    const seedVibe = vibe.trim();
+    if (!seedName && !seedNiche && !seedVibe) {
+      toast.error("Type a name or a few keywords first");
+      return;
+    }
+    setDescribing(true);
+    const tid = `describe-${kind}-${Date.now()}`;
+    toast.loading("Generating richer description…", { id: tid });
+    try {
+      const r = await describe({ data: { kind, name: seedName, niche: seedNiche, vibe: seedVibe, language } });
+      setNiche(r.description);
+      toast.success("Description expanded", { id: tid, description: "Edit anything you don't like" });
+    } catch (e: any) {
+      toast.error("Auto-describe failed", { id: tid, description: e?.message ?? "Try again in a moment" });
+    } finally {
+      setDescribing(false);
+    }
+  };
 
   const STAGES: ReadonlyArray<{ key: 1 | 2 | 3 | 4; label: string; hint: string }> = [
     { key: 1, label: "Queued",      hint: "Reserving credit & slot" },
