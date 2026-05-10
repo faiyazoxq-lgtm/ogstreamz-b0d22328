@@ -397,8 +397,21 @@ export function StreamLinkCard() {
         </div>
       )}
 
+      {configBlocked && (
+        <div role="alert" className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-3">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+            <div className="text-xs">
+              <div className="font-bold text-destructive">Stream linking is temporarily unavailable</div>
+              <div className="text-muted-foreground mt-0.5">
+                {config && !config.ok ? config.message : ""} Please try again later — Boss has been notified.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <form onSubmit={submit} className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3" aria-busy={inFlight}>
-        <fieldset disabled={inFlight} className="contents">
+        <fieldset disabled={inFlight || configBlocked} className="contents">
         <div>
           <input
             ref={usernameRef}
@@ -427,11 +440,11 @@ export function StreamLinkCard() {
           </div>
         )}
         <button
-          type="submit" disabled={inFlight}
+          type="submit" disabled={inFlight || configBlocked}
           className="sm:col-span-2 inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-bold hover:opacity-90 disabled:opacity-60"
         >
           {inFlight ? <Loader2 className="h-4 w-4 animate-spin" /> : <Tv className="h-4 w-4" />}
-          {busy ? "Verifying…" : reverifying ? "Re-verifying…" : linked ? "Re-verify Stream Account" : "Verify & Upgrade"}
+          {configBlocked ? "Unavailable" : busy ? "Verifying…" : reverifying ? "Re-verifying…" : linked ? "Re-verify Stream Account" : "Verify & Upgrade"}
         </button>
         </fieldset>
       </form>
