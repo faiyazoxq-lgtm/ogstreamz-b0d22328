@@ -27,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SiteSearch } from "@/components/SiteSearch";
 import { MasterSwearToggle } from "@/components/MasterSwearToggle";
 import { AnimatedCredits } from "@/components/AnimatedCredits";
+import { RealOgBadge } from "@/components/RealOgBadge";
 import {
   Sheet,
   SheetContent,
@@ -135,12 +136,21 @@ export function NavBar() {
   const { user, profile, isAdmin } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isBoss = isAdmin || profile?.rank === "boss";
-  const statusLabel = !user ? "GUEST" : isBoss ? "BOSS" : (profile?.rank?.toUpperCase() ?? "MEMBER");
+  const isVip = !isBoss && profile?.status === "vip";
+  const statusLabel = !user
+    ? "GUEST"
+    : isBoss
+      ? "BOSS"
+      : isVip
+        ? "REAL OG"
+        : (profile?.rank?.toUpperCase() ?? "MEMBER");
   const statusColor = !user
     ? "border-border text-muted-foreground"
     : isBoss
       ? "border-gold/60 text-gold bg-gold/10"
-      : "border-primary/40 text-primary bg-primary/10";
+      : isVip
+        ? "border-gold/60 text-gold bg-gold/10 shadow-[0_0_14px_-6px_oklch(0.82_0.16_85/0.8)]"
+        : "border-primary/40 text-primary bg-primary/10";
 
   const visibleHubs = hubLinks.filter((l) => !l.bossOnly || isBoss);
 
@@ -207,7 +217,7 @@ export function NavBar() {
               className={`inline-flex items-center gap-1 px-2 py-1 rounded-md border text-[10px] font-bold uppercase tracking-[0.2em] ${statusColor}`}
               title={user ? (isBoss ? "Boss Account" : `Signed in as ${profile?.email ?? user.email}`) : "Not signed in"}
             >
-              {isBoss ? <Crown className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
+              {isBoss || isVip ? <Crown className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
               {statusLabel}
             </span>
           </li>
