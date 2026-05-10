@@ -9,6 +9,7 @@ import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { effectiveSwearing } from "@/lib/swearing";
 import { createCheckoutSession } from "@/lib/payments.functions";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { supabase } from "@/integrations/supabase/client";
@@ -121,8 +122,8 @@ type BuyState = "idle" | "opening" | "open";
 
 export function FeaturedDropCard() {
   const { user, profile } = useAuth();
-  // Heart icon = Safe Mode (swearing flag off). Surface inline on reverent drops.
-  const safeMode = !profile?.feature_flags?.swearing;
+  // Heart icon = Safe Mode (swearing agent off). Surface inline on reverent drops.
+  const safeMode = !effectiveSwearing(profile);
   const [dynamicDrops, setDynamicDrops] = useState<DynamicDrop[]>([]);
   const [index, setIndex] = useState(0);
 

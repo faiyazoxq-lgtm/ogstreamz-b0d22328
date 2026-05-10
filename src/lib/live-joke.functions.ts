@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { enforceSwearRules, loadLexicon } from "./swear-enforcer.server";
 import { assertVipAccess } from "@/lib/vip-guard";
+import { effectiveSwearing } from "@/lib/swearing";
 
 type Result = { joke: string; headline: string; source?: string; error?: string; balance?: number; trends?: string[] };
 
@@ -53,14 +54,15 @@ export const generateLiveJoke = createServerFn({ method: "POST" })
       return { joke: "", headline: "", error: e?.message ?? "VIP required" };
     }
 
-    // Master Swearing Agent toggle — when ON, we force brutal mode on the joke.
+    // Master Swearing Agent toggle — defaults follow rank (Safe Mode for
+    // streamers / VIPs, ON for everyone else); explicit user/boss flag wins.
     let brutal = false;
     try {
       const { data: prof } = await supabase
         .from("profiles")
-        .select("feature_flags")
+        .select("rank, feature_flags")
         .maybeSingle();
-      brutal = !!(prof?.feature_flags as any)?.swearing;
+      brutal = effectiveSwearing(prof as any);
     } catch { /* default false */ }
 
     // Charge 1 credit (VIP bypass handled inside RPC)
