@@ -21,6 +21,7 @@ import { VaultLoginModal } from "@/components/VaultLoginModal";
 import { StreamLinkCard } from "@/components/StreamLinkCard";
 import { Flame } from "lucide-react";
 import { TrackingEye } from "@/components/TrackingEye";
+import { VipPortalExplorer } from "@/components/VipPortalExplorer";
 
 const ICONS: Record<string, any> = {
   Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
