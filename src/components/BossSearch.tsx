@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Search, Music2, Smile, Wrench, Loader2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,7 @@ type ToolHit = { kind: "tool"; id: string; slug: string; name: string; descripti
 type Hit = TrackHit | JokeHit | ToolHit;
 
 const KIND_ICON = { track: Music2, joke: Smile, tool: Wrench } as const;
+const TOOL_PAGE_SIZE = 8;
 
 function escapeRegex(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -37,12 +38,20 @@ function Highlight({ text, term }: { text: string; term: string }) {
 export function BossSearch({ className = "" }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
-  const [hits, setHits] = useState<Hit[]>([]);
+  const [topHits, setTopHits] = useState<Hit[]>([]); // tracks + jokes
+  const [toolHits, setToolHits] = useState<ToolHit[]>([]);
+  const [toolPage, setToolPage] = useState(0);
+  const [toolsHasMore, setToolsHasMore] = useState(false);
+  const [toolsLoadingMore, setToolsLoadingMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const [highlight, setHighlight] = useState(0);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const reqIdRef = useRef(0);
   const navigate = useNavigate();
+
+  const hits = useMemo<Hit[]>(() => [...topHits, ...toolHits], [topHits, toolHits]);
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -67,8 +76,12 @@ export function BossSearch({ className = "" }: { className?: string }) {
 
   useEffect(() => {
     const term = q.trim();
-    if (!term) { setHits([]); setLoading(false); return; }
+    if (!term) {
+      setTopHits([]); setToolHits([]); setToolPage(0); setToolsHasMore(false); setLoading(false);
+      return;
+    }
     setLoading(true);
+    const reqId = ++reqIdRef.current;
     const handle = setTimeout(async () => {
       const like = `%${term.replace(/[%_]/g, "")}%`;
       const [tracks, jokes, tools] = await Promise.all([
@@ -83,27 +96,70 @@ export function BossSearch({ className = "" }: { className?: string }) {
         supabase.from("calculators")
           .select("id, slug, name, description")
           .or(`name.ilike.${like},slug.ilike.${like},description.ilike.${like}`)
-          .limit(6),
+          .range(0, TOOL_PAGE_SIZE),
       ]);
-      const out: Hit[] = [];
+      if (reqId !== reqIdRef.current) return; // stale
+      const top: Hit[] = [];
       for (const t of (tracks.data ?? []) as Array<{ id: string; title: string; portal_slug: string }>) {
-        out.push({ kind: "track", id: t.id, title: t.title, portal_slug: t.portal_slug });
+        top.push({ kind: "track", id: t.id, title: t.title, portal_slug: t.portal_slug });
       }
       for (const j of (jokes.data ?? []) as Array<{ id: string; content: string; keyword: string | null }>) {
-        out.push({ kind: "joke", id: j.id, content: j.content, keyword: j.keyword });
+        top.push({ kind: "joke", id: j.id, content: j.content, keyword: j.keyword });
       }
-      for (const c of (tools.data ?? []) as Array<{ id: string; slug: string; name: string; description: string | null }>) {
-        out.push({ kind: "tool", id: c.id, slug: c.slug, name: c.name, description: c.description });
-      }
-      setHits(out);
+      const toolRows = (tools.data ?? []) as Array<{ id: string; slug: string; name: string; description: string | null }>;
+      const toolsPage0: ToolHit[] = toolRows.slice(0, TOOL_PAGE_SIZE).map((c) => ({
+        kind: "tool", id: c.id, slug: c.slug, name: c.name, description: c.description,
+      }));
+      setTopHits(top);
+      setToolHits(toolsPage0);
+      setToolPage(0);
+      setToolsHasMore(toolRows.length > TOOL_PAGE_SIZE);
       setHighlight(0);
       setLoading(false);
     }, 200);
     return () => clearTimeout(handle);
   }, [q]);
 
+  const loadMoreTools = useCallback(async () => {
+    const term = q.trim();
+    if (!term || toolsLoadingMore || !toolsHasMore) return;
+    setToolsLoadingMore(true);
+    const reqId = reqIdRef.current;
+    const nextPage = toolPage + 1;
+    const from = nextPage * TOOL_PAGE_SIZE;
+    const to = from + TOOL_PAGE_SIZE; // request one extra to detect more
+    const like = `%${term.replace(/[%_]/g, "")}%`;
+    const { data } = await supabase.from("calculators")
+      .select("id, slug, name, description")
+      .or(`name.ilike.${like},slug.ilike.${like},description.ilike.${like}`)
+      .range(from, to);
+    if (reqId !== reqIdRef.current) { setToolsLoadingMore(false); return; }
+    const rows = (data ?? []) as Array<{ id: string; slug: string; name: string; description: string | null }>;
+    const pageRows: ToolHit[] = rows.slice(0, TOOL_PAGE_SIZE).map((c) => ({
+      kind: "tool", id: c.id, slug: c.slug, name: c.name, description: c.description,
+    }));
+    setToolHits((prev) => {
+      const seen = new Set(prev.map((p) => p.id));
+      return [...prev, ...pageRows.filter((r) => !seen.has(r.id))];
+    });
+    setToolPage(nextPage);
+    setToolsHasMore(rows.length > TOOL_PAGE_SIZE);
+    setToolsLoadingMore(false);
+  }, [q, toolPage, toolsHasMore, toolsLoadingMore]);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !toolsHasMore) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) loadMoreTools();
+    }, { root: el.closest("[data-search-panel]"), rootMargin: "120px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [toolsHasMore, loadMoreTools, toolHits.length]);
+
   const showPanel = open && q.trim().length > 0;
   const empty = useMemo(() => !loading && hits.length === 0 && q.trim().length > 0, [loading, hits, q]);
+  const firstToolIndex = topHits.length;
 
   function goHit(h: Hit) {
     if (h.kind === "tool") {
@@ -154,7 +210,7 @@ export function BossSearch({ className = "" }: { className?: string }) {
       </div>
 
       {showPanel && (
-        <div className="absolute left-0 right-0 mt-2 w-[min(92vw,420px)] max-h-[70vh] overflow-auto rounded-md border border-border bg-popover shadow-lg z-50">
+        <div data-search-panel className="absolute left-0 right-0 mt-2 w-[min(92vw,420px)] max-h-[70vh] overflow-auto rounded-md border border-border bg-popover shadow-lg z-50">
           {loading && (
             <div className="flex items-center gap-2 p-3 text-sm text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin" /> Searching…
@@ -174,6 +230,9 @@ export function BossSearch({ className = "" }: { className?: string }) {
                 const clickable = h.kind === "tool" || (h.kind === "track" && !!h.portal_slug);
                 return (
                   <li key={`${h.kind}:${h.id}`}>
+                    {h.kind === "tool" && i === firstToolIndex && firstToolIndex > 0 && (
+                      <div className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">Tools</div>
+                    )}
                     <button
                       type="button"
                       onClick={() => goHit(h)}
@@ -196,6 +255,21 @@ export function BossSearch({ className = "" }: { className?: string }) {
                 );
               })}
             </ul>
+          )}
+          {!loading && toolHits.length > 0 && (toolsHasMore || toolsLoadingMore) && (
+            <div ref={sentinelRef} className="flex items-center justify-center gap-2 p-2 text-[11px] text-muted-foreground">
+              {toolsLoadingMore ? (
+                <><Loader2 className="h-3 w-3 animate-spin" /> Loading more tools…</>
+              ) : (
+                <button
+                  type="button"
+                  onClick={loadMoreTools}
+                  className="rounded border border-border px-2 py-1 hover:bg-secondary"
+                >
+                  Load more tools
+                </button>
+              )}
+            </div>
           )}
         </div>
       )}
