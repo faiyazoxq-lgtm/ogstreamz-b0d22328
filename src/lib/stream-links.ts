@@ -206,3 +206,23 @@ export function entryLabel(entry: StreamEntry): string {
   const v = entry.value.trim();
   return v.replace(/^https?:\/\/(www\.)?/i, "");
 }
+
+/**
+ * Canonical dedupe key for an entry. Two entries with the same key point at
+ * the same destination — e.g. `twitch.tv/Foo`, `@foo`, and `https://twitch.tv/foo/`
+ * all collapse to `twitch:twitch.tv/foo`.
+ */
+export function entryKey(entry: StreamEntry): string {
+  const normalized = normalizeEntry(entry).value.trim();
+  if (!normalized) return "";
+  let canonical = normalized;
+  try {
+    const u = new URL(/^https?:\/\//i.test(normalized) ? normalized : `https://${normalized}`);
+    const host = u.hostname.toLowerCase().replace(/^www\./, "");
+    const path = u.pathname.replace(/\/+$/, "").toLowerCase();
+    canonical = `${host}${path}${u.search.toLowerCase()}`;
+  } catch {
+    canonical = normalized.toLowerCase();
+  }
+  return `${entry.platform}:${canonical}`;
+}

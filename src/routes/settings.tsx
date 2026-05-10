@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   STREAM_PLATFORMS,
+  entryKey,
   newEntry,
   normalizeEntry,
   platformMeta,
@@ -157,12 +158,20 @@ function SettingsPage() {
         if (v) (cleanCard as any)[k] = v.slice(0, 300);
       });
       const cleanedEntries: StreamEntry[] = [];
+      const seenKeys = new Set<string>();
       for (const e of streamEntries) {
         const value = e.value.trim();
         if (!value) continue;
         const err = validateEntry({ ...e, value });
         if (err) throw new Error(`${platformMeta(e.platform).label}: ${err}`);
         const normalized = normalizeEntry({ ...e, value });
+        const key = entryKey(normalized);
+        if (key && seenKeys.has(key)) {
+          throw new Error(
+            `${platformMeta(e.platform).label}: duplicate of another entry (${normalized.value}). Remove one.`,
+          );
+        }
+        if (key) seenKeys.add(key);
         cleanedEntries.push({
           id: e.id,
           platform: e.platform,
