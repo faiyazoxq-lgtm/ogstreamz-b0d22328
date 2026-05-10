@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Music, Wand2, Loader2, ArrowLeft, Disc3, Lock, BadgeCheck, Layers, Copy, Check } from "lucide-react";
+import { Music, Wand2, Loader2, ArrowLeft, Disc3, Lock, BadgeCheck, Layers, Copy, Check, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
@@ -21,6 +21,7 @@ type MusicPortal = {
   vibe: string | null;
   theme: string;
   swear_chat_enabled?: boolean;
+  jokes: string[] | null;
 };
 
 export const Route = createFileRoute("/m/$slug")({
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/m/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals")
-      .select("id, slug, name, language, style, vibe, theme, kind, swear_chat_enabled")
+      .select("id, slug, name, language, style, vibe, theme, kind, swear_chat_enabled, jokes")
       .eq("slug", params.slug)
       .eq("kind", "music")
       .maybeSingle();
@@ -338,6 +339,8 @@ function MusicPortalPage() {
           <p className="mt-3 text-sm opacity-70">{portal.style} · {portal.language}</p>
         </header>
 
+        <MusicHooksSection portal={portal} theme={theme} onUseHook={(text) => setRaw(text)} />
+
         {tracks.length > 0 && (
           <section className="mb-10">
             <p className="text-xs uppercase tracking-[0.4em] mb-4 opacity-70" style={{ color: theme.accent }}>
@@ -511,5 +514,91 @@ function MusicPortalPage() {
         </Link>
       </footer>
     </div>
+  );
+}
+
+function MusicHooksSection({
+  portal,
+  theme,
+  onUseHook,
+}: {
+  portal: MusicPortal;
+  theme: { accent: string; secondary: string; font: string; ornament: string };
+  onUseHook: (text: string) => void;
+}) {
+  const hooks: string[] = Array.isArray(portal.jokes)
+    ? (portal.jokes as unknown[]).filter(
+        (h): h is string => typeof h === "string" && h.trim().length > 0,
+      )
+    : [];
+  if (hooks.length === 0) return null;
+
+  const useHook = (text: string) => {
+    onUseHook(text);
+    toast.success("Hook loaded into composer");
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: document.body.scrollHeight * 0.35, behavior: "smooth" });
+    }
+  };
+
+  return (
+    <section
+      className="mb-10 rounded-2xl border p-6 sm:p-8"
+      style={{
+        borderColor: `${theme.accent}55`,
+        background: `${theme.accent}08`,
+        boxShadow: `0 0 60px ${theme.accent}22`,
+      }}
+    >
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4" style={{ color: theme.accent }} />
+          <h2 className="text-sm uppercase tracking-[0.3em] font-bold" style={{ color: theme.accent }}>
+            Generated Hooks · Seed Vault
+          </h2>
+        </div>
+        <span
+          className="text-[10px] uppercase tracking-[0.3em] px-2 py-1 rounded-full border"
+          style={{ borderColor: `${theme.accent}55`, color: theme.accent }}
+        >
+          {hooks.length} hook{hooks.length === 1 ? "" : "s"}
+        </span>
+      </div>
+      <p className="text-xs opacity-70 mb-4">
+        AI-spawned hooks tuned for <span className="opacity-100">{portal.style ?? "this portal"}</span>.
+        Tap one to drop it into the composer below.
+      </p>
+      <ol className="space-y-3">
+        {hooks.map((h, i) => (
+          <li
+            key={i}
+            className="rounded-xl border p-4 flex gap-3 items-start"
+            style={{ borderColor: `${theme.accent}30`, background: "rgba(0,0,0,0.45)" }}
+          >
+            <span
+              className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full font-black text-[11px] tabular-nums"
+              style={{ background: theme.accent, color: "#000", boxShadow: `0 0 18px -4px ${theme.accent}` }}
+            >
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <p
+              className="flex-1 text-sm leading-relaxed whitespace-pre-line"
+              style={{ fontFamily: theme.font }}
+            >
+              {h}
+            </p>
+            <button
+              type="button"
+              onClick={() => useHook(h)}
+              className="shrink-0 inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-[10px] uppercase tracking-[0.25em] font-bold hover:opacity-80"
+              style={{ borderColor: `${theme.accent}66`, color: theme.accent, background: `${theme.accent}10` }}
+              aria-label={`Use hook ${i + 1} as composer starter`}
+            >
+              <Wand2 className="h-3 w-3" /> Use
+            </button>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
