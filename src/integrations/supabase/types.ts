@@ -2204,6 +2204,65 @@ export type Database = {
         }
         Relationships: []
       }
+      vip_notification_reads: {
+        Row: {
+          notification_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          notification_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          notification_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vip_notification_reads_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "vip_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vip_notifications: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string
+          id: string
+          link_url: string | null
+          severity: string
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by: string
+          id?: string
+          link_url?: string | null
+          severity?: string
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          link_url?: string | null
+          severity?: string
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       vip_passes: {
         Row: {
           created_at: string
