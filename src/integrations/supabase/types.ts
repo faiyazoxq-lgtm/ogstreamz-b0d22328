@@ -1973,6 +1973,8 @@ export type Database = {
         Row: {
           audio_url: string | null
           created_at: string
+          fallback_brief: Json | null
+          fallback_provider: string | null
           id: string
           image_url: string | null
           lyric_text: string | null
@@ -1993,6 +1995,8 @@ export type Database = {
         Insert: {
           audio_url?: string | null
           created_at?: string
+          fallback_brief?: Json | null
+          fallback_provider?: string | null
           id?: string
           image_url?: string | null
           lyric_text?: string | null
@@ -2013,6 +2017,8 @@ export type Database = {
         Update: {
           audio_url?: string | null
           created_at?: string
+          fallback_brief?: Json | null
+          fallback_provider?: string | null
           id?: string
           image_url?: string | null
           lyric_text?: string | null
@@ -2091,6 +2097,48 @@ export type Database = {
           telegram_username?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      system_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          category: Database["public"]["Enums"]["system_alert_category"]
+          created_at: string
+          id: string
+          message: string | null
+          metadata: Json
+          related_job_id: string | null
+          severity: Database["public"]["Enums"]["system_alert_severity"]
+          source: string
+          title: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          category: Database["public"]["Enums"]["system_alert_category"]
+          created_at?: string
+          id?: string
+          message?: string | null
+          metadata?: Json
+          related_job_id?: string | null
+          severity?: Database["public"]["Enums"]["system_alert_severity"]
+          source: string
+          title: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          category?: Database["public"]["Enums"]["system_alert_category"]
+          created_at?: string
+          id?: string
+          message?: string | null
+          metadata?: Json
+          related_job_id?: string | null
+          severity?: Database["public"]["Enums"]["system_alert_severity"]
+          source?: string
+          title?: string
         }
         Relationships: []
       }
@@ -2845,6 +2893,7 @@ export type Database = {
       }
       increment_portal_view: { Args: { _slug: string }; Returns: number }
       is_boss: { Args: { _uid: string }; Returns: boolean }
+      is_boss_or_admin: { Args: { _uid: string }; Returns: boolean }
       is_real_og: { Args: { _uid?: string }; Returns: boolean }
       mark_stream_verified: {
         Args: { _expires_at: string; _status: string; _user_id: string }
@@ -2909,6 +2958,8 @@ export type Database = {
       app_role: "admin" | "user" | "reseller"
       subscription_plan: "free" | "metal" | "energy" | "syndicate"
       syndicate_rank: "prospect" | "enforcer" | "vip" | "boss" | "stream_user"
+      system_alert_category: "fallback" | "api_error"
+      system_alert_severity: "info" | "warn" | "error"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3040,6 +3091,8 @@ export const Constants = {
       app_role: ["admin", "user", "reseller"],
       subscription_plan: ["free", "metal", "energy", "syndicate"],
       syndicate_rank: ["prospect", "enforcer", "vip", "boss", "stream_user"],
+      system_alert_category: ["fallback", "api_error"],
+      system_alert_severity: ["info", "warn", "error"],
     },
   },
 } as const
