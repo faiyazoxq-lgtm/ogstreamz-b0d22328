@@ -61,7 +61,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
 
       {!user ? (
         <div className="rounded-xl border border-border bg-background/60 p-4 text-sm text-muted-foreground">
-          <Link to="/login" className="underline text-foreground">Sign in</Link> to spawn portals with credits.
+          <Link to="/auth" className="underline text-foreground">Sign in</Link> to spawn portals with credits.
         </div>
       ) : (
         <>
