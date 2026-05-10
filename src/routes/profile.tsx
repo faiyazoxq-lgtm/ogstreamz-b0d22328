@@ -8,6 +8,9 @@ import { CREDIT_PACK_LIST } from "@/lib/credit-packs";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { useServerFn } from "@tanstack/react-start";
 import { requestTopup, listMyTopupRequests } from "@/lib/topup-requests.functions";
+import { checkIsBoss } from "@/lib/boss.functions";
+import { useQuery } from "@tanstack/react-query";
+import { ShieldCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -31,6 +34,14 @@ function ProfilePage() {
   const { user, profile, isAdmin, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const { openCheckout, closeCheckout, isOpen, checkoutElement } = useStripeCheckout();
+  const checkBoss = useServerFn(checkIsBoss);
+  const { data: bossCheck } = useQuery({
+    queryKey: ["check-is-boss", user?.id],
+    queryFn: () => checkBoss(),
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+  const verifiedBoss = bossCheck?.isBoss === true;
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
@@ -74,6 +85,18 @@ function ProfilePage() {
             Welcome back
           </h1>
           <p className="mt-3 text-muted-foreground text-sm">{isBoss ? "— BOSS ACCOUNT —" : (profile?.email ?? user.email)}</p>
+          {verifiedBoss && (
+            <div className="mt-4 flex justify-center">
+              <span
+                role="status"
+                aria-label="Verified Boss account"
+                className="inline-flex items-center gap-2 rounded-full border border-[var(--gold)] bg-[color-mix(in_oklab,var(--gold)_12%,transparent)] px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-[var(--gold)] shadow-[0_0_24px_-6px_var(--electric-gold-glow)]"
+              >
+                <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                Verified Boss
+              </span>
+            </div>
+          )}
           {isVip && !isBoss && (
             <div className="mt-4 flex justify-center">
               <RealOgBadge variant="badge" size="lg" />
