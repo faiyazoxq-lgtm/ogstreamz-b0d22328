@@ -10,14 +10,16 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { listPassOrders, decidePassOrder, type PassOrderRow } from "@/lib/overlord.functions";
+import { coinChip } from "@/lib/coins";
 
 type StatusFilter = "pending_approval" | "issued" | "denied" | "all";
 
 function fmtMoney(cents: number, currency: string) {
   try {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency: (currency || "usd").toUpperCase() }).format((cents ?? 0) / 100);
+    const base = new Intl.NumberFormat(undefined, { style: "currency", currency: (currency || "gbp").toUpperCase() }).format((cents ?? 0) / 100);
+    return (currency || "gbp").toLowerCase() === "gbp" ? `${base} ${coinChip(cents)}` : base;
   } catch {
-    return `${(cents / 100).toFixed(2)} ${currency?.toUpperCase() ?? ""}`;
+    return `${(cents / 100).toFixed(2)} ${currency?.toUpperCase() ?? ""} ${coinChip(cents)}`;
   }
 }
 
