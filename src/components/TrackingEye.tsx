@@ -200,11 +200,14 @@ export function TrackingEye({
     <span
       ref={ref}
       aria-hidden
-      className={`relative inline-flex items-center justify-center overflow-hidden ring-1 transition-transform duration-150 ${className}`}
+      className={`relative inline-flex items-center justify-center overflow-hidden transition-transform duration-150 ${className}`}
       style={{
         background: irisBg,
-        boxShadow: irisGlow,
-        ["--tw-ring-color" as string]: irisRing,
+        // Em-scaled inset ring keeps the outline crisp at every font size:
+        // 0.06em scales with the eye, with a 1px floor for tiny renders and
+        // a 2px ceiling so giant hero eyes don't get a chunky stroke.
+        // Layered with the existing soft glow via boxShadow.
+        boxShadow: `inset 0 0 0 clamp(1px, 0.06em, 2px) ${irisRing}, ${irisGlow}`,
         // True ellipse (50% on both axes) so non-square eyes render as a
         // proper egg/letter-O silhouette at every font size — `rounded-full`
         // collapses to a stadium shape when width ≠ height.
@@ -234,10 +237,11 @@ export function TrackingEye({
         />
       )}
       <span
-        className="relative block ring-1 shadow-[inset_0_0_2px_rgba(0,0,0,0.8)] transition-transform duration-75"
+        className="relative block transition-transform duration-75"
         style={{
           background: pupilBg,
-          ["--tw-ring-color" as string]: pupilRing,
+          // Pupil ring + inner shadow scale together with the eye.
+          boxShadow: `inset 0 0 0 clamp(1px, 0.05em, 1.5px) ${pupilRing}, inset 0 0 clamp(1px, 0.08em, 3px) rgba(0,0,0,0.8)`,
           // Upright oval pupil — narrower than tall so it reads as a true
           // eye pupil (and mirrors the egg-shaped iris that stands in for
           // the letter "O" across the brand wordmark).
