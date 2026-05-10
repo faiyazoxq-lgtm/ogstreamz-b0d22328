@@ -14,6 +14,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { redeemCode } from "@/lib/overlord.functions";
 import { ZeroGStreamPanel } from "@/components/ZeroGStreamPanel";
 import { VaultRevealCard } from "@/components/VaultRevealCard";
+import { VipNotificationsInbox } from "@/components/VipNotificationsInbox";
 
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: requireMember,
@@ -124,6 +125,7 @@ function DashboardPage() {
       {/* History */}
       <section className="space-y-6">
         <ZeroGStreamPanel />
+        <VipNotificationsInbox />
         <VaultRevealCard />
         <h2 className="text-xs uppercase tracking-[0.4em] text-muted-foreground"><History className="inline h-3.5 w-3.5 mr-2" />Transmission History</h2>
 
