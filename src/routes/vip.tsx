@@ -286,11 +286,18 @@ function VipPage() {
             </div>
           </div>
         ) : user ? (
-          <div role="status" className="flex items-center gap-3 rounded-2xl border border-cyan-300/30 bg-cyan-400/5 p-3">
+          <div role="status" className="flex flex-col sm:flex-row items-start sm:items-center gap-3 rounded-2xl border border-cyan-300/30 bg-cyan-400/5 p-3">
             <ShieldCheck className="h-5 w-5 text-cyan-300 shrink-0" />
-            <p className="text-xs sm:text-sm text-cyan-100/85">
-              Signed in as <span className="font-mono">{user.email}</span> · <span className="text-cyan-300/80">Free tier</span> — upgrade below to unlock the full vault.
+            <p className="flex-1 text-xs sm:text-sm text-cyan-100/85">
+              Signed in as <span className="font-mono">{user.email}</span> · <span className="text-cyan-300/80">Free tier</span> — upgrade to unlock the full vault.
             </p>
+            <button
+              type="button"
+              onClick={scrollToPricing}
+              className="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-black uppercase tracking-[0.2em] px-3 py-2 text-[11px] shadow-[0_0_30px_-5px_rgba(56,189,248,0.7)]"
+            >
+              <Crown className="h-3.5 w-3.5" /> Upgrade now
+            </button>
           </div>
         ) : null}
       </div>
