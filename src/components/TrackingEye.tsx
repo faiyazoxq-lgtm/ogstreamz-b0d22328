@@ -80,10 +80,12 @@ export function TrackingEye({
 
     const onPointer = (e: PointerEvent) => updateTarget(e.clientX, e.clientY);
     const onTouch = (e: TouchEvent) => {
-      const t0 = e.touches[0];
+      const t0 = e.touches[0] || e.changedTouches[0];
       if (t0) updateTarget(t0.clientX, t0.clientY);
     };
     window.addEventListener("pointermove", onPointer, { passive: true });
+    window.addEventListener("pointerdown", onPointer, { passive: true });
+    window.addEventListener("touchstart", onTouch, { passive: true });
     window.addEventListener("touchmove", onTouch, { passive: true });
 
     // rAF lerp toward the target — smooth motion independent of input rate.
@@ -113,6 +115,8 @@ export function TrackingEye({
 
     return () => {
       window.removeEventListener("pointermove", onPointer);
+      window.removeEventListener("pointerdown", onPointer);
+      window.removeEventListener("touchstart", onTouch);
       window.removeEventListener("touchmove", onTouch);
       cancelAnimationFrame(raf);
     };
