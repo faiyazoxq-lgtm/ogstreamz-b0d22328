@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CheckCircle2 } from "lucide-react";
 import bgFlame from "@/assets/bg-flame.png";
+import { requireMember } from "@/lib/route-guards";
 
 type Search = { session_id?: string };
 
 export const Route = createFileRoute("/checkout/return")({
+  beforeLoad: requireMember,
   validateSearch: (search: Record<string, unknown>): Search => ({
     session_id: typeof search.session_id === "string" ? search.session_id : undefined,
   }),
