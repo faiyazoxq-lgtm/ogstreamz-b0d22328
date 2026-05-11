@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import {
   Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft,
   ShieldAlert, LogIn, Tv, Tags, Bell, Sparkles, Settings, Boxes, Grid3x3,
-  Coins, Power, Rocket, KeyRound, Wallet, SlidersHorizontal,
+  Coins, Power, Rocket, KeyRound, Wallet, SlidersHorizontal, Lock,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { BossSearch } from "@/components/BossSearch";
@@ -81,6 +81,7 @@ const GROUPS: RailGroup[] = [
     tint: "#94a3b8",
     items: [
       { to: "/boss/api-keys", label: "Agent Keys", Icon: KeyRound, desc: "Encrypted vault" },
+      { to: "/boss/secrets-inventory", label: "Secrets Inventory", Icon: Lock, desc: "Platform secrets list" },
       { to: "/boss/settings", label: "Settings", Icon: Settings, desc: "Tunables" },
     ],
   },
