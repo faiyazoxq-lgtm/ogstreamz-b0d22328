@@ -1,5 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
+import { timingSafeEqual } from "crypto";
+
+function safeEqual(a: string, b: string) {
+  const ab = Buffer.from(a);
+  const bb = Buffer.from(b);
+  return ab.length === bb.length && timingSafeEqual(ab, bb);
+}
 
 function adminClient() {
   const url = process.env.SUPABASE_URL!;
@@ -28,7 +35,9 @@ export const Route = createFileRoute("/api/public/fleet/webhook/$botId")({
           .eq("id", botId)
           .maybeSingle();
         if (!bot) return new Response("Not found", { status: 404 });
-        if (provided !== bot.webhook_secret) return new Response("Unauthorized", { status: 401 });
+        if (!bot.webhook_secret || !safeEqual(provided, bot.webhook_secret)) {
+          return new Response("Unauthorized", { status: 401 });
+        }
 
         const update: any = await request.json().catch(() => ({}));
         const msg = update.message || update.edited_message || update.channel_post;
