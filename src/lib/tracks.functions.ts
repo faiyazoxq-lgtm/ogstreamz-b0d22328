@@ -187,3 +187,70 @@ export const createTrackUnlockCheckout = createServerFn({ method: "POST" })
     } as any);
     return session.client_secret;
   });
+
+/**
+ * Streaming endpoint: returns a short-lived signed URL for the FULL track
+ * audio, gated on purchase. Unlike getTrackDownloadUrl this returns a
+ * structured paywall payload instead of throwing when access is denied,
+ * so the player can render an inline paywall with title + price.
+ */
+export const getTrackStreamUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { trackId: string }) => ({
+    trackId: String(d.trackId || "").trim().slice(0, 64),
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    if (!data.trackId) {
+      return { allowed: false as const, reason: "invalid" as const };
+    }
+
+    const { createClient } = await import("@supabase/supabase-js");
+    const admin = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+
+    const { data: track } = await admin
+      .from("tracks")
+      .select("id, title, full_path, price_cents, currency")
+      .eq("id", data.trackId)
+      .maybeSingle();
+    if (!track) return { allowed: false as const, reason: "not_found" as const };
+
+    // Strict ownership check via user-scoped client (RLS enforced).
+    const { data: owned } = await supabase
+      .from("track_purchases")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("track_id", data.trackId)
+      .maybeSingle();
+
+    if (!owned) {
+      return {
+        allowed: false as const,
+        reason: "paywall" as const,
+        track: {
+          id: track.id,
+          title: track.title,
+          price_cents: track.price_cents,
+          currency: track.currency,
+        },
+      };
+    }
+
+    if (!track.full_path) {
+      return { allowed: false as const, reason: "unavailable" as const };
+    }
+
+    // No `download` option = inline streaming. 10 min lifetime.
+    const { data: signed, error } = await admin.storage
+      .from("tracks")
+      .createSignedUrl(track.full_path, 60 * 10);
+    if (error || !signed?.signedUrl) {
+      return { allowed: false as const, reason: "unavailable" as const };
+    }
+
+    return {
+      allowed: true as const,
+      url: signed.signedUrl,
+      title: track.title as string,
+    };
+  });
