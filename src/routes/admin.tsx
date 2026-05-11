@@ -54,7 +54,15 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Row = { id: string; email: string; status: "free" | "vip"; credits: number; rank?: "boss" | "enforcer" | "prospect" | "vip" };
+type Row = {
+  id: string;
+  email: string;
+  status: "free" | "vip";
+  credits: number;
+  rank?: "boss" | "enforcer" | "prospect" | "vip";
+  display_name?: string | null;
+  stream_links?: Record<string, unknown> | null;
+};
 
 function AdminPage() {
   const { user, isAdmin, loading } = useAuth();
@@ -76,7 +84,7 @@ function AdminPage() {
     if (!isAdmin) return;
     supabase
       .from("profiles")
-      .select("id,email,status,credits,rank")
+      .select("id,email,status,credits,rank,display_name,stream_links")
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
         if (error) toast.error(error.message);
@@ -99,8 +107,27 @@ function AdminPage() {
 
   const q = rosterQuery.trim().toLowerCase();
   const RANK_ORDER: Record<string, number> = { prospect: 0, enforcer: 1, vip: 2, boss: 3 };
+  const streamHaystack = (links: Row["stream_links"]) => {
+    if (!links || typeof links !== "object") return "";
+    const parts: string[] = [];
+    const walk = (v: unknown) => {
+      if (!v) return;
+      if (typeof v === "string") parts.push(v);
+      else if (Array.isArray(v)) v.forEach(walk);
+      else if (typeof v === "object") Object.values(v as Record<string, unknown>).forEach(walk);
+    };
+    walk(links);
+    return parts.join(" ").toLowerCase();
+  };
   const filteredRows = rows.filter((r) => {
-    if (q && !r.email.toLowerCase().includes(q)) return false;
+    if (q) {
+      const hay = [
+        r.email,
+        r.display_name ?? "",
+        streamHaystack(r.stream_links),
+      ].join(" ").toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
     if (rosterStatus !== "all" && r.status !== rosterStatus) return false;
     if (rosterRank !== "all" && r.rank !== rosterRank) return false;
     if (rosterCredits === "zero" && (r.credits ?? 0) !== 0) return false;
