@@ -22,6 +22,7 @@ import { StreamLinkCard } from "@/components/StreamLinkCard";
 import { Flame } from "lucide-react";
 import { TrackingEye } from "@/components/TrackingEye";
 import { VipPortalExplorer } from "@/components/VipPortalExplorer";
+import { OgVaultAccessSection } from "@/components/OgVaultAccessSection";
 import { usePortalCount } from "@/hooks/use-portal-count";
 import { TelegramConnectBanner } from "@/components/TelegramConnectBanner";
 
@@ -245,6 +246,7 @@ function Index() {
         </div>
       </section>
 
+      {isVipMember && <OgVaultAccessSection />}
       {isVipMember && <VipPortalExplorer customHubs={customHubs} />}
 
       <section className="relative max-w-7xl mx-auto px-5 sm:px-8 pb-28 grid gap-6 md:gap-8 grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))]">
