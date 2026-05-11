@@ -1,80 +1,77 @@
-# Encrypted Records + Dual-Store Ledger
-
 ## Goal
 
-Every record in the app becomes opaque ciphertext at rest. Each write is mirrored to a second independent store, and every read fetches both copies and rejects mismatches. Decryption keys live only in server secrets — never in the browser, never in plain DB columns.
+Give the Boss a single, persistent to-do list inside the portal that holds every "make this project perfect" job, with priority + status, and start working through it **one item at a time** in agreed order.
 
-## Architecture
+---
 
-```text
-Browser  ──auth token──▶  createServerFn (Worker)
-                              │
-                              ├─▶ Primary store:  public.* tables (pgp_sym_encrypt columns)
-                              └─▶ Mirror store:   public.ledger_mirror (separate schema, JSONB ciphertext + hash chain)
+## Part 1 — Build the Boss To-Do feature
 
-Read path:
-  fetch(primary) + fetch(mirror)  ──▶  decrypt both  ──▶  hash compare  ──▶  return / raise tamper alert
-```
+A new page at `/boss/todo` plus a tile on the boss overview.
 
-- **Encryption**: `pgp_sym_encrypt(plaintext, key)` with AES-256 inside a SECURITY DEFINER function. Keys come from `MASTER_DATA_KEY` (new Supabase secret) loaded into a server-only `_data_key` table at boot.
-- **Mirror store**: new `ledger_mirror` table — `(record_id, table_name, version, ciphertext bytea, prev_hash bytea, row_hash bytea, written_at)`. Append-only, hash-chained, RLS denies all client access.
-- **Cross-check**: every read goes through a SECURITY DEFINER fn (`read_record(table, id)`) that pulls primary + mirror, decrypts, hashes, and raises if they diverge.
-- **No tracing**: drop `created_at` precision to day-bucket on encrypted tables; no IP / UA logging; ledger row hashes use HMAC so only key-holders can correlate.
+**Database** (`boss_todos` table)
+- `title`, `details` (markdown), `category` (security · performance · ux · seo · ops · content), `priority` (P0–P3), `status` (todo · in_progress · blocked · done), `link` (optional deep-link into the boss portal), `position` (for drag ordering), `done_at`
+- RLS: only the Boss role can read/write (reuse existing `has_role(auth.uid(),'boss')`)
+- Realtime enabled so multiple tabs stay in sync
 
-## Scope (per your answer: everything)
+**Page** (`src/routes/boss.todo.tsx`)
+- Grouped columns: **In progress · Todo · Blocked · Done**
+- Filter chips by category and priority
+- Inline add (title + priority + category)
+- Click row → side drawer with details, link button, status switcher, "mark done"
+- Counter pill on the boss overview tile showing open P0/P1 count
 
-Tables to convert — encrypt all non-key columns, keep only `id`, `user_id` (for RLS), `created_at` (day-bucket):
+**Overview tile**
+- Add `Boss To-Do` tile to `boss.overview.tsx` (system category, `ListChecks` icon, `#ffd166` tint), routes to `/boss/todo`
 
-- `profiles`, `user_roles`, `credit_ledger`, `credit_purchases`, `vip_passes`, `vip_pass_pool`, `vip_pass_reveals`
-- `portals`, `portal_brief_versions`, `portal_view_events`, `trade_scans`
-- `pass_orders`, `topup_requests`, `redeem_codes`, `redemptions`, `pending_credit_grants`
-- `stream_account_links` (already encrypted), `stream_verification_requests` (already encrypted), `vault_credentials` (already encrypted)
-- `signup_passes`, `signup_pass_claims`, `subscriptions`, `reseller_accounts`, `reseller_credit_ledger`
-- `telegram_user_links`, `vip_notifications`, `civility_settings`, `analytics_settings`
+**Migration also seeds the prefilled jobs from Part 2** so the list is populated on first open.
 
-That's ~25 tables. Every read path in the app (server functions, RLS policies, triggers, RPC functions like `spend_credits`, `redeem_code`, `boss_*`) has to be rewritten to call the encrypted accessors instead of selecting columns directly.
+---
 
-## Implementation phases
+## Part 2 — The prioritized job list (what gets seeded)
 
-### Phase 1 — Foundation (1 migration)
-- Add `MASTER_DATA_KEY` secret.
-- Create `_data_key` table (service-role only) + `_data_secret()` accessor (mirrors existing `_stream_link_secret`).
-- Create `ledger_mirror` table with hash-chain trigger.
-- Create generic helpers: `enc_write(table, id, payload jsonb)`, `enc_read(table, id) returns jsonb`, `enc_verify(table, id) returns boolean`.
+These are the jobs to make the project perfect. Ordered top-to-bottom = work order.
 
-### Phase 2 — Convert one table end-to-end as proof (credit_ledger)
-- Add `enc_payload bytea` column, backfill from existing columns, drop plaintext columns.
-- Rewrite `spend_credits`, `admin_adjust_credits`, etc. to `enc_write` + mirror.
-- Rewrite the credits UI server fn to use `enc_read` with cross-check.
-- Verify the credits page still works end-to-end.
+**P0 — must do next**
+1. Wire the Cloudflare Web Analytics token (the placeholder from `/boss/analytics-setup`)
+2. Run **Denylist Audit** and clean any DB hits it surfaces
+3. Sweep `<a href>`, `<iframe src>`, `<img src>` usages in the codebase and swap to `SafeLink` / `SafeEmbed` / `SafeImage` for any field that holds external/member-supplied URLs
+4. Add Cloudflare DNS + caching rules (the steps from the earlier Cloudflare guide)
 
-### Phase 3 — Roll out to remaining 24 tables
-- One migration per table family. Each: add encrypted column, backfill, rewrite RPCs, drop plaintext, update server fns.
+**P1 — strong wins**
+5. Lighthouse pass on `/`, `/music`, `/jokes`, `/tools`, `/vip` — fix LCP image (preload + `fetchpriority="high"`), defer non-critical JS, add `loading="lazy"` to below-fold images
+6. SEO: per-route `head()` with unique title/description/og:image on every public route; verify single H1 and canonical tags
+7. Accessibility: keyboard focus rings on all interactive elements, `aria-label` on icon-only buttons, color-contrast pass on tinted tiles
+8. Error boundaries: confirm every route with a loader has `errorComponent` + `notFoundComponent`
+9. Email verification flow review (signup → confirm → first login) end-to-end
 
-### Phase 4 — Lock down
-- Revoke all direct `SELECT` grants on the converted tables; force everything through SECURITY DEFINER accessors.
-- Add `enc_verify_all()` cron that walks the ledger nightly and alerts on mismatch.
+**P2 — polish**
+10. Add a publish checklist runner (extends existing `boss.publish-check`) that pings: analytics beacon present, denylist empty hits, sitemap reachable, robots.txt sane, all `/api/public/*` endpoints respond
+11. Realtime presence indicator in the boss portal (who else is editing)
+12. Backup export: nightly snapshot of key tables to storage bucket
+13. Cost dashboard: surface AI Gateway spend per model in `boss.portal-costs`
 
-## Trade-offs you need to know about
+**P3 — nice-to-haves**
+14. Dark/light auto-switch with system preference
+15. Custom 404 illustration
+16. Boss audit log (who changed what, when)
 
-| Cost | Impact |
-|---|---|
-| **No SQL filtering / sorting on encrypted fields** | Search by email, sort by date, "where status = 'pending'" all break. Either keep an HMAC index (leaks equality) or load + filter in the server fn (slow above ~1k rows). |
-| **2× write cost, 2× storage** | Every insert/update hits primary + mirror. Roughly doubles DB load. |
-| **2× read latency** | Both copies fetched + decrypted before responding. Add ~50–150ms per query. |
-| **Realtime subscriptions break** | The frontend can't subscribe to `postgres_changes` anymore — payloads are ciphertext. Replace with polling or a server-fn re-broadcast. |
-| **Boss/admin dashboards need rewriting** | `boss_list_stream_links`, `boss_list_vault_credentials`, every leaderboard and analytics view decrypts row-by-row — pagination becomes mandatory. |
-| **Single secret = single point of failure** | You picked Lovable Cloud secrets. If that key leaks or is lost, all data is unreadable. No recovery. Recommend backing up `MASTER_DATA_KEY` offline the moment it's generated. |
-| **"No tracing" is partial** | Postgres still has WAL, audit logs, and connection logs. True untraceability requires moving the DB off Lovable Cloud — which you said no to. |
+---
 
-## What I will NOT do without explicit confirmation
+## Part 3 — Working order
 
-- Touch `auth.users` (Supabase-managed, can't be encrypted).
-- Drop the existing `email` column on `profiles` — auth flow needs it. Will encrypt a `display_email` shadow column instead.
-- Remove created_at entirely (RLS and ordering depend on it) — only round to day.
+We tackle them **one at a time**, top-down. After each item ships:
+- mark it done in `/boss/todo`
+- I post the diff summary and what to verify
+- you approve → I pick up the next one
 
-## Recommendation
+First up after this plan: **Part 1 itself** (build the to-do page + seed the jobs). Then I'll start on P0 #1 (Cloudflare Analytics token wiring).
 
-Start with **Phase 1 + Phase 2** only. That gets the encryption + mirror plumbing in place and proves it on `credit_ledger` (lowest blast radius). After you confirm it works, we roll out to the rest one family at a time. Doing all 25 tables in one shot will almost certainly break something silently.
+---
 
-Confirm and I'll start with Phase 1 (foundation migration) + Phase 2 (credit_ledger conversion).
+## Technical notes
+
+- New file: `src/routes/boss.todo.tsx`
+- New migration: `boss_todos` table + RLS + seed inserts for the 16 jobs above
+- Edit: `src/routes/boss.overview.tsx` — add the tile
+- No new dependencies; uses existing shadcn `Card`, `Badge`, `Sheet`, `Select`
+- Realtime via existing supabase channel pattern from `use-domain-denylist.ts`
