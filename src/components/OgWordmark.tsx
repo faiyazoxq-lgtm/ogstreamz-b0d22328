@@ -26,6 +26,7 @@ export function OgWordmark({
   eyeClassName = EYE_SCALE_CLASS,
   pupilRatio = 0.5,
   travelRatio = 0.18,
+  bloodshot = true,
   style,
 }: {
   suffix?: string;
@@ -33,6 +34,7 @@ export function OgWordmark({
   eyeClassName?: string;
   pupilRatio?: number;
   travelRatio?: number;
+  bloodshot?: boolean;
   style?: React.CSSProperties;
 }) {
   const rest = `G${suffix}`;
@@ -49,6 +51,7 @@ export function OgWordmark({
           className={eyeClassName}
           pupilRatio={pupilRatio}
           travelRatio={travelRatio}
+          bloodshot={bloodshot}
         />
       </span>
       {Array.from(rest).map((ch, i) => (
