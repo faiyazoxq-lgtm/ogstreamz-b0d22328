@@ -541,6 +541,26 @@ function AuthPage() {
                 </div>
               </div>
               <ContentModePicker value={contentMode} onChange={setContentMode} />
+              <div className="rounded-xl border border-amber-300/30 bg-amber-300/5 px-4 py-3">
+                <Label htmlFor="vipref" className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] font-bold text-amber-200/90">
+                  <Coins className="h-3.5 w-3.5 text-amber-300" />
+                  VIP referral code <span className="text-amber-200/50 normal-case tracking-normal font-normal">(optional)</span>
+                </Label>
+                <Input
+                  id="vipref"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="off"
+                  maxLength={6}
+                  placeholder="6-digit code"
+                  value={vipReferral}
+                  onChange={(e) => setVipReferral(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  className="mt-1.5 font-mono tracking-[0.4em] text-center text-lg tabular-nums bg-black/40 border-amber-300/30 focus-visible:border-amber-300 focus-visible:ring-amber-300/30"
+                />
+                <p className="mt-1.5 text-[11px] text-amber-100/70">
+                  Got a code from a VIP? Enter it — you both earn <span className="font-bold text-amber-200">+2 coins</span>.
+                </p>
+              </div>
               <AuthForm
                 email={email}
                 setEmail={(v) => { setEmail(v); if (emailError) setEmailError(null); }}
