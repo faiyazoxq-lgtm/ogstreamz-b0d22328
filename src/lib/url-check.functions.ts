@@ -44,22 +44,49 @@ export const checkUrlReachable = createServerFn({ method: "POST" })
     const timer = setTimeout(() => controller.abort(), 7000);
     const started = Date.now();
     try {
-      let res: Response;
-      try {
-        res = await fetch(target.toString(), {
-          method: "HEAD",
-          redirect: "follow",
-          signal: controller.signal,
-        });
-      } catch {
-        // Some hosts block HEAD — retry with a tiny GET.
-        res = await fetch(target.toString(), {
-          method: "GET",
-          redirect: "follow",
-          signal: controller.signal,
-          headers: { range: "bytes=0-0" },
-        });
+      // Manually follow redirects so each hop's host can be re-validated
+      // against the private-IP denylist (prevents SSRF via 3xx into
+      // 169.254.169.254 / RFC1918 / loopback).
+      let current = target;
+      let res: Response | null = null;
+      const MAX_REDIRECTS = 5;
+      for (let i = 0; i <= MAX_REDIRECTS; i++) {
+        if (current.protocol !== "http:" && current.protocol !== "https:") {
+          return { ok: false, error: "Redirect to non-http(s) blocked" };
+        }
+        if (isPrivateHost(current.hostname)) {
+          return { ok: false, error: "Redirect to internal host blocked" };
+        }
+        try {
+          res = await fetch(current.toString(), {
+            method: "HEAD",
+            redirect: "manual",
+            signal: controller.signal,
+          });
+        } catch {
+          // Some hosts block HEAD — retry with a tiny GET.
+          res = await fetch(current.toString(), {
+            method: "GET",
+            redirect: "manual",
+            signal: controller.signal,
+            headers: { range: "bytes=0-0" },
+          });
+        }
+        if (res.status >= 300 && res.status < 400) {
+          const loc = res.headers.get("location");
+          if (!loc) break;
+          let next: URL;
+          try {
+            next = new URL(loc, current);
+          } catch {
+            return { ok: false, error: "Invalid redirect target" };
+          }
+          current = next;
+          continue;
+        }
+        break;
       }
+      if (!res) return { ok: false, error: "No response" };
       const ms = Date.now() - started;
       return {
         ok: res.ok || res.status === 405 || res.status === 403,
