@@ -1,19 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireBoss } from "@/integrations/supabase/boss-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-async function assertBoss(supabase: any, userId: string) {
-  const [{ data: prof }, { data: role }] = await Promise.all([
-    supabase.from("profiles").select("rank").eq("id", userId).maybeSingle(),
-    supabase.from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle(),
-  ]);
-  const ok = prof?.rank === "boss" || !!role;
-  if (!ok) throw new Error("Boss / admin only");
-}
-
 export const listSystemAlerts = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireBoss])
   .inputValidator((d) =>
     z
       .object({
@@ -22,10 +13,7 @@ export const listSystemAlerts = createServerFn({ method: "POST" })
       })
       .parse(d ?? {}),
   )
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    await assertBoss(supabase, userId);
-
+  .handler(async ({ data }) => {
     let q = supabaseAdmin
       .from("system_alerts")
       .select("id, category, severity, source, title, message, metadata, related_job_id, acknowledged_at, acknowledged_by, created_at")
@@ -44,11 +32,10 @@ export const listSystemAlerts = createServerFn({ method: "POST" })
   });
 
 export const acknowledgeAlert = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireBoss])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    await assertBoss(supabase, userId);
+    const { userId } = context;
     const { error } = await supabaseAdmin
       .from("system_alerts")
       .update({ acknowledged_at: new Date().toISOString(), acknowledged_by: userId })
@@ -58,10 +45,9 @@ export const acknowledgeAlert = createServerFn({ method: "POST" })
   });
 
 export const acknowledgeAllAlerts = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireBoss])
   .handler(async ({ context }) => {
-    const { supabase, userId } = context;
-    await assertBoss(supabase, userId);
+    const { userId } = context;
     const { error } = await supabaseAdmin
       .from("system_alerts")
       .update({ acknowledged_at: new Date().toISOString(), acknowledged_by: userId })

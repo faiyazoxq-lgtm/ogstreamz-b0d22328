@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireBoss } from "@/integrations/supabase/boss-middleware";
 
 export type AgentKeyRow = {
   id: string;
@@ -35,7 +35,7 @@ const MetaSchema = z.object({
 });
 
 export const listAgentKeys = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireBoss])
   .handler(async ({ context }): Promise<{ keys: AgentKeyRow[] }> => {
     const { supabase } = context;
     const { data, error } = await supabase.rpc("boss_list_agent_keys" as never);
@@ -44,7 +44,7 @@ export const listAgentKeys = createServerFn({ method: "GET" })
   });
 
 export const upsertAgentKey = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireBoss])
   .inputValidator((d: unknown) => UpsertSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
@@ -60,7 +60,7 @@ export const upsertAgentKey = createServerFn({ method: "POST" })
   });
 
 export const updateAgentKeyMeta = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireBoss])
   .inputValidator((d: unknown) => MetaSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
@@ -75,7 +75,7 @@ export const updateAgentKeyMeta = createServerFn({ method: "POST" })
   });
 
 export const deleteAgentKey = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireBoss])
   .inputValidator((d: unknown) => z.object({ key_name: KeyName }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
@@ -87,7 +87,7 @@ export const deleteAgentKey = createServerFn({ method: "POST" })
   });
 
 export const revealAgentKey = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireBoss])
   .inputValidator((d: unknown) => z.object({ key_name: KeyName }).parse(d))
   .handler(async ({ data, context }): Promise<{ value: string }> => {
     const { supabase } = context;
