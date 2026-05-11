@@ -241,7 +241,7 @@ export function TrackingEye({
   // without manual per-context tuning. On light themes the same mix yields
   // a darker, denser ring against pale backgrounds.
   const irisRing = isIce
-    ? "color-mix(in oklab, oklch(0.78 0.2 245) 55%, color-mix(in oklab, var(--foreground) 70%, transparent))"
+    ? "color-mix(in oklab, #ffffff 88%, transparent)"
     : "color-mix(in oklab, var(--electric-gold-300) 55%, color-mix(in oklab, var(--foreground) 70%, transparent))";
   const pupilBg = isIce ? "oklch(0.55 0.24 255)" : "var(--midnight-pupil)";
   // Pupil ring needs to stay visible against the pupil itself AND the
