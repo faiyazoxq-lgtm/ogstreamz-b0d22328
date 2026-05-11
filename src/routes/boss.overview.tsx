@@ -700,6 +700,17 @@ function BossOverview() {
       </CollapsiblePanel>
 
       <CollapsiblePanel
+        id="telegram-inbox"
+        title="Telegram Inbox"
+        Icon={Send}
+        tint="#3ad6ff"
+        subtitle="Bot DMs and groups · pick a chat to view messages and reply"
+        defaultOpen={false}
+      >
+        <TelegramInboxPanel />
+      </CollapsiblePanel>
+
+      <CollapsiblePanel
         id="modules"
         title="Modules"
         Icon={Boxes}
