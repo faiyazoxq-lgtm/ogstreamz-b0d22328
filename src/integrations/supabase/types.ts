@@ -1499,6 +1499,39 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_royalty_ledger: {
+        Row: {
+          created_at: string
+          creator_id: string
+          gross_credits: number
+          id: string
+          payer_id: string
+          portal_id: string
+          royalty_credits: number
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          gross_credits: number
+          id?: string
+          payer_id: string
+          portal_id: string
+          royalty_credits: number
+          source: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          gross_credits?: number
+          id?: string
+          payer_id?: string
+          portal_id?: string
+          royalty_credits?: number
+          source?: string
+        }
+        Relationships: []
+      }
       portal_unlocks: {
         Row: {
           amount_cents: number
@@ -3651,6 +3684,18 @@ export type Database = {
       is_boss: { Args: { _uid: string }; Returns: boolean }
       is_boss_or_admin: { Args: { _uid: string }; Returns: boolean }
       is_real_og: { Args: { _uid?: string }; Returns: boolean }
+      list_nav_portals: {
+        Args: never
+        Returns: {
+          by_boss: boolean
+          created_at: string
+          id: string
+          name: string
+          paid: boolean
+          slug: string
+          vip: boolean
+        }[]
+      }
       mark_stream_verified: {
         Args: { _expires_at: string; _status: string; _user_id: string }
         Returns: undefined
