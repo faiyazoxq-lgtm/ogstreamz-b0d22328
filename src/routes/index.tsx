@@ -9,8 +9,6 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/logo.gif";
-import heroBg from "@/assets/og-streamz-hero-bg.png";
 import { TiltCard } from "@/components/TiltCard";
 import { WelcomeAuthPrompt } from "@/components/WelcomeAuthPrompt";
 import { QuickJumpDrawer } from "@/components/QuickJumpDrawer";
@@ -98,18 +96,6 @@ function Index() {
 
   return (
     <main className="relative">
-      {/* Dynamic OG-STREAMZ hero background — fixed, parallax-style,
-          gently breathing, dimmed so foreground stays readable. */}
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-background"
-      >
-        <div
-          className="absolute inset-0 bg-no-repeat bg-center bg-cover opacity-50 motion-safe:animate-[hero-pan_30s_ease-in-out_infinite_alternate]"
-          style={{ backgroundImage: `url(${heroBg})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background" />
-      </div>
       {user && (
         <div className="relative max-w-7xl mx-auto px-5 sm:px-8 pt-4">
           <TelegramConnectBanner userId={user.id} />
@@ -122,14 +108,6 @@ function Index() {
       </div>
 
       <section className="relative max-w-7xl mx-auto px-5 sm:px-8 pt-12 sm:pt-20 pb-16 text-center">
-        <div className="relative mx-auto mb-8 w-full max-w-2xl">
-          <div className="absolute inset-0 blur-3xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245_/_0.45),transparent)]" />
-          <img
-            src={logo}
-            alt="0G-PORTAL mascot"
-            className="relative w-full h-auto rounded-2xl border border-[oklch(0.72_0.22_245/0.4)] shadow-[0_0_80px_-10px_oklch(0.72_0.22_245/0.6)]"
-          />
-        </div>
         <p className="text-xs sm:text-sm tracking-[0.4em] uppercase font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
           Street · Static · Stream
         </p>
