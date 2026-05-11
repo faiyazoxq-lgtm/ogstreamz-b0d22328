@@ -96,7 +96,17 @@ async function processBucket(kind: "7d" | "1d" | "expired") {
 export const Route = createFileRoute("/api/public/hooks/telegram-reminders")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const provided = request.headers.get("x-hook-secret") || "";
+        const expected = process.env.REMINDER_HOOK_SECRET || "";
+        if (!expected || provided.length !== expected.length) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+        // timing-safe compare
+        let diff = 0;
+        for (let i = 0; i < expected.length; i++) diff |= provided.charCodeAt(i) ^ expected.charCodeAt(i);
+        if (diff !== 0) return new Response("Unauthorized", { status: 401 });
+
         const results = await Promise.all([
           processBucket("7d"),
           processBucket("1d"),
