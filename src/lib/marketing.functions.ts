@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /**
@@ -140,14 +141,17 @@ async function tgBroadcast(caption: string): Promise<string | null> {
   }
 }
 
-export const runPortalMarketing = createServerFn({ method: "POST" })
-  .inputValidator((d: { portalId: string }) => ({ portalId: String(d.portalId || "").slice(0, 64) }))
-  .handler(async ({ data }) => {
-    if (!data.portalId) throw new Error("portalId required");
+/**
+ * Internal helper — call directly from other auth-guarded server functions.
+ * NOT exposed as a server fn endpoint; keeps the service-role + AI cost surface
+ * gated by whatever caller (e.g. spawnMusicPortal) already enforces auth.
+ */
+export async function runPortalMarketingInternal(portalId: string): Promise<{ ok: boolean; telegram: boolean; campaign: boolean }> {
+    if (!portalId) throw new Error("portalId required");
     const { data: portal } = await supabaseAdmin
       .from("portals")
       .select("id, slug, name, kind, style, language, vibe, created_by")
-      .eq("id", data.portalId)
+      .eq("id", portalId)
       .maybeSingle();
     if (!portal) throw new Error("Portal not found");
 
@@ -220,4 +224,28 @@ export const runPortalMarketing = createServerFn({ method: "POST" })
       .eq("portal_id", portal.id);
 
     return { ok: true, telegram: !!tgMsgId, campaign: !!campaign };
+}
+
+/**
+ * Public server fn wrapper — auth + admin/boss only. Any direct HTTP caller
+ * must be authenticated and have admin role to trigger the marketing pipeline.
+ */
+export const runPortalMarketing = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { portalId: string }) => ({ portalId: String(d.portalId || "").slice(0, 64) }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    const { data: role } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("rank")
+      .eq("id", userId)
+      .maybeSingle();
+    if (!role && prof?.rank !== "boss") throw new Error("Admin only");
+    return runPortalMarketingInternal(data.portalId);
   });
