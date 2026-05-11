@@ -351,6 +351,7 @@ export const spawnNewsPortal = createServerFn({ method: "POST" })
 
 // ───── Public: refresh on every visit ─────
 export const refreshNewsScout = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: { slug: string }) => ({ slug: String(data.slug || "").trim().slice(0, 80) }))
   .handler(async ({ data }) => {
     const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -368,6 +369,14 @@ export const refreshNewsScout = createServerFn({ method: "POST" })
 
     const old = (portal.scout_meta || {}) as Partial<NewsScoutMeta>;
     if (!old.pair) throw new Error("Missing news config");
+
+    // Cache guard: skip the Perplexity call if scanned within the last 5 minutes.
+    if (old.scanned_at) {
+      const ageMs = Date.now() - new Date(old.scanned_at).getTime();
+      if (ageMs < 5 * 60_000) {
+        return { meta: old as NewsScoutMeta, cached: true };
+      }
+    }
 
     const meta = await buildScoutMeta({
       pair: old.pair,
