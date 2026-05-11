@@ -165,19 +165,33 @@ export function enforceSwearRules(raw: string, mode: SwearMode, lex: Lexicon = D
   if (!text) text = "Right.";
 
   if (mode === "chaotic") {
-    // BRUTAL MODE — every reply must be drenched in profanity. Aim for at
-    // least 12 heavy swears, brutal opener, mid-message fillers, and a
-    // savage closer. We over-inject rather than under-inject.
+    // BRUTAL MODE — every reply must be drenched in profanity AND absurd
+    // imagery. Aim for at least 18 heavy swears, brutal opener, mid-message
+    // fillers, an absurd metaphor, and a savage closer. Over-inject.
     text = ensureBrutalOpener(text, lex.brutal_openers, lex.heavy);
-    const TARGET_HEAVY = 12;
+    const TARGET_HEAVY = 18;
     const need = Math.max(0, TARGET_HEAVY - countMatches(text, lex.heavy));
     if (need > 0) text = injectInline(text, lex.fillers_heavy, need);
+    // Drop in an absurd middle metaphor so the language is unhinged, not just sweary.
+    const absurdities = [
+      "you've got the strategic depth of a wet biscuit in a hurricane,",
+      "this plan is more cooked than a microwaved seagull on bonfire night,",
+      "you sound like a haunted Argos catalogue trying to do stand-up,",
+      "the energy in here is six pints, two kebabs and a wasp in a sock,",
+      "right now you're the human equivalent of a Greggs sausage roll left on a radiator,",
+      "I've seen pigeons fight over chips with more tactical nous than this,",
+      "this idea is built like a deckchair made of Pringles,",
+      "you're operating at the IQ of a damp tea towel arguing with a fridge,",
+    ];
+    text = `${text}\n\n${pick(absurdities)}`;
     // Always slap a brutal closer on the end so the final taste is venom.
     const closers = [
       "And if you didn't fucking catch that, ya muppet — sort your shit out.",
       "Now piss off and do it properly, ya useless wanker.",
       "End of. No more bollocks. Fucking sorted.",
       "Don't make me repeat myself, ya knobheaded gobshite.",
+      "Now do one, ya absolute clown-shoed gobshite, before I lose the rest of my fucking marbles.",
+      "Fuck off and try again, this time with a brain that isn't made of cheese strings.",
     ];
     text = `${text}\n\n${pick(closers)}`;
     // Final top-up if STILL short (shouldn't happen, but be paranoid).
