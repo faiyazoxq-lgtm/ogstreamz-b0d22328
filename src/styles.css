@@ -112,6 +112,15 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
+  /* Brand wordmark + TrackingEye palette — single source of truth.
+     Both .text-eye-ice / .text-eye-ice--bright and the TrackingEye
+     iris/pupil rings consume these so theme changes stay in sync. */
+  --eye-ice-fg: #ffffff;
+  --eye-ice-stroke: rgba(255, 255, 255, 1);
+  --eye-ice-glow: oklch(0.72 0.22 245);
+  --eye-ice-glow-soft: oklch(0.78 0.2 240);
+  --eye-ice-pupil: oklch(0.55 0.24 255);
+  --eye-ice-pupil-ring: oklch(0.35 0.14 255);
 }
 
 .dark {
