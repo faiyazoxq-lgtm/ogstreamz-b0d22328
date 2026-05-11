@@ -19,14 +19,13 @@ function normalize(d: string): string {
 async function load(): Promise<string[]> {
   if (cache) return cache;
   if (loadPromise) return loadPromise;
-  loadPromise = supabase
-    .from("domain_denylist")
-    .select("domain")
-    .then(({ data }) => {
-      cache = (data ?? []).map((r) => normalize(r.domain)).filter(Boolean);
-      listeners.forEach((cb) => cb(cache!));
-      return cache;
-    });
+  loadPromise = (async () => {
+    const { data } = await supabase.from("domain_denylist").select("domain");
+    const next = (data ?? []).map((r) => normalize(r.domain)).filter(Boolean);
+    cache = next;
+    listeners.forEach((cb) => cb(next));
+    return next;
+  })();
   return loadPromise;
 }
 
