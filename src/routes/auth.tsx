@@ -216,19 +216,25 @@ function AuthPage() {
         const ref = new URLSearchParams(window.location.search).get("ref") || undefined;
         const dest = peekRedirect();
         try { sessionStorage.setItem("signup_content_mode", contentMode); } catch { /* ignore */ }
+        const vipRef = vipReferral.replace(/\D/g, "").slice(0, 6);
+        const meta: Record<string, string> = {};
+        if (ref) meta.referred_by_reseller = ref;
+        if (vipRef.length === 6) meta.vip_referral_code = vipRef;
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}${dest}`,
-            data: ref ? { referred_by_reseller: ref } : undefined,
+            data: Object.keys(meta).length ? meta : undefined,
           },
         });
         if (error) throw error;
         try { sessionStorage.setItem("just_signed_up", "1"); } catch { /* ignore */ }
         toast.success(passToken
           ? `Welcome. Confirm your email — your pass ${passToken} will activate on first sign-in.`
-          : `Welcome to the Syndicate. Confirm your inbox — +${signupBonus} credits land on first sign-in.`);
+          : vipRef.length === 6
+            ? `Welcome. Confirm your inbox — +${signupBonus} credits + 2 referral coins land on first sign-in.`
+            : `Welcome to the Syndicate. Confirm your inbox — +${signupBonus} credits land on first sign-in.`);
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
