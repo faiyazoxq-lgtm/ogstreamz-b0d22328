@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { TrackUnlockCheckout } from "@/components/TrackUnlockCheckout";
 import { ApiError } from "@/lib/api-error";
 import { useRetryWithBackoff } from "@/hooks/use-retry-with-backoff";
+import { PreparationProgress } from "@/components/PreparationProgress";
 
 type Props = {
   trackId: string;
@@ -289,15 +290,12 @@ export function StreamingPlayer({
         </div>
       )}
 
-      {retry.status === "retrying" && retry.nextRetryInMs > 0 && (
-        <div
-          className="mt-3 rounded-lg border p-2 text-center text-[10px] uppercase tracking-[0.25em] flex items-center justify-center gap-2"
-          style={{ borderColor: `${accent}55`, color: accent, background: "rgba(0,0,0,0.4)" }}
-        >
-          <Loader2 className="h-3 w-3 animate-spin" />
-          Retrying in {Math.ceil(retry.nextRetryInMs / 1000)}s · attempt {retry.attempt} of 3
-        </div>
-      )}
+      <PreparationProgress
+        retry={retry}
+        accent={accent}
+        secondary={secondary}
+        label="Preparing stream…"
+      />
 
       <Dialog open={checkoutOpen} onOpenChange={(o) => (o ? setCheckoutOpen(true) : closeCheckout())}>
         <DialogContent className="max-w-2xl p-0 overflow-hidden">
