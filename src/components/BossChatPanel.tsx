@@ -5,56 +5,25 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
-import { supabase } from "@/integrations/supabase/client";
-import { setFeatureFlags } from "@/lib/overlord.functions";
 import { bossChat } from "@/lib/boss-chat.functions";
 import { effectiveSwearing } from "@/lib/swearing";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 export function BossChatPanel() {
-  const { user, profile, isAdmin, refresh } = useAuth();
+  const { user, profile } = useAuth();
   const ask = useServerFn(bossChat);
-  const setF = useServerFn(setFeatureFlags);
 
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
-  const [togglingFlag, setTogglingFlag] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const swearing = effectiveSwearing(profile);
-  // BRUTAL MODE default — chaotic unless the user has explicitly chosen otherwise.
-  const intensityRaw = String((profile?.feature_flags as any)?.swearing_intensity ?? "chaotic").toLowerCase();
-  const intensity: "mild" | "medium" | "chaotic" =
-    intensityRaw === "mild" || intensityRaw === "medium" ? intensityRaw : "chaotic";
-  const canToggleSelf = !!user;
-  // Boss can also toggle in bulk via the Boss Control Center; this is the per-user switch.
-  const isBoss = profile?.rank === "boss" || isAdmin;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
-
-  const setIntensity = async (next: "mild" | "medium" | "chaotic") => {
-    if (!user || !profile || next === intensity) return;
-    setTogglingFlag(true);
-    try {
-      const merged = { ...(profile.feature_flags ?? {}), swearing_intensity: next };
-      if (isBoss) {
-        await setF({ data: { userId: user.id, flags: merged } });
-      } else {
-        const { error } = await supabase.from("profiles").update({ feature_flags: merged }).eq("id", user.id);
-        if (error) throw new Error(error.message);
-      }
-      await refresh();
-      toast.success(`Intensity: ${next.toUpperCase()}`);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to set intensity");
-    } finally {
-      setTogglingFlag(false);
-    }
-  };
 
   const send = async () => {
     const text = input.trim();
@@ -127,38 +96,10 @@ export function BossChatPanel() {
       </header>
 
       {swearing && (
-        <div className="-mt-1 mb-4 flex flex-wrap items-center gap-2">
-          <span className="text-[10px] uppercase tracking-[0.3em] font-black text-rose-300/80">
-            Intensity
-          </span>
-          {(["mild", "medium", "chaotic"] as const).map((opt) => {
-            const active = intensity === opt;
-            const tint =
-              opt === "mild"
-                ? "border-amber-500/60 text-amber-200 bg-amber-500/10"
-                : opt === "medium"
-                  ? "border-rose-500/60 text-rose-200 bg-rose-500/10"
-                  : "border-fuchsia-500/70 text-fuchsia-200 bg-fuchsia-500/15";
-            return (
-              <button
-                key={opt}
-                type="button"
-                disabled={togglingFlag || !canToggleSelf}
-                onClick={() => setIntensity(opt)}
-                className={`px-3 py-1.5 rounded-full border-2 text-[10px] font-black uppercase tracking-[0.25em] transition-all ${
-                  active
-                    ? `${tint} ring-2 ring-offset-2 ring-offset-black ring-rose-500/40 shadow-[0_0_18px_-2px_rgba(244,63,94,0.6)]`
-                    : "border-white/15 text-white/55 hover:border-white/35 hover:text-white/80 bg-black/30"
-                }`}
-              >
-                {opt}
-              </button>
-            );
-          })}
-          <span className="text-[10px] text-rose-300/60 italic ml-1">
-            {intensity === "mild" && "Sass only · PG-13"}
-            {intensity === "medium" && "Standard sweary roast"}
-            {intensity === "chaotic" && "Full unhinged Enforcer"}
+        <div className="-mt-1 mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border-2 border-fuchsia-500/70 bg-fuchsia-500/15 text-fuchsia-200">
+          <Flame className="h-3.5 w-3.5" />
+          <span className="text-[10px] uppercase tracking-[0.3em] font-black">
+            OG Brutal · all-or-nothing
           </span>
         </div>
       )}

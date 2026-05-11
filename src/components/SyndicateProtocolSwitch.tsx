@@ -11,7 +11,6 @@ import { ShieldAlert, ShieldCheck } from "lucide-react";
  */
 export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean }) {
   const [mode, setMode] = useState<"og" | "normal">("og");
-  const [intensity, setIntensityState] = useState<"mild" | "medium" | "chaotic">("chaotic");
   const [enabled, setEnabled] = useState(true);
   const [id, setId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -27,10 +26,8 @@ export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean
       if (!alive || !data) return;
       setId(data.id);
       setEnabled(!!data.enabled);
-      const t = (data.tuning ?? {}) as { mode?: string; intensity?: string };
+      const t = (data.tuning ?? {}) as { mode?: string };
       setMode(t.mode === "normal" ? "normal" : "og");
-      const ri = String(t.intensity ?? "chaotic").toLowerCase();
-      setIntensityState(ri === "mild" || ri === "medium" ? (ri as any) : "chaotic");
     })();
     return () => { alive = false; };
   }, []);
@@ -42,7 +39,7 @@ export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean
     setMode(next);
     const { error } = await supabase
       .from("hub_settings")
-      .update({ tuning: { mode: next, intensity }, updated_at: new Date().toISOString() })
+      .update({ tuning: { mode: next, intensity: "chaotic" }, updated_at: new Date().toISOString() })
       .eq("id", id);
     setSaving(false);
     if (error) {
@@ -51,24 +48,6 @@ export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean
       return;
     }
     toast.success(`Syndicate Protocol → ${next === "og" ? "OG-MODE · ENFORCER" : "NORMAL · ANALYST"}`);
-  }
-
-  async function setIntensity(next: "mild" | "medium" | "chaotic") {
-    if (!id || saving || next === intensity) return;
-    setSaving(true);
-    const prev = intensity;
-    setIntensityState(next);
-    const { error } = await supabase
-      .from("hub_settings")
-      .update({ tuning: { mode, intensity: next }, updated_at: new Date().toISOString() })
-      .eq("id", id);
-    setSaving(false);
-    if (error) {
-      setIntensityState(prev);
-      toast.error(error.message);
-      return;
-    }
-    toast.success(`Swearing intensity → ${next.toUpperCase()}`);
   }
 
   async function toggleOnline(v: boolean) {
@@ -176,40 +155,14 @@ export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean
       </p>
 
       {isOg && (
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="text-[10px] uppercase tracking-[0.3em] terminal-mono text-white/55">
-            Swearing Intensity
-          </span>
-          {(["mild", "medium", "chaotic"] as const).map((opt) => {
-            const active = intensity === opt;
-            return (
-              <button
-                key={opt}
-                type="button"
-                disabled={saving}
-                onClick={() => setIntensity(opt)}
-                className={`px-3 py-1.5 rounded-full border-2 text-[10px] font-black uppercase tracking-[0.25em] transition-all ${
-                  active
-                    ? "border-[var(--syndicate-glow)] text-white"
-                    : "border-white/15 text-white/55 hover:border-white/35 hover:text-white/85 bg-black/30"
-                }`}
-                style={
-                  active
-                    ? {
-                        background: "color-mix(in srgb, var(--syndicate-glow) 18%, transparent)",
-                        boxShadow: "0 0 22px -2px color-mix(in srgb, var(--syndicate-glow) 70%, transparent)",
-                      }
-                    : undefined
-                }
-              >
-                {opt}
-              </button>
-            );
-          })}
-          <span className="text-[10px] terminal-mono text-white/45 italic ml-1">
-            {intensity === "mild" && "PG-13 · sass only"}
-            {intensity === "medium" && "Standard sweary roast"}
-            {intensity === "chaotic" && "Full unhinged Enforcer"}
+        <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border-2"
+          style={{
+            borderColor: "color-mix(in srgb, var(--syndicate-glow) 70%, transparent)",
+            background: "color-mix(in srgb, var(--syndicate-glow) 12%, transparent)",
+          }}>
+          <ShieldAlert className="h-3.5 w-3.5" style={{ color: "var(--syndicate-glow)" }} />
+          <span className="text-[10px] uppercase tracking-[0.3em] terminal-mono font-black text-white/90">
+            OG Brutal · all-or-nothing
           </span>
         </div>
       )}
