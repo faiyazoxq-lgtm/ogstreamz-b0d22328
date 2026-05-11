@@ -4,29 +4,10 @@
 //  • getOpsSnapshot   — live counts across the whole platform
 //  • runMaintenance   — one-click housekeeping actions
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireBoss } from "@/integrations/supabase/boss-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const AI_ENDPOINT = "https://ai.gateway.lovable.dev/v1/chat/completions";
-
-async function assertBoss(userId: string) {
-  const { data, error } = await supabaseAdmin
-    .from("profiles")
-    .select("rank")
-    .eq("id", userId)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data || data.rank !== "boss") {
-    // Allow admins too via user_roles
-    const { data: r } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (!r) throw new Error("Boss/admin only");
-  }
-}
 
 export const runAgentTask = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
