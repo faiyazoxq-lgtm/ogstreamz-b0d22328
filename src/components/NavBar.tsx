@@ -382,7 +382,7 @@ export function NavBar() {
 }
 
 function MobileNavDrawer({
-  hubs, stores, admin, user, profile, isBoss,
+  hubs, stores, admin, user, profile, isBoss, portals,
 }: {
   hubs: ReadonlyArray<HubLink>;
   stores: ReadonlyArray<HubLink>;
@@ -390,6 +390,7 @@ function MobileNavDrawer({
   user: ReturnType<typeof useAuth>["user"];
   profile: ReturnType<typeof useAuth>["profile"];
   isBoss: boolean;
+  portals: ReadonlyArray<HubLink>;
 }) {
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -520,7 +521,7 @@ function MobileNavDrawer({
             </div>
           )}
 
-          {user && <Section title="Switch portal" icon={DoorOpen} items={portalSwitcherLinks} />}
+          {user && portals.length > 0 && <Section title="Portals" icon={DoorOpen} items={portals} />}
           <Section title="HUBS" icon={Rocket} items={hubs} gold />
           <Section title={isBoss ? "Manage Store" : "Store"} icon={Store} items={stores} />
           {admin.length > 0 && <Section title="Boss" icon={ShieldCheck} items={admin} />}
