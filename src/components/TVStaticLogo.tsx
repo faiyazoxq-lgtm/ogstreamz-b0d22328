@@ -11,7 +11,7 @@ export function TVStaticLogo({
 }) {
   // Fluid square that tracks the wordmark's clamp font-size formula
   // (~0.95rem→1.875rem) so icon + text always share the same optical centre.
-  const dim = size ? `${size}px` : "clamp(2.25rem, 9vw, 3.25rem)";
+  const dim = size ? `${size}px` : "clamp(3rem, 12vw, 4.5rem)";
   return (
     <span
       className={`relative inline-block tv-screen rounded-md ring-1 ring-[oklch(0.72_0.22_245/0.55)] align-middle ${className}`}
