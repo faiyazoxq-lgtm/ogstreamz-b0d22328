@@ -376,6 +376,51 @@ export type Database = {
         }
         Relationships: []
       }
+      boss_function_ideas: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          link: string | null
+          notes: string
+          position: number
+          priority: string
+          status: string
+          summary: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link?: string | null
+          notes?: string
+          position?: number
+          priority?: string
+          status?: string
+          summary?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link?: string | null
+          notes?: string
+          position?: number
+          priority?: string
+          status?: string
+          summary?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       boss_notes: {
         Row: {
           body: string
@@ -1003,6 +1048,45 @@ export type Database = {
           justification?: string
           reviewed_at?: string
           reviewed_by?: string | null
+          signature?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      function_grant_revocations: {
+        Row: {
+          id: string
+          reason: string
+          restore_sql: string
+          restored_at: string | null
+          restored_by: string | null
+          revoked_at: string
+          revoked_by: string | null
+          role_name: string
+          signature: string
+          status: string
+        }
+        Insert: {
+          id?: string
+          reason?: string
+          restore_sql: string
+          restored_at?: string | null
+          restored_by?: string | null
+          revoked_at?: string
+          revoked_by?: string | null
+          role_name: string
+          signature: string
+          status?: string
+        }
+        Update: {
+          id?: string
+          reason?: string
+          restore_sql?: string
+          restored_at?: string | null
+          restored_by?: string | null
+          revoked_at?: string
+          revoked_by?: string | null
+          role_name?: string
           signature?: string
           status?: string
         }
@@ -3263,6 +3347,27 @@ export type Database = {
           status: string
         }[]
       }
+      boss_list_function_grant_log: {
+        Args: never
+        Returns: {
+          id: string
+          reason: string
+          restore_sql: string
+          restored_at: string | null
+          restored_by: string | null
+          revoked_at: string
+          revoked_by: string | null
+          role_name: string
+          signature: string
+          status: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "function_grant_revocations"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       boss_list_stream_links: {
         Args: never
         Returns: {
@@ -3310,7 +3415,15 @@ export type Database = {
         }[]
       }
       boss_purge_view_events: { Args: never; Returns: number }
+      boss_restore_function_execute: {
+        Args: { _log_id: string }
+        Returns: boolean
+      }
       boss_reveal_agent_key: { Args: { _key_name: string }; Returns: string }
+      boss_revoke_function_execute: {
+        Args: { _reason?: string; _role_name: string; _signature: string }
+        Returns: string
+      }
       boss_revoke_vip_pass: { Args: { _pass_id: string }; Returns: boolean }
       boss_set_banned: {
         Args: { _banned: boolean; _reason?: string; _user_id: string }
