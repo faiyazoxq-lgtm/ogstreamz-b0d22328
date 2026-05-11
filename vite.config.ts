@@ -12,4 +12,36 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
+  vite: {
+    build: {
+      // Most remaining "large" chunks are vendor bundles, not app code.
+      // Bump the warning slightly so noise doesn't hide real regressions.
+      chunkSizeWarningLimit: 800,
+      rollupOptions: {
+        output: {
+          // Split heavy third-party libs into their own long-cacheable chunks.
+          // App route code stays under TanStack Router's auto-code-split chunks.
+          manualChunks(id) {
+            if (!id.includes("node_modules")) return undefined;
+
+            if (id.includes("/@supabase/")) return "vendor-supabase";
+            if (id.includes("/@tanstack/")) return "vendor-tanstack";
+            if (id.includes("/@stripe/") || id.includes("/stripe")) return "vendor-stripe";
+            if (id.includes("/@radix-ui/")) return "vendor-radix";
+            if (id.includes("/lucide-react/")) return "vendor-icons";
+            if (id.includes("/recharts/") || id.includes("/d3-")) return "vendor-charts";
+            if (id.includes("/framer-motion/") || id.includes("/motion/")) return "vendor-motion";
+            if (
+              id.includes("/react/") ||
+              id.includes("/react-dom/") ||
+              id.includes("/scheduler/")
+            ) {
+              return "vendor-react";
+            }
+            return "vendor";
+          },
+        },
+      },
+    },
+  },
 });
