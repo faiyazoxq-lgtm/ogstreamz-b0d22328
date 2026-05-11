@@ -72,9 +72,18 @@ function NavDropdown({
   hideLabelOnMobile?: boolean;
   currentPath: string;
 }) {
-  const sectionActive = items.some(
+  // Pick the most specific matching item (longest `to` wins) so that
+  // e.g. "/dashboard" beats "/" on /dashboard.
+  const matches = items.filter(
     (it) => currentPath === it.to || currentPath.startsWith(it.to + "/"),
   );
+  const activeItem =
+    matches.sort((a, b) => b.to.length - a.to.length)[0] ?? null;
+  const sectionActive = activeItem !== null;
+  // For the soft-gold (Portals) trigger: surface the active portal's
+  // icon + label directly so the user sees where they are without opening.
+  const TriggerIcon = softGold && activeItem ? activeItem.icon : Icon;
+  const triggerLabel = softGold && activeItem ? activeItem.label : label;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -91,8 +100,8 @@ function NavDropdown({
               : "text-muted-foreground hover:text-foreground hover:bg-secondary data-[state=open]:bg-secondary data-[state=open]:text-foreground data-[active=true]:bg-secondary data-[active=true]:text-foreground",
         ].join(" ")}
       >
-        <Icon className="h-4 w-4" />
-        <span className={hideLabelOnMobile ? "hidden md:inline" : ""}>{label}</span>
+        <TriggerIcon className="h-4 w-4" />
+        <span className={hideLabelOnMobile ? "hidden md:inline" : ""}>{triggerLabel}</span>
         <ChevronDown className="h-3.5 w-3.5 opacity-70 hidden md:inline transition-transform duration-300 group-data-[state=open]:rotate-180" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -113,7 +122,7 @@ function NavDropdown({
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {items.map((it) => {
-          const isActive = currentPath === it.to || currentPath.startsWith(it.to + "/");
+          const isActive = activeItem?.to === it.to;
           return (
             <DropdownMenuItem
               key={it.to}
