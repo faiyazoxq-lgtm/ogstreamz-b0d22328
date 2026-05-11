@@ -50,14 +50,35 @@ export const Route = createFileRoute("/api/public/suno-webhook")({
       POST: async ({ request }) => {
         // Verify webhook secret in ?secret= query param (sunoapi.com has no signing).
         const url = new URL(request.url);
-        const provided = url.searchParams.get("secret") || "";
+        const provided = url.searchParams.get("secret");
         const expected = process.env.SUNO_WEBHOOK_SECRET || "";
-        if (!expected || provided.length !== expected.length) {
-          return new Response("Unauthorized", { status: 401 });
+        const ip = request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "unknown";
+        const ua = (request.headers.get("user-agent") || "").slice(0, 200);
+
+        if (!expected) {
+          console.error("[suno-webhook] SUNO_WEBHOOK_SECRET not configured");
+          return Response.json(
+            { error: "server_misconfigured", message: "Suno webhook secret is not configured." },
+            { status: 500 },
+          );
         }
-        let diff = 0;
-        for (let i = 0; i < expected.length; i++) diff |= provided.charCodeAt(i) ^ expected.charCodeAt(i);
-        if (diff !== 0) return new Response("Unauthorized", { status: 401 });
+        if (!provided) {
+          console.warn(`[suno-webhook] 401 missing ?secret ip=${ip} ua="${ua}"`);
+          return Response.json(
+            { error: "missing_secret", message: "?secret query parameter is required." },
+            { status: 401 },
+          );
+        }
+        let diff = provided.length ^ expected.length;
+        const len = Math.min(provided.length, expected.length);
+        for (let i = 0; i < len; i++) diff |= provided.charCodeAt(i) ^ expected.charCodeAt(i);
+        if (diff !== 0) {
+          console.warn(`[suno-webhook] 403 invalid ?secret ip=${ip} ua="${ua}"`);
+          return Response.json(
+            { error: "invalid_secret", message: "?secret did not match." },
+            { status: 403 },
+          );
+        }
 
         let payload: any;
         try {
