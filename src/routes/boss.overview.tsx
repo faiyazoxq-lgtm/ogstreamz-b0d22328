@@ -12,6 +12,7 @@ import { CollapsiblePanel } from "@/components/boss/CollapsiblePanel";
 import { PowerToggle, type PowerToggleConfirm } from "@/components/boss/PowerToggle";
 import { QuickJump } from "@/components/boss/QuickJump";
 import { TelegramInboxPanel } from "@/components/boss/TelegramInboxPanel";
+import { TelegramConnectionPanel } from "@/components/boss/TelegramConnectionPanel";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -707,7 +708,10 @@ function BossOverview() {
         subtitle="Bot DMs and groups · pick a chat to view messages and reply"
         defaultOpen={false}
       >
-        <TelegramInboxPanel />
+        <div className="space-y-4">
+          <TelegramConnectionPanel />
+          <TelegramInboxPanel />
+        </div>
       </CollapsiblePanel>
 
       <CollapsiblePanel
