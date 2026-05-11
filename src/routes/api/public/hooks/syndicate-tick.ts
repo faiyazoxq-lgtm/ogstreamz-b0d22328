@@ -6,7 +6,7 @@ export const Route = createFileRoute("/api/public/hooks/syndicate-tick")({
     handlers: {
       POST: async ({ request }) => {
         const apikey = request.headers.get("apikey") || "";
-        const expected = process.env.SUPABASE_PUBLISHABLE_KEY || "";
+        const expected = process.env.SYNDICATE_TICK_SECRET || "";
         if (!expected || apikey !== expected) {
           return new Response(JSON.stringify({ error: "Unauthorized" }), {
             status: 401, headers: { "Content-Type": "application/json" },
