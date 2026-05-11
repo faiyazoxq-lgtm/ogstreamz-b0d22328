@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { tgCall, tgSendMessage } from "@/lib/telegram-bot.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function assertAdmin(supabase: any, userId: string) {
   const { data } = await supabase
@@ -11,6 +12,26 @@ async function assertAdmin(supabase: any, userId: string) {
     .eq("role", "admin")
     .maybeSingle();
   if (!data) throw new Error("Admin only");
+}
+
+/** Throw unless the caller has an active VIP/Real OG status. */
+async function assertVip(supabase: any, userId: string): Promise<void> {
+  const { data, error } = await supabase.rpc("is_real_og", { _uid: userId });
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("VIP only — link a VIP pass first.");
+}
+
+/** Look up the caller's linked Telegram chat_id, or throw. */
+async function getMyChatId(userId: string): Promise<number> {
+  const { data, error } = await supabaseAdmin
+    .from("telegram_user_links")
+    .select("chat_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  const chatId = (data as { chat_id: number | null } | null)?.chat_id;
+  if (!chatId) throw new Error("Telegram not linked yet.");
+  return Number(chatId);
 }
 
 export type TgChatSummary = {
@@ -186,4 +207,46 @@ export const getTelegramBotStatus = createServerFn({ method: "POST" })
         error: e instanceof Error ? e.message : String(e),
       };
     }
+  });
+
+// =============================================================
+// VIP-scoped: each VIP only sees their own DM thread with the bot.
+// =============================================================
+
+/** Messages from the caller's own Telegram DM with the bot. VIP only. */
+export const listMyTelegramMessages = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { limit?: number }) =>
+    z.object({ limit: z.number().int().min(1).max(500).optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    await assertVip(supabase, userId);
+    const chatId = await getMyChatId(userId);
+
+    const { data: rows, error } = await supabaseAdmin
+      .from("telegram_messages")
+      .select(
+        "update_id, chat_id, from_username, from_name, text, message_date",
+      )
+      .eq("chat_id", chatId)
+      .order("message_date", { ascending: false })
+      .limit(data.limit ?? 100);
+    if (error) throw new Error(error.message);
+    const messages = ((rows ?? []) as any[]).reverse() as TgMessage[];
+    return { chat_id: chatId, messages };
+  });
+
+/** Send a message from the bot into the caller's own DM. VIP only. */
+export const sendMyTelegramMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { text: string }) =>
+    z.object({ text: z.string().min(1).max(4096) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    await assertVip(supabase, userId);
+    const chatId = await getMyChatId(userId);
+    const result = await tgSendMessage(chatId, data.text);
+    return { ok: true, message_id: (result as any)?.message_id ?? null };
   });
