@@ -78,7 +78,7 @@ function useNavPortals(): ReadonlyArray<HubLink> {
 // Boss / admin pages live under their own /boss layout with a sidebar.
 
 function NavDropdown({
-  label, icon: Icon, items, gold, softGold, hideLabelOnMobile, currentPath,
+  label, icon: Icon, items, gold, softGold, hideLabelOnMobile, currentPath, pill,
 }: {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -87,6 +87,7 @@ function NavDropdown({
   softGold?: boolean;
   hideLabelOnMobile?: boolean;
   currentPath: string;
+  pill?: boolean;
 }) {
   // Pick the most specific matching item (longest `to` wins) so that
   // e.g. "/dashboard" beats "/" on /dashboard.
@@ -106,19 +107,20 @@ function NavDropdown({
         aria-label={label}
         data-active={sectionActive ? "true" : undefined}
         className={[
-          "group inline-flex items-center gap-1 sm:gap-1.5 px-2 md:px-4 py-2 text-sm md:text-base font-semibold rounded-md transition-all duration-300 outline-none",
-          "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary focus-visible:ring-offset-[3px] focus-visible:ring-offset-background focus-visible:shadow-[0_0_0_1px_var(--background)]",
+          "group inline-flex items-center gap-1.5 px-3 md:px-4 py-1.5 text-[11px] md:text-xs font-bold uppercase tracking-[0.18em] transition-all duration-300 outline-none",
+          "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           "active:scale-[0.97]",
+          pill ? "rounded-full" : "rounded-md",
           gold
-            ? "text-gold hover:bg-gold/10 border border-gold/30 data-[state=open]:bg-gold/15 data-[active=true]:bg-gold/15 data-[active=true]:border-gold/60"
+            ? "text-gold hover:bg-gold/10 data-[state=open]:bg-gold/15 data-[active=true]:bg-gold/15"
             : softGold
-              ? "text-gold/85 border border-gold/20 hover:text-gold hover:bg-gold/[0.08] hover:border-gold/40 hover:shadow-[0_0_18px_-4px_var(--gold)] data-[state=open]:text-gold data-[state=open]:bg-gold/10 data-[state=open]:border-gold/50 data-[state=open]:shadow-[0_0_22px_-6px_var(--gold)] data-[active=true]:bg-gold/10 data-[active=true]:border-gold/50"
-              : "text-muted-foreground hover:text-foreground hover:bg-secondary data-[state=open]:bg-secondary data-[state=open]:text-foreground data-[active=true]:bg-secondary data-[active=true]:text-foreground",
+              ? "text-gold/80 hover:text-gold hover:bg-gold/[0.08] data-[state=open]:text-gold data-[state=open]:bg-gold/10 data-[active=true]:bg-gold/10"
+              : "text-foreground/70 hover:text-foreground hover:bg-white/5 data-[state=open]:bg-white/5 data-[state=open]:text-foreground data-[active=true]:bg-white/5 data-[active=true]:text-foreground",
         ].join(" ")}
       >
         <TriggerIcon className="h-4 w-4" />
         <span className={hideLabelOnMobile ? "hidden md:inline" : ""}>{triggerLabel}</span>
-        <ChevronDown className="h-3.5 w-3.5 opacity-70 hidden md:inline transition-transform duration-300 group-data-[state=open]:rotate-180" />
+        <ChevronDown className="h-3 w-3 opacity-60 hidden md:inline transition-transform duration-300 group-data-[state=open]:rotate-180" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
@@ -264,7 +266,7 @@ export function NavBar() {
         <Link
           to="/"
           aria-label="0G-PORTAL — home"
-          className="brand-glow group min-w-0 flex-1 sm:flex-initial overflow-hidden h-full -ml-1 sm:ml-0 px-2 sm:px-1 py-2 min-h-12 sm:min-h-0 rounded-lg outline-none transition-colors active:bg-white/5 hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-[3px] focus-visible:ring-offset-background focus-visible:shadow-[0_0_24px_-4px_var(--gold)] touch-manipulation flex items-center"
+          className="brand-glow group min-w-0 flex-1 sm:flex-initial overflow-hidden h-full -ml-1 sm:ml-0 pl-1 pr-3 sm:pl-1.5 sm:pr-4 py-1 min-h-12 sm:min-h-0 rounded-2xl outline-none transition-all border border-white/10 hover:border-gold/30 bg-white/[0.02] hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:shadow-[0_0_24px_-4px_var(--gold)] touch-manipulation flex items-center"
           style={{ gap: "clamp(0.5rem, 1.6vw + 0.25rem, 1.5rem)" }}
         >
           <TVStaticLogo className="shrink-0 self-center" />
@@ -311,15 +313,15 @@ export function NavBar() {
             </span>
           </Link>
         )}
-        <ul className="flex items-center flex-nowrap gap-0.5 sm:gap-1.5 shrink-0 ml-auto">
+        <ul className="flex items-center flex-nowrap gap-2 sm:gap-3 shrink-0 ml-auto">
           <li className="hidden sm:block">
-            <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile currentPath={pathname} />
-          </li>
-          <li className="hidden sm:block">
-            <NavDropdown label="Portals" icon={DoorOpen} items={navPortals.length ? navPortals : [{ to: "/portals", label: "Browse Portals", icon: Sparkles, desc: "No portals yet — open the directory" }]} softGold hideLabelOnMobile currentPath={pathname} />
-          </li>
-          <li className="hidden sm:block">
-            <NavDropdown label={isBoss ? "Manage Store" : "Store"} icon={Store} items={storeLinks} hideLabelOnMobile currentPath={pathname} />
+            <div className="flex items-center bg-white/[0.04] border border-white/10 rounded-full p-1 shadow-inner shadow-black/20 backdrop-blur-sm">
+              <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile currentPath={pathname} pill />
+              <span aria-hidden className="w-px h-4 bg-white/10" />
+              <NavDropdown label="Portals" icon={DoorOpen} items={navPortals.length ? navPortals : [{ to: "/portals", label: "Browse Portals", icon: Sparkles, desc: "No portals yet — open the directory" }]} softGold hideLabelOnMobile currentPath={pathname} pill />
+              <span aria-hidden className="w-px h-4 bg-white/10" />
+              <NavDropdown label={isBoss ? "Manage Store" : "Store"} icon={Store} items={storeLinks} hideLabelOnMobile currentPath={pathname} pill />
+            </div>
           </li>
           {isBoss && (
             <li className="hidden sm:block">
@@ -327,7 +329,7 @@ export function NavBar() {
                 to="/boss"
                 aria-label="Boss portal"
                 data-active={pathname === "/boss" || pathname.startsWith("/boss/") ? "true" : undefined}
-                className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-2 text-sm sm:text-base font-semibold rounded-md border border-gold/30 text-gold hover:bg-gold/10 data-[active=true]:bg-gold/15 data-[active=true]:border-gold/60 transition-colors outline-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-[3px] focus-visible:ring-offset-background"
+                className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold uppercase tracking-[0.18em] rounded-full border border-gold/40 text-gold hover:bg-gold/10 data-[active=true]:bg-gold/15 data-[active=true]:border-gold/60 transition-colors outline-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <Crown className="h-4 w-4" />
                 <span className="hidden sm:inline">Boss</span>
@@ -335,11 +337,20 @@ export function NavBar() {
             </li>
           )}
           <li className="hidden sm:block">
-            <AccountMenu
-              user={user}
-              profile={profile}
-              isBoss={isBoss}
-            />
+            <div className="flex items-center gap-2">
+              <span
+                className={`hidden lg:inline-flex items-center gap-1 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-[0.2em] ${statusColor}`}
+                title={user ? (isBoss ? "Boss Account" : `Signed in as ${profile?.email ?? user.email}`) : "Not signed in"}
+              >
+                {isBoss || isVip ? <Crown className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
+                {statusLabel}
+              </span>
+              <AccountMenu
+                user={user}
+                profile={profile}
+                isBoss={isBoss}
+              />
+            </div>
           </li>
           {user && (
             <li className="block">
@@ -356,15 +367,6 @@ export function NavBar() {
               isBoss={isBoss}
               portals={navPortals}
             />
-          </li>
-          <li className="hidden lg:block">
-            <span
-              className={`inline-flex items-center gap-1 px-2 py-1 rounded-md border text-[10px] font-bold uppercase tracking-[0.2em] ${statusColor}`}
-              title={user ? (isBoss ? "Boss Account" : `Signed in as ${profile?.email ?? user.email}`) : "Not signed in"}
-            >
-              {isBoss || isVip ? <Crown className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
-              {statusLabel}
-            </span>
           </li>
         </ul>
       </nav>
@@ -583,7 +585,7 @@ function AccountMenu({
     return (
       <Link
         to="/auth"
-        className="ml-0.5 sm:ml-1 inline-flex items-center gap-2 btn-glass-blue px-2.5 sm:px-4 py-2 rounded-md text-xs uppercase tracking-[0.2em] font-bold text-white transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="inline-flex items-center gap-1.5 btn-glass-blue px-4 sm:px-5 py-1.5 rounded-full text-[11px] sm:text-xs uppercase tracking-[0.2em] font-bold text-white transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         aria-label="Join"
       >
         <LogIn className="h-3.5 w-3.5" />
@@ -598,11 +600,11 @@ function AccountMenu({
           <TooltipTrigger asChild>
             <DropdownMenuTrigger
               aria-label="Account"
-              className="ml-0.5 sm:ml-1 inline-flex items-center gap-1.5 btn-glass-blue px-2.5 sm:px-4 py-2 rounded-md text-xs uppercase tracking-[0.2em] font-bold text-white outline-none transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[state=open]:brightness-110 data-[state=open]:ring-2 data-[state=open]:ring-primary/60"
+              className="inline-flex items-center gap-1.5 btn-glass-blue px-4 sm:px-5 py-1.5 rounded-full text-[11px] sm:text-xs uppercase tracking-[0.2em] font-bold text-white outline-none transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[state=open]:brightness-110 data-[state=open]:ring-2 data-[state=open]:ring-primary/60"
             >
               <User className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Account</span>
-              <ChevronDown className="h-3 w-3 opacity-80 hidden sm:inline" />
+              <ChevronDown className="h-3 w-3 opacity-70 hidden sm:inline" />
             </DropdownMenuTrigger>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="bg-card border border-border text-foreground">
