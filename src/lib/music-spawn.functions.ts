@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { runPortalMarketing } from "@/lib/marketing.functions";
+import { runPortalMarketingInternal } from "@/lib/marketing.functions";
 import { assertVipAccess } from "@/lib/vip-guard";
 
 function slugify(s: string): string {
@@ -60,7 +60,7 @@ export const spawnMusicPortal = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     // Fire-and-forget the marketing engine. Failures must NOT block portal spawn.
-    runPortalMarketing({ data: { portalId: portal.id } }).catch((e) =>
+    runPortalMarketingInternal(portal.id).catch((e) =>
       console.warn("[spawnMusicPortal] marketing dispatch failed:", e),
     );
 
