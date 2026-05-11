@@ -174,7 +174,6 @@ function RootComponent() {
           <Toaster />
           <CloudflareAnalytics />
           <DomainDenylistGuard />
-          <ZeroGWatermark />
         </GlobalMoodProvider>
       </AuthProvider>
     </QueryClientProvider>
