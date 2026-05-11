@@ -93,6 +93,45 @@ export async function requireUsageAccess({ location }: GuardCtx) {
 }
 
 /**
+ * Route guard: only paid VIP-tier users (rank=vip, status=vip, an active
+ * vip_pass, or boss/admin override) may enter. Signed-in non-VIPs get
+ * bounced to /vip with an `upgrade` flag so the upgrade CTA highlights.
+ */
+export async function requireVip({ location }: GuardCtx) {
+  if (typeof window === "undefined") return;
+  const stash = () => stashRedirect(location);
+
+  if (!hasStoredAuth()) { stash(); throw redirect({ to: "/auth" }); }
+
+  const { data: sess } = await supabase.auth.getSession();
+  const uid = sess.session?.user?.id;
+  if (!uid) { stash(); throw redirect({ to: "/auth" }); }
+
+  const [{ data: prof }, { data: adminRow }, { data: pass }] = await Promise.all([
+    supabase.from("profiles").select("rank,status,banned").eq("id", uid).maybeSingle(),
+    supabase.from("user_roles").select("role").eq("user_id", uid).eq("role", "admin").maybeSingle(),
+    supabase.from("vip_passes").select("id").eq("user_id", uid)
+      .is("revoked_at", null).gt("expires_at", new Date().toISOString()).limit(1).maybeSingle(),
+  ]);
+
+  if (prof?.banned) {
+    throw redirect({ to: "/", search: { banned: "1" } as never });
+  }
+
+  const rank = prof?.rank as string | undefined;
+  const isVip =
+    !!adminRow ||
+    rank === "boss" ||
+    rank === "vip" ||
+    prof?.status === "vip" ||
+    !!pass;
+
+  if (!isVip) {
+    throw redirect({ to: "/vip", search: { upgrade: "vip" } as never });
+  }
+}
+
+/**
  * Route guard: only Boss-tier users (rank=boss) or admins may enter.
  * Unauthenticated → /auth (with redirect-back). Signed-in but not boss → /.
  */
