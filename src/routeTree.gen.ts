@@ -54,6 +54,7 @@ import { Route as BossTodoRouteImport } from './routes/boss.todo'
 import { Route as BossTelegramSetupRouteImport } from './routes/boss.telegram-setup'
 import { Route as BossStreamQueueRouteImport } from './routes/boss.stream-queue'
 import { Route as BossSettingsRouteImport } from './routes/boss.settings'
+import { Route as BossSecretsInventoryRouteImport } from './routes/boss.secrets-inventory'
 import { Route as BossPublishCheckRouteImport } from './routes/boss.publish-check'
 import { Route as BossPricingRouteImport } from './routes/boss.pricing'
 import { Route as BossPowerRouteImport } from './routes/boss.power'
@@ -305,6 +306,11 @@ const BossSettingsRoute = BossSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => BossRoute,
 } as any)
+const BossSecretsInventoryRoute = BossSecretsInventoryRouteImport.update({
+  id: '/secrets-inventory',
+  path: '/secrets-inventory',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossPublishCheckRoute = BossPublishCheckRouteImport.update({
   id: '/publish-check',
   path: '/publish-check',
@@ -486,6 +492,7 @@ export interface FileRoutesByFullPath {
   '/boss/power': typeof BossPowerRoute
   '/boss/pricing': typeof BossPricingRoute
   '/boss/publish-check': typeof BossPublishCheckRoute
+  '/boss/secrets-inventory': typeof BossSecretsInventoryRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/telegram-setup': typeof BossTelegramSetupRoute
@@ -557,6 +564,7 @@ export interface FileRoutesByTo {
   '/boss/power': typeof BossPowerRoute
   '/boss/pricing': typeof BossPricingRoute
   '/boss/publish-check': typeof BossPublishCheckRoute
+  '/boss/secrets-inventory': typeof BossSecretsInventoryRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/telegram-setup': typeof BossTelegramSetupRoute
@@ -630,6 +638,7 @@ export interface FileRoutesById {
   '/boss/power': typeof BossPowerRoute
   '/boss/pricing': typeof BossPricingRoute
   '/boss/publish-check': typeof BossPublishCheckRoute
+  '/boss/secrets-inventory': typeof BossSecretsInventoryRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/telegram-setup': typeof BossTelegramSetupRoute
@@ -704,6 +713,7 @@ export interface FileRouteTypes {
     | '/boss/power'
     | '/boss/pricing'
     | '/boss/publish-check'
+    | '/boss/secrets-inventory'
     | '/boss/settings'
     | '/boss/stream-queue'
     | '/boss/telegram-setup'
@@ -775,6 +785,7 @@ export interface FileRouteTypes {
     | '/boss/power'
     | '/boss/pricing'
     | '/boss/publish-check'
+    | '/boss/secrets-inventory'
     | '/boss/settings'
     | '/boss/stream-queue'
     | '/boss/telegram-setup'
@@ -847,6 +858,7 @@ export interface FileRouteTypes {
     | '/boss/power'
     | '/boss/pricing'
     | '/boss/publish-check'
+    | '/boss/secrets-inventory'
     | '/boss/settings'
     | '/boss/stream-queue'
     | '/boss/telegram-setup'
@@ -1236,6 +1248,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossSettingsRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/secrets-inventory': {
+      id: '/boss/secrets-inventory'
+      path: '/secrets-inventory'
+      fullPath: '/boss/secrets-inventory'
+      preLoaderRoute: typeof BossSecretsInventoryRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/publish-check': {
       id: '/boss/publish-check'
       path: '/publish-check'
@@ -1442,6 +1461,7 @@ interface BossRouteChildren {
   BossPowerRoute: typeof BossPowerRoute
   BossPricingRoute: typeof BossPricingRoute
   BossPublishCheckRoute: typeof BossPublishCheckRoute
+  BossSecretsInventoryRoute: typeof BossSecretsInventoryRoute
   BossSettingsRoute: typeof BossSettingsRoute
   BossStreamQueueRoute: typeof BossStreamQueueRoute
   BossTelegramSetupRoute: typeof BossTelegramSetupRoute
@@ -1466,6 +1486,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossPowerRoute: BossPowerRoute,
   BossPricingRoute: BossPricingRoute,
   BossPublishCheckRoute: BossPublishCheckRoute,
+  BossSecretsInventoryRoute: BossSecretsInventoryRoute,
   BossSettingsRoute: BossSettingsRoute,
   BossStreamQueueRoute: BossStreamQueueRoute,
   BossTelegramSetupRoute: BossTelegramSetupRoute,
