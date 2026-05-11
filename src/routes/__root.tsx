@@ -27,7 +27,6 @@ import { VipPromoBanner } from "../components/VipPromoBanner";
 import { FlameBackdrop } from "../components/FlameBackdrop";
 import { CloudflareAnalytics } from "../components/CloudflareAnalytics";
 import { DomainDenylistGuard } from "../components/DomainDenylistGuard";
-import { ZeroGWatermark } from "../components/ZeroGWatermark";
 
 function NotFoundComponent() {
   return (
