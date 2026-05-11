@@ -10,6 +10,7 @@ import {
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.gif";
+import heroBg from "@/assets/og-streamz-hero-bg.png";
 import { TiltCard } from "@/components/TiltCard";
 import { WelcomeAuthPrompt } from "@/components/WelcomeAuthPrompt";
 import { QuickJumpDrawer } from "@/components/QuickJumpDrawer";
@@ -96,6 +97,18 @@ function Index() {
 
   return (
     <main className="relative">
+      {/* Dynamic OG-STREAMZ hero background — fixed, parallax-style,
+          gently breathing, dimmed so foreground stays readable. */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-background"
+      >
+        <div
+          className="absolute inset-0 bg-no-repeat bg-center bg-cover opacity-50 motion-safe:animate-[hero-pan_30s_ease-in-out_infinite_alternate]"
+          style={{ backgroundImage: `url(${heroBg})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background" />
+      </div>
       {user && (
         <div className="relative max-w-7xl mx-auto px-5 sm:px-8 pt-4">
           <TelegramConnectBanner userId={user.id} />
