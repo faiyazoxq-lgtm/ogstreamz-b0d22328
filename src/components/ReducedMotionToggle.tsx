@@ -43,7 +43,7 @@ export function ReducedMotionToggle() {
       onClick={cycle}
       title={`${label} — click to change`}
       aria-label={label}
-      className="fixed bottom-3 right-3 z-[60] flex items-center gap-1.5 rounded-full border border-white/15 bg-black/55 backdrop-blur px-2.5 py-1.5 text-[11px] uppercase tracking-wider text-white/75 hover:text-white hover:bg-black/70 transition print:hidden"
+      className="fixed bottom-3 left-3 z-[60] flex items-center gap-1.5 rounded-full border border-white/15 bg-black/55 backdrop-blur px-2.5 py-1.5 text-[11px] uppercase tracking-wider text-white/75 hover:text-white hover:bg-black/70 transition print:hidden"
     >
       <Icon className="h-3.5 w-3.5" />
       <span className="hidden sm:inline">{label}</span>
