@@ -19,7 +19,7 @@ export function TrackUnlockCheckout({ trackId, onSuccess }: Props) {
       .then(({ data }) => {
         if (cancelled || !data) return;
         setMeta({
-          title: data.title,
+          title: data.title ?? "Track",
           cost: Math.max(1, Math.ceil((data.price_cents ?? 200) / 100)),
         });
       });
