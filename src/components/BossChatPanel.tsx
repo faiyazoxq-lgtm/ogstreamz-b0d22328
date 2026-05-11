@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Send, Skull, Crown, Flame, ShieldCheck, VolumeX, Volume2 } from "lucide-react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
+import { Loader2, Send, Skull, Crown, Flame, ShieldCheck, VolumeX, Volume2, Link2, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,24 +11,73 @@ import { effectiveSwearing } from "@/lib/swearing";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-export function BossChatPanel() {
+type Tone = "clean" | "brutal" | "auto";
+
+export function BossChatPanel({ tone }: { tone?: Tone } = {}) {
   const { user, profile } = useAuth();
   const ask = useServerFn(bossChat);
+  // Loose access — this panel may render under routes that don't define `tone`.
+  const search = useSearch({ strict: false }) as { tone?: Tone };
+  const navigate = useNavigate();
+  const effectiveTone: Tone = tone ?? search.tone ?? "auto";
 
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   // Per-conversation Safe Mode override. Resets on page reload — does NOT
   // touch the user's profile-level Swearing Agent preference.
-  const [convoSafe, setConvoSafe] = useState(false);
+  // Seed from the URL `?tone=` so a shared link opens in the right mode.
+  const [convoSafe, setConvoSafe] = useState<boolean>(effectiveTone === "clean");
+  const [copied, setCopied] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const profileSwearing = effectiveSwearing(profile);
   const swearing = profileSwearing && !convoSafe;
 
+  // If the URL tone changes after mount (back/forward, external link), sync.
+  useEffect(() => {
+    if (effectiveTone === "clean") setConvoSafe(true);
+    else if (effectiveTone === "brutal") setConvoSafe(false);
+    // "auto" leaves whatever the user picked alone
+  }, [effectiveTone]);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
+
+  const writeToneToUrl = (next: Tone) => {
+    try {
+      navigate({
+        to: ".",
+        replace: true,
+        search: (prev: Record<string, unknown>) => ({ ...prev, tone: next }),
+      } as any);
+    } catch {
+      /* route may not declare `tone` in its schema — non-fatal */
+    }
+  };
+
+  const toggleSafe = () => {
+    setConvoSafe((v) => {
+      const next = !v;
+      writeToneToUrl(next ? "clean" : "brutal");
+      return next;
+    });
+  };
+
+  const copyShareLink = async () => {
+    if (typeof window === "undefined") return;
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tone", convoSafe ? "clean" : "brutal");
+      await navigator.clipboard.writeText(url.toString());
+      setCopied(true);
+      toast.success(`Share link copied · opens in ${convoSafe ? "Clean" : "OG Brutal"} mode`);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      toast.error("Copy failed");
+    }
+  };
 
   const send = async () => {
     const text = input.trim();
@@ -103,7 +153,7 @@ export function BossChatPanel() {
           {profileSwearing && (
             <button
               type="button"
-              onClick={() => setConvoSafe((v) => !v)}
+              onClick={toggleSafe}
               aria-pressed={convoSafe}
               className={`text-[10px] uppercase tracking-[0.25em] font-bold underline-offset-4 hover:underline inline-flex items-center gap-1 ${
                 convoSafe ? "text-emerald-300" : "text-rose-300/80 hover:text-rose-200"
@@ -114,6 +164,15 @@ export function BossChatPanel() {
               {convoSafe ? "Unmute for this chat" : "Mute profanity (this chat)"}
             </button>
           )}
+          <button
+            type="button"
+            onClick={copyShareLink}
+            className="text-[10px] uppercase tracking-[0.25em] font-bold text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+            title={`Copy a shareable link that opens this chat in ${convoSafe ? "Clean" : "OG Brutal"} mode`}
+          >
+            {copied ? <Check className="h-3 w-3" /> : <Link2 className="h-3 w-3" />}
+            {copied ? "Link copied" : `Share ${convoSafe ? "Clean" : "Brutal"} link`}
+          </button>
         </div>
       </header>
 
