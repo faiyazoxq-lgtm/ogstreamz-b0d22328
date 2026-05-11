@@ -350,6 +350,9 @@ export function NavBar() {
           </li>
         </ul>
       </nav>
+      <div className="hidden md:block max-w-7xl mx-auto px-4 sm:px-8 pb-3">
+        <SiteSearch />
+      </div>
     </header>
   );
 }
