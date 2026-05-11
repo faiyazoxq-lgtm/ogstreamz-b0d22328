@@ -457,6 +457,7 @@ function BossOverview() {
             onToggle={togglePaymentMode}
             saving={togglingPayments}
             ready
+            confirm={paymentsConfirm}
           />
           <PowerToggle
             title="Coin transactions"
@@ -471,6 +472,7 @@ function BossOverview() {
             onToggle={toggleCoinFreeze}
             saving={togglingCoin}
             ready={coinFrozen !== null}
+            confirm={coinConfirm}
           />
           <PowerToggle
             title="Guttermouth"
@@ -485,6 +487,7 @@ function BossOverview() {
             onToggle={toggleSwear}
             saving={togglingSwear}
             ready={swearDefault !== null}
+            confirm={swearConfirm}
           />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
