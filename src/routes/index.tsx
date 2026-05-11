@@ -23,6 +23,7 @@ import { Flame } from "lucide-react";
 import { TrackingEye } from "@/components/TrackingEye";
 import { VipPortalExplorer } from "@/components/VipPortalExplorer";
 import { usePortalCount } from "@/hooks/use-portal-count";
+import { TelegramConnectBanner } from "@/components/TelegramConnectBanner";
 
 const ICONS: Record<string, any> = {
   Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
@@ -94,6 +95,11 @@ function Index() {
 
   return (
     <main className="relative">
+      {user && (
+        <div className="relative max-w-7xl mx-auto px-5 sm:px-8 pt-4">
+          <TelegramConnectBanner userId={user.id} />
+        </div>
+      )}
       {/* Ambient glow */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[600px] w-[900px] rounded-full bg-[radial-gradient(closest-side,oklch(0.72_0.22_245_/_0.28),transparent)]" />
