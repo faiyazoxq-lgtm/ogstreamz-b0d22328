@@ -215,7 +215,7 @@ function StorePage() {
           {loadingCatalog ? (
             <p className="text-center py-6 text-muted-foreground text-xs"><Loader2 className="h-4 w-4 inline animate-spin mr-2" />Loading items…</p>
           ) : (
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,160px),1fr))] gap-3">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,150px),1fr))] gap-2.5 sm:gap-3">
               {CATALOG_KINDS.map((kind) => {
                 const items = catalog.filter((p) => p.kind === kind);
                 const meta = CATALOG_META[kind];
@@ -229,9 +229,9 @@ function StorePage() {
                     key={kind}
                     to="/store/catalog"
                     search={{ tab: kind }}
-                    className="group relative rounded-2xl border border-border bg-card p-4 hover:border-[oklch(0.72_0.22_245/0.7)] hover:shadow-[0_0_30px_oklch(0.72_0.22_245/0.25)] transition flex flex-col min-h-[220px]"
+                    className="group relative rounded-2xl border border-border bg-card p-3 sm:p-4 hover:border-[oklch(0.72_0.22_245/0.7)] hover:shadow-[0_0_30px_oklch(0.72_0.22_245/0.25)] transition flex flex-col min-h-[200px] sm:min-h-[220px]"
                   >
-                    <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-secondary/50 border border-border mb-3">
+                    <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-secondary/50 border border-border mb-2.5 sm:mb-3">
                       {featured?.image_url ? (
                         <img
                           src={featured.image_url}
@@ -251,8 +251,8 @@ function StorePage() {
                         {items.length}
                       </span>
                     </div>
-                    <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{meta.blurb}</p>
-                    <p className="mt-1 text-sm font-bold text-white line-clamp-2 min-h-[2.5rem]">
+                    <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.22em] sm:tracking-[0.25em] text-muted-foreground line-clamp-1">{meta.blurb}</p>
+                    <p className="mt-1 text-[13px] sm:text-sm font-bold text-white line-clamp-2 min-h-[2.25rem] sm:min-h-[2.5rem] leading-snug">
                       {featured?.title ?? "Coming soon"}
                     </p>
                     <div className="mt-auto pt-2 flex items-center justify-between">
@@ -280,7 +280,7 @@ function StorePage() {
       ) : (
         <>
         {!isBoss && <PackCompareTable packs={packs} onBuy={(pid: string) => buy(pid)} />}
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-5">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-3 sm:gap-5">
           {packs.map((p) => (
             <PackCard
               key={p.id}
