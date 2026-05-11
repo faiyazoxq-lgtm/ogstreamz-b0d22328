@@ -21,6 +21,10 @@ export type RetryState<T> = {
   status: "idle" | "loading" | "retrying" | "success" | "error";
   attempt: number;
   nextRetryInMs: number; // countdown to the upcoming auto-retry, 0 when not pending
+  /** Total ms scheduled for the current backoff window (for progress bars). */
+  currentDelayMs: number;
+  /** Max attempts configured for this run. */
+  maxAttempts: number;
   data: T | null;
   errorCode: ApiErrorCode | null;
   errorMessage: string | null;
@@ -45,6 +49,7 @@ export function useRetryWithBackoff<T>(
   const [errorCode, setErrorCode] = useState<ApiErrorCode | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [nextRetryInMs, setNextRetryInMs] = useState(0);
+  const [currentDelayMs, setCurrentDelayMs] = useState(0);
 
   const fnRef = useRef(fn);
   fnRef.current = fn;
@@ -69,6 +74,7 @@ export function useRetryWithBackoff<T>(
     setErrorCode(null);
     setErrorMessage(null);
     setNextRetryInMs(0);
+    setCurrentDelayMs(0);
   }, []);
 
   const attemptRun = useCallback(async (n: number) => {
@@ -76,6 +82,7 @@ export function useRetryWithBackoff<T>(
     setStatus(n === 1 ? "loading" : "retrying");
     setAttempt(n);
     setNextRetryInMs(0);
+    setCurrentDelayMs(0);
     try {
       const result = await fnRef.current();
       if (cancelledRef.current) return;
@@ -101,6 +108,7 @@ export function useRetryWithBackoff<T>(
       const delay = Math.round(jitter);
       setStatus("retrying");
       setNextRetryInMs(delay);
+      setCurrentDelayMs(delay);
 
       // Tick down so the UI can show "Retrying in 3s…"
       const startedAt = Date.now();
@@ -133,5 +141,17 @@ export function useRetryWithBackoff<T>(
     await attemptRun(1);
   }, [attemptRun]);
 
-  return { status, attempt, nextRetryInMs, data, errorCode, errorMessage, run, retry, reset };
+  return {
+    status,
+    attempt,
+    nextRetryInMs,
+    currentDelayMs,
+    maxAttempts,
+    data,
+    errorCode,
+    errorMessage,
+    run,
+    retry,
+    reset,
+  };
 }
