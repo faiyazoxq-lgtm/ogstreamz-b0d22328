@@ -63,6 +63,7 @@ import { Route as BossPortalCostsRouteImport } from './routes/boss.portal-costs'
 import { Route as BossOverviewRouteImport } from './routes/boss.overview'
 import { Route as BossLexiconRouteImport } from './routes/boss.lexicon'
 import { Route as BossHubsRouteImport } from './routes/boss.hubs'
+import { Route as BossFunctionAuditRouteImport } from './routes/boss.function-audit'
 import { Route as BossDomainDenylistRouteImport } from './routes/boss.domain-denylist'
 import { Route as BossDenylistAuditRouteImport } from './routes/boss.denylist-audit'
 import { Route as BossCivilityRouteImport } from './routes/boss.civility'
@@ -351,6 +352,11 @@ const BossHubsRoute = BossHubsRouteImport.update({
   path: '/hubs',
   getParentRoute: () => BossRoute,
 } as any)
+const BossFunctionAuditRoute = BossFunctionAuditRouteImport.update({
+  id: '/function-audit',
+  path: '/function-audit',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossDomainDenylistRoute = BossDomainDenylistRouteImport.update({
   id: '/domain-denylist',
   path: '/domain-denylist',
@@ -484,6 +490,7 @@ export interface FileRoutesByFullPath {
   '/boss/civility': typeof BossCivilityRoute
   '/boss/denylist-audit': typeof BossDenylistAuditRoute
   '/boss/domain-denylist': typeof BossDomainDenylistRoute
+  '/boss/function-audit': typeof BossFunctionAuditRoute
   '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
@@ -556,6 +563,7 @@ export interface FileRoutesByTo {
   '/boss/civility': typeof BossCivilityRoute
   '/boss/denylist-audit': typeof BossDenylistAuditRoute
   '/boss/domain-denylist': typeof BossDomainDenylistRoute
+  '/boss/function-audit': typeof BossFunctionAuditRoute
   '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
@@ -630,6 +638,7 @@ export interface FileRoutesById {
   '/boss/civility': typeof BossCivilityRoute
   '/boss/denylist-audit': typeof BossDenylistAuditRoute
   '/boss/domain-denylist': typeof BossDomainDenylistRoute
+  '/boss/function-audit': typeof BossFunctionAuditRoute
   '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
@@ -705,6 +714,7 @@ export interface FileRouteTypes {
     | '/boss/civility'
     | '/boss/denylist-audit'
     | '/boss/domain-denylist'
+    | '/boss/function-audit'
     | '/boss/hubs'
     | '/boss/lexicon'
     | '/boss/overview'
@@ -777,6 +787,7 @@ export interface FileRouteTypes {
     | '/boss/civility'
     | '/boss/denylist-audit'
     | '/boss/domain-denylist'
+    | '/boss/function-audit'
     | '/boss/hubs'
     | '/boss/lexicon'
     | '/boss/overview'
@@ -850,6 +861,7 @@ export interface FileRouteTypes {
     | '/boss/civility'
     | '/boss/denylist-audit'
     | '/boss/domain-denylist'
+    | '/boss/function-audit'
     | '/boss/hubs'
     | '/boss/lexicon'
     | '/boss/overview'
@@ -1311,6 +1323,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossHubsRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/function-audit': {
+      id: '/boss/function-audit'
+      path: '/function-audit'
+      fullPath: '/boss/function-audit'
+      preLoaderRoute: typeof BossFunctionAuditRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/domain-denylist': {
       id: '/boss/domain-denylist'
       path: '/domain-denylist'
@@ -1453,6 +1472,7 @@ interface BossRouteChildren {
   BossCivilityRoute: typeof BossCivilityRoute
   BossDenylistAuditRoute: typeof BossDenylistAuditRoute
   BossDomainDenylistRoute: typeof BossDomainDenylistRoute
+  BossFunctionAuditRoute: typeof BossFunctionAuditRoute
   BossHubsRoute: typeof BossHubsRouteWithChildren
   BossLexiconRoute: typeof BossLexiconRoute
   BossOverviewRoute: typeof BossOverviewRoute
@@ -1478,6 +1498,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossCivilityRoute: BossCivilityRoute,
   BossDenylistAuditRoute: BossDenylistAuditRoute,
   BossDomainDenylistRoute: BossDomainDenylistRoute,
+  BossFunctionAuditRoute: BossFunctionAuditRoute,
   BossHubsRoute: BossHubsRouteWithChildren,
   BossLexiconRoute: BossLexiconRoute,
   BossOverviewRoute: BossOverviewRoute,
