@@ -120,6 +120,7 @@ const LANG_RULES: Record<BattleLanguage, string> = {
 };
 
 export const playBattleRound = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { slug: string; session_id: string; round?: number; previous?: { situation: string; pickedText: string; outcome: string } | null }) => ({
     slug: String(d.slug || "").trim().slice(0, 80),
     session_id: String(d.session_id || "").trim().slice(0, 80) || crypto.randomUUID(),
