@@ -21,8 +21,11 @@ export type Lexicon = {
 
 export const DEFAULT_LEXICON: Lexicon = {
   heavy: [
-  "fuck", "fucking", "shit", "bullshit", "twat", "wanker", "prick",
-  "bastard", "arse", "bollocks", "dickhead", "knobhead", "gobshite",
+  "fuck", "fucking", "fucked", "fucker", "motherfucker", "shit", "shitting",
+  "bullshit", "twat", "wanker", "wankstain", "prick", "bastard", "arse",
+  "arsehole", "bollocks", "dickhead", "knobhead", "knob", "gobshite",
+  "shithead", "shitshow", "piss", "pisstake", "tosser", "muppet", "melt",
+  "bellend", "numpty", "nonce", "plonker",
   ],
   mid: ["shit", "piss", "bastard", "prick", "arse", "bollocks", "dickhead"],
   soft: ["damn", "hell", "bloody", "crap", "sodding"],
@@ -41,6 +44,12 @@ export const DEFAULT_LEXICON: Lexicon = {
     "Fucking hell, ya muppet —",
     "Christ on a bike, you walnut —",
     "Sit down, ya soft prick —",
+    "Fuck me sideways, you bellend —",
+    "Oi, shitstain — pay attention —",
+    "Right, you fucking numpty —",
+    "Bollocks to that, ya wanker —",
+    "Christ alive, ya useless tosser —",
+    "Shut your gob a sec, ya plonker —",
   ],
   fillers_heavy: [
     "no fucking arguments,",
@@ -48,6 +57,14 @@ export const DEFAULT_LEXICON: Lexicon = {
     "don't be a wanker about it,",
     "stop being such a twat,",
     "and that's the fucking truth,",
+    "for fuck's sake,",
+    "no shit, ya muppet,",
+    "swear down, you absolute dickhead,",
+    "and don't piss it up the wall,",
+    "I'm fucking telling you,",
+    "wrap your knobhead around this,",
+    "this is the bollocks of it,",
+    "stop fannying about,",
   ],
   fillers_mid: [
     "no piss-arsing about,",
@@ -148,11 +165,24 @@ export function enforceSwearRules(raw: string, mode: SwearMode, lex: Lexicon = D
   if (!text) text = "Right.";
 
   if (mode === "chaotic") {
+    // BRUTAL MODE — every reply must be drenched in profanity. Aim for at
+    // least 12 heavy swears, brutal opener, mid-message fillers, and a
+    // savage closer. We over-inject rather than under-inject.
     text = ensureBrutalOpener(text, lex.brutal_openers, lex.heavy);
-    const need = Math.max(0, 6 - countMatches(text, lex.heavy));
+    const TARGET_HEAVY = 12;
+    const need = Math.max(0, TARGET_HEAVY - countMatches(text, lex.heavy));
     if (need > 0) text = injectInline(text, lex.fillers_heavy, need);
-    if (countMatches(text, lex.heavy) < 6) {
-      text = `${text}\n\nAnd if you didn't catch that, ya fucking muppet — sort your shit out.`;
+    // Always slap a brutal closer on the end so the final taste is venom.
+    const closers = [
+      "And if you didn't fucking catch that, ya muppet — sort your shit out.",
+      "Now piss off and do it properly, ya useless wanker.",
+      "End of. No more bollocks. Fucking sorted.",
+      "Don't make me repeat myself, ya knobheaded gobshite.",
+    ];
+    text = `${text}\n\n${pick(closers)}`;
+    // Final top-up if STILL short (shouldn't happen, but be paranoid).
+    if (countMatches(text, lex.heavy) < TARGET_HEAVY) {
+      text = injectInline(text, lex.fillers_heavy, TARGET_HEAVY - countMatches(text, lex.heavy));
     }
     return text;
   }
