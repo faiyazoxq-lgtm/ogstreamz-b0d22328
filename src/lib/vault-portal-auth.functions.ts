@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 const InputSchema = z.object({
@@ -7,6 +8,7 @@ const InputSchema = z.object({
 });
 
 export const vaultPortalLogin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }) => {
     const domain = process.env.VAULT_PORTAL_DOMAIN;
