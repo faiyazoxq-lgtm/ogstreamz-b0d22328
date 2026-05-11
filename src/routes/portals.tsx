@@ -285,8 +285,21 @@ function PortalsHub() {
                   params={{ slug: i.slug }}
                   className="mt-3 block rounded-md outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
-                  <h3 className="font-[Montserrat] font-black text-xl tracking-tight truncate hover:underline">{i.name}</h3>
-                  <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{i.subtitle || "—"}</p>
+                  {/* Title typography matches the header 0G-PORTAL wordmark:
+                      JetBrains Mono / black weight via text-eye-ice--bright,
+                      fluid clamp scale tuned to roughly half the navbar
+                      wordmark, and a per-card accent halo layered on top of
+                      the shared white→blue ice aura. */}
+                  <h3
+                    className="text-eye-ice--bright tracking-[-0.02em] leading-[1.05] truncate transition-[text-shadow,filter] duration-300 group-hover:brightness-110"
+                    style={{
+                      fontSize: "clamp(1.25rem, 3.4vw, 1.875rem)",
+                      textShadow: `0 0 2px rgba(0,0,0,0.55), 0 0 8px rgba(0,0,0,0.4), 0 0 16px ${meta.accent}, 0 0 32px color-mix(in oklab, ${meta.accent} 55%, transparent)`,
+                    }}
+                  >
+                    {i.name}
+                  </h3>
+                  <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2">{i.subtitle || "—"}</p>
                 </Link>
                 <div className="mt-3 text-[10px] uppercase tracking-widest text-muted-foreground/70 truncate">
                   {origin.replace(/^https?:\/\//, "")}{href}
