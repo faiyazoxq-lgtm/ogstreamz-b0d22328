@@ -2710,6 +2710,13 @@ export type Database = {
             referencedRelation: "tracks"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "track_purchases_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "tracks_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       tracks: {
@@ -3051,6 +3058,42 @@ export type Database = {
           theme_config: Json | null
           vibe: string | null
           vip: boolean | null
+        }
+        Relationships: []
+      }
+      tracks_public: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          currency: string | null
+          id: string | null
+          portal_slug: string | null
+          preview_path: string | null
+          price_cents: number | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          id?: string | null
+          portal_slug?: string | null
+          preview_path?: string | null
+          price_cents?: number | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          id?: string | null
+          portal_slug?: string | null
+          preview_path?: string | null
+          price_cents?: number | null
+          title?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
