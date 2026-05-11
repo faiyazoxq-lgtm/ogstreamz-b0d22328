@@ -1,11 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-
-async function isBoss(supabase: any) {
-  const uid = (await supabase.auth.getUser()).data.user?.id;
-  const { data } = await supabase.rpc("is_boss", { _uid: uid });
-  return !!data;
-}
+import { requireBoss } from "@/integrations/supabase/boss-middleware";
 
 export const requestTopup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -38,13 +33,12 @@ export const listMyTopupRequests = createServerFn({ method: "GET" })
   });
 
 export const bossListTopupRequests = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireBoss])
   .inputValidator((d: { status?: string } = {}) => ({
     status: d?.status === "approved" || d?.status === "denied" || d?.status === "all" ? d.status : "pending",
   }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
-    if (!(await isBoss(supabase))) throw new Error("Boss only");
     let q = supabase.from("topup_requests").select("*").order("created_at", { ascending: false }).limit(100);
     if (data.status !== "all") q = q.eq("status", data.status);
     const { data: rows, error } = await q;
@@ -53,7 +47,7 @@ export const bossListTopupRequests = createServerFn({ method: "GET" })
   });
 
 export const bossApproveTopup = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireBoss])
   .inputValidator((d: { id: string; credits: number; note?: string }) => ({
     id: String(d.id),
     credits: Math.max(1, Math.min(1000, Math.trunc(Number(d.credits)))),
@@ -71,7 +65,7 @@ export const bossApproveTopup = createServerFn({ method: "POST" })
   });
 
 export const bossDenyTopup = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireBoss])
   .inputValidator((d: { id: string; note?: string }) => ({
     id: String(d.id),
     note: String(d.note ?? "").slice(0, 500),
@@ -84,14 +78,13 @@ export const bossDenyTopup = createServerFn({ method: "POST" })
   });
 
 export const bossSetFriendsFamily = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireBoss])
   .inputValidator((d: { userId: string; enabled: boolean }) => ({
     userId: String(d.userId),
     enabled: !!d.enabled,
   }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
-    if (!(await isBoss(supabase))) throw new Error("Boss only");
     const { data: profile, error: readErr } = await supabase
       .from("profiles")
       .select("feature_flags")
@@ -105,10 +98,9 @@ export const bossSetFriendsFamily = createServerFn({ method: "POST" })
   });
 
 export const bossListFriendsFamily = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireBoss])
   .handler(async ({ context }) => {
     const { supabase } = context as any;
-    if (!(await isBoss(supabase))) throw new Error("Boss only");
     const { data, error } = await supabase
       .from("profiles")
       .select("id,email,credits,feature_flags,rank,status")
