@@ -26,6 +26,7 @@ import { AuthGate } from "../components/AuthGate";
 import { VipPromoBanner } from "../components/VipPromoBanner";
 import { FlameBackdrop } from "../components/FlameBackdrop";
 import { CloudflareAnalytics } from "../components/CloudflareAnalytics";
+import { DomainDenylistGuard } from "../components/DomainDenylistGuard";
 
 function NotFoundComponent() {
   return (
@@ -172,6 +173,7 @@ function RootComponent() {
           </div>
           <Toaster />
           <CloudflareAnalytics />
+          <DomainDenylistGuard />
         </GlobalMoodProvider>
       </AuthProvider>
     </QueryClientProvider>
