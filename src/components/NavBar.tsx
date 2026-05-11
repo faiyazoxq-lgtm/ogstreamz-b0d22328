@@ -54,12 +54,6 @@ const storeLinks: ReadonlyArray<HubLink> = [
   { to: "/checkout/return",  label: "Last Receipt",     icon: Receipt,     desc: "Recent purchase status" },
 ];
 
-const portalSwitcherLinks: ReadonlyArray<HubLink> = [
-  { to: "/",          label: "The HUB",   icon: Compass,         desc: "Home base — main hub" },
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, desc: "Your control room" },
-  { to: "/portals",   label: "0G-PORTAL", icon: Sparkles,        desc: "Browse the full universe" },
-];
-
 // Live portal switcher: only boss-created portals + paid member-created
 // portals (price > 0 or coin cost > 0). Sourced via the list_nav_portals
 // SQL function which respects RLS and the boss/member rules.
