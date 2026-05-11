@@ -293,7 +293,7 @@ export function NavBar() {
             <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile currentPath={pathname} />
           </li>
           <li className="hidden sm:block">
-            <NavDropdown label="Portals" icon={DoorOpen} items={portalSwitcherLinks} hideLabelOnMobile currentPath={pathname} />
+            <NavDropdown label="Portals" icon={DoorOpen} items={portalSwitcherLinks} softGold hideLabelOnMobile currentPath={pathname} />
           </li>
           <li className="hidden sm:block">
             <NavDropdown label={isBoss ? "Manage Store" : "Store"} icon={Store} items={storeLinks} hideLabelOnMobile currentPath={pathname} />
