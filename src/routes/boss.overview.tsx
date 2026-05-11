@@ -96,7 +96,7 @@ const TILE_CATEGORIES: { id: string; label: string; tint: string; labels: string
   { id: "content",    label: "Content",       tint: "#a78bfa", labels: ["Hubs", "Portals"] },
   { id: "moderation", label: "Moderation",    tint: "#ff2e55", labels: ["Civility Controls", "Swear Lexicon"] },
   { id: "insights",   label: "Insights",      tint: "#00e08a", labels: ["Analytics", "Overlord Deck"] },
-  { id: "system",     label: "Command & System", tint: "#94a3b8", labels: ["System Alerts", "Publish Check", "Agent Keys", "Settings"] },
+  { id: "system",     label: "Command & System", tint: "#94a3b8", labels: ["System Alerts", "Publish Check", "Agent Keys", "Telegram Setup", "Settings"] },
 ];
 
 function BossOverview() {
