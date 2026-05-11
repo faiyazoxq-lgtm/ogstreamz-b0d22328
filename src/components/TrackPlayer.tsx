@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react";
-import { Play, Pause, Lock, Download, Loader2, BadgeCheck, Crown, Unlock } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Play, Pause, Lock, Download, Loader2, BadgeCheck, Crown, Unlock, RotateCw, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { getTrackDownloadUrl } from "@/lib/tracks.functions";
-import { parseApiError } from "@/lib/api-error";
+import { useRetryWithBackoff } from "@/hooks/use-retry-with-backoff";
 import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TrackUnlockCheckout } from "@/components/TrackUnlockCheckout";
@@ -29,7 +29,6 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, isV
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0); // 0..1
   const [previewEnded, setPreviewEnded] = useState(false);
-  const [downloading, setDownloading] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const { user } = useAuth();
   const downloadFn = useServerFn(getTrackDownloadUrl);
@@ -80,21 +79,43 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, isV
     else { a.play().then(() => setPlaying(true)).catch(() => toast.error("Couldn't play preview")); }
   };
 
-  const onDownload = async () => {
-    if (!user) return toast.error("Sign in to download");
-    setDownloading(true);
-    try {
-      const r = await downloadFn({ data: { trackId } });
-      window.location.href = r.url;
-    } catch (e: any) {
-      const { code, message } = parseApiError(e);
+  // Wrap download in a backoff helper so transient UNAVAILABLE / INTERNAL
+  // errors retry automatically before surfacing to the user.
+  const callDownload = useCallback(
+    () => downloadFn({ data: { trackId } }),
+    [downloadFn, trackId],
+  );
+  const downloadRetry = useRetryWithBackoff(callDownload, {
+    maxAttempts: 3,
+    baseDelayMs: 800,
+    maxDelayMs: 6000,
+  });
+
+  useEffect(() => {
+    if (downloadRetry.status === "success" && downloadRetry.data?.url) {
+      window.location.href = downloadRetry.data.url;
+      downloadRetry.reset();
+    } else if (downloadRetry.status === "error") {
+      const code = downloadRetry.errorCode;
       if (code === "UNAUTHENTICATED") toast.error("Sign in to download");
       else if (code === "NOT_UNLOCKED") toast.error("Unlock this track to download");
-      else toast.error(message);
-    } finally {
-      setDownloading(false);
+      // UNAVAILABLE / INTERNAL surface inline below with a Retry button.
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [downloadRetry.status]);
+
+  const onDownload = () => {
+    if (!user) return toast.error("Sign in to download");
+    downloadRetry.run();
   };
+
+  const downloading =
+    downloadRetry.status === "loading" || downloadRetry.status === "retrying";
+  const downloadError =
+    downloadRetry.status === "error" &&
+    (downloadRetry.errorCode === "UNAVAILABLE" ||
+      downloadRetry.errorCode === "INTERNAL" ||
+      downloadRetry.errorCode === "RATE_LIMITED");
 
   return (
     <div
@@ -173,14 +194,55 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, isV
       )}
 
       {unlocked && (
-        <Button
-          onClick={onDownload}
-          disabled={downloading}
-          className="mt-4 h-12 w-full text-xs uppercase tracking-[0.3em] font-bold"
-          style={{ background: accent, color: "#000" }}
-        >
-          {downloading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Preparing...</> : <><Download className="h-4 w-4 mr-2" />Download HQ MP3</>}
-        </Button>
+        <>
+          <Button
+            onClick={onDownload}
+            disabled={downloading}
+            className="mt-4 h-12 w-full text-xs uppercase tracking-[0.3em] font-bold"
+            style={{ background: accent, color: "#000" }}
+          >
+            {downloading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {downloadRetry.status === "retrying"
+                  ? `Retrying (attempt ${downloadRetry.attempt + 1})...`
+                  : "Preparing..."}
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4 mr-2" />
+                Download HQ MP3
+              </>
+            )}
+          </Button>
+          {downloadRetry.status === "retrying" && downloadRetry.nextRetryInMs > 0 && (
+            <p className="mt-2 text-[10px] uppercase tracking-[0.25em] text-center opacity-70">
+              Retrying in {Math.ceil(downloadRetry.nextRetryInMs / 1000)}s · attempt {downloadRetry.attempt} of 3
+            </p>
+          )}
+          {downloadError && (
+            <div
+              className="mt-3 rounded-xl border p-3 text-[11px]"
+              style={{ borderColor: "#ff6b6b66", color: "#ffb4b4", background: "rgba(80,0,0,0.25)" }}
+            >
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                <span>{downloadRetry.errorMessage ?? "Download unavailable"}</span>
+              </div>
+              <p className="text-center opacity-70 mb-2">
+                Tried {downloadRetry.attempt} of 3 automatic retries.
+              </p>
+              <Button
+                onClick={() => downloadRetry.retry()}
+                variant="outline"
+                className="h-9 w-full text-[10px] uppercase tracking-[0.3em] font-bold border"
+                style={{ borderColor: `${accent}66`, color: accent, background: "transparent" }}
+              >
+                <RotateCw className="h-3.5 w-3.5 mr-2" /> Try again
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       <Dialog open={checkoutOpen} onOpenChange={(o) => (o ? setCheckoutOpen(true) : closeAndRefresh())}>
