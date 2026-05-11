@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Crown, Coins, LogOut, Shield, Sparkles, Zap, Flame, Skull, Settings, Heart, Send } from "lucide-react";
+import { Crown, Coins, LogOut, Shield, Sparkles, Zap, Flame, Skull, Settings, Heart, Send, Pencil, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { FlameBackdrop } from "@/components/FlameBackdrop";
@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { RealOgBadge } from "@/components/RealOgBadge";
 import { StreamLinkCard } from "@/components/StreamLinkCard";
 import { CoinActivity } from "@/components/CoinActivity";
+import { supabase } from "@/integrations/supabase/client";
 
 import { requireMember } from "@/lib/route-guards";
 export const Route = createFileRoute("/profile")({
@@ -33,6 +34,35 @@ export const Route = createFileRoute("/profile")({
 function ProfilePage() {
   const { user, profile, isAdmin, loading, signOut } = useAuth();
   const navigate = useNavigate();
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [savingName, setSavingName] = useState(false);
+  const [displayName, setDisplayName] = useState<string | null>(null);
+  useEffect(() => {
+    setDisplayName(profile?.display_name ?? null);
+  }, [profile?.display_name]);
+
+  const saveDisplayName = async () => {
+    if (!user) return;
+    const trimmed = nameDraft.trim().slice(0, 40);
+    if (!trimmed) {
+      toast.error("Name cannot be empty");
+      return;
+    }
+    setSavingName(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ display_name: trimmed })
+      .eq("id", user.id);
+    setSavingName(false);
+    if (error) {
+      toast.error("Failed to save name");
+      return;
+    }
+    setDisplayName(trimmed);
+    setEditingName(false);
+    toast.success("Name updated");
+  };
   const { openCheckout, closeCheckout, isOpen, checkoutElement } = useStripeCheckout();
   const checkBoss = useServerFn(checkIsBoss);
   const { data: bossCheck } = useQuery({
@@ -84,7 +114,60 @@ function ProfilePage() {
           <h1 className="mt-3 font-[Montserrat] font-black text-4xl sm:text-5xl text-metallic">
             Welcome back
           </h1>
-          <p className="mt-3 text-muted-foreground text-sm">{isBoss ? "— BOSS ACCOUNT —" : (profile?.email ?? user.email)}</p>
+          <div className="mt-3 flex items-center justify-center gap-2 text-muted-foreground text-sm">
+            {isBoss ? (
+              <span>— BOSS ACCOUNT —</span>
+            ) : editingName ? (
+              <>
+                <Input
+                  autoFocus
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveDisplayName();
+                    if (e.key === "Escape") setEditingName(false);
+                  }}
+                  maxLength={40}
+                  placeholder="Your name"
+                  className="h-8 max-w-[220px] text-center"
+                  disabled={savingName}
+                />
+                <button
+                  type="button"
+                  onClick={saveDisplayName}
+                  disabled={savingName}
+                  className="text-[var(--gold)] hover:opacity-80 disabled:opacity-50"
+                  aria-label="Save name"
+                >
+                  <Check className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingName(false)}
+                  disabled={savingName}
+                  className="text-muted-foreground hover:opacity-80"
+                  aria-label="Cancel"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </>
+            ) : (
+              <>
+                <span>{displayName?.trim() || "Set your display name"}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNameDraft(displayName ?? "");
+                    setEditingName(true);
+                  }}
+                  className="text-muted-foreground hover:text-[var(--gold)] transition-colors"
+                  aria-label="Edit name"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+              </>
+            )}
+          </div>
           {verifiedBoss && (
             <div className="mt-4 flex justify-center">
               <span
