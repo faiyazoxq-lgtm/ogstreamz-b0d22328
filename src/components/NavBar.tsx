@@ -266,7 +266,7 @@ export function NavBar() {
         <Link
           to="/"
           aria-label="0G-PORTAL — home"
-          className="brand-glow group min-w-0 flex-1 sm:flex-initial overflow-hidden h-full -ml-1 sm:ml-0 px-2 sm:px-1 py-2 min-h-12 sm:min-h-0 rounded-lg outline-none transition-colors active:bg-white/5 hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-[3px] focus-visible:ring-offset-background focus-visible:shadow-[0_0_24px_-4px_var(--gold)] touch-manipulation flex items-center"
+          className="brand-glow group min-w-0 flex-1 sm:flex-initial overflow-hidden h-full -ml-1 sm:ml-0 pl-1 pr-3 sm:pl-1.5 sm:pr-4 py-1 min-h-12 sm:min-h-0 rounded-2xl outline-none transition-all border border-white/10 hover:border-gold/30 bg-white/[0.02] hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:shadow-[0_0_24px_-4px_var(--gold)] touch-manipulation flex items-center"
           style={{ gap: "clamp(0.5rem, 1.6vw + 0.25rem, 1.5rem)" }}
         >
           <TVStaticLogo className="shrink-0 self-center" />
@@ -313,15 +313,15 @@ export function NavBar() {
             </span>
           </Link>
         )}
-        <ul className="flex items-center flex-nowrap gap-0.5 sm:gap-1.5 shrink-0 ml-auto">
+        <ul className="flex items-center flex-nowrap gap-2 sm:gap-3 shrink-0 ml-auto">
           <li className="hidden sm:block">
-            <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile currentPath={pathname} />
-          </li>
-          <li className="hidden sm:block">
-            <NavDropdown label="Portals" icon={DoorOpen} items={navPortals.length ? navPortals : [{ to: "/portals", label: "Browse Portals", icon: Sparkles, desc: "No portals yet — open the directory" }]} softGold hideLabelOnMobile currentPath={pathname} />
-          </li>
-          <li className="hidden sm:block">
-            <NavDropdown label={isBoss ? "Manage Store" : "Store"} icon={Store} items={storeLinks} hideLabelOnMobile currentPath={pathname} />
+            <div className="flex items-center bg-white/[0.04] border border-white/10 rounded-full p-1 shadow-inner shadow-black/20 backdrop-blur-sm">
+              <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile currentPath={pathname} pill />
+              <span aria-hidden className="w-px h-4 bg-white/10" />
+              <NavDropdown label="Portals" icon={DoorOpen} items={navPortals.length ? navPortals : [{ to: "/portals", label: "Browse Portals", icon: Sparkles, desc: "No portals yet — open the directory" }]} softGold hideLabelOnMobile currentPath={pathname} pill />
+              <span aria-hidden className="w-px h-4 bg-white/10" />
+              <NavDropdown label={isBoss ? "Manage Store" : "Store"} icon={Store} items={storeLinks} hideLabelOnMobile currentPath={pathname} pill />
+            </div>
           </li>
           {isBoss && (
             <li className="hidden sm:block">
@@ -329,7 +329,7 @@ export function NavBar() {
                 to="/boss"
                 aria-label="Boss portal"
                 data-active={pathname === "/boss" || pathname.startsWith("/boss/") ? "true" : undefined}
-                className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-2 text-sm sm:text-base font-semibold rounded-md border border-gold/30 text-gold hover:bg-gold/10 data-[active=true]:bg-gold/15 data-[active=true]:border-gold/60 transition-colors outline-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-[3px] focus-visible:ring-offset-background"
+                className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold uppercase tracking-[0.18em] rounded-full border border-gold/40 text-gold hover:bg-gold/10 data-[active=true]:bg-gold/15 data-[active=true]:border-gold/60 transition-colors outline-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <Crown className="h-4 w-4" />
                 <span className="hidden sm:inline">Boss</span>
@@ -337,11 +337,20 @@ export function NavBar() {
             </li>
           )}
           <li className="hidden sm:block">
-            <AccountMenu
-              user={user}
-              profile={profile}
-              isBoss={isBoss}
-            />
+            <div className="flex items-center gap-2">
+              <span
+                className={`hidden lg:inline-flex items-center gap-1 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-[0.2em] ${statusColor}`}
+                title={user ? (isBoss ? "Boss Account" : `Signed in as ${profile?.email ?? user.email}`) : "Not signed in"}
+              >
+                {isBoss || isVip ? <Crown className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
+                {statusLabel}
+              </span>
+              <AccountMenu
+                user={user}
+                profile={profile}
+                isBoss={isBoss}
+              />
+            </div>
           </li>
           {user && (
             <li className="block">
@@ -358,15 +367,6 @@ export function NavBar() {
               isBoss={isBoss}
               portals={navPortals}
             />
-          </li>
-          <li className="hidden lg:block">
-            <span
-              className={`inline-flex items-center gap-1 px-2 py-1 rounded-md border text-[10px] font-bold uppercase tracking-[0.2em] ${statusColor}`}
-              title={user ? (isBoss ? "Boss Account" : `Signed in as ${profile?.email ?? user.email}`) : "Not signed in"}
-            >
-              {isBoss || isVip ? <Crown className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
-              {statusLabel}
-            </span>
           </li>
         </ul>
       </nav>
