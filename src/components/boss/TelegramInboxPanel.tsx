@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, RefreshCw, Send, Users, User, Megaphone, MessageSquare } from "lucide-react";
+import { Loader2, RefreshCw, Send, Users, User, Megaphone, MessageSquare, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   listTelegramChats,
@@ -10,6 +10,10 @@ import {
   type TgChatSummary,
   type TgMessage,
 } from "@/lib/telegram-inbox.functions";
+
+// Preset keyword chips. Boss portal will manage this list later;
+// keep the array empty so chips render only once configured.
+const BOSS_KEYWORDS: string[] = [];
 
 function ChatTypeIcon({ type, className }: { type: string | null; className?: string }) {
   if (type === "group" || type === "supergroup") return <Users className={className} />;
@@ -37,6 +41,7 @@ export function TelegramInboxPanel() {
 
   const [activeChatId, setActiveChatId] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
+  const [query, setQuery] = useState("");
 
   const chatsQuery = useQuery({
     queryKey: ["tg-inbox", "chats"],
@@ -60,6 +65,15 @@ export function TelegramInboxPanel() {
   });
 
   const messages: TgMessage[] = messagesQuery.data?.messages ?? [];
+  const filteredMessages = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return messages;
+    return messages.filter((m) => {
+      const text = (m.text ?? "").toLowerCase();
+      const sender = `${m.from_name ?? ""} ${m.from_username ?? ""}`.toLowerCase();
+      return text.includes(q) || sender.includes(q);
+    });
+  }, [messages, query]);
   const activeChat = useMemo(
     () => chats.find((c) => c.chat_id === activeChatId) ?? null,
     [chats, activeChatId],
@@ -196,6 +210,58 @@ export function TelegramInboxPanel() {
           )}
         </div>
 
+        {/* Search & keyword filter */}
+        {activeChatId !== null && (
+          <div className="px-3 py-2 border-b border-white/10 space-y-2">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Filter by keyword or sender name…"
+                className="w-full rounded-md border border-white/10 bg-black/40 pl-7 pr-7 py-1.5 text-xs text-white placeholder:text-white/35 focus:outline-none focus:border-white/30"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-white/40 hover:text-white"
+                  title="Clear"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            {BOSS_KEYWORDS.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {BOSS_KEYWORDS.map((kw) => {
+                  const active = query.toLowerCase() === kw.toLowerCase();
+                  return (
+                    <button
+                      key={kw}
+                      type="button"
+                      onClick={() => setQuery(active ? "" : kw)}
+                      className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] border transition ${
+                        active
+                          ? "border-white/40 bg-white/15 text-white"
+                          : "border-white/10 bg-white/[0.03] text-white/55 hover:text-white hover:bg-white/10"
+                      }`}
+                    >
+                      {kw}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            {query && (
+              <div className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+                {filteredMessages.length} / {messages.length} messages
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex-1 overflow-y-auto p-3 space-y-2 max-h-[420px]">
           {activeChatId === null ? (
             <div className="h-full flex items-center justify-center text-xs text-white/45">
@@ -210,8 +276,12 @@ export function TelegramInboxPanel() {
             <div className="text-xs text-white/45 text-center py-6">
               No messages stored for this chat yet.
             </div>
+          ) : filteredMessages.length === 0 ? (
+            <div className="text-xs text-white/45 text-center py-6">
+              No messages match "{query}".
+            </div>
           ) : (
-            messages.map((m) => (
+            filteredMessages.map((m) => (
               <div
                 key={m.update_id}
                 className="rounded-lg border border-white/5 bg-white/[0.03] px-3 py-2"
