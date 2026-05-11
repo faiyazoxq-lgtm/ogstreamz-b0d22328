@@ -48,6 +48,17 @@ export const Route = createFileRoute("/api/public/suno-webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // Verify webhook secret in ?secret= query param (sunoapi.com has no signing).
+        const url = new URL(request.url);
+        const provided = url.searchParams.get("secret") || "";
+        const expected = process.env.SUNO_WEBHOOK_SECRET || "";
+        if (!expected || provided.length !== expected.length) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+        let diff = 0;
+        for (let i = 0; i < expected.length; i++) diff |= provided.charCodeAt(i) ^ expected.charCodeAt(i);
+        if (diff !== 0) return new Response("Unauthorized", { status: 401 });
+
         let payload: any;
         try {
           payload = await request.json();
