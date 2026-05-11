@@ -216,7 +216,10 @@ export function NavBar() {
           : "bg-background/80 sm:bg-background/35 backdrop-blur-none sm:backdrop-blur-md border-transparent"
       }`}
     >
-      <nav className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap min-w-0 px-1.5 sm:px-8 h-20 sm:h-28 lg:h-32 py-2 sm:py-4 gap-1 sm:gap-2">
+      <nav
+        className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap min-w-0 px-1.5 sm:px-8 py-2 sm:py-4 gap-1 sm:gap-2"
+        style={{ minHeight: "clamp(4rem, 6vw + 3rem, 8rem)" }}
+      >
         <Link
           to="/"
           aria-label="0G-PORTAL — home"
