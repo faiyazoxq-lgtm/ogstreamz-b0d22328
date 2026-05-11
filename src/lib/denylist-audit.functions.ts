@@ -127,13 +127,13 @@ export const runDenylistAudit = createServerFn({ method: "POST" })
       const idCol = target.idCol ?? "id";
       const cols = [idCol, ...target.columns].join(", ");
       try {
-        const { data, error } = await admin.from(target.table).select(cols).limit(2000);
+        const { data, error } = await (admin.from(target.table) as any).select(cols).limit(2000);
         if (error) {
           errors.push(`${target.table}: ${error.message}`);
           continue;
         }
         dbColumnsScanned += target.columns.length;
-        for (const row of (data ?? []) as Record<string, unknown>[]) {
+        for (const row of ((data ?? []) as unknown as Record<string, unknown>[])) {
           const rowId = String(row[idCol] ?? "?");
           for (const col of target.columns) {
             const raw = row[col];
