@@ -1,6 +1,6 @@
 // Centralised AI providers for user-facing text generation.
 //
-//   smartChat     — tries GEMINI_API_KEY_PRIMARY → Perplexity → legacy GEMINI_API_KEY,
+//   smartChat     — tries GEMINI_API_KEY_PRIMARY → Perplexity → legacy GOOGLE_AI_STUDIO_API_KEY,
 //                   in that order, so we burn the new Gemini quota first and only
 //                   fall back when something explodes.
 //   geminiChat    — direct Gemini call with primary→fallback key chain.
@@ -24,7 +24,7 @@ function geminiKeys(): string[] {
   // Order matters: primary (new) key first, legacy second.
   const out: string[] = [];
   const primary = process.env.GEMINI_API_KEY_PRIMARY;
-  const legacy = process.env.GEMINI_API_KEY;
+  const legacy = process.env.GOOGLE_AI_STUDIO_API_KEY;
   if (primary) out.push(primary);
   if (legacy && legacy !== primary) out.push(legacy);
   return out;
@@ -58,7 +58,7 @@ export async function geminiChat(opts: {
   json?: boolean;
 }): Promise<string> {
   const keys = geminiKeys();
-  if (keys.length === 0) throw new Error("No Gemini key configured (GEMINI_API_KEY_PRIMARY / GEMINI_API_KEY)");
+  if (keys.length === 0) throw new Error("No Gemini key configured (GEMINI_API_KEY_PRIMARY / GOOGLE_AI_STUDIO_API_KEY)");
   const model = opts.model || GEMINI_DEFAULT_MODEL;
   const body = toGeminiBody(opts.messages, opts);
   let lastErr = "";
@@ -113,9 +113,9 @@ export async function smartChat(opts: {
   }
 
   // 3) Legacy Gemini key
-  if (process.env.GEMINI_API_KEY) {
+  if (process.env.GOOGLE_AI_STUDIO_API_KEY) {
     try {
-      return await geminiChatWithKey(process.env.GEMINI_API_KEY, opts);
+      return await geminiChatWithKey(process.env.GOOGLE_AI_STUDIO_API_KEY, opts);
     } catch (e: any) {
       errors.push(`legacy-gemini: ${e?.message ?? e}`);
     }

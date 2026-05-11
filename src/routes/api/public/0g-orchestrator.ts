@@ -139,9 +139,9 @@ export const Route = createFileRoute("/api/public/0g-orchestrator")({
             headers: { "Content-Type": "application/json", ...cors },
           });
         }
-        const KEY = process.env.GEMINI_API_KEY;
+        const KEY = process.env.GOOGLE_AI_STUDIO_API_KEY;
         if (!KEY) {
-          return new Response(JSON.stringify({ error: "GEMINI_API_KEY missing" }), {
+          return new Response(JSON.stringify({ error: "GOOGLE_AI_STUDIO_API_KEY missing" }), {
             status: 500,
             headers: { "Content-Type": "application/json", ...cors },
           });

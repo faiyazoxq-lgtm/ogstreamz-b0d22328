@@ -1,5 +1,5 @@
 // 0G-BRAIN — central Gemini-powered orchestrator.
-// Uses the user's personal GEMINI_API_KEY (Supabase secret) against the
+// Uses the user's personal GOOGLE_AI_STUDIO_API_KEY (Supabase secret) against the
 // Google Generative Language API directly. Three task surfaces:
 //   • quantAnalyze  — TradeHUB "Senior Wall Street Analyst"
 //   • produceSong   — MusicHUB "Multi-Platinum Producer"
@@ -9,7 +9,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // Reused by all three endpoints below. Throws a 402-ish error string when the
 // caller is not a VIP / paid-tier user. Free / prospect users should not be
-// able to drain GEMINI_API_KEY.
+// able to drain GOOGLE_AI_STUDIO_API_KEY.
 async function assertVipOrPaid(supabase: any, userId: string) {
   const { data, error } = await supabase.rpc("has_active_vip", { _user: userId });
   if (error) throw new Response("Unable to verify entitlement", { status: 500 });
@@ -23,8 +23,8 @@ const ENDPOINT = (model: string) =>
   `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
 async function geminiJSON<T = any>(systemHint: string, user: string, fallback: T): Promise<T> {
-  const KEY = process.env.GEMINI_API_KEY;
-  if (!KEY) throw new Error("GEMINI_API_KEY missing");
+  const KEY = process.env.GOOGLE_AI_STUDIO_API_KEY;
+  if (!KEY) throw new Error("GOOGLE_AI_STUDIO_API_KEY missing");
 
   const r = await fetch(`${ENDPOINT(MODEL)}?key=${encodeURIComponent(KEY)}`, {
     method: "POST",

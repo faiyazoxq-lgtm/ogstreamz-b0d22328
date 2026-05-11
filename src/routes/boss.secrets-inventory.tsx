@@ -42,7 +42,7 @@ const SECTIONS: Section[] = [
     blurb: "Outbound credentials for third-party services. Connector-managed keys can only be edited from Connectors.",
     entries: [
       { name: "LOVABLE_API_KEY", purpose: "Lovable AI Gateway (Gemini/GPT/etc).", tags: ["managed"] },
-      { name: "GEMINI_API_KEY", purpose: "Google Gemini direct API.", tags: [] },
+      { name: "GOOGLE_AI_STUDIO_API_KEY", purpose: "Google Gemini direct API.", tags: [] },
       { name: "PERPLEXITY_API_KEY", purpose: "Perplexity research/search.", tags: ["connector"] },
       { name: "FIRECRAWL_API_KEY", purpose: "Firecrawl scraping.", tags: ["connector"] },
       { name: "TELEGRAM_API_KEY", purpose: "Telegram bot send/receive.", tags: ["connector"] },
