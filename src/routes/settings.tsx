@@ -80,7 +80,8 @@ const DISPLAY_FIELDS: Array<{ key: keyof CardDisplayPrefs; label: string; hint: 
   { key: "show_socials", label: "Social / contact links", hint: "Show the contact links filled in below" },
 ];
 
-const SOCIAL_FIELDS: Array<{ key: keyof ContactCard; label: string; placeholder: string; Icon: any }> = [
+type SocialKey = Exclude<keyof ContactCard, "_display">;
+const SOCIAL_FIELDS: Array<{ key: SocialKey; label: string; placeholder: string; Icon: any }> = [
   { key: "telegram", label: "Telegram", placeholder: "@username or t.me/username", Icon: Send },
   { key: "whatsapp", label: "WhatsApp", placeholder: "+44 7..." , Icon: MessageCircle },
   { key: "website", label: "Website", placeholder: "https://yoursite.com", Icon: Globe },
