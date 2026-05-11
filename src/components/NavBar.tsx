@@ -89,8 +89,8 @@ function NavDropdown({
         ].join(" ")}
       >
         <Icon className="h-4 w-4" />
-        <span className={hideLabelOnMobile ? "hidden sm:inline" : ""}>{label}</span>
-        <ChevronDown className="h-3.5 w-3.5 opacity-70 hidden sm:inline transition-transform group-data-[state=open]:rotate-180" />
+        <span className={hideLabelOnMobile ? "hidden md:inline" : ""}>{label}</span>
+        <ChevronDown className="h-3.5 w-3.5 opacity-70 hidden md:inline transition-transform group-data-[state=open]:rotate-180" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64 bg-card border-border">
         <DropdownMenuLabel className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
