@@ -6,7 +6,7 @@ import {
   Store, ShoppingBag, Receipt,
   ShieldCheck, LayoutDashboard,
   UserCircle, Settings, LogOut, Menu,
-  Compass, Sparkles, DoorOpen,
+  Compass, Sparkles, DoorOpen, Send,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { TVStaticLogo } from "@/components/TVStaticLogo";
@@ -490,6 +490,7 @@ function MobileNavDrawer({
                 <li><Row to="/history"   label="Portal History"  Icon={History} /></li>
                 <li><Row to="/dashboard" label="Dashboard"       Icon={LayoutDashboard} /></li>
                 <li><Row to="/noticeboard" label="VIP Noticeboard" Icon={Crown} /></li>
+                <li><Row to="/connect-telegram" label="Telegram Inbox" Icon={Send} /></li>
                 <li><Row to="/settings"  label="Settings"        Icon={Settings} /></li>
               </ul>
             </div>

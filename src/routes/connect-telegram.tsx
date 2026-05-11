@@ -9,6 +9,7 @@ import {
   generateTelegramLinkCode,
   getTelegramLinkStatus,
 } from "@/lib/account-passes.functions";
+import { MyTelegramInbox } from "@/components/telegram/MyTelegramInbox";
 
 const BOT_USERNAME = "Ogstreamzbot";
 
@@ -230,15 +231,20 @@ function ConnectTelegramPage() {
         </ul>
 
         {linked ? (
-          <div className="rounded-xl border-2 border-emerald-500/50 bg-emerald-950/30 p-4 text-emerald-200">
-            <p className="font-bold text-sm flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5" /> Telegram connected
-              {status?.tg_username ? ` · @${status.tg_username}` : ""}
-            </p>
-            <p className="text-xs text-emerald-300/80 mt-1">
-              You can now access every group feature. Returning you to where you were…
-            </p>
-          </div>
+          <>
+            <div className="rounded-xl border-2 border-emerald-500/50 bg-emerald-950/30 p-4 text-emerald-200">
+              <p className="font-bold text-sm flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5" /> Telegram connected
+                {status?.tg_username ? ` · @${status.tg_username}` : ""}
+              </p>
+              <p className="text-xs text-emerald-300/80 mt-1">
+                Group features unlocked. Your DM thread with the bot lives below — VIP only.
+              </p>
+            </div>
+            <div className="mt-5">
+              <MyTelegramInbox />
+            </div>
+          </>
         ) : (
           <>
             {code && (
