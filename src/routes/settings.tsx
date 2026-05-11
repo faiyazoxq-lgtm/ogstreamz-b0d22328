@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Upload, Save, User2, Globe, Send, Twitter, Instagram, Youtube, MessageCircle, Music2, Github, Linkedin, Trash2, Radio, Lock, Plus, X, Copy, Check, Wand2, ArrowRightLeft, AlertTriangle } from "lucide-react";
+import { Loader2, Upload, Save, User2, Globe, Send, Twitter, Instagram, Youtube, MessageCircle, Music2, Github, Linkedin, Trash2, Radio, Lock, Plus, X, Copy, Check, Wand2, ArrowRightLeft, AlertTriangle, Eye } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,9 +50,38 @@ type ContactCard = {
   linkedin?: string;
   whatsapp?: string;
   email_public?: string;
+  _display?: CardDisplayPrefs;
 };
 
-const SOCIAL_FIELDS: Array<{ key: keyof ContactCard; label: string; placeholder: string; Icon: any }> = [
+type CardDisplayPrefs = {
+  show_avatar?: boolean;
+  show_name?: boolean;
+  show_bio?: boolean;
+  show_credits?: boolean;
+  show_socials?: boolean;
+  show_rank?: boolean;
+};
+
+const DEFAULT_DISPLAY: Required<CardDisplayPrefs> = {
+  show_avatar: true,
+  show_name: true,
+  show_bio: true,
+  show_credits: false,
+  show_socials: true,
+  show_rank: true,
+};
+
+const DISPLAY_FIELDS: Array<{ key: keyof CardDisplayPrefs; label: string; hint: string }> = [
+  { key: "show_avatar", label: "Profile picture", hint: "Show your avatar on the card" },
+  { key: "show_name", label: "Chosen display name", hint: "Show your display name (otherwise just initials)" },
+  { key: "show_bio", label: "Bio / tag-line", hint: "Show the short bio you wrote above" },
+  { key: "show_rank", label: "Rank badge", hint: "Show your syndicate rank (Prospect, VIP, etc.)" },
+  { key: "show_credits", label: "Coin balance", hint: "Show your current 🪙 balance publicly" },
+  { key: "show_socials", label: "Social / contact links", hint: "Show the contact links filled in below" },
+];
+
+type SocialKey = Exclude<keyof ContactCard, "_display">;
+const SOCIAL_FIELDS: Array<{ key: SocialKey; label: string; placeholder: string; Icon: any }> = [
   { key: "telegram", label: "Telegram", placeholder: "@username or t.me/username", Icon: Send },
   { key: "whatsapp", label: "WhatsApp", placeholder: "+44 7..." , Icon: MessageCircle },
   { key: "website", label: "Website", placeholder: "https://yoursite.com", Icon: Globe },
@@ -74,6 +104,7 @@ function SettingsPage() {
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [contact, setContact] = useState<ContactCard>({});
+  const [display, setDisplay] = useState<Required<CardDisplayPrefs>>(DEFAULT_DISPLAY);
   const [streamEntries, setStreamEntries] = useState<StreamEntry[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -88,7 +119,9 @@ function SettingsPage() {
     setDisplayName(profile.display_name ?? "");
     setBio((profile as any).bio ?? "");
     setAvatarUrl((profile as any).avatar_url ?? null);
-    setContact(((profile as any).contact_card ?? {}) as ContactCard);
+    const card = ((profile as any).contact_card ?? {}) as ContactCard;
+    setContact(card);
+    setDisplay({ ...DEFAULT_DISPLAY, ...(card._display ?? {}) });
     setStreamEntries(readEntries((profile as any).stream_links));
   }, [profile]);
 
@@ -159,9 +192,11 @@ function SettingsPage() {
       // Strip empty values
       const cleanCard: ContactCard = {};
       (Object.keys(contact) as (keyof ContactCard)[]).forEach((k) => {
+        if (k === "_display") return;
         const v = (contact[k] ?? "").toString().trim();
         if (v) (cleanCard as any)[k] = v.slice(0, 300);
       });
+      cleanCard._display = { ...DEFAULT_DISPLAY, ...display };
       const cleanedEntries: StreamEntry[] = [];
       const seenKeys = new Set<string>();
       for (const e of streamEntries) {
@@ -317,6 +352,36 @@ function SettingsPage() {
                   onChange={(e) => setContact((c) => ({ ...c, [key]: e.target.value }))}
                 />
               </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Card display preferences */}
+        <section className="rounded-2xl border border-border bg-card p-6 sm:p-8 mb-6">
+          <h2 className="text-xs uppercase tracking-[0.3em] font-bold text-muted-foreground mb-1 flex items-center gap-2">
+            <Eye className="h-3.5 w-3.5" style={{ color: "var(--neon-blue-bright)" }} />
+            Card Display
+          </h2>
+          <p className="text-xs text-muted-foreground mb-5">
+            Choose what other members see on your profile card. Toggle anything off to hide it.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {DISPLAY_FIELDS.map(({ key, label, hint }) => (
+              <label
+                key={key}
+                htmlFor={`display-${key}`}
+                className="flex items-start justify-between gap-3 rounded-xl border border-border/60 bg-background/40 px-4 py-3 cursor-pointer hover:border-border"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">{label}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{hint}</p>
+                </div>
+                <Switch
+                  id={`display-${key}`}
+                  checked={!!display[key]}
+                  onCheckedChange={(v) => setDisplay((d) => ({ ...d, [key]: !!v }))}
+                />
+              </label>
             ))}
           </div>
         </section>
