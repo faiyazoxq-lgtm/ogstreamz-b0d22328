@@ -13,8 +13,15 @@ type TradePortal = {
   theme_config: any;
 };
 
+type Tone = "clean" | "brutal" | "auto";
+const TONES: Tone[] = ["clean", "brutal", "auto"];
+
 export const Route = createFileRoute("/trade")({
   beforeLoad: requireMember,
+  validateSearch: (search: Record<string, unknown>): { tone: Tone } => {
+    const raw = typeof search.tone === "string" ? search.tone.toLowerCase() : "";
+    return { tone: (TONES as string[]).includes(raw) ? (raw as Tone) : "auto" };
+  },
   head: () => ({
     meta: [
       { title: "TradeHUB — 0G-PORTAL Executive Terminals" },
@@ -27,6 +34,7 @@ export const Route = createFileRoute("/trade")({
 });
 
 function TradeHubPage() {
+  const { tone } = Route.useSearch();
   const [portals, setPortals] = useState<TradePortal[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,7 +70,7 @@ function TradeHubPage() {
       )}
 
       <div className="mb-10">
-        <BossChatPanel />
+        <BossChatPanel tone={tone} />
       </div>
 
       {!portals ? (
