@@ -61,7 +61,7 @@ type Row = {
   credits: number;
   rank?: "boss" | "enforcer" | "prospect" | "vip";
   display_name?: string | null;
-  stream_links?: Record<string, unknown> | null;
+  stream_links?: unknown;
 };
 
 function AdminPage() {
