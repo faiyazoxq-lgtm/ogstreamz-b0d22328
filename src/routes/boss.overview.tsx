@@ -4,7 +4,7 @@ import {
   Crown, Users, Coins, Ticket, KeyRound, Handshake, Inbox, FileText, ArrowUpRight,
   Share2, ShieldCheck, BarChart3, Skull, Activity, RefreshCw, AlertTriangle, Tv,
   Tags, Music, CheckCircle2, Radio, Zap, Bell, CreditCard, Power, Snowflake, Undo2,
-  Rocket, Boxes, Grid3x3, Settings as SettingsIcon, Sparkles, Loader2, ShieldAlert, Gauge, Send, ShieldOff,
+  Rocket, Boxes, Grid3x3, Settings as SettingsIcon, Sparkles, Loader2, ShieldAlert, Gauge, Send, ShieldOff, ScanSearch,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePaymentMode, setPaymentMode } from "@/hooks/use-payment-mode";
@@ -89,6 +89,7 @@ const TILES: Tile[] = [
   { to: "/boss/telegram-setup",      label: "Telegram Setup",    blurb: "BotFather checklist · /setdomain, privacy, slash commands",   Icon: Send,         tint: "#3ad6ff" },
   { to: "/boss/analytics-setup",     label: "Analytics Setup",   blurb: "Cookieless Cloudflare Web Analytics · paste token, no banner", Icon: BarChart3,    tint: "#3ad6ff" },
   { to: "/boss/domain-denylist",     label: "Domain Denylist",   blurb: "Block specific domains from appearing anywhere on the site",   Icon: ShieldOff,    tint: "#ff5577" },
+  { to: "/boss/denylist-audit",      label: "Denylist Audit",    blurb: "Scan stored fields, pages & redirects for blocked domains",    Icon: ScanSearch,   tint: "#00e08a" },
   { to: "/boss/settings",            label: "Settings",          blurb: "Signup bonus, feature flags & tunables",                      Icon: SettingsIcon, tint: "#94a3b8" },
 ];
 
@@ -98,7 +99,7 @@ const TILE_CATEGORIES: { id: string; label: string; tint: string; labels: string
   { id: "content",    label: "Content",       tint: "#a78bfa", labels: ["Hubs", "Portals"] },
   { id: "moderation", label: "Moderation",    tint: "#ff2e55", labels: ["Civility Controls", "Swear Lexicon"] },
   { id: "insights",   label: "Insights",      tint: "#00e08a", labels: ["Analytics", "Overlord Deck"] },
-  { id: "system",     label: "Command & System", tint: "#94a3b8", labels: ["System Alerts", "Publish Check", "Agent Keys", "Telegram Setup", "Analytics Setup", "Domain Denylist", "Settings"] },
+  { id: "system",     label: "Command & System", tint: "#94a3b8", labels: ["System Alerts", "Publish Check", "Agent Keys", "Telegram Setup", "Analytics Setup", "Domain Denylist", "Denylist Audit", "Settings"] },
 ];
 
 function BossOverview() {
