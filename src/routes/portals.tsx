@@ -315,38 +315,40 @@ function PortalsHub() {
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground/60 min-h-[1em]">
                     {i.views > 0 ? `${i.views.toLocaleString()} views` : "\u00A0"}
                   </div>
-                  <div className="flex items-center gap-1.5 sm:gap-2">
-                  <button
-                    onClick={() => copyLink(i)}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-card px-2 sm:px-3 py-2 text-[10px] sm:text-[11px] uppercase tracking-[0.16em] sm:tracking-[0.18em] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
-                    title="Copy link"
-                  >
-                    <Copy className="h-3.5 w-3.5" /> Copy
-                  </button>
-                  <button
-                    onClick={() => setQrFor(i)}
-                    className="inline-flex items-center justify-center rounded-md border border-border bg-card px-2.5 sm:px-3 py-2 text-[11px] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
-                    title="Show QR code"
-                    aria-label={`Show QR code for ${i.name}`}
-                  >
-                    <QrCode className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    onClick={() => nativeShare(i)}
-                    className="inline-flex items-center justify-center rounded-md border border-border bg-card px-2.5 sm:px-3 py-2 text-[11px] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
-                    title="Share"
-                    aria-label={`Share ${i.name}`}
-                  >
-                    <Share2 className="h-3.5 w-3.5" />
-                  </button>
-                  <Link
-                    to={i.to}
-                    params={{ slug: i.slug }}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 sm:px-3 py-2 text-[10px] sm:text-[11px] uppercase tracking-[0.16em] sm:tracking-[0.18em] font-bold text-black outline-none transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-primary"
-                    style={{ background: meta.accent }}
-                  >
-                    Open <ExternalLink className="h-3.5 w-3.5" />
-                  </Link>
+                  <div className="flex flex-nowrap items-stretch gap-1 sm:gap-1.5">
+                    <button
+                      onClick={() => copyLink(i)}
+                      className="flex-1 min-w-0 inline-flex items-center justify-center gap-1 sm:gap-1.5 rounded-md border border-border bg-card px-1.5 sm:px-3 py-2 text-[10px] sm:text-[11px] uppercase tracking-[0.12em] sm:tracking-[0.18em] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
+                      title="Copy link"
+                      aria-label={`Copy link for ${i.name}`}
+                    >
+                      <Copy className="h-3.5 w-3.5 shrink-0" />
+                      <span className="hidden sm:inline">Copy</span>
+                    </button>
+                    <button
+                      onClick={() => setQrFor(i)}
+                      className="shrink-0 inline-flex items-center justify-center rounded-md border border-border bg-card w-9 sm:w-auto sm:px-3 py-2 text-[11px] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
+                      title="Show QR code"
+                      aria-label={`Show QR code for ${i.name}`}
+                    >
+                      <QrCode className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => nativeShare(i)}
+                      className="shrink-0 inline-flex items-center justify-center rounded-md border border-border bg-card w-9 sm:w-auto sm:px-3 py-2 text-[11px] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
+                      title="Share"
+                      aria-label={`Share ${i.name}`}
+                    >
+                      <Share2 className="h-3.5 w-3.5" />
+                    </button>
+                    <Link
+                      to={i.to}
+                      params={{ slug: i.slug }}
+                      className="flex-1 min-w-0 inline-flex items-center justify-center gap-1 sm:gap-1.5 rounded-md px-1.5 sm:px-3 py-2 text-[10px] sm:text-[11px] uppercase tracking-[0.12em] sm:tracking-[0.18em] font-bold text-black outline-none transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-primary"
+                      style={{ background: meta.accent }}
+                    >
+                      Open <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                    </Link>
                   </div>
                 </div>
               </div>
