@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Play, Pause, Lock, Loader2, Crown, Unlock, AlertTriangle } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Play, Pause, Lock, Loader2, Crown, Unlock, AlertTriangle, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { getTrackStreamUrl } from "@/lib/tracks.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { TrackUnlockCheckout } from "@/components/TrackUnlockCheckout";
-import { parseApiError } from "@/lib/api-error";
+import { ApiError } from "@/lib/api-error";
+import { useRetryWithBackoff } from "@/hooks/use-retry-with-backoff";
 
 type Props = {
   trackId: string;
@@ -21,11 +22,9 @@ type Props = {
 
 type State =
   | { kind: "idle" }
-  | { kind: "loading" }
   | { kind: "ready"; url: string }
   | { kind: "paywall"; priceCents: number; title: string }
-  | { kind: "auth" }
-  | { kind: "error"; message: string };
+  | { kind: "auth" };
 
 /**
  * Streaming player that gates playback behind a server-verified purchase.
@@ -55,6 +54,44 @@ export function StreamingPlayer({
       ? `${window.location.origin}${window.location.pathname}?unlocked=${trackId}&session_id={CHECKOUT_SESSION_ID}`
       : "";
 
+  // Wrap the server fn so the retry hook only sees success/throw. Map
+  // the structured `{ allowed:false, reason }` payloads to ApiError codes
+  // so transient reasons get backoff while NOT_UNLOCKED / NOT_FOUND don't.
+  const callStream = useCallback(async () => {
+    const r = await streamFn({ data: { trackId } });
+    if (r.allowed) return r;
+    if (r.reason === "paywall" && r.track) {
+      throw new ApiError("NOT_UNLOCKED", "Locked");
+    }
+    if (r.reason === "not_found") throw new ApiError("NOT_FOUND", "Track not found");
+    if (r.reason === "invalid") throw new ApiError("INVALID_INPUT", "Invalid request");
+    // "unavailable" → retryable
+    throw new ApiError("UNAVAILABLE", "Stream temporarily unavailable");
+  }, [streamFn, trackId]);
+
+  const retry = useRetryWithBackoff(callStream, {
+    maxAttempts: 3,
+    baseDelayMs: 800,
+    maxDelayMs: 6000,
+  });
+
+  // React to retry hook outcomes — translate into player state.
+  useEffect(() => {
+    if (retry.status === "success" && retry.data?.allowed) {
+      setState({ kind: "ready", url: retry.data.url });
+      requestAnimationFrame(() => {
+        audioRef.current?.play().then(() => setPlaying(true)).catch(() => {});
+      });
+    } else if (retry.status === "error") {
+      const code = retry.errorCode;
+      if (code === "UNAUTHENTICATED") setState({ kind: "auth" });
+      else if (code === "NOT_UNLOCKED")
+        setState({ kind: "paywall", priceCents, title });
+      // For UNAVAILABLE/INTERNAL/NOT_FOUND we keep state.kind === "idle"
+      // and let the inline error block (driven by `retry`) render.
+    }
+  }, [retry.status, retry.data, retry.errorCode, priceCents, title]);
+
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
@@ -70,39 +107,14 @@ export function StreamingPlayer({
     };
   }, [state.kind]);
 
-  const requestStream = async () => {
+  const requestStream = useCallback(() => {
     if (!user) {
       setState({ kind: "auth" });
       return;
     }
-    setState({ kind: "loading" });
-    try {
-      const r = await streamFn({ data: { trackId } });
-      if (r.allowed) {
-        setState({ kind: "ready", url: r.url });
-        // Auto-play after URL is ready
-        requestAnimationFrame(() => {
-          audioRef.current?.play().then(() => setPlaying(true)).catch(() => {
-            /* user can press play manually */
-          });
-        });
-      } else if (r.reason === "paywall" && r.track) {
-        setState({ kind: "paywall", priceCents: r.track.price_cents, title: r.track.title });
-      } else if (r.reason === "not_found") {
-        setState({ kind: "error", message: "Track not found" });
-      } else if (r.reason === "unavailable") {
-        setState({ kind: "error", message: "Stream unavailable right now" });
-      } else {
-        setState({ kind: "error", message: "Couldn't start stream" });
-      }
-    } catch (e: any) {
-      const { code, message } = parseApiError(e);
-      if (code === "UNAUTHENTICATED") setState({ kind: "auth" });
-      else if (code === "NOT_UNLOCKED")
-        setState({ kind: "paywall", priceCents, title });
-      else setState({ kind: "error", message });
-    }
-  };
+    setState({ kind: "idle" });
+    retry.run();
+  }, [user, retry]);
 
   const togglePlay = () => {
     const a = audioRef.current;
@@ -127,6 +139,14 @@ export function StreamingPlayer({
     requestStream();
   };
 
+  const isLoading = retry.status === "loading" || retry.status === "retrying";
+  const showError =
+    retry.status === "error" &&
+    (retry.errorCode === "UNAVAILABLE" ||
+      retry.errorCode === "INTERNAL" ||
+      retry.errorCode === "RATE_LIMITED" ||
+      retry.errorCode === "NOT_FOUND");
+
   return (
     <div
       className="rounded-2xl border p-5 relative overflow-hidden"
@@ -144,7 +164,7 @@ export function StreamingPlayer({
       <div className="flex items-center gap-3">
         <button
           onClick={onMainAction}
-          disabled={state.kind === "loading"}
+          disabled={isLoading}
           aria-label={playing ? "Pause" : "Play"}
           className="h-12 w-12 rounded-full flex items-center justify-center border-2 transition disabled:opacity-50"
           style={{
@@ -154,7 +174,7 @@ export function StreamingPlayer({
             boxShadow: `0 0 30px ${accent}55`,
           }}
         >
-          {state.kind === "loading" ? (
+          {isLoading ? (
             <Loader2 className="h-5 w-5 animate-spin" />
           ) : state.kind === "paywall" || state.kind === "auth" ? (
             <Lock className="h-5 w-5" />
@@ -178,13 +198,15 @@ export function StreamingPlayer({
           <p className="text-[10px] uppercase tracking-[0.25em] mt-1.5 opacity-60">
             {state.kind === "ready"
               ? "Streaming · Full Track"
-              : state.kind === "loading"
+              : retry.status === "loading"
               ? "Verifying access…"
+              : retry.status === "retrying"
+              ? `Retrying (attempt ${retry.attempt + 1})…`
               : state.kind === "paywall"
               ? "Locked · Purchase required"
               : state.kind === "auth"
               ? "Sign in to stream"
-              : state.kind === "error"
+              : showError
               ? "Unavailable"
               : "Tap play to stream"}
           </p>
@@ -244,15 +266,36 @@ export function StreamingPlayer({
         </div>
       )}
 
-      {state.kind === "error" && (
+      {showError && (
         <div
-          className="mt-4 rounded-xl border p-3 text-center text-[11px] flex items-center justify-center gap-2"
+          className="mt-4 rounded-xl border p-3 text-[11px]"
           style={{ borderColor: "#ff6b6b66", color: "#ffb4b4", background: "rgba(80,0,0,0.25)" }}
         >
-          <AlertTriangle className="h-3.5 w-3.5" /> {state.message}
-          <button onClick={requestStream} className="underline ml-2 opacity-80 hover:opacity-100">
-            Retry
-          </button>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <AlertTriangle className="h-3.5 w-3.5" />
+            <span>{retry.errorMessage ?? "Stream unavailable"}</span>
+          </div>
+          <p className="text-center opacity-70 mb-2">
+            Tried {retry.attempt} of 3 automatic retries.
+          </p>
+          <Button
+            onClick={() => retry.retry()}
+            variant="outline"
+            className="h-9 w-full text-[10px] uppercase tracking-[0.3em] font-bold border"
+            style={{ borderColor: `${accent}66`, color: accent, background: "transparent" }}
+          >
+            <RotateCw className="h-3.5 w-3.5 mr-2" /> Try again
+          </Button>
+        </div>
+      )}
+
+      {retry.status === "retrying" && retry.nextRetryInMs > 0 && (
+        <div
+          className="mt-3 rounded-lg border p-2 text-center text-[10px] uppercase tracking-[0.25em] flex items-center justify-center gap-2"
+          style={{ borderColor: `${accent}55`, color: accent, background: "rgba(0,0,0,0.4)" }}
+        >
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Retrying in {Math.ceil(retry.nextRetryInMs / 1000)}s · attempt {retry.attempt} of 3
         </div>
       )}
 
