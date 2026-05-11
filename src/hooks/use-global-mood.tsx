@@ -27,24 +27,14 @@ export function GlobalMoodProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     }
     load();
-
-    const channel = supabase
-      .channel("global-mood")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "hub_settings", filter: "hub_key=eq.shape-bridge" },
-        (payload: any) => {
-          const row = payload.new ?? payload.record ?? {};
-          const t = (row.tuning ?? {}) as { mode?: string };
-          setMood(t.mode === "normal" ? "normal" : "og");
-          setEnabled(row.enabled ?? true);
-        },
-      )
-      .subscribe();
+    // hub_settings was removed from realtime publication for security
+    // (it leaks AI model identifiers + integration configs to any signed-in
+    // user). Poll every 30s instead.
+    const interval = setInterval(load, 30_000);
 
     return () => {
       alive = false;
-      supabase.removeChannel(channel);
+      clearInterval(interval);
     };
   }, []);
 

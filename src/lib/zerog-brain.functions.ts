@@ -5,6 +5,18 @@
 //   • produceSong   — MusicHUB "Multi-Platinum Producer"
 //   • vetToolCode   — ToolHUB "Architect" JS sanity-check
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+// Reused by all three endpoints below. Throws a 402-ish error string when the
+// caller is not a VIP / paid-tier user. Free / prospect users should not be
+// able to drain GEMINI_API_KEY.
+async function assertVipOrPaid(supabase: any, userId: string) {
+  const { data, error } = await supabase.rpc("has_active_vip", { _user: userId });
+  if (error) throw new Response("Unable to verify entitlement", { status: 500 });
+  if (data !== true) {
+    throw new Response("VIP / paid tier required", { status: 403 });
+  }
+}
 
 const MODEL = "gemini-2.5-pro";
 const ENDPOINT = (model: string) =>
@@ -48,12 +60,15 @@ export type QuantBriefing = {
 };
 
 export const quantAnalyze = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { ticker: string; news?: string[]; tradingView?: any }) => ({
     ticker: String(d.ticker || "GOLD").trim().slice(0, 40),
     news: Array.isArray(d.news) ? d.news.slice(0, 25).map((s) => String(s).slice(0, 400)) : [],
     tradingView: d.tradingView ?? null,
   }))
-  .handler(async ({ data }): Promise<QuantBriefing> => {
+  .handler(async ({ data, context }): Promise<QuantBriefing> => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    await assertVipOrPaid(supabase, userId);
     const sys =
       "You are a Senior Wall Street Analyst writing for an executive trading dashboard. Cross-reference live news with current global macro trends (rates, USD, geopolitics, flows). Output STRICT JSON only.";
     const user = `TICKER: ${data.ticker}
@@ -99,12 +114,15 @@ export type ProducerOutput = {
 };
 
 export const produceSong = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { lyrics: string; vibe?: string; language?: string }) => ({
     lyrics: String(d.lyrics || "").trim().slice(0, 4000),
     vibe: String(d.vibe || "").trim().slice(0, 400),
     language: String(d.language || "Urdu/English").slice(0, 40),
   }))
-  .handler(async ({ data }): Promise<ProducerOutput> => {
+  .handler(async ({ data, context }): Promise<ProducerOutput> => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    await assertVipOrPaid(supabase, userId);
     const sys =
       "You are a multi-platinum producer prepping a track for Suno V5.5. Layer in technical Suno V5.5 tags for specific instrument textures (e.g. '1970s analog synth warmth', 'Roland TR-808 sub kicks', 'tape saturation'). Ensure Urdu/English cultural blending is poetic and hit-ready. Output STRICT JSON only.";
     const user = `VIBE: ${data.vibe || "(producer's choice — make it a hit)"}
@@ -141,11 +159,14 @@ export type ArchitectReview = {
 };
 
 export const vetToolCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { description: string; code: string }) => ({
     description: String(d.description || "").slice(0, 600),
     code: String(d.code || "").slice(0, 12000),
   }))
-  .handler(async ({ data }): Promise<ArchitectReview> => {
+  .handler(async ({ data, context }): Promise<ArchitectReview> => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    await assertVipOrPaid(supabase, userId);
     const sys =
       "You are 0G-BRAIN's Code Architect. Audit JavaScript for a customer-facing calculator/tool. Verify the math is flawless, edge cases handled (zero, negatives, NaN, division), no XSS, no unbounded loops. If anything is wrong, return a corrected drop-in version. Output STRICT JSON only.";
     const user = `TOOL DESCRIPTION:

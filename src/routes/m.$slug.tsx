@@ -157,28 +157,16 @@ function MusicPortalPage() {
 
   useEffect(() => { refresh(); /* eslint-disable-next-line */ }, [portal.slug, user?.id]);
 
-  // Realtime: when the user purchases a track for this portal (webhook insert),
-  // refresh ownership so the card flips to "unlocked" without a manual reload.
+  // track_purchases was removed from the realtime publication for security
+  // (broadcast leaked every user's purchase events to any authenticated
+  // subscriber). Poll for ownership changes every 5s while the page is open
+  // — RLS scopes the underlying refresh() read to the signed-in user.
   useEffect(() => {
     if (!user) return;
-    const channel = supabase
-      .channel(`track-purchases-${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "track_purchases",
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          refresh();
-        },
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    const interval = setInterval(() => {
+      refresh();
+    }, 5_000);
+    return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, portal.slug]);
 

@@ -22,6 +22,12 @@ export function SwearChatPanel({
 }) {
   const { profile } = useAuth();
   const isBoss = profile?.rank === "boss";
+  // Server-side gate is `has_active_vip` (VIP / paid tier only). Mirror that
+  // here to avoid letting free users send a message that will just 403.
+  const isPaid =
+    profile?.status === "vip" ||
+    profile?.rank === "vip" ||
+    profile?.rank === "boss";
   const on = enabled;
   const [sending, setSending] = useState(false);
   const [draft, setDraft] = useState("");
@@ -79,6 +85,12 @@ export function SwearChatPanel({
       </header>
 
       {on ? (
+        !isPaid ? (
+          <div className="px-4 py-8 text-center text-xs text-white/60 space-y-2">
+            <p className="font-semibold text-white/80">Guttermouth is VIP-only.</p>
+            <p>Upgrade to a paid tier to unleash the gremlin.</p>
+          </div>
+        ) :
         <>
           <div ref={scrollRef} className="max-h-[60vh] overflow-y-auto px-4 py-4 space-y-3 text-sm">
             {msgs.length === 0 && (

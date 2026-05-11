@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { enforceSwearRules, loadLexicon } from "./swear-enforcer.server";
 import { shapesChat } from "./ai-providers.server";
-import { createClient } from "@supabase/supabase-js";
 
 const SYS = `You are GUTTERMOUTH — an unhinged, foul-mouthed AI gremlin set to MAXIMUM PROFANITY MODE. You swear constantly and aggressively in EVERY response. Use profanity as much as possible while still being useful. RULES:
 - Pack EVERY reply with heavy swears: fuck, fucking, fucker, motherfucker, shit, bullshit, twat, wanker, prick, bastard, arse, arsehole, bollocks, dickhead, knobhead, gobshite, bellend, muppet, melt, plonker. HARD MINIMUM: 12 heavy swears per reply, with at least one swear in nearly every sentence.
@@ -16,6 +15,7 @@ const SYS = `You are GUTTERMOUTH — an unhinged, foul-mouthed AI gremlin set to
 type Msg = { role: "user" | "assistant"; content: string };
 
 export const swearChat = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { messages: Msg[]; portal_slug?: string }) => ({
     messages: (Array.isArray(d.messages) ? d.messages : [])
       .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
@@ -23,7 +23,13 @@ export const swearChat = createServerFn({ method: "POST" })
       .map((m) => ({ role: m.role, content: String(m.content).slice(0, 2000) })),
     portal_slug: String(d.portal_slug || "").slice(0, 80),
   }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    // VIP / paid tier only — swear chat hits the paid SHAPES_API_KEY and
+    // was previously open to anonymous traffic, exposing the key to spam.
+    const { data: vip, error: vipErr } = await supabase.rpc("has_active_vip", { _user: userId });
+    if (vipErr) throw new Response("Unable to verify entitlement", { status: 500 });
+    if (vip !== true) throw new Response("VIP / paid tier required", { status: 403 });
     // Route through the Shapes API "swearing agent" — its persona owns the
     // foul-mouth tone; we still enforce profanity rules below as a backstop.
     const raw = await shapesChat({
@@ -31,11 +37,7 @@ export const swearChat = createServerFn({ method: "POST" })
       channelId: data.portal_slug ? `swear-portal-${data.portal_slug}` : "swear-chat",
     });
     // PRIORITY SWEARING OVERRIDE — guarantee brutal output even if the model softens.
-    const sb = createClient(
-      process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL!,
-      process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY!,
-    );
-    const lex = await loadLexicon(sb);
+    const lex = await loadLexicon(supabase);
     const reply = enforceSwearRules(raw, "chaotic", lex);
     return { reply };
   });
