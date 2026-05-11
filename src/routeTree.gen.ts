@@ -50,6 +50,7 @@ import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as BossUsersRouteImport } from './routes/boss.users'
+import { Route as BossTodoRouteImport } from './routes/boss.todo'
 import { Route as BossTelegramSetupRouteImport } from './routes/boss.telegram-setup'
 import { Route as BossStreamQueueRouteImport } from './routes/boss.stream-queue'
 import { Route as BossSettingsRouteImport } from './routes/boss.settings'
@@ -284,6 +285,11 @@ const BossUsersRoute = BossUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => BossRoute,
 } as any)
+const BossTodoRoute = BossTodoRouteImport.update({
+  id: '/todo',
+  path: '/todo',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossTelegramSetupRoute = BossTelegramSetupRouteImport.update({
   id: '/telegram-setup',
   path: '/telegram-setup',
@@ -483,6 +489,7 @@ export interface FileRoutesByFullPath {
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/telegram-setup': typeof BossTelegramSetupRoute
+  '/boss/todo': typeof BossTodoRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -553,6 +560,7 @@ export interface FileRoutesByTo {
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/telegram-setup': typeof BossTelegramSetupRoute
+  '/boss/todo': typeof BossTodoRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -625,6 +633,7 @@ export interface FileRoutesById {
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/telegram-setup': typeof BossTelegramSetupRoute
+  '/boss/todo': typeof BossTodoRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -698,6 +707,7 @@ export interface FileRouteTypes {
     | '/boss/settings'
     | '/boss/stream-queue'
     | '/boss/telegram-setup'
+    | '/boss/todo'
     | '/boss/users'
     | '/checkout/return'
     | '/jokes/portal'
@@ -768,6 +778,7 @@ export interface FileRouteTypes {
     | '/boss/settings'
     | '/boss/stream-queue'
     | '/boss/telegram-setup'
+    | '/boss/todo'
     | '/boss/users'
     | '/checkout/return'
     | '/jokes/portal'
@@ -839,6 +850,7 @@ export interface FileRouteTypes {
     | '/boss/settings'
     | '/boss/stream-queue'
     | '/boss/telegram-setup'
+    | '/boss/todo'
     | '/boss/users'
     | '/checkout/return'
     | '/jokes/portal'
@@ -1196,6 +1208,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossUsersRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/todo': {
+      id: '/boss/todo'
+      path: '/todo'
+      fullPath: '/boss/todo'
+      preLoaderRoute: typeof BossTodoRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/telegram-setup': {
       id: '/boss/telegram-setup'
       path: '/telegram-setup'
@@ -1426,6 +1445,7 @@ interface BossRouteChildren {
   BossSettingsRoute: typeof BossSettingsRoute
   BossStreamQueueRoute: typeof BossStreamQueueRoute
   BossTelegramSetupRoute: typeof BossTelegramSetupRoute
+  BossTodoRoute: typeof BossTodoRoute
   BossUsersRoute: typeof BossUsersRoute
   BossIndexRoute: typeof BossIndexRoute
 }
@@ -1449,6 +1469,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossSettingsRoute: BossSettingsRoute,
   BossStreamQueueRoute: BossStreamQueueRoute,
   BossTelegramSetupRoute: BossTelegramSetupRoute,
+  BossTodoRoute: BossTodoRoute,
   BossUsersRoute: BossUsersRoute,
   BossIndexRoute: BossIndexRoute,
 }
