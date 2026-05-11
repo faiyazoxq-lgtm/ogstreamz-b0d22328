@@ -80,7 +80,7 @@ function NavDropdown({
         aria-label={label}
         data-active={sectionActive ? "true" : undefined}
         className={[
-          "inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2 text-sm sm:text-base font-semibold rounded-md transition-colors outline-none",
+          "inline-flex items-center gap-1 sm:gap-1.5 px-2 md:px-4 py-2 text-sm md:text-base font-semibold rounded-md transition-colors outline-none",
           "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary focus-visible:ring-offset-[3px] focus-visible:ring-offset-background focus-visible:shadow-[0_0_0_1px_var(--background)]",
           "active:scale-[0.97]",
           gold
@@ -89,8 +89,8 @@ function NavDropdown({
         ].join(" ")}
       >
         <Icon className="h-4 w-4" />
-        <span className={hideLabelOnMobile ? "hidden sm:inline" : ""}>{label}</span>
-        <ChevronDown className="h-3.5 w-3.5 opacity-70 hidden sm:inline transition-transform group-data-[state=open]:rotate-180" />
+        <span className={hideLabelOnMobile ? "hidden md:inline" : ""}>{label}</span>
+        <ChevronDown className="h-3.5 w-3.5 opacity-70 hidden md:inline transition-transform group-data-[state=open]:rotate-180" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64 bg-card border-border">
         <DropdownMenuLabel className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
