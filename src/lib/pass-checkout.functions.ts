@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 let _admin: any = null;
 function admin() {
@@ -16,20 +17,26 @@ function admin() {
 const UUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
 export const createPassCheckoutSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: {
     productId: string;
-    userId: string;
+    userId?: string;
     customerEmail?: string;
     returnUrl: string;
     environment: StripeEnv;
   }) => {
     if (!UUID.test(data.productId)) throw new Error("Invalid productId");
-    if (!data.userId || !/^[a-zA-Z0-9_-]+$/.test(data.userId)) throw new Error("Invalid userId");
     if (!data.returnUrl?.startsWith("http")) throw new Error("Invalid returnUrl");
     if (data.environment !== "sandbox" && data.environment !== "live") throw new Error("Invalid env");
     return data;
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    // Always bind the session to the authenticated user; ignore client userId
+    // unless it matches (kept as a defensive cross-check).
+    const userId = context.userId;
+    if (data.userId && data.userId !== userId) {
+      throw new Response("Forbidden: userId mismatch", { status: 403 });
+    }
     const { data: product, error } = await admin()
       .from("store_products")
       .select("id, sku, kind, title, description, price_cents, currency, duration_days, active")
@@ -49,7 +56,7 @@ export const createPassCheckoutSession = createServerFn({ method: "POST" })
     // Resolve a Customer with userId metadata so later searches work.
     let customerId: string | undefined;
     const found = await stripe.customers.search({
-      query: `metadata['userId']:'${data.userId}'`,
+      query: `metadata['userId']:'${userId}'`,
       limit: 1,
     });
     if (found.data.length) {
@@ -58,9 +65,9 @@ export const createPassCheckoutSession = createServerFn({ method: "POST" })
       const list = await stripe.customers.list({ email: data.customerEmail, limit: 1 });
       if (list.data.length) {
         customerId = list.data[0].id;
-        if (list.data[0].metadata?.userId !== data.userId) {
+        if (list.data[0].metadata?.userId !== userId) {
           await stripe.customers.update(customerId, {
-            metadata: { ...list.data[0].metadata, userId: data.userId },
+            metadata: { ...list.data[0].metadata, userId },
           });
         }
       }
@@ -68,7 +75,7 @@ export const createPassCheckoutSession = createServerFn({ method: "POST" })
     if (!customerId) {
       const created = await stripe.customers.create({
         ...(data.customerEmail && { email: data.customerEmail }),
-        metadata: { userId: data.userId },
+        metadata: { userId },
       });
       customerId = created.id;
     }
@@ -91,7 +98,7 @@ export const createPassCheckoutSession = createServerFn({ method: "POST" })
       }],
       managed_payments: { enabled: true },
       metadata: {
-        userId: data.userId,
+        userId,
         kind: product.kind,
         productId: product.id,
         sku: product.sku,
