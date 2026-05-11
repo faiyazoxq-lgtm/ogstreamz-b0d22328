@@ -97,15 +97,36 @@ export const Route = createFileRoute("/api/public/hooks/telegram-reminders")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const provided = request.headers.get("x-hook-secret") || "";
+        const provided = request.headers.get("x-hook-secret");
         const expected = process.env.REMINDER_HOOK_SECRET || "";
-        if (!expected || provided.length !== expected.length) {
-          return new Response("Unauthorized", { status: 401 });
+        const ip = request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "unknown";
+        const ua = (request.headers.get("user-agent") || "").slice(0, 200);
+
+        if (!expected) {
+          console.error("[telegram-reminders] REMINDER_HOOK_SECRET not configured");
+          return Response.json(
+            { error: "server_misconfigured", message: "Reminder hook secret is not configured." },
+            { status: 500 },
+          );
+        }
+        if (!provided) {
+          console.warn(`[telegram-reminders] 401 missing x-hook-secret ip=${ip} ua="${ua}"`);
+          return Response.json(
+            { error: "missing_secret", message: "x-hook-secret header is required." },
+            { status: 401 },
+          );
         }
         // timing-safe compare
-        let diff = 0;
-        for (let i = 0; i < expected.length; i++) diff |= provided.charCodeAt(i) ^ expected.charCodeAt(i);
-        if (diff !== 0) return new Response("Unauthorized", { status: 401 });
+        let diff = provided.length ^ expected.length;
+        const len = Math.min(provided.length, expected.length);
+        for (let i = 0; i < len; i++) diff |= provided.charCodeAt(i) ^ expected.charCodeAt(i);
+        if (diff !== 0) {
+          console.warn(`[telegram-reminders] 403 invalid x-hook-secret ip=${ip} ua="${ua}"`);
+          return Response.json(
+            { error: "invalid_secret", message: "x-hook-secret did not match." },
+            { status: 403 },
+          );
+        }
 
         const results = await Promise.all([
           processBucket("7d"),
