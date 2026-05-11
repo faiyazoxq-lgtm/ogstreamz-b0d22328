@@ -14,34 +14,17 @@ export default defineConfig({
   },
   vite: {
     build: {
-      // Most remaining "large" chunks are vendor bundles, not app code.
-      // Bump the warning slightly so noise doesn't hide real regressions.
+      // TanStack Router auto-splits route components into their own chunks,
+      // so the only remaining "large" chunks are vendor bundles. Bumping the
+      // warning threshold keeps the build output clean without masking real
+      // regressions in app code (which stays well under 800 kB).
+      //
+      // NOTE: do NOT add `rollupOptions.output.manualChunks` here. Splitting
+      // React / TanStack / Supabase into separate vendor chunks breaks
+      // Rollup's cross-chunk re-export resolution under the Cloudflare SSR
+      // build (errors with `getVariableForExportName` on null). Let Rollup
+      // chunk vendors automatically.
       chunkSizeWarningLimit: 800,
-      rollupOptions: {
-        output: {
-          // Split heavy third-party libs into their own long-cacheable chunks.
-          // App route code stays under TanStack Router's auto-code-split chunks.
-          manualChunks(id) {
-            if (!id.includes("node_modules")) return undefined;
-
-            if (id.includes("/@supabase/")) return "vendor-supabase";
-            if (id.includes("/@tanstack/")) return "vendor-tanstack";
-            if (id.includes("/@stripe/") || id.includes("/stripe")) return "vendor-stripe";
-            if (id.includes("/@radix-ui/")) return "vendor-radix";
-            if (id.includes("/lucide-react/")) return "vendor-icons";
-            if (id.includes("/recharts/") || id.includes("/d3-")) return "vendor-charts";
-            if (id.includes("/framer-motion/") || id.includes("/motion/")) return "vendor-motion";
-            if (
-              id.includes("/react/") ||
-              id.includes("/react-dom/") ||
-              id.includes("/scheduler/")
-            ) {
-              return "vendor-react";
-            }
-            return "vendor";
-          },
-        },
-      },
     },
   },
 });
