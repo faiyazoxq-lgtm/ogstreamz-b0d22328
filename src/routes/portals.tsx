@@ -291,7 +291,7 @@ function PortalsHub() {
                       wordmark, and a per-card accent halo layered on top of
                       the shared white→blue ice aura. */}
                   <h3
-                    className="text-eye-ice--bright tracking-[-0.02em] leading-[1.1] line-clamp-2 break-words transition-[text-shadow,filter] duration-300 group-hover:brightness-110"
+                    className="text-eye-ice--bright tracking-[-0.02em] leading-[1.15] sm:leading-[1.1] lg:leading-[1.05] line-clamp-2 break-words transition-[text-shadow,filter] duration-300 group-hover:brightness-110"
                     style={{
                       fontSize: "clamp(1.125rem, 4.2vw, 1.875rem)",
                       textShadow: `0 0 2px rgba(0,0,0,0.55), 0 0 8px rgba(0,0,0,0.4), 0 0 16px ${meta.accent}, 0 0 32px color-mix(in oklab, ${meta.accent} 55%, transparent)`,
@@ -300,7 +300,7 @@ function PortalsHub() {
                     {i.name}
                   </h3>
                   <p
-                    className="mt-1.5 text-muted-foreground line-clamp-2 leading-snug"
+                    className="mt-2 sm:mt-1.5 lg:mt-1 text-muted-foreground line-clamp-2 leading-relaxed sm:leading-snug lg:leading-tight"
                     style={{ fontSize: "clamp(0.75rem, 1.8vw, 0.8125rem)" }}
                   >
                     {i.subtitle || "—"}
