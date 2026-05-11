@@ -243,9 +243,10 @@ export const listMyTelegramMessages = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const all = ((rows ?? []) as any[]) as TgMessage[];
     const hasMore = all.length > limit;
-    const page = hasMore ? all.slice(0, limit) : all;
-    const messages = page.reverse(); // oldest -> newest within page
-    const nextCursor = hasMore ? page[0]?.message_date ?? null : null;
+    const page = hasMore ? all.slice(0, limit) : all; // newest-first
+    const oldestDate = page.length ? page[page.length - 1].message_date : null;
+    const messages = [...page].reverse(); // oldest -> newest within page
+    const nextCursor = hasMore ? oldestDate : null;
     return { chat_id: chatId, messages, nextCursor };
   });
 
