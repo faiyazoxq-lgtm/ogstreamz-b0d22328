@@ -9,6 +9,11 @@ export const getRouter = () => {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
+    // Prefetch route chunks + loaders the moment a link is hovered/touched.
+    // 50ms delay debounces accidental hovers so we don't waste bandwidth
+    // on pointer pass-throughs.
+    defaultPreload: "intent",
+    defaultPreloadDelay: 50,
     defaultPreloadStaleTime: 0,
   });
 
