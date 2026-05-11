@@ -15,7 +15,7 @@ export function TrackUnlockCheckout({ trackId, onSuccess }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    supabase.from("tracks").select("title, price_cents").eq("id", trackId).maybeSingle()
+    supabase.from("tracks_public").select("title, price_cents").eq("id", trackId).maybeSingle()
       .then(({ data }) => {
         if (cancelled || !data) return;
         setMeta({
