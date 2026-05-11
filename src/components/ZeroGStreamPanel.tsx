@@ -3,6 +3,7 @@ import { Brain, Loader2, Sparkles, Search, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 type Hub = "trade" | "music" | "tools" | "connect" | "general";
 
@@ -47,9 +48,18 @@ export function ZeroGStreamPanel() {
           : { prompt: vibe || asset };
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Sign in required to run 0G-BRAIN");
+        setBusy(false);
+        return;
+      }
       const resp = await fetch("/api/public/0g-orchestrator", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ hub, params }),
         signal: ac.signal,
       });
