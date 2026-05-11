@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { getTrackStreamUrl } from "@/lib/tracks.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { TrackUnlockCheckout } from "@/components/TrackUnlockCheckout";
+import { parseApiError } from "@/lib/api-error";
 
 type Props = {
   trackId: string;
@@ -95,9 +96,11 @@ export function StreamingPlayer({
         setState({ kind: "error", message: "Couldn't start stream" });
       }
     } catch (e: any) {
-      const msg = String(e?.message ?? "");
-      if (msg.toLowerCase().includes("unauthorized")) setState({ kind: "auth" });
-      else setState({ kind: "error", message: msg || "Couldn't start stream" });
+      const { code, message } = parseApiError(e);
+      if (code === "UNAUTHENTICATED") setState({ kind: "auth" });
+      else if (code === "NOT_UNLOCKED")
+        setState({ kind: "paywall", priceCents, title });
+      else setState({ kind: "error", message });
     }
   };
 
