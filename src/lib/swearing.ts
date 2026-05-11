@@ -30,9 +30,13 @@ export function effectiveSwearing(profile: ProfileLike): boolean {
   return !rankDefaultsToSafe(profile?.rank);
 }
 
-/** Resolve effective intensity ("chaotic" default for non-safe ranks, "mild" for safe). */
-export function effectiveIntensity(profile: ProfileLike): SwearIntensity {
-  const raw = String((profile?.feature_flags ?? {})?.swearing_intensity ?? "").toLowerCase();
-  if (raw === "mild" || raw === "medium" || raw === "chaotic") return raw;
-  return rankDefaultsToSafe(profile?.rank) ? "mild" : "chaotic";
+/**
+ * All-or-nothing policy: when the Swearing Agent is ON, intensity is ALWAYS
+ * "chaotic" (OG brutal). When OFF, the user is in family-friendly Safe Mode
+ * and intensity is irrelevant. The legacy mild/medium tiers are retired —
+ * this function always returns "chaotic" so any caller that gates on
+ * intensity gets brutal mode the moment swearing is on.
+ */
+export function effectiveIntensity(_profile: ProfileLike): SwearIntensity {
+  return "chaotic";
 }
