@@ -12,14 +12,9 @@ export function CloudflareAnalytics() {
 
   useEffect(() => {
     let cancelled = false;
-    supabase
-      .from("store_settings")
-      .select("cf_analytics_token")
-      .eq("id", 1)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!cancelled) setToken((data?.cf_analytics_token ?? "").trim() || null);
-      });
+    supabase.rpc("get_cf_analytics_token").then(({ data }) => {
+      if (!cancelled) setToken(((data as string | null) ?? "").trim() || null);
+    });
     return () => {
       cancelled = true;
     };

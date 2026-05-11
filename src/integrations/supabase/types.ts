@@ -163,18 +163,21 @@ export type Database = {
       }
       analytics_settings: {
         Row: {
+          cf_analytics_token: string | null
           id: number
           retention_days: number
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          cf_analytics_token?: string | null
           id?: number
           retention_days?: number
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          cf_analytics_token?: string | null
           id?: number
           retention_days?: number
           updated_at?: string
@@ -2285,21 +2288,18 @@ export type Database = {
       }
       store_settings: {
         Row: {
-          cf_analytics_token: string | null
           credits_per_song: number
           id: number
           stream_portal_url: string
           updated_at: string
         }
         Insert: {
-          cf_analytics_token?: string | null
           credits_per_song?: number
           id?: number
           stream_portal_url?: string
           updated_at?: string
         }
         Update: {
-          cf_analytics_token?: string | null
           credits_per_song?: number
           id?: number
           stream_portal_url?: string
@@ -3559,6 +3559,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_cf_analytics_token: { Args: never; Returns: string }
       get_my_stream_creds: {
         Args: never
         Returns: {

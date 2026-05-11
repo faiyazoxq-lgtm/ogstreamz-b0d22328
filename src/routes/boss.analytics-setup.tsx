@@ -25,13 +25,13 @@ function AnalyticsSetup() {
 
   useEffect(() => {
     supabase
-      .from("store_settings")
+      .from("analytics_settings")
       .select("cf_analytics_token")
       .eq("id", 1)
       .maybeSingle()
       .then(({ data, error }) => {
         if (error) toast.error(error.message);
-        const v = (data?.cf_analytics_token ?? "").trim();
+        const v = ((data as { cf_analytics_token?: string | null } | null)?.cf_analytics_token ?? "").trim();
         setToken(v);
         setInitial(v);
         setLoading(false);
@@ -43,7 +43,10 @@ function AnalyticsSetup() {
   async function save() {
     setSaving(true);
     const v = token.trim() || null;
-    const { error } = await supabase.from("store_settings").update({ cf_analytics_token: v }).eq("id", 1);
+    const { error } = await supabase
+      .from("analytics_settings")
+      .update({ cf_analytics_token: v } as never)
+      .eq("id", 1);
     setSaving(false);
     if (error) {
       toast.error(error.message);
