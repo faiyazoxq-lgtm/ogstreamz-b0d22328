@@ -356,6 +356,36 @@ function SettingsPage() {
           </div>
         </section>
 
+        {/* Card display preferences */}
+        <section className="rounded-2xl border border-border bg-card p-6 sm:p-8 mb-6">
+          <h2 className="text-xs uppercase tracking-[0.3em] font-bold text-muted-foreground mb-1 flex items-center gap-2">
+            <Eye className="h-3.5 w-3.5" style={{ color: "var(--neon-blue-bright)" }} />
+            Card Display
+          </h2>
+          <p className="text-xs text-muted-foreground mb-5">
+            Choose what other members see on your profile card. Toggle anything off to hide it.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {DISPLAY_FIELDS.map(({ key, label, hint }) => (
+              <label
+                key={key}
+                htmlFor={`display-${key}`}
+                className="flex items-start justify-between gap-3 rounded-xl border border-border/60 bg-background/40 px-4 py-3 cursor-pointer hover:border-border"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">{label}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{hint}</p>
+                </div>
+                <Switch
+                  id={`display-${key}`}
+                  checked={!!display[key]}
+                  onCheckedChange={(v) => setDisplay((d) => ({ ...d, [key]: !!v }))}
+                />
+              </label>
+            ))}
+          </div>
+        </section>
+
         {/* Stream profiles */}
         <section className="rounded-2xl border border-border bg-card p-6 sm:p-8 mb-6">
           <h2 className="text-xs uppercase tracking-[0.3em] font-bold text-muted-foreground mb-1 flex items-center gap-2">
