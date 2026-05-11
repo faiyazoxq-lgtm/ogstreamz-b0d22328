@@ -96,38 +96,10 @@ export function BossChatPanel() {
       </header>
 
       {swearing && (
-        <div className="-mt-1 mb-4 flex flex-wrap items-center gap-2">
-          <span className="text-[10px] uppercase tracking-[0.3em] font-black text-rose-300/80">
-            Intensity
-          </span>
-          {(["mild", "medium", "chaotic"] as const).map((opt) => {
-            const active = intensity === opt;
-            const tint =
-              opt === "mild"
-                ? "border-amber-500/60 text-amber-200 bg-amber-500/10"
-                : opt === "medium"
-                  ? "border-rose-500/60 text-rose-200 bg-rose-500/10"
-                  : "border-fuchsia-500/70 text-fuchsia-200 bg-fuchsia-500/15";
-            return (
-              <button
-                key={opt}
-                type="button"
-                disabled={togglingFlag || !canToggleSelf}
-                onClick={() => setIntensity(opt)}
-                className={`px-3 py-1.5 rounded-full border-2 text-[10px] font-black uppercase tracking-[0.25em] transition-all ${
-                  active
-                    ? `${tint} ring-2 ring-offset-2 ring-offset-black ring-rose-500/40 shadow-[0_0_18px_-2px_rgba(244,63,94,0.6)]`
-                    : "border-white/15 text-white/55 hover:border-white/35 hover:text-white/80 bg-black/30"
-                }`}
-              >
-                {opt}
-              </button>
-            );
-          })}
-          <span className="text-[10px] text-rose-300/60 italic ml-1">
-            {intensity === "mild" && "Sass only · PG-13"}
-            {intensity === "medium" && "Standard sweary roast"}
-            {intensity === "chaotic" && "Full unhinged Enforcer"}
+        <div className="-mt-1 mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border-2 border-fuchsia-500/70 bg-fuchsia-500/15 text-fuchsia-200">
+          <Flame className="h-3.5 w-3.5" />
+          <span className="text-[10px] uppercase tracking-[0.3em] font-black">
+            OG Brutal · all-or-nothing
           </span>
         </div>
       )}
