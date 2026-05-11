@@ -48,7 +48,7 @@ export const listFleet = createServerFn({ method: "GET" })
       admin
         .from("bot_factory")
         .select(
-          "id,pair_name,pair_label,bot_username,channel_chat_id,asset_class,bias,active,tier,last_pinged_at,last_broadcast,ping_count,webhook_url,created_at,updated_at,telegram_bot_token"
+          "id,pair_name,pair_label,bot_username,channel_chat_id,asset_class,bias,active,tier,last_pinged_at,last_broadcast,ping_count,webhook_url,created_at,updated_at"
         )
         .order("created_at", { ascending: false }),
       admin.from("fleet_settings").select("*").eq("id", 1).maybeSingle(),
@@ -56,7 +56,8 @@ export const listFleet = createServerFn({ method: "GET" })
     return {
       bots: (bots || []).map((b: any) => ({
         ...b,
-        telegram_bot_token: b.telegram_bot_token ? "•••" + b.telegram_bot_token.slice(-4) : "",
+        // Token is encrypted at rest and never returned to the client.
+        telegram_bot_token: "•••",
       })),
       settings: settings || { global_frequency: "aggressive" },
     };
@@ -83,18 +84,23 @@ export const spawnFleetBot = createServerFn({ method: "POST" })
     // Verify the token + grab username
     const me = await tgDirect(data.telegram_bot_token, "getMe", {});
 
-    const { data: inserted, error } = await admin.from("bot_factory").insert({
-      pair_name: data.pair_name,
-      pair_label: data.pair_label || data.pair_name,
-      telegram_bot_token: data.telegram_bot_token,
-      bot_username: me?.username || null,
-      channel_chat_id: data.channel_chat_id,
-      bias: data.bias,
-      asset_class: data.asset_class,
-      tier: "FREE",
-      created_by: userId,
-    }).select("*").single();
+    // Insert via service-role-only RPC so the token is encrypted at rest and a
+    // fresh encrypted webhook secret is generated server-side.
+    const { data: rpcRows, error } = await admin.rpc("bot_factory_create", {
+      p_pair_name: data.pair_name,
+      p_pair_label: data.pair_label || data.pair_name,
+      p_token: data.telegram_bot_token,
+      p_bot_username: me?.username || null,
+      p_channel_chat_id: data.channel_chat_id,
+      p_bias: data.bias,
+      p_asset_class: data.asset_class,
+      p_created_by: userId,
+    });
     if (error) throw new Error(error.message);
+    const inserted = Array.isArray(rpcRows) ? rpcRows[0] : rpcRows;
+    if (!inserted?.id || !inserted?.webhook_secret) {
+      throw new Error("Bot insert failed");
+    }
 
     // Set webhook to our public route — uses bot id as path param + per-bot secret
     const webhookUrl = `${projectBaseUrl()}/api/public/fleet/webhook/${inserted.id}`;
@@ -121,9 +127,9 @@ export const deleteFleetBot = createServerFn({ method: "POST" })
     const { supabase, userId } = context as { supabase: any; userId: string };
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
     const admin = adminClient();
-    const { data: bot } = await admin.from("bot_factory").select("telegram_bot_token").eq("id", data.id).maybeSingle();
-    if (bot?.telegram_bot_token) {
-      await tgDirect(bot.telegram_bot_token, "deleteWebhook", { drop_pending_updates: true }).catch(() => {});
+    const { data: token } = await admin.rpc("bot_factory_reveal_token", { p_id: data.id });
+    if (typeof token === "string" && token.length > 0) {
+      await tgDirect(token, "deleteWebhook", { drop_pending_updates: true }).catch(() => {});
     }
     const { error } = await admin.from("bot_factory").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -184,7 +190,10 @@ export const broadcastFleetCommand = createServerFn({ method: "POST" })
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
     if (!data.message) throw new Error("Message required");
     const admin = adminClient();
-    const { data: bots } = await admin.from("bot_factory").select("*").eq("active", true);
+    const { data: bots } = await admin
+      .from("bot_factory")
+      .select("id,pair_name,pair_label,channel_chat_id,ping_count")
+      .eq("active", true);
 
     const results: { pair: string; ok: boolean; err?: string }[] = [];
     for (const bot of bots || []) {
@@ -193,11 +202,16 @@ export const broadcastFleetCommand = createServerFn({ method: "POST" })
         continue;
       }
       try {
+        const { data: token } = await admin.rpc("bot_factory_reveal_token", { p_id: bot.id });
+        if (typeof token !== "string" || !token) {
+          results.push({ pair: bot.pair_name, ok: false, err: "no token" });
+          continue;
+        }
         const text =
           `🛰️ <b>0G · ${bot.pair_label || bot.pair_name}</b>\n` +
           `<i>📣 MASTER BROADCAST</i>\n\n` +
           escapeHtml(data.message);
-        await tgDirect(bot.telegram_bot_token, "sendMessage", {
+        await tgDirect(token, "sendMessage", {
           chat_id: bot.channel_chat_id,
           text,
           parse_mode: "HTML",

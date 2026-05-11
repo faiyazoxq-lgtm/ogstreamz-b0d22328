@@ -559,16 +559,16 @@ export type Database = {
           channel_chat_id: string
           created_at: string
           created_by: string | null
+          enc_telegram_bot_token: string
+          enc_webhook_secret: string
           id: string
           last_broadcast: string | null
           last_pinged_at: string | null
           pair_label: string
           pair_name: string
           ping_count: number
-          telegram_bot_token: string
           tier: string
           updated_at: string
-          webhook_secret: string
           webhook_url: string | null
         }
         Insert: {
@@ -579,16 +579,16 @@ export type Database = {
           channel_chat_id?: string
           created_at?: string
           created_by?: string | null
+          enc_telegram_bot_token: string
+          enc_webhook_secret: string
           id?: string
           last_broadcast?: string | null
           last_pinged_at?: string | null
           pair_label?: string
           pair_name: string
           ping_count?: number
-          telegram_bot_token: string
           tier?: string
           updated_at?: string
-          webhook_secret?: string
           webhook_url?: string | null
         }
         Update: {
@@ -599,16 +599,16 @@ export type Database = {
           channel_chat_id?: string
           created_at?: string
           created_by?: string | null
+          enc_telegram_bot_token?: string
+          enc_webhook_secret?: string
           id?: string
           last_broadcast?: string | null
           last_pinged_at?: string | null
           pair_label?: string
           pair_name?: string
           ping_count?: number
-          telegram_bot_token?: string
           tier?: string
           updated_at?: string
-          webhook_secret?: string
           webhook_url?: string | null
         }
         Relationships: []
@@ -3481,6 +3481,24 @@ export type Database = {
         }
         Returns: string
       }
+      bot_factory_create: {
+        Args: {
+          p_asset_class: string
+          p_bias: string
+          p_bot_username: string
+          p_channel_chat_id: string
+          p_created_by: string
+          p_pair_label: string
+          p_pair_name: string
+          p_token: string
+        }
+        Returns: {
+          id: string
+          webhook_secret: string
+        }[]
+      }
+      bot_factory_reveal_secret: { Args: { p_id: string }; Returns: string }
+      bot_factory_reveal_token: { Args: { p_id: string }; Returns: string }
       charge_portal_use: { Args: { _portal_id: string }; Returns: number }
       civility_default: { Args: never; Returns: boolean }
       claim_portal_download: {

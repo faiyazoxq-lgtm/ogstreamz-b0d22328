@@ -31,23 +31,28 @@ export const Route = createFileRoute("/api/public/fleet/webhook/$botId")({
         const admin = adminClient();
         const { data: bot } = await admin
           .from("bot_factory")
-          .select("id, telegram_bot_token, webhook_secret, pair_label, tier, channel_chat_id")
+          .select("id, pair_label, tier, channel_chat_id")
           .eq("id", botId)
           .maybeSingle();
         if (!bot) return new Response("Not found", { status: 404 });
-        if (!bot.webhook_secret || !safeEqual(provided, bot.webhook_secret)) {
+
+        // Decrypt webhook secret + token via service-role-only RPCs.
+        const { data: secret } = await admin.rpc("bot_factory_reveal_secret", { p_id: botId });
+        if (typeof secret !== "string" || !secret || !safeEqual(provided, secret)) {
           return new Response("Unauthorized", { status: 401 });
         }
+        const { data: token } = await admin.rpc("bot_factory_reveal_token", { p_id: botId });
+        const botToken = typeof token === "string" ? token : "";
 
         const update: any = await request.json().catch(() => ({}));
         const msg = update.message || update.edited_message || update.channel_post;
         const chatId = msg?.chat?.id;
         const text: string = (msg?.text || "").trim();
 
-        if (chatId && text) {
+        if (chatId && text && botToken) {
           // Tiny built-in command surface — extend later
           if (/^\/start/i.test(text)) {
-            await tg(bot.telegram_bot_token, "sendMessage", {
+            await tg(botToken, "sendMessage", {
               chat_id: chatId,
               text:
                 `🛰️ <b>0G · ${escape(bot.pair_label)}</b>\n` +
@@ -56,7 +61,7 @@ export const Route = createFileRoute("/api/public/fleet/webhook/$botId")({
               parse_mode: "HTML",
             });
           } else if (/^\/status/i.test(text)) {
-            await tg(bot.telegram_bot_token, "sendMessage", {
+            await tg(botToken, "sendMessage", {
               chat_id: chatId,
               text: `✅ ${escape(bot.pair_label)} · ${bot.tier}`,
               parse_mode: "HTML",
