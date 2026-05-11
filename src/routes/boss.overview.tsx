@@ -86,6 +86,7 @@ const TILES: Tile[] = [
   { to: "/boss/alerts",              label: "System Alerts",     blurb: "API errors and Perplexity fallback activity, realtime",       Icon: Bell,         tint: "#ff5577" },
   { to: "/boss/publish-check",       label: "Publish Check",     blurb: "Pre-publish validation & manual checklist",                   Icon: Rocket,       tint: "#ffd166" },
   { to: "/boss/api-keys",            label: "Agent Keys",        blurb: "Encrypted vault for AI / integration API keys",               Icon: KeyRound,     tint: "#a78bfa" },
+  { to: "/boss/telegram-setup",      label: "Telegram Setup",    blurb: "BotFather checklist · /setdomain, privacy, slash commands",   Icon: Send,         tint: "#3ad6ff" },
   { to: "/boss/settings",            label: "Settings",          blurb: "Signup bonus, feature flags & tunables",                      Icon: SettingsIcon, tint: "#94a3b8" },
 ];
 

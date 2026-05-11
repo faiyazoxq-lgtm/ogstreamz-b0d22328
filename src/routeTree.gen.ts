@@ -50,6 +50,7 @@ import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as BossUsersRouteImport } from './routes/boss.users'
+import { Route as BossTelegramSetupRouteImport } from './routes/boss.telegram-setup'
 import { Route as BossStreamQueueRouteImport } from './routes/boss.stream-queue'
 import { Route as BossSettingsRouteImport } from './routes/boss.settings'
 import { Route as BossPublishCheckRouteImport } from './routes/boss.publish-check'
@@ -280,6 +281,11 @@ const BossUsersRoute = BossUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => BossRoute,
 } as any)
+const BossTelegramSetupRoute = BossTelegramSetupRouteImport.update({
+  id: '/telegram-setup',
+  path: '/telegram-setup',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossStreamQueueRoute = BossStreamQueueRouteImport.update({
   id: '/stream-queue',
   path: '/stream-queue',
@@ -455,6 +461,7 @@ export interface FileRoutesByFullPath {
   '/boss/publish-check': typeof BossPublishCheckRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
+  '/boss/telegram-setup': typeof BossTelegramSetupRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -521,6 +528,7 @@ export interface FileRoutesByTo {
   '/boss/publish-check': typeof BossPublishCheckRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
+  '/boss/telegram-setup': typeof BossTelegramSetupRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -589,6 +597,7 @@ export interface FileRoutesById {
   '/boss/publish-check': typeof BossPublishCheckRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
+  '/boss/telegram-setup': typeof BossTelegramSetupRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/jokes/portal': typeof JokesPortalRoute
@@ -658,6 +667,7 @@ export interface FileRouteTypes {
     | '/boss/publish-check'
     | '/boss/settings'
     | '/boss/stream-queue'
+    | '/boss/telegram-setup'
     | '/boss/users'
     | '/checkout/return'
     | '/jokes/portal'
@@ -724,6 +734,7 @@ export interface FileRouteTypes {
     | '/boss/publish-check'
     | '/boss/settings'
     | '/boss/stream-queue'
+    | '/boss/telegram-setup'
     | '/boss/users'
     | '/checkout/return'
     | '/jokes/portal'
@@ -791,6 +802,7 @@ export interface FileRouteTypes {
     | '/boss/publish-check'
     | '/boss/settings'
     | '/boss/stream-queue'
+    | '/boss/telegram-setup'
     | '/boss/users'
     | '/checkout/return'
     | '/jokes/portal'
@@ -1148,6 +1160,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossUsersRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/telegram-setup': {
+      id: '/boss/telegram-setup'
+      path: '/telegram-setup'
+      fullPath: '/boss/telegram-setup'
+      preLoaderRoute: typeof BossTelegramSetupRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/stream-queue': {
       id: '/boss/stream-queue'
       path: '/stream-queue'
@@ -1346,6 +1365,7 @@ interface BossRouteChildren {
   BossPublishCheckRoute: typeof BossPublishCheckRoute
   BossSettingsRoute: typeof BossSettingsRoute
   BossStreamQueueRoute: typeof BossStreamQueueRoute
+  BossTelegramSetupRoute: typeof BossTelegramSetupRoute
   BossUsersRoute: typeof BossUsersRoute
   BossIndexRoute: typeof BossIndexRoute
 }
@@ -1365,6 +1385,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossPublishCheckRoute: BossPublishCheckRoute,
   BossSettingsRoute: BossSettingsRoute,
   BossStreamQueueRoute: BossStreamQueueRoute,
+  BossTelegramSetupRoute: BossTelegramSetupRoute,
   BossUsersRoute: BossUsersRoute,
   BossIndexRoute: BossIndexRoute,
 }
