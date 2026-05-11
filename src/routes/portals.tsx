@@ -267,7 +267,7 @@ function PortalsHub() {
             return (
               <div
                 key={`${i.kind}-${i.id}`}
-                className="group relative rounded-2xl border border-white/10 bg-black/40 p-5 backdrop-blur-xl transition hover:-translate-y-0.5"
+                className="group relative flex flex-col rounded-2xl border border-white/10 bg-black/40 p-5 backdrop-blur-xl transition hover:-translate-y-0.5 min-h-[260px] sm:min-h-[280px]"
                 style={{ boxShadow: `0 0 32px -24px ${meta.accent}` }}
               >
                 <div className="flex items-center justify-between">
@@ -309,7 +309,7 @@ function PortalsHub() {
                 <div className="mt-3 text-[10px] uppercase tracking-widest text-muted-foreground/70 truncate">
                   {origin.replace(/^https?:\/\//, "")}{href}
                 </div>
-                <div className="mt-4 flex items-center gap-2">
+                <div className="mt-auto pt-4 flex items-center gap-2">
                   <button
                     onClick={() => copyLink(i)}
                     className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-2 text-[11px] uppercase tracking-[0.18em] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
