@@ -20,7 +20,10 @@ async function load(): Promise<string[]> {
   if (cache) return cache;
   if (loadPromise) return loadPromise;
   loadPromise = (async () => {
-    const { data } = await supabase.from("domain_denylist").select("domain");
+    // The denylist table itself is boss/admin-only. Use the public RPC
+    // that returns just the domain strings — that's all the client needs
+    // for SafeLink/SafeImage URL filtering.
+    const { data } = await supabase.rpc("get_domain_denylist");
     const next = (data ?? []).map((r) => normalize(r.domain)).filter(Boolean);
     cache = next;
     listeners.forEach((cb) => cb(next));
