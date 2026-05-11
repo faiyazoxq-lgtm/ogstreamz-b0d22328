@@ -178,3 +178,39 @@ export async function requireReseller({ location }: GuardCtx) {
     throw redirect({ to: "/", search: { forbidden: "reseller" } as never });
   }
 }
+
+/**
+ * Route guard: only members with a confirmed Telegram link (chat_id bound)
+ * can open this route. Used to gate group features — no chat_id, no group
+ * invite delivery channel, so we must redirect to the connect-telegram gate.
+ *
+ * Composes on top of requireMember semantics: also bounces unauthenticated
+ * users to /auth.
+ */
+export async function requireTelegramLink({ location }: GuardCtx) {
+  if (typeof window === "undefined") return;
+  const stash = () => stashRedirect(location);
+
+  if (!hasStoredAuth()) { stash(); throw redirect({ to: "/auth" }); }
+
+  const { data: sess } = await supabase.auth.getSession();
+  const uid = sess.session?.user?.id;
+  if (!uid) { stash(); throw redirect({ to: "/auth" }); }
+
+  const { data: prof } = await supabase
+    .from("profiles").select("banned").eq("id", uid).maybeSingle();
+  if (prof?.banned) {
+    throw redirect({ to: "/", search: { banned: "1" } as never });
+  }
+
+  const { data: link } = await supabase
+    .from("telegram_user_links")
+    .select("chat_id")
+    .eq("user_id", uid)
+    .maybeSingle();
+
+  if (!link?.chat_id) {
+    try { sessionStorage.setItem("post_telegram_redirect", location.href || "/"); } catch { /* ignore */ }
+    throw redirect({ to: "/connect-telegram" });
+  }
+}

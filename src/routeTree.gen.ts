@@ -33,6 +33,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FleetRouteImport } from './routes/fleet'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConsoleRouteImport } from './routes/console'
+import { Route as ConnectTelegramRouteImport } from './routes/connect-telegram'
 import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as BossRouteImport } from './routes/boss'
 import { Route as BattlehubRouteImport } from './routes/battlehub'
@@ -192,6 +193,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const ConsoleRoute = ConsoleRouteImport.update({
   id: '/console',
   path: '/console',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConnectTelegramRoute = ConnectTelegramRouteImport.update({
+  id: '/connect-telegram',
+  path: '/connect-telegram',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConnectRoute = ConnectRouteImport.update({
@@ -408,6 +414,7 @@ export interface FileRoutesByFullPath {
   '/battlehub': typeof BattlehubRoute
   '/boss': typeof BossRouteWithChildren
   '/connect': typeof ConnectRoute
+  '/connect-telegram': typeof ConnectTelegramRoute
   '/console': typeof ConsoleRoute
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
@@ -473,6 +480,7 @@ export interface FileRoutesByTo {
   '/battle': typeof BattleRoute
   '/battlehub': typeof BattlehubRoute
   '/connect': typeof ConnectRoute
+  '/connect-telegram': typeof ConnectTelegramRoute
   '/console': typeof ConsoleRoute
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
@@ -540,6 +548,7 @@ export interface FileRoutesById {
   '/battlehub': typeof BattlehubRoute
   '/boss': typeof BossRouteWithChildren
   '/connect': typeof ConnectRoute
+  '/connect-telegram': typeof ConnectTelegramRoute
   '/console': typeof ConsoleRoute
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
@@ -608,6 +617,7 @@ export interface FileRouteTypes {
     | '/battlehub'
     | '/boss'
     | '/connect'
+    | '/connect-telegram'
     | '/console'
     | '/dashboard'
     | '/fleet'
@@ -673,6 +683,7 @@ export interface FileRouteTypes {
     | '/battle'
     | '/battlehub'
     | '/connect'
+    | '/connect-telegram'
     | '/console'
     | '/dashboard'
     | '/fleet'
@@ -739,6 +750,7 @@ export interface FileRouteTypes {
     | '/battlehub'
     | '/boss'
     | '/connect'
+    | '/connect-telegram'
     | '/console'
     | '/dashboard'
     | '/fleet'
@@ -806,6 +818,7 @@ export interface RootRouteChildren {
   BattlehubRoute: typeof BattlehubRoute
   BossRoute: typeof BossRouteWithChildren
   ConnectRoute: typeof ConnectRoute
+  ConnectTelegramRoute: typeof ConnectTelegramRoute
   ConsoleRoute: typeof ConsoleRoute
   DashboardRoute: typeof DashboardRoute
   FleetRoute: typeof FleetRoute
@@ -1014,6 +1027,13 @@ declare module '@tanstack/react-router' {
       path: '/console'
       fullPath: '/console'
       preLoaderRoute: typeof ConsoleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/connect-telegram': {
+      id: '/connect-telegram'
+      path: '/connect-telegram'
+      fullPath: '/connect-telegram'
+      preLoaderRoute: typeof ConnectTelegramRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/connect': {
@@ -1379,6 +1399,7 @@ const rootRouteChildren: RootRouteChildren = {
   BattlehubRoute: BattlehubRoute,
   BossRoute: BossRouteWithChildren,
   ConnectRoute: ConnectRoute,
+  ConnectTelegramRoute: ConnectTelegramRoute,
   ConsoleRoute: ConsoleRoute,
   DashboardRoute: DashboardRoute,
   FleetRoute: FleetRoute,
