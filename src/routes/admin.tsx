@@ -65,6 +65,7 @@ function AdminPage() {
   const [rosterStatus, setRosterStatus] = useState<"all" | "free" | "vip">("all");
   const [rosterRank, setRosterRank] = useState<"all" | "prospect" | "enforcer" | "vip">("all");
   const [rosterCredits, setRosterCredits] = useState<"all" | "zero" | "low" | "high">("all");
+  const [rosterSort, setRosterSort] = useState<{ key: "email" | "rank" | "status" | "credits"; dir: "asc" | "desc" }>({ key: "email", dir: "asc" });
 
   useEffect(() => {
     if (loading) return;
@@ -97,6 +98,7 @@ function AdminPage() {
   }
 
   const q = rosterQuery.trim().toLowerCase();
+  const RANK_ORDER: Record<string, number> = { prospect: 0, enforcer: 1, vip: 2, boss: 3 };
   const filteredRows = rows.filter((r) => {
     if (q && !r.email.toLowerCase().includes(q)) return false;
     if (rosterStatus !== "all" && r.status !== rosterStatus) return false;
@@ -105,7 +107,23 @@ function AdminPage() {
     if (rosterCredits === "low" && !((r.credits ?? 0) > 0 && (r.credits ?? 0) < 10)) return false;
     if (rosterCredits === "high" && (r.credits ?? 0) < 10) return false;
     return true;
+  }).slice().sort((a, b) => {
+    const dir = rosterSort.dir === "asc" ? 1 : -1;
+    switch (rosterSort.key) {
+      case "email":
+        return a.email.localeCompare(b.email) * dir;
+      case "status":
+        return a.status.localeCompare(b.status) * dir;
+      case "credits":
+        return ((a.credits ?? 0) - (b.credits ?? 0)) * dir;
+      case "rank":
+        return ((RANK_ORDER[a.rank ?? ""] ?? -1) - (RANK_ORDER[b.rank ?? ""] ?? -1)) * dir;
+    }
   });
+  const toggleSort = (key: "email" | "rank" | "status" | "credits") =>
+    setRosterSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
+  const sortIndicator = (key: "email" | "rank" | "status" | "credits") =>
+    rosterSort.key === key ? (rosterSort.dir === "asc" ? "▲" : "▼") : "↕";
 
   return (
     <main className="max-w-[1600px] mx-auto px-4 sm:px-6 py-12">
@@ -187,9 +205,25 @@ function AdminPage() {
       </div>
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="grid grid-cols-12 gap-2 px-5 py-3 text-[10px] uppercase tracking-[0.3em] text-muted-foreground border-b border-border">
-          <div className="col-span-5">Email</div>
-          <div className="col-span-3">Status</div>
-          <div className="col-span-2">Credits</div>
+          {([
+            { key: "email", label: "Email", span: "col-span-4", align: "" },
+            { key: "rank", label: "Rank", span: "col-span-2", align: "" },
+            { key: "status", label: "Status", span: "col-span-2", align: "" },
+            { key: "credits", label: "Credits", span: "col-span-2", align: "" },
+          ] as const).map((c) => (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => toggleSort(c.key)}
+              className={`${c.span} flex items-center gap-1.5 text-left uppercase tracking-[0.3em] text-muted-foreground hover:text-foreground transition-colors`}
+              aria-label={`Sort by ${c.label}`}
+            >
+              <span>{c.label}</span>
+              <span className={`text-[9px] ${rosterSort.key === c.key ? "text-foreground" : "opacity-50"}`}>
+                {sortIndicator(c.key)}
+              </span>
+            </button>
+          ))}
           <div className="col-span-2 text-right">Action</div>
         </div>
         {filteredRows.map((r) => (
@@ -2090,10 +2124,22 @@ function MusicSpawnerPanel() {
 function RoleRow({ row, busy, onSave }: { row: Row; busy: boolean; onSave: (p: Partial<Row>) => void }) {
   const [credits, setCredits] = useState(String(row.credits));
   const [status, setStatus] = useState<"free" | "vip">(row.status);
+  const rankTint: Record<string, string> = {
+    prospect: "border-zinc-500/40 text-zinc-300",
+    enforcer: "border-amber-400/50 text-amber-200",
+    vip: "border-fuchsia-400/50 text-fuchsia-200",
+    boss: "border-rose-500/50 text-rose-200",
+  };
+  const rankKey = row.rank ?? "prospect";
   return (
     <div className="grid grid-cols-12 gap-2 px-5 py-4 items-center border-b border-border last:border-b-0">
-      <div className="col-span-5 text-sm truncate">{row.email}</div>
-      <div className="col-span-3">
+      <div className="col-span-4 text-sm truncate">{row.email}</div>
+      <div className="col-span-2">
+        <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] ${rankTint[rankKey] ?? rankTint.prospect}`}>
+          {rankKey}
+        </span>
+      </div>
+      <div className="col-span-2">
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value as "free" | "vip")}
