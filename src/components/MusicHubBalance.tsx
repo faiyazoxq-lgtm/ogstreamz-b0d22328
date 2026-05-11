@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Coins, Plus, Loader2, ArrowDownRight, ArrowUpRight, Gift, Sparkles } from "lucide-react";
+import { Coins, Plus, Loader2, ArrowDownRight, ArrowUpRight, Gift, Sparkles, Crown, Infinity as InfinityIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export function MusicHubBalance({ className }: { className?: string }) {
   const { user, profile, loading, hasStoredSession, refresh } = useAuth();
+  const isBoss = profile?.rank === "boss";
 
   const [liveCredits, setLiveCredits] = useState<number | null>(null);
   const [delta, setDelta] = useState<{ value: number; reason: string | null; key: number } | null>(null);
@@ -117,6 +118,38 @@ export function MusicHubBalance({ className }: { className?: string }) {
         </span>
         <Button asChild size="sm" variant="outline" className="ml-auto">
           <Link to="/auth">Sign in</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  // Boss has unlimited credits — show a status card, never a balance.
+  if (isBoss) {
+    return (
+      <div
+        className={[
+          "relative overflow-hidden rounded-3xl border border-pink-400/40 bg-gradient-to-br from-pink-500/15 via-fuchsia-500/10 to-transparent p-5 flex flex-wrap items-center gap-4",
+          className ?? "",
+        ].join(" ")}
+        aria-label="Boss — unlimited credits"
+      >
+        <div className="rounded-full bg-pink-500/20 border border-pink-400/50 p-3">
+          <Crown className="h-6 w-6 text-pink-300" />
+        </div>
+        <div className="leading-tight">
+          <div className="text-[10px] uppercase tracking-[0.32em] text-muted-foreground font-semibold">
+            Boss access
+          </div>
+          <div className="font-[Montserrat] font-black text-3xl text-foreground tracking-tight inline-flex items-center gap-2">
+            <InfinityIcon className="h-7 w-7 text-pink-300" />
+            Unlimited
+          </div>
+          <div className="text-[11px] text-muted-foreground mt-0.5">
+            No coin balance — every spawn, unlock & joke is on the house.
+          </div>
+        </div>
+        <Button asChild size="sm" variant="outline" className="ml-auto border-pink-400/40 text-pink-200 hover:bg-pink-500/10">
+          <Link to="/admin" hash="roster">Manage credits</Link>
         </Button>
       </div>
     );

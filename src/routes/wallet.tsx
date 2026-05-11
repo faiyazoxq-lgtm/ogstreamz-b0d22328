@@ -6,6 +6,7 @@ import { MusicHubBalance } from "@/components/MusicHubBalance";
 import { CoinActivity } from "@/components/CoinActivity";
 import { CoinTopUpModal } from "@/components/CoinTopUpModal";
 import { requireMember } from "@/lib/route-guards";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/wallet")({
   beforeLoad: requireMember,
@@ -20,6 +21,8 @@ export const Route = createFileRoute("/wallet")({
 
 function WalletPage() {
   const [topUpOpen, setTopUpOpen] = useState(false);
+  const { profile } = useAuth();
+  const isBoss = profile?.rank === "boss";
   return (
     <main className="mx-auto max-w-3xl px-5 py-10 space-y-6">
       <header className="flex items-center justify-between gap-3">
@@ -34,15 +37,17 @@ function WalletPage() {
 
       <MusicHubBalance />
 
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gold/30 bg-card p-4">
-        <div className="flex-1 min-w-[180px]">
-          <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Need more 🪙?</p>
-          <p className="text-sm text-foreground/80">Grab a coin pack from the store — instant top-up.</p>
+      {!isBoss && (
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gold/30 bg-card p-4">
+          <div className="flex-1 min-w-[180px]">
+            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Need more 🪙?</p>
+            <p className="text-sm text-foreground/80">Grab a coin pack from the store — instant top-up.</p>
+          </div>
+          <Button size="lg" className="font-semibold" onClick={() => setTopUpOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" /> Top up coins
+          </Button>
         </div>
-        <Button size="lg" className="font-semibold" onClick={() => setTopUpOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" /> Top up coins
-        </Button>
-      </div>
+      )}
 
       <CoinActivity loadMore pageSize={20} showDateFilter defaultRange="30d" />
 
