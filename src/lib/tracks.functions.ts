@@ -69,12 +69,15 @@ export const createTrack = createServerFn({ method: "POST" })
         price_cents: data.price_cents,
         suno_prompt,
         created_by: userId,
-      }).select("id, title, suno_prompt").single();
+      })
+      // Don't SELECT full_path / suno_prompt back — column-level GRANTs
+      // restrict those to the service role. Return the local prompt instead.
+      .select("id, title").single();
     if (error) {
       console.error("[createTrack] insert failed", error);
       throw new ApiError("INTERNAL", "Could not create track");
     }
-    return { track };
+    return { track: { ...track, suno_prompt } };
   });
 
 export const listPortalTracks = createServerFn({ method: "POST" })
