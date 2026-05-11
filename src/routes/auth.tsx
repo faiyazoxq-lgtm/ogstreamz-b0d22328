@@ -146,6 +146,7 @@ function AuthPage() {
         /* non-fatal */
       }
       // Confirm starting credits when this is the first sign-in after signup.
+      let forceTelegramGate = false;
       try {
         if (sessionStorage.getItem("just_signed_up") === "1") {
           sessionStorage.removeItem("just_signed_up");
@@ -153,6 +154,9 @@ function AuthPage() {
           toast.success(`Account created · +${credits} credits in your wallet`, {
             description: "Spend them on any portal — no card needed.",
           });
+          // First-ever sign-in MUST go through the Telegram connect gate so
+          // every member starts with a chat_id and can be invited to groups.
+          forceTelegramGate = true;
         }
       } catch { /* ignore */ }
       // Apply chosen content mode (uncensored vs family-friendly) on first sign-in.
@@ -180,9 +184,13 @@ function AuthPage() {
       } catch { /* ignore */ }
       // Surface the live credit balance on this screen for ~2.2s before
       // redirecting, so members can see what they have to spend.
-      setSignedInDest(dest);
+      const finalDest = forceTelegramGate ? "/connect-telegram" : dest;
+      if (forceTelegramGate) {
+        try { sessionStorage.setItem("post_telegram_redirect", dest); } catch { /* ignore */ }
+      }
+      setSignedInDest(finalDest);
       tryClaim().finally(() => {
-        const t = setTimeout(() => navigate({ to: dest as never }), 2200);
+        const t = setTimeout(() => navigate({ to: finalDest as never }), 2200);
         return () => clearTimeout(t);
       });
     }
