@@ -260,14 +260,14 @@ function PortalsHub() {
           <p className="text-sm text-muted-foreground">No portals match this filter yet. Spawn one from a hub.</p>
         </div>
       ) : (
-        <div className="grid gap-3 sm:gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] items-stretch">
+        <div className="grid gap-2.5 sm:gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] items-stretch">
           {filtered.map((i) => {
             const meta = KIND_META[i.kind];
             const href = buildHref(i);
             return (
               <div
                 key={`${i.kind}-${i.id}`}
-                className="group relative flex h-full flex-col gap-3 sm:gap-4 rounded-2xl border border-white/10 bg-black/40 p-4 sm:p-5 backdrop-blur-xl transition hover:-translate-y-0.5 min-h-[260px] sm:min-h-[280px]"
+                className="group relative flex h-full flex-col gap-2.5 sm:gap-4 rounded-2xl border border-white/10 bg-black/40 p-3.5 sm:p-5 backdrop-blur-xl transition hover:-translate-y-0.5 min-h-[230px] sm:min-h-[280px]"
                 style={{ boxShadow: `0 0 32px -24px ${meta.accent}` }}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -293,7 +293,7 @@ function PortalsHub() {
                   <h3
                     className="m-0 text-eye-ice--bright tracking-[-0.02em] leading-[1.15] sm:leading-[1.1] lg:leading-[1.05] line-clamp-2 break-words transition-[text-shadow,filter] duration-300 group-hover:brightness-110"
                     style={{
-                      fontSize: "clamp(1.125rem, 4.2vw, 1.875rem)",
+                      fontSize: "clamp(1rem, 3.6vw, 1.875rem)",
                       textShadow: `0 0 2px rgba(0,0,0,0.55), 0 0 8px rgba(0,0,0,0.4), 0 0 16px ${meta.accent}, 0 0 32px color-mix(in oklab, ${meta.accent} 55%, transparent)`,
                     }}
                   >
@@ -309,23 +309,23 @@ function PortalsHub() {
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground/70 truncate">
                   {origin.replace(/^https?:\/\//, "")}{href}
                 </div>
-                <div className="mt-auto pt-3 sm:pt-4 border-t border-white/5 flex flex-col gap-3">
+                <div className="mt-auto pt-2.5 sm:pt-4 border-t border-white/5 flex flex-col gap-2.5">
                   {/* Reserved views slot keeps the action row at the same
                       vertical position whether or not a card has views. */}
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground/60 min-h-[1em]">
                     {i.views > 0 ? `${i.views.toLocaleString()} views` : "\u00A0"}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
                   <button
                     onClick={() => copyLink(i)}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-[11px] uppercase tracking-[0.18em] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-card px-2 sm:px-3 py-2 text-[10px] sm:text-[11px] uppercase tracking-[0.16em] sm:tracking-[0.18em] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
                     title="Copy link"
                   >
                     <Copy className="h-3.5 w-3.5" /> Copy
                   </button>
                   <button
                     onClick={() => setQrFor(i)}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-[11px] uppercase tracking-[0.18em] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
+                    className="inline-flex items-center justify-center rounded-md border border-border bg-card px-2.5 sm:px-3 py-2 text-[11px] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
                     title="Show QR code"
                     aria-label={`Show QR code for ${i.name}`}
                   >
@@ -333,7 +333,7 @@ function PortalsHub() {
                   </button>
                   <button
                     onClick={() => nativeShare(i)}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-[11px] uppercase tracking-[0.18em] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
+                    className="inline-flex items-center justify-center rounded-md border border-border bg-card px-2.5 sm:px-3 py-2 text-[11px] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
                     title="Share"
                     aria-label={`Share ${i.name}`}
                   >
@@ -342,7 +342,7 @@ function PortalsHub() {
                   <Link
                     to={i.to}
                     params={{ slug: i.slug }}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-[11px] uppercase tracking-[0.18em] font-bold text-black outline-none transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-primary"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 sm:px-3 py-2 text-[10px] sm:text-[11px] uppercase tracking-[0.16em] sm:tracking-[0.18em] font-bold text-black outline-none transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-primary"
                     style={{ background: meta.accent }}
                   >
                     Open <ExternalLink className="h-3.5 w-3.5" />
