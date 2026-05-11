@@ -105,9 +105,9 @@ function ProfilePage() {
           )}
         </header>
 
-        {/* OG Status — manual re-check + VIP & stream subscription snapshot */}
-        <section className="mb-8">
-          <OgStatusCard />
+        {/* Real 0G status tag */}
+        <section className="mb-8 flex justify-center">
+          <RealOgBadge variant="badge" size="lg" />
         </section>
 
         <section className="grid sm:grid-cols-2 gap-5">
