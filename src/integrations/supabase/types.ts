@@ -406,6 +406,48 @@ export type Database = {
         }
         Relationships: []
       }
+      boss_todos: {
+        Row: {
+          category: string
+          created_at: string
+          details: string | null
+          done_at: string | null
+          id: string
+          link: string | null
+          position: number
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          details?: string | null
+          done_at?: string | null
+          id?: string
+          link?: string | null
+          position?: number
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          details?: string | null
+          done_at?: string | null
+          id?: string
+          link?: string | null
+          position?: number
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bot_configs: {
         Row: {
           active: boolean
