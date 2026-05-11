@@ -11,10 +11,6 @@ import { CollapsiblePanel } from "@/components/boss/CollapsiblePanel";
 import { PowerToggle, type PowerToggleConfirm } from "@/components/boss/PowerToggle";
 import { QuickJump } from "@/components/boss/QuickJump";
 import { toast } from "sonner";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/boss/power")({
   head: () => ({
