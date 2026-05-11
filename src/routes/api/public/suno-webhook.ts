@@ -48,9 +48,9 @@ export const Route = createFileRoute("/api/public/suno-webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        // Verify webhook secret in ?secret= query param (sunoapi.com has no signing).
-        const url = new URL(request.url);
-        const provided = url.searchParams.get("secret");
+        // Verify webhook secret from x-webhook-secret header (header keeps secret out
+        // of access logs, CDN logs and Referer). Query param is no longer accepted.
+        const provided = request.headers.get("x-webhook-secret") || "";
         const expected = process.env.SUNO_WEBHOOK_SECRET || "";
         const ip = request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "unknown";
         const ua = (request.headers.get("user-agent") || "").slice(0, 200);
@@ -63,9 +63,9 @@ export const Route = createFileRoute("/api/public/suno-webhook")({
           );
         }
         if (!provided) {
-          console.warn(`[suno-webhook] 401 missing ?secret ip=${ip} ua="${ua}"`);
+          console.warn(`[suno-webhook] 401 missing x-webhook-secret ip=${ip} ua="${ua}"`);
           return Response.json(
-            { error: "missing_secret", message: "?secret query parameter is required." },
+            { error: "missing_secret", message: "x-webhook-secret header is required." },
             { status: 401 },
           );
         }
@@ -73,9 +73,9 @@ export const Route = createFileRoute("/api/public/suno-webhook")({
         const len = Math.min(provided.length, expected.length);
         for (let i = 0; i < len; i++) diff |= provided.charCodeAt(i) ^ expected.charCodeAt(i);
         if (diff !== 0) {
-          console.warn(`[suno-webhook] 403 invalid ?secret ip=${ip} ua="${ua}"`);
+          console.warn(`[suno-webhook] 403 invalid x-webhook-secret ip=${ip} ua="${ua}"`);
           return Response.json(
-            { error: "invalid_secret", message: "?secret did not match." },
+            { error: "invalid_secret", message: "x-webhook-secret did not match." },
             { status: 403 },
           );
         }
