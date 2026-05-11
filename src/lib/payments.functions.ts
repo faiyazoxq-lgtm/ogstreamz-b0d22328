@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 async function resolveOrCreateCustomer(
   stripe: ReturnType<typeof createStripeClient>,
@@ -35,6 +36,7 @@ async function resolveOrCreateCustomer(
 }
 
 export const createCheckoutSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator(
     (data: {
       priceId: string;
@@ -48,7 +50,13 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       return data;
     },
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    // Force the session to belong to the authenticated user — never trust the
+    // client-supplied userId for credit/subscription attribution.
+    const userId = context.userId;
+    if (data.userId && data.userId !== userId) {
+      throw new Response("Forbidden: userId mismatch", { status: 403 });
+    }
     const stripe = createStripeClient(data.environment);
 
     const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
@@ -56,28 +64,23 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     const stripePrice = prices.data[0];
     const isRecurring = stripePrice.type === "recurring";
 
-    const customerId =
-      data.customerEmail || data.userId
-        ? await resolveOrCreateCustomer(stripe, {
-            email: data.customerEmail,
-            userId: data.userId,
-          })
-        : undefined;
+    const customerId = await resolveOrCreateCustomer(stripe, {
+      email: data.customerEmail,
+      userId,
+    });
 
     const session = await stripe.checkout.sessions.create({
       line_items: [{ price: stripePrice.id, quantity: data.quantity || 1 }],
       mode: isRecurring ? "subscription" : "payment",
       ui_mode: "embedded_page",
       return_url: data.returnUrl,
-      ...(customerId && { customer: customerId }),
+      customer: customerId,
       managed_payments: { enabled: true },
-      ...(data.userId && {
-        metadata: { userId: data.userId, priceId: data.priceId },
-        ...(isRecurring && {
-          subscription_data: {
-            metadata: { userId: data.userId, priceId: data.priceId },
-          },
-        }),
+      metadata: { userId, priceId: data.priceId },
+      ...(isRecurring && {
+        subscription_data: {
+          metadata: { userId, priceId: data.priceId },
+        },
       }),
     } as any);
 
