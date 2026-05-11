@@ -260,7 +260,7 @@ function PortalsHub() {
           <p className="text-sm text-muted-foreground">No portals match this filter yet. Spawn one from a hub.</p>
         </div>
       ) : (
-        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
+        <div className="grid gap-3 sm:gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] items-stretch">
           {filtered.map((i) => {
             const meta = KIND_META[i.kind];
             const href = buildHref(i);
