@@ -11,6 +11,7 @@ import { usePaymentMode, setPaymentMode } from "@/hooks/use-payment-mode";
 import { CollapsiblePanel } from "@/components/boss/CollapsiblePanel";
 import { PowerToggle, type PowerToggleConfirm } from "@/components/boss/PowerToggle";
 import { QuickJump } from "@/components/boss/QuickJump";
+import { TelegramInboxPanel } from "@/components/boss/TelegramInboxPanel";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 
