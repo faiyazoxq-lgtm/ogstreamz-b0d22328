@@ -6,6 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { getTrackDownloadUrl } from "@/lib/tracks.functions";
 import { useRetryWithBackoff } from "@/hooks/use-retry-with-backoff";
+import { PreparationProgress } from "@/components/PreparationProgress";
 import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TrackUnlockCheckout } from "@/components/TrackUnlockCheckout";
@@ -215,11 +216,12 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, isV
               </>
             )}
           </Button>
-          {downloadRetry.status === "retrying" && downloadRetry.nextRetryInMs > 0 && (
-            <p className="mt-2 text-[10px] uppercase tracking-[0.25em] text-center opacity-70">
-              Retrying in {Math.ceil(downloadRetry.nextRetryInMs / 1000)}s · attempt {downloadRetry.attempt} of 3
-            </p>
-          )}
+          <PreparationProgress
+            retry={downloadRetry}
+            accent={accent}
+            secondary={secondary}
+            label="Preparing download…"
+          />
           {downloadError && (
             <div
               className="mt-3 rounded-xl border p-3 text-[11px]"
