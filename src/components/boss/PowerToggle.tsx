@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -44,6 +44,9 @@ export function PowerToggle({
 
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState("");
+  const confirmBtnRef = useRef<HTMLButtonElement | null>(null);
+  const inputId = useId();
+  const hintId = useId();
 
   const nextWillActivate = !active; // toggle flips the state
   const needsConfirm = !!confirm && (
@@ -70,6 +73,13 @@ export function PowerToggle({
     setOpen(false);
     setTyped("");
     onToggle();
+  }
+
+  function handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter" && phraseOk && !saving) {
+      e.preventDefault();
+      handleConfirm();
+    }
   }
 
   return (
@@ -146,31 +156,51 @@ export function PowerToggle({
         <AlertDialog open={open} onOpenChange={setOpen}>
           <AlertDialogContent
             className={tone === "danger" ? "border-destructive/40" : "border-amber-400/40"}
+            aria-labelledby={`${inputId}-title`}
+            aria-describedby={`${inputId}-desc`}
+            onEscapeKeyDown={() => setOpen(false)}
           >
             <AlertDialogHeader>
               <AlertDialogTitle
+                id={`${inputId}-title`}
                 className="flex items-center gap-2"
                 style={{ color: toneColor }}
               >
                 <AlertTriangle className="h-5 w-5" />
                 {confirm.title}
               </AlertDialogTitle>
-              <AlertDialogDescription asChild>
+              <AlertDialogDescription asChild id={`${inputId}-desc`}>
                 <div className="space-y-2 text-sm">{confirm.description}</div>
               </AlertDialogDescription>
             </AlertDialogHeader>
             {confirm.typeToConfirm && (
               <div className="space-y-1.5">
-                <label className="text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/55 font-bold">
+                <label
+                  htmlFor={inputId}
+                  className="text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/55 font-bold"
+                >
                   Type <span style={{ color: toneColor }}>{confirm.typeToConfirm}</span> to confirm
                 </label>
                 <Input
+                  id={inputId}
                   value={typed}
                   onChange={(e) => setTyped(e.target.value)}
+                  onKeyDown={handleInputKeyDown}
                   placeholder={confirm.typeToConfirm}
                   className="font-bold tracking-widest"
+                  aria-label={`Type ${confirm.typeToConfirm} to confirm`}
+                  aria-describedby={hintId}
+                  aria-invalid={typed.length > 0 && !phraseOk}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
                   autoFocus
                 />
+                <p id={hintId} className="sr-only" aria-live="polite">
+                  {phraseOk
+                    ? "Confirmation phrase matches. Press Enter to confirm."
+                    : `You must type ${confirm.typeToConfirm} exactly to enable the confirm button.`}
+                </p>
               </div>
             )}
             <AlertDialogFooter>
@@ -178,8 +208,10 @@ export function PowerToggle({
                 {confirm.cancelLabel ?? "Cancel"}
               </AlertDialogCancel>
               <AlertDialogAction
+                ref={confirmBtnRef}
                 disabled={saving || !phraseOk}
                 onClick={handleConfirm}
+                aria-disabled={saving || !phraseOk}
                 className={
                   tone === "danger"
                     ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
