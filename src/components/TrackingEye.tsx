@@ -302,12 +302,51 @@ export function TrackingEye({
           }}
         />
       )}
+      {/* 3D sphere shading — layered over the sclera so the eye reads as a
+          rounded ball instead of a flat disc. Uses radial gradients so it
+          adds zero size and keeps the existing iris ring + glow intact. */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          borderRadius: "50% / 50%",
+          background: [
+            // Bottom-right ambient occlusion shadow (gives volume)
+            "radial-gradient(circle at 70% 78%, oklch(0.18 0.02 260 / 0.55), transparent 60%)",
+            // Top-left soft fill light
+            "radial-gradient(circle at 28% 22%, oklch(1 0 0 / 0.35), transparent 55%)",
+            // Subtle outer rim shadow for the sphere silhouette
+            "radial-gradient(circle at 50% 50%, transparent 70%, oklch(0.2 0.02 260 / 0.45) 100%)",
+          ].join(", "),
+          mixBlendMode: "multiply",
+        }}
+      />
+      {/* Specular highlight glint — small bright dot top-left, classic
+          eyeball reflection. Sits above everything except the pupil so the
+          eye looks wet and rounded. */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute"
+        style={{
+          top: "10%",
+          left: "18%",
+          width: "26%",
+          height: "20%",
+          borderRadius: "50%",
+          background:
+            "radial-gradient(ellipse at 35% 35%, rgba(255,255,255,0.95), rgba(255,255,255,0.55) 35%, transparent 70%)",
+          filter: "blur(0.3px)",
+          mixBlendMode: "screen",
+        }}
+      />
       <span
         className="relative block transition-transform duration-75"
         style={{
           background: pupilBg,
-          // Pupil ring + inner shadow scale together with the eye.
-          boxShadow: `inset 0 0 0 clamp(1px, 0.05em, 1.5px) ${pupilRing}, inset 0 0 clamp(1px, 0.08em, 3px) rgba(0,0,0,0.8)`,
+          // Pupil ring + inner shadow scale together with the eye. Adds a
+          // bright top-left inset glint so the pupil itself reads as a
+          // glossy sphere (3D depth).
+          boxShadow: `inset 0 0 0 clamp(1px, 0.05em, 1.5px) ${pupilRing}, inset 0.05em 0.05em clamp(1px, 0.08em, 3px) rgba(255,255,255,0.45), inset -0.04em -0.04em clamp(1px, 0.08em, 3px) rgba(0,0,0,0.85)`,
           // Upright oval pupil — narrower than tall so it reads as a true
           // eye pupil (and mirrors the egg-shaped iris that stands in for
           // the letter "O" across the brand wordmark).
