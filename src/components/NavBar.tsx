@@ -585,7 +585,7 @@ function AccountMenu({
     return (
       <Link
         to="/auth"
-        className="ml-0.5 sm:ml-1 inline-flex items-center gap-2 btn-glass-blue px-2.5 sm:px-4 py-2 rounded-md text-xs uppercase tracking-[0.2em] font-bold text-white transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="inline-flex items-center gap-1.5 btn-glass-blue px-4 sm:px-5 py-1.5 rounded-full text-[11px] sm:text-xs uppercase tracking-[0.2em] font-bold text-white transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         aria-label="Join"
       >
         <LogIn className="h-3.5 w-3.5" />
@@ -600,11 +600,11 @@ function AccountMenu({
           <TooltipTrigger asChild>
             <DropdownMenuTrigger
               aria-label="Account"
-              className="ml-0.5 sm:ml-1 inline-flex items-center gap-1.5 btn-glass-blue px-2.5 sm:px-4 py-2 rounded-md text-xs uppercase tracking-[0.2em] font-bold text-white outline-none transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[state=open]:brightness-110 data-[state=open]:ring-2 data-[state=open]:ring-primary/60"
+              className="inline-flex items-center gap-1.5 btn-glass-blue px-4 sm:px-5 py-1.5 rounded-full text-[11px] sm:text-xs uppercase tracking-[0.2em] font-bold text-white outline-none transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[state=open]:brightness-110 data-[state=open]:ring-2 data-[state=open]:ring-primary/60"
             >
               <User className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Account</span>
-              <ChevronDown className="h-3 w-3 opacity-80 hidden sm:inline" />
+              <ChevronDown className="h-3 w-3 opacity-70 hidden sm:inline" />
             </DropdownMenuTrigger>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="bg-card border border-border text-foreground">
