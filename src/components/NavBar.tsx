@@ -236,7 +236,7 @@ export function NavBar() {
             }}
           />
         </Link>
-        {user && (
+        {user && !isBoss && (
           <Link
             to="/store"
             aria-label={`Coin wallet: ${profile?.credits ?? 0} coins — tap to top up`}
@@ -250,6 +250,21 @@ export function NavBar() {
             />
             <span className="hidden sm:inline text-[9px] uppercase tracking-[0.25em] text-amber-200/90 leading-none">
               coins
+            </span>
+          </Link>
+        )}
+        {user && isBoss && (
+          <Link
+            to="/admin"
+            hash="roster"
+            aria-label="Add or manage credits"
+            title="Add or manage member credits"
+            className="shrink inline-flex items-center min-w-0 max-w-[44vw] sm:max-w-none gap-1 sm:gap-2 rounded-full border-2 border-gold/60 bg-gradient-to-r from-gold/25 via-gold/15 to-gold/25 hover:from-gold/35 hover:to-gold/35 px-1.5 py-1 sm:px-4 sm:py-2 font-bold text-gold shadow-[0_0_22px_-4px_var(--gold)] transition-all outline-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-[3px] focus-visible:ring-offset-background"
+          >
+            <Coins className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" aria-hidden />
+            <span className="text-[11px] sm:text-sm font-bold uppercase tracking-[0.15em] leading-none truncate">
+              <span className="sm:hidden">Creds</span>
+              <span className="hidden sm:inline">Add / Manage Creds</span>
             </span>
           </Link>
         )}
