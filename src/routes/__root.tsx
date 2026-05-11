@@ -142,7 +142,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <GlobalMoodProvider>
-          <div className="relative min-h-screen bg-background text-foreground overflow-x-hidden">
+          <div className="relative min-h-screen text-foreground overflow-x-hidden bg-background">
             {/* Brand wallpaper — visible at the start of every page, scrolls
                 away into pure black as the user moves down the page. */}
             <SiteWallpaper />
