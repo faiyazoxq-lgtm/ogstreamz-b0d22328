@@ -214,6 +214,12 @@ function VipPage() {
             </button>
           </div>
         ) : null}
+
+        {isVip && (
+          <div className="mt-4">
+            <VipReferralCard />
+          </div>
+        )}
       </div>
 
       {/* HERO */}
