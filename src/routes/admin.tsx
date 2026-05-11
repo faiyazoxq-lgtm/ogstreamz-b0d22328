@@ -94,7 +94,7 @@ function AdminPage() {
 
   const update = async (id: string, patch: Partial<Row>) => {
     setBusy(id);
-    const { error } = await supabase.from("profiles").update(patch).eq("id", id);
+    const { error } = await supabase.from("profiles").update(patch as never).eq("id", id);
     setBusy(null);
     if (error) return toast.error(error.message);
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
