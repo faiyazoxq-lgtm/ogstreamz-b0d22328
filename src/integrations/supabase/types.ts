@@ -3422,6 +3422,10 @@ export type Database = {
         Args: { _amount: number; _reason: string }
         Returns: number
       }
+      text_contains_denylisted_domain: {
+        Args: { _text: string }
+        Returns: boolean
+      }
     }
     Enums: {
       access_tier: "visitor" | "member" | "stream" | "vip" | "boss"
