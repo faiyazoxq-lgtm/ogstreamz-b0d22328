@@ -894,6 +894,33 @@ export type Database = {
         }
         Relationships: []
       }
+      domain_denylist: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          domain: string
+          id: string
+          note: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          domain: string
+          id?: string
+          note?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          domain?: string
+          id?: string
+          note?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fleet_settings: {
         Row: {
           global_frequency: string
