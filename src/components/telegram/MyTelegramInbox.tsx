@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, RefreshCw, Send, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
@@ -10,16 +10,30 @@ import {
 } from "@/lib/telegram-inbox.functions";
 
 const BOT_USERNAME = "Ogstreamzbot";
+const PAGE_SIZE = 50;
 
 export function MyTelegramInbox() {
   const qc = useQueryClient();
   const fetchMessages = useServerFn(listMyTelegramMessages);
   const sendMessage = useServerFn(sendMyTelegramMessage);
   const [draft, setDraft] = useState("");
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const topSentinelRef = useRef<HTMLDivElement | null>(null);
+  const prevScrollHeightRef = useRef<number | null>(null);
+  const initialScrolledRef = useRef(false);
 
-  const q = useQuery({
+  const q = useInfiniteQuery({
     queryKey: ["my-tg-inbox"],
-    queryFn: () => fetchMessages({ data: { limit: 200 } }),
+    queryFn: ({ pageParam }) =>
+      fetchMessages({
+        data: {
+          limit: PAGE_SIZE,
+          before: pageParam ?? undefined,
+        },
+      }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) =>
+      (lastPage as { nextCursor: string | null }).nextCursor ?? undefined,
     refetchInterval: 15_000,
     retry: false,
   });
@@ -42,8 +56,54 @@ export function MyTelegramInbox() {
     send.mutate(text);
   };
 
-  const messages: TgMessage[] = q.data?.messages ?? [];
+  // Pages come newest-page-first (page0 = newest 50, page1 = older 50, ...).
+  // Each page.messages is oldest->newest within the page.
+  // To render oldest -> newest overall, reverse the pages then flatten.
+  const messages: TgMessage[] = (q.data?.pages ?? [])
+    .slice()
+    .reverse()
+    .flatMap((p: any) => p.messages as TgMessage[]);
   const errMsg = q.error instanceof Error ? q.error.message : "";
+
+  // Stick to bottom on first load.
+  useLayoutEffect(() => {
+    if (initialScrolledRef.current) return;
+    if (!scrollRef.current || messages.length === 0) return;
+    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    initialScrolledRef.current = true;
+  }, [messages.length]);
+
+  // Preserve scroll position when prepending older messages.
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el || prevScrollHeightRef.current == null) return;
+    el.scrollTop = el.scrollHeight - prevScrollHeightRef.current;
+    prevScrollHeightRef.current = null;
+  }, [messages.length]);
+
+  // Scroll-up sentinel: load older when it becomes visible.
+  useEffect(() => {
+    const sentinel = topSentinelRef.current;
+    const root = scrollRef.current;
+    if (!sentinel || !root) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (
+          entry?.isIntersecting &&
+          q.hasNextPage &&
+          !q.isFetchingNextPage &&
+          initialScrolledRef.current
+        ) {
+          prevScrollHeightRef.current = root.scrollHeight;
+          q.fetchNextPage();
+        }
+      },
+      { root, rootMargin: "80px 0px 0px 0px", threshold: 0 },
+    );
+    io.observe(sentinel);
+    return () => io.disconnect();
+  }, [q.hasNextPage, q.isFetchingNextPage, q.fetchNextPage, messages.length]);
 
   return (
     <div className="rounded-2xl border-2 border-sky-500/40 bg-gradient-to-b from-sky-950/20 via-black/70 to-black overflow-hidden">
@@ -68,7 +128,21 @@ export function MyTelegramInbox() {
         </button>
       </div>
 
-      <div className="max-h-[420px] min-h-[200px] overflow-y-auto p-3 space-y-2">
+      <div
+        ref={scrollRef}
+        className="max-h-[420px] min-h-[200px] overflow-y-auto p-3 space-y-2"
+      >
+        <div ref={topSentinelRef} />
+        {q.isFetchingNextPage && (
+          <div className="flex items-center justify-center text-[10px] uppercase tracking-[0.2em] text-white/45 py-2">
+            <Loader2 className="mr-2 h-3 w-3 animate-spin" /> Loading older…
+          </div>
+        )}
+        {!q.hasNextPage && messages.length > 0 && !q.isLoading && (
+          <div className="text-center text-[10px] uppercase tracking-[0.2em] text-white/30 py-1">
+            Start of conversation
+          </div>
+        )}
         {q.isLoading ? (
           <div className="flex items-center justify-center text-xs text-white/45 py-8">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading messages…
