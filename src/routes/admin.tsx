@@ -2124,10 +2124,22 @@ function MusicSpawnerPanel() {
 function RoleRow({ row, busy, onSave }: { row: Row; busy: boolean; onSave: (p: Partial<Row>) => void }) {
   const [credits, setCredits] = useState(String(row.credits));
   const [status, setStatus] = useState<"free" | "vip">(row.status);
+  const rankTint: Record<string, string> = {
+    prospect: "border-zinc-500/40 text-zinc-300",
+    enforcer: "border-amber-400/50 text-amber-200",
+    vip: "border-fuchsia-400/50 text-fuchsia-200",
+    boss: "border-rose-500/50 text-rose-200",
+  };
+  const rankKey = row.rank ?? "prospect";
   return (
     <div className="grid grid-cols-12 gap-2 px-5 py-4 items-center border-b border-border last:border-b-0">
-      <div className="col-span-5 text-sm truncate">{row.email}</div>
-      <div className="col-span-3">
+      <div className="col-span-4 text-sm truncate">{row.email}</div>
+      <div className="col-span-2">
+        <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] ${rankTint[rankKey] ?? rankTint.prospect}`}>
+          {rankKey}
+        </span>
+      </div>
+      <div className="col-span-2">
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value as "free" | "vip")}
