@@ -25,6 +25,7 @@ import { ReducedMotionToggle } from "../components/ReducedMotionToggle";
 import { AuthGate } from "../components/AuthGate";
 import { VipPromoBanner } from "../components/VipPromoBanner";
 import { FlameBackdrop } from "../components/FlameBackdrop";
+import { SiteWallpaper } from "../components/SiteWallpaper";
 import { CloudflareAnalytics } from "../components/CloudflareAnalytics";
 import { DomainDenylistGuard } from "../components/DomainDenylistGuard";
 
@@ -142,18 +143,10 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <GlobalMoodProvider>
-          <div className="min-h-screen bg-background text-foreground">
-            {/* Brand wallpaper — fixed flame backdrop behind all content */}
-            <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-              <FlameBackdrop
-                style={{
-                  WebkitMaskImage:
-                    "radial-gradient(ellipse 70% 55% at 50% 60%, transparent 0%, rgba(0,0,0,0.35) 45%, #000 80%)",
-                  maskImage:
-                    "radial-gradient(ellipse 70% 55% at 50% 60%, transparent 0%, rgba(0,0,0,0.35) 45%, #000 80%)",
-                }}
-              />
-            </div>
+          <div className="relative min-h-screen bg-background text-foreground overflow-x-hidden">
+            {/* Brand wallpaper — visible at the start of every page, scrolls
+                away into pure black as the user moves down the page. */}
+            <SiteWallpaper />
             <div className="relative z-10">
             <PaymentTestModeBanner />
             <SpotlightEyes />
