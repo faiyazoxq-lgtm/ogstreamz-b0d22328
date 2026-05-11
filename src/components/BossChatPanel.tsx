@@ -5,56 +5,25 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
-import { supabase } from "@/integrations/supabase/client";
-import { setFeatureFlags } from "@/lib/overlord.functions";
 import { bossChat } from "@/lib/boss-chat.functions";
 import { effectiveSwearing } from "@/lib/swearing";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 export function BossChatPanel() {
-  const { user, profile, isAdmin, refresh } = useAuth();
+  const { user, profile } = useAuth();
   const ask = useServerFn(bossChat);
-  const setF = useServerFn(setFeatureFlags);
 
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
-  const [togglingFlag, setTogglingFlag] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const swearing = effectiveSwearing(profile);
-  // BRUTAL MODE default — chaotic unless the user has explicitly chosen otherwise.
-  const intensityRaw = String((profile?.feature_flags as any)?.swearing_intensity ?? "chaotic").toLowerCase();
-  const intensity: "mild" | "medium" | "chaotic" =
-    intensityRaw === "mild" || intensityRaw === "medium" ? intensityRaw : "chaotic";
-  const canToggleSelf = !!user;
-  // Boss can also toggle in bulk via the Boss Control Center; this is the per-user switch.
-  const isBoss = profile?.rank === "boss" || isAdmin;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
-
-  const setIntensity = async (next: "mild" | "medium" | "chaotic") => {
-    if (!user || !profile || next === intensity) return;
-    setTogglingFlag(true);
-    try {
-      const merged = { ...(profile.feature_flags ?? {}), swearing_intensity: next };
-      if (isBoss) {
-        await setF({ data: { userId: user.id, flags: merged } });
-      } else {
-        const { error } = await supabase.from("profiles").update({ feature_flags: merged }).eq("id", user.id);
-        if (error) throw new Error(error.message);
-      }
-      await refresh();
-      toast.success(`Intensity: ${next.toUpperCase()}`);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to set intensity");
-    } finally {
-      setTogglingFlag(false);
-    }
-  };
 
   const send = async () => {
     const text = input.trim();
