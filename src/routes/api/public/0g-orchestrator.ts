@@ -29,7 +29,7 @@ function corsHeaders(origin: string | null) {
   };
 }
 
-async function verifyUser(request: Request): Promise<{ ok: boolean; userId?: string }> {
+async function verifyUser(request: Request): Promise<{ ok: boolean; userId?: string; vip?: boolean; reason?: string }> {
   const auth = request.headers.get("authorization") || "";
   const m = auth.match(/^Bearer\s+(.+)$/i);
   if (!m) return { ok: false };
@@ -37,11 +37,19 @@ async function verifyUser(request: Request): Promise<{ ok: boolean; userId?: str
     const sb = createClient(
       process.env.SUPABASE_URL!,
       process.env.SUPABASE_PUBLISHABLE_KEY!,
-      { auth: { autoRefreshToken: false, persistSession: false } },
+      {
+        auth: { autoRefreshToken: false, persistSession: false },
+        global: { headers: { Authorization: `Bearer ${m[1]}` } },
+      },
     );
     const { data, error } = await sb.auth.getUser(m[1]);
     if (error || !data?.user) return { ok: false };
-    return { ok: true, userId: data.user.id };
+    // Gate the expensive Gemini 2.5 HIGH-thinking + Google Search stream behind
+    // VIP / paid tier — same check used by zerog-brain.functions.ts.
+    const { data: vipData, error: vipErr } = await sb.rpc("has_active_vip", { _user: data.user.id });
+    if (vipErr) return { ok: false, reason: "entitlement_check_failed" };
+    if (vipData !== true) return { ok: true, userId: data.user.id, vip: false, reason: "vip_required" };
+    return { ok: true, userId: data.user.id, vip: true };
   } catch {
     return { ok: false };
   }
@@ -118,6 +126,16 @@ export const Route = createFileRoute("/api/public/0g-orchestrator")({
         if (!auth.ok) {
           return new Response(JSON.stringify({ error: "Unauthorized" }), {
             status: 401,
+            headers: { "Content-Type": "application/json", ...cors },
+          });
+        }
+        if (!auth.vip) {
+          const status = auth.reason === "entitlement_check_failed" ? 500 : 403;
+          const msg = auth.reason === "entitlement_check_failed"
+            ? "Unable to verify entitlement"
+            : "VIP / paid tier required to use 0G-BRAIN orchestrator";
+          return new Response(JSON.stringify({ error: msg }), {
+            status,
             headers: { "Content-Type": "application/json", ...cors },
           });
         }
