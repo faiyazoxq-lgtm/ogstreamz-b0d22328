@@ -3578,6 +3578,12 @@ export type Database = {
         }
       }
       get_cf_analytics_token: { Args: never; Returns: string }
+      get_domain_denylist: {
+        Args: never
+        Returns: {
+          domain: string
+        }[]
+      }
       get_my_stream_creds: {
         Args: never
         Returns: {
