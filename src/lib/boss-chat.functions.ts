@@ -32,7 +32,7 @@ type Msg = { role: "user" | "assistant"; content: string };
 
 export const bossChat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { messages: Msg[]; targetUserId?: string | null }) => ({
+  .inputValidator((d: { messages: Msg[]; targetUserId?: string | null; safeMode?: boolean }) => ({
     messages: Array.isArray(d.messages)
       ? d.messages
           .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
@@ -40,6 +40,7 @@ export const bossChat = createServerFn({ method: "POST" })
           .map((m) => ({ role: m.role, content: m.content.slice(0, 4000) }))
       : [],
     targetUserId: d.targetUserId ? String(d.targetUserId) : null,
+    safeMode: d.safeMode === true,
   }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as any;
@@ -80,7 +81,10 @@ export const bossChat = createServerFn({ method: "POST" })
 
     // Per-user defaults: streamers / VIPs / boss start in Safe Mode unless they
     // (or boss) explicitly flip swearing back on. Everyone else defaults to ON.
-    const swearing = effectiveSwearing(prof as any);
+    // Per-conversation override: if the client requested Safe Mode for this
+    // chat, force swearing OFF regardless of profile defaults. Profile flag
+    // is untouched — this is a session-only opt-out.
+    const swearing = data.safeMode ? false : effectiveSwearing(prof as any);
     const intensity = effectiveIntensity(prof as any);
     const system = swearing ? buildSwearingSystem(intensity) : NORMAL_SYSTEM;
 
