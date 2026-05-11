@@ -11,7 +11,11 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "check:links": "node scripts/check-internal-links.mjs",
-    "ci": "npm run check:links && npm run lint"
+    "check:secrets": "node scripts/check-server-secrets.mjs",
+    "check:secrets:bundle": "node scripts/check-server-secrets.mjs --bundle",
+    "prebuild": "npm run check:secrets",
+    "postbuild": "npm run check:secrets:bundle",
+    "ci": "npm run check:links && npm run check:secrets && npm run lint"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
