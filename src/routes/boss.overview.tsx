@@ -11,6 +11,7 @@ import { usePaymentMode, setPaymentMode } from "@/hooks/use-payment-mode";
 import { CollapsiblePanel } from "@/components/boss/CollapsiblePanel";
 import { PowerToggle, type PowerToggleConfirm } from "@/components/boss/PowerToggle";
 import { QuickJump } from "@/components/boss/QuickJump";
+import { TelegramInboxPanel } from "@/components/boss/TelegramInboxPanel";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -696,6 +697,17 @@ function BossOverview() {
             );
           })}
         </ul>
+      </CollapsiblePanel>
+
+      <CollapsiblePanel
+        id="telegram-inbox"
+        title="Telegram Inbox"
+        Icon={Send}
+        tint="#3ad6ff"
+        subtitle="Bot DMs and groups · pick a chat to view messages and reply"
+        defaultOpen={false}
+      >
+        <TelegramInboxPanel />
       </CollapsiblePanel>
 
       <CollapsiblePanel
