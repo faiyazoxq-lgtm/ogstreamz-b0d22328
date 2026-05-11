@@ -61,20 +61,21 @@ export function LiveCostEstimator({ className = "" }: Props) {
       .then(({ data }) => {
         if (!cancelled && typeof data?.credits === "number") setLiveBalance(data.credits);
       });
-    const channel = supabase
-      .channel(`wallet:${profile.id}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${profile.id}` },
-        (payload) => {
-          const next = (payload.new as { credits?: number } | null)?.credits;
-          if (typeof next === "number") setLiveBalance(next);
-        },
-      )
-      .subscribe();
+    // profiles was removed from the realtime publication for security
+    // (broadcast leaked every user's email/credits/ban status to any
+    // authenticated subscriber). Poll the user's own credit balance every
+    // 8s instead — RLS still scopes the read to the signed-in user.
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("credits")
+        .eq("id", profile.id)
+        .maybeSingle();
+      if (!cancelled && typeof data?.credits === "number") setLiveBalance(data.credits);
+    }, 8_000);
     return () => {
       cancelled = true;
-      supabase.removeChannel(channel);
+      clearInterval(interval);
     };
   }, [profile?.id]);
 

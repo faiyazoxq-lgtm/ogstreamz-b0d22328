@@ -34,41 +34,51 @@ export function MusicHubBalance({ className }: { className?: string }) {
     }
   }, [profile, liveCredits]);
 
-  // Realtime subscription: profile updates + ledger inserts
+  // profiles + credit_ledger were removed from the realtime publication for
+  // security (broadcast was visible to any signed-in subscriber). We now
+  // poll the user's own balance + most recent ledger entry every 6s — RLS
+  // still scopes both reads to the signed-in user.
   useEffect(() => {
     if (!user) return;
+    let cancelled = false;
+    let lastLedgerId: string | null = null;
 
-    const channel = supabase
-      .channel(`musichub-balance-${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
-        (payload) => {
-          const next = (payload.new as { credits?: number } | null)?.credits;
-          if (typeof next !== "number") return;
-          const prev = prevRef.current;
-          setLiveCredits(next);
-          if (prev !== null && next !== prev) {
-            setDelta((d) => ({ value: next - prev, reason: d?.reason ?? null, key: Date.now() }));
-          }
-          prevRef.current = next;
+    const tick = async () => {
+      const [{ data: prof }, { data: ledger }] = await Promise.all([
+        supabase.from("profiles").select("credits").eq("id", user.id).maybeSingle(),
+        supabase
+          .from("credit_ledger")
+          .select("id, delta, reason")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+      if (cancelled) return;
+      const next = typeof prof?.credits === "number" ? prof.credits : null;
+      if (next !== null) {
+        const prev = prevRef.current;
+        setLiveCredits(next);
+        if (prev !== null && next !== prev) {
+          setDelta((d) => ({ value: next - prev, reason: d?.reason ?? null, key: Date.now() }));
         }
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "credit_ledger", filter: `user_id=eq.${user.id}` },
-        (payload) => {
-          const row = payload.new as { delta?: number; reason?: string } | null;
-          if (!row || typeof row.delta !== "number") return;
+        prevRef.current = next;
+      }
+      const row = ledger as { id?: string; delta?: number; reason?: string } | null;
+      if (row?.id && row.id !== lastLedgerId && typeof row.delta === "number") {
+        if (lastLedgerId !== null) {
           setDelta({ value: row.delta, reason: row.reason ?? null, key: Date.now() });
-          // Pull fresh profile/credits in case the profiles UPDATE event was missed
           refresh().catch(() => {});
         }
-      )
-      .subscribe();
+        lastLedgerId = row.id;
+      }
+    };
 
+    tick();
+    const interval = setInterval(tick, 6_000);
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      clearInterval(interval);
     };
   }, [user, refresh]);
 
