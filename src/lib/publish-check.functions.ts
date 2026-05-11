@@ -87,7 +87,7 @@ export const runPublishChecks = createServerFn({ method: "POST" })
       "STRIPE_SANDBOX_API_KEY",
       "PAYMENTS_LIVE_WEBHOOK_SECRET",
       "PAYMENTS_SANDBOX_WEBHOOK_SECRET",
-      "GEMINI_API_KEY",
+      "GOOGLE_AI_STUDIO_API_KEY",
       "GEMINI_API_KEY_PRIMARY",
       "TELEGRAM_API_KEY",
     ];

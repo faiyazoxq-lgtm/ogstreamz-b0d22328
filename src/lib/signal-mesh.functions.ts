@@ -102,7 +102,7 @@ async function dispatchMusicBot(args: {
 
 // ────────── BOT-TO-BOT WORK ORDER → V-HUB BOT (Veo) ──────────
 async function dispatchVHubBot(args: { intel: any }): Promise<string | null> {
-  const key = process.env.GEMINI_API_KEY;
+  const key = process.env.GOOGLE_AI_STUDIO_API_KEY;
   if (!key) return null;
   const ticker = args.intel.price?.primaryTicker || args.intel.topMove?.ticker || "MARKET";
   const dir = args.intel.signal === "BUY" ? "rising green" : args.intel.signal === "SELL" ? "falling red" : "sideways amber";
@@ -213,8 +213,8 @@ export const pollVeoBundle = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { userId } = context as { userId: string };
     if (!(await isAdmin(userId))) throw new Error("Boss only");
-    const key = process.env.GEMINI_API_KEY;
-    if (!key) throw new Error("GEMINI_API_KEY missing");
+    const key = process.env.GOOGLE_AI_STUDIO_API_KEY;
+    if (!key) throw new Error("GOOGLE_AI_STUDIO_API_KEY missing");
 
     const { data: bundle } = await supabaseAdmin
       .from("signal_bundles")

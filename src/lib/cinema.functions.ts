@@ -100,8 +100,8 @@ export const generatePortalCinema = createServerFn({ method: "POST" })
     const { supabase, userId } = context as { supabase: any; userId: string };
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
 
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
+    const GOOGLE_AI_STUDIO_API_KEY = process.env.GOOGLE_AI_STUDIO_API_KEY;
+    if (!GOOGLE_AI_STUDIO_API_KEY) throw new Error("GOOGLE_AI_STUDIO_API_KEY not configured");
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error("Supabase env missing");
@@ -117,7 +117,7 @@ export const generatePortalCinema = createServerFn({ method: "POST" })
     const meta = (portal.scout_meta || {}) as any;
     const prompt = data.prompt || portal.bg_video_prompt || defaultPromptFor(meta.pair || "", meta.bias || "neutral");
 
-    const bytes = await veoGenerate(prompt, data.aspect, GEMINI_API_KEY);
+    const bytes = await veoGenerate(prompt, data.aspect, GOOGLE_AI_STUDIO_API_KEY);
 
     // Upload with service role (storage policies require admin role; service role bypasses RLS)
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
