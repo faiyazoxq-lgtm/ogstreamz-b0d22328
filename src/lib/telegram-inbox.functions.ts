@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { tgSendMessage } from "@/lib/telegram-bot.server";
+import { tgCall, tgSendMessage } from "@/lib/telegram-bot.server";
 
 async function assertAdmin(supabase: any, userId: string) {
   const { data } = await supabase
@@ -117,4 +117,73 @@ export const sendTelegramReply = createServerFn({ method: "POST" })
     await assertAdmin(supabase, userId);
     const result = await tgSendMessage(data.chatId, data.text);
     return { ok: true, message_id: (result as any)?.message_id ?? null };
+  });
+
+export type TgBotStatus = {
+  connected: boolean;
+  bot: {
+    id: number | null;
+    username: string | null;
+    first_name: string | null;
+    can_join_groups: boolean | null;
+    can_read_all_group_messages: boolean | null;
+  } | null;
+  webhook: {
+    url: string | null;
+    has_custom_certificate: boolean | null;
+    pending_update_count: number | null;
+    last_error_date: number | null;
+    last_error_message: string | null;
+    allowed_updates: string[] | null;
+  } | null;
+  chat_count: number;
+  error: string | null;
+};
+
+/** Get bot identity, webhook status, and chat reach. Admin-only. */
+export const getTelegramBotStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<TgBotStatus> => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    await assertAdmin(supabase, userId);
+
+    const { count } = await supabase
+      .from("telegram_messages")
+      .select("chat_id", { count: "exact", head: true });
+
+    try {
+      const [me, hook] = await Promise.all([
+        tgCall("getMe", {}),
+        tgCall("getWebhookInfo", {}),
+      ]);
+      return {
+        connected: true,
+        bot: {
+          id: (me as any)?.id ?? null,
+          username: (me as any)?.username ?? null,
+          first_name: (me as any)?.first_name ?? null,
+          can_join_groups: (me as any)?.can_join_groups ?? null,
+          can_read_all_group_messages:
+            (me as any)?.can_read_all_group_messages ?? null,
+        },
+        webhook: {
+          url: (hook as any)?.url ?? null,
+          has_custom_certificate: (hook as any)?.has_custom_certificate ?? null,
+          pending_update_count: (hook as any)?.pending_update_count ?? null,
+          last_error_date: (hook as any)?.last_error_date ?? null,
+          last_error_message: (hook as any)?.last_error_message ?? null,
+          allowed_updates: (hook as any)?.allowed_updates ?? null,
+        },
+        chat_count: count ?? 0,
+        error: null,
+      };
+    } catch (e) {
+      return {
+        connected: false,
+        bot: null,
+        webhook: null,
+        chat_count: count ?? 0,
+        error: e instanceof Error ? e.message : String(e),
+      };
+    }
   });
