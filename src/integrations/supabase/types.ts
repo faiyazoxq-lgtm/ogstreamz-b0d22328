@@ -981,6 +981,33 @@ export type Database = {
         }
         Relationships: []
       }
+      function_exec_audit: {
+        Row: {
+          created_at: string
+          justification: string
+          reviewed_at: string
+          reviewed_by: string | null
+          signature: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          justification?: string
+          reviewed_at?: string
+          reviewed_by?: string | null
+          signature: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          justification?: string
+          reviewed_at?: string
+          reviewed_by?: string | null
+          signature?: string
+          status?: string
+        }
+        Relationships: []
+      }
       hub_settings: {
         Row: {
           created_at: string
@@ -3220,6 +3247,22 @@ export type Database = {
           updated_at: string
         }[]
       }
+      boss_list_exposed_functions: {
+        Args: never
+        Returns: {
+          anon_can_execute: boolean
+          arguments: string
+          authenticated_can_execute: boolean
+          function_name: string
+          justification: string
+          public_can_execute: boolean
+          reviewed_at: string
+          schema_name: string
+          security_definer: boolean
+          signature: string
+          status: string
+        }[]
+      }
       boss_list_stream_links: {
         Args: never
         Returns: {
@@ -3299,6 +3342,10 @@ export type Database = {
           _value: string
         }
         Returns: string
+      }
+      boss_upsert_function_audit: {
+        Args: { _justification: string; _signature: string; _status: string }
+        Returns: undefined
       }
       boss_upsert_vault_credential: {
         Args: {
