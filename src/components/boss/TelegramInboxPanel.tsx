@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, RefreshCw, Send, Users, User, Megaphone, MessageSquare } from "lucide-react";
+import { Loader2, RefreshCw, Send, Users, User, Megaphone, MessageSquare, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   listTelegramChats,
@@ -10,6 +10,10 @@ import {
   type TgChatSummary,
   type TgMessage,
 } from "@/lib/telegram-inbox.functions";
+
+// Preset keyword chips. Boss portal will manage this list later;
+// keep the array empty so chips render only once configured.
+const BOSS_KEYWORDS: string[] = [];
 
 function ChatTypeIcon({ type, className }: { type: string | null; className?: string }) {
   if (type === "group" || type === "supergroup") return <Users className={className} />;
@@ -37,6 +41,7 @@ export function TelegramInboxPanel() {
 
   const [activeChatId, setActiveChatId] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
+  const [query, setQuery] = useState("");
 
   const chatsQuery = useQuery({
     queryKey: ["tg-inbox", "chats"],
@@ -60,6 +65,15 @@ export function TelegramInboxPanel() {
   });
 
   const messages: TgMessage[] = messagesQuery.data?.messages ?? [];
+  const filteredMessages = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return messages;
+    return messages.filter((m) => {
+      const text = (m.text ?? "").toLowerCase();
+      const sender = `${m.from_name ?? ""} ${m.from_username ?? ""}`.toLowerCase();
+      return text.includes(q) || sender.includes(q);
+    });
+  }, [messages, query]);
   const activeChat = useMemo(
     () => chats.find((c) => c.chat_id === activeChatId) ?? null,
     [chats, activeChatId],
@@ -210,8 +224,12 @@ export function TelegramInboxPanel() {
             <div className="text-xs text-white/45 text-center py-6">
               No messages stored for this chat yet.
             </div>
+          ) : filteredMessages.length === 0 ? (
+            <div className="text-xs text-white/45 text-center py-6">
+              No messages match "{query}".
+            </div>
           ) : (
-            messages.map((m) => (
+            filteredMessages.map((m) => (
               <div
                 key={m.update_id}
                 className="rounded-lg border border-white/5 bg-white/[0.03] px-3 py-2"
