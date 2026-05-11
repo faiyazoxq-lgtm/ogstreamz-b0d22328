@@ -226,7 +226,10 @@ export function NavBar() {
           <OgWordmark
             suffix="-PORTAL"
             className="brand-glow__mark hidden [@media(min-width:340px)]:inline-flex items-center self-center min-w-0 whitespace-nowrap overflow-hidden text-eye-ice--bright bg-transparent leading-none transition-[color,text-shadow,filter] duration-300 ease-out"
-            style={{ fontSize: "clamp(1.56rem, 7.2vw, 3.75rem)" }}
+            style={{
+              fontSize: "clamp(1.5rem, 4.4vw + 0.6rem, 4rem)",
+              letterSpacing: "-0.025em",
+            }}
           />
         </Link>
         {user && (
