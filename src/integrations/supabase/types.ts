@@ -2663,6 +2663,48 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_messages: {
+        Row: {
+          chat_id: number
+          chat_title: string | null
+          chat_type: string | null
+          created_at: string
+          from_name: string | null
+          from_user_id: number | null
+          from_username: string | null
+          message_date: string
+          raw: Json
+          text: string | null
+          update_id: number
+        }
+        Insert: {
+          chat_id: number
+          chat_title?: string | null
+          chat_type?: string | null
+          created_at?: string
+          from_name?: string | null
+          from_user_id?: number | null
+          from_username?: string | null
+          message_date?: string
+          raw: Json
+          text?: string | null
+          update_id: number
+        }
+        Update: {
+          chat_id?: number
+          chat_title?: string | null
+          chat_type?: string | null
+          created_at?: string
+          from_name?: string | null
+          from_user_id?: number | null
+          from_username?: string | null
+          message_date?: string
+          raw?: Json
+          text?: string | null
+          update_id?: number
+        }
+        Relationships: []
+      }
       telegram_pass_reminders: {
         Row: {
           id: string
