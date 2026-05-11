@@ -66,7 +66,7 @@ export function OgWordmark({
                   // the rest of "-PORTAL" from drifting away.
                   fontWeight: 900,
                   letterSpacing: "-0.06em",
-                  marginLeft: "-0.12em",
+                  marginLeft: "0.06em",
                 }
               : undefined
           }
