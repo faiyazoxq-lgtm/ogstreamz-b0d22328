@@ -88,6 +88,7 @@ export const runPublishChecks = createServerFn({ method: "POST" })
       "PAYMENTS_LIVE_WEBHOOK_SECRET",
       "PAYMENTS_SANDBOX_WEBHOOK_SECRET",
       "GEMINI_API_KEY",
+      "GEMINI_API_KEY_PRIMARY",
       "TELEGRAM_API_KEY",
     ];
     const missingRequired = requiredSecrets.filter((k) => !process.env[k]);
