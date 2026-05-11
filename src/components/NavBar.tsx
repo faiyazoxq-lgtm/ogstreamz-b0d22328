@@ -253,11 +253,11 @@ export function NavBar() {
           <TVStaticLogo className="shrink-0 self-center" />
           <OgWordmark
             suffix="-PORTAL"
-            className="brand-glow__mark hidden [@media(min-width:340px)]:inline-flex items-center self-center min-w-0 whitespace-nowrap overflow-hidden text-eye-ice bg-transparent leading-[0.9] transition-[color,text-shadow,filter] duration-300 ease-out"
+            className="brand-glow__mark inline-flex items-center self-center min-w-0 flex-shrink whitespace-nowrap overflow-hidden text-eye-ice bg-transparent leading-[0.9] transition-[color,text-shadow,filter] duration-300 ease-out"
             style={{
-              // Match the TVStaticLogo's clamp formula 1:1 so wordmark cap
-              // height tracks the logo box at every breakpoint.
-              fontSize: "clamp(3rem, 12vw, 4.5rem)",
+              // Scales fluidly so OG-PORTAL always fits alongside the nav,
+              // shrinking on narrow viewports without ever being clipped.
+              fontSize: "clamp(1.1rem, 4.2vw, 3rem)",
               letterSpacing: "-0.025em",
             }}
           />
@@ -295,9 +295,6 @@ export function NavBar() {
           </Link>
         )}
         <ul className="flex items-center flex-nowrap gap-0.5 sm:gap-1.5 shrink-0 ml-auto">
-          <li className="hidden md:block w-56 lg:w-72">
-            <SiteSearch />
-          </li>
           <li className="hidden sm:block">
             <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile currentPath={pathname} />
           </li>
@@ -353,6 +350,9 @@ export function NavBar() {
           </li>
         </ul>
       </nav>
+      <div className="hidden md:block max-w-7xl mx-auto px-4 sm:px-8 pb-3">
+        <SiteSearch />
+      </div>
     </header>
   );
 }
