@@ -2105,18 +2105,21 @@ export type Database = {
       }
       store_settings: {
         Row: {
+          cf_analytics_token: string | null
           credits_per_song: number
           id: number
           stream_portal_url: string
           updated_at: string
         }
         Insert: {
+          cf_analytics_token?: string | null
           credits_per_song?: number
           id?: number
           stream_portal_url?: string
           updated_at?: string
         }
         Update: {
+          cf_analytics_token?: string | null
           credits_per_song?: number
           id?: number
           stream_portal_url?: string
