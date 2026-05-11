@@ -25,6 +25,7 @@ import { ReducedMotionToggle } from "../components/ReducedMotionToggle";
 import { AuthGate } from "../components/AuthGate";
 import { VipPromoBanner } from "../components/VipPromoBanner";
 import { FlameBackdrop } from "../components/FlameBackdrop";
+import { CloudflareAnalytics } from "../components/CloudflareAnalytics";
 
 function NotFoundComponent() {
   return (
@@ -170,6 +171,7 @@ function RootComponent() {
             </div>
           </div>
           <Toaster />
+          <CloudflareAnalytics />
         </GlobalMoodProvider>
       </AuthProvider>
     </QueryClientProvider>
