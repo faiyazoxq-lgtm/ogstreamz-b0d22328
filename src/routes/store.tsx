@@ -215,7 +215,7 @@ function StorePage() {
           {loadingCatalog ? (
             <p className="text-center py-6 text-muted-foreground text-xs"><Loader2 className="h-4 w-4 inline animate-spin mr-2" />Loading items…</p>
           ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,160px),1fr))] gap-3">
               {CATALOG_KINDS.map((kind) => {
                 const items = catalog.filter((p) => p.kind === kind);
                 const meta = CATALOG_META[kind];
@@ -280,7 +280,7 @@ function StorePage() {
       ) : (
         <>
         {!isBoss && <PackCompareTable packs={packs} onBuy={(pid: string) => buy(pid)} />}
-        <div className="grid sm:grid-cols-3 gap-5">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-5">
           {packs.map((p) => (
             <PackCard
               key={p.id}
