@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { getTrackDownloadUrl } from "@/lib/tracks.functions";
+import { parseApiError } from "@/lib/api-error";
 import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TrackUnlockCheckout } from "@/components/TrackUnlockCheckout";
@@ -86,7 +87,10 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, isV
       const r = await downloadFn({ data: { trackId } });
       window.location.href = r.url;
     } catch (e: any) {
-      toast.error(e?.message ?? "Download unavailable");
+      const { code, message } = parseApiError(e);
+      if (code === "UNAUTHENTICATED") toast.error("Sign in to download");
+      else if (code === "NOT_UNLOCKED") toast.error("Unlock this track to download");
+      else toast.error(message);
     } finally {
       setDownloading(false);
     }

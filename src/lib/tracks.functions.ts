@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
+import { ApiError } from "@/lib/api-error";
 
 async function isAdmin(supabase: any, userId: string) {
   const { data } = await supabase
@@ -44,13 +45,15 @@ export const createTrack = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
-    if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
-    if (!data.title || !data.portal_slug || !data.preview_path || !data.full_path) throw new Error("Missing fields");
+    if (!(await isAdmin(supabase, userId))) throw new ApiError("FORBIDDEN", "Admin only");
+    if (!data.title || !data.portal_slug || !data.preview_path || !data.full_path) {
+      throw new ApiError("INVALID_INPUT", "Missing required fields");
+    }
 
     const { data: portal } = await supabase
       .from("portals").select("name, style, language, vibe, kind")
       .eq("slug", data.portal_slug).maybeSingle();
-    if (!portal) throw new Error("Portal not found");
+    if (!portal) throw new ApiError("NOT_FOUND", "Portal not found");
 
     const suno_prompt = await generateSunoPrompt(
       { name: portal.name, style: portal.style ?? "", language: portal.language ?? "English", vibe: portal.vibe },
@@ -67,7 +70,10 @@ export const createTrack = createServerFn({ method: "POST" })
         suno_prompt,
         created_by: userId,
       }).select("id, title, suno_prompt").single();
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[createTrack] insert failed", error);
+      throw new ApiError("INTERNAL", "Could not create track");
+    }
     return { track };
   });
 
@@ -79,7 +85,10 @@ export const listPortalTracks = createServerFn({ method: "POST" })
     const { data: tracks, error } = await admin
       .from("tracks").select("id, title, preview_path, price_cents, currency")
       .eq("portal_slug", data.portal_slug).order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[listPortalTracks] query failed", error);
+      throw new ApiError("UNAVAILABLE", "Track list unavailable");
+    }
 
     const items = await Promise.all((tracks ?? []).map(async (t: any) => {
       let preview_url: string | null = null;
@@ -108,7 +117,7 @@ export const getTrackDownloadUrl = createServerFn({ method: "POST" })
   .inputValidator((d: { trackId: string }) => ({ trackId: String(d.trackId || "").trim().slice(0, 64) }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
-    if (!data.trackId) throw new Error("Not unlocked");
+    if (!data.trackId) throw new ApiError("INVALID_INPUT", "Missing track id");
 
     // Strict ownership check: a track_purchases row for (user_id, track_id)
     // is the ONLY way this endpoint hands out a signed full-audio URL.
@@ -120,16 +129,23 @@ export const getTrackDownloadUrl = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .eq("track_id", data.trackId)
       .maybeSingle();
-    if (ownedErr || !owned) throw new Error("Not unlocked");
+    if (ownedErr) {
+      console.error("[getTrackDownloadUrl] ownership lookup failed", ownedErr);
+      throw new ApiError("UNAVAILABLE", "Could not verify access");
+    }
+    if (!owned) throw new ApiError("NOT_UNLOCKED");
 
     const { createClient } = await import("@supabase/supabase-js");
     const admin = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
     const { data: track } = await admin.from("tracks").select("full_path, title").eq("id", data.trackId).maybeSingle();
-    if (!track?.full_path) throw new Error("Track unavailable");
+    if (!track?.full_path) throw new ApiError("UNAVAILABLE", "Track file unavailable");
     const { data: signed, error } = await admin.storage.from("tracks").createSignedUrl(track.full_path, 60 * 10, {
       download: `${track.title.replace(/[^a-z0-9]+/gi, "-")}.mp3`,
     });
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[getTrackDownloadUrl] sign failed", error);
+      throw new ApiError("UNAVAILABLE", "Could not generate download link");
+    }
     return { url: signed!.signedUrl };
   });
 
@@ -144,7 +160,7 @@ export const createTrackUnlockCheckout = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     const { data: track } = await supabase.from("tracks").select("id, title, price_cents, currency").eq("id", data.trackId).maybeSingle();
-    if (!track) throw new Error("Track not found");
+    if (!track) throw new ApiError("NOT_FOUND", "Track not found");
 
     const stripe = createStripeClient(data.environment);
 
