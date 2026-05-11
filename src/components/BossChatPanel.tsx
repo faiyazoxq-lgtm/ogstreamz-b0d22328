@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Send, Skull, Crown, Flame, ShieldCheck } from "lucide-react";
+import { Loader2, Send, Skull, Crown, Flame, ShieldCheck, VolumeX, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,9 +17,13 @@ export function BossChatPanel() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  // Per-conversation Safe Mode override. Resets on page reload — does NOT
+  // touch the user's profile-level Swearing Agent preference.
+  const [convoSafe, setConvoSafe] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const swearing = effectiveSwearing(profile);
+  const profileSwearing = effectiveSwearing(profile);
+  const swearing = profileSwearing && !convoSafe;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -37,7 +41,7 @@ export function BossChatPanel() {
     setInput("");
     setBusy(true);
     try {
-      const r = await ask({ data: { messages: next } });
+      const r = await ask({ data: { messages: next, safeMode: convoSafe } });
       setMessages((m) => [...m, { role: "assistant", content: r.text }]);
     } catch (e: any) {
       const msg = e?.message ?? "Boss Chat failed";
@@ -82,16 +86,34 @@ export function BossChatPanel() {
           </div>
         </div>
 
-        <div
-          className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 ${
-            swearing ? "border-rose-600/60 bg-rose-950/30 text-rose-200" : "border-emerald-700/40 bg-black/40 text-emerald-300"
-          }`}
-          title="Toggle the Swearing Agent from the master switch in the header."
-        >
-          {swearing ? <Flame className="h-3.5 w-3.5 text-rose-300" /> : <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />}
-          <span className="text-[11px] uppercase tracking-[0.25em] font-black">
-            Swearing Agent · {swearing ? "ON" : "OFF"}
-          </span>
+        <div className="flex flex-col items-end gap-1.5">
+          <div
+            role="status"
+            aria-live="polite"
+            aria-label={`Tone: ${swearing ? "OG brutal — profanity on" : "Clean — profanity off"}`}
+            className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 ${
+              swearing ? "border-rose-600/60 bg-rose-950/30 text-rose-200" : "border-emerald-700/40 bg-black/40 text-emerald-300"
+            }`}
+          >
+            {swearing ? <Flame className="h-3.5 w-3.5 text-rose-300" /> : <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />}
+            <span className="text-[11px] uppercase tracking-[0.25em] font-black">
+              Tone · {swearing ? "OG Brutal" : "Clean"}
+            </span>
+          </div>
+          {profileSwearing && (
+            <button
+              type="button"
+              onClick={() => setConvoSafe((v) => !v)}
+              aria-pressed={convoSafe}
+              className={`text-[10px] uppercase tracking-[0.25em] font-bold underline-offset-4 hover:underline inline-flex items-center gap-1 ${
+                convoSafe ? "text-emerald-300" : "text-rose-300/80 hover:text-rose-200"
+              }`}
+              title={convoSafe ? "Re-enable profanity for this chat" : "Mute profanity for this chat only"}
+            >
+              {convoSafe ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
+              {convoSafe ? "Unmute for this chat" : "Mute profanity (this chat)"}
+            </button>
+          )}
         </div>
       </header>
 
