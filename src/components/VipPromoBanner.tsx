@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Crown, Lock, Flame, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Top-of-page banner promoting the VIP / Real OG pass to every visitor
@@ -12,11 +13,36 @@ export function VipPromoBanner() {
   const { profile, isAdmin } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [dismissed, setDismissed] = useState(false);
+  const [enabled, setEnabled] = useState(true);
 
   useEffect(() => {
     try {
       setDismissed(sessionStorage.getItem("vip_promo_dismissed") === "1");
     } catch { /* noop */ }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "vip_promo_banner_enabled")
+        .maybeSingle();
+      if (cancelled) return;
+      if (data?.value === false || data?.value === "false") setEnabled(false);
+      else setEnabled(true);
+    })();
+    const ch = supabase
+      .channel("app_settings_vip_promo")
+      .on("postgres_changes",
+        { event: "*", schema: "public", table: "app_settings", filter: "key=eq.vip_promo_banner_enabled" },
+        (payload) => {
+          const v = (payload.new as { value?: unknown } | null)?.value;
+          setEnabled(!(v === false || v === "false"));
+        })
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(ch); };
   }, []);
 
   const isVip =
@@ -27,7 +53,7 @@ export function VipPromoBanner() {
     profile?.feature_flags?.real_og === true;
 
   const HIDDEN_PREFIXES = ["/auth", "/vault-login", "/vip", "/checkout", "/forgot-password", "/reset-password"];
-  if (isVip || dismissed) return null;
+  if (!enabled || isVip || dismissed) return null;
   if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
 
   const dismiss = () => {

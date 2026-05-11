@@ -56,6 +56,7 @@ import { Route as BossStreamQueueRouteImport } from './routes/boss.stream-queue'
 import { Route as BossSettingsRouteImport } from './routes/boss.settings'
 import { Route as BossSecretsInventoryRouteImport } from './routes/boss.secrets-inventory'
 import { Route as BossPublishCheckRouteImport } from './routes/boss.publish-check'
+import { Route as BossPromotionsRouteImport } from './routes/boss.promotions'
 import { Route as BossPricingRouteImport } from './routes/boss.pricing'
 import { Route as BossPowerRouteImport } from './routes/boss.power'
 import { Route as BossPortalsRouteImport } from './routes/boss.portals'
@@ -319,6 +320,11 @@ const BossPublishCheckRoute = BossPublishCheckRouteImport.update({
   path: '/publish-check',
   getParentRoute: () => BossRoute,
 } as any)
+const BossPromotionsRoute = BossPromotionsRouteImport.update({
+  id: '/promotions',
+  path: '/promotions',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossPricingRoute = BossPricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
@@ -512,6 +518,7 @@ export interface FileRoutesByFullPath {
   '/boss/portals': typeof BossPortalsRoute
   '/boss/power': typeof BossPowerRoute
   '/boss/pricing': typeof BossPricingRoute
+  '/boss/promotions': typeof BossPromotionsRoute
   '/boss/publish-check': typeof BossPublishCheckRoute
   '/boss/secrets-inventory': typeof BossSecretsInventoryRoute
   '/boss/settings': typeof BossSettingsRoute
@@ -587,6 +594,7 @@ export interface FileRoutesByTo {
   '/boss/portals': typeof BossPortalsRoute
   '/boss/power': typeof BossPowerRoute
   '/boss/pricing': typeof BossPricingRoute
+  '/boss/promotions': typeof BossPromotionsRoute
   '/boss/publish-check': typeof BossPublishCheckRoute
   '/boss/secrets-inventory': typeof BossSecretsInventoryRoute
   '/boss/settings': typeof BossSettingsRoute
@@ -664,6 +672,7 @@ export interface FileRoutesById {
   '/boss/portals': typeof BossPortalsRoute
   '/boss/power': typeof BossPowerRoute
   '/boss/pricing': typeof BossPricingRoute
+  '/boss/promotions': typeof BossPromotionsRoute
   '/boss/publish-check': typeof BossPublishCheckRoute
   '/boss/secrets-inventory': typeof BossSecretsInventoryRoute
   '/boss/settings': typeof BossSettingsRoute
@@ -742,6 +751,7 @@ export interface FileRouteTypes {
     | '/boss/portals'
     | '/boss/power'
     | '/boss/pricing'
+    | '/boss/promotions'
     | '/boss/publish-check'
     | '/boss/secrets-inventory'
     | '/boss/settings'
@@ -817,6 +827,7 @@ export interface FileRouteTypes {
     | '/boss/portals'
     | '/boss/power'
     | '/boss/pricing'
+    | '/boss/promotions'
     | '/boss/publish-check'
     | '/boss/secrets-inventory'
     | '/boss/settings'
@@ -893,6 +904,7 @@ export interface FileRouteTypes {
     | '/boss/portals'
     | '/boss/power'
     | '/boss/pricing'
+    | '/boss/promotions'
     | '/boss/publish-check'
     | '/boss/secrets-inventory'
     | '/boss/settings'
@@ -1298,6 +1310,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossPublishCheckRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/promotions': {
+      id: '/boss/promotions'
+      path: '/promotions'
+      fullPath: '/boss/promotions'
+      preLoaderRoute: typeof BossPromotionsRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/pricing': {
       id: '/boss/pricing'
       path: '/pricing'
@@ -1520,6 +1539,7 @@ interface BossRouteChildren {
   BossPortalsRoute: typeof BossPortalsRoute
   BossPowerRoute: typeof BossPowerRoute
   BossPricingRoute: typeof BossPricingRoute
+  BossPromotionsRoute: typeof BossPromotionsRoute
   BossPublishCheckRoute: typeof BossPublishCheckRoute
   BossSecretsInventoryRoute: typeof BossSecretsInventoryRoute
   BossSettingsRoute: typeof BossSettingsRoute
@@ -1548,6 +1568,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossPortalsRoute: BossPortalsRoute,
   BossPowerRoute: BossPowerRoute,
   BossPricingRoute: BossPricingRoute,
+  BossPromotionsRoute: BossPromotionsRoute,
   BossPublishCheckRoute: BossPublishCheckRoute,
   BossSecretsInventoryRoute: BossSecretsInventoryRoute,
   BossSettingsRoute: BossSettingsRoute,
