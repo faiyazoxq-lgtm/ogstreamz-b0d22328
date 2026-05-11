@@ -8,13 +8,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { usePaymentMode, setPaymentMode } from "@/hooks/use-payment-mode";
 import { CollapsiblePanel } from "@/components/boss/CollapsiblePanel";
-import { PowerToggle } from "@/components/boss/PowerToggle";
+import { PowerToggle, type PowerToggleConfirm } from "@/components/boss/PowerToggle";
 import { QuickJump } from "@/components/boss/QuickJump";
 import { toast } from "sonner";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/boss/power")({
   head: () => ({
@@ -75,7 +71,6 @@ const PORTAL_ACTIONS: PortalAction[] = [
 function BossPowerPortal() {
   const paymentMode = usePaymentMode();
   const [togglingPayments, setTogglingPayments] = useState(false);
-  const [confirmGoLive, setConfirmGoLive] = useState(false);
   const [coinFrozen, setCoinFrozen] = useState<boolean | null>(null);
   const [togglingCoin, setTogglingCoin] = useState(false);
   const [swearDefault, setSwearDefault] = useState<boolean | null>(null);
@@ -131,8 +126,7 @@ function BossPowerPortal() {
     finally { setTogglingPayments(false); }
   }
   function togglePaymentMode() {
-    if (paymentMode === "live") void applyPaymentMode("test");
-    else setConfirmGoLive(true);
+    void applyPaymentMode(paymentMode === "live" ? "test" : "live");
   }
   async function toggleCoinFreeze() {
     if (coinFrozen === null) return;
@@ -180,6 +174,55 @@ function BossPowerPortal() {
 
   const totalQueue = counts.topups + counts.streams + counts.tracks + counts.grants;
   const ok = totalQueue === 0 && counts.alerts === 0;
+
+  const paymentsConfirm: PowerToggleConfirm = {
+    when: "always",
+    tone: paymentMode === "live" ? "warning" : "danger",
+    title: paymentMode === "live"
+      ? "Switch payments to TEST mode?"
+      : "Switch payments to LIVE mode?",
+    description: paymentMode === "live" ? (
+      <>
+        <p>Every checkout site-wide will move to <strong>sandbox cards only</strong>.</p>
+        <p className="text-amber-300">Real customers will see a "Test Mode" banner and cannot complete real purchases.</p>
+      </>
+    ) : (
+      <>
+        <p>Every checkout site-wide will charge <strong>real money</strong> to real cards immediately. Sandbox cards will be rejected.</p>
+        <p className="text-orange-300">The "Test Mode" banner will disappear for all members the moment you confirm.</p>
+        <p className="text-white/60 text-xs">Only switch to live when Stripe products & prices are fully verified for production.</p>
+      </>
+    ),
+    confirmLabel: paymentMode === "live" ? "Yes, go TEST" : "Yes, go LIVE",
+    cancelLabel: paymentMode === "live" ? "Stay in live mode" : "Stay in test mode",
+    typeToConfirm: paymentMode === "live" ? undefined : "GO LIVE",
+  };
+
+  const coinConfirm: PowerToggleConfirm = {
+    when: "deactivate", // FLOWING -> FROZEN needs confirm
+    tone: "danger",
+    title: "Freeze all coin flows?",
+    description: (
+      <>
+        <p>Every member will be <strong>blocked from earning or spending credits</strong> until you thaw.</p>
+        <p className="text-rose-300">Active battles, tips and store purchases will fail mid-flight.</p>
+      </>
+    ),
+    confirmLabel: "Freeze coins",
+    cancelLabel: "Keep flowing",
+    typeToConfirm: "FREEZE",
+  };
+
+  const swearConfirm: PowerToggleConfirm = {
+    when: "activate",
+    tone: "warning",
+    title: "Default new sessions to Guttermouth?",
+    description: (
+      <p>New visitors will land in foul-mouth chat by default. Existing sessions are unaffected.</p>
+    ),
+    confirmLabel: "Unleash",
+    cancelLabel: "Stay civil",
+  };
 
   return (
     <div className="space-y-6">
@@ -249,6 +292,7 @@ function BossPowerPortal() {
             onToggle={togglePaymentMode}
             saving={togglingPayments}
             ready
+            confirm={paymentsConfirm}
           />
           <PowerToggle
             title="Coin transactions"
@@ -263,6 +307,7 @@ function BossPowerPortal() {
             onToggle={toggleCoinFreeze}
             saving={togglingCoin}
             ready={coinFrozen !== null}
+            confirm={coinConfirm}
           />
           <PowerToggle
             title="Guttermouth"
@@ -277,6 +322,7 @@ function BossPowerPortal() {
             onToggle={toggleSwear}
             saving={togglingSwear}
             ready={swearDefault !== null}
+            confirm={swearConfirm}
           />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
@@ -469,36 +515,6 @@ function BossPowerPortal() {
           )}
         </div>
       </CollapsiblePanel>
-
-      <AlertDialog open={confirmGoLive} onOpenChange={setConfirmGoLive}>
-        <AlertDialogContent className="border-destructive/40">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-5 w-5" />
-              Switch payments to LIVE mode?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <span className="block">
-                Every checkout site-wide will charge <strong>real money</strong> to real cards
-                immediately. Sandbox / test cards will be rejected.
-              </span>
-              <span className="block text-orange-300">
-                The "Test Mode" banner will disappear for all members the moment you confirm.
-              </span>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={togglingPayments}>Stay in test mode</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={togglingPayments}
-              onClick={() => { void applyPaymentMode("live"); }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {togglingPayments ? "Switching…" : "Yes, go LIVE"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
