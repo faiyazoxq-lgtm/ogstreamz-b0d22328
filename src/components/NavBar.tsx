@@ -8,6 +8,7 @@ import {
   UserCircle, Settings, LogOut, Menu,
   Compass, Sparkles, DoorOpen, Send,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { TVStaticLogo } from "@/components/TVStaticLogo";
 import { OgWordmark } from "@/components/OgWordmark";
@@ -58,6 +59,27 @@ const portalSwitcherLinks: ReadonlyArray<HubLink> = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, desc: "Your control room" },
   { to: "/portals",   label: "0G-PORTAL", icon: Sparkles,        desc: "Browse the full universe" },
 ];
+
+// Live portal switcher: only boss-created portals + paid member-created
+// portals (price > 0 or coin cost > 0). Sourced via the list_nav_portals
+// SQL function which respects RLS and the boss/member rules.
+function useNavPortals(): ReadonlyArray<HubLink> {
+  const { data } = useQuery({
+    queryKey: ["nav-portals"],
+    staleTime: 60_000,
+    queryFn: async (): Promise<ReadonlyArray<HubLink>> => {
+      const { data, error } = await supabase.rpc("list_nav_portals");
+      if (error || !data) return [];
+      return (data as Array<{ slug: string; name: string; vip: boolean; by_boss: boolean; paid: boolean }>).map((p) => ({
+        to: `/p/${p.slug}`,
+        label: p.name,
+        icon: p.by_boss ? Crown : Sparkles,
+        desc: p.by_boss ? "Boss portal" : "Paid member portal",
+      }));
+    },
+  });
+  return data ?? [];
+}
 
 // Boss / admin pages live under their own /boss layout with a sidebar.
 
@@ -196,6 +218,7 @@ export function NavBar() {
         : "border-primary/40 text-primary bg-primary/10";
 
   const visibleHubs = hubLinks.filter((l) => !l.bossOnly || isBoss);
+  const navPortals = useNavPortals();
 
   // Scroll-aware navbar surface: keep it nearly transparent at the very top
   // (so the hero glow shows through) and ramp up the scrim + blur as soon as
@@ -299,7 +322,7 @@ export function NavBar() {
             <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile currentPath={pathname} />
           </li>
           <li className="hidden sm:block">
-            <NavDropdown label="Portals" icon={DoorOpen} items={portalSwitcherLinks} softGold hideLabelOnMobile currentPath={pathname} />
+            <NavDropdown label="Portals" icon={DoorOpen} items={navPortals.length ? navPortals : [{ to: "/portals", label: "Browse Portals", icon: Sparkles, desc: "No portals yet — open the directory" }]} softGold hideLabelOnMobile currentPath={pathname} />
           </li>
           <li className="hidden sm:block">
             <NavDropdown label={isBoss ? "Manage Store" : "Store"} icon={Store} items={storeLinks} hideLabelOnMobile currentPath={pathname} />
@@ -337,6 +360,7 @@ export function NavBar() {
               user={user}
               profile={profile}
               isBoss={isBoss}
+              portals={navPortals}
             />
           </li>
           <li className="hidden lg:block">
