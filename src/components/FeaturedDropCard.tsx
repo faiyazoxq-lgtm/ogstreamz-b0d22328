@@ -34,6 +34,8 @@ type StaticDrop = {
   audioUrl?: string;
   /** Optional Stripe price id for an inline buy button. */
   priceId?: string;
+  /** Price shown on the buy button, in coins (1 🪙 = £1). */
+  coinPrice?: number;
   /** Optional ornamental icon (top right). */
   ornament?: "moon" | "sparkles" | "music";
   /** Religious / devotional drop — switches off the Boss-style hum easter egg. */
@@ -69,6 +71,7 @@ const STATIC_DROPS: StaticDrop[] = [
     accent: "hsl(45 85% 70%)",
     audioUrl: "https://cdn.pixabay.com/audio/2024/02/04/audio_3a3f4def0f.mp3",
     priceId: "featured_nasheed_2usd",
+    coinPrice: 2,
     ornament: "moon",
     reverent: true,
     stylePhrase: "nasheed, devotional vocals, no instruments",
@@ -514,7 +517,7 @@ export function FeaturedDropCard() {
             ) : buyState === "open" ? (
               <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Checkout open</>
             ) : (
-              <><ShoppingBag className="h-4 w-4 mr-2" />Buy for 2 🪙</>
+              <><ShoppingBag className="h-4 w-4 mr-2" />Buy for {sd.coinPrice ?? 2} 🪙 Coins</>
             )}
           </Button>
         ) : (
