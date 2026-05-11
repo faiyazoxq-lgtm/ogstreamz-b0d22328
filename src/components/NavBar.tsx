@@ -233,7 +233,7 @@ export function NavBar() {
             style={{
               // Match the TVStaticLogo's clamp formula 1:1 so wordmark cap
               // height tracks the logo box at every breakpoint.
-              fontSize: "clamp(2.25rem, 9vw, 3.25rem)",
+              fontSize: "clamp(3rem, 12vw, 4.5rem)",
               letterSpacing: "-0.025em",
             }}
           />
