@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Lock, Webhook, KeyRound, Settings as SettingsIcon, ShieldAlert, ExternalLink } from "lucide-react";
+import { Lock, Webhook, KeyRound, Settings as SettingsIcon, ShieldAlert, ExternalLink, ShieldCheck } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { requireBoss } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/boss/secrets-inventory")({
@@ -101,6 +102,18 @@ function SecretsInventoryPage() {
             . To edit a runtime secret listed here, open Lovable Cloud → Backend → Secrets.
           </span>
         </div>
+
+        <Link
+          to="/boss/api-keys"
+          className="mt-3 flex items-start gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/5 px-3 py-2 text-xs text-emerald-200 hover:bg-emerald-500/10 transition"
+        >
+          <ShieldCheck className="h-4 w-4 mt-0.5 shrink-0" />
+          <span>
+            <strong className="font-bold">Encrypted Vault →</strong> Any blank or rotated secret can be parked in the
+            offline-encrypted vault (pgp_sym_encrypt at rest, decrypted only on explicit Reveal). Use this for keys you
+            need to keep but aren't ready to wire into runtime yet.
+          </span>
+        </Link>
       </header>
 
       <div className="grid gap-4 lg:grid-cols-2">
