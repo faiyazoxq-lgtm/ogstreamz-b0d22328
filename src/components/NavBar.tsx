@@ -78,7 +78,7 @@ function useNavPortals(): ReadonlyArray<HubLink> {
 // Boss / admin pages live under their own /boss layout with a sidebar.
 
 function NavDropdown({
-  label, icon: Icon, items, gold, softGold, hideLabelOnMobile, currentPath,
+  label, icon: Icon, items, gold, softGold, hideLabelOnMobile, currentPath, pill,
 }: {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -87,6 +87,7 @@ function NavDropdown({
   softGold?: boolean;
   hideLabelOnMobile?: boolean;
   currentPath: string;
+  pill?: boolean;
 }) {
   // Pick the most specific matching item (longest `to` wins) so that
   // e.g. "/dashboard" beats "/" on /dashboard.
@@ -106,19 +107,20 @@ function NavDropdown({
         aria-label={label}
         data-active={sectionActive ? "true" : undefined}
         className={[
-          "group inline-flex items-center gap-1 sm:gap-1.5 px-2 md:px-4 py-2 text-sm md:text-base font-semibold rounded-md transition-all duration-300 outline-none",
-          "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary focus-visible:ring-offset-[3px] focus-visible:ring-offset-background focus-visible:shadow-[0_0_0_1px_var(--background)]",
+          "group inline-flex items-center gap-1.5 px-3 md:px-4 py-1.5 text-[11px] md:text-xs font-bold uppercase tracking-[0.18em] transition-all duration-300 outline-none",
+          "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           "active:scale-[0.97]",
+          pill ? "rounded-full" : "rounded-md",
           gold
-            ? "text-gold hover:bg-gold/10 border border-gold/30 data-[state=open]:bg-gold/15 data-[active=true]:bg-gold/15 data-[active=true]:border-gold/60"
+            ? "text-gold hover:bg-gold/10 data-[state=open]:bg-gold/15 data-[active=true]:bg-gold/15"
             : softGold
-              ? "text-gold/85 border border-gold/20 hover:text-gold hover:bg-gold/[0.08] hover:border-gold/40 hover:shadow-[0_0_18px_-4px_var(--gold)] data-[state=open]:text-gold data-[state=open]:bg-gold/10 data-[state=open]:border-gold/50 data-[state=open]:shadow-[0_0_22px_-6px_var(--gold)] data-[active=true]:bg-gold/10 data-[active=true]:border-gold/50"
-              : "text-muted-foreground hover:text-foreground hover:bg-secondary data-[state=open]:bg-secondary data-[state=open]:text-foreground data-[active=true]:bg-secondary data-[active=true]:text-foreground",
+              ? "text-gold/80 hover:text-gold hover:bg-gold/[0.08] data-[state=open]:text-gold data-[state=open]:bg-gold/10 data-[active=true]:bg-gold/10"
+              : "text-foreground/70 hover:text-foreground hover:bg-white/5 data-[state=open]:bg-white/5 data-[state=open]:text-foreground data-[active=true]:bg-white/5 data-[active=true]:text-foreground",
         ].join(" ")}
       >
         <TriggerIcon className="h-4 w-4" />
         <span className={hideLabelOnMobile ? "hidden md:inline" : ""}>{triggerLabel}</span>
-        <ChevronDown className="h-3.5 w-3.5 opacity-70 hidden md:inline transition-transform duration-300 group-data-[state=open]:rotate-180" />
+        <ChevronDown className="h-3 w-3 opacity-60 hidden md:inline transition-transform duration-300 group-data-[state=open]:rotate-180" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
