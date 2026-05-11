@@ -223,7 +223,8 @@ export function NavBar() {
         <Link
           to="/"
           aria-label="0G-PORTAL — home"
-          className="brand-glow flex items-center gap-3 sm:gap-5 group min-w-0 flex-1 sm:flex-initial overflow-hidden h-full -ml-1 sm:ml-0 px-2 sm:px-1 py-2 min-h-12 sm:min-h-0 rounded-lg outline-none transition-colors active:bg-white/5 hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-[3px] focus-visible:ring-offset-background focus-visible:shadow-[0_0_24px_-4px_var(--gold)] touch-manipulation"
+          className="brand-glow group min-w-0 flex-1 sm:flex-initial overflow-hidden h-full -ml-1 sm:ml-0 px-2 sm:px-1 py-2 min-h-12 sm:min-h-0 rounded-lg outline-none transition-colors active:bg-white/5 hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-[3px] focus-visible:ring-offset-background focus-visible:shadow-[0_0_24px_-4px_var(--gold)] touch-manipulation flex items-center"
+          style={{ gap: "clamp(0.5rem, 1.6vw + 0.25rem, 1.5rem)" }}
         >
           <TVStaticLogo className="shrink-0 self-center" />
           <OgWordmark
