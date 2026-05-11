@@ -92,7 +92,46 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         const chatId: number | undefined = msg?.chat?.id;
         const text: string = msg?.text ?? "";
         const username: string = msg?.from?.username ?? "";
-        if (!chatId || !text) return Response.json({ ok: true });
+        if (!chatId) return Response.json({ ok: true });
+
+        // Persist every incoming message so the Boss inbox can render
+        // chats/groups and conversation threads. Idempotent on update_id.
+        try {
+          if (typeof update.update_id === "number") {
+            const fromName = [msg?.from?.first_name, msg?.from?.last_name]
+              .filter(Boolean)
+              .join(" ")
+              .trim() || null;
+            await getSupabase().from("telegram_messages").upsert(
+              {
+                update_id: update.update_id,
+                chat_id: chatId,
+                chat_type: msg?.chat?.type ?? null,
+                chat_title:
+                  msg?.chat?.title ??
+                  [msg?.chat?.first_name, msg?.chat?.last_name]
+                    .filter(Boolean)
+                    .join(" ")
+                    .trim() ||
+                  msg?.chat?.username ||
+                  null,
+                from_user_id: msg?.from?.id ?? null,
+                from_username: username || null,
+                from_name: fromName,
+                text: text || null,
+                raw: update,
+                message_date: msg?.date
+                  ? new Date(msg.date * 1000).toISOString()
+                  : new Date().toISOString(),
+              },
+              { onConflict: "update_id" },
+            );
+          }
+        } catch (e) {
+          console.error("telegram inbox upsert failed", e);
+        }
+
+        if (!text) return Response.json({ ok: true });
 
         try {
           await handleCommand(text, chatId, username);
