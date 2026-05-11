@@ -102,17 +102,17 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
               .filter(Boolean)
               .join(" ")
               .trim() || null;
-            await getSupabase().from("telegram_messages").upsert(
+            await (getSupabase().from("telegram_messages") as any).upsert(
               {
                 update_id: update.update_id,
                 chat_id: chatId,
                 chat_type: msg?.chat?.type ?? null,
                 chat_title:
-                  msg?.chat?.title ??
-                  [msg?.chat?.first_name, msg?.chat?.last_name]
+                  msg?.chat?.title ||
+                  ([msg?.chat?.first_name, msg?.chat?.last_name]
                     .filter(Boolean)
                     .join(" ")
-                    .trim() ||
+                    .trim()) ||
                   msg?.chat?.username ||
                   null,
                 from_user_id: msg?.from?.id ?? null,
