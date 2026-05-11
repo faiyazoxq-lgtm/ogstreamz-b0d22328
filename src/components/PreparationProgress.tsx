@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import type { RetryState } from "@/hooks/use-retry-with-backoff";
 
 type Props = {
-  retry: RetryState<unknown>;
+  retry: Pick<
+    RetryState<unknown>,
+    "status" | "attempt" | "maxAttempts" | "nextRetryInMs" | "currentDelayMs"
+  >;
   accent: string;
   secondary: string;
   /** Optional label override, e.g. "Preparing download…" */
