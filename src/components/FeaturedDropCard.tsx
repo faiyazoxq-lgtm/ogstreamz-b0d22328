@@ -517,7 +517,7 @@ export function FeaturedDropCard() {
             ) : buyState === "open" ? (
               <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Checkout open</>
             ) : (
-              <><ShoppingBag className="h-4 w-4 mr-2" />Buy for 2 🪙</>
+              <><ShoppingBag className="h-4 w-4 mr-2" />Buy for {sd.coinPrice ?? 2} 🪙 Coins</>
             )}
           </Button>
         ) : (
