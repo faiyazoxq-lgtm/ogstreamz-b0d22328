@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { createClient } from "@supabase/supabase-js";
 
 /**
  * 0G-BRAIN Orchestrator — streaming proxy to Gemini.
@@ -11,6 +12,40 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const MODEL = "gemini-2.5-flash";
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:streamGenerateContent?alt=sse`;
+
+const ALLOWED_ORIGINS = new Set([
+  "https://ogstreamz.lovable.app",
+  "https://www.ogstreamz.co.uk",
+  "https://ogstreamz.co.uk",
+]);
+function corsHeaders(origin: string | null) {
+  const allow = origin && (ALLOWED_ORIGINS.has(origin) || origin.endsWith(".lovable.app")) ? origin : "https://ogstreamz.lovable.app";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "content-type, authorization",
+    "Access-Control-Allow-Credentials": "true",
+    Vary: "Origin",
+  };
+}
+
+async function verifyUser(request: Request): Promise<{ ok: boolean; userId?: string }> {
+  const auth = request.headers.get("authorization") || "";
+  const m = auth.match(/^Bearer\s+(.+)$/i);
+  if (!m) return { ok: false };
+  try {
+    const sb = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_PUBLISHABLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } },
+    );
+    const { data, error } = await sb.auth.getUser(m[1]);
+    if (error || !data?.user) return { ok: false };
+    return { ok: true, userId: data.user.id };
+  } catch {
+    return { ok: false };
+  }
+}
 
 type Hub = "trade" | "music" | "tools" | "connect" | "general";
 
@@ -72,21 +107,25 @@ Return: structured [Verse]/[Chorus] lyrics + Suno V5.5 tag stack + BPM + key.`,
 export const Route = createFileRoute("/api/public/0g-orchestrator")({
   server: {
     handlers: {
-      OPTIONS: async () =>
+      OPTIONS: async ({ request }) =>
         new Response(null, {
           status: 204,
-          headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST, OPTIONS",
-            "Access-Control-Allow-Headers": "content-type, authorization",
-          },
+          headers: corsHeaders(request.headers.get("origin")),
         }),
       POST: async ({ request }) => {
+        const cors = corsHeaders(request.headers.get("origin"));
+        const auth = await verifyUser(request);
+        if (!auth.ok) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { "Content-Type": "application/json", ...cors },
+          });
+        }
         const KEY = process.env.GEMINI_API_KEY;
         if (!KEY) {
           return new Response(JSON.stringify({ error: "GEMINI_API_KEY missing" }), {
             status: 500,
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", ...cors },
           });
         }
 
@@ -94,11 +133,17 @@ export const Route = createFileRoute("/api/public/0g-orchestrator")({
         try {
           body = await request.json();
         } catch {
-          return new Response("Invalid JSON", { status: 400 });
+          return new Response("Invalid JSON", { status: 400, headers: cors });
         }
 
         const hub: Hub = (body?.hub as Hub) || "general";
-        const { system, user } = buildPrompt(hub, body?.params || {});
+        const rawParams = (body?.params && typeof body.params === "object") ? body.params : {};
+        // Cap any string field at 4000 chars to limit prompt-injection blast radius.
+        const params: Record<string, any> = {};
+        for (const [k, v] of Object.entries(rawParams)) {
+          params[k] = typeof v === "string" ? v.slice(0, 4000) : v;
+        }
+        const { system, user } = buildPrompt(hub, params);
 
         const upstream = await fetch(`${ENDPOINT}&key=${encodeURIComponent(KEY)}`, {
           method: "POST",
@@ -124,7 +169,7 @@ export const Route = createFileRoute("/api/public/0g-orchestrator")({
           console.error("0G-BRAIN upstream error", upstream.status, errTxt);
           return new Response(
             JSON.stringify({ error: `Gemini ${upstream.status}`, detail: errTxt.slice(0, 500) }),
-            { status: 502, headers: { "Content-Type": "application/json" } },
+            { status: 502, headers: { "Content-Type": "application/json", ...cors } },
           );
         }
 
@@ -135,7 +180,7 @@ export const Route = createFileRoute("/api/public/0g-orchestrator")({
             "Content-Type": "text/event-stream",
             "Cache-Control": "no-cache, no-transform",
             Connection: "keep-alive",
-            "Access-Control-Allow-Origin": "*",
+            ...cors,
           },
         });
       },
