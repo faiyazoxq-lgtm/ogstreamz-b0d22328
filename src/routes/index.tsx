@@ -53,13 +53,14 @@ const portals = [
 
 function Index() {
   const [customHubs, setCustomHubs] = useState<any[]>([]);
-  const { user, profile } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
   const { total: totalPortals, label: portalsLabel } = usePortalCount(portals, customHubs);
   const rank = profile?.rank;
   const streamLinked = rank === "stream_user" || rank === "vip" || rank === "boss";
   // VIPs (and the boss) already own the perks these promos are pitching —
   // hide the upsell so the welcome page stays clean for them.
-  const isVipMember = rank === "vip" || rank === "boss" || profile?.status === "vip";
+  const isBoss = isAdmin;
+  const isVipMember = rank === "vip" || rank === "boss" || profile?.status === "vip" || isBoss;
   const showStreamConnect = !!user && !streamLinked;
   const [pendingTo, setPendingTo] = useState<string | null>(null);
   const [vaultOpen, setVaultOpen] = useState(false);
@@ -259,7 +260,7 @@ function Index() {
         </div>
       </section>
 
-      {isVipMember && <OgVaultAccessSection />}
+      {isVipMember && <OgVaultAccessSection isBoss={isBoss} />}
       {isVipMember && <VipPortalExplorer customHubs={customHubs} />}
 
       <section className="relative max-w-7xl mx-auto px-5 sm:px-8 pb-28 grid gap-6 md:gap-8 grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))]">
