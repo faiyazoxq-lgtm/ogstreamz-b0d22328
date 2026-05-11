@@ -216,25 +216,38 @@ export const getTelegramBotStatus = createServerFn({ method: "POST" })
 /** Messages from the caller's own Telegram DM with the bot. VIP only. */
 export const listMyTelegramMessages = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { limit?: number }) =>
-    z.object({ limit: z.number().int().min(1).max(500).optional() }).parse(input ?? {}),
+  .inputValidator((input: { limit?: number; before?: string }) =>
+    z
+      .object({
+        limit: z.number().int().min(1).max(500).optional(),
+        before: z.string().datetime().optional(),
+      })
+      .parse(input ?? {}),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     await assertVip(supabase, userId);
     const chatId = await getMyChatId(userId);
 
-    const { data: rows, error } = await supabaseAdmin
+    const limit = data.limit ?? 50;
+    let q = supabaseAdmin
       .from("telegram_messages")
       .select(
         "update_id, chat_id, from_username, from_name, text, message_date",
       )
       .eq("chat_id", chatId)
       .order("message_date", { ascending: false })
-      .limit(data.limit ?? 100);
+      .limit(limit + 1);
+    if (data.before) q = q.lt("message_date", data.before);
+    const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    const messages = ((rows ?? []) as any[]).reverse() as TgMessage[];
-    return { chat_id: chatId, messages };
+    const all = ((rows ?? []) as any[]) as TgMessage[];
+    const hasMore = all.length > limit;
+    const page = hasMore ? all.slice(0, limit) : all; // newest-first
+    const oldestDate = page.length ? page[page.length - 1].message_date : null;
+    const messages = [...page].reverse(); // oldest -> newest within page
+    const nextCursor = hasMore ? oldestDate : null;
+    return { chat_id: chatId, messages, nextCursor };
   });
 
 /** Send a message from the bot into the caller's own DM. VIP only. */
