@@ -61,6 +61,7 @@ import { Route as BossPortalCostsRouteImport } from './routes/boss.portal-costs'
 import { Route as BossOverviewRouteImport } from './routes/boss.overview'
 import { Route as BossLexiconRouteImport } from './routes/boss.lexicon'
 import { Route as BossHubsRouteImport } from './routes/boss.hubs'
+import { Route as BossDomainDenylistRouteImport } from './routes/boss.domain-denylist'
 import { Route as BossCivilityRouteImport } from './routes/boss.civility'
 import { Route as BossApiKeysRouteImport } from './routes/boss.api-keys'
 import { Route as BossAnalyticsSetupRouteImport } from './routes/boss.analytics-setup'
@@ -337,6 +338,11 @@ const BossHubsRoute = BossHubsRouteImport.update({
   path: '/hubs',
   getParentRoute: () => BossRoute,
 } as any)
+const BossDomainDenylistRoute = BossDomainDenylistRouteImport.update({
+  id: '/domain-denylist',
+  path: '/domain-denylist',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossCivilityRoute = BossCivilityRouteImport.update({
   id: '/civility',
   path: '/civility',
@@ -458,6 +464,7 @@ export interface FileRoutesByFullPath {
   '/boss/analytics-setup': typeof BossAnalyticsSetupRoute
   '/boss/api-keys': typeof BossApiKeysRoute
   '/boss/civility': typeof BossCivilityRoute
+  '/boss/domain-denylist': typeof BossDomainDenylistRoute
   '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
@@ -526,6 +533,7 @@ export interface FileRoutesByTo {
   '/boss/analytics-setup': typeof BossAnalyticsSetupRoute
   '/boss/api-keys': typeof BossApiKeysRoute
   '/boss/civility': typeof BossCivilityRoute
+  '/boss/domain-denylist': typeof BossDomainDenylistRoute
   '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
@@ -596,6 +604,7 @@ export interface FileRoutesById {
   '/boss/analytics-setup': typeof BossAnalyticsSetupRoute
   '/boss/api-keys': typeof BossApiKeysRoute
   '/boss/civility': typeof BossCivilityRoute
+  '/boss/domain-denylist': typeof BossDomainDenylistRoute
   '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/overview': typeof BossOverviewRoute
@@ -667,6 +676,7 @@ export interface FileRouteTypes {
     | '/boss/analytics-setup'
     | '/boss/api-keys'
     | '/boss/civility'
+    | '/boss/domain-denylist'
     | '/boss/hubs'
     | '/boss/lexicon'
     | '/boss/overview'
@@ -735,6 +745,7 @@ export interface FileRouteTypes {
     | '/boss/analytics-setup'
     | '/boss/api-keys'
     | '/boss/civility'
+    | '/boss/domain-denylist'
     | '/boss/hubs'
     | '/boss/lexicon'
     | '/boss/overview'
@@ -804,6 +815,7 @@ export interface FileRouteTypes {
     | '/boss/analytics-setup'
     | '/boss/api-keys'
     | '/boss/civility'
+    | '/boss/domain-denylist'
     | '/boss/hubs'
     | '/boss/lexicon'
     | '/boss/overview'
@@ -1249,6 +1261,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossHubsRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/domain-denylist': {
+      id: '/boss/domain-denylist'
+      path: '/domain-denylist'
+      fullPath: '/boss/domain-denylist'
+      preLoaderRoute: typeof BossDomainDenylistRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/civility': {
       id: '/boss/civility'
       path: '/civility'
@@ -1375,6 +1394,7 @@ interface BossRouteChildren {
   BossAnalyticsSetupRoute: typeof BossAnalyticsSetupRoute
   BossApiKeysRoute: typeof BossApiKeysRoute
   BossCivilityRoute: typeof BossCivilityRoute
+  BossDomainDenylistRoute: typeof BossDomainDenylistRoute
   BossHubsRoute: typeof BossHubsRouteWithChildren
   BossLexiconRoute: typeof BossLexiconRoute
   BossOverviewRoute: typeof BossOverviewRoute
@@ -1396,6 +1416,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossAnalyticsSetupRoute: BossAnalyticsSetupRoute,
   BossApiKeysRoute: BossApiKeysRoute,
   BossCivilityRoute: BossCivilityRoute,
+  BossDomainDenylistRoute: BossDomainDenylistRoute,
   BossHubsRoute: BossHubsRouteWithChildren,
   BossLexiconRoute: BossLexiconRoute,
   BossOverviewRoute: BossOverviewRoute,
