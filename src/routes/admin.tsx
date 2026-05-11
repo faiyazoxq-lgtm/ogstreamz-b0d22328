@@ -61,6 +61,10 @@ function AdminPage() {
   const navigate = useNavigate();
   const [rows, setRows] = useState<Row[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [rosterQuery, setRosterQuery] = useState("");
+  const [rosterStatus, setRosterStatus] = useState<"all" | "free" | "vip">("all");
+  const [rosterRank, setRosterRank] = useState<"all" | "prospect" | "enforcer" | "vip">("all");
+  const [rosterCredits, setRosterCredits] = useState<"all" | "zero" | "low" | "high">("all");
 
   useEffect(() => {
     if (loading) return;
@@ -91,6 +95,17 @@ function AdminPage() {
   if (loading || !isAdmin) {
     return <main className="px-5 py-20 text-center text-muted-foreground">Verifying clearance…</main>;
   }
+
+  const q = rosterQuery.trim().toLowerCase();
+  const filteredRows = rows.filter((r) => {
+    if (q && !r.email.toLowerCase().includes(q)) return false;
+    if (rosterStatus !== "all" && r.status !== rosterStatus) return false;
+    if (rosterRank !== "all" && r.rank !== rosterRank) return false;
+    if (rosterCredits === "zero" && (r.credits ?? 0) !== 0) return false;
+    if (rosterCredits === "low" && !((r.credits ?? 0) > 0 && (r.credits ?? 0) < 10)) return false;
+    if (rosterCredits === "high" && (r.credits ?? 0) < 10) return false;
+    return true;
+  });
 
   return (
     <main className="max-w-[1600px] mx-auto px-4 sm:px-6 py-12">
@@ -126,6 +141,50 @@ function AdminPage() {
         {/* CENTER — main panels */}
         <div className="min-w-0">
       <SectionHeader id="roster" icon={<Users className="h-4 w-4" />} label="Roster" tint="#3ad6ff" />
+      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card/60 px-3 py-2">
+        <input
+          type="search"
+          value={rosterQuery}
+          onChange={(e) => setRosterQuery(e.target.value)}
+          placeholder="Search by email…"
+          className="flex-1 min-w-[160px] rounded-md border border-border bg-background px-2.5 py-1.5 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        />
+        <select
+          value={rosterStatus}
+          onChange={(e) => setRosterStatus(e.target.value as typeof rosterStatus)}
+          className="rounded-md border border-border bg-background px-2 py-1.5 text-xs"
+          aria-label="Filter by status"
+        >
+          <option value="all">All status</option>
+          <option value="free">Free</option>
+          <option value="vip">VIP</option>
+        </select>
+        <select
+          value={rosterRank}
+          onChange={(e) => setRosterRank(e.target.value as typeof rosterRank)}
+          className="rounded-md border border-border bg-background px-2 py-1.5 text-xs"
+          aria-label="Filter by rank"
+        >
+          <option value="all">All ranks</option>
+          <option value="prospect">Prospect</option>
+          <option value="enforcer">Enforcer</option>
+          <option value="vip">VIP</option>
+        </select>
+        <select
+          value={rosterCredits}
+          onChange={(e) => setRosterCredits(e.target.value as typeof rosterCredits)}
+          className="rounded-md border border-border bg-background px-2 py-1.5 text-xs"
+          aria-label="Filter by credits"
+        >
+          <option value="all">Any credits</option>
+          <option value="zero">0 🪙</option>
+          <option value="low">1–9 🪙</option>
+          <option value="high">10+ 🪙</option>
+        </select>
+        <span className="ml-auto text-[10px] uppercase tracking-[0.25em] text-muted-foreground tabular-nums">
+          {filteredRows.length} / {rows.length}
+        </span>
+      </div>
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="grid grid-cols-12 gap-2 px-5 py-3 text-[10px] uppercase tracking-[0.3em] text-muted-foreground border-b border-border">
           <div className="col-span-5">Email</div>
@@ -133,11 +192,14 @@ function AdminPage() {
           <div className="col-span-2">Credits</div>
           <div className="col-span-2 text-right">Action</div>
         </div>
-        {rows.map((r) => (
+        {filteredRows.map((r) => (
           <RoleRow key={r.id} row={r} busy={busy === r.id} onSave={(p) => update(r.id, p)} />
         ))}
         {rows.length === 0 && (
           <p className="px-5 py-10 text-center text-sm text-muted-foreground">No members yet.</p>
+        )}
+        {rows.length > 0 && filteredRows.length === 0 && (
+          <p className="px-5 py-10 text-center text-sm text-muted-foreground">No members match these filters.</p>
         )}
       </div>
 
