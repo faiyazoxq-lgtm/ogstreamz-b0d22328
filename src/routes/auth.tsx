@@ -41,6 +41,7 @@ function AuthPage() {
   const [remember, setRememberState] = useState<boolean>(true);
   const [signedInDest, setSignedInDest] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [vipReferral, setVipReferral] = useState<string>("");
   const [magicLinkNotice, setMagicLinkNotice] = useState<
     | { kind: "consumed"; email: string }
     | { kind: "failed"; reason: string }
@@ -48,6 +49,17 @@ function AuthPage() {
   >(null);
 
   useEffect(() => { setRememberState(getRemember()); }, []);
+
+  // Capture ?vipref=NNNNNN for VIP referral; only digits, max 6.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = new URLSearchParams(window.location.search).get("vipref") || "";
+    const clean = raw.replace(/\D/g, "").slice(0, 6);
+    if (clean) {
+      setVipReferral(clean);
+      setMode("signup");
+    }
+  }, []);
 
   // Resolve the post-auth destination: AuthGate stashes the originally
   // requested path in sessionStorage; honor it once, then clear.
