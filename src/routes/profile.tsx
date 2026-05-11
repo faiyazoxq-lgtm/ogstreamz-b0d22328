@@ -114,7 +114,7 @@ function ProfilePage() {
           <h1 className="mt-3 font-[Montserrat] font-black text-4xl sm:text-5xl text-metallic">
             Welcome back
           </h1>
-          <div className="mt-3 flex items-center justify-center gap-2 text-muted-foreground text-sm">
+          <div className="mt-4 flex items-center justify-center gap-2 text-foreground text-2xl sm:text-3xl font-semibold">
             {isBoss ? (
               <span>— BOSS ACCOUNT —</span>
             ) : editingName ? (
@@ -129,7 +129,7 @@ function ProfilePage() {
                   }}
                   maxLength={40}
                   placeholder="Your name"
-                  className="h-8 max-w-[220px] text-center"
+                  className="h-11 max-w-[320px] text-center text-2xl sm:text-3xl font-semibold"
                   disabled={savingName}
                 />
                 <button
@@ -139,7 +139,7 @@ function ProfilePage() {
                   className="text-[var(--gold)] hover:opacity-80 disabled:opacity-50"
                   aria-label="Save name"
                 >
-                  <Check className="h-4 w-4" />
+                  <Check className="h-5 w-5" />
                 </button>
                 <button
                   type="button"
@@ -148,7 +148,7 @@ function ProfilePage() {
                   className="text-muted-foreground hover:opacity-80"
                   aria-label="Cancel"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5" />
                 </button>
               </>
             ) : (
@@ -163,7 +163,7 @@ function ProfilePage() {
                   className="text-muted-foreground hover:text-[var(--gold)] transition-colors"
                   aria-label="Edit name"
                 >
-                  <Pencil className="h-3.5 w-3.5" />
+                  <Pencil className="h-5 w-5" />
                 </button>
               </>
             )}
@@ -180,17 +180,14 @@ function ProfilePage() {
               </span>
             </div>
           )}
-          {isVip && !isBoss && (
-            <div className="mt-4 flex justify-center">
-              <RealOgBadge variant="badge" size="lg" />
-            </div>
-          )}
         </header>
 
-        {/* Real 0G status tag */}
-        <section className="mb-8 flex justify-center">
-          <RealOgBadge variant="badge" size="lg" />
-        </section>
+        {/* Real 0G status tag — single large tag */}
+        {isVip && !isBoss && (
+          <section className="mb-8 flex justify-center">
+            <RealOgBadge variant="badge" size="lg" />
+          </section>
+        )}
 
         <section className="grid sm:grid-cols-2 gap-5">
           <div className="rounded-2xl border border-[oklch(0.72_0.22_245/0.4)] bg-card p-6 sm:p-8 animate-pulse-gold">
