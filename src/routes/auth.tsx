@@ -41,6 +41,7 @@ function AuthPage() {
   const [remember, setRememberState] = useState<boolean>(true);
   const [signedInDest, setSignedInDest] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [vipReferral, setVipReferral] = useState<string>("");
   const [magicLinkNotice, setMagicLinkNotice] = useState<
     | { kind: "consumed"; email: string }
     | { kind: "failed"; reason: string }
@@ -48,6 +49,17 @@ function AuthPage() {
   >(null);
 
   useEffect(() => { setRememberState(getRemember()); }, []);
+
+  // Capture ?vipref=NNNNNN for VIP referral; only digits, max 6.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = new URLSearchParams(window.location.search).get("vipref") || "";
+    const clean = raw.replace(/\D/g, "").slice(0, 6);
+    if (clean) {
+      setVipReferral(clean);
+      setMode("signup");
+    }
+  }, []);
 
   // Resolve the post-auth destination: AuthGate stashes the originally
   // requested path in sessionStorage; honor it once, then clear.
@@ -204,19 +216,25 @@ function AuthPage() {
         const ref = new URLSearchParams(window.location.search).get("ref") || undefined;
         const dest = peekRedirect();
         try { sessionStorage.setItem("signup_content_mode", contentMode); } catch { /* ignore */ }
+        const vipRef = vipReferral.replace(/\D/g, "").slice(0, 6);
+        const meta: Record<string, string> = {};
+        if (ref) meta.referred_by_reseller = ref;
+        if (vipRef.length === 6) meta.vip_referral_code = vipRef;
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}${dest}`,
-            data: ref ? { referred_by_reseller: ref } : undefined,
+            data: Object.keys(meta).length ? meta : undefined,
           },
         });
         if (error) throw error;
         try { sessionStorage.setItem("just_signed_up", "1"); } catch { /* ignore */ }
         toast.success(passToken
           ? `Welcome. Confirm your email — your pass ${passToken} will activate on first sign-in.`
-          : `Welcome to the Syndicate. Confirm your inbox — +${signupBonus} credits land on first sign-in.`);
+          : vipRef.length === 6
+            ? `Welcome. Confirm your inbox — +${signupBonus} credits + 2 referral coins land on first sign-in.`
+            : `Welcome to the Syndicate. Confirm your inbox — +${signupBonus} credits land on first sign-in.`);
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -523,6 +541,26 @@ function AuthPage() {
                 </div>
               </div>
               <ContentModePicker value={contentMode} onChange={setContentMode} />
+              <div className="rounded-xl border border-amber-300/30 bg-amber-300/5 px-4 py-3">
+                <Label htmlFor="vipref" className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] font-bold text-amber-200/90">
+                  <Coins className="h-3.5 w-3.5 text-amber-300" />
+                  VIP referral code <span className="text-amber-200/50 normal-case tracking-normal font-normal">(optional)</span>
+                </Label>
+                <Input
+                  id="vipref"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="off"
+                  maxLength={6}
+                  placeholder="6-digit code"
+                  value={vipReferral}
+                  onChange={(e) => setVipReferral(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  className="mt-1.5 font-mono tracking-[0.4em] text-center text-lg tabular-nums bg-black/40 border-amber-300/30 focus-visible:border-amber-300 focus-visible:ring-amber-300/30"
+                />
+                <p className="mt-1.5 text-[11px] text-amber-100/70">
+                  Got a code from a VIP? Enter it — you both earn <span className="font-bold text-amber-200">+2 coins</span>.
+                </p>
+              </div>
               <AuthForm
                 email={email}
                 setEmail={(v) => { setEmail(v); if (emailError) setEmailError(null); }}

@@ -1605,6 +1605,7 @@ export type Database = {
           free_clicks_used: number
           id: string
           rank: Database["public"]["Enums"]["syndicate_rank"]
+          referral_code: string | null
           referred_by_reseller: string | null
           status: Database["public"]["Enums"]["account_status"]
           stream_auto_checked_at: string | null
@@ -1631,6 +1632,7 @@ export type Database = {
           free_clicks_used?: number
           id: string
           rank?: Database["public"]["Enums"]["syndicate_rank"]
+          referral_code?: string | null
           referred_by_reseller?: string | null
           status?: Database["public"]["Enums"]["account_status"]
           stream_auto_checked_at?: string | null
@@ -1657,6 +1659,7 @@ export type Database = {
           free_clicks_used?: number
           id?: string
           rank?: Database["public"]["Enums"]["syndicate_rank"]
+          referral_code?: string | null
           referred_by_reseller?: string | null
           status?: Database["public"]["Enums"]["account_status"]
           stream_auto_checked_at?: string | null
@@ -1785,6 +1788,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      referral_redemptions: {
+        Row: {
+          code: string
+          created_at: string
+          credits_each: number
+          id: string
+          new_user_id: string
+          referrer_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          credits_each?: number
+          id?: string
+          new_user_id: string
+          referrer_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          credits_each?: number
+          id?: string
+          new_user_id?: string
+          referrer_id?: string
+        }
+        Relationships: []
       }
       reseller_accounts: {
         Row: {
@@ -3209,6 +3239,10 @@ export type Database = {
         Args: { _chat_id: number; _code: string; _tg_username: string }
         Returns: Json
       }
+      claim_vip_referral: {
+        Args: { p_code: string; p_user_id?: string }
+        Returns: Json
+      }
       enqueue_stream_verification: {
         Args: {
           _auto_expires_at: string
@@ -3221,6 +3255,7 @@ export type Database = {
         }
         Returns: string
       }
+      gen_unique_referral_code: { Args: never; Returns: string }
       get_action_billing: {
         Args: { _action_key: string }
         Returns: {
