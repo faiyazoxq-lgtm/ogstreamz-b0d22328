@@ -3,10 +3,33 @@ import { createClient } from "@supabase/supabase-js";
 
 const SITE_URL = "https://ogstreamz.co.uk";
 
-const STATIC_PATHS = [
-  "/", "/music", "/jokes", "/trade", "/connect", "/tools",
-  "/battle", "/battlehub", "/syndicate", "/portals", "/store",
-  "/auth", "/forgot-password",
+/**
+ * Public, indexable routes only. Auth flows (/auth, /forgot-password,
+ * /reset-password, /vault-login, /connect-telegram), private dashboards
+ * (/dashboard, /admin, /boss/*, /settings, /profile, /wallet, /history,
+ * /account/*, /reseller, /fleet, /syndicate-overlord, /console,
+ * /checkout/*), and the welcome/onboarding screen are intentionally
+ * excluded — they're either gated, transient, or have no SEO value.
+ *
+ * Tuple shape: [path, priority, changefreq]. Higher priority for the
+ * homepage and primary hubs; lower for secondary catalog/landing pages.
+ */
+const STATIC_PATHS: ReadonlyArray<readonly [string, string, string]> = [
+  ["/",            "1.0", "daily"],
+  ["/music",       "0.9", "daily"],
+  ["/jokes",       "0.9", "daily"],
+  ["/jokes/portal","0.7", "weekly"],
+  ["/trade",       "0.9", "daily"],
+  ["/tools",       "0.9", "daily"],
+  ["/battle",      "0.8", "daily"],
+  ["/battlehub",   "0.8", "daily"],
+  ["/syndicate",   "0.8", "daily"],
+  ["/connect",     "0.7", "weekly"],
+  ["/portals",     "0.8", "daily"],
+  ["/store",       "0.7", "weekly"],
+  ["/store/catalog","0.7","weekly"],
+  ["/vip",         "0.8", "weekly"],
+  ["/noticeboard", "0.6", "weekly"],
 ];
 
 function xmlEscape(s: string) {
@@ -37,13 +60,13 @@ function toIsoLastmod(value?: string | null) {
   return d.toISOString();
 }
 
-function urlNode(loc: string, lastmod?: string | null, priority = "0.6") {
+function urlNode(loc: string, lastmod?: string | null, priority = "0.6", changefreq = "weekly") {
   const canonical = canonicalize(loc);
   const iso = toIsoLastmod(lastmod);
   return `  <url>
     <loc>${xmlEscape(canonical)}</loc>
     <xhtml:link rel="canonical" href="${xmlEscape(canonical)}" />${iso ? `\n    <lastmod>${iso}</lastmod>` : ""}
-    <changefreq>weekly</changefreq>
+    <changefreq>${changefreq}</changefreq>
     <priority>${priority}</priority>
   </url>`;
 }
@@ -77,8 +100,8 @@ export const Route = createFileRoute("/sitemap.xml")({
         const latest = allTimes.length ? new Date(Math.max(...allTimes)).toISOString() : new Date().toISOString();
 
         const lines: string[] = [];
-        for (const p of STATIC_PATHS) {
-          lines.push(urlNode(`${SITE_URL}${p}`, latest, p === "/" ? "1.0" : "0.8"));
+        for (const [path, priority, changefreq] of STATIC_PATHS) {
+          lines.push(urlNode(`${SITE_URL}${path}`, latest, priority, changefreq));
         }
 
         const KIND_PREFIX: Record<string, string> = {
@@ -87,13 +110,13 @@ export const Route = createFileRoute("/sitemap.xml")({
         for (const row of (portals.data ?? []) as Array<{ slug: string; kind: string; updated_at: string | null }>) {
           const prefix = KIND_PREFIX[row.kind];
           if (!prefix) continue;
-          lines.push(urlNode(`${SITE_URL}${prefix}/${row.slug}`, row.updated_at ?? undefined));
+          lines.push(urlNode(`${SITE_URL}${prefix}/${row.slug}`, row.updated_at ?? undefined, "0.6", "weekly"));
         }
         for (const row of (battles.data ?? []) as Array<{ slug: string; updated_at: string | null }>) {
-          lines.push(urlNode(`${SITE_URL}/b/${row.slug}`, row.updated_at ?? undefined));
+          lines.push(urlNode(`${SITE_URL}/b/${row.slug}`, row.updated_at ?? undefined, "0.6", "daily"));
         }
         for (const row of (calculators.data ?? []) as Array<{ slug: string; updated_at: string | null }>) {
-          lines.push(urlNode(`${SITE_URL}/t/${row.slug}`, row.updated_at ?? undefined));
+          lines.push(urlNode(`${SITE_URL}/t/${row.slug}`, row.updated_at ?? undefined, "0.6", "weekly"));
         }
 
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
