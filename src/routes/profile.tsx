@@ -196,8 +196,10 @@ function ProfilePage() {
                   <Icon className="h-6 w-6" style={{ color: "var(--neon-blue-bright)" }} />
                   <h3 className="mt-4 font-[Montserrat] font-black text-xl text-white">{p.name}</h3>
                   <p className="mt-1 text-xs text-muted-foreground">{p.tagline}</p>
-                  <p className="mt-4 font-[Montserrat] font-black text-3xl text-metallic">
-                    £{(p.amountCents / 100).toFixed(2)} <span className="text-base text-yellow-300">({Math.round(p.amountCents / 100)} 🪙)</span>
+                  <p className="mt-4 font-[Montserrat] font-black text-3xl text-yellow-300 flex items-baseline gap-2">
+                    <span>{Math.round(p.amountCents / 100)}</span>
+                    <span className="text-2xl">🪙</span>
+                    <span className="text-sm text-muted-foreground font-bold uppercase tracking-[0.2em]">Coins</span>
                     {p.recurring && <span className="text-sm text-muted-foreground font-normal">/mo</span>}
                   </p>
                   <Button
