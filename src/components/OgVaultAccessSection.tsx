@@ -3,6 +3,7 @@ import { useState } from "react";
 import {
   Crown, ChevronDown, Lock, KeyRound, ShieldCheck,
   Inbox, Send, Coins, Sparkles, ArrowUpRight,
+  Users, BarChart3, Vault, MessageSquareWarning,
 } from "lucide-react";
 
 type VaultLink = {
@@ -12,7 +13,7 @@ type VaultLink = {
   Icon: React.ComponentType<{ className?: string }>;
 };
 
-const links: ReadonlyArray<VaultLink> = [
+const vipLinks: ReadonlyArray<VaultLink> = [
   { to: "/profile",          title: "Member Vault",      desc: "Your profile, credits & passes", Icon: ShieldCheck },
   { to: "/vip",              title: "VIP Lounge",        desc: "Premium-only frequencies",        Icon: Crown },
   { to: "/account/passes",   title: "Real OG Passes",    desc: "Manage active passes",            Icon: KeyRound },
@@ -21,8 +22,20 @@ const links: ReadonlyArray<VaultLink> = [
   { to: "/syndicate",        title: "Syndicate Channel", desc: "Members-only live rooms",         Icon: Send },
 ];
 
-export function OgVaultAccessSection() {
+const bossLinks: ReadonlyArray<VaultLink> = [
+  { to: "/boss",             title: "Boss Command Deck", desc: "Full control surface",            Icon: Crown },
+  { to: "/admin",            title: "Member Roster",     desc: "Manage members & credits",        Icon: Users },
+  { to: "/boss/analytics",   title: "Royalty Ledger",    desc: "Portal payouts & spend",          Icon: BarChart3 },
+  { to: "/boss/vault",       title: "Vault Credentials", desc: "Stream creds & API keys",         Icon: Vault },
+  { to: "/boss/civility",    title: "Civility & Lexicon",desc: "Swear chat & moderation",         Icon: MessageSquareWarning },
+  { to: "/connect-telegram", title: "Telegram Inbox",    desc: "Member DMs & alerts",             Icon: Inbox },
+];
+
+export function OgVaultAccessSection({ isBoss = false }: { isBoss?: boolean }) {
   const [open, setOpen] = useState(true);
+  const links = isBoss ? bossLinks : vipLinks;
+  const tagLabel = isBoss ? "Boss Mode" : "VIP Only";
+  const heading  = isBoss ? "Boss Command Vault" : "0G Vault Access";
 
   return (
     <section className="relative max-w-7xl mx-auto px-5 sm:px-8 pb-10">
@@ -39,10 +52,10 @@ export function OgVaultAccessSection() {
           </span>
           <span className="flex-1 min-w-0">
             <span className="block text-[10px] uppercase tracking-[0.35em] text-gold/80 font-semibold">
-              VIP Only
+              {tagLabel}
             </span>
             <span className="flex items-center gap-2 font-[Montserrat] font-black text-lg sm:text-xl text-gold">
-              0G Vault Access
+              {heading}
               <Sparkles className="h-4 w-4 opacity-80" aria-hidden />
             </span>
           </span>
