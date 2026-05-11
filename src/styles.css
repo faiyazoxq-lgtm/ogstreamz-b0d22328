@@ -570,8 +570,14 @@
     .scan-overlay::before,
     .electric-border,
     .tv-static-overlay,
-    .animate-pulse-gold,
     .animate-glitch { animation: none !important; }
+
+    /* Eye pulse: don't disable — just slow it way down so the wordmark
+       still feels alive without strobing for motion-sensitive users. */
+    .animate-pulse-gold { animation-duration: 8s !important; }
+    .animate-eye-pulse-gold { animation-duration: 5s !important; }
+    .animate-eye-ice-pulse,
+    .demon-pulse { animation-duration: 7s !important; }
   }
 
   /* Mobile perf: kill the heaviest GPU/paint animations on small screens.
