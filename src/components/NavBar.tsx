@@ -62,12 +62,13 @@ const portalSwitcherLinks: ReadonlyArray<HubLink> = [
 // Boss / admin pages live under their own /boss layout with a sidebar.
 
 function NavDropdown({
-  label, icon: Icon, items, gold, hideLabelOnMobile, currentPath,
+  label, icon: Icon, items, gold, softGold, hideLabelOnMobile, currentPath,
 }: {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   items: ReadonlyArray<{ to: string; label: string; icon: React.ComponentType<{ className?: string }>; desc?: string; bossOnly?: boolean }>;
   gold?: boolean;
+  softGold?: boolean;
   hideLabelOnMobile?: boolean;
   currentPath: string;
 }) {
@@ -80,19 +81,33 @@ function NavDropdown({
         aria-label={label}
         data-active={sectionActive ? "true" : undefined}
         className={[
-          "inline-flex items-center gap-1 sm:gap-1.5 px-2 md:px-4 py-2 text-sm md:text-base font-semibold rounded-md transition-colors outline-none",
+          "group inline-flex items-center gap-1 sm:gap-1.5 px-2 md:px-4 py-2 text-sm md:text-base font-semibold rounded-md transition-all duration-300 outline-none",
           "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary focus-visible:ring-offset-[3px] focus-visible:ring-offset-background focus-visible:shadow-[0_0_0_1px_var(--background)]",
           "active:scale-[0.97]",
           gold
             ? "text-gold hover:bg-gold/10 border border-gold/30 data-[state=open]:bg-gold/15 data-[active=true]:bg-gold/15 data-[active=true]:border-gold/60"
-            : "text-muted-foreground hover:text-foreground hover:bg-secondary data-[state=open]:bg-secondary data-[state=open]:text-foreground data-[active=true]:bg-secondary data-[active=true]:text-foreground",
+            : softGold
+              ? "text-gold/85 border border-gold/20 hover:text-gold hover:bg-gold/[0.08] hover:border-gold/40 hover:shadow-[0_0_18px_-4px_var(--gold)] data-[state=open]:text-gold data-[state=open]:bg-gold/10 data-[state=open]:border-gold/50 data-[state=open]:shadow-[0_0_22px_-6px_var(--gold)] data-[active=true]:bg-gold/10 data-[active=true]:border-gold/50"
+              : "text-muted-foreground hover:text-foreground hover:bg-secondary data-[state=open]:bg-secondary data-[state=open]:text-foreground data-[active=true]:bg-secondary data-[active=true]:text-foreground",
         ].join(" ")}
       >
         <Icon className="h-4 w-4" />
         <span className={hideLabelOnMobile ? "hidden md:inline" : ""}>{label}</span>
-        <ChevronDown className="h-3.5 w-3.5 opacity-70 hidden md:inline transition-transform group-data-[state=open]:rotate-180" />
+        <ChevronDown className="h-3.5 w-3.5 opacity-70 hidden md:inline transition-transform duration-300 group-data-[state=open]:rotate-180" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64 bg-card border-border">
+      <DropdownMenuContent
+        align="end"
+        sideOffset={8}
+        className={[
+          "w-64 bg-card border-border",
+          "data-[state=open]:animate-in data-[state=closed]:animate-out",
+          "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
+          "data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
+          "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
+          "duration-200 ease-out",
+          softGold ? "border-gold/30 shadow-[0_10px_40px_-10px_var(--gold)]" : "",
+        ].join(" ")}
+      >
         <DropdownMenuLabel className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
           {label}
         </DropdownMenuLabel>
@@ -278,7 +293,7 @@ export function NavBar() {
             <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile currentPath={pathname} />
           </li>
           <li className="hidden sm:block">
-            <NavDropdown label="Portals" icon={DoorOpen} items={portalSwitcherLinks} hideLabelOnMobile currentPath={pathname} />
+            <NavDropdown label="Portals" icon={DoorOpen} items={portalSwitcherLinks} softGold hideLabelOnMobile currentPath={pathname} />
           </li>
           <li className="hidden sm:block">
             <NavDropdown label={isBoss ? "Manage Store" : "Store"} icon={Store} items={storeLinks} hideLabelOnMobile currentPath={pathname} />
