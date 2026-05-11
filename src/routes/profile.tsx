@@ -17,7 +17,6 @@ import { toast } from "sonner";
 import { RealOgBadge } from "@/components/RealOgBadge";
 import { StreamLinkCard } from "@/components/StreamLinkCard";
 import { CoinActivity } from "@/components/CoinActivity";
-import { OgStatusCard } from "@/components/OgStatusCard";
 
 import { requireMember } from "@/lib/route-guards";
 export const Route = createFileRoute("/profile")({
