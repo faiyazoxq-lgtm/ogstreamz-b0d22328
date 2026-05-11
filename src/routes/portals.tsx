@@ -260,14 +260,14 @@ function PortalsHub() {
           <p className="text-sm text-muted-foreground">No portals match this filter yet. Spawn one from a hub.</p>
         </div>
       ) : (
-        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
           {filtered.map((i) => {
             const meta = KIND_META[i.kind];
             const href = buildHref(i);
             return (
               <div
                 key={`${i.kind}-${i.id}`}
-                className="group relative flex flex-col gap-3 sm:gap-4 rounded-2xl border border-white/10 bg-black/40 p-4 sm:p-5 backdrop-blur-xl transition hover:-translate-y-0.5 min-h-[260px] sm:min-h-[280px]"
+                className="group relative flex h-full flex-col gap-3 sm:gap-4 rounded-2xl border border-white/10 bg-black/40 p-4 sm:p-5 backdrop-blur-xl transition hover:-translate-y-0.5 min-h-[260px] sm:min-h-[280px]"
                 style={{ boxShadow: `0 0 32px -24px ${meta.accent}` }}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -309,7 +309,13 @@ function PortalsHub() {
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground/70 truncate">
                   {origin.replace(/^https?:\/\//, "")}{href}
                 </div>
-                <div className="mt-auto flex items-center gap-2 pt-3 sm:pt-4 border-t border-white/5">
+                <div className="mt-auto pt-3 sm:pt-4 border-t border-white/5 flex flex-col gap-3">
+                  {/* Reserved views slot keeps the action row at the same
+                      vertical position whether or not a card has views. */}
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground/60 min-h-[1em]">
+                    {i.views > 0 ? `${i.views.toLocaleString()} views` : "\u00A0"}
+                  </div>
+                  <div className="flex items-center gap-2">
                   <button
                     onClick={() => copyLink(i)}
                     className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-[11px] uppercase tracking-[0.18em] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
@@ -341,12 +347,8 @@ function PortalsHub() {
                   >
                     Open <ExternalLink className="h-3.5 w-3.5" />
                   </Link>
-                </div>
-                {i.views > 0 && (
-                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground/60">
-                    {i.views.toLocaleString()} views
                   </div>
-                )}
+                </div>
               </div>
             );
           })}
