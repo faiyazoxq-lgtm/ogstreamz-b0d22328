@@ -267,10 +267,10 @@ function PortalsHub() {
             return (
               <div
                 key={`${i.kind}-${i.id}`}
-                className="group relative flex flex-col rounded-2xl border border-white/10 bg-black/40 p-5 backdrop-blur-xl transition hover:-translate-y-0.5 min-h-[260px] sm:min-h-[280px]"
+                className="group relative flex flex-col gap-3 sm:gap-4 rounded-2xl border border-white/10 bg-black/40 p-4 sm:p-5 backdrop-blur-xl transition hover:-translate-y-0.5 min-h-[260px] sm:min-h-[280px]"
                 style={{ boxShadow: `0 0 32px -24px ${meta.accent}` }}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.3em]" style={{ color: meta.accent }}>
                     <meta.Icon className="h-3.5 w-3.5" /> {meta.label}
                   </div>
@@ -283,7 +283,7 @@ function PortalsHub() {
                 <Link
                   to={i.to}
                   params={{ slug: i.slug }}
-                  className="mt-3 block rounded-md outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="block space-y-2 sm:space-y-1.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   {/* Title typography matches the header 0G-PORTAL wordmark:
                       JetBrains Mono / black weight via text-eye-ice--bright,
@@ -291,7 +291,7 @@ function PortalsHub() {
                       wordmark, and a per-card accent halo layered on top of
                       the shared white→blue ice aura. */}
                   <h3
-                    className="text-eye-ice--bright tracking-[-0.02em] leading-[1.15] sm:leading-[1.1] lg:leading-[1.05] line-clamp-2 break-words transition-[text-shadow,filter] duration-300 group-hover:brightness-110"
+                    className="m-0 text-eye-ice--bright tracking-[-0.02em] leading-[1.15] sm:leading-[1.1] lg:leading-[1.05] line-clamp-2 break-words transition-[text-shadow,filter] duration-300 group-hover:brightness-110"
                     style={{
                       fontSize: "clamp(1.125rem, 4.2vw, 1.875rem)",
                       textShadow: `0 0 2px rgba(0,0,0,0.55), 0 0 8px rgba(0,0,0,0.4), 0 0 16px ${meta.accent}, 0 0 32px color-mix(in oklab, ${meta.accent} 55%, transparent)`,
@@ -300,26 +300,26 @@ function PortalsHub() {
                     {i.name}
                   </h3>
                   <p
-                    className="mt-2 sm:mt-1.5 lg:mt-1 text-muted-foreground line-clamp-2 leading-relaxed sm:leading-snug lg:leading-tight"
+                    className="m-0 text-muted-foreground line-clamp-2 leading-relaxed sm:leading-snug lg:leading-tight"
                     style={{ fontSize: "clamp(0.75rem, 1.8vw, 0.8125rem)" }}
                   >
                     {i.subtitle || "—"}
                   </p>
                 </Link>
-                <div className="mt-3 text-[10px] uppercase tracking-widest text-muted-foreground/70 truncate">
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground/70 truncate">
                   {origin.replace(/^https?:\/\//, "")}{href}
                 </div>
-                <div className="mt-auto pt-4 flex items-center gap-2">
+                <div className="mt-auto flex items-center gap-2 pt-3 sm:pt-4 border-t border-white/5">
                   <button
                     onClick={() => copyLink(i)}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-2 text-[11px] uppercase tracking-[0.18em] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-[11px] uppercase tracking-[0.18em] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
                     title="Copy link"
                   >
                     <Copy className="h-3.5 w-3.5" /> Copy
                   </button>
                   <button
                     onClick={() => setQrFor(i)}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-2 text-[11px] uppercase tracking-[0.18em] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-[11px] uppercase tracking-[0.18em] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
                     title="Show QR code"
                     aria-label={`Show QR code for ${i.name}`}
                   >
@@ -327,7 +327,7 @@ function PortalsHub() {
                   </button>
                   <button
                     onClick={() => nativeShare(i)}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-2 text-[11px] uppercase tracking-[0.18em] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-[11px] uppercase tracking-[0.18em] font-bold hover:border-[oklch(0.72_0.22_245/0.7)]"
                     title="Share"
                     aria-label={`Share ${i.name}`}
                   >
@@ -343,7 +343,7 @@ function PortalsHub() {
                   </Link>
                 </div>
                 {i.views > 0 && (
-                  <div className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground/60">
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground/60">
                     {i.views.toLocaleString()} views
                   </div>
                 )}
