@@ -1226,6 +1226,42 @@ export type Database = {
         }
         Relationships: []
       }
+      letter_history: {
+        Row: {
+          answers: Json
+          created_at: string
+          id: string
+          inputs: Json
+          letter: string
+          questions: Json
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          created_at?: string
+          id?: string
+          inputs?: Json
+          letter?: string
+          questions?: Json
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          id?: string
+          inputs?: Json
+          letter?: string
+          questions?: Json
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       magic_link_audit: {
         Row: {
           created_at: string

@@ -163,3 +163,120 @@ export const generateLetter = createServerFn({ method: "POST" })
       return { ok: false as const, error: e?.message || "AI error", letter: "", balance: null };
     }
   });
+
+// ===================== History =====================
+
+export type LetterHistoryRow = {
+  id: string;
+  title: string;
+  inputs: LetterInput;
+  questions: string[];
+  answers: Record<string, string>;
+  letter: string;
+  created_at: string;
+  updated_at: string;
+};
+
+const titleFor = (d: LetterInput) =>
+  clip(d.subject || `${d.issue}${d.subIssue ? " — " + d.subIssue : ""}` || "Untitled letter", 140);
+
+export const saveLetterHistory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id?: string; inputs: Partial<LetterInput>; questions?: string[]; answers?: Record<string, string>; letter: string; title?: string }) => ({
+    id: raw?.id ? String(raw.id).slice(0, 64) : undefined,
+    inputs: sanitize(raw?.inputs || {}),
+    questions: Array.isArray(raw?.questions) ? raw!.questions.slice(0, 12).map((q) => clip(q, 400)) : [],
+    answers: raw?.answers && typeof raw.answers === "object"
+      ? Object.fromEntries(Object.entries(raw.answers).slice(0, 12).map(([k, v]) => [String(k).slice(0, 8), clip(v, 600)]))
+      : {},
+    letter: clip(raw?.letter, 30000),
+    title: raw?.title ? clip(raw.title, 140) : "",
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    const title = data.title || titleFor(data.inputs);
+    if (data.id) {
+      const { data: row, error } = await supabase
+        .from("letter_history")
+        .update({
+          title,
+          inputs: data.inputs,
+          questions: data.questions,
+          answers: data.answers,
+          letter: data.letter,
+        })
+        .eq("id", data.id)
+        .eq("user_id", userId)
+        .select("id")
+        .maybeSingle();
+      if (error) return { ok: false as const, error: error.message, id: null as string | null };
+      return { ok: true as const, error: null, id: row?.id ?? data.id };
+    }
+    const { data: row, error } = await supabase
+      .from("letter_history")
+      .insert({
+        user_id: userId,
+        title,
+        inputs: data.inputs,
+        questions: data.questions,
+        answers: data.answers,
+        letter: data.letter,
+      })
+      .select("id")
+      .single();
+    if (error) return { ok: false as const, error: error.message, id: null };
+    return { ok: true as const, error: null, id: row.id as string };
+  });
+
+export const listLetterHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    const { data, error } = await supabase
+      .from("letter_history")
+      .select("id,title,inputs,letter,created_at,updated_at")
+      .eq("user_id", userId)
+      .order("updated_at", { ascending: false })
+      .limit(50);
+    if (error) return { ok: false as const, error: error.message, items: [] as Array<{ id: string; title: string; created_at: string; updated_at: string; preview: string }> };
+    const items = (data || []).map((r: any) => ({
+      id: r.id as string,
+      title: r.title as string,
+      created_at: r.created_at as string,
+      updated_at: r.updated_at as string,
+      preview: String(r.letter || "").slice(0, 160),
+    }));
+    return { ok: true as const, error: null, items };
+  });
+
+export const getLetterHistory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string }) => ({ id: String(raw?.id || "").slice(0, 64) }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    if (!data.id) return { ok: false as const, error: "Missing id", row: null as LetterHistoryRow | null };
+    const { data: row, error } = await supabase
+      .from("letter_history")
+      .select("id,title,inputs,questions,answers,letter,created_at,updated_at")
+      .eq("id", data.id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) return { ok: false as const, error: error.message, row: null };
+    if (!row) return { ok: false as const, error: "Not found", row: null };
+    return { ok: true as const, error: null, row: row as LetterHistoryRow };
+  });
+
+export const deleteLetterHistory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string }) => ({ id: String(raw?.id || "").slice(0, 64) }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    if (!data.id) return { ok: false as const, error: "Missing id" };
+    const { error } = await supabase
+      .from("letter_history")
+      .delete()
+      .eq("id", data.id)
+      .eq("user_id", userId);
+    if (error) return { ok: false as const, error: error.message };
+    return { ok: true as const, error: null };
+  });
