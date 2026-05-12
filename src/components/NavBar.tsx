@@ -261,7 +261,7 @@ export function NavBar() {
     >
       <nav
         className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap min-w-0 px-1.5 sm:px-8 py-2 sm:py-4 gap-1 sm:gap-2"
-        style={{ minHeight: "clamp(4rem, 6vw + 3rem, 8rem)" }}
+        style={{ minHeight: "clamp(3.5rem, 2.5vw + 2.75rem, 5.5rem)" }}
       >
         <Link
           to="/"
@@ -276,7 +276,7 @@ export function NavBar() {
             style={{
               // Scales fluidly so OG-PORTAL always fits alongside the nav,
               // shrinking on narrow viewports without ever being clipped.
-              fontSize: "clamp(1.1rem, 4.2vw, 3rem)",
+              fontSize: "clamp(1rem, 1.4vw + 0.85rem, 2rem)",
               letterSpacing: "-0.025em",
             }}
           />
