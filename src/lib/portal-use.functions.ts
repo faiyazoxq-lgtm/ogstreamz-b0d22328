@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /**
  * Charge a user `portals.use_credit_cost` credits for performing an action
@@ -41,6 +42,16 @@ export const chargePortalUse = createServerFn({ method: "POST" })
 
     const cost = Math.max(0, Math.floor(Number(portal.use_credit_cost) || 0));
     if (cost === 0 || privileged) {
+      // Audit log (free / privileged use)
+      try {
+        await supabaseAdmin.from("portal_use_audit").insert({
+          user_id: userId,
+          portal_id: portal.id,
+          portal_slug: data.slug,
+          cost: 0,
+          free: true,
+        });
+      } catch (_) { /* non-blocking */ }
       return { ok: true as const, cost, balance: null as number | null, free: true };
     }
 
@@ -55,5 +66,15 @@ export const chargePortalUse = createServerFn({ method: "POST" })
       }
       return { ok: false as const, error: spendErr.message || "spend_failed", cost, balance: null as number | null };
     }
+    // Audit log (paid use)
+    try {
+      await supabaseAdmin.from("portal_use_audit").insert({
+        user_id: userId,
+        portal_id: portal.id,
+        portal_slug: data.slug,
+        cost,
+        free: false,
+      });
+    } catch (_) { /* non-blocking */ }
     return { ok: true as const, cost, balance: balance as number, free: false };
   });
