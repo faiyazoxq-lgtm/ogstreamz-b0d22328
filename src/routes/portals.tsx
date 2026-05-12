@@ -5,6 +5,7 @@ import { Copy, ExternalLink, Music2, Smile, TrendingUp, Newspaper, Swords, Wrenc
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 import { requireMember } from "@/lib/route-guards";
+import { useAuth } from "@/hooks/use-auth";
 
 type PortalRow = {
   id: string;
@@ -60,6 +61,8 @@ export const Route = createFileRoute("/portals")({
 });
 
 function PortalsHub() {
+  const { isAdmin, profile } = useAuth();
+  const isBoss = isAdmin || profile?.rank === "boss";
   const [items, setItems] = useState<Item[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | Item["kind"]>("all");
@@ -70,43 +73,58 @@ function PortalsHub() {
   useEffect(() => {
     (async () => {
       try {
-        const [{ data: portals, error: pErr }, { data: battles, error: bErr }, { data: tools, error: tErr }] =
-          await Promise.all([
-            supabase.from("portals")
-              .select("id, slug, name, niche, kind, vip, view_count, created_at")
-              .order("created_at", { ascending: false }),
-            supabase.from("battles")
-              .select("id, slug, name, tagline, view_count, created_at, public")
-              .order("created_at", { ascending: false }),
-            supabase.from("calculators")
-              .select("id, slug, name, description, vip, created_at, published")
-              .order("created_at", { ascending: false }),
-          ]);
-        if (pErr) throw pErr;
-        if (bErr) throw bErr;
-        if (tErr) throw tErr;
-
         const out: Item[] = [];
-        for (const p of (portals as PortalRow[] | null) ?? []) {
-          const to = PORTAL_TO[p.kind] ?? "/p/$slug";
-          const kind = (["music","joke","trade","news"].includes(p.kind) ? p.kind : "joke") as Item["kind"];
-          out.push({
-            id: p.id, slug: p.slug, name: p.name, subtitle: p.niche || "",
-            kind, to, vip: !!p.vip, views: p.view_count || 0, created_at: p.created_at,
-          });
-        }
-        for (const b of (battles as BattleRow[] | null) ?? []) {
-          out.push({
-            id: b.id, slug: b.slug, name: b.name, subtitle: b.tagline || "Battle scenario",
-            kind: "battle", to: "/b/$slug", vip: false, views: b.view_count || 0, created_at: b.created_at,
-          });
-        }
-        for (const t of (tools as ToolRow[] | null) ?? []) {
-          if (!t.published) continue;
-          out.push({
-            id: t.id, slug: t.slug, name: t.name, subtitle: t.description || "Spawned tool",
-            kind: "tool", to: "/t/$slug", vip: !!t.vip, views: 0, created_at: t.created_at,
-          });
+        if (isBoss) {
+          // Boss sees the full catalogue: every portal + battle + tool.
+          const [{ data: portals, error: pErr }, { data: battles, error: bErr }, { data: tools, error: tErr }] =
+            await Promise.all([
+              supabase.from("portals")
+                .select("id, slug, name, niche, kind, vip, view_count, created_at")
+                .order("created_at", { ascending: false }),
+              supabase.from("battles")
+                .select("id, slug, name, tagline, view_count, created_at, public")
+                .order("created_at", { ascending: false }),
+              supabase.from("calculators")
+                .select("id, slug, name, description, vip, created_at, published")
+                .order("created_at", { ascending: false }),
+            ]);
+          if (pErr) throw pErr;
+          if (bErr) throw bErr;
+          if (tErr) throw tErr;
+          for (const p of (portals as PortalRow[] | null) ?? []) {
+            const to = PORTAL_TO[p.kind] ?? "/p/$slug";
+            const kind = (["music","joke","trade","news"].includes(p.kind) ? p.kind : "joke") as Item["kind"];
+            out.push({
+              id: p.id, slug: p.slug, name: p.name, subtitle: p.niche || "",
+              kind, to, vip: !!p.vip, views: p.view_count || 0, created_at: p.created_at,
+            });
+          }
+          for (const b of (battles as BattleRow[] | null) ?? []) {
+            out.push({
+              id: b.id, slug: b.slug, name: b.name, subtitle: b.tagline || "Battle scenario",
+              kind: "battle", to: "/b/$slug", vip: false, views: b.view_count || 0, created_at: b.created_at,
+            });
+          }
+          for (const t of (tools as ToolRow[] | null) ?? []) {
+            if (!t.published) continue;
+            out.push({
+              id: t.id, slug: t.slug, name: t.name, subtitle: t.description || "Spawned tool",
+              kind: "tool", to: "/t/$slug", vip: !!t.vip, views: 0, created_at: t.created_at,
+            });
+          }
+        } else {
+          // Members & VIPs: only Boss-published portals (no battles, no tools —
+          // those are hub content). Sourced from list_nav_portals which already
+          // enforces `published = true AND created_by is boss/admin`.
+          const { data, error: rpcErr } = await supabase.rpc("list_nav_portals");
+          if (rpcErr) throw rpcErr;
+          for (const p of (data ?? []) as Array<{ id: string; slug: string; name: string; vip: boolean; by_boss?: boolean; created_at: string }>) {
+            if (p.by_boss === false) continue;
+            out.push({
+              id: p.id, slug: p.slug, name: p.name, subtitle: "",
+              kind: "joke", to: "/p/$slug", vip: !!p.vip, views: 0, created_at: p.created_at,
+            });
+          }
         }
         out.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
         setItems(out);
@@ -114,7 +132,7 @@ function PortalsHub() {
         setError(e?.message ?? "Failed to load portals");
       }
     })();
-  }, []);
+  }, [isBoss]);
 
   const filtered = useMemo(() => {
     if (!items) return [];
@@ -209,7 +227,10 @@ function PortalsHub() {
       {/* Controls */}
       <div className="mb-6 grid gap-3 sm:flex sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-1.5">
-          {(["all","music","joke","trade","news","battle","tool"] as const).map((k) => {
+          {((isBoss
+              ? (["all","music","joke","trade","news","battle","tool"] as const)
+              : (["all","music","joke","trade","news"] as const)
+            ) as ReadonlyArray<"all" | Item["kind"]>).map((k) => {
             const active = filter === k;
             const meta = k === "all" ? null : KIND_META[k];
             return (
