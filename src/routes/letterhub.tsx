@@ -539,6 +539,77 @@ function LetterHubPage() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 animate-fade-in">
+      {conflict && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="letterhub-conflict-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+        >
+          <div className="w-full max-w-lg rounded-2xl border border-[oklch(0.72_0.22_245/0.5)] bg-card shadow-[0_0_80px_oklch(0.72_0.22_245/0.25)] p-5">
+            <h2 id="letterhub-conflict-title" className="text-base font-black uppercase tracking-[0.2em] text-white">
+              Two versions found
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              You have unsaved local edits for this letter that differ from the saved version.
+              Which one do you want to continue with?
+            </p>
+            <div className="mt-4 grid sm:grid-cols-2 gap-3 text-xs">
+              <div className="rounded-xl border border-border bg-background/40 p-3">
+                <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">Saved version</div>
+                <div className="text-white/90">
+                  Updated {new Date(conflict.dbRow.updated_at).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
+                </div>
+                <p className="mt-1 line-clamp-3 text-muted-foreground">
+                  {String(conflict.dbRow.letter || "(no letter yet)").slice(0, 200)}
+                </p>
+              </div>
+              <div className="rounded-xl border border-[oklch(0.72_0.22_245/0.5)] bg-[oklch(0.72_0.22_245/0.06)] p-3">
+                <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">Local autosave</div>
+                <div className="text-white/90">
+                  {conflict.local.savedAt
+                    ? `Auto-saved ${new Date(conflict.local.savedAt).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}`
+                    : "On this device"}
+                </div>
+                <p className="mt-1 line-clamp-3 text-muted-foreground">
+                  {String(conflict.local.letter || "(no letter yet)").slice(0, 200)}
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // Discard local, use DB. Clear the local draft so it doesn't
+                  // re-trigger the prompt next time.
+                  if (user && typeof window !== "undefined") {
+                    try { window.localStorage.removeItem(`letterhub:draft:${user.id}:${conflict.id}`); } catch { /* ignore */ }
+                  }
+                  const dbRow = conflict.dbRow;
+                  setConflict(null);
+                  applyDbRow(dbRow);
+                  toast.success("Loaded saved version");
+                }}
+                className="uppercase tracking-[0.2em] font-black text-xs"
+              >
+                Use saved
+              </Button>
+              <Button
+                onClick={() => {
+                  const { id, local } = conflict;
+                  setConflict(null);
+                  applyLocalDraft(id, local);
+                  toast.success("Restored local draft");
+                }}
+                className="btn-glass-blue uppercase tracking-[0.2em] font-black text-xs"
+              >
+                Use local draft
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="mb-6">
         <div className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.72_0.22_245/0.5)] bg-[oklch(0.72_0.22_245/0.12)] px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: "var(--neon-blue-bright)" }}>
           <Mail className="h-3.5 w-3.5" /> LetterHUB
