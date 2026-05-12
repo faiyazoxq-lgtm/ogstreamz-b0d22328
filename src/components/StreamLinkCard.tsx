@@ -463,6 +463,50 @@ export function StreamLinkCard() {
         </div>
       )}
 
+      {linked && (
+        <div className="mt-4 rounded-md border border-border bg-background/40 p-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-foreground/80">
+                Your m3u playlist URL
+              </p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                Built from the username &amp; password you entered. Server &amp; domain stay private.
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <button
+                type="button"
+                onClick={m3uVisible ? () => setM3uVisible(false) : revealM3u}
+                disabled={m3uBusy}
+                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/60 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-foreground/80 hover:text-foreground hover:border-foreground/40 disabled:opacity-60"
+              >
+                {m3uBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : m3uVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                {m3uVisible ? "Hide" : m3uBusy ? "Loading…" : "Reveal"}
+              </button>
+              {m3uVisible && m3uUrl && (
+                <button
+                  type="button"
+                  onClick={copyM3u}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/60 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-foreground/80 hover:text-foreground hover:border-foreground/40"
+                >
+                  {m3uCopied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                  {m3uCopied ? "Copied" : "Copy"}
+                </button>
+              )}
+            </div>
+          </div>
+          {m3uVisible && m3uUrl && (
+            <p className="mt-2 break-all rounded border border-border bg-background/60 px-2 py-1.5 font-mono text-[11px] text-foreground/90">
+              {m3uUrl}
+            </p>
+          )}
+          {m3uError && (
+            <p className="mt-2 text-xs text-destructive">{m3uError}</p>
+          )}
+        </div>
+      )}
+
       <Stepper />
 
       {resubmitCta && (
