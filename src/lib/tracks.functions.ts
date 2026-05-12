@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
 import { ApiError } from "@/lib/api-error";
+import { validateReturnUrl } from "@/lib/return-url";
 
 async function isAdmin(supabase: any, userId: string) {
   const { data } = await supabase
@@ -156,7 +157,7 @@ export const createTrackUnlockCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { trackId: string; returnUrl: string; environment: StripeEnv; customerEmail?: string }) => ({
     trackId: String(d.trackId || "").trim().slice(0, 64),
-    returnUrl: String(d.returnUrl || "").slice(0, 500),
+    returnUrl: validateReturnUrl(d.returnUrl),
     environment: d.environment,
     customerEmail: d.customerEmail,
   }))
