@@ -276,16 +276,17 @@ function BossContactsPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && filtered.length > 0) {
+              if (filtered.length === 0) return;
+              const len = filtered.length;
+              const step = (delta: number) => {
                 e.preventDefault();
-                setMatchIndex((i) =>
-                  filtered.length === 0
-                    ? 0
-                    : (Math.min(i, filtered.length - 1) +
-                        (e.shiftKey ? -1 + filtered.length : 1)) %
-                      filtered.length,
-                );
-              }
+                setMatchIndex((i) => (Math.min(i, len - 1) + delta + len) % len);
+              };
+              if (e.key === "Enter") step(e.shiftKey ? -1 : 1);
+              else if (e.key === "ArrowDown") step(1);
+              else if (e.key === "ArrowUp") step(-1);
+              else if (e.key === "Home") { e.preventDefault(); setMatchIndex(0); }
+              else if (e.key === "End") { e.preventDefault(); setMatchIndex(len - 1); }
             }}
             placeholder="Search by label, phone, or notes…"
             className="pl-9"
