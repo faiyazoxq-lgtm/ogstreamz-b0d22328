@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Copy, ExternalLink, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, ClipboardList, Search, Crown, QrCode, Share2, Globe, Download, X, Bot, Sparkles, PlusCircle } from "lucide-react";
+import { Copy, ExternalLink, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, ClipboardList, Search, Crown, QrCode, Share2, Globe, Download, X, Bot, Sparkles, PlusCircle, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 import { requireMember } from "@/lib/route-guards";
@@ -188,6 +188,33 @@ function PortalsHub() {
   const setQ = (v: string) =>
     navigate({ search: (prev: PortalsSearch) => ({ ...prev, q: v }), replace: true });
   const [qrFor, setQrFor] = useState<Item | null>(null);
+  // Per-user badge visibility preferences. Persisted in localStorage —
+  // these are non-sensitive UI prefs only (no credentials), in line with
+  // project policy that bans secrets in browser storage.
+  const BADGE_PREFS_KEY = "portals.badgePrefs.v1";
+  type BadgePrefs = { boss: boolean; mine: boolean };
+  const [badgePrefs, setBadgePrefs] = useState<BadgePrefs>({ boss: true, mine: true });
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(BADGE_PREFS_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      setBadgePrefs({
+        boss: parsed?.boss !== false,
+        mine: parsed?.mine !== false,
+      });
+    } catch { /* ignore corrupt prefs */ }
+  }, []);
+  const toggleBadge = (key: keyof BadgePrefs) => {
+    setBadgePrefs((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      try {
+        window.localStorage.setItem(BADGE_PREFS_KEY, JSON.stringify(next));
+      } catch { /* storage may be unavailable in private mode */ }
+      return next;
+    });
+  };
   // Per-hub visible-count state: MusicHUB / JokesHUB / ToolHUB paginate
   // long lists so the page stays fast even with hundreds of portals.
   const PAGE_SIZE = 12;
@@ -434,6 +461,31 @@ function PortalsHub() {
               );
             })}
           </div>
+          {/* Badge visibility toggles — preferences persist in localStorage. */}
+          <div className="inline-flex items-center rounded-md border border-border bg-card p-0.5 text-[10px] uppercase tracking-[0.18em] font-bold" role="group" aria-label="Badge visibility">
+            {([
+              { key: "boss" as const, label: "Boss" },
+              { key: "mine" as const, label: "Mine" },
+            ]).map(({ key, label }) => {
+              const on = badgePrefs[key];
+              return (
+                <button
+                  key={key}
+                  onClick={() => toggleBadge(key)}
+                  aria-pressed={on}
+                  title={`${on ? "Hide" : "Show"} ${label} badges`}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded transition"
+                  style={{
+                    background: on ? "rgba(255,255,255,0.08)" : "transparent",
+                    color: on ? "var(--mood-accent,#ffd166)" : "rgba(255,255,255,0.45)",
+                  }}
+                >
+                  {on ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                  {label}
+                </button>
+              );
+            })}
+          </div>
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <input
@@ -530,15 +582,15 @@ function PortalsHub() {
                       pill heights keep the row visually aligned across all
                       cards regardless of which badges are present. */}
                   <div className="flex flex-wrap justify-end items-center gap-1 shrink-0 max-w-[60%]">
-                    {i.byBoss ? (
+                    {i.byBoss && badgePrefs.boss ? (
                       <span className="inline-flex items-center h-5 px-2 rounded-full text-[10px] leading-none uppercase tracking-widest font-bold bg-[oklch(0.72_0.22_245/0.15)] border border-[oklch(0.72_0.22_245/0.5)] text-[oklch(0.78_0.18_245)]">
                         Boss
                       </span>
-                    ) : (
+                    ) : !i.byBoss && badgePrefs.mine ? (
                       <span className="inline-flex items-center h-5 px-2 rounded-full text-[10px] leading-none uppercase tracking-widest font-bold bg-white/5 border border-white/20 text-white/80">
                         Mine
                       </span>
-                    )}
+                    ) : null}
                     {i.vip && (
                       <span className="inline-flex items-center gap-1 h-5 px-2 rounded-full text-[10px] leading-none uppercase tracking-widest font-bold bg-gold/15 border border-gold/50 text-gold">
                         <Crown className="h-3 w-3" /> VIP
