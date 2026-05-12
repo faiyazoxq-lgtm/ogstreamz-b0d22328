@@ -99,7 +99,7 @@ export const notifyBossLoginIfNeeded = createServerFn({ method: "POST" })
       return { notified: false, reason: "not_boss" };
     }
 
-    const chatId = process.env.BOSS_TELEGRAM_API_KEY_TEST;
+    const chatId = getBossChatId();
     if (!chatId) return { notified: false, reason: "no_chat_id" };
 
     const ua =
