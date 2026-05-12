@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Crown, Eye, Copy, Check, Timer, Loader2, Flame, Lock } from "lucide-react";
+import { Crown, Eye, Copy, Check, Timer, Loader2, Flame, Lock, Download, Sparkles } from "lucide-react";
+import { toPng } from "html-to-image";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { revealVipPass, type VipPassRevealResult } from "@/lib/vip-pass-pool.functions";
@@ -25,6 +26,8 @@ export function VipPassRevealCard() {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(0);
+  const [downloading, setDownloading] = useState(false);
+  const passCardRef = useRef<HTMLDivElement | null>(null);
   const tick = useRef<number | null>(null);
 
   const pull = async () => {
@@ -72,6 +75,30 @@ export function VipPassRevealCard() {
       toast.success("Copied");
     } catch {
       toast.error("Copy failed");
+    }
+  };
+
+  const doDownload = async () => {
+    if (!passCardRef.current) return;
+    setDownloading(true);
+    try {
+      const dataUrl = await toPng(passCardRef.current, {
+        cacheBust: true,
+        pixelRatio: 3,
+        backgroundColor: "#000308",
+      });
+      const a = document.createElement("a");
+      const stamp = new Date().toISOString().slice(0, 10);
+      a.href = dataUrl;
+      a.download = `og-vip-pass-${stamp}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast.success("Pass image downloaded");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Download failed");
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -139,43 +166,121 @@ export function VipPassRevealCard() {
         )}
 
         {data?.available && (
-          <div className="mt-6 space-y-3">
-            {data.label && (
-              <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-cyan-200/80">{data.label}</p>
-            )}
-            {data.username && (
-              <div className="rounded-lg border border-cyan-300/40 bg-[#001a3d]/80 px-3 py-3">
-                <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-200/70 mb-1">Username</p>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 font-mono text-base sm:text-lg font-black text-white break-all select-all">{data.username}</code>
-                  <Button size="sm" onClick={() => doCopy(data.username || "")} className="bg-cyan-400/20 hover:bg-cyan-400/40 text-cyan-100 border border-cyan-300/60">
-                    <Copy className="h-4 w-4" />
-                  </Button>
+          <div className="mt-6 space-y-4">
+            {/* Premium printable pass card */}
+            <div className="relative">
+              <div
+                ref={passCardRef}
+                className="relative overflow-hidden rounded-2xl p-5 sm:p-6 border border-cyan-300/40"
+                style={{
+                  background:
+                    "radial-gradient(120% 80% at 0% 0%, rgba(0,200,255,0.35) 0%, transparent 55%), radial-gradient(120% 80% at 100% 100%, rgba(255,30,90,0.30) 0%, transparent 55%), linear-gradient(135deg, #050a1a 0%, #0a0014 100%)",
+                  boxShadow:
+                    "inset 0 0 0 1px rgba(0,212,255,0.25), 0 30px 60px -20px rgba(0,180,255,0.4)",
+                }}
+              >
+                {/* Holographic shimmer overlay */}
+                <div
+                  className="pointer-events-none absolute inset-0 opacity-30 mix-blend-screen"
+                  style={{
+                    background:
+                      "repeating-linear-gradient(115deg, rgba(255,255,255,0.06) 0 2px, transparent 2px 6px)",
+                  }}
+                />
+                <div className="pointer-events-none absolute -top-16 -right-10 h-48 w-48 rounded-full blur-2xl bg-cyan-400/30" />
+                <div className="pointer-events-none absolute -bottom-16 -left-10 h-48 w-48 rounded-full blur-2xl bg-fuchsia-500/20" />
+
+                <div className="relative flex items-start justify-between gap-3 mb-5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="grid place-items-center w-9 h-9 rounded-lg bg-cyan-400/15 border border-cyan-300/50">
+                      <Crown className="h-4 w-4 text-cyan-200" />
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase tracking-[0.4em] font-black text-cyan-200/90">
+                        OG-STREAMZ · VIP PASS
+                      </p>
+                      <p className="text-[10px] text-cyan-300/70 font-mono">
+                        {data.label || "Syndicate Drop"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[9px] uppercase tracking-[0.3em] text-cyan-200/60">Holder</p>
+                    <p className="text-xs font-mono text-cyan-100 truncate max-w-[140px]">
+                      {profile?.email ?? "Real OG"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="relative space-y-2.5">
+                  {data.username && (
+                    <div className="rounded-xl border border-cyan-300/30 bg-black/40 px-4 py-2.5 backdrop-blur-sm">
+                      <p className="text-[9px] uppercase tracking-[0.35em] text-cyan-200/70 mb-0.5">Username</p>
+                      <code className="font-mono text-base sm:text-lg font-black text-white break-all">
+                        {data.username}
+                      </code>
+                    </div>
+                  )}
+                  {data.password && (
+                    <div className="rounded-xl border border-cyan-300/30 bg-black/40 px-4 py-2.5 backdrop-blur-sm">
+                      <p className="text-[9px] uppercase tracking-[0.35em] text-cyan-200/70 mb-0.5">Password</p>
+                      <code
+                        className="font-mono text-base sm:text-lg font-black text-white break-all"
+                        style={{ textShadow: "0 0 10px rgba(0,212,255,0.6)" }}
+                      >
+                        {data.password}
+                      </code>
+                    </div>
+                  )}
+                  {data.code && (
+                    <div className="rounded-xl border border-cyan-300/30 bg-black/40 px-4 py-2.5 backdrop-blur-sm">
+                      <p className="text-[9px] uppercase tracking-[0.35em] text-cyan-200/70 mb-0.5">Code</p>
+                      <code
+                        className="font-mono text-base sm:text-lg font-black text-white break-all"
+                        style={{ textShadow: "0 0 10px rgba(0,212,255,0.6)" }}
+                      >
+                        {data.code}
+                      </code>
+                    </div>
+                  )}
+                </div>
+
+                <div className="relative mt-5 flex items-center justify-between text-[9px] uppercase tracking-[0.3em] text-cyan-200/70 font-mono">
+                  <span>Issued {new Date().toLocaleDateString()}</span>
+                  <span className="inline-flex items-center gap-1">
+                    <Sparkles className="h-3 w-3" /> 15-min window
+                  </span>
                 </div>
               </div>
-            )}
-            {data.password && (
-              <div className="rounded-lg border border-cyan-300/40 bg-[#001a3d]/80 px-3 py-3">
-                <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-200/70 mb-1">Password</p>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 font-mono text-base sm:text-lg font-black text-white break-all select-all [text-shadow:_0_0_10px_rgba(0,200,255,0.5)]">{data.password}</code>
-                  <Button size="sm" onClick={() => doCopy(data.password || "")} className="bg-cyan-400/20 hover:bg-cyan-400/40 text-cyan-100 border border-cyan-300/60">
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-            {data.code && (
-              <div className="flex items-center gap-2 rounded-lg border border-cyan-300/40 bg-[#001a3d]/80 px-3 py-3">
-                <div className="flex-1">
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-200/70 mb-1">Code</p>
-                  <code className="font-mono text-base sm:text-lg font-black text-white break-all select-all [text-shadow:_0_0_10px_rgba(0,200,255,0.5)]">{data.code}</code>
-                </div>
-                <Button size="sm" onClick={() => doCopy(data.code)} className="bg-cyan-400/20 hover:bg-cyan-400/40 text-cyan-100 border border-cyan-300/60">
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </div>
+
+            {/* Quick copy + download actions */}
+            <div className="flex flex-wrap items-center gap-2">
+              {data.username && (
+                <Button size="sm" onClick={() => doCopy(data.username || "")} className="bg-cyan-400/15 hover:bg-cyan-400/30 text-cyan-100 border border-cyan-300/50">
+                  <Copy className="h-3.5 w-3.5 mr-1.5" /> User
                 </Button>
-              </div>
-            )}
+              )}
+              {data.password && (
+                <Button size="sm" onClick={() => doCopy(data.password || "")} className="bg-cyan-400/15 hover:bg-cyan-400/30 text-cyan-100 border border-cyan-300/50">
+                  <Copy className="h-3.5 w-3.5 mr-1.5" /> Pass
+                </Button>
+              )}
+              {data.code && (
+                <Button size="sm" onClick={() => doCopy(data.code)} className="bg-cyan-400/15 hover:bg-cyan-400/30 text-cyan-100 border border-cyan-300/50">
+                  {copied ? <Check className="h-3.5 w-3.5 mr-1.5" /> : <Copy className="h-3.5 w-3.5 mr-1.5" />} Code
+                </Button>
+              )}
+              <Button
+                size="sm"
+                onClick={doDownload}
+                disabled={downloading}
+                className="ml-auto bg-gradient-to-r from-[#00d4ff] to-[#ff2a8a] text-black font-black uppercase tracking-[0.2em] shadow-[0_0_18px_rgba(0,200,255,0.5)] hover:brightness-110"
+              >
+                {downloading ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Download className="h-3.5 w-3.5 mr-1.5" />}
+                Save image
+              </Button>
+            </div>
 
             <div className="flex items-center justify-between gap-3 text-[11px] text-cyan-200/70 flex-wrap">
               <span>Pool size: <strong className="text-white">{data.pool_size}</strong></span>
