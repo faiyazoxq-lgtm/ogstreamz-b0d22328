@@ -99,6 +99,7 @@ function BossContactsPage() {
   const [editDraft, setEditDraft] = useState({ label: "", phone: "", notes: "", linked_user_id: null as string | null });
   const [query, setQuery] = useState("");
   const [matchIndex, setMatchIndex] = useState(0);
+  const [escapeAnnouncement, setEscapeAnnouncement] = useState("");
   const [draftLinked, setDraftLinked] = useState<ProfileLite | null>(null);
   const [editLinked, setEditLinked] = useState<ProfileLite | null>(null);
   const [profiles, setProfiles] = useState<Record<string, ProfileLite>>({});
@@ -233,6 +234,11 @@ function BossContactsPage() {
     setMatchIndex(0);
     searchInputRef.current?.focus();
   };
+  const announceEscape = (msg: string) => {
+    // Reset first so the same message re-announces if pressed twice.
+    setEscapeAnnouncement("");
+    setTimeout(() => setEscapeAnnouncement(msg), 30);
+  };
   useEffect(() => {
     if (!activeMatchId) return;
     const el = activeMatchRef.current;
@@ -289,9 +295,11 @@ function BossContactsPage() {
                 e.preventDefault();
                 if (query) {
                   clearAndFocusSearch();
+                  announceEscape("Search cleared. Highlighted match reset to first match.");
                 } else {
                   setMatchIndex(0);
                   searchInputRef.current?.focus();
+                  announceEscape("Highlighted match reset to first match.");
                 }
                 return;
               }
@@ -379,9 +387,11 @@ function BossContactsPage() {
                       e.preventDefault();
                       if (query) {
                         clearAndFocusSearch();
+                        announceEscape("Search cleared. Highlighted match reset to first match.");
                       } else {
                         setMatchIndex(0);
                         searchInputRef.current?.focus();
+                        announceEscape("Highlighted match reset to first match.");
                       }
                     }
                   }
