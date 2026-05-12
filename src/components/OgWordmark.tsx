@@ -1,4 +1,5 @@
-import { TrackingEye } from "./TrackingEye";
+import { TrackingPupil } from "./TrackingPupil";
+import ogEvilEye from "@/assets/og-evil-eye.jpg";
 
 /**
  * Single source of truth for TrackingEye sizing across the brand surface.
@@ -23,64 +24,84 @@ export const EYE_SCALE_CLASS = "w-[0.82em] h-[1em] shrink-0";
 export function OgWordmark({
   suffix = "-PORTAL",
   className = "",
-  eyeClassName = EYE_SCALE_CLASS,
-  pupilRatio = 0.62,
-  travelRatio = 0.18,
-  bloodshot = true,
-  evil = true,
   style,
 }: {
   suffix?: string;
   className?: string;
+  /** @deprecated kept for API compatibility — ignored by the artwork lockup. */
   eyeClassName?: string;
-  pupilRatio?: number;
-  travelRatio?: number;
-  bloodshot?: boolean;
-  /** Predatory slit-pupil treatment that locks tightly with the wordmark. */
-  evil?: boolean;
+  /** @deprecated */ pupilRatio?: number;
+  /** @deprecated */ travelRatio?: number;
+  /** @deprecated */ bloodshot?: boolean;
+  /** @deprecated */ evil?: boolean;
   style?: React.CSSProperties;
 }) {
-  const rest = `G${suffix}`;
+  // Artwork "OG" lockup. The painted iris sits at roughly x=34%, y=50% of the
+  // 1920×1047 source; the iris itself is ~22% of the image width. Those ratios
+  // place the tracking-pupil overlay exactly on top of the painted iris so the
+  // eye reads as if it's tracking — same behavior as the previous stylized eye.
+  const ART_ASPECT = 1920 / 1047;
+  // Iris hotspot inside the artwork (left/top/size as % of the image box).
+  const IRIS_LEFT_PCT = 23.4; // left edge of iris bounding box
+  const IRIS_TOP_PCT = 39;
+  const IRIS_SIZE_PCT = 22; // iris is roughly square
+
   return (
     <span
       className={`inline-flex items-center text-eye-ice leading-none tracking-[-0.02em] ${className}`}
       style={style}
     >
-      {/* Eye stands in for the leading "O". Sized to the wordmark's own
-          cap height (em-based) and shaped as an upright ellipse so it
-          reads as a letter, not a disc. */}
       <span
-        className="relative inline-flex items-center justify-center align-middle leading-none w-[0.82em] h-[1em]"
-        style={{ marginRight: "-0.04em" }}
+        className="relative inline-block align-middle leading-none"
+        style={{
+          // Match cap-height of the surrounding text so the lockup sits on the
+          // same baseline as the suffix. Width follows the artwork's aspect.
+          height: "1.2em",
+          width: `calc(1.2em * ${ART_ASPECT})`,
+          marginRight: "0.04em",
+          marginLeft: "-0.05em",
+        }}
       >
-        <TrackingEye
-          className={eyeClassName}
-          pupilRatio={pupilRatio}
-          travelRatio={travelRatio}
-          bloodshot={bloodshot}
-          slit={evil}
+        <img
+          src={ogEvilEye}
+          alt="0G"
+          draggable={false}
+          className="block w-full h-full select-none"
+          style={{
+            // Drop the JPEG's black background on dark surfaces — `screen`
+            // turns near-black to transparent so the artwork sits cleanly on
+            // the navbar, hero, footer, and login chrome alike.
+            mixBlendMode: "screen",
+            objectFit: "contain",
+          }}
         />
-      </span>
-      {Array.from(rest).map((ch, i) => (
+        {/* Iris hotspot — a relative box positioned over the painted iris.
+            TrackingPupil renders an absolutely-centered slit inside it that
+            translates with the cursor. */}
         <span
-          key={i}
-          style={
-            i === 0
-              ? {
-                  // Pull the G flush against the egg-eye on every breakpoint.
-                  // Negative margin closes the optical gap left by the
-                  // ellipse's curved right edge; tighter letter-spacing keeps
-                  // the rest of "-PORTAL" from drifting away.
-                  fontWeight: 900,
-                  letterSpacing: "-0.07em",
-                  marginLeft: "0.015em",
-                }
-              : undefined
-          }
+          aria-hidden
+          className="absolute pointer-events-none"
+          style={{
+            left: `${IRIS_LEFT_PCT}%`,
+            top: `${IRIS_TOP_PCT}%`,
+            width: `${IRIS_SIZE_PCT}%`,
+            height: `${IRIS_SIZE_PCT * ART_ASPECT}%`,
+          }}
         >
-          {ch}
+          <TrackingPupil pupilRatio={0.16} travelRatio={0.22} />
         </span>
-      ))}
+      </span>
+      {suffix && (
+        <span
+          style={{
+            fontWeight: 900,
+            letterSpacing: "-0.045em",
+            marginLeft: "0.04em",
+          }}
+        >
+          {suffix}
+        </span>
+      )}
     </span>
   );
 }
