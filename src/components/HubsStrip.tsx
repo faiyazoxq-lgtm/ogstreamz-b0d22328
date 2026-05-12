@@ -77,6 +77,24 @@ export function HubsStrip({ className = "" }: { className?: string }) {
     return () => { cancelled = true; void supabase.removeChannel(channel); };
   }, []);
 
+  // Auto-scroll the active hub chip into view when the route changes
+  // (or when custom hubs load and the active chip first appears).
+  useEffect(() => {
+    const ul = listRef.current;
+    if (!ul) return;
+    const active = ul.querySelector<HTMLAnchorElement>('a[aria-current="page"]');
+    if (!active) return;
+    const ulRect = ul.getBoundingClientRect();
+    const aRect = active.getBoundingClientRect();
+    const offset = (aRect.left + aRect.right) / 2 - (ulRect.left + ulRect.right) / 2;
+    if (Math.abs(offset) < 4) return; // already centered
+    const target = Math.max(
+      0,
+      Math.min(ul.scrollLeft + offset, ul.scrollWidth - ul.clientWidth),
+    );
+    ul.scrollTo({ left: target, behavior: "smooth" });
+  }, [pathname, customHubs]);
+
   return (
     <nav aria-label="All hubs" className={`relative max-w-7xl mx-auto px-5 sm:px-8 ${className}`}>
       <div className="rounded-2xl border border-white/10 bg-black/50 backdrop-blur-xl px-3 sm:px-4 py-3">
