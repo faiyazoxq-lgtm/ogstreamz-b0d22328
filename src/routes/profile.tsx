@@ -108,15 +108,40 @@ function ProfilePage() {
 
       <div className="relative max-w-4xl mx-auto px-5 sm:px-8 py-12 sm:py-16">
         <header className="text-center mb-10">
-          <p className="text-xs uppercase tracking-[0.4em] font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
+          <p
+            className="font-semibold uppercase"
+            style={{
+              color: "var(--neon-blue-bright)",
+              fontSize: "clamp(0.66rem, 0.6rem + 0.3vw, 0.78rem)",
+              letterSpacing: "0.42em",
+            }}
+          >
             Member Vault
           </p>
-          <h1 className="mt-3 font-[Montserrat] font-black text-4xl sm:text-5xl text-metallic">
+          <h1
+            className="mt-4 font-[Montserrat] font-extralight text-metallic"
+            style={{
+              fontSize: "clamp(1.875rem, 1.4rem + 2.4vw, 3.25rem)",
+              letterSpacing: "0.04em",
+              lineHeight: 1.05,
+            }}
+          >
             Welcome back
           </h1>
-          <div className="mt-4 flex items-center justify-center gap-2 text-foreground text-2xl sm:text-3xl font-semibold">
+          <div
+            className="mt-5 flex items-center justify-center gap-3 text-foreground font-[Montserrat] font-semibold"
+            style={{
+              fontSize: "clamp(1.35rem, 1rem + 1.6vw, 2.25rem)",
+              letterSpacing: "0.005em",
+              lineHeight: 1.15,
+            }}
+          >
             {isBoss ? (
-              <span>— BOSS ACCOUNT —</span>
+              <>
+                <span aria-hidden="true" className="h-px w-8 sm:w-12 bg-[color-mix(in_oklab,var(--gold)_70%,transparent)]" />
+                <span className="tracking-[0.22em] uppercase text-[var(--gold)]">Boss Account</span>
+                <span aria-hidden="true" className="h-px w-8 sm:w-12 bg-[color-mix(in_oklab,var(--gold)_70%,transparent)]" />
+              </>
             ) : editingName ? (
               <>
                 <Input
@@ -129,7 +154,8 @@ function ProfilePage() {
                   }}
                   maxLength={40}
                   placeholder="Your name"
-                  className="h-11 max-w-[320px] text-center text-2xl sm:text-3xl font-semibold"
+                  className="h-11 max-w-[320px] text-center font-semibold"
+                  style={{ fontSize: "clamp(1.25rem, 1rem + 1.2vw, 1.875rem)", letterSpacing: "0.005em" }}
                   disabled={savingName}
                 />
                 <button
