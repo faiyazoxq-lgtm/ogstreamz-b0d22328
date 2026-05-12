@@ -4,7 +4,7 @@ import {
   Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft,
   ShieldAlert, LogIn, Tv, Tags, Bell, Sparkles, Settings, Boxes, Grid3x3,
   Coins, Power, Rocket, KeyRound, Wallet, SlidersHorizontal, Lock, ScrollText,
-  ShieldOff, Lightbulb, Megaphone,
+  ShieldOff, Lightbulb, Megaphone, Phone,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { BossSearch } from "@/components/BossSearch";
@@ -41,6 +41,7 @@ const GROUPS: RailGroup[] = [
     items: [
       { to: "/boss/users", label: "Roster", Icon: Users, desc: "Rank, credits, bans" },
       { to: "/boss/stream-queue", label: "Stream Queue", Icon: Tv, desc: "Pending verifications" },
+      { to: "/boss/contacts", label: "Contacts", Icon: Phone, desc: "Phone numbers & spares" },
     ],
   },
   {
