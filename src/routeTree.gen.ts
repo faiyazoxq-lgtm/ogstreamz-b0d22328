@@ -82,6 +82,7 @@ import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as AccountPassesRouteImport } from './routes/account.passes'
 import { Route as BossHubsNewRouteImport } from './routes/boss.hubs.new'
 import { Route as ApiPublicSunoWebhookRouteImport } from './routes/api/public/suno-webhook'
+import { Route as ApiPublicStreamM3uRouteImport } from './routes/api/public/stream-m3u'
 import { Route as ApiPublic0gOrchestratorRouteImport } from './routes/api/public/0g-orchestrator'
 import { Route as BossHubsIdEditRouteImport } from './routes/boss.hubs.$id.edit'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
@@ -455,6 +456,11 @@ const ApiPublicSunoWebhookRoute = ApiPublicSunoWebhookRouteImport.update({
   path: '/api/public/suno-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicStreamM3uRoute = ApiPublicStreamM3uRouteImport.update({
+  id: '/api/public/stream-m3u',
+  path: '/api/public/stream-m3u',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublic0gOrchestratorRoute = ApiPublic0gOrchestratorRouteImport.update({
   id: '/api/public/0g-orchestrator',
   path: '/api/public/0g-orchestrator',
@@ -569,6 +575,7 @@ export interface FileRoutesByFullPath {
   '/td/$slug': typeof TdSlugRoute
   '/boss/': typeof BossIndexRoute
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
+  '/api/public/stream-m3u': typeof ApiPublicStreamM3uRoute
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/boss/hubs/new': typeof BossHubsNewRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
@@ -650,6 +657,7 @@ export interface FileRoutesByTo {
   '/td/$slug': typeof TdSlugRoute
   '/boss': typeof BossIndexRoute
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
+  '/api/public/stream-m3u': typeof ApiPublicStreamM3uRoute
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/boss/hubs/new': typeof BossHubsNewRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
@@ -733,6 +741,7 @@ export interface FileRoutesById {
   '/td/$slug': typeof TdSlugRoute
   '/boss/': typeof BossIndexRoute
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
+  '/api/public/stream-m3u': typeof ApiPublicStreamM3uRoute
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/boss/hubs/new': typeof BossHubsNewRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
@@ -817,6 +826,7 @@ export interface FileRouteTypes {
     | '/td/$slug'
     | '/boss/'
     | '/api/public/0g-orchestrator'
+    | '/api/public/stream-m3u'
     | '/api/public/suno-webhook'
     | '/boss/hubs/new'
     | '/api/public/hooks/syndicate-tick'
@@ -898,6 +908,7 @@ export interface FileRouteTypes {
     | '/td/$slug'
     | '/boss'
     | '/api/public/0g-orchestrator'
+    | '/api/public/stream-m3u'
     | '/api/public/suno-webhook'
     | '/boss/hubs/new'
     | '/api/public/hooks/syndicate-tick'
@@ -980,6 +991,7 @@ export interface FileRouteTypes {
     | '/td/$slug'
     | '/boss/'
     | '/api/public/0g-orchestrator'
+    | '/api/public/stream-m3u'
     | '/api/public/suno-webhook'
     | '/boss/hubs/new'
     | '/api/public/hooks/syndicate-tick'
@@ -1033,6 +1045,7 @@ export interface RootRouteChildren {
   TSlugRoute: typeof TSlugRoute
   TdSlugRoute: typeof TdSlugRoute
   ApiPublic0gOrchestratorRoute: typeof ApiPublic0gOrchestratorRoute
+  ApiPublicStreamM3uRoute: typeof ApiPublicStreamM3uRoute
   ApiPublicSunoWebhookRoute: typeof ApiPublicSunoWebhookRoute
   ApiPublicHooksSyndicateTickRoute: typeof ApiPublicHooksSyndicateTickRoute
   ApiPublicHooksTelegramRemindersRoute: typeof ApiPublicHooksTelegramRemindersRoute
@@ -1554,6 +1567,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSunoWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/stream-m3u': {
+      id: '/api/public/stream-m3u'
+      path: '/api/public/stream-m3u'
+      fullPath: '/api/public/stream-m3u'
+      preLoaderRoute: typeof ApiPublicStreamM3uRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/0g-orchestrator': {
       id: '/api/public/0g-orchestrator'
       path: '/api/public/0g-orchestrator'
@@ -1747,6 +1767,7 @@ const rootRouteChildren: RootRouteChildren = {
   TSlugRoute: TSlugRoute,
   TdSlugRoute: TdSlugRoute,
   ApiPublic0gOrchestratorRoute: ApiPublic0gOrchestratorRoute,
+  ApiPublicStreamM3uRoute: ApiPublicStreamM3uRoute,
   ApiPublicSunoWebhookRoute: ApiPublicSunoWebhookRoute,
   ApiPublicHooksSyndicateTickRoute: ApiPublicHooksSyndicateTickRoute,
   ApiPublicHooksTelegramRemindersRoute: ApiPublicHooksTelegramRemindersRoute,

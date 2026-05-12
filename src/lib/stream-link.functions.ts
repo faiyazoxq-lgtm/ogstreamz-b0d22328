@@ -1,5 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getRequestHost, getRequestHeader } from "@tanstack/react-start/server";
+import { randomBytes, createHash } from "crypto";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type StreamConfigStatus =
   | { ok: true; host: string }
@@ -324,13 +327,13 @@ export const reverifyStream = createServerFn({ method: "POST" })
 export const getMyStreamM3uUrl = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase } = context as any;
-    let server: string;
+    const { supabase, userId } = context as any;
     try {
-      server = getServerUrl();
+      getServerUrl();
     } catch (e: any) {
       return { ok: false as const, reason: "invalid_server" as const, error: e?.message || REASON_MESSAGES.invalid_server };
     }
+    // Confirm the member actually has saved credentials before minting a token.
     const { data: rows, error } = await supabase.rpc("get_my_stream_creds");
     if (error) {
       return { ok: false as const, reason: "rpc_error" as const, cause: classifyRpcError(error.message), error: error.message };
@@ -344,10 +347,25 @@ export const getMyStreamM3uUrl = createServerFn({ method: "GET" })
         error: "No saved stream credentials yet. Verify your line first.",
       };
     }
-    const url =
-      `${server}/get.php` +
-      `?username=${encodeURIComponent(creds.username)}` +
-      `&password=${encodeURIComponent(creds.password)}` +
-      `&type=m3u_plus&output=ts`;
-    return { ok: true as const, url };
+
+    // Mint a fresh, opaque, single-line token (32 bytes -> 64 hex chars).
+    // We persist only the SHA-256 hash so the secret never sits at rest.
+    const token = randomBytes(32).toString("hex");
+    const tokenHash = createHash("sha256").update(token).digest("hex");
+    const ttlHours = 24;
+    const expiresAt = new Date(Date.now() + ttlHours * 60 * 60 * 1000).toISOString();
+
+    const { error: insErr } = await supabaseAdmin
+      .from("stream_url_tokens" as never)
+      .insert({ token_hash: tokenHash, user_id: userId, expires_at: expiresAt } as never);
+    if (insErr) {
+      return { ok: false as const, reason: "rpc_error" as const, cause: classifyRpcError(insErr.message), error: insErr.message };
+    }
+
+    // Build an absolute URL pointing at our public proxy route.
+    const forwardedProto = (getRequestHeader("x-forwarded-proto") || "").split(",")[0].trim();
+    const host = getRequestHost();
+    const proto = forwardedProto || (host && host.startsWith("localhost") ? "http" : "https");
+    const url = `${proto}://${host}/api/public/stream-m3u?t=${token}`;
+    return { ok: true as const, url, expiresAt };
   });
