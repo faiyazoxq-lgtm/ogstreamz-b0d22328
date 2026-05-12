@@ -17,6 +17,7 @@ import { useSubscription } from "@/hooks/use-subscription";
 import { PlanChip, StatusBadge } from "@/components/SubscriptionBadges";
 import { VaultGuard } from "@/components/VaultGuard";
 import { VipReferralCard } from "@/components/VipReferralCard";
+import { VipMembersDashboard } from "@/components/VipMembersDashboard";
 import { requireMember } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/vip")({
@@ -144,6 +145,9 @@ function VipPage() {
   return (
     <main className="min-h-screen bg-black text-white overflow-x-hidden">
       <PaymentTestModeBanner />
+
+      {/* Members area — only shown when the visitor is already VIP. */}
+      <VipMembersDashboard />
 
       {/* STATUS BANNER — clear, prominent state of the user's VIP */}
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-6">

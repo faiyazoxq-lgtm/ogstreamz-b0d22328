@@ -11,12 +11,11 @@ import {
 import { useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
-import { NavBar } from "../components/NavBar";
+import { AppShell } from "../components/AppShell";
 import { AuthProvider } from "../hooks/use-auth";
 import { Toaster } from "../components/ui/sonner";
 import { PaymentTestModeBanner } from "../components/PaymentTestModeBanner";
 import { GlobalMoodProvider } from "../hooks/use-global-mood";
-import { BottomDock } from "../components/BottomDock";
 import { LiveThinkingFeed } from "../components/LiveThinkingFeed";
 import { SystemGlitchOverlay } from "../components/SystemGlitchOverlay";
 import { EnforcerConsole } from "../components/EnforcerConsole";
@@ -154,18 +153,18 @@ function RootComponent() {
             <PaymentTestModeBanner />
             <SpotlightEyes />
             <VipPromoBanner />
-            <NavBar />
-            <HubsStripSlot />
-            <AuthGate>
-              <Outlet />
-            </AuthGate>
-            <SiteFooter />
+            <AppShell>
+              <HubsStripSlot />
+              <AuthGate>
+                <Outlet />
+              </AuthGate>
+              <SiteFooter />
+            </AppShell>
             <TeleportOverlay />
             <EyeGlowTuner />
             <SystemGlitchOverlay />
             <LiveThinkingFeed />
             <EnforcerConsole />
-            <BottomDock />
             <ReducedMotionToggle />
             <AlignmentQAOverlay />
             <PupilCalibrator />
