@@ -285,9 +285,12 @@ function BossContactsPage() {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Escape") {
+                e.preventDefault();
                 if (query) {
-                  e.preventDefault();
                   clearAndFocusSearch();
+                } else {
+                  setMatchIndex(0);
+                  searchInputRef.current?.focus();
                 }
                 return;
               }
@@ -361,9 +364,14 @@ function BossContactsPage() {
             onKeyDown={
               isActiveMatch
                 ? (e) => {
-                    if (e.key === "Escape" && query) {
+                    if (e.key === "Escape") {
                       e.preventDefault();
-                      clearAndFocusSearch();
+                      if (query) {
+                        clearAndFocusSearch();
+                      } else {
+                        setMatchIndex(0);
+                        searchInputRef.current?.focus();
+                      }
                     }
                   }
                 : undefined
