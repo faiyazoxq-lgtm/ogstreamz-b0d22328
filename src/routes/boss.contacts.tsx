@@ -247,6 +247,7 @@ function BossContactsPage() {
     }
     prevQueryRef.current = query;
     if (!next) {
+      setRestoreAnnouncement("");
       setMatchIndex(0);
       return;
     }
@@ -257,15 +258,24 @@ function BossContactsPage() {
       const idx = filtered.findIndex((c) => c.id === savedId);
       if (idx >= 0) {
         setMatchIndex(idx);
-        const c = filtered[idx];
-        const msg = `Restored previous match ${idx + 1} of ${filtered.length} for “${query.trim()}”: ${c.label}${c.phone ? `, ${c.phone}` : ""}.`;
-        setRestoreAnnouncement("");
-        setTimeout(() => setRestoreAnnouncement(msg), 30);
+        // Only announce when the restored position is meaningfully different
+        // from the default (first match). idx === 0 is indistinguishable from
+        // a fresh query, so skip the announcement to avoid noisy reads.
+        if (idx > 0) {
+          const c = filtered[idx];
+          const msg = `Restored previous match ${idx + 1} of ${filtered.length} for “${query.trim()}”: ${c.label}${c.phone ? `, ${c.phone}` : ""}.`;
+          setRestoreAnnouncement("");
+          setTimeout(() => setRestoreAnnouncement(msg), 30);
+        } else {
+          setRestoreAnnouncement("");
+        }
         return;
       }
       // Stale entry — drop it so we don't keep checking a missing contact.
       savedMatchIdRef.current.delete(next);
     }
+    // No restore happened — clear any stale announcement from a prior query.
+    setRestoreAnnouncement("");
     setMatchIndex(0);
   }, [query, filtered]);
   const activeMatchId =
