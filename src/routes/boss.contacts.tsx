@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Phone, Plus, Trash2, Loader2, Copy, Pencil, Check, X, Search } from "lucide-react";
+import { Phone, Plus, Trash2, Loader2, Copy, Pencil, Check, X, Search, UserPlus, UserMinus, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +20,14 @@ type Contact = {
   notes: string;
   sort_order: number;
   created_at: string;
+  linked_user_id: string | null;
+};
+
+type ProfileLite = {
+  id: string;
+  email: string | null;
+  display_name: string | null;
+  rank: string | null;
 };
 
 function BossContactsPage() {
@@ -28,8 +36,11 @@ function BossContactsPage() {
   const [draft, setDraft] = useState({ label: "", phone: "", notes: "" });
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
-  const [editDraft, setEditDraft] = useState({ label: "", phone: "", notes: "" });
+  const [editDraft, setEditDraft] = useState({ label: "", phone: "", notes: "", linked_user_id: null as string | null });
   const [query, setQuery] = useState("");
+  const [draftLinked, setDraftLinked] = useState<ProfileLite | null>(null);
+  const [editLinked, setEditLinked] = useState<ProfileLite | null>(null);
+  const [profiles, setProfiles] = useState<Record<string, ProfileLite>>({});
 
   async function load() {
     const { data, error } = await supabase
@@ -38,7 +49,18 @@ function BossContactsPage() {
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
-    setItems((data ?? []) as Contact[]);
+    const rows = (data ?? []) as Contact[];
+    setItems(rows);
+    const linkIds = Array.from(new Set(rows.map((r) => r.linked_user_id).filter(Boolean) as string[]));
+    if (linkIds.length) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id,email,display_name,rank")
+        .in("id", linkIds);
+      const map: Record<string, ProfileLite> = {};
+      (profs ?? []).forEach((p) => { map[p.id as string] = p as ProfileLite; });
+      setProfiles(map);
+    }
     setLoading(false);
   }
 
@@ -65,10 +87,12 @@ function BossContactsPage() {
     setSaving(true);
     const { error } = await supabase.from("boss_contacts").insert({
       label, phone: parsed.e164, notes: draft.notes.trim(),
+      linked_user_id: draftLinked?.id ?? null,
     });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     setDraft({ label: "", phone: "", notes: "" });
+    setDraftLinked(null);
     toast.success("Contact added");
   }
 
@@ -80,7 +104,8 @@ function BossContactsPage() {
 
   function beginEdit(c: Contact) {
     setEditing(c.id);
-    setEditDraft({ label: c.label, phone: c.phone, notes: c.notes });
+    setEditDraft({ label: c.label, phone: c.phone, notes: c.notes, linked_user_id: c.linked_user_id });
+    setEditLinked(c.linked_user_id ? profiles[c.linked_user_id] ?? null : null);
   }
 
   async function saveEdit(id: string) {
@@ -90,6 +115,7 @@ function BossContactsPage() {
       label: editDraft.label.trim(),
       phone: parsed.e164,
       notes: editDraft.notes.trim(),
+      linked_user_id: editLinked?.id ?? null,
     }).eq("id", id);
     if (error) { toast.error(error.message); return; }
     setEditing(null);
@@ -149,6 +175,7 @@ function BossContactsPage() {
           value={draft.notes}
           onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
         />
+        <UserLinkPicker selected={draftLinked} onSelect={setDraftLinked} />
         <Button onClick={add} disabled={saving} size="sm">
           {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
           Add
@@ -200,6 +227,7 @@ function BossContactsPage() {
                   <Input value={editDraft.phone} onChange={(e) => setEditDraft({ ...editDraft, phone: e.target.value })} />
                 </div>
                 <Textarea rows={2} value={editDraft.notes} onChange={(e) => setEditDraft({ ...editDraft, notes: e.target.value })} />
+                <UserLinkPicker selected={editLinked} onSelect={setEditLinked} />
                 <div className="flex gap-2">
                   <Button size="sm" onClick={() => saveEdit(c.id)}><Check className="h-4 w-4 mr-1" /> Save</Button>
                   <Button size="sm" variant="ghost" onClick={() => setEditing(null)}><X className="h-4 w-4 mr-1" /> Cancel</Button>
@@ -212,6 +240,21 @@ function BossContactsPage() {
                   <a href={`tel:${c.phone}`} className="text-base font-mono text-foreground hover:underline" title={c.phone}>
                     {toDisplay(c.phone)}
                   </a>
+                  {c.linked_user_id && profiles[c.linked_user_id] && (
+                    <Link
+                      to="/boss/users"
+                      className="mt-1 inline-flex items-center gap-1 text-xs text-cyan-400 hover:underline"
+                      title={profiles[c.linked_user_id].email ?? ""}
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      {profiles[c.linked_user_id].display_name || profiles[c.linked_user_id].email || "Linked profile"}
+                      {profiles[c.linked_user_id].rank && (
+                        <span className="ml-1 rounded bg-cyan-400/10 px-1 py-0.5 uppercase tracking-wider">
+                          {profiles[c.linked_user_id].rank}
+                        </span>
+                      )}
+                    </Link>
+                  )}
                   {c.notes && <p className="mt-1 text-xs text-muted-foreground whitespace-pre-wrap">{c.notes}</p>}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
@@ -224,6 +267,95 @@ function BossContactsPage() {
           </div>
         ))}
       </section>
+    </div>
+  );
+}
+
+function UserLinkPicker({
+  selected,
+  onSelect,
+}: {
+  selected: ProfileLite | null;
+  onSelect: (p: ProfileLite | null) => void;
+}) {
+  const [q, setQ] = useState("");
+  const [results, setResults] = useState<ProfileLite[]>([]);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (selected) return;
+    const term = q.trim();
+    if (term.length < 2) { setResults([]); return; }
+    let cancelled = false;
+    setLoading(true);
+    const t = setTimeout(async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id,email,display_name,rank")
+        .or(`email.ilike.%${term}%,display_name.ilike.%${term}%`)
+        .limit(8);
+      if (!cancelled) {
+        setResults((data ?? []) as ProfileLite[]);
+        setLoading(false);
+      }
+    }, 200);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [q, selected]);
+
+  if (selected) {
+    return (
+      <div className="flex items-center gap-2 rounded-lg border border-cyan-400/30 bg-cyan-400/5 px-2 py-1.5 text-xs">
+        <UserPlus className="h-3.5 w-3.5 text-cyan-400" />
+        <span className="font-medium">{selected.display_name || selected.email}</span>
+        {selected.email && selected.display_name && (
+          <span className="text-muted-foreground">{selected.email}</span>
+        )}
+        <button
+          type="button"
+          onClick={() => { onSelect(null); setQ(""); }}
+          className="ml-auto inline-flex items-center gap-1 text-muted-foreground hover:text-destructive"
+          aria-label="Unlink user"
+        >
+          <UserMinus className="h-3.5 w-3.5" /> Unlink
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <Input
+        value={q}
+        onChange={(e) => { setQ(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        placeholder="Link to a user (search by email or name)…"
+        className="text-sm"
+      />
+      {open && q.trim().length >= 2 && (
+        <div className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-popover p-1 shadow-lg max-h-60 overflow-auto">
+          {loading && <div className="px-2 py-1 text-xs text-muted-foreground">Searching…</div>}
+          {!loading && results.length === 0 && (
+            <div className="px-2 py-1 text-xs text-muted-foreground">No matches</div>
+          )}
+          {results.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => { onSelect(p); setOpen(false); setQ(""); }}
+              className="flex w-full items-center justify-between rounded px-2 py-1 text-left text-xs hover:bg-accent"
+            >
+              <span className="truncate">
+                <span className="font-medium">{p.display_name || p.email}</span>
+                {p.display_name && p.email && (
+                  <span className="ml-2 text-muted-foreground">{p.email}</span>
+                )}
+              </span>
+              {p.rank && <span className="ml-2 rounded bg-muted px-1 uppercase tracking-wider">{p.rank}</span>}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
