@@ -28,6 +28,7 @@ import { SiteWallpaper } from "../components/SiteWallpaper";
 import { CloudflareAnalytics } from "../components/CloudflareAnalytics";
 import { DomainDenylistGuard } from "../components/DomainDenylistGuard";
 import { SiteFooter } from "../components/SiteFooter";
+import { AlignmentQAOverlay } from "../components/AlignmentQAOverlay";
 
 function NotFoundComponent() {
   return (
@@ -163,6 +164,7 @@ function RootComponent() {
             <EnforcerConsole />
             <BottomDock />
             <ReducedMotionToggle />
+            <AlignmentQAOverlay />
             </div>
           </div>
           <Toaster />
