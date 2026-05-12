@@ -385,6 +385,7 @@ export type Database = {
           created_by: string | null
           id: string
           label: string
+          linked_user_id: string | null
           notes: string
           phone: string
           sort_order: number
@@ -395,6 +396,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           label: string
+          linked_user_id?: string | null
           notes?: string
           phone: string
           sort_order?: number
@@ -405,12 +407,21 @@ export type Database = {
           created_by?: string | null
           id?: string
           label?: string
+          linked_user_id?: string | null
           notes?: string
           phone?: string
           sort_order?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "boss_contacts_linked_user_id_fkey"
+            columns: ["linked_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       boss_function_ideas: {
         Row: {
