@@ -82,6 +82,7 @@ import { Route as AccountPassesRouteImport } from './routes/account.passes'
 import { Route as BossHubsNewRouteImport } from './routes/boss.hubs.new'
 import { Route as ApiPublicSunoWebhookRouteImport } from './routes/api/public/suno-webhook'
 import { Route as ApiPublic0gOrchestratorRouteImport } from './routes/api/public/0g-orchestrator'
+import { Route as BossHubsIdEditRouteImport } from './routes/boss.hubs.$id.edit'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicHooksTelegramRemindersRouteImport } from './routes/api/public/hooks/telegram-reminders'
@@ -453,6 +454,11 @@ const ApiPublic0gOrchestratorRoute = ApiPublic0gOrchestratorRouteImport.update({
   path: '/api/public/0g-orchestrator',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BossHubsIdEditRoute = BossHubsIdEditRouteImport.update({
+  id: '/$id/edit',
+  path: '/$id/edit',
+  getParentRoute: () => BossHubsRoute,
+} as any)
 const ApiPublicTelegramWebhookRoute =
   ApiPublicTelegramWebhookRouteImport.update({
     id: '/api/public/telegram/webhook',
@@ -562,6 +568,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/telegram-reminders': typeof ApiPublicHooksTelegramRemindersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/boss/hubs/$id/edit': typeof BossHubsIdEditRoute
   '/api/public/fleet/webhook/$botId': typeof ApiPublicFleetWebhookBotIdRoute
 }
 export interface FileRoutesByTo {
@@ -641,6 +648,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/telegram-reminders': typeof ApiPublicHooksTelegramRemindersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/boss/hubs/$id/edit': typeof BossHubsIdEditRoute
   '/api/public/fleet/webhook/$botId': typeof ApiPublicFleetWebhookBotIdRoute
 }
 export interface FileRoutesById {
@@ -722,6 +730,7 @@ export interface FileRoutesById {
   '/api/public/hooks/telegram-reminders': typeof ApiPublicHooksTelegramRemindersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/boss/hubs/$id/edit': typeof BossHubsIdEditRoute
   '/api/public/fleet/webhook/$botId': typeof ApiPublicFleetWebhookBotIdRoute
 }
 export interface FileRouteTypes {
@@ -804,6 +813,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/telegram-reminders'
     | '/api/public/payments/webhook'
     | '/api/public/telegram/webhook'
+    | '/boss/hubs/$id/edit'
     | '/api/public/fleet/webhook/$botId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -883,6 +893,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/telegram-reminders'
     | '/api/public/payments/webhook'
     | '/api/public/telegram/webhook'
+    | '/boss/hubs/$id/edit'
     | '/api/public/fleet/webhook/$botId'
   id:
     | '__root__'
@@ -963,6 +974,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/telegram-reminders'
     | '/api/public/payments/webhook'
     | '/api/public/telegram/webhook'
+    | '/boss/hubs/$id/edit'
     | '/api/public/fleet/webhook/$botId'
   fileRoutesById: FileRoutesById
 }
@@ -1530,6 +1542,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublic0gOrchestratorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/boss/hubs/$id/edit': {
+      id: '/boss/hubs/$id/edit'
+      path: '/$id/edit'
+      fullPath: '/boss/hubs/$id/edit'
+      preLoaderRoute: typeof BossHubsIdEditRouteImport
+      parentRoute: typeof BossHubsRoute
+    }
     '/api/public/telegram/webhook': {
       id: '/api/public/telegram/webhook'
       path: '/api/public/telegram/webhook'
@@ -1570,10 +1589,12 @@ declare module '@tanstack/react-router' {
 
 interface BossHubsRouteChildren {
   BossHubsNewRoute: typeof BossHubsNewRoute
+  BossHubsIdEditRoute: typeof BossHubsIdEditRoute
 }
 
 const BossHubsRouteChildren: BossHubsRouteChildren = {
   BossHubsNewRoute: BossHubsNewRoute,
+  BossHubsIdEditRoute: BossHubsIdEditRoute,
 }
 
 const BossHubsRouteWithChildren = BossHubsRoute._addFileChildren(
