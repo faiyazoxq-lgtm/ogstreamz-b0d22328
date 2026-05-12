@@ -10,6 +10,7 @@ import { bundleAndBroadcastSignal, pollVeoBundle } from "@/lib/signal-mesh.funct
 import { LiveDataIcon } from "@/components/LiveDataIcon";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { OgWordmark } from "@/components/OgWordmark";
 
 type Portal = {
   id: string; slug: string; name: string; niche: string; vip: boolean;
@@ -444,7 +445,7 @@ function TradeTerminal() {
         <div className="flex items-center gap-2 rounded-full border px-4 py-2 backdrop-blur-md text-[10px] uppercase tracking-[0.3em]"
              style={{ borderColor: `${GOLD}55`, background: "rgba(10,12,15,0.85)", color: GOLD, boxShadow: `0 0 24px -10px ${GOLD}` }}>
           <ShieldAlert className="h-3.5 w-3.5" />
-          <span>Risk Disclosure · Not Financial Advice · Markets carry capital loss risk · 0G-PORTAL TradeHUB</span>
+          <span className="inline-flex items-center gap-1">Risk Disclosure · Not Financial Advice · Markets carry capital loss risk · <OgWordmark suffix="-PORTAL" /> TradeHUB</span>
         </div>
       </div>
 
