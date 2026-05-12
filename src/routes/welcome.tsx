@@ -10,13 +10,13 @@ import { SiteGuideSwearChat } from "@/components/SiteGuideSwearChat";
 export const Route = createFileRoute("/welcome")({
   head: () => ({
     meta: [
-      { title: "Welcome · Login or sign up — 0G-PORTAL" },
+      { title: "Welcome · Login / sign up — 0G-PORTAL" },
       {
         name: "description",
         content:
-          "Login or sign up to The HUB, your Dashboard, or the full 0G-PORTAL universe.",
+          "Login / sign up to The HUB, your Dashboard, or the full 0G-PORTAL universe.",
       },
-      { property: "og:title", content: "Welcome · Login or sign up — 0G-PORTAL" },
+      { property: "og:title", content: "Welcome · Login / sign up — 0G-PORTAL" },
       {
         property: "og:description",
         content: "Three doors. One Syndicate. Pick your entry point.",
@@ -140,7 +140,7 @@ function WelcomePage() {
               Welcome
             </p>
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Login or sign up
+              Login / sign up
             </h1>
             <p className="mx-auto max-w-xl text-sm text-muted-foreground sm:text-base">
               Pick the door that fits what you're here for. You can switch between them
@@ -215,7 +215,7 @@ function WelcomePage() {
             <div className="relative space-y-1">
               <h2 className="text-xl font-semibold tracking-tight">0G STREAMZ Profile</h2>
               <p className="text-sm text-muted-foreground">
-                Login or sign up on the streaming domain to manage your line, expiry and devices.
+                Login / sign up on the streaming domain to manage your line, expiry and devices.
               </p>
             </div>
             <div className="relative mt-auto flex items-center justify-between text-sm font-medium text-primary">
