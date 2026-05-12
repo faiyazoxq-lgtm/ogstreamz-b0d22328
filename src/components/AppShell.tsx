@@ -410,12 +410,20 @@ function MobileHeader({
       )}
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger
-          aria-label="Open menu"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-secondary/40 text-foreground hover:bg-secondary"
+          aria-label={open ? "Close navigation menu" : "Open navigation menu"}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          aria-controls="mobile-nav-drawer"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-secondary/40 text-foreground hover:bg-secondary outline-none focus-visible:ring-2 focus-visible:ring-gold/70 motion-safe:transition-colors"
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-5 w-5" aria-hidden />
         </SheetTrigger>
-        <SheetContent side="right" className="w-[92vw] max-w-sm bg-card p-0 flex flex-col">
+        <SheetContent
+          id="mobile-nav-drawer"
+          side="right"
+          aria-label="Navigation drawer"
+          className="w-[92vw] max-w-sm bg-card p-0 flex flex-col"
+        >
           <SheetHeader className="px-4 pt-4 pb-3 border-b border-border space-y-3">
             <SheetTitle className="sr-only">Navigation menu</SheetTitle>
             <div className="flex items-center gap-3">
