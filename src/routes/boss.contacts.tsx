@@ -277,7 +277,8 @@ function BossContactsPage() {
       </section>
 
       <section className="space-y-2">
-        <div className="relative">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             ref={searchInputRef}
@@ -322,6 +323,16 @@ function BossContactsPage() {
               <X className="h-4 w-4" />
             </button>
           )}
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={clearAndFocusSearch}
+            disabled={!query}
+          >
+            <X className="h-4 w-4 mr-1" /> Clear
+          </Button>
         </div>
         <div
           id="boss-contacts-search-status"
