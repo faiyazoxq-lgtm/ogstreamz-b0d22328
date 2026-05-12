@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Wand2, Loader2, Sparkles, RotateCcw, Lock, BadgeCheck, ShieldCheck } from "lucide-react";
+import { Wand2, Loader2, Sparkles, RotateCcw, Lock, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { spawnTool, type ToolAudience } from "@/lib/tools.functions";
-import { verifyMyStreamAccess } from "@/lib/stream-link.functions";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
 import { VipPaywallInline } from "@/components/VipPaywallInline";
@@ -131,8 +130,6 @@ function ToolPromptBuilder() {
         seed="precision instruments, glowing dials, terminal grid, neon blueprint"
         accent="gold"
       />
-
-      <VerifyStreamAccessCard signedIn={!!user} />
 
       <section className="rounded-3xl border border-gold/40 bg-gradient-to-br from-card to-background p-4 sm:p-6 shadow-[0_0_80px_oklch(0.82_0.16_88_/_0.1)] backdrop-blur-xl">
         <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Tool Name</label>
