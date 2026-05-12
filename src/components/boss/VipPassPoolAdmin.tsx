@@ -150,6 +150,7 @@ export function VipPassPoolAdmin() {
   const [csvRows, setCsvRows] = useState<CsvRow[]>([]);
   const [csvFileName, setCsvFileName] = useState<string>("");
   const [importProgress, setImportProgress] = useState<{ done: number; total: number } | null>(null);
+  const [skipDuplicates, setSkipDuplicates] = useState(true);
 
   const refresh = async () => {
     setLoading(true);
@@ -169,19 +170,20 @@ export function VipPassPoolAdmin() {
     try {
       const text = await file.text();
       const parsed = parseCsv(text);
-      const mapped = mapCsvRows(parsed);
+      const mapped = annotateDuplicates(mapCsvRows(parsed), rows);
       if (mapped.length === 0) return toast.error("No rows found in CSV");
       setCsvRows(mapped);
       setCsvFileName(file.name);
-      const valid = mapped.filter((r) => !r._error).length;
-      toast.success(`Parsed ${mapped.length} row${mapped.length === 1 ? "" : "s"} · ${valid} ready`);
+      const valid = mapped.filter((r) => !r._error && !r._duplicate).length;
+      const dupes = mapped.filter((r) => r._duplicate).length;
+      toast.success(`Parsed ${mapped.length} row${mapped.length === 1 ? "" : "s"} · ${valid} ready${dupes ? ` · ${dupes} duplicate${dupes === 1 ? "" : "s"}` : ""}`);
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to read CSV");
     }
   };
 
   const importCsv = async () => {
-    const valid = csvRows.filter((r) => !r._error);
+    const valid = csvRows.filter((r) => !r._error && (skipDuplicates ? !r._duplicate : true));
     if (valid.length === 0) return toast.error("No valid rows to import");
     setBusy(true);
     setImportProgress({ done: 0, total: valid.length });
