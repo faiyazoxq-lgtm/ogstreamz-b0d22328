@@ -131,6 +131,66 @@ function Index() {
         </div>
       </section>
 
+      {/* Top-level hubs nav — quick jump to every hub */}
+      <nav
+        aria-label="All hubs"
+        className="relative max-w-7xl mx-auto px-5 sm:px-8 -mt-8 mb-8"
+      >
+        <div className="rounded-2xl border border-white/10 bg-black/50 backdrop-blur-xl px-3 sm:px-4 py-3">
+          <div className="flex items-center justify-between gap-3 px-1 pb-2">
+            <p className="text-[10px] uppercase tracking-[0.35em] font-bold text-white/70">
+              All hubs
+            </p>
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.72_0.22_245/0.5)] bg-[oklch(0.72_0.22_245/0.15)] px-2.5 py-0.5 text-[10px] font-black tabular-nums"
+              style={{ color: "var(--neon-blue-bright)" }}
+            >
+              <Sparkles className="h-3 w-3" />
+              {portals.length + customHubs.length} live
+            </span>
+          </div>
+          <ul className="flex gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-none -mx-1 px-1">
+            {portals.map(({ to, title, Icon }) => (
+              <li key={to} className="snap-start shrink-0">
+                <Link
+                  to={to}
+                  className="group inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2 text-[11px] uppercase tracking-[0.18em] font-bold text-white/85 hover:border-[oklch(0.72_0.22_245/0.7)] hover:bg-[oklch(0.72_0.22_245/0.12)] hover:text-white transition-colors"
+                  activeProps={{ className: "border-[oklch(0.72_0.22_245/0.9)] bg-[oklch(0.72_0.22_245/0.18)] text-white" }}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {title}
+                </Link>
+              </li>
+            ))}
+            {customHubs.map((h) => {
+              const CustomIcon = (h.icon && ICONS[h.icon]) || Sparkles;
+              const href: string = h.href || `/hub/${h.id}`;
+              return (
+                <li key={h.id} className="snap-start shrink-0">
+                  <Link
+                    to={href as never}
+                    className="group inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2 text-[11px] uppercase tracking-[0.18em] font-bold text-white/85 hover:border-[oklch(0.72_0.22_245/0.7)] hover:bg-[oklch(0.72_0.22_245/0.12)] hover:text-white transition-colors"
+                  >
+                    <CustomIcon className="h-3.5 w-3.5" />
+                    {h.title}
+                  </Link>
+                </li>
+              );
+            })}
+            <li className="snap-start shrink-0">
+              <Link
+                to="/portals"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/[0.06] px-3.5 py-2 text-[11px] uppercase tracking-[0.18em] font-black text-white hover:bg-white hover:text-black transition-colors"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                See all
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            </li>
+          </ul>
+        </div>
+      </nav>
+
       {/* Best bulk-buy Coins deal — shown above the VIP pass on welcome page */}
       <CoinsBulkPromoCard />
 
