@@ -13,6 +13,7 @@ import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { TVStaticLogo } from "@/components/TVStaticLogo";
 import { PortalMascot } from "@/components/PortalMascot";
+import { OgWordmark } from "@/components/OgWordmark";
 import { TradingViewChart, TradingViewTickerTape } from "@/components/TradingViewWidgets";
 import { LiveDataIcon } from "@/components/LiveDataIcon";
 import { SwearChatPanel } from "@/components/SwearChatPanel";
@@ -97,7 +98,7 @@ export const Route = createFileRoute("/p/$slug")({
       <div className="tv-static-overlay opacity-40" />
       <div className="scan-overlay" />
       <div className="relative z-10 max-w-xl w-full text-center electric-border rounded-2xl p-10 bg-black/60 backdrop-blur-sm">
-        <div className="text-[10px] tracking-[0.5em] text-cyan-300/70 mb-3">// 0G-PORTAL DIAGNOSTIC</div>
+        <div className="text-[10px] tracking-[0.5em] text-cyan-300/70 mb-3 inline-flex items-center gap-1">// <OgWordmark suffix="-PORTAL" /> DIAGNOSTIC</div>
         <h1 className="font-mono text-5xl md:text-6xl font-black tracking-tight text-cyan-200 animate-glitch" style={{ textShadow: "0 0 24px rgba(120,200,255,0.55)" }}>
           404
         </h1>
@@ -632,7 +633,7 @@ function PortalPage() {
 
       <footer className="relative border-t py-6 text-center text-xs uppercase tracking-[0.4em] opacity-60" style={{ borderColor: `${T.accent}33` }}>
         <Link to="/" className="hover:opacity-100 inline-flex items-center gap-2">
-          <span style={{ color: T.accent }}>▣</span> Powered by 0G-PORTAL
+          <span style={{ color: T.accent }}>▣</span> Powered by <OgWordmark suffix="-PORTAL" />
         </Link>
       </footer>
 
@@ -801,7 +802,7 @@ function NewsHubView({ portal }: { portal: Portal }) {
           <motion.div animate={{ scale: [1, 1.25, 1], opacity: [0.6, 1, 0.6] }} transition={{ duration: 1.6, repeat: Infinity }} style={{ filter: `drop-shadow(0 0 12px ${accent})` }}>
             <Satellite className="h-4 w-4" style={{ color: accent }} />
           </motion.div>
-          <span className="text-[10px] uppercase tracking-[0.4em]" style={{ color: accent }}>0G-PORTAL · SCOUTING</span>
+          <span className="text-[10px] uppercase tracking-[0.4em] inline-flex items-center gap-1" style={{ color: accent }}><OgWordmark suffix="-PORTAL" /> · SCOUTING</span>
           <PortalMascot kind="trade" accent={accent} secondary={secondary} className="h-9 w-9" />
         </div>
       </div>
@@ -985,7 +986,7 @@ function NewsHubView({ portal }: { portal: Portal }) {
 
       <footer className="relative z-10 border-t mt-12 py-6 px-5 sm:px-8 text-center" style={{ borderColor: `${accent}33` }}>
         <Link to="/" className="hover:opacity-100 inline-flex items-center gap-2 text-xs uppercase tracking-[0.4em] opacity-70">
-          <span style={{ color: accent }}>▣</span> Powered by 0G-PORTAL · Satellite Recon
+          <span style={{ color: accent }}>▣</span> Powered by <OgWordmark suffix="-PORTAL" /> · Satellite Recon
         </Link>
         <p className="mt-4 max-w-3xl mx-auto text-[10px] uppercase tracking-[0.25em] opacity-50 leading-relaxed">
           0G-TradeHUB is a sentiment analysis tool. Close to financial advice, but legally NOT financial advice. Your capital is at risk.

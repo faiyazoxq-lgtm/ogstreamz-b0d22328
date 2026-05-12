@@ -89,8 +89,8 @@ export function SiteFooter() {
           })}
         </div>
         <div className="mt-10 flex flex-col-reverse gap-4 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
-            © {year} 0G-PORTAL · Luxury Street Hub
+          <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground inline-flex items-center gap-1">
+            © {year} <OgWordmark suffix="-PORTAL" /> · Luxury Street Hub
           </p>
           <Link
             to="/"

@@ -167,7 +167,7 @@ function Index() {
                   if (c < 5) return `Only ${c} credit${c === 1 ? "" : "s"} left in the tank — ${portalsLabel} waiting, make 'em count.`;
                   return `You've got ${c} credits loaded and all ${portalsLabel} are warm. Pick a hub or hit the dashboard.`;
                 })()
-              : `0G-PORTAL fuses ${portalsLabel} — music, jokes, trade signals, outreach, battles, tools and more — into one streetwise hub. Free sign-up — keep your credits, lyrics, scans and chats forever. No card, no nonsense.`}
+              : (<><OgWordmark suffix="-PORTAL" /> fuses {portalsLabel} — music, jokes, trade signals, outreach, battles, tools and more — into one streetwise hub. Free sign-up — keep your credits, lyrics, scans and chats forever. No card, no nonsense.</>)}
           </p>
 
           {user && (

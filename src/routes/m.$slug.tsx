@@ -11,6 +11,7 @@ import { listPortalTracks, getTrackOwnership } from "@/lib/tracks.functions";
 import { spawnMusic } from "@/lib/suno.functions";
 import { TrackPlayer } from "@/components/TrackPlayer";
 import { SwearChatPanel } from "@/components/SwearChatPanel";
+import { OgWordmark } from "@/components/OgWordmark";
 
 type MusicPortal = {
   id: string;
@@ -59,7 +60,7 @@ export const Route = createFileRoute("/m/$slug")({
     <main className="min-h-screen flex items-center justify-center p-8 text-center">
       <div>
         <h1 className="text-3xl font-bold">Music portal not found</h1>
-        <Link to="/" className="text-sm underline mt-3 inline-block">Back to 0G-PORTAL</Link>
+        <Link to="/" className="text-sm underline mt-3 inline-flex items-center gap-1">Back to <OgWordmark suffix="-PORTAL" /></Link>
       </div>
     </main>
   ),
@@ -466,7 +467,7 @@ function MusicPortalPage() {
 
         <p className="mt-3 text-center text-[10px] uppercase tracking-[0.35em] opacity-60 flex items-center justify-center gap-2">
           <BadgeCheck className="h-3 w-3" style={{ color: theme.accent }} />
-          Licensed by 0G-PORTAL · {owned.size > 0 ? "HQ Master fulfillment unlocked" : "Preview & Purchase to unlock HQ"}
+          Licensed by <OgWordmark suffix="-PORTAL" /> · {owned.size > 0 ? "HQ Master fulfillment unlocked" : "Preview & Purchase to unlock HQ"}
         </p>
 
         {submitted && (
@@ -499,7 +500,7 @@ function MusicPortalPage() {
 
       <footer className="relative border-t py-6 text-center text-xs uppercase tracking-[0.4em] opacity-60" style={{ borderColor: `${theme.accent}33` }}>
         <Link to="/" className="hover:opacity-100">
-          <span style={{ color: theme.accent }}>▣</span> Powered by 0G-PORTAL
+          <span style={{ color: theme.accent }}>▣</span> Powered by <OgWordmark suffix="-PORTAL" />
         </Link>
       </footer>
     </div>

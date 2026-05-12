@@ -10,6 +10,7 @@ import { PreparationProgress } from "@/components/PreparationProgress";
 import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TrackUnlockCheckout } from "@/components/TrackUnlockCheckout";
+import { OgWordmark } from "@/components/OgWordmark";
 
 const PREVIEW_SECS = 60;
 
@@ -128,7 +129,7 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, isV
         className="absolute top-2 right-2 text-[9px] uppercase tracking-[0.3em] flex items-center gap-1 px-2 py-0.5 rounded-full border"
         style={{ color: accent, borderColor: `${accent}66`, background: "rgba(0,0,0,0.4)" }}
       >
-        <BadgeCheck className="h-3 w-3" /> Licensed by 0G-PORTAL
+        <BadgeCheck className="h-3 w-3" /> Licensed by <OgWordmark suffix="-PORTAL" />
       </div>
 
       <h3 className="text-lg font-bold pr-32 mb-3" style={{ color: "#fff" }}>{title}</h3>

@@ -18,6 +18,7 @@ import { VaultRevealCard } from "@/components/VaultRevealCard";
 import { VipPassRevealCard } from "@/components/VipPassRevealCard";
 import { VipNotificationsInbox } from "@/components/VipNotificationsInbox";
 import { PassesPanel } from "@/components/PassesPanel";
+import { OgWordmark } from "@/components/OgWordmark";
 import { LiveCostEstimator } from "@/components/LiveCostEstimator";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PlanChip, StatusBadge, formatSubscriptionTerm } from "@/components/SubscriptionBadges";
@@ -183,7 +184,7 @@ function DashboardPage() {
       </section>
 
       <footer className="mt-16 pt-8 border-t border-border text-center text-[10px] uppercase tracking-[0.4em] text-muted-foreground">
-        0G-PORTAL · Syndicate Member · Frequency Unlocked
+        <span className="inline-flex items-center gap-2"><OgWordmark suffix="-PORTAL" /> · Syndicate Member · Frequency Unlocked</span>
       </footer>
     </main>
   );
