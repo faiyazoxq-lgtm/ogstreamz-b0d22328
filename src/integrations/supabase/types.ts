@@ -1997,6 +1997,42 @@ export type Database = {
         }
         Relationships: []
       }
+      realtime_denial_log: {
+        Row: {
+          created_at: string
+          id: string
+          ip: string | null
+          metadata: Json
+          reason: string | null
+          status: string
+          topic: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip?: string | null
+          metadata?: Json
+          reason?: string | null
+          status: string
+          topic: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip?: string | null
+          metadata?: Json
+          reason?: string | null
+          status?: string
+          topic?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       redeem_codes: {
         Row: {
           code: string
