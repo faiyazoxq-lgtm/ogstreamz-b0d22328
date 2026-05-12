@@ -116,7 +116,8 @@ export function VerifyStreamAccessCard({ signedIn }: { signedIn: boolean }) {
 
   return (
     <section className="rounded-2xl border border-border bg-card/60 p-4 sm:p-5 backdrop-blur-md">
-      <div className="flex items-start gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+        <div className="flex items-start gap-3 flex-1 min-w-0">
         {busy ? (
           <Loader2 className="h-5 w-5 text-primary mt-0.5 shrink-0 animate-spin" aria-hidden />
         ) : result?.ok ? (
@@ -128,7 +129,7 @@ export function VerifyStreamAccessCard({ signedIn }: { signedIn: boolean }) {
         )}
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="text-sm font-bold uppercase tracking-[0.25em]">
+            <div className="text-sm font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em]">
               Verify Stream Access
             </div>
             {checkedAt && !busy && (
@@ -204,12 +205,13 @@ export function VerifyStreamAccessCard({ signedIn }: { signedIn: boolean }) {
             </div>
           )}
         </div>
+        </div>
         <Button
           onClick={onVerify}
           disabled={busy}
           size="sm"
           variant="outline"
-          className="shrink-0"
+          className="shrink-0 w-full sm:w-auto sm:self-start"
         >
           {busy ? (
             <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Checking…</>
