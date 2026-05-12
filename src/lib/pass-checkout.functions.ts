@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { validateReturnUrl } from "@/lib/return-url";
 
 let _admin: any = null;
 function admin() {
@@ -26,9 +27,8 @@ export const createPassCheckoutSession = createServerFn({ method: "POST" })
     environment: StripeEnv;
   }) => {
     if (!UUID.test(data.productId)) throw new Error("Invalid productId");
-    if (!data.returnUrl?.startsWith("http")) throw new Error("Invalid returnUrl");
     if (data.environment !== "sandbox" && data.environment !== "live") throw new Error("Invalid env");
-    return data;
+    return { ...data, returnUrl: validateReturnUrl(data.returnUrl) };
   })
   .handler(async ({ data, context }) => {
     // Always bind the session to the authenticated user; ignore client userId
