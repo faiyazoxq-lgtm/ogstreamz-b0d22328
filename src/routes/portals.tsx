@@ -434,8 +434,22 @@ function PortalsHub() {
       {!items ? (
         <div className="text-sm text-muted-foreground">Loading portals…</div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card p-10 text-center">
-          <p className="text-sm text-muted-foreground">No portals match this filter yet. Spawn one from a hub.</p>
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-xl p-5 sm:p-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              No portals match {q ? `“${q}”` : "this filter"} in <span className="font-bold text-foreground">{scope === "boss" ? "Boss-published" : scope === "mine" ? "your portals" : "any scope"}</span> yet.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(filter === "all" ? HUB_ORDER : [filter as Item["kind"]]).slice(0, 4).map((k) => (
+              <OgBotEmpty
+                key={k}
+                kind={k}
+                side={scope === "boss" ? "boss" : scope === "mine" ? "mine" : "any"}
+                compact
+              />
+            ))}
+          </div>
         </div>
       ) : (
         <div className="space-y-10">
@@ -447,6 +461,12 @@ function PortalsHub() {
             const visible = paginated ? (visibleCounts[hubKind] ?? PAGE_SIZE) : hubItems.length;
             const shown = paginated ? hubItems.slice(0, visible) : hubItems;
             const remaining = hubItems.length - shown.length;
+            // When scope === "all", detect if either Boss or Mine subgroup is
+            // empty within this hub so we can show a friendly OG BoT nudge.
+            const hasBoss = hubItems.some((i) => i.byBoss);
+            const hasMine = hubItems.some((i) => !i.byBoss);
+            const missingSide: "boss" | "mine" | null =
+              scope === "all" ? (!hasBoss ? "boss" : !hasMine ? "mine" : null) : null;
             return (
               <section key={hubKind} aria-labelledby={`hub-${hubKind}`}>
                 <header className="mb-3 flex items-center gap-2">
