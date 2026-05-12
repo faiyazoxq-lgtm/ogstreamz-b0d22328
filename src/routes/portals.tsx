@@ -521,24 +521,28 @@ function PortalsHub() {
                 className="group relative flex h-full flex-col gap-2.5 sm:gap-4 rounded-2xl border border-white/10 bg-black/40 p-3.5 sm:p-5 backdrop-blur-xl transition hover:-translate-y-0.5 min-h-[230px] sm:min-h-[280px]"
                 style={{ boxShadow: `0 0 32px -24px ${meta.accent}` }}
               >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.3em]" style={{ color: meta.accent }}>
+                <div className="flex items-start justify-between gap-2 min-w-0">
+                  <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.3em] min-w-0 truncate" style={{ color: meta.accent }}>
                     <meta.Icon className="h-3.5 w-3.5" /> {meta.label}
                   </div>
-                  <div className="inline-flex items-center gap-1.5">
+                  {/* Badge stack: wraps on narrow cards so Boss/Mine never
+                      collides with VIP. Right-aligned, fixed gap, identical
+                      pill heights keep the row visually aligned across all
+                      cards regardless of which badges are present. */}
+                  <div className="flex flex-wrap justify-end items-center gap-1 shrink-0 max-w-[60%]">
                     {i.byBoss ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-bold bg-[oklch(0.72_0.22_245/0.15)] border border-[oklch(0.72_0.22_245/0.5)] text-[oklch(0.78_0.18_245)]">
+                      <span className="inline-flex items-center h-5 px-2 rounded-full text-[10px] leading-none uppercase tracking-widest font-bold bg-[oklch(0.72_0.22_245/0.15)] border border-[oklch(0.72_0.22_245/0.5)] text-[oklch(0.78_0.18_245)]">
                         Boss
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-bold bg-white/5 border border-white/20 text-white/80">
+                      <span className="inline-flex items-center h-5 px-2 rounded-full text-[10px] leading-none uppercase tracking-widest font-bold bg-white/5 border border-white/20 text-white/80">
                         Mine
                       </span>
                     )}
                     {i.vip && (
-                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-bold bg-gold/15 border border-gold/50 text-gold">
-                      <Crown className="h-3 w-3" /> VIP
-                    </div>
+                      <span className="inline-flex items-center gap-1 h-5 px-2 rounded-full text-[10px] leading-none uppercase tracking-widest font-bold bg-gold/15 border border-gold/50 text-gold">
+                        <Crown className="h-3 w-3" /> VIP
+                      </span>
                     )}
                   </div>
                 </div>
