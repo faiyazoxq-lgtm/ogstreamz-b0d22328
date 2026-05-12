@@ -226,6 +226,13 @@ export function VipPassPoolAdmin() {
   };
   useEffect(() => { void refresh(); /* eslint-disable-next-line */ }, []);
 
+  // Re-annotate duplicates whenever the existing pool changes (e.g. after refresh).
+  useEffect(() => {
+    if (csvRows.length === 0) return;
+    setCsvRows((prev) => annotateDuplicates(prev, rows));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows]);
+
   const submit = async () => {
     const hasCode = !!draft.code.trim();
     const hasCred = !!draft.username.trim() && !!draft.password.trim();
@@ -438,13 +445,16 @@ export function VipPassPoolAdmin() {
         </div>
 
         {csvRows.length > 0 && (() => {
-          const valid = csvRows.filter((r) => !r._error).length;
-          const invalid = csvRows.length - valid;
+          const dupes = csvRows.filter((r) => r._duplicate && !r._error).length;
+          const invalid = csvRows.filter((r) => r._error).length;
+          const ready = csvRows.filter((r) => !r._error && !r._duplicate).length;
+          const importable = skipDuplicates ? ready : ready + dupes;
           return (
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-3 flex-wrap text-xs">
                 <p className="text-muted-foreground">
-                  <strong className="text-emerald-300">{valid}</strong> ready
+                  <strong className="text-emerald-300">{ready}</strong> ready
+                  {dupes > 0 && <> · <strong className="text-amber-300">{dupes}</strong> duplicate{dupes === 1 ? "" : "s"}</>}
                   {invalid > 0 && <> · <strong className="text-rose-300">{invalid}</strong> with errors</>}
                   {" "}· total {csvRows.length}
                 </p>
@@ -454,6 +464,14 @@ export function VipPassPoolAdmin() {
                   </p>
                 )}
               </div>
+              {dupes > 0 && (
+                <label className="flex items-center justify-between gap-2 rounded-md border border-amber-400/30 bg-amber-500/5 px-3 py-2 text-xs">
+                  <span className="text-amber-200">
+                    Skip {dupes} duplicate{dupes === 1 ? "" : "s"} (rows that match an existing pass or repeat earlier in the file)
+                  </span>
+                  <Switch checked={skipDuplicates} onCheckedChange={setSkipDuplicates} />
+                </label>
+              )}
               <div className="max-h-64 overflow-auto rounded-md border border-border bg-background/40">
                 <table className="w-full text-xs min-w-[640px]">
                   <thead className="sticky top-0 bg-card/95 backdrop-blur">
@@ -469,7 +487,7 @@ export function VipPassPoolAdmin() {
                   </thead>
                   <tbody>
                     {csvRows.slice(0, 200).map((r, i) => (
-                      <tr key={i} className={`border-b border-border/40 ${r._error ? "bg-rose-500/5" : ""}`}>
+                      <tr key={i} className={`border-b border-border/40 ${r._error ? "bg-rose-500/5" : r._duplicate ? "bg-amber-500/5" : ""}`}>
                         <td className="px-2 py-1 text-muted-foreground tabular-nums">{r._line}</td>
                         <td className="px-2 py-1 text-white">{r.label || <span className="text-muted-foreground">—</span>}</td>
                         <td className="px-2 py-1 font-mono text-cyan-200">{r.username || <span className="text-muted-foreground">—</span>}</td>
@@ -479,6 +497,8 @@ export function VipPassPoolAdmin() {
                         <td className="px-2 py-1">
                           {r._error
                             ? <span className="text-rose-300">{r._error}</span>
+                            : r._duplicate
+                            ? <span className="text-amber-300">{r._duplicate}</span>
                             : <span className="text-emerald-300">Ready</span>}
                         </td>
                       </tr>
@@ -502,12 +522,12 @@ export function VipPassPoolAdmin() {
                 <Button
                   size="sm"
                   onClick={importCsv}
-                  disabled={busy || valid === 0}
+                  disabled={busy || importable === 0}
                   className="bg-cyan-400 hover:bg-cyan-300 text-black font-bold"
                 >
                   {busy
                     ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Importing…</>
-                    : <><Plus className="h-4 w-4 mr-1" /> Import {valid} pass{valid === 1 ? "" : "es"}</>}
+                    : <><Plus className="h-4 w-4 mr-1" /> Import {importable} pass{importable === 1 ? "" : "es"}</>}
                 </Button>
               </div>
             </div>
