@@ -87,6 +87,7 @@ const GROUPS: RailGroup[] = [
       { to: "/boss/function-audit", label: "Function Audit", Icon: ScrollText, desc: "Exposed DB functions" },
       { to: "/boss/function-grants", label: "Function Grants", Icon: ShieldOff, desc: "Revoke EXECUTE w/ restore log" },
       { to: "/boss/function-ideas", label: "Function Ideas", Icon: Lightbulb, desc: "Plug-in & feature backlog" },
+      { to: "/boss/realtime-denials", label: "Realtime Denials", Icon: ShieldAlert, desc: "Audit denied subscriptions" },
       { to: "/boss/settings", label: "Settings", Icon: Settings, desc: "Tunables" },
     ],
   },
