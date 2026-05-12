@@ -270,7 +270,10 @@ function PortalPage() {
         if (!r.ok) {
           if (r.error === "insufficient") {
             toast.error(`Need ${useCost} 🪙 to use this portal — top up to continue`);
-            navigate({ to: "/wallet" });
+            navigate({
+              to: "/wallet",
+              search: { topup: 1, reason: "insufficient", need: useCost, from: portal.slug } as never,
+            });
           } else {
             toast.error(r.error || "Could not charge credits");
           }
