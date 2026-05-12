@@ -350,10 +350,30 @@ export const spawnNewsPortal = createServerFn({ method: "POST" })
   });
 
 // ───── Public: refresh on every visit ─────
+// In-memory per-user rate limiter (best-effort; resets on cold start).
+// Limits an authenticated user to N refreshes per WINDOW across ALL slugs
+// to prevent enumerating every news slug to drain paid AI / search calls.
+const REFRESH_WINDOW_MS = 60_000;
+const REFRESH_MAX_PER_WINDOW = 6;
+const _refreshHits = new Map<string, number[]>();
+function _checkRefreshRate(userId: string) {
+  const now = Date.now();
+  const arr = (_refreshHits.get(userId) || []).filter((t) => now - t < REFRESH_WINDOW_MS);
+  if (arr.length >= REFRESH_MAX_PER_WINDOW) {
+    const err: any = new Error("Too many news refreshes — slow down a moment.");
+    err.code = "rate_limited";
+    throw err;
+  }
+  arr.push(now);
+  _refreshHits.set(userId, arr);
+}
+
 export const refreshNewsScout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { slug: string }) => ({ slug: String(data.slug || "").trim().slice(0, 80) }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { userId } = context as { userId: string };
+    _checkRefreshRate(userId);
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
     if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) throw new Error("Supabase env missing");
