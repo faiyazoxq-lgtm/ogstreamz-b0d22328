@@ -909,28 +909,36 @@ html[data-mood="og"] {
 }
 
 @layer utilities {
-  /* Premium badge show/hide motion.
-     - Shared tokens so every card on the page animates with identical
-       rhythm — no per-card drift, no jittery cascade.
-     - Asymmetric timing: reveals are slightly slower with a soft overshoot
-       so they feel inviting; hides are faster + sharper so the card snaps
-       back to a calm state without lingering.
-     - Layout properties (max-width / padding / margin) share one curve so
-       neighbouring badges reflow as a single coordinated motion. */
+  /* ──────────────────────────────────────────────────────────────────
+     Portal motion tokens — single source of truth.
+     Every animated portal element (badges, cards, buttons, reveals)
+     pulls from these vars so future tweaks stay consistent. Adjust
+     here, the whole page re-tunes together.
+     - *-ease-out / *-dur-in : reveals, hovers, expands (gentle settle)
+     - *-ease-in  / *-dur-out: hides, presses, exits     (decisive)
+     - *-dur-fast            : color/opacity micro-flicks
+     ────────────────────────────────────────────────────────────────── */
   :root {
-    --badge-ease-out:    cubic-bezier(0.16, 1, 0.3, 1);    /* expo-out, gentle settle */
-    --badge-ease-in:     cubic-bezier(0.7, 0, 0.84, 0);    /* expo-in, decisive exit */
-    --badge-dur-in:      360ms;
-    --badge-dur-out:     220ms;
+    --portal-ease-out: cubic-bezier(0.16, 1, 0.3, 1);   /* expo-out */
+    --portal-ease-in:  cubic-bezier(0.7, 0, 0.84, 0);   /* expo-in  */
+    --portal-dur-in:   360ms;
+    --portal-dur-out:  220ms;
+    --portal-dur-fast: 160ms;
+
+    /* Back-compat aliases — older selectors reference --badge-*. */
+    --badge-ease-out: var(--portal-ease-out);
+    --badge-ease-in:  var(--portal-ease-in);
+    --badge-dur-in:   var(--portal-dur-in);
+    --badge-dur-out:  var(--portal-dur-out);
   }
   /* Portal card press/hover motion — shares the badge motion tokens so
      every interactive element on the page settles with the same rhythm
      (expo-out reveal, faster expo-in press). */
   .portal-card-motion {
     transition:
-      transform   var(--badge-dur-in)  var(--badge-ease-out),
-      box-shadow  var(--badge-dur-in)  var(--badge-ease-out),
-      border-color var(--badge-dur-in) var(--badge-ease-out);
+      transform    var(--portal-dur-in) var(--portal-ease-out),
+      box-shadow   var(--portal-dur-in) var(--portal-ease-out),
+      border-color var(--portal-dur-in) var(--portal-ease-out);
     will-change: transform;
   }
   .portal-card-motion:hover {
@@ -939,24 +947,45 @@ html[data-mood="og"] {
   .portal-card-motion:active {
     transform: translateY(0) scale(0.995);
     transition:
-      transform   var(--badge-dur-out) var(--badge-ease-in),
-      box-shadow  var(--badge-dur-out) var(--badge-ease-in);
+      transform  var(--portal-dur-out) var(--portal-ease-in),
+      box-shadow var(--portal-dur-out) var(--portal-ease-in);
   }
   .portal-card-motion .portal-card-title {
     transition:
-      text-shadow var(--badge-dur-in) var(--badge-ease-out),
-      filter      var(--badge-dur-in) var(--badge-ease-out);
+      text-shadow var(--portal-dur-in) var(--portal-ease-out),
+      filter      var(--portal-dur-in) var(--portal-ease-out);
   }
   .portal-card-motion:hover .portal-card-title {
     filter: brightness(1.1);
+  }
+  /* Shared button motion — pills, toggles, action buttons. Same curve
+     family as cards/badges so nothing on the page feels off-tempo. */
+  .portal-button-motion {
+    transition:
+      background-color var(--portal-dur-fast) var(--portal-ease-out),
+      color            var(--portal-dur-fast) var(--portal-ease-out),
+      border-color     var(--portal-dur-fast) var(--portal-ease-out),
+      transform        var(--portal-dur-out)  var(--portal-ease-out),
+      filter           var(--portal-dur-fast) var(--portal-ease-out);
+  }
+  .portal-button-motion:hover  { filter: brightness(1.08); }
+  .portal-button-motion:active {
+    transform: scale(0.97);
+    transition:
+      transform var(--portal-dur-out)  var(--portal-ease-in),
+      filter    var(--portal-dur-fast) var(--portal-ease-in);
   }
   @media (prefers-reduced-motion: reduce) {
     .portal-card-motion,
     .portal-card-motion:hover,
     .portal-card-motion:active,
-    .portal-card-motion .portal-card-title {
+    .portal-card-motion .portal-card-title,
+    .portal-button-motion,
+    .portal-button-motion:hover,
+    .portal-button-motion:active {
       transition: none !important;
       transform: none !important;
+      filter: none !important;
     }
   }
   .badge-toggle {
