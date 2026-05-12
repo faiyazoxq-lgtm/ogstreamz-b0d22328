@@ -897,48 +897,63 @@ export type Database = {
           create_portal_cost: number
           created_at: string
           created_by: string | null
+          description: string
           href: string
           icon: string
           id: string
           paid_services: Json
           published: boolean
+          sections: Json
+          slug: string | null
           sort_order: number
           swear_chat_enabled: boolean
           tagline: string
+          template: string
           title: string
           updated_at: string
+          visibility: string
         }
         Insert: {
           accent?: string
           create_portal_cost?: number
           created_at?: string
           created_by?: string | null
+          description?: string
           href: string
           icon?: string
           id?: string
           paid_services?: Json
           published?: boolean
+          sections?: Json
+          slug?: string | null
           sort_order?: number
           swear_chat_enabled?: boolean
           tagline?: string
+          template?: string
           title: string
           updated_at?: string
+          visibility?: string
         }
         Update: {
           accent?: string
           create_portal_cost?: number
           created_at?: string
           created_by?: string | null
+          description?: string
           href?: string
           icon?: string
           id?: string
           paid_services?: Json
           published?: boolean
+          sections?: Json
+          slug?: string | null
           sort_order?: number
           swear_chat_enabled?: boolean
           tagline?: string
+          template?: string
           title?: string
           updated_at?: string
+          visibility?: string
         }
         Relationships: []
       }
