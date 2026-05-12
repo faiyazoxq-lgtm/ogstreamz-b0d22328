@@ -1,12 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowUpRight, ShoppingBag, Sparkles } from "lucide-react";
+import { ArrowUpRight, Loader2, ShoppingBag, Sparkles, Sparkles as SparklesIcon, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PortalHeader } from "@/components/PortalHeader";
 import type { HubSection } from "@/lib/hub-sections";
 import { useDownloadCharge } from "@/hooks/use-download-charge";
 import { peekPortalDownload } from "@/lib/portal-downloads.functions";
+import { cloneHubPortalForMe, type CloneResult } from "@/lib/portal-clone.functions";
 import { CoinPurchaseModal, type CoinPurchaseStatus } from "@/components/CoinPurchaseModal";
 
 /**
@@ -201,16 +202,19 @@ function PortalTile({
 }) {
   const { charge } = useDownloadCharge();
   const peek = useServerFn(peekPortalDownload);
+  const cloneFn = useServerFn(cloneHubPortalForMe);
   const COST = 2;
   const [open, setOpen] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
   const [status, setStatus] = useState<CoinPurchaseStatus>({ kind: "idle" });
+  const [clone, setClone] = useState<CloneResult | { kind: "pending" } | null>(null);
 
   const openModal = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setStatus({ kind: "idle" });
     setBalance(null);
+    setClone(null);
     setOpen(true);
     try {
       const p = await peek({ data: { portalId: portal.id, cost: COST } });
@@ -231,6 +235,15 @@ function PortalTile({
           ? "Unlocked with VIP free pass."
           : `Unlocked. ${out.balance.toLocaleString()} 🪙 remaining.`,
       });
+      // VIP perk: mint a personalised clone seeded from the buyer's bio.
+      // Non-VIPs get a `not_vip` outcome and we silently skip the banner.
+      setClone({ kind: "pending" } as any);
+      try {
+        const res = await cloneFn({ data: { portalId: portal.id } });
+        setClone(res);
+      } catch (err: any) {
+        setClone({ ok: false, reason: "unknown", message: String(err?.message || "Clone failed") });
+      }
     } else {
       setStatus({
         kind: "err",
@@ -276,7 +289,75 @@ function PortalTile({
         accent={accent}
         status={status}
         onConfirm={onConfirm}
-      />
+      >
+        {clone && status.kind === "ok" && <CloneBanner clone={clone} accent={accent} />}
+      </CoinPurchaseModal>
     </div>
+  );
+}
+
+function CloneBanner({
+  clone, accent,
+}: {
+  clone: CloneResult | { kind: "pending" };
+  accent: string;
+}) {
+  if ("kind" in clone && (clone as any).kind === "pending") {
+    return (
+      <p className="flex items-center gap-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-xs text-muted-foreground">
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        Crafting your VIP clone…
+      </p>
+    );
+  }
+  const c = clone as CloneResult;
+  if (!("ok" in c)) return null;
+  if (c.ok) {
+    return (
+      <div
+        className="rounded-lg border px-3 py-3 text-xs"
+        style={{ borderColor: `${accent}66`, background: `${accent}10`, color: accent }}
+      >
+        <p className="flex items-center gap-2 font-bold uppercase tracking-[0.2em]">
+          <SparklesIcon className="h-3.5 w-3.5" /> VIP perk unlocked
+        </p>
+        <p className="mt-1 text-foreground/90">
+          We minted <strong>{c.name}</strong> — a clone tuned to your bio. Ready when you are.
+        </p>
+        <Link
+          to={`${c.prefix}${c.slug}` as any}
+          className="portal-button-motion portal-button-motion--lg mt-3 w-full inline-flex items-center justify-center gap-2 font-black uppercase tracking-[0.2em] text-[11px] text-black border-2"
+          style={{ background: accent, borderColor: accent }}
+        >
+          <SparklesIcon className="h-3.5 w-3.5" /> Open my clone
+        </Link>
+      </div>
+    );
+  }
+  if (c.reason === "no_bio") {
+    return (
+      <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-3 text-xs text-amber-100">
+        <p className="flex items-center gap-2 font-bold uppercase tracking-[0.2em]">
+          <UserPlus className="h-3.5 w-3.5" /> Add a bio to claim your clone
+        </p>
+        <p className="mt-1 text-amber-100/90">
+          VIPs get a personalised clone of every portal they buy — but we need a bio
+          to tune it to you. Add one to your profile card.
+        </p>
+        <Link
+          to="/profile"
+          className="portal-button-motion portal-button-motion--lg mt-3 w-full inline-flex items-center justify-center gap-2 font-black uppercase tracking-[0.2em] text-[11px] text-black border-2"
+          style={{ background: "#fbbf24", borderColor: "#fbbf24" }}
+        >
+          <UserPlus className="h-3.5 w-3.5" /> Add bio in profile
+        </Link>
+      </div>
+    );
+  }
+  if (c.reason === "not_vip") return null;
+  return (
+    <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
+      Couldn't create your VIP clone: {c.message ?? c.reason}
+    </p>
   );
 }
