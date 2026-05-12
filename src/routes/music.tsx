@@ -12,7 +12,6 @@ import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { MusicHubBalance } from "@/components/MusicHubBalance";
 import { FeaturedDropCard } from "@/components/FeaturedDropCard";
 import { VipPaywallInline } from "@/components/VipPaywallInline";
-import { ZeroGBadge } from "@/components/ZeroGBadge";
 import { PortalHeader, PortalStyleLine, mergeStyle } from "@/components/PortalHeader";
 
 const MUSIC_STYLE = "Cinematic neon street-rap with gritty bass and OG energy.";
