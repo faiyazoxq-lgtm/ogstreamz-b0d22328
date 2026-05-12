@@ -254,8 +254,8 @@ function PortalsHub() {
       <div className="mb-6 grid gap-3 sm:flex sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-1.5">
           {((isBoss
-              ? (["all","music","joke","trade","news","battle","tool"] as const)
-              : (["all","music","joke","trade","news"] as const)
+              ? (["all","music","joke","trade","news","form","battle","tool"] as const)
+              : (["all","music","joke","trade","news","form"] as const)
             ) as ReadonlyArray<"all" | Item["kind"]>).map((k) => {
             const active = filter === k;
             const meta = k === "all" ? null : KIND_META[k];
