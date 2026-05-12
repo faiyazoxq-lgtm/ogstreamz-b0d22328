@@ -192,8 +192,8 @@ function PortalsHub() {
   // these are non-sensitive UI prefs only (no credentials), in line with
   // project policy that bans secrets in browser storage.
   const BADGE_PREFS_KEY = "portals.badgePrefs.v1";
-  type BadgePrefs = { boss: boolean; mine: boolean };
-  const [badgePrefs, setBadgePrefs] = useState<BadgePrefs>({ boss: true, mine: true });
+  type BadgePrefs = { boss: boolean; mine: boolean; vip: boolean };
+  const [badgePrefs, setBadgePrefs] = useState<BadgePrefs>({ boss: true, mine: true, vip: true });
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -203,6 +203,7 @@ function PortalsHub() {
       setBadgePrefs({
         boss: parsed?.boss !== false,
         mine: parsed?.mine !== false,
+        vip: parsed?.vip !== false,
       });
     } catch { /* ignore corrupt prefs */ }
   }, []);
@@ -466,6 +467,7 @@ function PortalsHub() {
             {([
               { key: "boss" as const, label: "Boss" },
               { key: "mine" as const, label: "Mine" },
+              { key: "vip" as const, label: "VIP" },
             ]).map(({ key, label }) => {
               const on = badgePrefs[key];
               return (
@@ -591,7 +593,7 @@ function PortalsHub() {
                         Mine
                       </span>
                     ) : null}
-                    {i.vip && (
+                    {i.vip && badgePrefs.vip && (
                       <span className="inline-flex items-center gap-1 h-5 px-2 rounded-full text-[10px] leading-none uppercase tracking-widest font-bold bg-gold/15 border border-gold/50 text-gold">
                         <Crown className="h-3 w-3" /> VIP
                       </span>
