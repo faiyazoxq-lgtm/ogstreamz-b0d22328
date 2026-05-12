@@ -24,9 +24,10 @@ export function OgWordmark({
   suffix = "-PORTAL",
   className = "",
   eyeClassName = EYE_SCALE_CLASS,
-  pupilRatio = 0.5,
+  pupilRatio = 0.62,
   travelRatio = 0.18,
   bloodshot = true,
+  evil = true,
   style,
 }: {
   suffix?: string;
@@ -35,6 +36,8 @@ export function OgWordmark({
   pupilRatio?: number;
   travelRatio?: number;
   bloodshot?: boolean;
+  /** Predatory slit-pupil treatment that locks tightly with the wordmark. */
+  evil?: boolean;
   style?: React.CSSProperties;
 }) {
   const rest = `G${suffix}`;
@@ -46,12 +49,16 @@ export function OgWordmark({
       {/* Eye stands in for the leading "O". Sized to the wordmark's own
           cap height (em-based) and shaped as an upright ellipse so it
           reads as a letter, not a disc. */}
-      <span className="relative inline-flex items-center justify-center align-middle leading-none w-[0.82em] h-[1em]">
+      <span
+        className="relative inline-flex items-center justify-center align-middle leading-none w-[0.82em] h-[1em]"
+        style={{ marginRight: "-0.04em" }}
+      >
         <TrackingEye
           className={eyeClassName}
           pupilRatio={pupilRatio}
           travelRatio={travelRatio}
           bloodshot={bloodshot}
+          slit={evil}
         />
       </span>
       {Array.from(rest).map((ch, i) => (
@@ -65,8 +72,8 @@ export function OgWordmark({
                   // ellipse's curved right edge; tighter letter-spacing keeps
                   // the rest of "-PORTAL" from drifting away.
                   fontWeight: 900,
-                  letterSpacing: "-0.06em",
-                  marginLeft: "0.06em",
+                  letterSpacing: "-0.07em",
+                  marginLeft: "0.015em",
                 }
               : undefined
           }

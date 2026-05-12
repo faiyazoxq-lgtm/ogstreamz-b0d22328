@@ -260,32 +260,35 @@ export function NavBar() {
       }`}
     >
       <nav
-        className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap min-w-0 px-1.5 sm:px-8 py-2 sm:py-4 gap-1 sm:gap-2"
+        className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap min-w-0 px-2 sm:px-8 py-2 sm:py-3 gap-2 sm:gap-4"
         style={{ minHeight: "clamp(3.5rem, 2.5vw + 2.75rem, 5.5rem)" }}
       >
         <Link
           to="/"
           aria-label="0G-PORTAL — home"
-          className="brand-glow group min-w-0 flex-1 sm:flex-initial h-full -ml-1 sm:ml-0 pl-1 pr-3 sm:pl-1.5 sm:pr-4 py-1 min-h-12 sm:min-h-0 rounded-2xl outline-none transition-all border border-white/10 hover:border-gold/30 bg-white/[0.02] hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:shadow-[0_0_24px_-4px_var(--gold)] touch-manipulation flex items-center"
-          style={{ gap: "clamp(0.5rem, 1.6vw + 0.25rem, 1.5rem)" }}
+          className="brand-glow group min-w-0 flex-1 sm:flex-initial h-full -ml-1 sm:ml-0 pl-1.5 pr-3 sm:pl-2 sm:pr-4 py-1 min-h-12 sm:min-h-0 rounded-2xl outline-none transition-all border border-white/10 hover:border-gold/30 bg-white/[0.02] hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:shadow-[0_0_24px_-4px_var(--gold)] touch-manipulation flex items-center"
+          style={{ gap: "clamp(0.4rem, 0.9vw + 0.2rem, 0.9rem)" }}
         >
           <TVStaticLogo className="shrink-0 self-center" />
           <OgWordmark
             suffix="-PORTAL"
-            className="brand-glow__mark inline-flex items-center self-center min-w-0 flex-shrink whitespace-nowrap text-eye-ice bg-transparent leading-[0.9] transition-[color,text-shadow,filter] duration-300 ease-out"
+            className="brand-glow__mark inline-flex items-center self-center min-w-0 flex-shrink whitespace-nowrap text-eye-ice bg-transparent leading-[0.9] transition-[color,text-shadow,filter,letter-spacing] duration-300 ease-out tracking-[-0.005em] sm:tracking-[-0.018em] md:tracking-[-0.028em] lg:tracking-[-0.034em] xl:tracking-[-0.04em]"
             style={{
               // Fully fluid clamp tuned so the full "0G-PORTAL" lockup
               // never wraps or clips between 320px → 1920px viewports.
               // The vw component keeps growth proportional, the rem floor
               // guarantees legibility on phones, and the rem ceiling keeps
               // the wordmark from dwarfing the nav on widescreen displays.
+              // Letter-spacing is handled per-breakpoint by the Tailwind
+              // tracking-* classes above so the optical tracking stays
+              // consistent at every font size (looser when small, tighter
+              // when large).
               fontSize: "clamp(0.95rem, 0.55rem + 1.5vw, 2rem)",
-              letterSpacing: "-0.028em",
               wordSpacing: "-0.05em",
             }}
           />
         </Link>
-        <ul className="flex items-center flex-nowrap gap-2 sm:gap-3 shrink-0 ml-auto">
+        <ul className="flex items-center flex-nowrap gap-1.5 sm:gap-2.5 shrink-0 ml-auto">
           <li className="hidden sm:block">
             <div className="flex items-center gap-2">
               {user && !isBoss && (
@@ -347,7 +350,7 @@ export function NavBar() {
       {/* Secondary nav row — dropdown menus sit below the logo so the
           brand row stays clean and the menus get full breathing width. */}
       <div className="hidden sm:block border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-2 flex items-center justify-center gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-2.5 flex items-center justify-center gap-4">
           <div className="flex items-center bg-white/[0.04] border border-white/10 rounded-full p-1 shadow-inner shadow-black/20 backdrop-blur-sm">
             <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold currentPath={pathname} pill />
             <span aria-hidden className="w-px h-4 bg-white/10" />

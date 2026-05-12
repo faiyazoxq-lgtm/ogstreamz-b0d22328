@@ -15,6 +15,7 @@ export function TrackingEye({
   idleTravelRatio = 0.06,
   variant = "ice",
   bloodshot = false,
+  slit = false,
   className = "",
   style,
 }: {
@@ -38,6 +39,8 @@ export function TrackingEye({
   variant?: "ice" | "gold";
   /** Adds red veins + pinkish iris tint for a bloodshot look. */
   bloodshot?: boolean;
+  /** Vertical slit pupil — narrow & predatory. Used by the "evil" lockup. */
+  slit?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }) {
@@ -349,10 +352,12 @@ export function TrackingEye({
           boxShadow: `inset 0 0 0 clamp(1px, 0.05em, 1.5px) ${pupilRing}, inset 0.05em 0.05em clamp(1px, 0.08em, 3px) rgba(255,255,255,0.45), inset -0.04em -0.04em clamp(1px, 0.08em, 3px) rgba(0,0,0,0.85)`,
           // Upright oval pupil — narrower than tall so it reads as a true
           // eye pupil (and mirrors the egg-shaped iris that stands in for
-          // the letter "O" across the brand wordmark).
-          width: `${pupilRatio * 72}%`,
-          height: `${pupilRatio * 100}%`,
-          borderRadius: "50% / 50%",
+          // the letter "O" across the brand wordmark). In `slit` mode the
+          // pupil collapses into a thin vertical slash for a predatory,
+          // reptilian look that locks visually with the wordmark.
+          width: `${pupilRatio * (slit ? 28 : 72)}%`,
+          height: `${pupilRatio * (slit ? 108 : 100)}%`,
+          borderRadius: slit ? "45% / 50%" : "50% / 50%",
           transform: `translate(${pupil.x}px, ${pupil.y}px)`,
         }}
       />
