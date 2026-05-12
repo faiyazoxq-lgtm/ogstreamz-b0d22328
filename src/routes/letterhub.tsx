@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Sparkles, FileDown, Loader2, ArrowRight, ArrowLeft, RotateCcw, Mail, History, Trash2, FileText, Wand2, CheckCircle2, AlertCircle, Eye, Pencil, Columns2 } from "lucide-react";
+import { Sparkles, FileDown, Loader2, ArrowRight, ArrowLeft, RotateCcw, Mail, History, Trash2, FileText, Wand2, CheckCircle2, AlertCircle, Eye, Pencil, Columns2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -125,6 +125,18 @@ function LetterHubPage() {
   const autosaveKey = user ? `letterhub:draft:${user.id}:${historyId ?? "new"}` : null;
   const [restoredKey, setRestoredKey] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+
+  const saveNow = useCallback(() => {
+    if (!autosaveKey || typeof window === "undefined") return;
+    try {
+      const payload = { form, questions, answers, letter, step, savedAt: Date.now() };
+      window.localStorage.setItem(autosaveKey, JSON.stringify(payload));
+      setLastSavedAt(payload.savedAt);
+      toast.success("Draft saved locally");
+    } catch {
+      toast.error("Could not save draft locally");
+    }
+  }, [autosaveKey, form, questions, answers, letter, step]);
 
   // On first mount per user, rehydrate the last-active historyId so the
   // autosave key resolves to the right draft slot.
@@ -931,6 +943,14 @@ function LetterHubPage() {
                         Auto-saved {new Date(lastSavedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     )}
+                    <button
+                      type="button"
+                      onClick={saveNow}
+                      className="inline-flex items-center gap-1 rounded-md border border-border bg-background/40 px-2 py-1 text-[10px] font-black uppercase tracking-[0.15em] text-white/80 hover:text-white hover:border-[oklch(0.72_0.22_245/0.6)] transition-colors"
+                      aria-label="Save draft now"
+                    >
+                      <Save className="h-3 w-3" /> Save now
+                    </button>
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={reset} className="uppercase tracking-[0.2em] font-black text-xs">
