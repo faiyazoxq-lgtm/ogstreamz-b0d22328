@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Sparkles, FileDown, Loader2, ArrowRight, ArrowLeft, RotateCcw, Mail } from "lucide-react";
+import { Sparkles, FileDown, Loader2, ArrowRight, ArrowLeft, RotateCcw, Mail, History, Trash2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,7 +9,15 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { CreditWallet } from "@/components/CreditWallet";
 import { VaultLockedDialog } from "@/components/VaultLockedDialog";
-import { clarifyLetter, generateLetter, type LetterInput } from "@/lib/letter.functions";
+import {
+  clarifyLetter,
+  generateLetter,
+  saveLetterHistory,
+  listLetterHistory,
+  getLetterHistory,
+  deleteLetterHistory,
+  type LetterInput,
+} from "@/lib/letter.functions";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
 import { requireMember } from "@/lib/route-guards";
@@ -69,6 +77,10 @@ function LetterHubPage() {
   const { user, profile } = useAuth();
   const clarify = useServerFn(clarifyLetter);
   const generate = useServerFn(generateLetter);
+  const saveHistoryFn = useServerFn(saveLetterHistory);
+  const listHistoryFn = useServerFn(listLetterHistory);
+  const getHistoryFn = useServerFn(getLetterHistory);
+  const deleteHistoryFn = useServerFn(deleteLetterHistory);
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [form, setForm] = useState<LetterInput>(EMPTY);
@@ -77,6 +89,27 @@ function LetterHubPage() {
   const [loading, setLoading] = useState(false);
   const [letter, setLetter] = useState("");
   const [locked, setLocked] = useState(false);
+  const [historyId, setHistoryId] = useState<string | null>(null);
+  const [history, setHistory] = useState<Array<{ id: string; title: string; created_at: string; updated_at: string; preview: string }>>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [savingHistory, setSavingHistory] = useState(false);
+
+  const refreshHistory = useCallback(async () => {
+    if (!user) return;
+    setHistoryLoading(true);
+    try {
+      const res = await listHistoryFn();
+      if (res.ok) setHistory(res.items);
+    } catch {
+      /* silent */
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [user, listHistoryFn]);
+
+  useEffect(() => {
+    void refreshHistory();
+  }, [refreshHistory]);
 
   const set = <K extends keyof LetterInput>(k: K, v: LetterInput[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
@@ -87,6 +120,7 @@ function LetterHubPage() {
     setAnswers({});
     setLetter("");
     setStep(1);
+    setHistoryId(null);
   };
 
   const canStep2 = form.issue && form.subIssue.trim() && form.format && form.tone && form.audience;
@@ -132,11 +166,94 @@ function LetterHubPage() {
       toast.success(
         res.balance != null ? `Letter ready · ${res.balance} credits left` : "Letter ready",
       );
+      // auto-save to history
+      try {
+        const answersMap = Object.fromEntries(Object.entries(answers).map(([k, v]) => [String(k), v ?? ""]));
+        const saved = await saveHistoryFn({
+          data: {
+            inputs: form,
+            questions,
+            answers: answersMap,
+            letter: res.letter,
+          },
+        });
+        if (saved.ok && saved.id) {
+          setHistoryId(saved.id);
+          void refreshHistory();
+        }
+      } catch {
+        /* non-blocking */
+      }
     } catch (e: any) {
       toast.error(e?.message || "AI error");
     } finally {
       setLoading(false);
     }
+  };
+
+  const saveCurrent = async () => {
+    if (!letter || !user) return;
+    setSavingHistory(true);
+    try {
+      const answersMap = Object.fromEntries(Object.entries(answers).map(([k, v]) => [String(k), v ?? ""]));
+      const res = await saveHistoryFn({
+        data: {
+          id: historyId ?? undefined,
+          inputs: form,
+          questions,
+          answers: answersMap,
+          letter,
+        },
+      });
+      if (!res.ok) {
+        toast.error(res.error || "Could not save");
+        return;
+      }
+      if (res.id) setHistoryId(res.id);
+      toast.success("Saved to history");
+      void refreshHistory();
+    } finally {
+      setSavingHistory(false);
+    }
+  };
+
+  const openHistory = async (id: string) => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const res = await getHistoryFn({ data: { id } });
+      if (!res.ok || !res.row) {
+        toast.error(res.error || "Could not load");
+        return;
+      }
+      const r = res.row;
+      setForm({ ...EMPTY, ...r.inputs });
+      setQuestions(Array.isArray(r.questions) ? r.questions : []);
+      const ansObj: Record<number, string> = {};
+      Object.entries(r.answers || {}).forEach(([k, v]) => {
+        const idx = Number(k);
+        if (Number.isFinite(idx)) ansObj[idx] = String(v ?? "");
+      });
+      setAnswers(ansObj);
+      setLetter(r.letter || "");
+      setHistoryId(r.id);
+      setStep(r.letter ? 4 : 2);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeHistory = async (id: string) => {
+    if (!confirm("Delete this saved letter?")) return;
+    const res = await deleteHistoryFn({ data: { id } });
+    if (!res.ok) {
+      toast.error(res.error || "Delete failed");
+      return;
+    }
+    if (historyId === id) setHistoryId(null);
+    setHistory((h) => h.filter((x) => x.id !== id));
+    toast.success("Deleted");
   };
 
   const downloadPdf = () => {
@@ -411,6 +528,62 @@ function LetterHubPage() {
       </section>
 
       <CreditWallet className="mt-10" />
+
+      {user && (
+        <section className="mt-10 rounded-3xl border border-border bg-card/40 p-4 sm:p-6 backdrop-blur-xl">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-black uppercase tracking-[0.25em] flex items-center gap-2">
+              <History className="h-4 w-4" /> Saved letters
+            </h2>
+            <span className="text-[11px] text-muted-foreground">
+              {historyLoading ? "Loading…" : `${history.length} saved`}
+            </span>
+          </div>
+          {history.length === 0 && !historyLoading && (
+            <p className="text-sm text-muted-foreground italic">
+              Letters you generate are auto-saved here so you can reopen, edit inputs, and re-download anytime.
+            </p>
+          )}
+          <ul className="space-y-2">
+            {history.map((h) => (
+              <li
+                key={h.id}
+                className={
+                  "group flex items-start gap-3 rounded-xl border p-3 transition-colors " +
+                  (historyId === h.id
+                    ? "border-[oklch(0.72_0.22_245/0.7)] bg-[oklch(0.72_0.22_245/0.08)]"
+                    : "border-border bg-background/40 hover:border-[oklch(0.72_0.22_245/0.5)]")
+                }
+              >
+                <FileText className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                <button
+                  type="button"
+                  onClick={() => openHistory(h.id)}
+                  className="flex-1 text-left min-w-0"
+                >
+                  <div className="text-sm font-bold truncate">{h.title || "Untitled letter"}</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {new Date(h.updated_at).toLocaleString()}
+                  </div>
+                  {h.preview && (
+                    <div className="text-xs text-muted-foreground/80 mt-1 line-clamp-2">
+                      {h.preview}
+                    </div>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void removeHistory(h.id)}
+                  className="opacity-60 hover:opacity-100 hover:text-red-400 transition-all p-1"
+                  aria-label="Delete saved letter"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <VaultLockedDialog open={locked} onOpenChange={setLocked} itemName="LetterHUB" isAuthenticated={!!user} />
     </main>
