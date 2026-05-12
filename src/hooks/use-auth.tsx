@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { promoteBossIfNeeded } from "@/lib/boss.functions";
+import { notifyBossLoginIfNeeded } from "@/lib/boss-login-notify.functions";
 import { getRemember, hasTabSession, markTabSession, clearTabSession } from "@/lib/remember-session";
 import { hasStoredAuth } from "@/lib/has-stored-auth";
 
@@ -96,13 +97,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
-        if (_event === "SIGNED_IN") markTabSession();
+        if (_event === "SIGNED_IN") {
+          markTabSession();
+          // Fire-and-forget: server fn no-ops for non-boss callers, and
+          // silently dedupes per browser tab to avoid spamming Telegram on
+          // tab focus / token refresh storms.
+          try {
+            const key = "boss:tg-login-notified";
+            if (typeof sessionStorage !== "undefined" && !sessionStorage.getItem(key)) {
+              sessionStorage.setItem(key, "1");
+              const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+              const tz =
+                typeof Intl !== "undefined"
+                  ? Intl.DateTimeFormat().resolvedOptions().timeZone || ""
+                  : "";
+              notifyBossLoginIfNeeded({ data: { userAgent: ua, timezone: tz } }).catch(
+                () => {/* silent — telemetry must not break auth */},
+              );
+            }
+          } catch { /* sessionStorage may be unavailable */ }
+        }
         // defer fetch to avoid recursive auth state callbacks
         setTimeout(() => loadExtras(s.user.id), 0);
       } else {
         clearTabSession();
         setProfile(null);
         setIsAdmin(false);
+        try { sessionStorage.removeItem("boss:tg-login-notified"); } catch { /* noop */ }
       }
     });
 
