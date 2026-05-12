@@ -234,7 +234,7 @@ export const submitFormPortal = createServerFn({ method: "POST" })
 
     const { error: insErr } = await supabaseAdmin.from("form_submissions").insert({
       portal_id: row.id,
-      payload: cleaned,
+      payload: cleaned as any,
       submitter_email: submitterEmail,
       telegram_sent: telegramSent,
     });
