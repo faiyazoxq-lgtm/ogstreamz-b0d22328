@@ -43,16 +43,30 @@ export function VipNotificationsInbox() {
 
   useEffect(() => {
     void refresh();
-    const ch = supabase
-      .channel("vip_notifications_inbox")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "vip_notifications" }, () => {
-        void refresh();
-      })
-      .on("postgres_changes", { event: "DELETE", schema: "public", table: "vip_notifications" }, () => {
-        void refresh();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    (async () => {
+      // Scope the realtime channel + postgres_changes filter to the current
+      // user so subscribers only receive their own notification events,
+      // never broadcast rows belonging to other users.
+      const { data } = await supabase.auth.getUser();
+      const uid = data.user?.id;
+      if (!uid || cancelled) return;
+      const filter = `user_id=eq.${uid}`;
+      channel = supabase
+        .channel(`vip_notifications:${uid}`)
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "vip_notifications", filter }, () => {
+          void refresh();
+        })
+        .on("postgres_changes", { event: "DELETE", schema: "public", table: "vip_notifications", filter }, () => {
+          void refresh();
+        })
+        .subscribe();
+    })();
+    return () => {
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
+    };
   }, []);
 
   const dismiss = async (id: string) => {
