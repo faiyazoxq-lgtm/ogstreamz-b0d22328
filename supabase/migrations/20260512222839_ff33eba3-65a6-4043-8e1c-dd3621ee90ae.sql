@@ -1,0 +1,1 @@
+ALTER VIEW public.portals_public SET (security_invoker = true);
