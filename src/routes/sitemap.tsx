@@ -5,6 +5,7 @@ import {
   Sparkles, Receipt, Send, UserCircle, History, LayoutDashboard,
   Settings, LogIn, Coins,
 } from "lucide-react";
+import { OgWordmark } from "@/components/OgWordmark";
 
 /**
  * Human-readable sitemap. Mirrors the XML sitemap but grouped by intent
@@ -87,7 +88,7 @@ function SitemapPage() {
           Every page, one place
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
-          A complete map of 0G-PORTAL. Pick any hub, portal, or account page below.
+          A complete map of <OgWordmark suffix="-PORTAL" />. Pick any hub, portal, or account page below.
         </p>
       </header>
 
