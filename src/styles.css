@@ -988,6 +988,24 @@ html[data-mood="og"] {
       filter: none !important;
     }
   }
+  /* Staggered card reveal — runs once on mount. Uses the shared portal
+     motion tokens so the entry choreography matches hover/press feel.
+     Per-card delay is set inline via --portal-reveal-delay. */
+  @keyframes portal-card-reveal {
+    from { opacity: 0; transform: translateY(8px) scale(0.985); }
+    to   { opacity: 1; transform: translateY(0)   scale(1); }
+  }
+  .portal-card-reveal {
+    animation: portal-card-reveal var(--portal-dur-in) var(--portal-ease-out) both;
+    animation-delay: var(--portal-reveal-delay, 0ms);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .portal-card-reveal {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
   .badge-toggle {
     overflow: hidden;
     max-width: 12rem;
