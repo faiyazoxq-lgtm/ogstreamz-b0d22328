@@ -74,6 +74,15 @@ function isPathActive(pathname: string, to: string) {
   return pathname === to || pathname.startsWith(to + "/");
 }
 
+/**
+ * Returns true when the current pathname matches the tab's primary route
+ * OR any of its companion prefixes. Lets one bottom-tab "Hubs" stay lit
+ * while you navigate /portals → /p/foo → /music, etc.
+ */
+function isAnyPathActive(pathname: string, prefixes: ReadonlyArray<string>) {
+  return prefixes.some((p) => isPathActive(pathname, p));
+}
+
 /* ======================================================================
  * Desktop sidebar
  * ====================================================================== */
@@ -107,18 +116,19 @@ function SidebarSection({
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
+          aria-controls={`sidebar-section-${title.replace(/\s+/g, "-").toLowerCase()}`}
           className={[
-            "group/sec w-full flex items-center gap-2 px-3 py-1.5 text-[10px] uppercase tracking-[0.28em] font-bold transition-colors rounded-md",
+            "group/sec w-full flex items-center gap-2 px-3 py-1.5 text-[10px] uppercase tracking-[0.28em] font-bold transition-colors rounded-md outline-none focus-visible:ring-2 focus-visible:ring-gold/70",
             gold ? "text-gold/80 hover:text-gold" : "text-muted-foreground hover:text-foreground",
           ].join(" ")}
         >
-          <Icon className="h-3.5 w-3.5" />
+          <Icon aria-hidden className="h-3.5 w-3.5" />
           <span className="flex-1 text-left">{title}</span>
-          <ChevronDown className={`h-3 w-3 transition-transform ${open ? "rotate-0" : "-rotate-90"}`} />
+          <ChevronDown aria-hidden className={`h-3 w-3 motion-safe:transition-transform duration-200 ${open ? "rotate-0" : "-rotate-90"}`} />
         </button>
       )}
       {(open || collapsed) && (
-        <ul className="mt-1 space-y-0.5">
+        <ul id={`sidebar-section-${title.replace(/\s+/g, "-").toLowerCase()}`} className="mt-1 space-y-0.5">
           {items.map((it) => {
             const active = isPathActive(pathname, it.to);
             return (
@@ -126,9 +136,10 @@ function SidebarSection({
                 <Link
                   to={it.to}
                   aria-current={active ? "page" : undefined}
+                  aria-label={`${it.label}${active ? ", current page" : ""}`}
                   title={collapsed ? it.label : undefined}
                   className={[
-                    "group/item relative flex items-center gap-3 rounded-lg outline-none transition-all min-h-10",
+                    "group/item relative flex items-center gap-3 rounded-lg outline-none motion-safe:transition-all duration-200 min-h-10",
                     collapsed ? "justify-center px-0 py-2" : "px-3 py-2",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                     active
@@ -136,7 +147,7 @@ function SidebarSection({
                       : "text-foreground/85 hover:bg-white/5 hover:text-foreground",
                   ].join(" ")}
                 >
-                  <it.icon className={`h-4 w-4 shrink-0 ${active ? "text-gold drop-shadow-[0_0_6px_rgba(255,209,102,0.6)]" : "text-gold/70 group-hover/item:text-gold"}`} />
+                  <it.icon aria-hidden className={`h-4 w-4 shrink-0 motion-safe:transition-all duration-200 ${active ? "text-gold drop-shadow-[0_0_6px_rgba(255,209,102,0.6)] scale-110" : "text-gold/70 group-hover/item:text-gold"}`} />
                   {!collapsed && (
                     <span className="flex-1 min-w-0">
                       <span className="flex items-center gap-1.5 text-[13px] font-semibold leading-tight">
@@ -269,7 +280,7 @@ function DesktopSidebar({
       )}
 
       {/* Sections */}
-      <nav className="flex-1 overflow-y-auto overscroll-contain px-2 py-3 scrollbar-thin">
+      <nav aria-label="Primary sidebar navigation" className="flex-1 overflow-y-auto overscroll-contain px-2 py-3 scrollbar-thin">
         <SidebarSection
           title="Explore"
           icon={Compass}
@@ -364,19 +375,29 @@ function MobileHeader({
         to={to}
         onClick={close}
         aria-current={active ? "page" : undefined}
+        aria-label={`${label}${active ? ", current page" : ""}`}
         className={[
-          "relative flex items-center gap-3 min-h-12 w-full rounded-xl px-3 py-2.5 transition-colors",
+          "relative flex items-center gap-3 min-h-12 w-full rounded-xl px-3 py-2.5 motion-safe:transition-all duration-200",
+          "outline-none focus-visible:ring-2 focus-visible:ring-gold/70 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
           active ? "bg-gold/10 text-gold ring-1 ring-inset ring-gold/40" : "text-foreground hover:bg-secondary",
         ].join(" ")}
       >
-        {active && <span aria-hidden className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-gold shadow-[0_0_10px_rgba(255,209,102,0.6)]" />}
+        <span
+          aria-hidden
+          className={[
+            "absolute left-0 top-2 bottom-2 w-1 rounded-r-full motion-safe:transition-all duration-200",
+            active
+              ? "bg-gold shadow-[0_0_10px_rgba(255,209,102,0.6)] opacity-100"
+              : "bg-transparent opacity-0",
+          ].join(" ")}
+        />
         <span className={`h-9 w-9 shrink-0 rounded-lg flex items-center justify-center ${active ? "bg-gold/15 text-gold ring-1 ring-gold/40" : "bg-secondary text-gold/80"}`}>
-          <Icon className="h-5 w-5" />
+          <Icon aria-hidden className="h-5 w-5" />
         </span>
         <span className="flex-1 min-w-0">
           <span className={`flex items-center gap-1.5 text-[14px] font-semibold leading-tight ${active ? "text-gold" : "text-foreground"}`}>
             <span className="truncate">{label}</span>
-            {vip && <Crown className="h-3 w-3 text-gold" />}
+            {vip && <Crown aria-label="VIP" className="h-3 w-3 text-gold" />}
           </span>
           {desc && <span className="block text-[11px] text-muted-foreground truncate mt-0.5">{desc}</span>}
         </span>
@@ -401,12 +422,20 @@ function MobileHeader({
       )}
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger
-          aria-label="Open menu"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-secondary/40 text-foreground hover:bg-secondary"
+          aria-label={open ? "Close navigation menu" : "Open navigation menu"}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          aria-controls="mobile-nav-drawer"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-secondary/40 text-foreground hover:bg-secondary outline-none focus-visible:ring-2 focus-visible:ring-gold/70 motion-safe:transition-colors"
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-5 w-5" aria-hidden />
         </SheetTrigger>
-        <SheetContent side="right" className="w-[92vw] max-w-sm bg-card p-0 flex flex-col">
+        <SheetContent
+          id="mobile-nav-drawer"
+          side="right"
+          aria-label="Navigation drawer"
+          className="w-[92vw] max-w-sm bg-card p-0 flex flex-col"
+        >
           <SheetHeader className="px-4 pt-4 pb-3 border-b border-border space-y-3">
             <SheetTitle className="sr-only">Navigation menu</SheetTitle>
             <div className="flex items-center gap-3">
@@ -512,43 +541,94 @@ function MobileHeader({
  * ====================================================================== */
 function MobileTabBar({ isVip, isBoss }: { isVip: boolean; isBoss: boolean }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const tabs: ReadonlyArray<{ to: string; label: string; icon: ComponentType<{ className?: string }>; gold?: boolean }> = [
-    { to: "/", label: "Home", icon: Home },
-    { to: "/portals", label: "Hubs", icon: Rocket },
-    { to: "/store", label: "Store", icon: ShoppingBag },
-    { to: "/vip", label: isVip ? "VIP" : "Go VIP", icon: Crown, gold: true },
-    { to: isBoss ? "/boss" : "/dashboard", label: isBoss ? "Boss" : "Account", icon: isBoss ? ShieldCheck : UserCircle },
+  type Tab = {
+    to: string;
+    label: string;
+    icon: ComponentType<{ className?: string }>;
+    gold?: boolean;
+    /** Extra prefixes that should also keep this tab active. */
+    matches?: ReadonlyArray<string>;
+  };
+  const tabs: ReadonlyArray<Tab> = [
+    { to: "/", label: "Home", icon: Home, matches: ["/"] },
+    {
+      to: "/portals",
+      label: "Hubs",
+      icon: Rocket,
+      matches: ["/portals", "/p", "/hub", "/music", "/jokes", "/tools", "/trade", "/connect", "/battle", "/syndicate", "/letterhub", "/appealhub"],
+    },
+    {
+      to: "/store",
+      label: "Store",
+      icon: ShoppingBag,
+      matches: ["/store", "/checkout", "/wallet"],
+    },
+    {
+      to: "/vip",
+      label: isVip ? "VIP" : "Go VIP",
+      icon: Crown,
+      gold: true,
+      matches: ["/vip", "/account/passes", "/vault-login"],
+    },
+    {
+      to: isBoss ? "/boss" : "/dashboard",
+      label: isBoss ? "Boss" : "Account",
+      icon: isBoss ? ShieldCheck : UserCircle,
+      matches: isBoss
+        ? ["/boss"]
+        : ["/dashboard", "/profile", "/settings", "/history", "/account", "/connect-telegram"],
+    },
   ];
   return (
     <nav
-      aria-label="Primary"
+      aria-label="Primary mobile navigation"
+      role="navigation"
       className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-background/95 backdrop-blur"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <ul className="grid grid-cols-5">
+      <ul role="list" className="grid grid-cols-5">
         {tabs.map((t) => {
-          const active = isPathActive(pathname, t.to);
+          const active = isAnyPathActive(pathname, t.matches ?? [t.to]);
           return (
             <li key={t.to}>
               <Link
                 to={t.to}
                 aria-current={active ? "page" : undefined}
+                aria-label={`${t.label}${active ? ", current page" : ""}`}
+                data-active={active ? "true" : undefined}
                 className={[
-                  "flex flex-col items-center justify-center gap-0.5 min-h-14 px-1 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] transition-colors",
+                  "group/tab relative flex flex-col items-center justify-center gap-0.5 min-h-14 px-1 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em]",
+                  "outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold/70",
+                  "motion-safe:transition-colors duration-200",
                   active
                     ? t.gold
                       ? "text-gold [text-shadow:_0_0_10px_rgba(255,209,102,0.6)]"
                       : "text-primary"
                     : t.gold
-                      ? "text-gold/70"
+                      ? "text-gold/70 hover:text-gold"
                       : "text-muted-foreground hover:text-foreground",
                 ].join(" ")}
               >
-                <t.icon className={`h-5 w-5 ${active && t.gold ? "drop-shadow-[0_0_8px_rgba(255,209,102,0.7)]" : ""}`} />
+                <t.icon
+                  aria-hidden
+                  className={[
+                    "h-5 w-5 motion-safe:transition-transform duration-200",
+                    active ? "scale-110" : "scale-100 group-hover/tab:scale-105",
+                    active && t.gold ? "drop-shadow-[0_0_8px_rgba(255,209,102,0.7)]" : "",
+                  ].join(" ")}
+                />
                 <span className="leading-none">{t.label}</span>
-                {active && (
-                  <span aria-hidden className={`h-0.5 w-6 rounded-full ${t.gold ? "bg-gold shadow-[0_0_8px_rgba(255,209,102,0.8)]" : "bg-primary"}`} />
-                )}
+                <span
+                  aria-hidden
+                  className={[
+                    "h-0.5 rounded-full motion-safe:transition-all duration-200",
+                    active
+                      ? t.gold
+                        ? "w-7 bg-gold shadow-[0_0_8px_rgba(255,209,102,0.8)]"
+                        : "w-7 bg-primary"
+                      : "w-0 bg-transparent",
+                  ].join(" ")}
+                />
               </Link>
             </li>
           );
