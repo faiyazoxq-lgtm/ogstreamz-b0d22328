@@ -279,7 +279,7 @@ function DesktopSidebar({
       )}
 
       {/* Sections */}
-      <nav className="flex-1 overflow-y-auto overscroll-contain px-2 py-3 scrollbar-thin">
+      <nav aria-label="Primary sidebar navigation" className="flex-1 overflow-y-auto overscroll-contain px-2 py-3 scrollbar-thin">
         <SidebarSection
           title="Explore"
           icon={Compass}
