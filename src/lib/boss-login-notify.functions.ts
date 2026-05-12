@@ -3,6 +3,7 @@ import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { normalizeEmail, shouldPromoteToBoss } from "./boss-policy";
 import { tgSendMessage } from "./telegram-bot.server";
+import { getBossChatId } from "./boss-chat.server";
 
 /**
  * Parse a user-agent string into a coarse device + OS + browser label.
