@@ -129,7 +129,7 @@ function OgBotEmpty({
           <p className="mt-1 text-[13px] text-muted-foreground">{copy.body}</p>
           <Link
             to={spawnHref as never}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-[11px] uppercase tracking-[0.2em] font-bold text-black transition hover:brightness-110 active:scale-[0.97]"
+            className="portal-button-motion mt-3 inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-[11px] uppercase tracking-[0.2em] font-bold text-black"
             style={{ background: meta.accent }}
           >
             <PlusCircle className="h-3.5 w-3.5" /> {copy.cta}
@@ -464,7 +464,7 @@ function PortalsHub() {
               <button
                 key={k}
                 onClick={() => setFilter(k)}
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-[0.18em] font-semibold border transition"
+                className="portal-button-motion inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-[0.18em] font-semibold border"
                 style={{
                   borderColor: active ? (meta?.accent ?? "var(--mood-accent,#ffd166)") : "rgba(255,255,255,0.12)",
                   background: active ? "rgba(255,255,255,0.06)" : "transparent",
@@ -489,7 +489,7 @@ function PortalsHub() {
                   key={s}
                   onClick={() => setScope(s)}
                   aria-pressed={active}
-                  className="px-2.5 py-1.5 rounded transition"
+                  className="portal-button-motion px-2.5 py-1.5 rounded"
                   style={{
                     background: active ? "rgba(255,255,255,0.08)" : "transparent",
                     color: active ? "var(--mood-accent,#ffd166)" : "rgba(255,255,255,0.65)",
@@ -525,7 +525,7 @@ function PortalsHub() {
                   aria-pressed={on}
                   aria-label={`${label} badges, ${on ? "shown" : "hidden"}`}
                   title={`${on ? "Hide" : "Show"} ${label} badges`}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded transition-colors duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--mood-accent,#ffd166)] focus-visible:ring-offset-1 focus-visible:ring-offset-card"
+                  className="portal-button-motion inline-flex items-center gap-1 px-2.5 py-1.5 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--mood-accent,#ffd166)] focus-visible:ring-offset-1 focus-visible:ring-offset-card"
                   style={{
                     background: on ? "rgba(255,255,255,0.08)" : "transparent",
                     color: on ? "var(--mood-accent,#ffd166)" : "rgba(255,255,255,0.45)",
@@ -749,7 +749,7 @@ function PortalsHub() {
                     <Link
                       to={i.to}
                       params={{ slug: i.slug }}
-                      className="flex-1 min-w-0 inline-flex items-center justify-center gap-1 sm:gap-1.5 rounded-md px-1.5 sm:px-3 py-2 text-[10px] sm:text-[11px] uppercase tracking-[0.12em] sm:tracking-[0.18em] font-bold text-black outline-none transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-primary"
+                      className="portal-button-motion flex-1 min-w-0 inline-flex items-center justify-center gap-1 sm:gap-1.5 rounded-md px-1.5 sm:px-3 py-2 text-[10px] sm:text-[11px] uppercase tracking-[0.12em] sm:tracking-[0.18em] font-bold text-black outline-none focus-visible:ring-2 focus-visible:ring-primary"
                       style={{ background: meta.accent }}
                     >
                       Open <ExternalLink className="h-3.5 w-3.5 shrink-0" />
@@ -774,7 +774,7 @@ function PortalsHub() {
                           [hubKind]: (prev[hubKind] ?? PAGE_SIZE) + PAGE_SIZE,
                         }))
                       }
-                      className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-[11px] uppercase tracking-[0.2em] font-bold transition hover:-translate-y-0.5"
+                      className="portal-button-motion inline-flex items-center gap-2 rounded-md border px-4 py-2 text-[11px] uppercase tracking-[0.2em] font-bold"
                       style={{
                         borderColor: `color-mix(in oklab, ${hubMeta.accent} 50%, transparent)`,
                         color: hubMeta.accent,
