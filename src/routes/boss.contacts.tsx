@@ -222,11 +222,10 @@ function BossContactsPage() {
             value={draft.label}
             onChange={(e) => setDraft({ ...draft, label: e.target.value })}
           />
-          <Input
-            placeholder="Phone number"
-            inputMode="tel"
+          <PhoneField
+            id="contact-phone"
             value={draft.phone}
-            onChange={(e) => setDraft({ ...draft, phone: e.target.value })}
+            onChange={(v) => setDraft({ ...draft, phone: v })}
           />
         </div>
         <Textarea
@@ -284,7 +283,10 @@ function BossContactsPage() {
               <div className="space-y-2">
                 <div className="grid sm:grid-cols-2 gap-2">
                   <Input value={editDraft.label} onChange={(e) => setEditDraft({ ...editDraft, label: e.target.value })} />
-                  <Input value={editDraft.phone} onChange={(e) => setEditDraft({ ...editDraft, phone: e.target.value })} />
+                  <PhoneField
+                    value={editDraft.phone}
+                    onChange={(v) => setEditDraft({ ...editDraft, phone: v })}
+                  />
                 </div>
                 <Textarea rows={2} value={editDraft.notes} onChange={(e) => setEditDraft({ ...editDraft, notes: e.target.value })} />
                 <UserLinkPicker selected={editLinked} onSelect={setEditLinked} />
