@@ -2,6 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { TrackingPupil } from "./TrackingPupil";
 import { EyeLightning } from "./EyeLightning";
 import ogEvilEye from "@/assets/og-evil-eye.jpg";
+import {
+  getBreakpoint,
+  readOffsets,
+  subscribePupilOffsets,
+  type PupilOffsetMap,
+} from "@/lib/pupil-calibration";
 
 // Module-level mount counter so only the FIRST live OgWordmark renders the
 // global lightning overlay. Every other instance still gets the tracking
@@ -52,11 +58,13 @@ export function OgWordmark({
   const IRIS_H_PCT = 34;
   const IRIS_CENTER_X_PCT = 30;
   const IRIS_CENTER_Y_PCT = 49;
-  const IRIS_LEFT_PCT = IRIS_CENTER_X_PCT - IRIS_W_PCT / 2;
-  const IRIS_TOP_PCT = IRIS_CENTER_Y_PCT - IRIS_H_PCT / 2;
 
   const irisRef = useRef<HTMLElement>(null);
   const [ownsLightning, setOwnsLightning] = useState(false);
+  const [offsets, setOffsets] = useState<PupilOffsetMap>(() => readOffsets());
+  const [bp, setBp] = useState(() =>
+    typeof window === "undefined" ? "desktop" : getBreakpoint(window.innerWidth),
+  );
 
   useEffect(() => {
     LIGHTNING_OWNER += 1;
@@ -66,6 +74,21 @@ export function OgWordmark({
       LIGHTNING_OWNER -= 1;
     };
   }, []);
+
+  useEffect(() => {
+    const onResize = () => setBp(getBreakpoint(window.innerWidth));
+    onResize();
+    window.addEventListener("resize", onResize);
+    const unsub = subscribePupilOffsets(setOffsets);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      unsub();
+    };
+  }, []);
+
+  const off = offsets[bp];
+  const IRIS_LEFT_PCT = IRIS_CENTER_X_PCT + off.x - IRIS_W_PCT / 2;
+  const IRIS_TOP_PCT = IRIS_CENTER_Y_PCT + off.y - IRIS_H_PCT / 2;
 
   return (
     <span
