@@ -12,10 +12,10 @@ import { VaultLockedDialog } from "@/components/VaultLockedDialog";
 import { clarifyAppeal, generateAppeal, type AppealInput } from "@/lib/appeal.functions";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
-import { requireBoss } from "@/lib/route-guards";
+import { requireBossHub } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/appealhub")({
-  beforeLoad: requireBoss,
+  beforeLoad: requireBossHub,
   head: () => ({
     meta: [
       { title: "AppealHUB · Draft a Penalty Appeal Letter — 0G-STREAMZ" },

@@ -7,12 +7,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { STYLE_PRESETS } from "./jokes";
 import { generateLiveJoke } from "@/lib/live-joke.functions";
-import { requireBoss } from "@/lib/route-guards";
+import { requireBossHub } from "@/lib/route-guards";
 
 type Search = { styles: string; custom: string; live: 0 | 1 };
 
 export const Route = createFileRoute("/jokes/portal")({
-  beforeLoad: requireBoss,
+  beforeLoad: requireBossHub,
   validateSearch: (s: Record<string, unknown>): Search => ({
     styles: typeof s.styles === "string" ? s.styles : "",
     custom: typeof s.custom === "string" ? s.custom : "",
