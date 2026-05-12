@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Crown, Eye, Copy, Check, Timer, Loader2, Flame, Lock, Download, Sparkles } from "lucide-react";
+import { Crown, Eye, Copy, Check, Timer, Loader2, Flame, Lock, Download, Sparkles, Share2 } from "lucide-react";
 import { toPng } from "html-to-image";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ export function VipPassRevealCard() {
   const [copied, setCopied] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [downloading, setDownloading] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const passCardRef = useRef<HTMLDivElement | null>(null);
   const tick = useRef<number | null>(null);
 
@@ -88,27 +89,69 @@ export function VipPassRevealCard() {
     }
   };
 
+  const renderPassFile = async (): Promise<{ file: File; dataUrl: string; name: string } | null> => {
+    if (!passCardRef.current) return null;
+    const dataUrl = await toPng(passCardRef.current, {
+      cacheBust: true,
+      pixelRatio: 3,
+      backgroundColor: "#000308",
+    });
+    const stamp = new Date().toISOString().slice(0, 10);
+    const name = `og-vip-pass-${stamp}.png`;
+    const blob = await (await fetch(dataUrl)).blob();
+    const file = new File([blob], name, { type: "image/png" });
+    return { file, dataUrl, name };
+  };
+
+  const triggerDownload = (dataUrl: string, name: string) => {
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
   const doDownload = async () => {
-    if (!passCardRef.current) return;
     setDownloading(true);
     try {
-      const dataUrl = await toPng(passCardRef.current, {
-        cacheBust: true,
-        pixelRatio: 3,
-        backgroundColor: "#000308",
-      });
-      const a = document.createElement("a");
-      const stamp = new Date().toISOString().slice(0, 10);
-      a.href = dataUrl;
-      a.download = `og-vip-pass-${stamp}.png`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      const out = await renderPassFile();
+      if (!out) return;
+      triggerDownload(out.dataUrl, out.name);
       toast.success("Pass image downloaded");
     } catch (e: any) {
       toast.error(e?.message ?? "Download failed");
     } finally {
       setDownloading(false);
+    }
+  };
+
+  const doShare = async () => {
+    setSharing(true);
+    try {
+      const out = await renderPassFile();
+      if (!out) return;
+      const nav = navigator as Navigator & {
+        canShare?: (data: ShareData) => boolean;
+        share?: (data: ShareData) => Promise<void>;
+      };
+      const shareData: ShareData = {
+        files: [out.file],
+        title: "OG-STREAMZ VIP Pass",
+        text: "My OG-STREAMZ VIP pass — 15-min window.",
+      };
+      if (nav.share && nav.canShare && nav.canShare(shareData)) {
+        await nav.share(shareData);
+        toast.success("Shared");
+      } else {
+        triggerDownload(out.dataUrl, out.name);
+        toast.message("Sharing not supported — image downloaded instead");
+      }
+    } catch (e: any) {
+      if (e?.name === "AbortError") return; // user cancelled
+      toast.error(e?.message ?? "Share failed");
+    } finally {
+      setSharing(false);
     }
   };
 
@@ -308,6 +351,15 @@ export function VipPassRevealCard() {
               >
                 {downloading ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Download className="h-3.5 w-3.5 mr-1.5" />}
                 Save image
+              </Button>
+              <Button
+                size="sm"
+                onClick={doShare}
+                disabled={sharing}
+                className="bg-gradient-to-r from-[#ff2a8a] to-[#00d4ff] text-black font-black uppercase tracking-[0.2em] shadow-[0_0_18px_rgba(255,42,138,0.5)] hover:brightness-110"
+              >
+                {sharing ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Share2 className="h-3.5 w-3.5 mr-1.5" />}
+                Share
               </Button>
             </div>
 
