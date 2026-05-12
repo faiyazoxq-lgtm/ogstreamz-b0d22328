@@ -13,7 +13,7 @@ import { PortalHeader, PortalStyleLine, mergeStyle } from "@/components/PortalHe
 
 const JOKES_STYLE = "Razor-sharp punch-up roast, club-room timing, no slurs.";
 
-import { requireMember } from "@/lib/route-guards";
+import { requireVip } from "@/lib/route-guards";
 export type StylePreset = { id: string; label: string; Icon: typeof Skull };
 
 export const STYLE_PRESETS: StylePreset[] = [
@@ -54,7 +54,7 @@ const PROMPTS: Prompt[] = [
 ];
 
 export const Route = createFileRoute("/jokes")({
-  beforeLoad: requireMember,
+  beforeLoad: requireVip,
   head: () => ({
     meta: [
       { title: "JokesHUB · Build Your Mix — 0G-STREAMZ" },

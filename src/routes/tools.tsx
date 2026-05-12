@@ -16,9 +16,9 @@ import { PortalHeader, PortalStyleLine, mergeStyle } from "@/components/PortalHe
 
 const TOOLS_STYLE = "Concise, decisive, OG-tone explanation with one actionable next step.";
 
-import { requireUsageAccess } from "@/lib/route-guards";
+import { requireVip } from "@/lib/route-guards";
 export const Route = createFileRoute("/tools")({
-  beforeLoad: requireUsageAccess,
+  beforeLoad: requireVip,
   head: () => ({
     meta: [
       { title: "ToolHUB · Build Your Tool — 0G-STREAMZ" },
