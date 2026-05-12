@@ -270,11 +270,12 @@ export function NavBar() {
         >
           <OgWordmark
             suffix="-PORTAL"
+            fit
+            maxFontSize={72}
+            minFontSize={22}
             className="brand-glow__mark inline-flex items-center self-center min-w-0 flex-shrink whitespace-nowrap text-white font-black bg-transparent leading-[0.9] transition-[color,text-shadow,filter,letter-spacing] duration-300 ease-out tracking-[-0.005em] sm:tracking-[-0.018em] md:tracking-[-0.028em] lg:tracking-[-0.034em] xl:tracking-[-0.04em] drop-shadow-[0_0_18px_oklch(0.72_0.22_245/0.55)]"
             style={{
-              // Larger, fluid wordmark — keeps the full "0G-PORTAL" lockup
-              // legible on phones and commanding on widescreen displays.
-              fontSize: "clamp(1.5rem, 0.9rem + 2.6vw, 3.25rem)",
+              // Auto-fit handles the font-size; keep typographic refinements.
               wordSpacing: "-0.05em",
               color: "#ffffff",
               textShadow:
