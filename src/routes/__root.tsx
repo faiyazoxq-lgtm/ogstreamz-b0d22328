@@ -30,6 +30,7 @@ import { DomainDenylistGuard } from "../components/DomainDenylistGuard";
 import { SiteFooter } from "../components/SiteFooter";
 import { AlignmentQAOverlay } from "../components/AlignmentQAOverlay";
 import { PupilCalibrator } from "../components/PupilCalibrator";
+import { HubsStrip } from "../components/HubsStrip";
 
 function NotFoundComponent() {
   return (
@@ -154,6 +155,7 @@ function RootComponent() {
             <SpotlightEyes />
             <VipPromoBanner />
             <NavBar />
+            <HubsStripSlot />
             <AuthGate>
               <Outlet />
             </AuthGate>
@@ -176,6 +178,16 @@ function RootComponent() {
       </AuthProvider>
     </QueryClientProvider>
   );
+}
+
+// Renders the All-Hubs strip on the home page and every hub route, in a
+// fixed slot so navigating between hubs doesn't cause layout shift.
+function HubsStripSlot() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const HUB_ROUTES = new Set(["/", "/music", "/jokes", "/trade", "/connect", "/battle", "/tools"]);
+  const showStrip = HUB_ROUTES.has(pathname) || pathname.startsWith("/hub/");
+  if (!showStrip) return null;
+  return <HubsStrip className="pt-4 pb-2" />;
 }
 
 function TeleportOverlay() {
