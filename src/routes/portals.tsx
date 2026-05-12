@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Copy, ExternalLink, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, ClipboardList, Search, Crown, QrCode, Share2, Globe, Download, X, Bot, Sparkles, PlusCircle } from "lucide-react";
+import { Copy, ExternalLink, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, ClipboardList, Search, Crown, QrCode, Share2, Globe, Download, X, Bot, Sparkles, PlusCircle, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 import { requireMember } from "@/lib/route-guards";
@@ -188,6 +188,33 @@ function PortalsHub() {
   const setQ = (v: string) =>
     navigate({ search: (prev: PortalsSearch) => ({ ...prev, q: v }), replace: true });
   const [qrFor, setQrFor] = useState<Item | null>(null);
+  // Per-user badge visibility preferences. Persisted in localStorage —
+  // these are non-sensitive UI prefs only (no credentials), in line with
+  // project policy that bans secrets in browser storage.
+  const BADGE_PREFS_KEY = "portals.badgePrefs.v1";
+  type BadgePrefs = { boss: boolean; mine: boolean };
+  const [badgePrefs, setBadgePrefs] = useState<BadgePrefs>({ boss: true, mine: true });
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(BADGE_PREFS_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      setBadgePrefs({
+        boss: parsed?.boss !== false,
+        mine: parsed?.mine !== false,
+      });
+    } catch { /* ignore corrupt prefs */ }
+  }, []);
+  const toggleBadge = (key: keyof BadgePrefs) => {
+    setBadgePrefs((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      try {
+        window.localStorage.setItem(BADGE_PREFS_KEY, JSON.stringify(next));
+      } catch { /* storage may be unavailable in private mode */ }
+      return next;
+    });
+  };
   // Per-hub visible-count state: MusicHUB / JokesHUB / ToolHUB paginate
   // long lists so the page stays fast even with hundreds of portals.
   const PAGE_SIZE = 12;
