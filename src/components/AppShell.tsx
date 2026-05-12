@@ -557,7 +557,7 @@ function MobileTabBar({ isVip, isBoss }: { isVip: boolean; isBoss: boolean }) {
     { to: "/", label: "Home", icon: Home, matches: ["/"] },
     {
       to: "/portals",
-      label: "Hubs",
+      label: "Portals",
       icon: Rocket,
       matches: ["/portals", "/p", "/hub", "/music", "/jokes", "/tools", "/trade", "/connect", "/battle", "/syndicate", "/letterhub", "/appealhub"],
     },
