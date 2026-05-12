@@ -250,7 +250,7 @@ function Index() {
       {isVipMember && <VipPortalExplorer customHubs={customHubs} />}
 
       <section className="relative max-w-7xl mx-auto px-5 sm:px-8 pb-28 grid gap-6 md:gap-8 grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))]">
-        {portals.map(({ to, title, desc, Icon }) => {
+        {isBoss && portals.map(({ to, title, desc, Icon }) => {
           const thisPending = pendingTo === to;
           const dimmed = pendingTo !== null && !thisPending;
           return (
