@@ -30,6 +30,7 @@ import { SiteFooter } from "../components/SiteFooter";
 import { AlignmentQAOverlay } from "../components/AlignmentQAOverlay";
 import { PupilCalibrator } from "../components/PupilCalibrator";
 import { HubsStrip } from "../components/HubsStrip";
+import { useAuth } from "../hooks/use-auth";
 
 function NotFoundComponent() {
   return (
@@ -183,6 +184,10 @@ function RootComponent() {
 // fixed slot so navigating between hubs doesn't cause layout shift.
 function HubsStripSlot() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { isAdmin, profile } = useAuth();
+  const isBoss = isAdmin || profile?.rank === "boss";
+  // Hubs are Boss-only — hide the strip from members and VIPs.
+  if (!isBoss) return null;
   const HUB_ROUTES = new Set(["/", "/music", "/jokes", "/trade", "/connect", "/battle", "/tools"]);
   const showStrip = HUB_ROUTES.has(pathname) || pathname.startsWith("/hub/");
   if (!showStrip) return null;
