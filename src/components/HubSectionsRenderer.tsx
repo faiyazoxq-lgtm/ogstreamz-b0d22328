@@ -9,6 +9,7 @@ import { useDownloadCharge } from "@/hooks/use-download-charge";
 import { peekPortalDownload } from "@/lib/portal-downloads.functions";
 import { cloneHubPortalForMe, type CloneResult } from "@/lib/portal-clone.functions";
 import { CoinPurchaseModal, type CoinPurchaseStatus } from "@/components/CoinPurchaseModal";
+import { PortalPreviewModal } from "@/components/PortalPreviewModal";
 
 /**
  * Locked layout for boss-built custom hubs. Same typography, padding, and
@@ -205,6 +206,7 @@ function PortalTile({
   const cloneFn = useServerFn(cloneHubPortalForMe);
   const COST = 2;
   const [open, setOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
   const [status, setStatus] = useState<CoinPurchaseStatus>({ kind: "idle" });
   const [clone, setClone] = useState<CloneResult | { kind: "pending" } | null>(null);
@@ -292,9 +294,22 @@ function PortalTile({
         onConfirm={onConfirm}
         unlockedHref={`${prefix}${portal.slug}`}
         unlockedLabel="View unlocked portal"
+        onUnlockedClick={() => {
+          setOpen(false);
+          setPreviewOpen(true);
+        }}
       >
         {clone && status.kind === "ok" && <CloneBanner clone={clone} accent={accent} />}
       </CoinPurchaseModal>
+
+      <PortalPreviewModal
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        href={`${prefix}${portal.slug}`}
+        portal={portal}
+        kind={kind}
+        accent={accent}
+      />
     </div>
   );
 }

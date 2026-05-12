@@ -39,6 +39,7 @@ export function CoinPurchaseModal({
   children,
   unlockedHref,
   unlockedLabel = "View unlocked portal",
+  onUnlockedClick,
 }: {
   open: boolean;
   onOpenChange: (next: boolean) => void;
@@ -54,6 +55,11 @@ export function CoinPurchaseModal({
   /** Where the "View unlocked portal" button links after a successful charge. */
   unlockedHref?: string;
   unlockedLabel?: string;
+  /**
+   * If provided, the post-purchase CTA calls this instead of navigating.
+   * Use it to open a "Preview portal" modal before leaving the page.
+   */
+  onUnlockedClick?: () => void;
 }) {
   const total = Math.max(0, Math.round(cost * quantity));
   const insufficient =
@@ -191,16 +197,21 @@ export function CoinPurchaseModal({
               >
                 Close
               </Button>
-              {unlockedHref && (
+              {(onUnlockedClick || unlockedHref) && (
                 <Button
-                  asChild
                   type="button"
+                  {...(onUnlockedClick ? {} : { asChild: true } as any)}
+                  onClick={onUnlockedClick}
                   className="portal-button-motion portal-button-motion--lg flex-1 inline-flex items-center justify-center gap-2 font-black uppercase tracking-[0.2em] text-xs text-black border-2"
                   style={{ background: accent, borderColor: accent, boxShadow: `0 0 32px -8px ${accent}` }}
                 >
-                  <Link to={unlockedHref as any} onClick={() => onOpenChange(false)}>
-                    <ArrowUpRight className="h-4 w-4" /> {unlockedLabel}
-                  </Link>
+                  {onUnlockedClick ? (
+                    <><ArrowUpRight className="h-4 w-4" /> {unlockedLabel}</>
+                  ) : (
+                    <Link to={unlockedHref as any} onClick={() => onOpenChange(false)}>
+                      <ArrowUpRight className="h-4 w-4" /> {unlockedLabel}
+                    </Link>
+                  )}
                 </Button>
               )}
             </div>
