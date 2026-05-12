@@ -509,7 +509,7 @@ export function FeaturedDropCard() {
             onClick={() => onBuy(sd.priceId!)}
             disabled={buyState !== "idle"}
             aria-busy={buyState !== "idle"}
-            className="flex-1 min-h-12 font-black tracking-wide transition-all active:scale-[0.98] text-black"
+            className="portal-button-motion portal-button-motion--lg flex-1 font-black tracking-wide active:scale-[0.98] text-black"
             style={{ backgroundColor: accent }}
           >
             {buyState === "opening" ? (
