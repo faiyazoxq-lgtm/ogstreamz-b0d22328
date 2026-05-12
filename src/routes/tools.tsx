@@ -12,7 +12,9 @@ import { spawnTool, type ToolAudience } from "@/lib/tools.functions";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
 import { VipPaywallInline } from "@/components/VipPaywallInline";
-import { ZeroGBadge } from "@/components/ZeroGBadge";
+import { PortalHeader, PortalStyleLine, mergeStyle } from "@/components/PortalHeader";
+
+const TOOLS_STYLE = "Concise, decisive, OG-tone explanation with one actionable next step.";
 
 import { requireUsageAccess } from "@/lib/route-guards";
 export const Route = createFileRoute("/tools")({
@@ -98,7 +100,7 @@ function ToolPromptBuilder() {
     setBusy(true);
     try {
       const res = await spawnFn({
-        data: { name: name.trim(), audience, logic: description.trim(), vibe, vip },
+        data: { name: name.trim(), audience, logic: mergeStyle(TOOLS_STYLE, description), vibe, vip },
       });
       toast.success("⚡ Tool spawned");
       navigate({ to: "/t/$slug", params: { slug: res.slug } });
@@ -121,18 +123,13 @@ function ToolPromptBuilder() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 animate-fade-in">
-      <header className="mb-6 text-center">
-        <p className="text-[10px] sm:text-xs tracking-[0.4em] text-gold uppercase font-semibold">
-          ToolHUB · Prompt Studio
-        </p>
-        <h1 className="mt-2 font-[Montserrat] font-black text-3xl sm:text-5xl tracking-tight leading-[1.05]">
-          Write the <span className="text-gradient-gold">Tool.</span>
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Describe the logic. Tap prompts to stack ideas — they vanish as you use them.
-        </p>
-        <ZeroGBadge className="mt-3" />
-      </header>
+      <PortalHeader
+        portalKey="tools"
+        name="ToolHUB"
+        tagline="Prompt Studio"
+        seed="precision instruments, glowing dials, terminal grid, neon blueprint"
+        accent="gold"
+      />
 
       <section className="rounded-3xl border border-gold/40 bg-gradient-to-br from-card to-background p-4 sm:p-6 shadow-[0_0_80px_oklch(0.82_0.16_88_/_0.1)] backdrop-blur-xl">
         <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Tool Name</label>
@@ -215,6 +212,8 @@ function ToolPromptBuilder() {
           <Sparkles className="h-3.5 w-3.5 text-gold shrink-0" />
           <span className="truncate">0G-BRAIN designs the tool around your prompt · audience: {audience} · vibe: {vibe}</span>
         </div>
+
+        <PortalStyleLine sentence={TOOLS_STYLE} />
 
         {isVip ? (
           <Button

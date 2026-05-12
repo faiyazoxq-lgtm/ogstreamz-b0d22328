@@ -9,7 +9,9 @@ import { VaultLockedDialog } from "@/components/VaultLockedDialog";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
 import { VipPaywallInline } from "@/components/VipPaywallInline";
-import { ZeroGBadge } from "@/components/ZeroGBadge";
+import { PortalHeader, PortalStyleLine, mergeStyle } from "@/components/PortalHeader";
+
+const JOKES_STYLE = "Razor-sharp punch-up roast, club-room timing, no slurs.";
 
 import { requireMember } from "@/lib/route-guards";
 export type StylePreset = { id: string; label: string; Icon: typeof Skull };
@@ -104,7 +106,7 @@ function JokesPromptBuilder() {
 
     const briefLines: string[] = ["# JOKES PORTAL · STYLE BRIEF", ""];
     if (name.trim()) briefLines.push(`Portal name: ${name.trim()}`);
-    briefLines.push(`Brief: ${description.trim()}`);
+    briefLines.push(`Brief: ${mergeStyle(JOKES_STYLE, description)}`);
     briefLines.push("");
     briefLines.push(
       "Generate a punchy interactive joke portal page styled around the above traits. " +
@@ -123,18 +125,13 @@ function JokesPromptBuilder() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 animate-fade-in">
-      <header className="mb-6 text-center">
-        <p className="text-[10px] sm:text-xs tracking-[0.4em] uppercase font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
-          JokesHUB · Prompt Studio
-        </p>
-        <h1 className="mt-2 font-[Montserrat] font-black text-3xl sm:text-5xl tracking-tight leading-[1.05] text-metallic">
-          Write the Punchline.
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Describe your style. Tap prompts to stack ideas — they vanish as you use them.
-        </p>
-        <ZeroGBadge className="mt-3" />
-      </header>
+      <PortalHeader
+        portalKey="jokes"
+        name="JokesHUB"
+        tagline="Prompt Studio"
+        seed="late-night club, neon spotlight, microphone, electric crowd, punchline payoff"
+        accent="blue"
+      />
 
       <section className="rounded-3xl border border-[oklch(0.72_0.22_245/0.4)] bg-gradient-to-br from-card to-background p-4 sm:p-6 shadow-[0_0_80px_oklch(0.72_0.22_245/0.1)] backdrop-blur-xl">
         <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Portal Name</label>
@@ -217,6 +214,8 @@ function JokesPromptBuilder() {
           <Sparkles className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--neon-blue-bright)" }} />
           <span className="truncate">0G-BRAIN designs the portal around your prompt</span>
         </div>
+
+        <PortalStyleLine sentence={JOKES_STYLE} />
 
         {isVip ? (
           <Button

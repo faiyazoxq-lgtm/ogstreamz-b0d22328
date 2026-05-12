@@ -1409,6 +1409,33 @@ export type Database = {
           },
         ]
       }
+      portal_creations: {
+        Row: {
+          created_at: string
+          id: string
+          output: Json
+          portal_key: string
+          prompt: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          output?: Json
+          portal_key: string
+          prompt: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          output?: Json
+          portal_key?: string
+          prompt?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       portal_downloads: {
         Row: {
           created_at: string
@@ -1433,6 +1460,33 @@ export type Database = {
           mode?: string
           portal_id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      portal_headers: {
+        Row: {
+          bg_url: string | null
+          created_at: string
+          description: string
+          portal_key: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bg_url?: string | null
+          created_at?: string
+          description: string
+          portal_key: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bg_url?: string | null
+          created_at?: string
+          description?: string
+          portal_key?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }

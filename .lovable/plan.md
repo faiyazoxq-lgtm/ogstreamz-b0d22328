@@ -1,77 +1,92 @@
 ## Goal
 
-Give the Boss a single, persistent to-do list inside the portal that holds every "make this project perfect" job, with priority + status, and start working through it **one item at a time** in agreed order.
+A single reusable layout that every portal page renders. Built once, plug in per portal with `portalKey`, name, fixed style sentence, and a generator function. New portals get the look for free.
 
----
+## Layout (top to bottom)
 
-## Part 1 — Build the Boss To-Do feature
+```text
++------------------------------------------+
+| [ AI-generated background image ]        |
+|                                          |
+|        LARGE PORTAL NAME                 |
+|        ai-generated short description    |
+|                                          |
++------------------------------------------+
+| [ multi-line prompt textarea         ]   |
+| Style: <fixed style sentence>            |
+| [ Generate ]                             |
++------------------------------------------+
+| Latest creation (inline result)          |
++------------------------------------------+
+| Your library (saved items, scrollable)   |
++------------------------------------------+
+```
 
-A new page at `/boss/todo` plus a tile on the boss overview.
+Style sentence is shown to the user verbatim and auto-prepended to their prompt before sending to the generator. Same prepended prompt is what gets stored.
 
-**Database** (`boss_todos` table)
-- `title`, `details` (markdown), `category` (security · performance · ux · seo · ops · content), `priority` (P0–P3), `status` (todo · in_progress · blocked · done), `link` (optional deep-link into the boss portal), `position` (for drag ordering), `done_at`
-- RLS: only the Boss role can read/write (reuse existing `has_role(auth.uid(),'boss')`)
-- Realtime enabled so multiple tabs stay in sync
+## Backend
 
-**Page** (`src/routes/boss.todo.tsx`)
-- Grouped columns: **In progress · Todo · Blocked · Done**
-- Filter chips by category and priority
-- Inline add (title + priority + category)
-- Click row → side drawer with details, link button, status switcher, "mark done"
-- Counter pill on the boss overview tile showing open P0/P1 count
+New table `portal_headers`:
+- `portal_key` (text, primary key) — e.g. `music`, `jokes`, `tools`, `battles`, `syndicate`
+- `title` (text)
+- `description` (text)
+- `bg_url` (text)
 
-**Overview tile**
-- Add `Boss To-Do` tile to `boss.overview.tsx` (system category, `ListChecks` icon, `#ffd166` tint), routes to `/boss/todo`
+Public read, service-role write (RLS).
 
-**Migration also seeds the prefilled jobs from Part 2** so the list is populated on first open.
+New table `portal_creations`:
+- `user_id`, `portal_key`, `prompt` (with style prefix already merged), `output` (jsonb — text, image url, audio url, etc.), `created_at`
 
----
+RLS: user reads/writes only their own rows. Realtime not needed.
 
-## Part 2 — The prioritized job list (what gets seeded)
+New storage bucket `portal-bg` (public). Headers are generated once per portal — no re-roll.
 
-These are the jobs to make the project perfect. Ordered top-to-bottom = work order.
+Server fns in `src/lib/portal-shell.functions.ts`:
+- `getPortalHeader(portalKey)` — returns cached row, or generates via Lovable AI (text) + Nano Banana (image), uploads to `portal-bg`, inserts into `portal_headers`, returns. Service role.
+- `recordPortalCreation({ portalKey, prompt, output })` — auth-required insert into `portal_creations`.
+- `listPortalCreations({ portalKey, limit })` — auth-required, returns the user's own rows.
 
-**P0 — must do next**
-1. Wire the Cloudflare Web Analytics token (the placeholder from `/boss/analytics-setup`)
-2. Run **Denylist Audit** and clean any DB hits it surfaces
-3. Sweep `<a href>`, `<iframe src>`, `<img src>` usages in the codebase and swap to `SafeLink` / `SafeEmbed` / `SafeImage` for any field that holds external/member-supplied URLs
-4. Add Cloudflare DNS + caching rules (the steps from the earlier Cloudflare guide)
+## Frontend
 
-**P1 — strong wins**
-5. Lighthouse pass on `/`, `/music`, `/jokes`, `/tools`, `/vip` — fix LCP image (preload + `fetchpriority="high"`), defer non-critical JS, add `loading="lazy"` to below-fold images
-6. SEO: per-route `head()` with unique title/description/og:image on every public route; verify single H1 and canonical tags
-7. Accessibility: keyboard focus rings on all interactive elements, `aria-label` on icon-only buttons, color-contrast pass on tinted tiles
-8. Error boundaries: confirm every route with a loader has `errorComponent` + `notFoundComponent`
-9. Email verification flow review (signup → confirm → first login) end-to-end
+New `src/components/PortalShell.tsx`:
 
-**P2 — polish**
-10. Add a publish checklist runner (extends existing `boss.publish-check`) that pings: analytics beacon present, denylist empty hits, sitemap reachable, robots.txt sane, all `/api/public/*` endpoints respond
-11. Realtime presence indicator in the boss portal (who else is editing)
-12. Backup export: nightly snapshot of key tables to storage bucket
-13. Cost dashboard: surface AI Gateway spend per model in `boss.portal-costs`
+```tsx
+<PortalShell
+  portalKey="music"
+  name="MusicHUB"
+  styleSentence="Cinematic neon street-rap, gritty bass, OG energy."
+  placeholder="Describe the track you want…"
+  onGenerate={async (mergedPrompt) => {
+    const result = await generateTrack({ data: { prompt: mergedPrompt } });
+    return { node: <TrackPlayer track={result} />, saved: { kind: "track", url: result.url, title: result.title } };
+  }}
+  renderSaved={(c) => <SavedTrackRow creation={c} />}
+/>
+```
 
-**P3 — nice-to-haves**
-14. Dark/light auto-switch with system preference
-15. Custom 404 illustration
-16. Boss audit log (who changed what, when)
+Shell handles: header fetch + skeleton, textarea, style line, generate button (with loading + error toasts), inline result slot, saved-creations list (live re-fetch on success).
 
----
+## Wire-up (this turn)
 
-## Part 3 — Working order
+Replace top of each existing portal page with `<PortalShell>`. Existing generators keep working — the shell just calls them with the merged prompt. Touched pages this turn:
 
-We tackle them **one at a time**, top-down. After each item ships:
-- mark it done in `/boss/todo`
-- I post the diff summary and what to verify
-- you approve → I pick up the next one
+1. `src/routes/music.tsx`
+2. `src/routes/jokes.tsx`
+3. `src/routes/tools.tsx`
 
-First up after this plan: **Part 1 itself** (build the to-do page + seed the jobs). Then I'll start on P0 #1 (Cloudflare Analytics token wiring).
+Other portal pages (`battle.tsx`, `battlehub.tsx`, `jokes.portal.tsx`, `syndicate.tsx`, `syndicate-overlord.tsx`) keep their current UIs this turn — `<PortalShell>` is ready to drop in next time we touch them, so the pattern holds for "current and future" without rewriting 6,000+ lines in one go.
 
----
+## Style sentences (fixed per portal)
 
-## Technical notes
+- music: "Cinematic neon street-rap with gritty bass and OG energy."
+- jokes: "Razor-sharp punch-up roast, club-room timing, no slurs."
+- tools: "Concise, decisive, OG-tone explanation with one actionable next step."
 
-- New file: `src/routes/boss.todo.tsx`
-- New migration: `boss_todos` table + RLS + seed inserts for the 16 jobs above
-- Edit: `src/routes/boss.overview.tsx` — add the tile
-- No new dependencies; uses existing shadcn `Card`, `Badge`, `Sheet`, `Select`
-- Realtime via existing supabase channel pattern from `use-domain-denylist.ts`
+Editable later from `boss.portals.tsx` (out of scope this turn).
+
+## Out of scope
+
+- Re-rolling cached headers (you said "generate once, cache forever"; admin can clear via DB if needed).
+- Editable style sentences (fixed per portal as you chose).
+- Migrating non-music/jokes/tools portals (shell ready, swap-in later).
+- Changing the existing generator server functions or their output formats.
