@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.jpg";
+import { OgWordmark } from "@/components/OgWordmark";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
@@ -78,7 +79,7 @@ function ResetPasswordPage() {
       <div className="relative w-full max-w-md">
         <Link to="/" className="flex items-center justify-center gap-3 mb-8">
           <img src={logo} alt="0G-PORTAL" className="h-10 w-10 rounded-md ring-1 ring-[oklch(0.72_0.22_245/0.5)]" />
-          <span className="font-[Montserrat] font-black text-2xl tracking-tight text-metallic">0G-PORTAL</span>
+          <OgWordmark suffix="-PORTAL" className="text-2xl text-metallic" />
         </Link>
 
         <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-[0_0_60px_-10px_oklch(0.72_0.22_245/0.4)]">
