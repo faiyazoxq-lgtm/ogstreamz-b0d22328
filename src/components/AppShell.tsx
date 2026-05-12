@@ -116,18 +116,19 @@ function SidebarSection({
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
+          aria-controls={`sidebar-section-${title.replace(/\s+/g, "-").toLowerCase()}`}
           className={[
-            "group/sec w-full flex items-center gap-2 px-3 py-1.5 text-[10px] uppercase tracking-[0.28em] font-bold transition-colors rounded-md",
+            "group/sec w-full flex items-center gap-2 px-3 py-1.5 text-[10px] uppercase tracking-[0.28em] font-bold transition-colors rounded-md outline-none focus-visible:ring-2 focus-visible:ring-gold/70",
             gold ? "text-gold/80 hover:text-gold" : "text-muted-foreground hover:text-foreground",
           ].join(" ")}
         >
-          <Icon className="h-3.5 w-3.5" />
+          <Icon aria-hidden className="h-3.5 w-3.5" />
           <span className="flex-1 text-left">{title}</span>
-          <ChevronDown className={`h-3 w-3 transition-transform ${open ? "rotate-0" : "-rotate-90"}`} />
+          <ChevronDown aria-hidden className={`h-3 w-3 motion-safe:transition-transform duration-200 ${open ? "rotate-0" : "-rotate-90"}`} />
         </button>
       )}
       {(open || collapsed) && (
-        <ul className="mt-1 space-y-0.5">
+        <ul id={`sidebar-section-${title.replace(/\s+/g, "-").toLowerCase()}`} className="mt-1 space-y-0.5">
           {items.map((it) => {
             const active = isPathActive(pathname, it.to);
             return (
