@@ -17,7 +17,8 @@ const client = new Client({
   ],
 });
 
-const PERPLEXITY_KEY = "YOUR_PERPLEXITY_KEY";
+// Read from Supabase secrets — never hard-code.
+const PERPLEXITY_KEY = process.env.PERPLEXITY_API_KEY;
 
 async function getSwearingReply(userMessage) {
   const res = await fetch("https://api.perplexity.ai/chat/completions", {
@@ -51,13 +52,16 @@ client.on("messageCreate", async (message) => {
   message.reply(reply);
 });
 
-client.login("YOUR_DISCORD_BOT_TOKEN");
+client.login(process.env.BOSS_TELEGRAM_API_KEY); // or DISCORD_BOT_TOKEN if/when added
 ```
 
 ## If wiring this up later
 
-- `PERPLEXITY_KEY` and `DISCORD_BOT_TOKEN` MUST live in Supabase secrets,
+- `PERPLEXITY_API_KEY` and the bot token (`BOSS_TELEGRAM_API_KEY` for
+  Telegram, or a future `DISCORD_BOT_TOKEN`) MUST live in Supabase secrets,
   never hard-coded. Read them via `process.env` server-side only.
+- Both are already provisioned in Lovable Cloud secrets — no inline
+  placeholders should ever land in committed code.
 - Same chaos-mode persona is now mirrored in `swear-chat.functions.ts` so
   the in-app swearing agent matches the Discord bot's tone when the master
   Swearing toggle is ON.
