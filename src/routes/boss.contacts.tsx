@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Phone, Plus, Trash2, Loader2, Copy, Pencil, Check, X, Search } from "lucide-react";
@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { parsePhone, toDisplay } from "@/lib/phone";
-import { useMemo } from "react";
 
 export const Route = createFileRoute("/boss/contacts")({
   head: () => ({ meta: [{ title: "Boss Contacts · 0G-STREAMZ" }] }),
