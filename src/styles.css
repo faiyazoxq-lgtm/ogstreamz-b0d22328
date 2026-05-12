@@ -981,8 +981,14 @@ html[data-mood="og"] {
      distracting the eye. */
   .portal-button-motion:focus-visible {
     outline: none;
+    /* Dark inner separator + gold ring + outer glow. The 1px dark ring
+       sits between the control and the gold halo so the halo stays
+       readable on light/saturated backgrounds (e.g. accent-tinted cards),
+       while the gold reads against dark surfaces unchanged. */
     box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.85),
       0 0 0 2px var(--mood-accent, #ffd166),
+      0 0 0 3px rgba(0, 0, 0, 0.55),
       0 0 12px 2px color-mix(in oklab, var(--mood-accent, #ffd166) 55%, transparent),
       0 0 28px 6px color-mix(in oklab, var(--mood-accent, #ffd166) 22%, transparent);
     animation: portal-focus-pulse var(--portal-dur-in) var(--portal-ease-out) both;
@@ -993,15 +999,42 @@ html[data-mood="og"] {
   @keyframes portal-focus-pulse {
     from {
       box-shadow:
+        0 0 0 0 rgba(0, 0, 0, 0.85),
         0 0 0 0 var(--mood-accent, #ffd166),
+        0 0 0 0 rgba(0, 0, 0, 0.55),
         0 0 0 0 color-mix(in oklab, var(--mood-accent, #ffd166) 55%, transparent),
         0 0 0 0 color-mix(in oklab, var(--mood-accent, #ffd166) 22%, transparent);
     }
     to {
       box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.85),
         0 0 0 2px var(--mood-accent, #ffd166),
+        0 0 0 3px rgba(0, 0, 0, 0.55),
         0 0 12px 2px color-mix(in oklab, var(--mood-accent, #ffd166) 55%, transparent),
         0 0 28px 6px color-mix(in oklab, var(--mood-accent, #ffd166) 22%, transparent);
+    }
+  }
+  /* prefers-contrast: more — drop the soft glow, keep a crisp solid
+     gold outline with a dark inner separator so edges stay sharp. */
+  @media (prefers-contrast: more) {
+    .portal-button-motion:focus-visible {
+      animation: none !important;
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.95),
+        0 0 0 3px var(--mood-accent, #ffd166) !important;
+      outline: 2px solid #fff;
+      outline-offset: 3px;
+    }
+  }
+  /* Windows High Contrast / forced-colors — defer entirely to the OS
+     palette. box-shadow is ignored here, so we use outline (which is
+     honored) and let the system choose the highlight color. */
+  @media (forced-colors: active) {
+    .portal-button-motion:focus-visible {
+      animation: none !important;
+      box-shadow: none !important;
+      outline: 3px solid Highlight;
+      outline-offset: 2px;
     }
   }
   @media (prefers-reduced-motion: reduce) {
