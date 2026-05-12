@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { requireBoss } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/battle")({
+  beforeLoad: requireBoss,
   head: () => ({
     meta: [
       { title: "BattleHUB · Every Choice Is A Loss" },
