@@ -12,7 +12,11 @@ import { useEffect, useRef, useState } from "react";
 export function TrackingPupil({
   pupilRatio = 0.55,
   travelRatio = 0.18,
-  smoothing = 0.08,
+  /**
+   * Time constant (seconds) of the low-pass follow filter. ~95% of the way
+   * to the target after ~3×tau. Lower = snappier, higher = silkier.
+   */
+  smoothing = 0.12,
   followGain = 0.5,
   className = "",
   style,
@@ -26,10 +30,20 @@ export function TrackingPupil({
   style?: React.CSSProperties;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const [pupil, setPupil] = useState({ x: 0, y: 0 });
   const [blink, setBlink] = useState(false);
   const targetRef = useRef({ x: 0, y: 0 });
   const currentRef = useRef({ x: 0, y: 0 });
+  const velocityRef = useRef({ x: 0, y: 0 });
+  const blinkRef = useRef(1);
+
+  // Keep transform string in sync with current pos + blink without a
+  // re-render. Called from rAF (movement) and from the blink effect.
+  const writeTransform = () => {
+    const el = ref.current;
+    if (!el) return;
+    const { x, y } = currentRef.current;
+    el.style.transform = `translate(calc(-50% + ${x.toFixed(2)}px), calc(-50% + ${y.toFixed(2)}px)) scaleY(${blinkRef.current})`;
+  };
 
   useEffect(() => {
     const update = (clientX: number, clientY: number) => {
@@ -49,14 +63,36 @@ export function TrackingPupil({
     window.addEventListener("pointermove", onPointer, { passive: true });
     window.addEventListener("pointerdown", onPointer, { passive: true });
 
+    // Critically-damped exponential low-pass with frame-rate-independent
+    // step. tau (seconds) = `smoothing`; alpha = 1 - exp(-dt/tau) keeps the
+    // visual response identical at 60Hz, 120Hz, or throttled tabs.
     let raf = 0;
-    const tick = () => {
+    let last = performance.now();
+    let idleFrames = 0;
+    const tick = (now: number) => {
+      const dt = Math.min(0.05, Math.max(0.0001, (now - last) / 1000));
+      last = now;
+      const tau = Math.max(0.016, smoothing);
+      const alpha = 1 - Math.exp(-dt / tau);
+
       const tgt = targetRef.current;
       const cur = currentRef.current;
-      const nx = cur.x + (tgt.x - cur.x) * smoothing;
-      const ny = cur.y + (tgt.y - cur.y) * smoothing;
+      const dx = tgt.x - cur.x;
+      const dy = tgt.y - cur.y;
+      const nx = cur.x + dx * alpha;
+      const ny = cur.y + dy * alpha;
+
+      // Track velocity for an optional "settled" short-circuit so we stop
+      // burning rAF cycles once the pupil is locked on its target.
+      velocityRef.current = { x: dx, y: dy };
       currentRef.current = { x: nx, y: ny };
-      setPupil({ x: nx, y: ny });
+      writeTransform();
+
+      const settled = Math.abs(dx) < 0.05 && Math.abs(dy) < 0.05;
+      idleFrames = settled ? idleFrames + 1 : 0;
+      // Always keep the loop alive so a fresh pointer move kicks us back in
+      // immediately — modern browsers idle rAF callbacks cheaply when the
+      // transform string is unchanged.
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -101,6 +137,13 @@ export function TrackingPupil({
     };
   }, []);
 
+  // Mirror the React `blink` state into a ref + transform write so the rAF
+  // loop and the blink animation share the same transform string.
+  useEffect(() => {
+    blinkRef.current = blink ? 0.05 : 1;
+    writeTransform();
+  }, [blink]);
+
   return (
     <span
       ref={ref}
@@ -110,8 +153,9 @@ export function TrackingPupil({
         width: `${pupilRatio * 100}%`,
         // Egg-shaped pupil — taller than wide, narrower top, rounder bottom.
         height: `${pupilRatio * 130}%`,
-        transform: `translate(calc(-50% + ${pupil.x}px), calc(-50% + ${pupil.y}px)) scaleY(${blink ? 0.05 : 1})`,
+        transform: `translate(-50%, -50%)`,
         transformOrigin: "center",
+        transition: "transform 80ms ease-out",
         // Hot red pupil — bright blood core fading to deep crimson, with an
         // outer red glow so it reads as a glowing eye even at small sizes.
         background:
