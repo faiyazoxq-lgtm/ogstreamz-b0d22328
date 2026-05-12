@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Sparkles, FileDown, Loader2, ArrowRight, ArrowLeft, RotateCcw, Mail, History, Trash2, FileText, Wand2, CheckCircle2, AlertCircle, Eye, Pencil, Columns2 } from "lucide-react";
+import { Sparkles, FileDown, Loader2, ArrowRight, ArrowLeft, RotateCcw, Mail, History, Trash2, FileText, Wand2, CheckCircle2, AlertCircle, Eye, Pencil, Columns2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -99,6 +99,18 @@ function LetterHubPage() {
   const [suggestingIdx, setSuggestingIdx] = useState<number | null>(null);
   const [touched, setTouched] = useState<Record<number, boolean>>({});
   const [previewMode, setPreviewMode] = useState<"preview" | "edit" | "split">("preview");
+
+  const saveNow = useCallback(() => {
+    if (!autosaveKey || typeof window === "undefined") return;
+    try {
+      const payload = { form, questions, answers, letter, step, savedAt: Date.now() };
+      window.localStorage.setItem(autosaveKey, JSON.stringify(payload));
+      setLastSavedAt(payload.savedAt);
+      toast.success("Draft saved locally");
+    } catch {
+      toast.error("Could not save draft locally");
+    }
+  }, [autosaveKey, form, questions, answers, letter, step]);
 
   // When reopening a saved letter, the local autosaved draft for that slot
   // may differ from what's in the database. Prompt the user to choose.
