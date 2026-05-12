@@ -52,6 +52,7 @@ import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as BossUsersRouteImport } from './routes/boss.users'
 import { Route as BossTodoRouteImport } from './routes/boss.todo'
+import { Route as BossTelegramTestRouteImport } from './routes/boss.telegram-test'
 import { Route as BossTelegramSetupRouteImport } from './routes/boss.telegram-setup'
 import { Route as BossStreamQueueRouteImport } from './routes/boss.stream-queue'
 import { Route as BossSettingsRouteImport } from './routes/boss.settings'
@@ -301,6 +302,11 @@ const BossTodoRoute = BossTodoRouteImport.update({
   path: '/todo',
   getParentRoute: () => BossRoute,
 } as any)
+const BossTelegramTestRoute = BossTelegramTestRouteImport.update({
+  id: '/telegram-test',
+  path: '/telegram-test',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossTelegramSetupRoute = BossTelegramSetupRouteImport.update({
   id: '/telegram-setup',
   path: '/telegram-setup',
@@ -531,6 +537,7 @@ export interface FileRoutesByFullPath {
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/telegram-setup': typeof BossTelegramSetupRoute
+  '/boss/telegram-test': typeof BossTelegramTestRoute
   '/boss/todo': typeof BossTodoRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -608,6 +615,7 @@ export interface FileRoutesByTo {
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/telegram-setup': typeof BossTelegramSetupRoute
+  '/boss/telegram-test': typeof BossTelegramTestRoute
   '/boss/todo': typeof BossTodoRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -687,6 +695,7 @@ export interface FileRoutesById {
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/telegram-setup': typeof BossTelegramSetupRoute
+  '/boss/telegram-test': typeof BossTelegramTestRoute
   '/boss/todo': typeof BossTodoRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -767,6 +776,7 @@ export interface FileRouteTypes {
     | '/boss/settings'
     | '/boss/stream-queue'
     | '/boss/telegram-setup'
+    | '/boss/telegram-test'
     | '/boss/todo'
     | '/boss/users'
     | '/checkout/return'
@@ -844,6 +854,7 @@ export interface FileRouteTypes {
     | '/boss/settings'
     | '/boss/stream-queue'
     | '/boss/telegram-setup'
+    | '/boss/telegram-test'
     | '/boss/todo'
     | '/boss/users'
     | '/checkout/return'
@@ -922,6 +933,7 @@ export interface FileRouteTypes {
     | '/boss/settings'
     | '/boss/stream-queue'
     | '/boss/telegram-setup'
+    | '/boss/telegram-test'
     | '/boss/todo'
     | '/boss/users'
     | '/checkout/return'
@@ -1295,6 +1307,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossTodoRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/telegram-test': {
+      id: '/boss/telegram-test'
+      path: '/telegram-test'
+      fullPath: '/boss/telegram-test'
+      preLoaderRoute: typeof BossTelegramTestRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/telegram-setup': {
       id: '/boss/telegram-setup'
       path: '/telegram-setup'
@@ -1565,6 +1584,7 @@ interface BossRouteChildren {
   BossSettingsRoute: typeof BossSettingsRoute
   BossStreamQueueRoute: typeof BossStreamQueueRoute
   BossTelegramSetupRoute: typeof BossTelegramSetupRoute
+  BossTelegramTestRoute: typeof BossTelegramTestRoute
   BossTodoRoute: typeof BossTodoRoute
   BossUsersRoute: typeof BossUsersRoute
   BossIndexRoute: typeof BossIndexRoute
@@ -1594,6 +1614,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossSettingsRoute: BossSettingsRoute,
   BossStreamQueueRoute: BossStreamQueueRoute,
   BossTelegramSetupRoute: BossTelegramSetupRoute,
+  BossTelegramTestRoute: BossTelegramTestRoute,
   BossTodoRoute: BossTodoRoute,
   BossUsersRoute: BossUsersRoute,
   BossIndexRoute: BossIndexRoute,
