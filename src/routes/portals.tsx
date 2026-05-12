@@ -30,7 +30,7 @@ type Item = {
   id: string; slug: string; name: string; subtitle: string;
   kind: "music" | "joke" | "trade" | "news" | "battle" | "tool" | "form";
   to: "/m/$slug" | "/p/$slug" | "/td/$slug" | "/b/$slug" | "/t/$slug" | "/f/$slug";
-  vip: boolean; views: number; created_at: string;
+  vip: boolean; views: number; created_at: string; byBoss: boolean;
 };
 
 const KIND_META: Record<Item["kind"], { label: string; hub: string; Icon: any; accent: string }> = {
@@ -101,20 +101,20 @@ function PortalsHub() {
             const kind = (["music","joke","trade","news","form"].includes(p.kind) ? p.kind : "joke") as Item["kind"];
             out.push({
               id: p.id, slug: p.slug, name: p.name, subtitle: p.niche || "",
-              kind, to, vip: !!p.vip, views: p.view_count || 0, created_at: p.created_at,
+              kind, to, vip: !!p.vip, views: p.view_count || 0, created_at: p.created_at, byBoss: true,
             });
           }
           for (const b of (battles as BattleRow[] | null) ?? []) {
             out.push({
               id: b.id, slug: b.slug, name: b.name, subtitle: b.tagline || "Battle scenario",
-              kind: "battle", to: "/b/$slug", vip: false, views: b.view_count || 0, created_at: b.created_at,
+              kind: "battle", to: "/b/$slug", vip: false, views: b.view_count || 0, created_at: b.created_at, byBoss: true,
             });
           }
           for (const t of (tools as ToolRow[] | null) ?? []) {
             if (!t.published) continue;
             out.push({
               id: t.id, slug: t.slug, name: t.name, subtitle: t.description || "Spawned tool",
-              kind: "tool", to: "/t/$slug", vip: !!t.vip, views: 0, created_at: t.created_at,
+              kind: "tool", to: "/t/$slug", vip: !!t.vip, views: 0, created_at: t.created_at, byBoss: true,
             });
           }
         } else {
@@ -138,7 +138,7 @@ function PortalsHub() {
             const kind = (["music","joke","trade","news","form"].includes(p.kind) ? p.kind : "joke") as Item["kind"];
             out.push({
               id: p.id, slug: p.slug, name: p.name, subtitle: "",
-              kind, to, vip: !!p.vip, views: 0, created_at: p.created_at,
+              kind, to, vip: !!p.vip, views: 0, created_at: p.created_at, byBoss: true,
             });
             seen.add(p.id);
           }
@@ -148,11 +148,15 @@ function PortalsHub() {
             const kind = (["music","joke","trade","news","form"].includes(p.kind) ? p.kind : "joke") as Item["kind"];
             out.push({
               id: p.id, slug: p.slug, name: p.name, subtitle: p.niche || "",
-              kind, to, vip: !!p.vip, views: p.view_count || 0, created_at: p.created_at,
+              kind, to, vip: !!p.vip, views: p.view_count || 0, created_at: p.created_at, byBoss: false,
             });
           }
         }
-        out.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+        // Boss-published portals first, then viewer's own — newest first within each group.
+        out.sort((a, b) => {
+          if (a.byBoss !== b.byBoss) return a.byBoss ? -1 : 1;
+          return +new Date(b.created_at) - +new Date(a.created_at);
+        });
         setItems(out);
       } catch (e: any) {
         setError(e?.message ?? "Failed to load portals");
