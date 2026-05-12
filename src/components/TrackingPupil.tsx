@@ -31,123 +31,15 @@ export function TrackingPupil({
 }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [blink, setBlink] = useState(false);
-  const targetRef = useRef({ x: 0, y: 0 });
-  const currentRef = useRef({ x: 0, y: 0 });
-  const velocityRef = useRef({ x: 0, y: 0 });
   const blinkRef = useRef(1);
 
-  // Keep transform string in sync with current pos + blink without a
-  // re-render. Called from rAF (movement) and from the blink effect.
+  // Cursor tracking removed — pupil sits dead-centre. Only the blink
+  // animation keeps the eye feeling alive (idle blink + tap blink).
   const writeTransform = () => {
     const el = ref.current;
     if (!el) return;
-    const { x, y } = currentRef.current;
-    el.style.transform = `translate(calc(-50% + ${x.toFixed(2)}px), calc(-50% + ${y.toFixed(2)}px)) scaleY(${blinkRef.current})`;
+    el.style.transform = `translate(-50%, -50%) scaleY(${blinkRef.current})`;
   };
-
-  useEffect(() => {
-    // Touch / coarse-pointer surfaces dispatch pointermove + touchmove
-    // continuously during scroll, which jitters the pupil. Detect coarse
-    // pointers and gate target updates while the page is actively
-    // scrolling so the pupil holds its last position instead of chasing
-    // the scroll-induced motion.
-    const isCoarse =
-      typeof window !== "undefined" && typeof window.matchMedia === "function"
-        ? window.matchMedia("(hover: none) and (pointer: coarse)").matches
-        : false;
-    let scrollingUntil = 0;
-    const SCROLL_QUIET_MS = 220;
-    const onScroll = () => {
-      scrollingUntil = performance.now() + SCROLL_QUIET_MS;
-    };
-    const isScrolling = () => performance.now() < scrollingUntil;
-
-    const update = (clientX: number, clientY: number, snap = false) => {
-      const el = ref.current?.parentElement;
-      if (!el) return;
-      // While scrolling on touch devices, freeze the target. Pointer/touch
-      // events that fire mid-scroll are scroll artifacts, not real intent.
-      if (isCoarse && isScrolling()) return;
-      const r = el.getBoundingClientRect();
-      const cx = r.left + r.width / 2;
-      const cy = r.top + r.height / 2;
-      const dx = clientX - cx;
-      const dy = clientY - cy;
-      const dist = Math.hypot(dx, dy) || 1;
-      const t = r.width * travelRatio;
-      const mag = Math.min(t, dist * followGain);
-      const next = { x: (dx / dist) * mag, y: (dy / dist) * mag };
-      targetRef.current = next;
-      // Touch taps fire one pointerdown — easing it in over ~3·tau feels
-      // like lag. Snap the smoothed position straight to the target so the
-      // pupil locks onto the tap, then keep tracking with the low-pass for
-      // any subsequent drag.
-      if (snap) {
-        currentRef.current = { ...next };
-        writeTransform();
-      }
-    };
-    const onMove = (e: PointerEvent) => update(e.clientX, e.clientY, false);
-    const onDown = (e: PointerEvent) => {
-      // Snap on touch/pen taps; mouse keeps the silky low-pass on click too.
-      update(e.clientX, e.clientY, e.pointerType !== "mouse");
-    };
-    // Touch fallback for browsers where pointer events lag behind touch
-    // (older iOS Safari especially). touchstart/touchmove fire ~immediately
-    // and `passive: true` keeps native scrolling untouched.
-    const onTouch = (e: TouchEvent) => {
-      const t = e.touches[0] ?? e.changedTouches[0];
-      if (!t) return;
-      update(t.clientX, t.clientY, e.type === "touchstart");
-    };
-    window.addEventListener("pointermove", onMove, { passive: true });
-    window.addEventListener("pointerdown", onDown, { passive: true });
-    window.addEventListener("touchstart", onTouch, { passive: true });
-    window.addEventListener("touchmove", onTouch, { passive: true });
-    window.addEventListener("scroll", onScroll, { passive: true, capture: true });
-
-    // Critically-damped exponential low-pass with frame-rate-independent
-    // step. tau (seconds) = `smoothing`; alpha = 1 - exp(-dt/tau) keeps the
-    // visual response identical at 60Hz, 120Hz, or throttled tabs.
-    let raf = 0;
-    let last = performance.now();
-    let idleFrames = 0;
-    const tick = (now: number) => {
-      const dt = Math.min(0.05, Math.max(0.0001, (now - last) / 1000));
-      last = now;
-      const tau = Math.max(0.016, smoothing);
-      const alpha = 1 - Math.exp(-dt / tau);
-
-      const tgt = targetRef.current;
-      const cur = currentRef.current;
-      const dx = tgt.x - cur.x;
-      const dy = tgt.y - cur.y;
-      const nx = cur.x + dx * alpha;
-      const ny = cur.y + dy * alpha;
-
-      // Track velocity for an optional "settled" short-circuit so we stop
-      // burning rAF cycles once the pupil is locked on its target.
-      velocityRef.current = { x: dx, y: dy };
-      currentRef.current = { x: nx, y: ny };
-      writeTransform();
-
-      const settled = Math.abs(dx) < 0.05 && Math.abs(dy) < 0.05;
-      idleFrames = settled ? idleFrames + 1 : 0;
-      // Always keep the loop alive so a fresh pointer move kicks us back in
-      // immediately — modern browsers idle rAF callbacks cheaply when the
-      // transform string is unchanged.
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerdown", onDown);
-      window.removeEventListener("touchstart", onTouch);
-      window.removeEventListener("touchmove", onTouch);
-      window.removeEventListener("scroll", onScroll, { capture: true } as EventListenerOptions);
-      cancelAnimationFrame(raf);
-    };
-  }, [travelRatio, smoothing, followGain]);
 
   // Blink on any pointer down — and idle-blink every few seconds so the eye
   // feels alive even when the cursor is still.
