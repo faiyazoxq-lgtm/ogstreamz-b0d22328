@@ -461,6 +461,31 @@ function PortalsHub() {
               );
             })}
           </div>
+          {/* Badge visibility toggles — preferences persist in localStorage. */}
+          <div className="inline-flex items-center rounded-md border border-border bg-card p-0.5 text-[10px] uppercase tracking-[0.18em] font-bold" role="group" aria-label="Badge visibility">
+            {([
+              { key: "boss" as const, label: "Boss" },
+              { key: "mine" as const, label: "Mine" },
+            ]).map(({ key, label }) => {
+              const on = badgePrefs[key];
+              return (
+                <button
+                  key={key}
+                  onClick={() => toggleBadge(key)}
+                  aria-pressed={on}
+                  title={`${on ? "Hide" : "Show"} ${label} badges`}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded transition"
+                  style={{
+                    background: on ? "rgba(255,255,255,0.08)" : "transparent",
+                    color: on ? "var(--mood-accent,#ffd166)" : "rgba(255,255,255,0.45)",
+                  }}
+                >
+                  {on ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                  {label}
+                </button>
+              );
+            })}
+          </div>
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <input
