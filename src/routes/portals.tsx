@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Copy, ExternalLink, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, ClipboardList, Search, Crown, QrCode, Share2, Globe, Download, X, Bot, Sparkles, PlusCircle } from "lucide-react";
@@ -140,8 +140,29 @@ function OgBotEmpty({
   );
 }
 
+type PortalsSearch = {
+  filter: "all" | Item["kind"];
+  scope: "all" | "boss" | "mine";
+  q: string;
+};
+
+const FILTER_VALUES: PortalsSearch["filter"][] = ["all", "music", "joke", "trade", "news", "form", "battle", "tool"];
+const SCOPE_VALUES: PortalsSearch["scope"][] = ["all", "boss", "mine"];
+
 export const Route = createFileRoute("/portals")({
   beforeLoad: requireMember,
+  // Persist filter / scope / search query in the URL so the grouping and
+  // ordering of portals stays consistent across navigation and refresh.
+  validateSearch: (raw: Record<string, unknown>): PortalsSearch => {
+    const f = String(raw.filter ?? "all") as PortalsSearch["filter"];
+    const s = String(raw.scope ?? "all") as PortalsSearch["scope"];
+    const q = typeof raw.q === "string" ? raw.q.slice(0, 80) : "";
+    return {
+      filter: FILTER_VALUES.includes(f) ? f : "all",
+      scope: SCOPE_VALUES.includes(s) ? s : "all",
+      q,
+    };
+  },
   head: () => ({
     meta: [
       { title: "All Portals — 0G Share Hub" },
@@ -156,10 +177,16 @@ function PortalsHub() {
   const isBoss = isAdmin || profile?.rank === "boss";
   const [items, setItems] = useState<Item[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"all" | Item["kind"]>("all");
-  const [q, setQ] = useState("");
-  // Scope toggle: All / Boss-published / Mine. Lives top-right next to search.
-  const [scope, setScope] = useState<"all" | "boss" | "mine">("all");
+  // Filter / scope / search query are persisted in the URL via validateSearch
+  // so the grouping & ordering stay consistent across navigation and refresh.
+  const { filter, scope, q } = Route.useSearch();
+  const navigate = useNavigate({ from: "/portals" });
+  const setFilter = (v: PortalsSearch["filter"]) =>
+    navigate({ search: (prev: PortalsSearch) => ({ ...prev, filter: v }), replace: true });
+  const setScope = (v: PortalsSearch["scope"]) =>
+    navigate({ search: (prev: PortalsSearch) => ({ ...prev, scope: v }), replace: true });
+  const setQ = (v: string) =>
+    navigate({ search: (prev: PortalsSearch) => ({ ...prev, q: v }), replace: true });
   const [qrFor, setQrFor] = useState<Item | null>(null);
   // Per-hub visible-count state: MusicHUB / JokesHUB / ToolHUB paginate
   // long lists so the page stays fast even with hundreds of portals.
