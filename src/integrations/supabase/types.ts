@@ -1088,6 +1088,44 @@ export type Database = {
         }
         Relationships: []
       }
+      form_submissions: {
+        Row: {
+          created_at: string
+          id: string
+          ip_hint: string | null
+          payload: Json
+          portal_id: string
+          submitter_email: string | null
+          telegram_sent: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_hint?: string | null
+          payload?: Json
+          portal_id: string
+          submitter_email?: string | null
+          telegram_sent?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_hint?: string | null
+          payload?: Json
+          portal_id?: string
+          submitter_email?: string | null
+          telegram_sent?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_submissions_portal_id_fkey"
+            columns: ["portal_id"]
+            isOneToOne: false
+            referencedRelation: "portals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       function_exec_audit: {
         Row: {
           created_at: string
