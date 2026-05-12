@@ -20,6 +20,23 @@ export function OgBotFloatingWidget() {
     setOpen(false);
   }, [pathname]);
 
+  // On auth/login flows the form lives in the lower half of the screen on
+  // mobile, so the default bottom-right launcher and panel can sit on top
+  // of email/password inputs and the submit button. Detect those routes
+  // and pin the widget to the top-right (small) instead so it never
+  // covers a critical form control.
+  const AUTH_PREFIXES = [
+    "/auth",
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/reset-password",
+    "/vault-login",
+  ];
+  const isAuthRoute = AUTH_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(p + "/"),
+  );
+
   // Detect any open Radix/Vaul dialog, sheet, drawer, or alert-dialog so
   // the floating widget can step out of the way (hide entirely on mobile,
   // sink behind the modal on desktop). Shadcn primitives expose
@@ -73,17 +90,23 @@ export function OgBotFloatingWidget() {
         aria-hidden={modalOpen || undefined}
         tabIndex={modalOpen ? -1 : 0}
         onClick={() => setOpen((o) => !o)}
-        className={`fixed right-4 bottom-20 md:bottom-6 inline-flex h-14 w-14 items-center justify-center rounded-full border border-[oklch(0.72_0.22_245/0.6)] bg-black/70 text-white shadow-[0_0_30px_-6px_oklch(0.72_0.22_245/0.7)] backdrop-blur-xl transition hover:scale-105 hover:border-[oklch(0.72_0.22_245)] ${
+        className={`fixed inline-flex items-center justify-center rounded-full border border-[oklch(0.72_0.22_245/0.6)] bg-black/70 text-white shadow-[0_0_30px_-6px_oklch(0.72_0.22_245/0.7)] backdrop-blur-xl transition hover:scale-105 hover:border-[oklch(0.72_0.22_245)] ${
+          isAuthRoute
+            ? // Tucked into the top-right on auth flows so it can't cover
+              // email/password fields or the primary CTA on small screens.
+              "right-3 top-3 md:right-6 md:top-6 h-11 w-11"
+            : "right-4 bottom-20 md:bottom-6 h-14 w-14"
+        } ${
           modalOpen
             ? "z-0 pointer-events-none opacity-0 scale-90"
             : "z-40 opacity-100"
         }`}
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        style={isAuthRoute ? undefined : { paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         {open ? (
-          <X className="h-5 w-5" />
+          <X className={isAuthRoute ? "h-4 w-4" : "h-5 w-5"} />
         ) : (
-          <Bot className="h-6 w-6" style={{ color: "var(--neon-blue-bright, #6cb6ff)" }} />
+          <Bot className={isAuthRoute ? "h-5 w-5" : "h-6 w-6"} style={{ color: "var(--neon-blue-bright, #6cb6ff)" }} />
         )}
         <span className="sr-only">OG Bot assistant</span>
       </button>
@@ -93,7 +116,14 @@ export function OgBotFloatingWidget() {
           role="dialog"
           aria-modal="false"
           aria-label="OG Bot assistant"
-          className="fixed z-40 right-3 left-3 bottom-36 md:left-auto md:right-6 md:bottom-24 md:w-[380px] max-h-[70vh] overflow-hidden rounded-2xl shadow-2xl"
+          className={`fixed z-40 overflow-hidden rounded-2xl shadow-2xl ${
+            isAuthRoute
+              ? // Anchor to the top-right under the launcher on auth flows
+                // and cap the height so login inputs below stay visible
+                // and tappable on small screens.
+                "right-3 left-3 top-16 md:left-auto md:right-6 md:top-20 md:w-[380px] max-h-[55vh]"
+              : "right-3 left-3 bottom-36 md:left-auto md:right-6 md:bottom-24 md:w-[380px] max-h-[70vh]"
+          }`}
         >
           <SiteGuideSwearChat />
         </div>
