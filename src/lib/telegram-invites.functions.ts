@@ -27,7 +27,7 @@ export const requestMembersConnectTelegram = createServerFn({ method: "POST" })
       .from("profiles")
       .select("id");
     if (memErr) throw new Error(memErr.message);
-    const memberIds = (members ?? []).map((r: { id: string }) => r.id);
+    const memberIds: string[] = (members ?? []).map((r: { id: string }) => r.id);
 
     // 2) Exclude users who already have a live chat_id linked.
     const { data: linked, error: linkErr } = await supabase
@@ -38,7 +38,7 @@ export const requestMembersConnectTelegram = createServerFn({ method: "POST" })
     const linkedSet = new Set(
       (linked ?? []).map((r: { user_id: string }) => r.user_id),
     );
-    const targets = memberIds.filter((id) => !linkedSet.has(id));
+    const targets = memberIds.filter((id: string) => !linkedSet.has(id));
 
     if (targets.length === 0) {
       return { invited: 0, dmd: 0, alreadyLinked: linkedSet.size };
@@ -46,7 +46,7 @@ export const requestMembersConnectTelegram = createServerFn({ method: "POST" })
 
     // 3) Fan-out per-user in-app notifications. Chunked to keep the insert
     //    payload comfortably under PostgREST limits.
-    const rows = targets.map((uid) => ({
+    const rows = targets.map((uid: string) => ({
       user_id: uid,
       audience: "ogs" as const,
       severity: "info" as const,
