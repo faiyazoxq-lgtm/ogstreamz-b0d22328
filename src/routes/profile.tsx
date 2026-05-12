@@ -217,11 +217,43 @@ function ProfilePage() {
               <span
                 role="status"
                 aria-label="Free tier — VIP not active"
-                className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_oklab,var(--gold)_28%,transparent)] bg-[color-mix(in_oklab,var(--gold)_5%,transparent)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.32em] text-[color-mix(in_oklab,var(--gold)_72%,var(--muted-foreground))]"
+                className="relative inline-flex items-center gap-2 rounded-full px-3.5 py-1 text-[10px] font-semibold uppercase tracking-[0.34em]"
+                style={{
+                  border: "1px solid color-mix(in oklab, var(--gold) 38%, transparent)",
+                  background:
+                    "linear-gradient(180deg, color-mix(in oklab, var(--gold) 14%, transparent) 0%, color-mix(in oklab, var(--gold) 4%, transparent) 50%, color-mix(in oklab, var(--gold) 10%, transparent) 100%)",
+                  backgroundClip: "padding-box",
+                  color: "color-mix(in oklab, var(--gold) 78%, var(--foreground))",
+                  boxShadow:
+                    "0 0 18px -6px var(--electric-gold-glow, color-mix(in oklab, var(--gold) 60%, transparent)), inset 0 1px 0 color-mix(in oklab, var(--gold) 28%, transparent), inset 0 -1px 0 color-mix(in oklab, var(--gold) 10%, transparent)",
+                  textShadow: "0 0 10px color-mix(in oklab, var(--gold) 35%, transparent)",
+                }}
               >
-                <span aria-hidden="true" className="h-px w-4 bg-[color-mix(in_oklab,var(--gold)_55%,transparent)]" />
-                Free Tier
-                <span aria-hidden="true" className="h-px w-4 bg-[color-mix(in_oklab,var(--gold)_55%,transparent)]" />
+                <span
+                  aria-hidden="true"
+                  className="h-px w-5"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, transparent 0%, color-mix(in oklab, var(--gold) 70%, transparent) 100%)",
+                  }}
+                />
+                <span
+                  className="bg-clip-text text-transparent"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(180deg, color-mix(in oklab, var(--gold) 92%, white) 0%, color-mix(in oklab, var(--gold) 70%, var(--foreground)) 55%, color-mix(in oklab, var(--gold) 88%, white) 100%)",
+                  }}
+                >
+                  Free Tier
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="h-px w-5"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, color-mix(in oklab, var(--gold) 70%, transparent) 0%, transparent 100%)",
+                  }}
+                />
               </span>
             )}
           </section>
