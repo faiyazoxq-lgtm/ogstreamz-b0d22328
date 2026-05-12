@@ -43,16 +43,17 @@ export function OgWordmark({
   /** @deprecated */ evil?: boolean;
   style?: React.CSSProperties;
 }) {
-  // Artwork "OG" lockup. The painted iris (the dark ring around the orange
-  // slit) sits at roughly x=27%, y=49% of the 1920×1047 source. The bright
-  // "red pearl" highlight inside the slit sits slightly above center at
-  // ~y=43%, so the moving pupil hotspot is centered on the pearl, not the
-  // geometric iris center — that's what makes the eye read as alive.
+  // Artwork "OG" lockup. The painted iris (dark ring around the orange slit)
+  // is centered at roughly x=30%, y=49% of the 1920×1047 source, with a
+  // diameter ≈19% of art width / 34% of art height. The hotspot below frames
+  // exactly that disc so the tracking pupil can travel inside the iris.
   const ART_ASPECT = 1920 / 1047;
-  const IRIS_LEFT_PCT = 17;
-  const IRIS_TOP_PCT = 26;
-  const IRIS_W_PCT = 20;
+  const IRIS_W_PCT = 19;
   const IRIS_H_PCT = 34;
+  const IRIS_CENTER_X_PCT = 30;
+  const IRIS_CENTER_Y_PCT = 49;
+  const IRIS_LEFT_PCT = IRIS_CENTER_X_PCT - IRIS_W_PCT / 2;
+  const IRIS_TOP_PCT = IRIS_CENTER_Y_PCT - IRIS_H_PCT / 2;
 
   const irisRef = useRef<HTMLElement>(null);
   const [ownsLightning, setOwnsLightning] = useState(false);
