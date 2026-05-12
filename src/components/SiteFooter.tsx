@@ -13,8 +13,14 @@ import { useAuth } from "@/hooks/use-auth";
  */
 export function SiteFooter() {
   const year = new Date().getFullYear();
-  const { isAdmin } = useAuth();
+  const { profile, isAdmin } = useAuth();
   const isBoss = isAdmin;
+  const isVip =
+    isAdmin ||
+    profile?.status === "vip" ||
+    profile?.rank === "vip" ||
+    profile?.rank === "boss" ||
+    profile?.feature_flags?.real_og === true;
   const allGroups = [
     {
       title: "Hubs",
@@ -35,7 +41,8 @@ export function SiteFooter() {
         { to: "/", label: "Home", icon: Home },
         { to: "/portals", label: "Browse Portals", icon: Sparkles },
         { to: "/noticeboard", label: "VIP Noticeboard", icon: Crown },
-        { to: "/vip", label: "Real OG", icon: Crown },
+        // Sales link to /vip is hidden from existing VIPs.
+        ...(isVip ? [] : [{ to: "/vip", label: "Real OG", icon: Crown }]),
       ],
     },
     {
@@ -54,7 +61,7 @@ export function SiteFooter() {
         { to: "/sitemap", label: "Sitemap", icon: Map },
       ],
     },
-  ] as const;
+  ];
   // Hubs are Boss-only — hide the entire Hubs column for everyone else.
   const groups = allGroups.filter((g) => g.title !== "Hubs" || isBoss);
 

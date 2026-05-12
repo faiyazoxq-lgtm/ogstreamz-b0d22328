@@ -22,7 +22,13 @@ export const Route = createFileRoute("/vault-login")({
 
 function VaultLoginPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
+  const isVip =
+    isAdmin ||
+    profile?.status === "vip" ||
+    profile?.rank === "vip" ||
+    profile?.rank === "boss" ||
+    profile?.feature_flags?.real_og === true;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -258,9 +264,11 @@ function VaultLoginPage() {
 
             <div className="mt-6 flex items-center justify-between text-[11px] text-cyan-200/60">
               <Link to="/auth" className="hover:text-cyan-100">Standard login</Link>
-              <Link to="/vip" className="inline-flex items-center gap-1 hover:text-cyan-100">
-                <Crown className="h-3 w-3" /> Get VIP Pass
-              </Link>
+              {!isVip && (
+                <Link to="/vip" className="inline-flex items-center gap-1 hover:text-cyan-100">
+                  <Crown className="h-3 w-3" /> Get VIP Pass
+                </Link>
+              )}
             </div>
           </div>
         </div>
