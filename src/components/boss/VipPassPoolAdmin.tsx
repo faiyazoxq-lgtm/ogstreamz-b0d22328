@@ -16,10 +16,12 @@ type Draft = {
   id: string | null;
   label: string;
   code: string;
+  username: string;
+  password: string;
   active: boolean;
   sort_order: number;
 };
-const empty: Draft = { id: null, label: "", code: "", active: true, sort_order: 0 };
+const empty: Draft = { id: null, label: "", code: "", username: "", password: "", active: true, sort_order: 0 };
 
 /** Boss-only: manage the VIP Pass Pool that gets randomly served to OGs. */
 export function VipPassPoolAdmin() {
@@ -32,6 +34,7 @@ export function VipPassPoolAdmin() {
   const [draft, setDraft] = useState<Draft>(empty);
   const [busy, setBusy] = useState(false);
   const [showCode, setShowCode] = useState<Record<string, boolean>>({});
+  const [showSecret, setShowSecret] = useState(false);
   const [bulk, setBulk] = useState("");
 
   const refresh = async () => {
@@ -48,7 +51,11 @@ export function VipPassPoolAdmin() {
   useEffect(() => { void refresh(); /* eslint-disable-next-line */ }, []);
 
   const submit = async () => {
-    if (!draft.code.trim()) return toast.error("Code required");
+    const hasCode = !!draft.code.trim();
+    const hasCred = !!draft.username.trim() && !!draft.password.trim();
+    if (!hasCode && !hasCred) {
+      return toast.error("Provide a code OR a username and password");
+    }
     setBusy(true);
     try {
       await save({ data: draft });
@@ -68,12 +75,26 @@ export function VipPassPoolAdmin() {
     setBusy(true);
     let added = 0, failed = 0;
     for (const line of lines) {
-      // Format: "label | code"  or just "code"
-      const [maybeLabel, maybeCode] = line.includes("|") ? line.split("|").map((s) => s.trim()) : ["", line];
-      const code = (maybeCode || maybeLabel).trim();
-      const label = maybeCode ? maybeLabel : "";
+      // Accepted formats per line:
+      //   "label | username | password"
+      //   "username | password"
+      //   "label | code"   (legacy single-code)
+      //   "code"           (legacy single-code)
+      const parts = line.split("|").map((s) => s.trim()).filter((s) => s.length > 0);
+      let payload: { label: string; code: string; username: string; password: string } = {
+        label: "", code: "", username: "", password: "",
+      };
+      if (parts.length >= 3) {
+        payload = { label: parts[0], username: parts[1], password: parts[2], code: "" };
+      } else if (parts.length === 2) {
+        payload = { label: "", username: parts[0], password: parts[1], code: "" };
+      } else if (parts.length === 1) {
+        payload = { label: "", code: parts[0], username: "", password: "" };
+      } else {
+        failed++; continue;
+      }
       try {
-        await save({ data: { id: null, label, code, active: true, sort_order: 0 } });
+        await save({ data: { id: null, ...payload, active: true, sort_order: 0 } });
         added++;
       } catch {
         failed++;
@@ -87,7 +108,7 @@ export function VipPassPoolAdmin() {
 
   const toggleActive = async (r: VipPassPoolRow) => {
     try {
-      await save({ data: { id: r.id, label: r.label, code: r.code, active: !r.active, sort_order: r.sort_order } });
+      await save({ data: { id: r.id, label: r.label, code: r.code, username: r.username, password: r.password, active: !r.active, sort_order: r.sort_order } });
       await refresh();
     } catch (e: any) {
       toast.error(e?.message ?? "Update failed");
@@ -112,49 +133,80 @@ export function VipPassPoolAdmin() {
         <div>
           <h2 className="font-[Montserrat] font-black text-xl text-foreground">VIP Pass Pool</h2>
           <p className="text-xs text-muted-foreground">
-            OGs press Reveal on their dashboard to be assigned a random code from this list. Each reveal lasts 15 minutes.
+            OGs press Reveal on their dashboard to be assigned a random pass — either a code, or a username + password — from this list. Each reveal lasts 15 minutes.
           </p>
         </div>
       </header>
 
       {/* Add single */}
-      <section className="rounded-xl border border-cyan-400/30 bg-card/70 p-4 grid gap-3 sm:grid-cols-[1fr_2fr_auto_auto_auto] sm:items-end">
-        <div>
-          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Label</label>
-          <Input value={draft.label} onChange={(e) => setDraft({ ...draft, label: e.target.value })} placeholder="e.g. Backstage" />
+      <section className="rounded-xl border border-cyan-400/30 bg-card/70 p-4 space-y-3">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Label</label>
+            <Input value={draft.label} onChange={(e) => setDraft({ ...draft, label: e.target.value })} placeholder="e.g. Stream A · 4K" />
+          </div>
+          <div>
+            <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Pass Code (optional)</label>
+            <Input value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value })} placeholder="VIP-XXXX-2026" className="font-mono" />
+          </div>
+          <div>
+            <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Username</label>
+            <Input value={draft.username} onChange={(e) => setDraft({ ...draft, username: e.target.value })} placeholder="streamuser01" className="font-mono" autoComplete="off" />
+          </div>
+          <div>
+            <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground flex items-center justify-between">
+              <span>Password</span>
+              <button type="button" onClick={() => setShowSecret((s) => !s)} className="text-muted-foreground hover:text-white">
+                {showSecret ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              </button>
+            </label>
+            <Input
+              type={showSecret ? "text" : "password"}
+              value={draft.password}
+              onChange={(e) => setDraft({ ...draft, password: e.target.value })}
+              placeholder="••••••••"
+              className="font-mono"
+              autoComplete="new-password"
+            />
+          </div>
         </div>
-        <div>
-          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Pass Code</label>
-          <Input value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value })} placeholder="VIP-XXXX-2026" className="font-mono" />
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Sort</label>
+            <Input
+              type="number"
+              value={draft.sort_order}
+              onChange={(e) => setDraft({ ...draft, sort_order: Math.max(0, parseInt(e.target.value || "0", 10)) })}
+              className="w-24 font-mono"
+            />
+          </div>
+          <label className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2 text-xs">
+            <span className="uppercase tracking-widest text-muted-foreground">Active</span>
+            <Switch checked={draft.active} onCheckedChange={(v) => setDraft({ ...draft, active: v })} />
+          </label>
+          <div className="flex-1" />
+          {draft.id && (
+            <Button variant="ghost" onClick={() => setDraft(empty)} className="text-muted-foreground">Cancel edit</Button>
+          )}
+          <Button onClick={submit} disabled={busy} className="bg-cyan-400 hover:bg-cyan-300 text-black font-bold">
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="h-4 w-4 mr-1" />{draft.id ? "Save" : "Add pass"}</>}
+          </Button>
         </div>
-        <div>
-          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Sort</label>
-          <Input
-            type="number"
-            value={draft.sort_order}
-            onChange={(e) => setDraft({ ...draft, sort_order: Math.max(0, parseInt(e.target.value || "0", 10)) })}
-            className="w-20 font-mono"
-          />
-        </div>
-        <label className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2 text-xs">
-          <span className="uppercase tracking-widest text-muted-foreground">Active</span>
-          <Switch checked={draft.active} onCheckedChange={(v) => setDraft({ ...draft, active: v })} />
-        </label>
-        <Button onClick={submit} disabled={busy} className="bg-cyan-400 hover:bg-cyan-300 text-black font-bold">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="h-4 w-4 mr-1" />{draft.id ? "Save" : "Add"}</>}
-        </Button>
+        <p className="text-[10px] text-muted-foreground">
+          Provide a username + password (recommended), or just a code, or both. Credentials are encrypted at rest.
+        </p>
       </section>
 
       {/* Bulk paste */}
       <section className="rounded-xl border border-cyan-400/20 bg-card/50 p-4">
         <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-cyan-300 mb-2">
-          <KeyRound className="h-3 w-3 inline mr-1" /> Bulk add — one code per line (optional <code>label | code</code>)
+          <KeyRound className="h-3 w-3 inline mr-1" /> Bulk add — one per line. Formats: <code>label | username | password</code>, <code>username | password</code>, or <code>code</code>
         </p>
         <textarea
           value={bulk}
           onChange={(e) => setBulk(e.target.value)}
-          rows={4}
-          placeholder={"Backstage | VIP-AAA-1111\nFront row | VIP-BBB-2222\nVIP-CCC-3333"}
+          rows={5}
+          placeholder={"Stream A | streamuser01 | s3cret-pass\nstreamuser02 | another-pass\nVIP-AAA-1111"}
           className="w-full rounded-md border border-border bg-background/60 px-3 py-2 text-sm font-mono"
         />
         <div className="mt-2 flex justify-end">
@@ -176,7 +228,7 @@ export function VipPassPoolAdmin() {
               <thead>
                 <tr className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground border-b border-border">
                   <th className="text-left px-3 py-2 font-bold">Label</th>
-                  <th className="text-left px-3 py-2 font-bold">Code</th>
+                  <th className="text-left px-3 py-2 font-bold">Credential</th>
                   <th className="text-right px-3 py-2 font-bold">Sort</th>
                   <th className="text-center px-3 py-2 font-bold">Active</th>
                   <th className="px-3 py-2"></th>
@@ -185,11 +237,15 @@ export function VipPassPoolAdmin() {
               <tbody>
                 {rows.map((r) => {
                   const visible = !!showCode[r.id];
+                  const hasCred = !!r.username && !!r.password;
+                  const display = hasCred
+                    ? (visible ? `${r.username} / ${r.password}` : `${r.username} / ${"•".repeat(Math.min(10, r.password.length || 8))}`)
+                    : (visible ? r.code : "•".repeat(Math.min(16, r.code.length)));
                   return (
                     <tr key={r.id} className={`border-b border-border/40 ${!r.active ? "opacity-50" : ""}`}>
                       <td className="px-3 py-2 text-white">{r.label || <span className="text-muted-foreground">—</span>}</td>
                       <td className="px-3 py-2 font-mono text-cyan-200">
-                        <span>{visible ? r.code : "•".repeat(Math.min(16, r.code.length))}</span>
+                        <span className="break-all">{display || <span className="text-muted-foreground">—</span>}</span>
                         <button
                           type="button"
                           onClick={() => setShowCode((s) => ({ ...s, [r.id]: !s[r.id] }))}
@@ -215,7 +271,7 @@ export function VipPassPoolAdmin() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => setDraft({ id: r.id, label: r.label, code: r.code, active: r.active, sort_order: r.sort_order })}
+                          onClick={() => setDraft({ id: r.id, label: r.label, code: r.code, username: r.username, password: r.password, active: r.active, sort_order: r.sort_order })}
                           className="text-cyan-200 hover:text-white"
                         >
                           Edit

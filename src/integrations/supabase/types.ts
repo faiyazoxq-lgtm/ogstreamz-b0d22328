@@ -3327,9 +3327,11 @@ export type Database = {
       vip_pass_pool: {
         Row: {
           active: boolean
-          code: string
+          code: string | null
           created_at: string
           created_by: string | null
+          enc_password: string | null
+          enc_username: string | null
           id: string
           label: string
           sort_order: number
@@ -3337,9 +3339,11 @@ export type Database = {
         }
         Insert: {
           active?: boolean
-          code: string
+          code?: string | null
           created_at?: string
           created_by?: string | null
+          enc_password?: string | null
+          enc_username?: string | null
           id?: string
           label?: string
           sort_order?: number
@@ -3347,9 +3351,11 @@ export type Database = {
         }
         Update: {
           active?: boolean
-          code?: string
+          code?: string | null
           created_at?: string
           created_by?: string | null
+          enc_password?: string | null
+          enc_username?: string | null
           id?: string
           label?: string
           sort_order?: number
@@ -3707,6 +3713,20 @@ export type Database = {
           username: string
         }[]
       }
+      boss_list_vip_pass_pool: {
+        Args: never
+        Returns: {
+          active: boolean
+          code: string
+          created_at: string
+          id: string
+          label: string
+          password: string
+          sort_order: number
+          updated_at: string
+          username: string
+        }[]
+      }
       boss_purge_view_events: { Args: never; Returns: number }
       boss_restore_function_execute: {
         Args: { _log_id: string }
@@ -3764,16 +3784,29 @@ export type Database = {
         }
         Returns: string
       }
-      boss_upsert_vip_pass_pool: {
-        Args: {
-          _active: boolean
-          _code: string
-          _id: string
-          _label: string
-          _sort_order: number
-        }
-        Returns: string
-      }
+      boss_upsert_vip_pass_pool:
+        | {
+            Args: {
+              _active: boolean
+              _code: string
+              _id: string
+              _label: string
+              _sort_order: number
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _active: boolean
+              _code: string
+              _id: string
+              _label: string
+              _password?: string
+              _sort_order: number
+              _username?: string
+            }
+            Returns: string
+          }
       bot_factory_create: {
         Args: {
           p_asset_class: string
