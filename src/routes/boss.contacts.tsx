@@ -558,7 +558,7 @@ function BossContactsPage() {
               isActiveMatch
                 ? "border-gold/70 ring-2 ring-gold/40 bg-gold/5"
                 : "border-border"
-            }`}
+            }${c.id === restoredPulseId ? " animate-pulse ring-2 ring-gold/60" : ""}`}
           >
             {editing === c.id ? (
               <div className="space-y-2">
