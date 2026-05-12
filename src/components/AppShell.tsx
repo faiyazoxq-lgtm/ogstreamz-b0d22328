@@ -74,6 +74,15 @@ function isPathActive(pathname: string, to: string) {
   return pathname === to || pathname.startsWith(to + "/");
 }
 
+/**
+ * Returns true when the current pathname matches the tab's primary route
+ * OR any of its companion prefixes. Lets one bottom-tab "Hubs" stay lit
+ * while you navigate /portals → /p/foo → /music, etc.
+ */
+function isAnyPathActive(pathname: string, prefixes: ReadonlyArray<string>) {
+  return prefixes.some((p) => isPathActive(pathname, p));
+}
+
 /* ======================================================================
  * Desktop sidebar
  * ====================================================================== */
