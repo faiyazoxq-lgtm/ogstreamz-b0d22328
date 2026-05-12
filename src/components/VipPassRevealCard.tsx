@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Crown, Eye, Copy, Check, Timer, Loader2, Flame, Lock, Download, Sparkles, Share2 } from "lucide-react";
+import { Crown, Eye, Copy, Check, Timer, Loader2, Flame, Lock, Download, Sparkles, Share2, Gift } from "lucide-react";
 import { toPng } from "html-to-image";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 import { revealVipPass, type VipPassRevealResult } from "@/lib/vip-pass-pool.functions";
 
 /** VIP / Real OG widget: press Reveal to be assigned a random VIP pass code
@@ -30,8 +31,32 @@ export function VipPassRevealCard() {
   const [downloading, setDownloading] = useState(false);
   const [sharing, setSharing] = useState(false);
   const passCardRef = useRef<HTMLDivElement | null>(null);
+  const referralCardRef = useRef<HTMLDivElement | null>(null);
   const tick = useRef<number | null>(null);
   const renderCache = useRef<{ key: string; file: File; dataUrl: string; name: string } | null>(null);
+  const referralCache = useRef<{ key: string; file: File; dataUrl: string; name: string } | null>(null);
+
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+
+  // Pull this user's referral code so the share card embeds a reward link.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("referral_code")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!cancelled) setReferralCode(prof?.referral_code ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
+  const referralUrl = useMemo(() => {
+    if (!referralCode || typeof window === "undefined") return "";
+    return `${window.location.origin}/auth?mode=signup&vipref=${referralCode}`;
+  }, [referralCode]);
 
   // Stable identity for the currently-rendered pass. When this changes,
   // the cached PNG is invalidated so Share/Save re-render once.
@@ -143,40 +168,63 @@ export function VipPassRevealCard() {
     }
   };
 
+  // Renders the referral card (no creds) — cached per referral code.
+  const renderReferralFile = async (): Promise<{ file: File; dataUrl: string; name: string } | null> => {
+    if (!referralCardRef.current) return null;
+    const key = referralCode ?? "";
+    if (referralCache.current && referralCache.current.key === key && key) {
+      const c = referralCache.current;
+      return { file: c.file, dataUrl: c.dataUrl, name: c.name };
+    }
+    const dataUrl = await toPng(referralCardRef.current, {
+      cacheBust: true,
+      pixelRatio: 3,
+      backgroundColor: "#000308",
+    });
+    const stamp = new Date().toISOString().slice(0, 10);
+    const name = `og-vip-invite-${stamp}.png`;
+    const blob = await (await fetch(dataUrl)).blob();
+    const file = new File([blob], name, { type: "image/png" });
+    if (key) referralCache.current = { key, file, dataUrl, name };
+    return { file, dataUrl, name };
+  };
+
   const doShare = async () => {
+    if (!referralCode || !referralUrl) {
+      toast.error("Referral code not ready yet — try again in a moment");
+      return;
+    }
     setSharing(true);
     try {
-      const out = await renderPassFile();
+      const out = await renderReferralFile();
       if (!out) return;
       const nav = navigator as Navigator & {
         canShare?: (data: ShareData) => boolean;
         share?: (data: ShareData) => Promise<void>;
       };
+      const text = `Join me on OG-STREAMZ — use my VIP code ${referralCode} at signup and we both get +2 coins 🪙`;
       const shareData: ShareData = {
         files: [out.file],
-        title: "OG-STREAMZ VIP Pass",
-        text: "My OG-STREAMZ VIP pass — 15-min window.",
-        url: typeof window !== "undefined" ? window.location.href : undefined,
+        title: "Join me on OG-STREAMZ",
+        text,
+        url: referralUrl,
       };
       if (nav.share && nav.canShare && nav.canShare(shareData)) {
         await nav.share(shareData);
-        toast.success("Shared");
+        toast.success("Invite shared");
       } else {
         triggerDownload(out.dataUrl, out.name);
-        const shareUrl = shareData.url ?? "";
         let copied = false;
-        if (shareUrl) {
-          try {
-            await navigator.clipboard.writeText(shareUrl);
-            copied = true;
-          } catch {
-            /* clipboard blocked — silent */
-          }
+        try {
+          await navigator.clipboard.writeText(`${text}\n${referralUrl}`);
+          copied = true;
+        } catch {
+          /* clipboard blocked — silent */
         }
         toast.message(
           copied
-            ? "Sharing not supported — image saved & link copied"
-            : "Sharing not supported — image downloaded instead",
+            ? "Sharing not supported — invite saved & link copied"
+            : "Sharing not supported — invite image downloaded instead",
         );
       }
     } catch (e: any) {
@@ -387,11 +435,12 @@ export function VipPassRevealCard() {
               <Button
                 size="sm"
                 onClick={doShare}
-                disabled={sharing}
+                disabled={sharing || !referralUrl}
+                title={referralUrl ? "Share your VIP invite link" : "Preparing your invite link…"}
                 className="bg-gradient-to-r from-[#ff2a8a] to-[#00d4ff] text-black font-black uppercase tracking-[0.2em] shadow-[0_0_18px_rgba(255,42,138,0.5)] hover:brightness-110"
               >
-                {sharing ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Share2 className="h-3.5 w-3.5 mr-1.5" />}
-                Share
+                {sharing ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Gift className="h-3.5 w-3.5 mr-1.5" />}
+                Share invite
               </Button>
             </div>
 
@@ -413,6 +462,131 @@ export function VipPassRevealCard() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Off-screen referral share card — rendered to PNG when the user
+          taps Share invite. No credentials, just branding + QR + code. */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "fixed",
+          left: "-10000px",
+          top: 0,
+          width: 720,
+          pointerEvents: "none",
+          opacity: 1,
+        }}
+      >
+        <div
+          ref={referralCardRef}
+          style={{
+            width: 720,
+            padding: 40,
+            borderRadius: 24,
+            color: "#e6f6ff",
+            fontFamily: "Montserrat, system-ui, sans-serif",
+            background:
+              "radial-gradient(120% 80% at 0% 0%, rgba(0,200,255,0.45) 0%, transparent 55%), radial-gradient(120% 80% at 100% 100%, rgba(255,30,138,0.40) 0%, transparent 55%), linear-gradient(135deg, #050a1a 0%, #0a0014 100%)",
+            border: "1px solid rgba(0,212,255,0.45)",
+            boxShadow: "inset 0 0 0 1px rgba(0,212,255,0.25)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
+            <div
+              style={{
+                width: 48, height: 48, borderRadius: 12,
+                display: "grid", placeItems: "center",
+                background: "rgba(0,212,255,0.18)",
+                border: "1px solid rgba(0,212,255,0.55)",
+              }}
+            >
+              <Gift style={{ width: 22, height: 22, color: "#a5f3ff" }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, letterSpacing: "0.4em", fontWeight: 900, color: "#a5f3ff" }}>
+                OG-STREAMZ · VIP INVITE
+              </div>
+              <div style={{ marginTop: 4, fontSize: 26, fontWeight: 900, color: "#fff", textShadow: "0 0 18px rgba(0,200,255,0.6)" }}>
+                You're invited to the syndicate
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 11, letterSpacing: "0.35em", color: "rgba(165,243,255,0.7)", fontWeight: 800 }}>
+                VIP REFERRAL CODE
+              </div>
+              <div
+                style={{
+                  marginTop: 10,
+                  fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                  fontSize: 56,
+                  letterSpacing: "0.25em",
+                  fontWeight: 900,
+                  color: "#fff",
+                  textShadow: "0 0 20px rgba(0,212,255,0.7)",
+                  wordBreak: "break-all",
+                }}
+              >
+                {referralCode ?? "—"}
+              </div>
+              <div style={{ marginTop: 18, fontSize: 14, color: "rgba(230,246,255,0.85)", lineHeight: 1.45 }}>
+                Sign up with this code and we both pocket{" "}
+                <strong style={{ color: "#ffd000" }}>+2 coins</strong>. Scan the QR or open the link below.
+              </div>
+              <div
+                style={{
+                  marginTop: 14,
+                  fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                  fontSize: 13,
+                  color: "#a5f3ff",
+                  wordBreak: "break-all",
+                }}
+              >
+                {referralUrl}
+              </div>
+            </div>
+
+            {referralUrl && (
+              <div
+                style={{
+                  background: "#fff",
+                  padding: 12,
+                  borderRadius: 16,
+                  boxShadow: "0 0 24px rgba(0,200,255,0.45)",
+                }}
+              >
+                <QRCodeSVG
+                  value={referralUrl}
+                  size={180}
+                  level="M"
+                  bgColor="#ffffff"
+                  fgColor="#020617"
+                  marginSize={1}
+                />
+                <div style={{ marginTop: 6, textAlign: "center", fontSize: 10, letterSpacing: "0.3em", fontWeight: 900, color: "#1f2937" }}>
+                  SCAN TO JOIN
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div
+            style={{
+              marginTop: 28,
+              display: "flex",
+              justifyContent: "space-between",
+              fontFamily: "ui-monospace, SFMono-Regular, monospace",
+              fontSize: 11,
+              letterSpacing: "0.3em",
+              color: "rgba(165,243,255,0.7)",
+            }}
+          >
+            <span>OGSTREAMZ.CO.UK</span>
+            <span>BOTH EARN +2 🪙</span>
+          </div>
+        </div>
       </div>
     </section>
   );
