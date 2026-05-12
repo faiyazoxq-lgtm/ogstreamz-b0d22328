@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Phone, Plus, Trash2, Loader2, Copy, Pencil, Check, X } from "lucide-react";
+import { Phone, Plus, Trash2, Loader2, Copy, Pencil, Check, X, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,6 +29,8 @@ function BossContactsPage() {
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState({ label: "", phone: "", notes: "" });
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<"all" | "spare" | "other">("all");
 
   async function load() {
     const { data, error } = await supabase
@@ -104,6 +106,23 @@ function BossContactsPage() {
     }
   }
 
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const qDigits = q.replace(/\D/g, "");
+    return items.filter((c) => {
+      if (filter === "spare" && !/\bspare\b/i.test(c.label)) return false;
+      if (filter === "other" && /\bspare\b/i.test(c.label)) return false;
+      if (!q) return true;
+      const phoneDigits = c.phone.replace(/\D/g, "");
+      const labelMatch = c.label.toLowerCase().includes(q);
+      const notesMatch = (c.notes ?? "").toLowerCase().includes(q);
+      const phoneMatch =
+        c.phone.toLowerCase().includes(q) ||
+        (qDigits.length >= 3 && phoneDigits.includes(qDigits));
+      return labelMatch || notesMatch || phoneMatch;
+    });
+  }, [items, query, filter]);
+
   return (
     <div className="py-6 space-y-6">
       <header className="flex items-center gap-2">
@@ -140,11 +159,56 @@ function BossContactsPage() {
       </section>
 
       <section className="space-y-2">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by label, phone, or notes…"
+            className="pl-9"
+            aria-label="Search contacts"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-1 text-xs">
+          {(["all", "spare", "other"] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setFilter(k)}
+              className={`rounded-full px-3 py-1 uppercase tracking-[0.2em] border transition ${
+                filter === k
+                  ? "border-gold/60 bg-gold/10 text-gold"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {k === "all" ? "All" : k === "spare" ? "Spare" : "Other"}
+            </button>
+          ))}
+          <span className="ml-auto text-muted-foreground">
+            {filtered.length} of {items.length}
+          </span>
+        </div>
+      </section>
+
+      <section className="space-y-2">
         {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
         {!loading && items.length === 0 && (
           <p className="text-sm text-muted-foreground">No contacts yet.</p>
         )}
-        {items.map((c) => (
+        {!loading && items.length > 0 && filtered.length === 0 && (
+          <p className="text-sm text-muted-foreground">No contacts match your search.</p>
+        )}
+        {filtered.map((c) => (
           <div key={c.id} className="rounded-xl border border-border bg-card/60 p-3">
             {editing === c.id ? (
               <div className="space-y-2">
