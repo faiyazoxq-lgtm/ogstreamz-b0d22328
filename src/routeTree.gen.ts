@@ -40,6 +40,7 @@ import { Route as BossRouteImport } from './routes/boss'
 import { Route as BattlehubRouteImport } from './routes/battlehub'
 import { Route as BattleRouteImport } from './routes/battle'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AppealhubRouteImport } from './routes/appealhub'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BossIndexRouteImport } from './routes/boss.index'
@@ -246,6 +247,11 @@ const BattleRoute = BattleRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppealhubRoute = AppealhubRouteImport.update({
+  id: '/appealhub',
+  path: '/appealhub',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -517,6 +523,7 @@ const ApiPublicFleetWebhookBotIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/appealhub': typeof AppealhubRoute
   '/auth': typeof AuthRoute
   '/battle': typeof BattleRoute
   '/battlehub': typeof BattlehubRoute
@@ -602,6 +609,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/appealhub': typeof AppealhubRoute
   '/auth': typeof AuthRoute
   '/battle': typeof BattleRoute
   '/battlehub': typeof BattlehubRoute
@@ -687,6 +695,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/appealhub': typeof AppealhubRoute
   '/auth': typeof AuthRoute
   '/battle': typeof BattleRoute
   '/battlehub': typeof BattlehubRoute
@@ -774,6 +783,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/appealhub'
     | '/auth'
     | '/battle'
     | '/battlehub'
@@ -859,6 +869,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/appealhub'
     | '/auth'
     | '/battle'
     | '/battlehub'
@@ -943,6 +954,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/appealhub'
     | '/auth'
     | '/battle'
     | '/battlehub'
@@ -1029,6 +1041,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AppealhubRoute: typeof AppealhubRoute
   AuthRoute: typeof AuthRoute
   BattleRoute: typeof BattleRoute
   BattlehubRoute: typeof BattlehubRoute
@@ -1295,6 +1308,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/appealhub': {
+      id: '/appealhub'
+      path: '/appealhub'
+      fullPath: '/appealhub'
+      preLoaderRoute: typeof AppealhubRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -1769,6 +1789,7 @@ const StoreRouteWithChildren = StoreRoute._addFileChildren(StoreRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AppealhubRoute: AppealhubRoute,
   AuthRoute: AuthRoute,
   BattleRoute: BattleRoute,
   BattlehubRoute: BattlehubRoute,
