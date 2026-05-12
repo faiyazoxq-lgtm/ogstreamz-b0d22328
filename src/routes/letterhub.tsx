@@ -943,6 +943,14 @@ function LetterHubPage() {
                         Auto-saved {new Date(lastSavedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     )}
+                    <button
+                      type="button"
+                      onClick={saveNow}
+                      className="inline-flex items-center gap-1 rounded-md border border-border bg-background/40 px-2 py-1 text-[10px] font-black uppercase tracking-[0.15em] text-white/80 hover:text-white hover:border-[oklch(0.72_0.22_245/0.6)] transition-colors"
+                      aria-label="Save draft now"
+                    >
+                      <Save className="h-3 w-3" /> Save now
+                    </button>
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={reset} className="uppercase tracking-[0.2em] font-black text-xs">
