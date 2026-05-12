@@ -1,5 +1,12 @@
+import { useEffect, useRef, useState } from "react";
 import { TrackingPupil } from "./TrackingPupil";
+import { EyeLightning } from "./EyeLightning";
 import ogEvilEye from "@/assets/og-evil-eye.jpg";
+
+// Module-level mount counter so only the FIRST live OgWordmark renders the
+// global lightning overlay. Every other instance still gets the tracking
+// pupil, but only one fixed-position SVG layer exists at a time.
+let LIGHTNING_OWNER = 0;
 
 /**
  * Single source of truth for TrackingEye sizing across the brand surface.
@@ -36,16 +43,28 @@ export function OgWordmark({
   /** @deprecated */ evil?: boolean;
   style?: React.CSSProperties;
 }) {
-  // Artwork "OG" lockup. The painted iris sits at roughly x=34%, y=50% of the
-  // 1920×1047 source; the iris itself is ~22% of the image width. Those ratios
-  // place the tracking-pupil overlay exactly on top of the painted iris so the
-  // eye reads as if it's tracking — same behavior as the previous stylized eye.
+  // Artwork "OG" lockup. The painted iris (the dark ring around the orange
+  // slit) sits at roughly x=27%, y=49% of the 1920×1047 source. The bright
+  // "red pearl" highlight inside the slit sits slightly above center at
+  // ~y=43%, so the moving pupil hotspot is centered on the pearl, not the
+  // geometric iris center — that's what makes the eye read as alive.
   const ART_ASPECT = 1920 / 1047;
-  // Iris hotspot inside the artwork (left/top/size as % of the image box).
-  const IRIS_LEFT_PCT = 23; // left edge of iris bounding box (% of art width)
-  const IRIS_TOP_PCT = 30;  // top edge (% of art height) → centers iris at 50%
-  const IRIS_W_PCT = 22;    // iris width as % of art width
-  const IRIS_H_PCT = 40;    // iris height as % of art height (≈ square pixels)
+  const IRIS_LEFT_PCT = 17;
+  const IRIS_TOP_PCT = 26;
+  const IRIS_W_PCT = 20;
+  const IRIS_H_PCT = 34;
+
+  const irisRef = useRef<HTMLSpanElement>(null);
+  const [ownsLightning, setOwnsLightning] = useState(false);
+
+  useEffect(() => {
+    LIGHTNING_OWNER += 1;
+    const isOwner = LIGHTNING_OWNER === 1;
+    setOwnsLightning(isOwner);
+    return () => {
+      LIGHTNING_OWNER -= 1;
+    };
+  }, []);
 
   return (
     <span
@@ -80,6 +99,7 @@ export function OgWordmark({
             TrackingPupil renders an absolutely-centered slit inside it that
             translates with the cursor. */}
         <span
+          ref={irisRef}
           aria-hidden
           className="absolute pointer-events-none"
           style={{
@@ -103,6 +123,7 @@ export function OgWordmark({
           {suffix}
         </span>
       )}
+      {ownsLightning && <EyeLightning originRef={irisRef} />}
     </span>
   );
 }
