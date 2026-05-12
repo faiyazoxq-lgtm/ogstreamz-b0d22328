@@ -144,6 +144,13 @@ function BossContactsPage() {
       toast.error(parsed.error);
       return;
     }
+    const dupes = items.filter((c) => c.phone === parsed.e164);
+    if (dupes.length > 0) {
+      const names = dupes.map((d) => d.label).join(", ");
+      if (!confirm(`This number is already saved as: ${names}.\nAdd another contact with the same phone?`)) {
+        return;
+      }
+    }
     setSaving(true);
     const { error } = await supabase.from("boss_contacts").insert({
       label, phone: parsed.e164, notes: draft.notes.trim(),
@@ -171,6 +178,13 @@ function BossContactsPage() {
   async function saveEdit(id: string) {
     const parsed = parsePhone(editDraft.phone);
     if (!parsed.ok) { toast.error(parsed.error); return; }
+    const dupes = items.filter((c) => c.id !== id && c.phone === parsed.e164);
+    if (dupes.length > 0) {
+      const names = dupes.map((d) => d.label).join(", ");
+      if (!confirm(`This number is already saved as: ${names}.\nKeep both contacts with the same phone?`)) {
+        return;
+      }
+    }
     const { error } = await supabase.from("boss_contacts").update({
       label: editDraft.label.trim(),
       phone: parsed.e164,
