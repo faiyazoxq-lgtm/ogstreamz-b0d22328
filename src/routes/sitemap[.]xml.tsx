@@ -12,19 +12,14 @@ const SITE_URL = "https://ogstreamz.co.uk";
  * excluded — they're either gated, transient, or have no SEO value.
  *
  * Tuple shape: [path, priority, changefreq]. Higher priority for the
- * homepage and primary hubs; lower for secondary catalog/landing pages.
+ * homepage; lower for secondary catalog/landing pages. Hub landing
+ * pages (/music, /jokes, /trade, /tools, /battle, /battlehub,
+ * /syndicate, /connect) are Boss-only surfaces and are intentionally
+ * excluded from the public sitemap.
  */
 const STATIC_PATHS: ReadonlyArray<readonly [string, string, string]> = [
   ["/",            "1.0", "daily"],
-  ["/music",       "0.9", "daily"],
-  ["/jokes",       "0.9", "daily"],
   ["/jokes/portal","0.7", "weekly"],
-  ["/trade",       "0.9", "daily"],
-  ["/tools",       "0.9", "daily"],
-  ["/battle",      "0.8", "daily"],
-  ["/battlehub",   "0.8", "daily"],
-  ["/syndicate",   "0.8", "daily"],
-  ["/connect",     "0.7", "weekly"],
   ["/portals",     "0.8", "daily"],
   ["/store",       "0.7", "weekly"],
   ["/store/catalog","0.7","weekly"],
