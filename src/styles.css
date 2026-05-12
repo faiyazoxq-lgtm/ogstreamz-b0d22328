@@ -1007,10 +1007,14 @@ html[data-mood="og"] {
     --portal-focus-scale: 1;
   }
   .portal-button-motion--lg {
-    padding: 0.75rem 1.25rem;
+    /* Mobile-friendly touch target: 48px min-height (Material) with
+       generous horizontal padding so labels never crowd the halo. The
+       --portal-focus-scale stays at 1.25 — increasing the footprint
+       grows the gold halo proportionally without re-tuning ratios. */
+    padding: 0.875rem 1.5rem;        /* 14px / 24px */
     font-size: 1rem;                 /* 16px */
     border-radius: 0.625rem;
-    min-height: 2.75rem;             /* 44px — touch-target friendly */
+    min-height: 3rem;                /* 48px — comfortable on mobile  */
     line-height: 1.15;
     --portal-focus-scale: 1.25;
   }
