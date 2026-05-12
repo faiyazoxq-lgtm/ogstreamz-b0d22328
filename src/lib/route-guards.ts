@@ -163,6 +163,7 @@ export async function requireBoss({ location }: GuardCtx) {
  * Route guard: admin role only. Unauthenticated → /auth, signed-in non-admin → /.
  */
 export async function requireAdmin({ location }: GuardCtx) {
+  // (unchanged below)
   if (typeof window === "undefined") return;
   const stash = () => stashRedirect(location);
 
@@ -183,6 +184,36 @@ export async function requireAdmin({ location }: GuardCtx) {
   const isAdmin = !!adminRow || prof?.rank === "boss";
   if (!isAdmin) {
     throw redirect({ to: "/", search: { forbidden: "admin" } as never });
+  }
+}
+
+/**
+ * Hub route guard: identical to `requireBoss`, except signed-in non-boss users
+ * (VIPs / members) are redirected to `/portals` instead of `/`. Hubs are the
+ * Boss-only authoring surfaces (MusicHUB, JokesHUB, ToolHUB, etc.) — non-boss
+ * traffic should land on the curated portal grid they're allowed to use.
+ */
+export async function requireBossHub({ location }: GuardCtx) {
+  if (typeof window === "undefined") return;
+  const stash = () => stashRedirect(location);
+
+  if (!hasStoredAuth()) { stash(); throw redirect({ to: "/auth" }); }
+
+  const { data: sess } = await supabase.auth.getSession();
+  const uid = sess.session?.user?.id;
+  if (!uid) { stash(); throw redirect({ to: "/auth" }); }
+
+  const [{ data: prof }, { data: adminRow }] = await Promise.all([
+    supabase.from("profiles").select("rank,banned").eq("id", uid).maybeSingle(),
+    supabase.from("user_roles").select("role").eq("user_id", uid).eq("role", "admin").maybeSingle(),
+  ]);
+
+  if (prof?.banned) {
+    throw redirect({ to: "/", search: { banned: "1" } as never });
+  }
+  const isBoss = prof?.rank === "boss" || !!adminRow;
+  if (!isBoss) {
+    throw redirect({ to: "/portals", search: { forbidden: "hub" } as never });
   }
 }
 

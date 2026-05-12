@@ -16,9 +16,9 @@ import { PortalHeader, PortalStyleLine, mergeStyle } from "@/components/PortalHe
 
 const MUSIC_STYLE = "Cinematic neon street-rap with gritty bass and OG energy.";
 
-import { requireBoss } from "@/lib/route-guards";
+import { requireBossHub } from "@/lib/route-guards";
 export const Route = createFileRoute("/music")({
-  beforeLoad: requireBoss,
+  beforeLoad: requireBossHub,
   head: () => ({
     meta: [
       { title: "MusicHUB · Build Your Sound — 0G-STREAMZ" },

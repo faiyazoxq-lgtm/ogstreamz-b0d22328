@@ -3,10 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Swords, Crown, Shield, TrendingUp, Timer, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { requireBoss } from "@/lib/route-guards";
+import { requireBossHub } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/battlehub")({
-  beforeLoad: requireBoss,
+  beforeLoad: requireBossHub,
   head: () => ({
     meta: [
       { title: "BattleHUB — Pick A Side" },

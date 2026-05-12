@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { requireBoss } from "@/lib/route-guards";
+import { requireBossHub } from "@/lib/route-guards";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -20,7 +20,7 @@ import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
 
 export const Route = createFileRoute("/connect")({
-  beforeLoad: requireBoss,
+  beforeLoad: requireBossHub,
   head: () => ({
     meta: [
       { title: "ConnectHUB · Signal-Based Outreach" },
