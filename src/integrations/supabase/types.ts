@@ -3779,6 +3779,7 @@ export type Database = {
         Args: { p_code: string; p_user_id?: string }
         Returns: Json
       }
+      downgrade_expired_stream_users: { Args: never; Returns: number }
       enqueue_stream_verification: {
         Args: {
           _auto_expires_at: string
