@@ -221,11 +221,18 @@ export function VipPassRevealCard() {
         } catch {
           /* clipboard blocked — silent */
         }
-        toast.message(
-          copied
-            ? "Sharing not supported — invite saved & link copied"
-            : "Sharing not supported — invite image downloaded instead",
-        );
+        if (copied) {
+          const preview = referralUrl.replace(/^https?:\/\//, "");
+          toast.success("Copied!", {
+            description: preview,
+            action: {
+              label: "Open",
+              onClick: () => window.open(referralUrl, "_blank", "noopener,noreferrer"),
+            },
+          });
+        } else {
+          toast.message("Sharing not supported — invite image downloaded instead");
+        }
       }
     } catch (e: any) {
       if (e?.name === "AbortError") return; // user cancelled
