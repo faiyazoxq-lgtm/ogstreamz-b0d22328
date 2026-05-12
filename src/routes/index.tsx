@@ -24,6 +24,7 @@ import { Flame } from "lucide-react";
 import { TrackingEye } from "@/components/TrackingEye";
 import { VipPortalExplorer } from "@/components/VipPortalExplorer";
 import { OgVaultAccessSection } from "@/components/OgVaultAccessSection";
+import { VipReferralCard } from "@/components/VipReferralCard";
 import { usePortalCount } from "@/hooks/use-portal-count";
 import { TelegramConnectBanner } from "@/components/TelegramConnectBanner";
 
@@ -248,6 +249,14 @@ function Index() {
 
       {isVipMember && <OgVaultAccessSection isBoss={isBoss} />}
       {isVipMember && <VipPortalExplorer customHubs={customHubs} />}
+      {isVipMember && (
+        <section
+          aria-label="Refer a friend"
+          className="relative max-w-3xl mx-auto px-5 sm:px-8 mt-8"
+        >
+          <VipReferralCard />
+        </section>
+      )}
 
       <section className="relative max-w-7xl mx-auto px-5 sm:px-8 pb-28 grid gap-6 md:gap-8 grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))]">
         {isBoss && portals.map(({ to, title, desc, Icon }) => {
