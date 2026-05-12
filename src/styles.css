@@ -925,6 +925,16 @@ html[data-mood="og"] {
     --portal-dur-out:  220ms;
     --portal-dur-fast: 160ms;
 
+    /* Metallic antique-gold focus ring — darker + warmer than the bright
+       --mood-accent so it reads as brushed metal against the deep navy
+       chrome of the 0G-STREAMZ shell instead of a neon highlight.
+       --portal-focus-gold     : ring core (brushed antique gold)
+       --portal-focus-gold-hi  : faint inner highlight (catch-light)
+       --portal-focus-gold-lo  : outer halo (deep amber, near-bronze) */
+    --portal-focus-gold:    #b8902a;
+    --portal-focus-gold-hi: #d4ad48;
+    --portal-focus-gold-lo: #6a4a10;
+
     /* Back-compat aliases — older selectors reference --badge-*. */
     --badge-ease-out: var(--portal-ease-out);
     --badge-ease-in:  var(--portal-ease-in);
@@ -981,16 +991,17 @@ html[data-mood="og"] {
      distracting the eye. */
   .portal-button-motion:focus-visible {
     outline: none;
-    /* Dark inner separator + gold ring + outer glow. The 1px dark ring
-       sits between the control and the gold halo so the halo stays
-       readable on light/saturated backgrounds (e.g. accent-tinted cards),
-       while the gold reads against dark surfaces unchanged. */
+    /* Dark inner separator + brushed-gold ring + tight bronze halo.
+       Tighter blur radii and lower opacities than before — the focus
+       state should feel like polished metal catching the light, not a
+       neon glow. The 1px dark ring keeps the gold readable on
+       accent-tinted cards. */
     box-shadow:
       0 0 0 1px rgba(0, 0, 0, 0.85),
-      0 0 0 2px var(--mood-accent, #ffd166),
+      0 0 0 2px var(--portal-focus-gold),
       0 0 0 3px rgba(0, 0, 0, 0.55),
-      0 0 12px 2px color-mix(in oklab, var(--mood-accent, #ffd166) 55%, transparent),
-      0 0 28px 6px color-mix(in oklab, var(--mood-accent, #ffd166) 22%, transparent);
+      0 0 6px 1px color-mix(in oklab, var(--portal-focus-gold-hi) 40%, transparent),
+      0 0 18px 4px color-mix(in oklab, var(--portal-focus-gold-lo) 35%, transparent);
     animation: portal-focus-pulse var(--portal-dur-in) var(--portal-ease-out) both;
     transition:
       box-shadow var(--portal-dur-in) var(--portal-ease-out),
@@ -1000,18 +1011,18 @@ html[data-mood="og"] {
     from {
       box-shadow:
         0 0 0 0 rgba(0, 0, 0, 0.85),
-        0 0 0 0 var(--mood-accent, #ffd166),
+        0 0 0 0 var(--portal-focus-gold),
         0 0 0 0 rgba(0, 0, 0, 0.55),
-        0 0 0 0 color-mix(in oklab, var(--mood-accent, #ffd166) 55%, transparent),
-        0 0 0 0 color-mix(in oklab, var(--mood-accent, #ffd166) 22%, transparent);
+        0 0 0 0 color-mix(in oklab, var(--portal-focus-gold-hi) 40%, transparent),
+        0 0 0 0 color-mix(in oklab, var(--portal-focus-gold-lo) 35%, transparent);
     }
     to {
       box-shadow:
         0 0 0 1px rgba(0, 0, 0, 0.85),
-        0 0 0 2px var(--mood-accent, #ffd166),
+        0 0 0 2px var(--portal-focus-gold),
         0 0 0 3px rgba(0, 0, 0, 0.55),
-        0 0 12px 2px color-mix(in oklab, var(--mood-accent, #ffd166) 55%, transparent),
-        0 0 28px 6px color-mix(in oklab, var(--mood-accent, #ffd166) 22%, transparent);
+        0 0 6px 1px color-mix(in oklab, var(--portal-focus-gold-hi) 40%, transparent),
+        0 0 18px 4px color-mix(in oklab, var(--portal-focus-gold-lo) 35%, transparent);
     }
   }
   /* prefers-contrast: more — drop the soft glow, keep a crisp solid
@@ -1021,7 +1032,7 @@ html[data-mood="og"] {
       animation: none !important;
       box-shadow:
         0 0 0 1px rgba(0, 0, 0, 0.95),
-        0 0 0 3px var(--mood-accent, #ffd166) !important;
+        0 0 0 3px var(--portal-focus-gold) !important;
       outline: 2px solid #fff;
       outline-offset: 3px;
     }
