@@ -28,6 +28,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PortalsRouteImport } from './routes/portals'
 import { Route as NoticeboardRouteImport } from './routes/noticeboard'
 import { Route as MusicRouteImport } from './routes/music'
+import { Route as LetterhubRouteImport } from './routes/letterhub'
 import { Route as JokesRouteImport } from './routes/jokes'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
@@ -187,6 +188,11 @@ const NoticeboardRoute = NoticeboardRouteImport.update({
 const MusicRoute = MusicRouteImport.update({
   id: '/music',
   path: '/music',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LetterhubRoute = LetterhubRouteImport.update({
+  id: '/letterhub',
+  path: '/letterhub',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JokesRoute = JokesRouteImport.update({
@@ -536,6 +542,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/history': typeof HistoryRoute
   '/jokes': typeof JokesRouteWithChildren
+  '/letterhub': typeof LetterhubRoute
   '/music': typeof MusicRoute
   '/noticeboard': typeof NoticeboardRoute
   '/portals': typeof PortalsRoute
@@ -621,6 +628,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/history': typeof HistoryRoute
   '/jokes': typeof JokesRouteWithChildren
+  '/letterhub': typeof LetterhubRoute
   '/music': typeof MusicRoute
   '/noticeboard': typeof NoticeboardRoute
   '/portals': typeof PortalsRoute
@@ -708,6 +716,7 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/history': typeof HistoryRoute
   '/jokes': typeof JokesRouteWithChildren
+  '/letterhub': typeof LetterhubRoute
   '/music': typeof MusicRoute
   '/noticeboard': typeof NoticeboardRoute
   '/portals': typeof PortalsRoute
@@ -796,6 +805,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/history'
     | '/jokes'
+    | '/letterhub'
     | '/music'
     | '/noticeboard'
     | '/portals'
@@ -881,6 +891,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/history'
     | '/jokes'
+    | '/letterhub'
     | '/music'
     | '/noticeboard'
     | '/portals'
@@ -967,6 +978,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/history'
     | '/jokes'
+    | '/letterhub'
     | '/music'
     | '/noticeboard'
     | '/portals'
@@ -1054,6 +1066,7 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HistoryRoute: typeof HistoryRoute
   JokesRoute: typeof JokesRouteWithChildren
+  LetterhubRoute: typeof LetterhubRoute
   MusicRoute: typeof MusicRoute
   NoticeboardRoute: typeof NoticeboardRoute
   PortalsRoute: typeof PortalsRoute
@@ -1224,6 +1237,13 @@ declare module '@tanstack/react-router' {
       path: '/music'
       fullPath: '/music'
       preLoaderRoute: typeof MusicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/letterhub': {
+      id: '/letterhub'
+      path: '/letterhub'
+      fullPath: '/letterhub'
+      preLoaderRoute: typeof LetterhubRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/jokes': {
@@ -1802,6 +1822,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   HistoryRoute: HistoryRoute,
   JokesRoute: JokesRouteWithChildren,
+  LetterhubRoute: LetterhubRoute,
   MusicRoute: MusicRoute,
   NoticeboardRoute: NoticeboardRoute,
   PortalsRoute: PortalsRoute,
