@@ -100,6 +100,71 @@ function LetterHubPage() {
   const [touched, setTouched] = useState<Record<number, boolean>>({});
   const [previewMode, setPreviewMode] = useState<"preview" | "edit" | "split">("preview");
 
+  // ---- Autosave (localStorage) ----
+  // Keyed by historyId ("new" for unsaved drafts) and user id so multiple
+  // accounts on the same browser don't clobber each other.
+  const autosaveKey = user ? `letterhub:draft:${user.id}:${historyId ?? "new"}` : null;
+  const [restoredKey, setRestoredKey] = useState<string | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+
+  // Restore on mount / when switching between drafts
+  useEffect(() => {
+    if (!autosaveKey || typeof window === "undefined") return;
+    if (restoredKey === autosaveKey) return;
+    try {
+      const raw = window.localStorage.getItem(autosaveKey);
+      if (raw) {
+        const saved = JSON.parse(raw) as {
+          form?: LetterInput;
+          questions?: string[];
+          answers?: Record<number, string>;
+          letter?: string;
+          step?: 1 | 2 | 3 | 4;
+          savedAt?: number;
+        };
+        if (saved.form) setForm((f) => ({ ...f, ...saved.form }));
+        if (Array.isArray(saved.questions)) setQuestions(saved.questions);
+        if (saved.answers && typeof saved.answers === "object") {
+          const ans: Record<number, string> = {};
+          Object.entries(saved.answers).forEach(([k, v]) => {
+            const i = Number(k);
+            if (Number.isFinite(i)) ans[i] = String(v ?? "");
+          });
+          setAnswers(ans);
+        }
+        if (typeof saved.letter === "string") setLetter(saved.letter);
+        if (saved.step) setStep(saved.step);
+        if (saved.savedAt) setLastSavedAt(saved.savedAt);
+      }
+    } catch {
+      /* ignore corrupt drafts */
+    }
+    setRestoredKey(autosaveKey);
+  }, [autosaveKey, restoredKey]);
+
+  // Debounced persist on every change
+  useEffect(() => {
+    if (!autosaveKey || typeof window === "undefined") return;
+    if (restoredKey !== autosaveKey) return; // don't overwrite before restore
+    const t = window.setTimeout(() => {
+      try {
+        const payload = {
+          form,
+          questions,
+          answers,
+          letter,
+          step,
+          savedAt: Date.now(),
+        };
+        window.localStorage.setItem(autosaveKey, JSON.stringify(payload));
+        setLastSavedAt(payload.savedAt);
+      } catch {
+        /* quota or serialization issue — silent */
+      }
+    }, 600);
+    return () => window.clearTimeout(t);
+  }, [autosaveKey, restoredKey, form, questions, answers, letter, step]);
+
   const refreshHistory = useCallback(async () => {
     if (!user) return;
     setHistoryLoading(true);
@@ -121,6 +186,9 @@ function LetterHubPage() {
     setForm((f) => ({ ...f, [k]: v }));
 
   const reset = () => {
+    if (autosaveKey && typeof window !== "undefined") {
+      try { window.localStorage.removeItem(autosaveKey); } catch { /* ignore */ }
+    }
     setForm(EMPTY);
     setQuestions([]);
     setAnswers({});
@@ -128,6 +196,8 @@ function LetterHubPage() {
     setStep(1);
     setHistoryId(null);
     setTouched({});
+    setLastSavedAt(null);
+    setRestoredKey(null);
   };
 
   const canStep2 = form.issue && form.subIssue.trim() && form.format && form.tone && form.audience;
