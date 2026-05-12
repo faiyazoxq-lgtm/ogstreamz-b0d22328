@@ -10,13 +10,13 @@ import { SiteGuideSwearChat } from "@/components/SiteGuideSwearChat";
 export const Route = createFileRoute("/welcome")({
   head: () => ({
     meta: [
-      { title: "Welcome · Choose your portal — 0G-PORTAL" },
+      { title: "Welcome · Login or sign up — 0G-PORTAL" },
       {
         name: "description",
         content:
-          "Pick where you want to sign in: The HUB, your Dashboard, or the full 0G-PORTAL universe.",
+          "Login or sign up to The HUB, your Dashboard, or the full 0G-PORTAL universe.",
       },
-      { property: "og:title", content: "Welcome · Choose your portal — 0G-PORTAL" },
+      { property: "og:title", content: "Welcome · Login or sign up — 0G-PORTAL" },
       {
         property: "og:description",
         content: "Three doors. One Syndicate. Pick your entry point.",
@@ -140,7 +140,7 @@ function WelcomePage() {
               Welcome
             </p>
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Where do you want to sign in?
+              Login or sign up
             </h1>
             <p className="mx-auto max-w-xl text-sm text-muted-foreground sm:text-base">
               Pick the door that fits what you're here for. You can switch between them
@@ -187,7 +187,7 @@ function WelcomePage() {
                 <p className="text-sm text-muted-foreground">{desc}</p>
               </div>
               <div className="relative mt-auto inline-flex items-center gap-1 text-sm font-medium text-primary">
-                Sign in to {title}
+                Login / sign up to {title}
                 <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
               </div>
             </Link>
@@ -215,7 +215,7 @@ function WelcomePage() {
             <div className="relative space-y-1">
               <h2 className="text-xl font-semibold tracking-tight">0G STREAMZ Profile</h2>
               <p className="text-sm text-muted-foreground">
-                Sign in on the streaming domain to manage your line, expiry and devices.
+                Login or sign up on the streaming domain to manage your line, expiry and devices.
               </p>
             </div>
             <div className="relative mt-auto flex items-center justify-between text-sm font-medium text-primary">
@@ -246,7 +246,7 @@ function WelcomePage() {
           <p>
             Already know where you're going?{" "}
             <Link to="/auth" className="font-medium text-primary hover:underline">
-              Skip to sign in
+              Skip to login / sign up
             </Link>
           </p>
           <p>
