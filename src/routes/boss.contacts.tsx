@@ -329,7 +329,7 @@ function BossContactsPage() {
       </section>
 
       <section className="space-y-2">
-        <div className="flex items-center gap-2">
+        <div role="search" aria-label="Boss contacts search" className="flex items-center gap-2">
           <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -372,7 +372,8 @@ function BossContactsPage() {
             <button
               type="button"
               onClick={() => setQuery("")}
-              aria-label="Clear search"
+              aria-label="Clear search query"
+              title="Clear search"
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
             >
               <X className="h-4 w-4" />
@@ -388,6 +389,9 @@ function BossContactsPage() {
               announceEscape("Search cleared. Highlighted match reset to first match.");
             }}
             disabled={!query}
+            aria-label="Clear search and reset highlighted match"
+            aria-controls="boss-contacts-list boss-contacts-search-status"
+            title="Clear search"
           >
             <X className="h-4 w-4 mr-1" /> Clear
           </Button>
@@ -406,6 +410,7 @@ function BossContactsPage() {
           role="status"
           aria-live="polite"
           aria-atomic="true"
+          aria-label="Search results status"
           className={`text-xs text-muted-foreground text-right ${query ? "" : "sr-only"}`}
         >
           {query
@@ -435,10 +440,16 @@ function BossContactsPage() {
           <div
             key={c.id}
             ref={isActiveMatch ? activeMatchRef : undefined}
-            role="listitem"
+            role={isActiveMatch ? "group" : "listitem"}
             tabIndex={isActiveMatch ? 0 : -1}
             aria-current={isActiveMatch ? "true" : undefined}
-            aria-label={`${c.label}, ${toDisplay(c.phone)}${isActiveMatch ? ", current match" : ""}`}
+            aria-label={
+              isActiveMatch
+                ? `Highlighted match: ${c.label}, ${toDisplay(c.phone)}. Press Escape to clear search, Enter or Arrow keys to move between matches.`
+                : `${c.label}, ${toDisplay(c.phone)}`
+            }
+            aria-roledescription={isActiveMatch ? "highlighted search match" : undefined}
+            aria-describedby={isActiveMatch ? "boss-contacts-search-status" : undefined}
             onKeyDown={
               isActiveMatch
                 ? (e) => {
