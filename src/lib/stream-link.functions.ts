@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getRequestHost, getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
 import { randomBytes, createHash } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { tagOgStreamzUser } from "@/lib/stream-tag.server";
 
 // Per-user mint quota: max N successful mints in WINDOW_MS.
 const MINT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
