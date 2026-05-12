@@ -183,8 +183,8 @@ function DashboardPage() {
             </HistoryGroup>
       </section>
 
-      <footer className="mt-16 pt-8 border-t border-border text-center text-[10px] uppercase tracking-[0.4em] text-muted-foreground inline-flex items-center justify-center gap-2 w-full">
-        <OgWordmark suffix="-PORTAL" /> · Syndicate Member · Frequency Unlocked
+      <footer className="mt-16 pt-8 border-t border-border text-center text-[10px] uppercase tracking-[0.4em] text-muted-foreground">
+        <span className="inline-flex items-center gap-2"><OgWordmark suffix="-PORTAL" /> · Syndicate Member · Frequency Unlocked</span>
       </footer>
     </main>
   );
