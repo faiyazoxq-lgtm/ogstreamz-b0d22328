@@ -157,7 +157,7 @@ function PortalGrid({
   useEffect(() => {
     let alive = true;
     void supabase
-      .from("portals")
+      .from("portals_public")
       .select("id,slug,name,niche,vibe,kind")
       .eq("kind", kind)
       .order("created_at", { ascending: false })
