@@ -29,6 +29,7 @@ import { CloudflareAnalytics } from "../components/CloudflareAnalytics";
 import { DomainDenylistGuard } from "../components/DomainDenylistGuard";
 import { SiteFooter } from "../components/SiteFooter";
 import { AlignmentQAOverlay } from "../components/AlignmentQAOverlay";
+import { PupilCalibrator } from "../components/PupilCalibrator";
 
 function NotFoundComponent() {
   return (
@@ -165,6 +166,7 @@ function RootComponent() {
             <BottomDock />
             <ReducedMotionToggle />
             <AlignmentQAOverlay />
+            <PupilCalibrator />
             </div>
           </div>
           <Toaster />
