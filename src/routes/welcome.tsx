@@ -186,9 +186,15 @@ function WelcomePage() {
                 <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
                 <p className="text-sm text-muted-foreground">{desc}</p>
               </div>
-              <div className="relative mt-auto flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm font-medium text-primary">
-                <span className="break-words">Login / sign up to {title}</span>
-                <ArrowRight className="h-4 w-4 shrink-0 transition group-hover:translate-x-0.5" aria-hidden />
+              <div className="relative mt-auto text-sm font-medium leading-snug text-primary">
+                <span>Login / sign up to </span>
+                <span className="inline-flex items-baseline whitespace-nowrap align-baseline">
+                  {title}
+                  <ArrowRight
+                    className="ml-1 inline-block h-4 w-4 shrink-0 translate-y-[2px] transition group-hover:translate-x-0.5"
+                    aria-hidden
+                  />
+                </span>
               </div>
             </Link>
           ))}
@@ -218,10 +224,14 @@ function WelcomePage() {
                 Login / sign up on the streaming domain to manage your line, expiry and devices.
               </p>
             </div>
-            <div className="relative mt-auto flex flex-wrap items-center justify-between gap-2 text-sm font-medium text-primary">
-              <span className="inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-1">
-                <span className="break-all">Open {streamHost}</span>
-                <ExternalLink className="h-4 w-4 shrink-0 transition group-hover:translate-x-0.5" aria-hidden />
+            <div className="relative mt-auto text-sm font-medium leading-snug text-primary">
+              <span>Open </span>
+              <span className="inline-flex items-baseline whitespace-nowrap align-baseline break-all">
+                <span className="break-all">{streamHost}</span>
+                <ExternalLink
+                  className="ml-1 inline-block h-4 w-4 shrink-0 translate-y-[2px] transition group-hover:translate-x-0.5"
+                  aria-hidden
+                />
               </span>
             </div>
           </a>
