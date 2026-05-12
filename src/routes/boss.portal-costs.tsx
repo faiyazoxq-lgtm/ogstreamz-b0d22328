@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Coins, Search, Save, Loader2, Lock, Sparkles } from "lucide-react";
+import { Coins, Search, Save, Loader2, Lock, Sparkles, Minus, Plus, ExternalLink, Zap, Gift } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useServerFn } from "@tanstack/react-start";
+import { chargePortalUse } from "@/lib/portal-use.functions";
 
 export const Route = createFileRoute("/boss/portal-costs")({
   component: PortalCosts,
@@ -37,6 +39,9 @@ function PortalCosts() {
   const [q, setQ] = useState("");
 
   const [loading, setLoading] = useState(true);
+  const chargeFn = useServerFn(chargePortalUse);
+  const [savingPortal, setSavingPortal] = useState<string | null>(null);
+  const [testing, setTesting] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -82,12 +87,45 @@ function PortalCosts() {
   }
 
   async function savePortal(id: string) {
-    const value = Math.max(0, Math.floor(Number(portalDrafts[id]) || 0));
+    const value = Math.max(0, Math.floor(Number(portalDrafts[id] ?? portals.find((p) => p.id === id)?.use_credit_cost ?? 0)));
+    setSavingPortal(id);
     const { error } = await supabase.from("portals").update({ use_credit_cost: value }).eq("id", id);
+    setSavingPortal(null);
     if (error) return toast.error(error.message);
-    toast.success("Portal cost saved");
+    toast.success(value === 0 ? "Portal set to free" : `Saved · ${value} 🪙 per use`);
     setPortals((prev) => prev.map((p) => (p.id === id ? { ...p, use_credit_cost: value } : p)));
     setPortalDrafts((prev) => { const { [id]: _, ...rest } = prev; return rest; });
+  }
+
+  async function quickSetPortal(id: string, value: number) {
+    const v = Math.max(0, Math.floor(value));
+    setPortalDrafts((prev) => ({ ...prev, [id]: v }));
+    setSavingPortal(id);
+    const { error } = await supabase.from("portals").update({ use_credit_cost: v }).eq("id", id);
+    setSavingPortal(null);
+    if (error) return toast.error(error.message);
+    setPortals((prev) => prev.map((p) => (p.id === id ? { ...p, use_credit_cost: v } : p)));
+    setPortalDrafts((prev) => { const { [id]: _, ...rest } = prev; return rest; });
+    toast.success(v === 0 ? "Set to free" : `Set to ${v} 🪙`);
+  }
+
+  async function testPortal(slug: string) {
+    setTesting(slug);
+    try {
+      const r = await chargeFn({ data: { slug } });
+      if (r.ok) {
+        if (r.free) toast.success(`Test passed — free for boss/admin (cost: ${r.cost} 🪙)`);
+        else toast.success(`Test charged ${r.cost} 🪙 · balance now ${r.balance}`);
+      } else if (r.error === "insufficient") {
+        toast.error(`Insufficient balance — would block at ${r.cost} 🪙`);
+      } else {
+        toast.error(r.error || "Test failed");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Test failed");
+    } finally {
+      setTesting(null);
+    }
   }
 
   const filteredPortals = useMemo(() => {
@@ -216,36 +254,89 @@ function PortalCosts() {
               </div>
             ) : (
               <div className="rounded-xl border bg-card overflow-hidden">
-                <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-3 px-3 py-2 text-[10px] uppercase tracking-wider text-muted-foreground border-b">
+                <div className="hidden md:grid md:grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-3 px-3 py-2 text-[10px] uppercase tracking-wider text-muted-foreground border-b">
                   <div>Portal</div>
                   <div>Kind</div>
-                  <div className="text-right w-28">Cost</div>
-                  <div className="w-16" />
+                  <div className="text-right w-44">Cost (instant save)</div>
+                  <div className="w-44 text-right">Test / Preview</div>
                 </div>
                 <div className="divide-y">
                   {filteredPortals.map((p) => {
                     const draft = portalDrafts[p.id];
+                    const current = draft ?? p.use_credit_cost;
                     const dirty = draft !== undefined && draft !== p.use_credit_cost;
+                    const isSaving = savingPortal === p.id;
+                    const isTesting = testing === p.slug;
                     return (
-                      <div key={p.id} className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-3 px-3 py-2 items-center">
+                      <div key={p.id} className="flex flex-wrap md:grid md:grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-2 md:gap-3 px-3 py-3 items-center">
                         <div className="min-w-0">
                           <p className="font-bold text-sm truncate">
                             {p.name} {p.vip && <span className="ml-1 text-[10px] uppercase tracking-wider text-amber-400">VIP</span>}
+                            {p.use_credit_cost === 0 && <span className="ml-1 text-[10px] uppercase tracking-wider text-emerald-400">FREE</span>}
                           </p>
                           <p className="text-xs text-muted-foreground truncate">/{p.slug}</p>
                         </div>
                         <span className="text-xs text-muted-foreground">{p.kind}</span>
                         <div className="flex items-center gap-1 justify-end">
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-8 w-8"
+                            disabled={isSaving || current <= 0}
+                            onClick={() => quickSetPortal(p.id, current - 1)}
+                            title="Decrease"
+                          >
+                            <Minus className="h-3.5 w-3.5" />
+                          </Button>
                           <Input
                             type="number"
                             min={0}
-                            className="h-8 w-20 text-right"
-                            value={draft ?? p.use_credit_cost}
+                            className="h-8 w-16 text-right"
+                            value={current}
                             onChange={(e) => setPortalDrafts((prev) => ({ ...prev, [p.id]: Number(e.target.value) }))}
+                            onBlur={() => { if (dirty) void savePortal(p.id); }}
                           />
-                          <span className="text-xs text-muted-foreground">c</span>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-8 w-8"
+                            disabled={isSaving}
+                            onClick={() => quickSetPortal(p.id, current + 1)}
+                            title="Increase"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={current === 0 ? "secondary" : "outline"}
+                            className="ml-1 h-8"
+                            disabled={isSaving || current === 0}
+                            onClick={() => quickSetPortal(p.id, 0)}
+                            title="Set free"
+                          >
+                            <Gift className="h-3.5 w-3.5 mr-1" /> Free
+                          </Button>
+                          {isSaving && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
                         </div>
-                        <Button size="sm" variant={dirty ? "default" : "ghost"} disabled={!dirty} onClick={() => savePortal(p.id)}>Save</Button>
+                        <div className="flex items-center gap-1 justify-end">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8"
+                            disabled={isTesting}
+                            onClick={() => void testPortal(p.slug)}
+                            title="Run a real charge against your account"
+                          >
+                            {isTesting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
+                            <span className="ml-1">Test</span>
+                          </Button>
+                          <Button asChild size="sm" variant="ghost" className="h-8">
+                            <a href={`/p/${p.slug}`} target="_blank" rel="noopener noreferrer" title="Open portal">
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              <span className="ml-1">Open</span>
+                            </a>
+                          </Button>
+                        </div>
                       </div>
                     );
                   })}
