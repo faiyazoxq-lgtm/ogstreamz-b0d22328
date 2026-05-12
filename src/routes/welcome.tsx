@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import logo from "@/assets/logo.jpg";
 import { FlameBackdrop } from "@/components/FlameBackdrop";
+import { SiteGuideSwearChat } from "@/components/SiteGuideSwearChat";
 
 export const Route = createFileRoute("/welcome")({
   head: () => ({
@@ -224,6 +225,21 @@ function WelcomePage() {
               </span>
             </div>
           </a>
+        </section>
+
+        <section className="mx-auto w-full max-w-3xl">
+          <div className="mb-3 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+              Lost? Ask the gremlin
+            </p>
+            <h2 className="text-lg font-semibold tracking-tight sm:text-xl">
+              Foul-mouthed site guide
+            </h2>
+            <p className="text-xs text-muted-foreground sm:text-sm">
+              Type what you want to do — it'll spit out a sitemap of where to go.
+            </p>
+          </div>
+          <SiteGuideSwearChat />
         </section>
 
         <footer className="flex flex-col items-center gap-2 text-center text-xs text-muted-foreground">
