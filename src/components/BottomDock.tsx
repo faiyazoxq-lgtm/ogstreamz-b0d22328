@@ -1,11 +1,11 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Radio, LineChart, Sparkles, Crown, Cpu } from "lucide-react";
+import { Home, Radio, LineChart, Sparkles, Crown, Cpu, Rocket } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 const ITEMS = [
   { to: "/", label: "Home", icon: Home },
   { to: "/console", label: "Console", icon: Cpu },
-  { to: "/trade", label: "Trade", icon: LineChart },
+  { to: "/portals", label: "Portals", icon: Rocket },
   { to: "/syndicate", label: "Syndicate", icon: Radio },
   { to: "/store", label: "Store", icon: Sparkles },
 ] as const;
@@ -20,9 +20,12 @@ export function BottomDock() {
 
   const items = isBoss
     ? [
-        ...ITEMS.map((it) =>
-          it.to === "/store" ? ({ ...it, label: "Manage Store" } as const) : it,
-        ),
+        ...ITEMS.map((it) => {
+          // Boss keeps the Trade hub shortcut here instead of Portals
+          if (it.to === "/portals") return { to: "/trade", label: "Trade", icon: LineChart } as const;
+          if (it.to === "/store") return { ...it, label: "Manage Store" } as const;
+          return it;
+        }),
         { to: "/boss", label: "Boss", icon: Crown } as const,
       ]
     : ITEMS;

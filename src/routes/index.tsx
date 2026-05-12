@@ -242,7 +242,7 @@ function Index() {
             )}
           </div>
 
-          <QuickJumpMenu user={!!user} />
+          <QuickJumpMenu user={!!user} isBoss={isBoss} />
         </div>
       </section>
 
@@ -250,7 +250,7 @@ function Index() {
       {isVipMember && <VipPortalExplorer customHubs={customHubs} />}
 
       <section className="relative max-w-7xl mx-auto px-5 sm:px-8 pb-28 grid gap-6 md:gap-8 grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))]">
-        {portals.map(({ to, title, desc, Icon }) => {
+        {isBoss && portals.map(({ to, title, desc, Icon }) => {
           const thisPending = pendingTo === to;
           const dimmed = pendingTo !== null && !thisPending;
           return (
@@ -408,9 +408,10 @@ const MEMBER_ITEMS: QuickItem[] = [
   { to: "/syndicate", title: "Syndicate", desc: "Live frequency",    Icon: Users,           tint: "oklch(0.70 0.18 180)" },
 ];
 
-function QuickJumpMenu({ user }: { user: boolean }) {
-  const [tab, setTab] = useState<"portals" | "member">("portals");
-  const items = tab === "portals" ? PORTAL_ITEMS : MEMBER_ITEMS;
+function QuickJumpMenu({ user, isBoss }: { user: boolean; isBoss: boolean }) {
+  // Hubs are Boss-only — non-boss users only see the Members quick-jump.
+  const [tab, setTab] = useState<"portals" | "member">(isBoss ? "portals" : "member");
+  const items = !isBoss ? MEMBER_ITEMS : tab === "portals" ? PORTAL_ITEMS : MEMBER_ITEMS;
   return (
     <nav aria-labelledby="quick-jump-label" className="mt-5 pt-4 border-t border-white/10">
       <div className="flex items-center justify-between gap-3 mb-3">
@@ -420,7 +421,7 @@ function QuickJumpMenu({ user }: { user: boolean }) {
         >
           Quick jump
         </h2>
-        {user && (
+        {user && isBoss && (
           <div role="tablist" aria-label="Quick jump category" className="inline-flex rounded-full border border-white/10 bg-black/40 p-0.5 text-[10px] font-bold uppercase tracking-[0.2em]">
             {(["portals", "member"] as const).map((t) => (
               <button
