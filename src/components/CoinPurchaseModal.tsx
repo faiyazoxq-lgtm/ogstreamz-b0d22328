@@ -1,5 +1,8 @@
 import * as React from "react";
-import { Loader2, ShoppingBag, Coins, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import {
+  Loader2, ShoppingBag, Coins, CheckCircle2, AlertTriangle, ArrowUpRight,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +16,7 @@ import { Button } from "@/components/ui/button";
 export type CoinPurchaseStatus =
   | { kind: "idle" }
   | { kind: "pending" }
-  | { kind: "ok"; message: string }
+  | { kind: "ok"; message: string; balance?: number; receiptId?: string }
   | { kind: "err"; message: string };
 
 /**
@@ -34,6 +37,8 @@ export function CoinPurchaseModal({
   onConfirm,
   description,
   children,
+  unlockedHref,
+  unlockedLabel = "View unlocked portal",
 }: {
   open: boolean;
   onOpenChange: (next: boolean) => void;
@@ -46,6 +51,9 @@ export function CoinPurchaseModal({
   onConfirm: () => void;
   description?: string;
   children?: React.ReactNode;
+  /** Where the "View unlocked portal" button links after a successful charge. */
+  unlockedHref?: string;
+  unlockedLabel?: string;
 }) {
   const total = Math.max(0, Math.round(cost * quantity));
   const insufficient =
@@ -92,9 +100,14 @@ export function CoinPurchaseModal({
           </p>
         )}
         {status.kind === "ok" && (
-          <p className="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-3 py-2 text-xs text-emerald-200">
-            <CheckCircle2 className="h-3.5 w-3.5" /> {status.message}
-          </p>
+          <SuccessReceipt
+            itemName={itemName}
+            paid={total}
+            balance={status.balance ?? balance ?? null}
+            message={status.message}
+            accent={accent}
+            receiptId={status.receiptId}
+          />
         )}
         {insufficient !== null && status.kind !== "err" && (
           <p className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/30 px-3 py-2 text-xs text-amber-200">
@@ -106,14 +119,28 @@ export function CoinPurchaseModal({
 
         <DialogFooter className="gap-2 sm:gap-2">
           {done ? (
-            <Button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="portal-button-motion portal-button-motion--lg w-full font-black uppercase tracking-[0.2em] text-xs text-black border-2"
-              style={{ background: accent, borderColor: accent }}
-            >
-              Done
-            </Button>
+            <div className="flex w-full flex-col-reverse sm:flex-row gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="flex-1 min-h-12"
+              >
+                Close
+              </Button>
+              {unlockedHref && (
+                <Button
+                  asChild
+                  type="button"
+                  className="portal-button-motion portal-button-motion--lg flex-1 inline-flex items-center justify-center gap-2 font-black uppercase tracking-[0.2em] text-xs text-black border-2"
+                  style={{ background: accent, borderColor: accent, boxShadow: `0 0 32px -8px ${accent}` }}
+                >
+                  <Link to={unlockedHref as any} onClick={() => onOpenChange(false)}>
+                    <ArrowUpRight className="h-4 w-4" /> {unlockedLabel}
+                  </Link>
+                </Button>
+              )}
+            </div>
           ) : (
             <>
               <Button
