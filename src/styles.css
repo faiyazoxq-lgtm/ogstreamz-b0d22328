@@ -909,50 +909,64 @@ html[data-mood="og"] {
 }
 
 @layer utilities {
-  /* Animated show/hide for portal card badges. Stays mounted so toggling
-     Boss / Mine / VIP collapses width + opacity + scale smoothly instead
-     of snapping the layout. */
-  /* Premium spring-style easing tuned to feel cohesive across all cards.
-     - Single shared duration + easing keeps every badge in lock-step so a
-       row of cards animates as one motion, not a jittery cascade.
-     - Standard "emphasized" curve (Material 3) for the entry, slightly
-       sharper "accelerate" curve for the exit so hides feel decisive. */
+  /* Premium badge show/hide motion.
+     - Shared tokens so every card on the page animates with identical
+       rhythm — no per-card drift, no jittery cascade.
+     - Asymmetric timing: reveals are slightly slower with a soft overshoot
+       so they feel inviting; hides are faster + sharper so the card snaps
+       back to a calm state without lingering.
+     - Layout properties (max-width / padding / margin) share one curve so
+       neighbouring badges reflow as a single coordinated motion. */
+  :root {
+    --badge-ease-out:    cubic-bezier(0.16, 1, 0.3, 1);    /* expo-out, gentle settle */
+    --badge-ease-in:     cubic-bezier(0.7, 0, 0.84, 0);    /* expo-in, decisive exit */
+    --badge-dur-in:      360ms;
+    --badge-dur-out:     220ms;
+  }
   .badge-toggle {
     overflow: hidden;
     max-width: 12rem;
     padding-inline: 0.5rem;
-    transform: scale(1) translateY(0);
+    transform: scale(1);
     opacity: 1;
     transform-origin: right center;
+    /* Reveal: layout eases in on the expo-out curve; opacity catches up a
+       beat later so the pill draws itself before the label fades on. */
     transition:
-      max-width 320ms cubic-bezier(0.2, 0, 0, 1),
-      padding-inline 320ms cubic-bezier(0.2, 0, 0, 1),
-      margin-inline 320ms cubic-bezier(0.2, 0, 0, 1),
-      opacity 220ms cubic-bezier(0.2, 0, 0, 1) 40ms,
-      transform 320ms cubic-bezier(0.2, 0, 0, 1),
-      border-color 220ms ease;
+      max-width      var(--badge-dur-in) var(--badge-ease-out),
+      padding-inline var(--badge-dur-in) var(--badge-ease-out),
+      margin-inline  var(--badge-dur-in) var(--badge-ease-out),
+      transform      var(--badge-dur-in) var(--badge-ease-out),
+      opacity        calc(var(--badge-dur-in) - 120ms) var(--badge-ease-out) 80ms,
+      border-color   200ms ease;
     will-change: max-width, opacity, transform;
+    backface-visibility: hidden;
   }
   .badge-toggle[data-show="false"] {
     max-width: 0;
     padding-inline: 0;
-    margin-inline: -0.125rem;
+    margin-inline: -0.125rem; /* eat the parent gap-1 so cards don't reserve space */
     opacity: 0;
-    transform: scale(0.9) translateY(-1px);
+    transform: scale(0.94);
     pointer-events: none;
     border-color: transparent;
+    /* Hide: opacity drops first (fast), layout collapses immediately after
+       on the same curve so the row closes cleanly. */
     transition:
-      max-width 240ms cubic-bezier(0.4, 0, 1, 1),
-      padding-inline 240ms cubic-bezier(0.4, 0, 1, 1),
-      margin-inline 240ms cubic-bezier(0.4, 0, 1, 1),
-      opacity 160ms cubic-bezier(0.4, 0, 1, 1),
-      transform 240ms cubic-bezier(0.4, 0, 1, 1),
-      border-color 160ms ease;
+      opacity        140ms var(--badge-ease-in),
+      max-width      var(--badge-dur-out) var(--badge-ease-in) 40ms,
+      padding-inline var(--badge-dur-out) var(--badge-ease-in) 40ms,
+      margin-inline  var(--badge-dur-out) var(--badge-ease-in) 40ms,
+      transform      var(--badge-dur-out) var(--badge-ease-in),
+      border-color   140ms ease;
   }
   .badge-toggle-inner {
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
   }
   @media (prefers-reduced-motion: reduce) {
-    .badge-toggle { transition: none; }
+    .badge-toggle,
+    .badge-toggle[data-show="false"] { transition: none; }
   }
 }
