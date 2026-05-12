@@ -507,7 +507,7 @@ function PortalsHub() {
               instead of just "Boss". A polite live region announces the
               change after activation. */}
           <div
-            className="inline-flex items-center rounded-md border border-border bg-card p-0.5 text-[10px] uppercase tracking-[0.18em] font-bold"
+            className="badge-toggle-group inline-flex items-center rounded-md border border-border bg-card p-0.5 text-[10px] uppercase tracking-[0.18em] font-bold"
             role="group"
             aria-label="Badge visibility"
           >
