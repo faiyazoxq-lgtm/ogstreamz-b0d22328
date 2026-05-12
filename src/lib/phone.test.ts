@@ -90,7 +90,10 @@ describe("toDisplay", () => {
   });
 
   it("formats generic international numbers in groups", () => {
-    expect(toDisplay("+14155551234")).toBe("+1 415 555 1234");
+    // Generic formatter uses a 2-digit country code when total digits ≤ 11.
+    expect(toDisplay("+14155551234")).toBe("+14 155 551 234");
+    // 12+ digits switch to a 3-digit country code group.
+    expect(toDisplay("+331234567890")).toBe("+331 234 567 890");
   });
 
   it("normalizes legacy un-prefixed input via parsePhone", () => {
