@@ -283,7 +283,7 @@ function ManagePlanPanel() {
               title="Add a recurring plan"
               desc="Lock in monthly or yearly billing on top of your lifetime pass."
               cta="See plans"
-              to="/vip#pricing"
+              to="/vip"
             />
           )}
 
