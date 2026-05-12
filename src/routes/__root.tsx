@@ -180,6 +180,16 @@ function RootComponent() {
   );
 }
 
+// Renders the All-Hubs strip on the home page and every hub route, in a
+// fixed slot so navigating between hubs doesn't cause layout shift.
+function HubsStripSlot() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const HUB_ROUTES = new Set(["/", "/music", "/jokes", "/trade", "/connect", "/battle", "/tools"]);
+  const showStrip = HUB_ROUTES.has(pathname) || pathname.startsWith("/hub/");
+  if (!showStrip) return null;
+  return <HubsStrip className="pt-4 pb-2" />;
+}
+
 function TeleportOverlay() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   // see EyeGlowTuner below — separate component to keep state-changes scoped.
