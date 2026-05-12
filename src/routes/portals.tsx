@@ -617,19 +617,36 @@ function PortalsHub() {
                       collides with VIP. Right-aligned, fixed gap, identical
                       pill heights keep the row visually aligned across all
                       cards regardless of which badges are present. */}
+                  {/* Badge stack: badges stay mounted and animate their
+                      width/opacity/scale when hidden so toggling Boss/Mine/VIP
+                      produces a smooth layout transition instead of a snap. */}
                   <div className="flex flex-wrap justify-end items-center gap-1 shrink-0 max-w-[60%]">
-                    {i.byBoss && badgePrefs.boss ? (
-                      <span className="inline-flex items-center h-5 px-2 rounded-full text-[10px] leading-none uppercase tracking-widest font-bold bg-[oklch(0.72_0.22_245/0.15)] border border-[oklch(0.72_0.22_245/0.5)] text-[oklch(0.78_0.18_245)]">
-                        Boss
+                    {i.byBoss ? (
+                      <span
+                        aria-hidden={!badgePrefs.boss}
+                        data-show={badgePrefs.boss}
+                        className="badge-toggle inline-flex items-center h-5 rounded-full text-[10px] leading-none uppercase tracking-widest font-bold bg-[oklch(0.72_0.22_245/0.15)] border border-[oklch(0.72_0.22_245/0.5)] text-[oklch(0.78_0.18_245)]"
+                      >
+                        <span className="badge-toggle-inner">Boss</span>
                       </span>
-                    ) : !i.byBoss && badgePrefs.mine ? (
-                      <span className="inline-flex items-center h-5 px-2 rounded-full text-[10px] leading-none uppercase tracking-widest font-bold bg-white/5 border border-white/20 text-white/80">
-                        Mine
+                    ) : (
+                      <span
+                        aria-hidden={!badgePrefs.mine}
+                        data-show={badgePrefs.mine}
+                        className="badge-toggle inline-flex items-center h-5 rounded-full text-[10px] leading-none uppercase tracking-widest font-bold bg-white/5 border border-white/20 text-white/80"
+                      >
+                        <span className="badge-toggle-inner">Mine</span>
                       </span>
-                    ) : null}
-                    {i.vip && badgePrefs.vip && (
-                      <span className="inline-flex items-center gap-1 h-5 px-2 rounded-full text-[10px] leading-none uppercase tracking-widest font-bold bg-gold/15 border border-gold/50 text-gold">
-                        <Crown className="h-3 w-3" /> VIP
+                    )}
+                    {i.vip && (
+                      <span
+                        aria-hidden={!badgePrefs.vip}
+                        data-show={badgePrefs.vip}
+                        className="badge-toggle inline-flex items-center h-5 rounded-full text-[10px] leading-none uppercase tracking-widest font-bold bg-gold/15 border border-gold/50 text-gold"
+                      >
+                        <span className="badge-toggle-inner inline-flex items-center gap-1">
+                          <Crown className="h-3 w-3" /> VIP
+                        </span>
                       </span>
                     )}
                   </div>
