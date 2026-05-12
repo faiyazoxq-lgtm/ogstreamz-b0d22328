@@ -6,6 +6,7 @@ import { BossChatPanel } from "@/components/BossChatPanel";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
 import { ZeroGBadge } from "@/components/ZeroGBadge";
+import { HubsStrip } from "@/components/HubsStrip";
 
 import { requireMember } from "@/lib/route-guards";
 type TradePortal = {
@@ -50,7 +51,9 @@ function TradeHubPage() {
   }, []);
 
   return (
-    <main className="max-w-7xl mx-auto px-5 sm:px-8 py-12 sm:py-16">
+    <>
+      <HubsStrip className="pt-6" />
+      <main className="max-w-7xl mx-auto px-5 sm:px-8 py-12 sm:py-16">
       <header className="mb-10">
         <p className="text-xs tracking-[0.4em] text-gold uppercase font-semibold">TradeHUB · Executive Tier</p>
         <h1 className="mt-3 font-[Montserrat] font-black text-4xl sm:text-6xl tracking-tight">
@@ -134,6 +137,7 @@ function TradeHubPage() {
       </div>
       <CreditWallet className="mt-10" />
       <SpawnPortalCard kind="trade" />
-    </main>
+      </main>
+    </>
   );
 }
