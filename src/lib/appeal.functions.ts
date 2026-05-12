@@ -149,8 +149,6 @@ export const generateAppeal = createServerFn({ method: "POST" })
       );
       return { ok: true as const, error: null, letter, balance: balance ?? null };
     } catch (e: any) {
-      // Best-effort refund
-      await supabase.rpc("admin_adjust_credits" as any, { _amount: 3, _reason: "appealhub:refund" }).catch(() => {});
       return { ok: false as const, error: e?.message || "AI error", letter: "", balance: null };
     }
   });
