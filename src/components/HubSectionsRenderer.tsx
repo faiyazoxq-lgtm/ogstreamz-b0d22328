@@ -7,6 +7,7 @@ import { PortalHeader } from "@/components/PortalHeader";
 import type { HubSection } from "@/lib/hub-sections";
 import { useDownloadCharge } from "@/hooks/use-download-charge";
 import { peekPortalDownload } from "@/lib/portal-downloads.functions";
+import { cloneHubPortalForMe, type CloneResult } from "@/lib/portal-clone.functions";
 import { CoinPurchaseModal, type CoinPurchaseStatus } from "@/components/CoinPurchaseModal";
 
 /**
@@ -201,16 +202,19 @@ function PortalTile({
 }) {
   const { charge } = useDownloadCharge();
   const peek = useServerFn(peekPortalDownload);
+  const cloneFn = useServerFn(cloneHubPortalForMe);
   const COST = 2;
   const [open, setOpen] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
   const [status, setStatus] = useState<CoinPurchaseStatus>({ kind: "idle" });
+  const [clone, setClone] = useState<CloneResult | { kind: "pending" } | null>(null);
 
   const openModal = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setStatus({ kind: "idle" });
     setBalance(null);
+    setClone(null);
     setOpen(true);
     try {
       const p = await peek({ data: { portalId: portal.id, cost: COST } });
@@ -231,6 +235,15 @@ function PortalTile({
           ? "Unlocked with VIP free pass."
           : `Unlocked. ${out.balance.toLocaleString()} 🪙 remaining.`,
       });
+      // VIP perk: mint a personalised clone seeded from the buyer's bio.
+      // Non-VIPs get a `not_vip` outcome and we silently skip the banner.
+      setClone({ kind: "pending" } as any);
+      try {
+        const res = await cloneFn({ data: { portalId: portal.id } });
+        setClone(res);
+      } catch (err: any) {
+        setClone({ ok: false, reason: "unknown", message: String(err?.message || "Clone failed") });
+      }
     } else {
       setStatus({
         kind: "err",
@@ -276,7 +289,9 @@ function PortalTile({
         accent={accent}
         status={status}
         onConfirm={onConfirm}
-      />
+      >
+        {clone && status.kind === "ok" && <CloneBanner clone={clone} accent={accent} />}
+      </CoinPurchaseModal>
     </div>
   );
 }
