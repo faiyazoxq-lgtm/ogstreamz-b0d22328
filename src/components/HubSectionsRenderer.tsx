@@ -1,10 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, Loader2, ShoppingBag, Sparkles } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowUpRight, ShoppingBag, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PortalHeader } from "@/components/PortalHeader";
 import type { HubSection } from "@/lib/hub-sections";
 import { useDownloadCharge } from "@/hooks/use-download-charge";
+import { peekPortalDownload } from "@/lib/portal-downloads.functions";
+import { CoinPurchaseModal, type CoinPurchaseStatus } from "@/components/CoinPurchaseModal";
 
 /**
  * Locked layout for boss-built custom hubs. Same typography, padding, and
@@ -196,20 +199,42 @@ function PortalTile({
   kind: string;
   accent: string;
 }) {
-  const { charge, pending } = useDownloadCharge();
-  const [status, setStatus] = useState<null | { kind: "ok" | "err"; msg: string }>(null);
+  const { charge } = useDownloadCharge();
+  const peek = useServerFn(peekPortalDownload);
+  const COST = 2;
+  const [open, setOpen] = useState(false);
+  const [balance, setBalance] = useState<number | null>(null);
+  const [status, setStatus] = useState<CoinPurchaseStatus>({ kind: "idle" });
 
-  const onBuy = async (e: React.MouseEvent) => {
+  const openModal = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setStatus(null);
-    const out = await charge({ portalId: portal.id, cost: 2 });
+    setStatus({ kind: "idle" });
+    setBalance(null);
+    setOpen(true);
+    try {
+      const p = await peek({ data: { portalId: portal.id, cost: COST } });
+      setBalance(p.balance ?? null);
+    } catch {
+      // Balance preview is best-effort; modal still allows confirming.
+    }
+  };
+
+  const onConfirm = async () => {
+    setStatus({ kind: "pending" });
+    const out = await charge({ portalId: portal.id, cost: COST });
     if (out.ok) {
-      setStatus({ kind: "ok", msg: out.mode === "vip_free" ? "Unlocked (VIP free pass)" : `Unlocked · ${out.balance} 🪙 left` });
+      setBalance(out.balance);
+      setStatus({
+        kind: "ok",
+        message: out.mode === "vip_free"
+          ? "Unlocked with VIP free pass."
+          : `Unlocked. ${out.balance.toLocaleString()} 🪙 remaining.`,
+      });
     } else {
       setStatus({
         kind: "err",
-        msg: out.reason === "insufficient" ? "Not enough coins" : out.message || "Couldn't unlock",
+        message: out.reason === "insufficient" ? "Not enough coins for this purchase." : out.message,
       });
     }
   };
@@ -235,28 +260,23 @@ function PortalTile({
 
       <button
         type="button"
-        onClick={onBuy}
-        disabled={pending}
-        aria-busy={pending}
-        className="portal-button-motion portal-button-motion--lg mt-4 w-full inline-flex items-center justify-center gap-2 font-black uppercase tracking-[0.2em] text-xs text-black border-2 disabled:opacity-70 disabled:cursor-wait"
+        onClick={openModal}
+        className="portal-button-motion portal-button-motion--lg mt-4 w-full inline-flex items-center justify-center gap-2 font-black uppercase tracking-[0.2em] text-xs text-black border-2"
         style={{ background: accent, borderColor: accent, boxShadow: `0 0 32px -8px ${accent}` }}
       >
-        {pending ? (
-          <><Loader2 className="h-4 w-4 animate-spin" /> Unlocking…</>
-        ) : (
-          <><ShoppingBag className="h-4 w-4" /> Buy for 2 🪙</>
-        )}
+        <ShoppingBag className="h-4 w-4" /> Buy for {COST} 🪙
       </button>
-      {status && (
-        <p
-          className={`mt-2 text-[11px] uppercase tracking-[0.2em] text-center ${
-            status.kind === "ok" ? "text-emerald-300" : "text-rose-300"
-          }`}
-          role="status"
-        >
-          {status.msg}
-        </p>
-      )}
+
+      <CoinPurchaseModal
+        open={open}
+        onOpenChange={setOpen}
+        itemName={portal.name}
+        cost={COST}
+        balance={balance}
+        accent={accent}
+        status={status}
+        onConfirm={onConfirm}
+      />
     </div>
   );
 }
