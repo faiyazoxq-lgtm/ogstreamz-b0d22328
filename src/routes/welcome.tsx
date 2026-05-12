@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import logo from "@/assets/logo.jpg";
 import { FlameBackdrop } from "@/components/FlameBackdrop";
 import { SiteGuideSwearChat } from "@/components/SiteGuideSwearChat";
+import { VerifyStreamAccessCard } from "@/components/VerifyStreamAccessCard";
 
 export const Route = createFileRoute("/welcome")({
   head: () => ({
@@ -250,6 +251,10 @@ function WelcomePage() {
             </p>
           </div>
           <SiteGuideSwearChat />
+        </section>
+
+        <section className="mx-auto w-full max-w-3xl">
+          <VerifyStreamAccessCard signedIn={!!user} />
         </section>
 
         <footer className="flex flex-col items-center gap-2 text-balance text-center text-xs text-muted-foreground">
