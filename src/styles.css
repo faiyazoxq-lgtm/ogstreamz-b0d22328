@@ -1065,9 +1065,11 @@ html[data-mood="og"] {
     .portal-button-motion:focus-visible {
       animation: none !important;
       transition: none !important;
-      outline: 2px solid var(--mood-accent, #ffd166);
+      outline: 2px solid var(--portal-focus-gold);
       outline-offset: 2px;
-      box-shadow: 0 0 0 4px color-mix(in oklab, var(--mood-accent, #ffd166) 30%, transparent);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.85),
+        0 0 0 4px color-mix(in oklab, var(--portal-focus-gold-lo) 35%, transparent);
     }
   }
   /* Staggered card reveal — runs once on mount. Uses the shared portal
