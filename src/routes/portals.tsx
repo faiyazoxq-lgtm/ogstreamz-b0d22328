@@ -625,14 +625,17 @@ function PortalsHub() {
                   </span>
                 </header>
                 <div className="grid gap-2.5 sm:gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] items-stretch">
-                  {shown.map((i) => {
+                  {shown.map((i, idx) => {
             const meta = KIND_META[i.kind];
             const href = buildHref(i);
+            // Cap the cascade so large hubs don't drag — last card kicks
+            // off no later than ~480ms, keeping total reveal under ~840ms.
+            const revealDelay = `${Math.min(idx, 8) * 60}ms`;
             return (
               <div
                 key={`${i.kind}-${i.id}`}
-                className="group portal-card-motion relative flex h-full flex-col gap-2.5 sm:gap-4 rounded-2xl border border-white/10 bg-black/40 p-3.5 sm:p-5 backdrop-blur-xl min-h-[230px] sm:min-h-[280px]"
-                style={{ boxShadow: `0 0 32px -24px ${meta.accent}` }}
+                className="group portal-card-motion portal-card-reveal relative flex h-full flex-col gap-2.5 sm:gap-4 rounded-2xl border border-white/10 bg-black/40 p-3.5 sm:p-5 backdrop-blur-xl min-h-[230px] sm:min-h-[280px]"
+                style={{ boxShadow: `0 0 32px -24px ${meta.accent}`, ["--portal-reveal-delay" as any]: revealDelay }}
               >
                 <div className="flex items-start justify-between gap-2 min-w-0">
                   <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.3em] min-w-0 truncate" style={{ color: meta.accent }}>
