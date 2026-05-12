@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Copy, ExternalLink, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, Search, Crown, QrCode, Share2, Globe, Download, X } from "lucide-react";
+import { Copy, ExternalLink, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, ClipboardList, Search, Crown, QrCode, Share2, Globe, Download, X } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 import { requireMember } from "@/lib/route-guards";
@@ -28,8 +28,8 @@ type ToolRow = {
 
 type Item = {
   id: string; slug: string; name: string; subtitle: string;
-  kind: "music" | "joke" | "trade" | "news" | "battle" | "tool";
-  to: "/m/$slug" | "/p/$slug" | "/td/$slug" | "/b/$slug" | "/t/$slug";
+  kind: "music" | "joke" | "trade" | "news" | "battle" | "tool" | "form";
+  to: "/m/$slug" | "/p/$slug" | "/td/$slug" | "/b/$slug" | "/t/$slug" | "/f/$slug";
   vip: boolean; views: number; created_at: string;
 };
 
@@ -40,16 +40,18 @@ const KIND_META: Record<Item["kind"], { label: string; hub: string; Icon: any; a
   news:   { label: "News",   hub: "NewsHUB",   Icon: Newspaper,  accent: "#a78bfa" },
   battle: { label: "Battle", hub: "BattleHUB", Icon: Swords,     accent: "#ff2e55" },
   tool:   { label: "Tool",   hub: "ToolHUB",   Icon: Wrench,     accent: "#5cbdb9" },
+  form:   { label: "Form",   hub: "FormHUB",   Icon: ClipboardList, accent: "#7dd3fc" },
 };
 
 // Display order for hub sections on the portals page.
-const HUB_ORDER: Item["kind"][] = ["music", "joke", "trade", "news", "battle", "tool"];
+const HUB_ORDER: Item["kind"][] = ["music", "joke", "trade", "news", "form", "battle", "tool"];
 
 const PORTAL_TO: Record<string, Item["to"]> = {
   music: "/m/$slug",
   joke: "/p/$slug",
   trade: "/td/$slug",
   news: "/p/$slug",
+  form: "/f/$slug",
 };
 
 export const Route = createFileRoute("/portals")({
