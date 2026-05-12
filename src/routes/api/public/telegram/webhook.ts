@@ -30,11 +30,11 @@ async function handleCommand(
   const trimmed = text.trim();
 
   // --- Boss-only commands -------------------------------------------------
-  // Anything sent in the chat whose ID matches BOSS_TELEGRAM_API_KEY is
+  // Anything sent in the chat whose ID matches BOSS_TELEGRAM_API_KEY_TEST is
   // treated as the operator. Boss commands let the operator send DMs back
   // to members directly from Telegram, broadcast to all linked members,
   // and inspect inbox state — fully two-way messaging without leaving chat.
-  const bossChatRaw = process.env.BOSS_TELEGRAM_API_KEY;
+  const bossChatRaw = process.env.BOSS_TELEGRAM_API_KEY_TEST;
   const bossChatId = bossChatRaw ? Number(bossChatRaw) : NaN;
   if (bossChatRaw && Number.isFinite(bossChatId) && chatId === bossChatId) {
     if (await handleBossCommand(trimmed, chatId, msg)) return;
@@ -105,7 +105,7 @@ async function handleCommand(
         );
         return;
       }
-      const bossChat = process.env.BOSS_TELEGRAM_API_KEY;
+      const bossChat = process.env.BOSS_TELEGRAM_API_KEY_TEST;
       if (!bossChat) {
         await tgSendMessage(chatId, "Inbox temporarily unavailable. Please try later.");
         return;
