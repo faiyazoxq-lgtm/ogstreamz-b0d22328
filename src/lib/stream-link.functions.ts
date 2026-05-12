@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getRequestHost, getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
 import { randomBytes, createHash } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { tagOgStreamzUser } from "@/lib/stream-tag.server";
 
 // Per-user mint quota: max N successful mints in WINDOW_MS.
 const MINT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
@@ -427,4 +428,93 @@ export const getMyStreamM3uUrl = createServerFn({ method: "GET" })
     const url = `${proto}://${host}/api/public/stream-m3u?t=${token}`;
     await logStreamUrlAudit({ user_id: userId, action: "mint", success: true, token_hash: tokenHash });
     return { ok: true as const, url, expiresAt };
+  });
+/**
+ * Verify the signed-in user's stream access by hitting the configured
+ * upstream get.php with their saved credentials, then refreshing their
+ * OGStreamz tag (rank='stream_user', stream_status, stream_expires_at).
+ *
+ * Returns the refreshed profile snapshot. Never returns the credentials
+ * or the upstream URL — they stay server-side.
+ */
+export const verifyMyStreamAccess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context as any;
+
+    let server: string;
+    try {
+      server = getServerUrl();
+    } catch (e: any) {
+      return { ok: false as const, error: e?.message || "Stream server not configured" };
+    }
+
+    const { data: rows, error } = await supabase.rpc("get_my_stream_creds");
+    if (error) return { ok: false as const, error: error.message };
+    const creds = Array.isArray(rows) && rows[0] ? rows[0] : null;
+    if (!creds?.username || !creds?.password) {
+      return {
+        ok: false as const,
+        error: "No stream credentials on file. Verify your line first.",
+      };
+    }
+
+    // Probe player_api.php (small JSON, fast) instead of streaming the full M3U.
+    const url =
+      `${server}/player_api.php` +
+      `?username=${encodeURIComponent(creds.username)}` +
+      `&password=${encodeURIComponent(creds.password)}`;
+
+    let upstreamRes: Response;
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 10_000);
+      upstreamRes = await fetch(url, {
+        method: "GET",
+        signal: ctrl.signal,
+        headers: { "Accept": "application/json", "User-Agent": "OGStreamz/1.0" },
+      });
+      clearTimeout(timer);
+    } catch (e: any) {
+      return {
+        ok: false as const,
+        error: e?.name === "AbortError" ? "Upstream timeout" : "Upstream unreachable",
+      };
+    }
+
+    if (!upstreamRes.ok) {
+      return { ok: false as const, error: `Upstream ${upstreamRes.status}` };
+    }
+    let info: any = null;
+    try {
+      const json = await upstreamRes.json();
+      info = json?.user_info ?? json ?? null;
+    } catch {
+      return { ok: false as const, error: "Invalid upstream response" };
+    }
+    if (!info || Number(info.auth) !== 1) {
+      return { ok: false as const, error: "Stream credentials rejected by provider" };
+    }
+
+    const status = (info.status ? String(info.status) : "Active");
+    const expUnix = Number(info.exp_date);
+    const expiresAt =
+      Number.isFinite(expUnix) && expUnix > 0
+        ? new Date(expUnix * 1000).toISOString()
+        : null;
+
+    await tagOgStreamzUser(userId, "m3u_fetch", { status, expiresAt });
+
+    const { data: prof } = await supabaseAdmin
+      .from("profiles")
+      .select("rank, stream_status, stream_expires_at, stream_verified_at")
+      .eq("id", userId)
+      .maybeSingle();
+
+    return {
+      ok: true as const,
+      status,
+      expiresAt,
+      profile: prof ?? null,
+    };
   });
