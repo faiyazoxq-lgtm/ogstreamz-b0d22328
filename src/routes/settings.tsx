@@ -416,6 +416,77 @@ function SettingsPage() {
           </div>
         </section>
 
+        {/* Swearing Agent */}
+        <section className="rounded-2xl border border-border bg-card p-6 sm:p-8 mb-6">
+          <h2 className="text-xs uppercase tracking-[0.3em] font-bold text-muted-foreground mb-1 flex items-center gap-2">
+            <Skull className="h-3.5 w-3.5" style={{ color: "var(--neon-blue-bright)" }} />
+            Swearing Agent
+          </h2>
+          <p className="text-xs text-muted-foreground mb-5">
+            The Swearing Agent itself is flipped from the header (the 🖕 / ❤️ button). Chaos Mode escalates it from foul-mouthed to fully unhinged when it's on.
+          </p>
+
+          {/* Status row — current Swearing Agent state, read-only here */}
+          <div className="mb-3 flex items-start justify-between gap-3 rounded-xl border border-border/60 bg-background/40 px-4 py-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">Swearing Agent</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Currently{" "}
+                <span className={swearingOn ? "text-rose-300 font-semibold" : "text-emerald-300 font-semibold"}>
+                  {swearingOn ? "ON 🖕" : "OFF 💚 (Safe Mode)"}
+                </span>
+                . Use the header toggle to change it.
+              </p>
+            </div>
+            <span
+              className={[
+                "shrink-0 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-[0.25em] font-bold border",
+                swearingOn
+                  ? "border-rose-500/60 bg-rose-950/40 text-rose-200"
+                  : "border-emerald-500/50 bg-emerald-950/30 text-emerald-300",
+              ].join(" ")}
+            >
+              {swearingOn ? "On" : "Off"}
+            </span>
+          </div>
+
+          {/* Chaos Mode — the new sub-toggle */}
+          <label
+            htmlFor="chaos-mode"
+            className={[
+              "flex items-start justify-between gap-3 rounded-xl border px-4 py-3 cursor-pointer transition-colors",
+              swearingOn ? "border-border/60 bg-background/40 hover:border-border" : "border-border/40 bg-background/20 opacity-60 cursor-not-allowed",
+            ].join(" ")}
+            aria-disabled={!swearingOn}
+          >
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Flame className="h-3.5 w-3.5 text-rose-400" />
+                Chaos Mode
+                <span
+                  className={[
+                    "ml-1 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-[0.25em] font-bold border",
+                    chaosMode
+                      ? "border-rose-500/70 bg-rose-950/50 text-rose-100 shadow-[0_0_10px_-2px_rgba(244,63,94,0.6)]"
+                      : "border-border/60 bg-background/40 text-muted-foreground",
+                  ].join(" ")}
+                >
+                  {chaosMode ? "On" : "Off"}
+                </span>
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Doubles the swear density, adds ALL-CAPS bursts, named insults, and mid-answer rants. Requires the Swearing Agent to be ON.
+              </p>
+            </div>
+            <Switch
+              id="chaos-mode"
+              checked={chaosMode}
+              disabled={!swearingOn || chaosBusy}
+              onCheckedChange={(v) => toggleChaos(!!v)}
+            />
+          </label>
+        </section>
+
         {/* Stream profiles */}
         <section className="rounded-2xl border border-border bg-card p-6 sm:p-8 mb-6">
           <h2 className="text-xs uppercase tracking-[0.3em] font-bold text-muted-foreground mb-1 flex items-center gap-2">
