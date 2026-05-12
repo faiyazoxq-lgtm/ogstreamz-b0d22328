@@ -642,10 +642,19 @@ function PortalsHub() {
                       collides with VIP. Right-aligned, fixed gap, identical
                       pill heights keep the row visually aligned across all
                       cards regardless of which badges are present. */}
-                  {/* Badge stack: badges stay mounted and animate their
-                      width/opacity/scale when hidden so toggling Boss/Mine/VIP
-                      produces a smooth layout transition instead of a snap. */}
-                  <div className="flex flex-wrap justify-end items-center gap-1 shrink-0 max-w-[60%]">
+                  {/* Badge stack: badges stay mounted and animate width /
+                      opacity / scale on toggle.
+                      - `flex-nowrap` (was `flex-wrap`) keeps badges on a
+                        single row so flex doesn't recompute the wrap point
+                        mid-animation as a badge's max-width shrinks (was
+                        causing a 2→1 line jump on narrow mobile).
+                      - `min-h-5` reserves the badge row height so the title
+                        row above never jumps when the last visible badge
+                        collapses to zero.
+                      - At most two badges per card (Boss XOR Mine, plus
+                        optional VIP), so a single row fits within 60% of
+                        even a 360px card. */}
+                  <div className="flex flex-nowrap justify-end items-center gap-1 shrink-0 max-w-[60%] min-h-5">
                     {i.byBoss ? (
                       <span
                         aria-hidden={!badgePrefs.boss}
