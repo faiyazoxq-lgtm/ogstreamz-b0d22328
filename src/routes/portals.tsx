@@ -761,9 +761,9 @@ function PortalsHub() {
                       className={`portal-button-motion ${
                         i.kind === "music"
                           ? "portal-button-motion--lg"
-                          : i.kind === "joke" || i.kind === "jokes"
+                          : i.kind === "joke"
                             ? "portal-button-motion--md"
-                            : i.kind === "tool" || i.kind === "tools"
+                            : i.kind === "tool"
                               ? "portal-button-motion--sm"
                               : "px-1.5 sm:px-3 py-2 text-[10px] sm:text-[11px] rounded-md"
                       } flex-1 min-w-0 inline-flex items-center justify-center gap-1 sm:gap-1.5 uppercase tracking-[0.12em] sm:tracking-[0.18em] font-bold text-black outline-none focus-visible:ring-2 focus-visible:ring-primary`}
