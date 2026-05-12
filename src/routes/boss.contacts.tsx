@@ -234,6 +234,9 @@ function BossContactsPage() {
   // Tracks the matchIndex value last announced by the restore effect, so we
   // only announce when the restored value actually differs from before.
   const lastAnnouncedIndexRef = useRef<number | null>(null);
+  // Brief visual "pulse" highlight applied to the contact row whose
+  // matchIndex was just restored from a previously searched query.
+  const [restoredPulseId, setRestoredPulseId] = useState<string | null>(null);
   useEffect(() => {
     prevMatchIdRef.current =
       query.trim() && filtered.length > 0
@@ -262,6 +265,10 @@ function BossContactsPage() {
       const idx = filtered.findIndex((c) => c.id === savedId);
       if (idx >= 0) {
         setMatchIndex(idx);
+        // Trigger a brief visual pulse on the restored row so the user can
+        // see where focus landed. The auto-scroll effect on activeMatchId
+        // already brings it into view.
+        setRestoredPulseId(savedId);
         // Only announce when the restored position is meaningfully different
         // from the default (first match) AND differs from the last announced
         // index, so re-entering the same query at the same position stays quiet.
@@ -282,6 +289,7 @@ function BossContactsPage() {
     // No restore happened — clear any stale announcement from a prior query.
     setRestoreAnnouncement("");
     lastAnnouncedIndexRef.current = null;
+    setRestoredPulseId(null);
     setMatchIndex(0);
   }, [query, filtered]);
   const activeMatchId =
