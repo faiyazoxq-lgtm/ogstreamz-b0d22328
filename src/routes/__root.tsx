@@ -30,6 +30,7 @@ import { SiteFooter } from "../components/SiteFooter";
 import { AlignmentQAOverlay } from "../components/AlignmentQAOverlay";
 import { PupilCalibrator } from "../components/PupilCalibrator";
 import { HubsStrip } from "../components/HubsStrip";
+import { OgBotFloatingWidget } from "../components/OgBotFloatingWidget";
 import { useAuth } from "../hooks/use-auth";
 
 function NotFoundComponent() {
@@ -169,6 +170,7 @@ function RootComponent() {
             <ReducedMotionToggle />
             <AlignmentQAOverlay />
             <PupilCalibrator />
+            <OgBotFloatingWidget />
             </div>
           </div>
           <Toaster />
