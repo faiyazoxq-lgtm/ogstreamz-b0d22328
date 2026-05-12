@@ -236,6 +236,18 @@ function BossContactsPage() {
     setMatchIndex(0);
     searchInputRef.current?.focus();
   };
+  // Close any popovers/overlays related to the search-results area
+  // (currently the inline edit panel on a contact row, which also unmounts
+  // its UserLinkPicker dropdown). Returns true if anything was closed.
+  const closeSearchOverlays = () => {
+    let closed = false;
+    if (editing !== null) {
+      setEditing(null);
+      setEditLinked(null);
+      closed = true;
+    }
+    return closed;
+  };
   const announceEscape = (msg: string) => {
     // Reset first so the same message re-announces if pressed twice.
     setEscapeAnnouncement("");
@@ -327,13 +339,14 @@ function BossContactsPage() {
             onKeyDown={(e) => {
               if (e.key === "Escape") {
                 e.preventDefault();
+                const closed = closeSearchOverlays();
                 if (query) {
                   clearAndFocusSearch();
-                  announceEscape("Search cleared. Highlighted match reset to first match.");
+                  announceEscape(`${closed ? "Open panel closed. " : ""}Search cleared. Highlighted match reset to first match.`);
                 } else {
                   setMatchIndex(0);
                   searchInputRef.current?.focus();
-                  announceEscape("Highlighted match reset to first match.");
+                  announceEscape(`${closed ? "Open panel closed. " : ""}Highlighted match reset to first match.`);
                 }
                 return;
               }
@@ -431,13 +444,14 @@ function BossContactsPage() {
                 ? (e) => {
                     if (e.key === "Escape") {
                       e.preventDefault();
+                      const closed = closeSearchOverlays();
                       if (query) {
                         clearAndFocusSearch();
-                        announceEscape("Search cleared. Highlighted match reset to first match.");
+                        announceEscape(`${closed ? "Open panel closed. " : ""}Search cleared. Highlighted match reset to first match.`);
                       } else {
                         setMatchIndex(0);
                         searchInputRef.current?.focus();
-                        announceEscape("Highlighted match reset to first match.");
+                        announceEscape(`${closed ? "Open panel closed. " : ""}Highlighted match reset to first match.`);
                       }
                     }
                   }
