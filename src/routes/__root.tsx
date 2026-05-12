@@ -11,7 +11,7 @@ import {
 import { useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
-import { NavBar } from "../components/NavBar";
+import { AppShell } from "../components/AppShell";
 import { AuthProvider } from "../hooks/use-auth";
 import { Toaster } from "../components/ui/sonner";
 import { PaymentTestModeBanner } from "../components/PaymentTestModeBanner";
@@ -154,12 +154,13 @@ function RootComponent() {
             <PaymentTestModeBanner />
             <SpotlightEyes />
             <VipPromoBanner />
-            <NavBar />
-            <HubsStripSlot />
-            <AuthGate>
-              <Outlet />
-            </AuthGate>
-            <SiteFooter />
+            <AppShell>
+              <HubsStripSlot />
+              <AuthGate>
+                <Outlet />
+              </AuthGate>
+              <SiteFooter />
+            </AppShell>
             <TeleportOverlay />
             <EyeGlowTuner />
             <SystemGlitchOverlay />
