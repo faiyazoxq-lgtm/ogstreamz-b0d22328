@@ -347,11 +347,22 @@ function PortalsHub() {
                   <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.3em]" style={{ color: meta.accent }}>
                     <meta.Icon className="h-3.5 w-3.5" /> {meta.label}
                   </div>
-                  {i.vip && (
+                  <div className="inline-flex items-center gap-1.5">
+                    {i.byBoss ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-bold bg-[oklch(0.72_0.22_245/0.15)] border border-[oklch(0.72_0.22_245/0.5)] text-[oklch(0.78_0.18_245)]">
+                        Boss
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-bold bg-white/5 border border-white/20 text-white/80">
+                        Mine
+                      </span>
+                    )}
+                    {i.vip && (
                     <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-bold bg-gold/15 border border-gold/50 text-gold">
                       <Crown className="h-3 w-3" /> VIP
                     </div>
-                  )}
+                    )}
+                  </div>
                 </div>
                 <Link
                   to={i.to}
