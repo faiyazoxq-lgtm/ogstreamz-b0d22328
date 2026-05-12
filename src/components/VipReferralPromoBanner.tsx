@@ -74,7 +74,7 @@ export function VipReferralPromoBanner() {
         </div>
 
         <Link
-          to="/dashboard"
+          to="/vip"
           hash="referral"
           className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-amber-300/60 bg-gradient-to-r from-amber-400/25 via-amber-300/15 to-amber-400/25 hover:from-amber-400/35 hover:to-amber-400/35 px-3 py-1.5 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] text-amber-50 shadow-[0_0_24px_-4px_rgba(252,211,77,0.85)] transition-all active:scale-[0.98]"
         >
