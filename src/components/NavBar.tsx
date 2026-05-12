@@ -270,19 +270,15 @@ export function NavBar() {
         >
           <OgWordmark
             suffix="-PORTAL"
-            className="brand-glow__mark inline-flex items-center self-center min-w-0 flex-shrink whitespace-nowrap text-eye-ice bg-transparent leading-[0.9] transition-[color,text-shadow,filter,letter-spacing] duration-300 ease-out tracking-[-0.005em] sm:tracking-[-0.018em] md:tracking-[-0.028em] lg:tracking-[-0.034em] xl:tracking-[-0.04em]"
+            className="brand-glow__mark inline-flex items-center self-center min-w-0 flex-shrink whitespace-nowrap text-white font-black bg-transparent leading-[0.9] transition-[color,text-shadow,filter,letter-spacing] duration-300 ease-out tracking-[-0.005em] sm:tracking-[-0.018em] md:tracking-[-0.028em] lg:tracking-[-0.034em] xl:tracking-[-0.04em] drop-shadow-[0_0_18px_oklch(0.72_0.22_245/0.55)]"
             style={{
-              // Fully fluid clamp tuned so the full "0G-PORTAL" lockup
-              // never wraps or clips between 320px → 1920px viewports.
-              // The vw component keeps growth proportional, the rem floor
-              // guarantees legibility on phones, and the rem ceiling keeps
-              // the wordmark from dwarfing the nav on widescreen displays.
-              // Letter-spacing is handled per-breakpoint by the Tailwind
-              // tracking-* classes above so the optical tracking stays
-              // consistent at every font size (looser when small, tighter
-              // when large).
-              fontSize: "clamp(0.95rem, 0.55rem + 1.5vw, 2rem)",
+              // Larger, fluid wordmark — keeps the full "0G-PORTAL" lockup
+              // legible on phones and commanding on widescreen displays.
+              fontSize: "clamp(1.5rem, 0.9rem + 2.6vw, 3.25rem)",
               wordSpacing: "-0.05em",
+              color: "#ffffff",
+              textShadow:
+                "0 0 1px rgba(255,255,255,0.95), 0 0 18px oklch(0.72 0.22 245 / 0.55), 0 2px 12px rgba(0,0,0,0.55)",
             }}
           />
         </Link>
