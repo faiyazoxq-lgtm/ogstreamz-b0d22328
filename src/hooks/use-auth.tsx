@@ -5,6 +5,8 @@ import { promoteBossIfNeeded } from "@/lib/boss.functions";
 import { notifyBossLoginIfNeeded } from "@/lib/boss-login-notify.functions";
 import { getRemember, hasTabSession, markTabSession, clearTabSession } from "@/lib/remember-session";
 import { hasStoredAuth } from "@/lib/has-stored-auth";
+import { logSecurityEvent } from "@/lib/security-monitor.functions";
+import { getDeviceHash } from "@/lib/device-id";
 
 export type SyndicateRank = "prospect" | "enforcer" | "stream_user" | "vip" | "boss";
 export type FeatureFlags = { jokes: boolean; music: boolean; tools: boolean; swearing: boolean; real_og?: boolean };
@@ -99,6 +101,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (s?.user) {
         if (_event === "SIGNED_IN") {
           markTabSession();
+          // Security audit: log sign-in with device fingerprint so Boss
+          // gets alerted on new devices / unusual hours. Per-tab dedupe
+          // so token refreshes don't spam events.
+          try {
+            const skey = "sec:signin-logged";
+            if (typeof sessionStorage !== "undefined" && !sessionStorage.getItem(skey)) {
+              sessionStorage.setItem(skey, "1");
+              const tz =
+                typeof Intl !== "undefined"
+                  ? Intl.DateTimeFormat().resolvedOptions().timeZone || ""
+                  : "";
+              getDeviceHash()
+                .then((deviceHash) =>
+                  logSecurityEvent({ data: { event: "sign_in", deviceHash, timezone: tz } }),
+                )
+                .catch(() => {/* silent */});
+            }
+          } catch { /* sessionStorage may be unavailable */ }
           // Fire-and-forget: server fn no-ops for non-boss callers, and
           // silently dedupes per browser tab to avoid spamming Telegram on
           // tab focus / token refresh storms.
@@ -116,6 +136,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               );
             }
           } catch { /* sessionStorage may be unavailable */ }
+        } else if (_event === "PASSWORD_RECOVERY") {
+          logSecurityEvent({ data: { event: "password_recovery" } }).catch(() => {});
+        } else if (_event === "USER_UPDATED") {
+          logSecurityEvent({ data: { event: "user_updated" } }).catch(() => {});
         }
         // defer fetch to avoid recursive auth state callbacks
         setTimeout(() => loadExtras(s.user.id), 0);
@@ -123,7 +147,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearTabSession();
         setProfile(null);
         setIsAdmin(false);
-        try { sessionStorage.removeItem("boss:tg-login-notified"); } catch { /* noop */ }
+        try {
+          sessionStorage.removeItem("boss:tg-login-notified");
+          sessionStorage.removeItem("sec:signin-logged");
+        } catch { /* noop */ }
       }
     });
 

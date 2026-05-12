@@ -59,6 +59,7 @@ import { Route as BossTelegramTestRouteImport } from './routes/boss.telegram-tes
 import { Route as BossTelegramSetupRouteImport } from './routes/boss.telegram-setup'
 import { Route as BossStreamQueueRouteImport } from './routes/boss.stream-queue'
 import { Route as BossSettingsRouteImport } from './routes/boss.settings'
+import { Route as BossSecurityEventsRouteImport } from './routes/boss.security-events'
 import { Route as BossSecretsInventoryRouteImport } from './routes/boss.secrets-inventory'
 import { Route as BossRealtimeDenialsRouteImport } from './routes/boss.realtime-denials'
 import { Route as BossPublishCheckRouteImport } from './routes/boss.publish-check'
@@ -345,6 +346,11 @@ const BossSettingsRoute = BossSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => BossRoute,
 } as any)
+const BossSecurityEventsRoute = BossSecurityEventsRouteImport.update({
+  id: '/security-events',
+  path: '/security-events',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossSecretsInventoryRoute = BossSecretsInventoryRouteImport.update({
   id: '/secrets-inventory',
   path: '/secrets-inventory',
@@ -587,6 +593,7 @@ export interface FileRoutesByFullPath {
   '/boss/publish-check': typeof BossPublishCheckRoute
   '/boss/realtime-denials': typeof BossRealtimeDenialsRoute
   '/boss/secrets-inventory': typeof BossSecretsInventoryRoute
+  '/boss/security-events': typeof BossSecurityEventsRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/telegram-setup': typeof BossTelegramSetupRoute
@@ -673,6 +680,7 @@ export interface FileRoutesByTo {
   '/boss/publish-check': typeof BossPublishCheckRoute
   '/boss/realtime-denials': typeof BossRealtimeDenialsRoute
   '/boss/secrets-inventory': typeof BossSecretsInventoryRoute
+  '/boss/security-events': typeof BossSecurityEventsRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/telegram-setup': typeof BossTelegramSetupRoute
@@ -761,6 +769,7 @@ export interface FileRoutesById {
   '/boss/publish-check': typeof BossPublishCheckRoute
   '/boss/realtime-denials': typeof BossRealtimeDenialsRoute
   '/boss/secrets-inventory': typeof BossSecretsInventoryRoute
+  '/boss/security-events': typeof BossSecurityEventsRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
   '/boss/telegram-setup': typeof BossTelegramSetupRoute
@@ -850,6 +859,7 @@ export interface FileRouteTypes {
     | '/boss/publish-check'
     | '/boss/realtime-denials'
     | '/boss/secrets-inventory'
+    | '/boss/security-events'
     | '/boss/settings'
     | '/boss/stream-queue'
     | '/boss/telegram-setup'
@@ -936,6 +946,7 @@ export interface FileRouteTypes {
     | '/boss/publish-check'
     | '/boss/realtime-denials'
     | '/boss/secrets-inventory'
+    | '/boss/security-events'
     | '/boss/settings'
     | '/boss/stream-queue'
     | '/boss/telegram-setup'
@@ -1023,6 +1034,7 @@ export interface FileRouteTypes {
     | '/boss/publish-check'
     | '/boss/realtime-denials'
     | '/boss/secrets-inventory'
+    | '/boss/security-events'
     | '/boss/settings'
     | '/boss/stream-queue'
     | '/boss/telegram-setup'
@@ -1456,6 +1468,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossSettingsRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/security-events': {
+      id: '/boss/security-events'
+      path: '/security-events'
+      fullPath: '/boss/security-events'
+      preLoaderRoute: typeof BossSecurityEventsRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/secrets-inventory': {
       id: '/boss/secrets-inventory'
       path: '/secrets-inventory'
@@ -1742,6 +1761,7 @@ interface BossRouteChildren {
   BossPublishCheckRoute: typeof BossPublishCheckRoute
   BossRealtimeDenialsRoute: typeof BossRealtimeDenialsRoute
   BossSecretsInventoryRoute: typeof BossSecretsInventoryRoute
+  BossSecurityEventsRoute: typeof BossSecurityEventsRoute
   BossSettingsRoute: typeof BossSettingsRoute
   BossStreamQueueRoute: typeof BossStreamQueueRoute
   BossTelegramSetupRoute: typeof BossTelegramSetupRoute
@@ -1775,6 +1795,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossPublishCheckRoute: BossPublishCheckRoute,
   BossRealtimeDenialsRoute: BossRealtimeDenialsRoute,
   BossSecretsInventoryRoute: BossSecretsInventoryRoute,
+  BossSecurityEventsRoute: BossSecurityEventsRoute,
   BossSettingsRoute: BossSettingsRoute,
   BossStreamQueueRoute: BossStreamQueueRoute,
   BossTelegramSetupRoute: BossTelegramSetupRoute,
@@ -1862,13 +1883,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

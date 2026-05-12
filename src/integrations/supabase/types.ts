@@ -1226,6 +1226,33 @@ export type Database = {
         }
         Relationships: []
       }
+      known_devices: {
+        Row: {
+          device_hash: string
+          first_seen: string
+          id: string
+          last_seen: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          device_hash: string
+          first_seen?: string
+          id?: string
+          last_seen?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          device_hash?: string
+          first_seen?: string
+          id?: string
+          last_seen?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       letter_history: {
         Row: {
           answers: Json
@@ -2334,6 +2361,42 @@ export type Database = {
           id?: string
           reason?: string
           reseller_user_id?: string
+        }
+        Relationships: []
+      }
+      security_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          ip: string | null
+          metadata: Json
+          severity: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          ip?: string | null
+          metadata?: Json
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip?: string | null
+          metadata?: Json
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -3599,6 +3662,18 @@ export type Database = {
       }
     }
     Functions: {
+      _emit_security_alert: {
+        Args: {
+          _actor_id: string
+          _event_type: string
+          _message: string
+          _metadata: Json
+          _severity: string
+          _title: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       _profile_self_update_safe: {
         Args: {
           _banned: boolean
@@ -4162,7 +4237,7 @@ export type Database = {
       billing_mode: "free" | "pay_per_use" | "subscription" | "allowance"
       subscription_plan: "free" | "metal" | "energy" | "syndicate"
       syndicate_rank: "prospect" | "enforcer" | "vip" | "boss" | "stream_user"
-      system_alert_category: "fallback" | "api_error"
+      system_alert_category: "fallback" | "api_error" | "security"
       system_alert_severity: "info" | "warn" | "error"
     }
     CompositeTypes: {
@@ -4298,7 +4373,7 @@ export const Constants = {
       billing_mode: ["free", "pay_per_use", "subscription", "allowance"],
       subscription_plan: ["free", "metal", "energy", "syndicate"],
       syndicate_rank: ["prospect", "enforcer", "vip", "boss", "stream_user"],
-      system_alert_category: ["fallback", "api_error"],
+      system_alert_category: ["fallback", "api_error", "security"],
       system_alert_severity: ["info", "warn", "error"],
     },
   },
