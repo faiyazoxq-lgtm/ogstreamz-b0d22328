@@ -320,7 +320,7 @@ function Index() {
           </TiltCard>
           );
         })}
-        {customHubs.map((h) => {
+        {isBoss && customHubs.map((h) => {
           const Icon = ICONS[h.icon] ?? Sparkles;
           const accent = h.accent || "#3ad6ff";
           const isExternal = /^https?:\/\//i.test(h.href);
