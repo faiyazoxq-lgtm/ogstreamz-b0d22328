@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { timingSafeEqual } from "crypto";
 import { tgSendMessage, deriveTelegramWebhookSecret } from "@/lib/telegram-bot.server";
 import { getBossChatId } from "@/lib/boss-chat.server";
+import { logInfo, logWarn, logError } from "@/lib/server-log.server";
 
 let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
@@ -129,7 +130,10 @@ async function handleCommand(
         );
         await tgSendMessage(chatId, "✅ Sent. The team will reply here shortly.");
       } catch (e) {
-        console.error("forward to boss failed", e);
+        logError("tg.webhook.forward_to_boss_failed", {
+          chatId,
+          error: e instanceof Error ? e.message : String(e),
+        });
         await tgSendMessage(chatId, "Could not deliver your message. Please try again.");
       }
       return;
@@ -278,9 +282,13 @@ async function handleBossCommand(
         sent++;
       } catch (e) {
         failed++;
-        console.error("broadcast send failed for", id, e);
+        logError("tg.webhook.broadcast_send_failed", {
+          targetSuffix: String(id).slice(-8),
+          error: e instanceof Error ? e.message : String(e),
+        });
       }
     }
+    logInfo("tg.webhook.broadcast_complete", { sent, failed, total: targets.length });
     await tgSendMessage(
       bossChatId,
       `📣 Broadcast complete — ${sent} delivered, ${failed} failed.`,
@@ -349,7 +357,10 @@ async function deliverBossDm(target: number, body: string, bossChatId: number) {
         message_date: new Date().toISOString(),
       });
     } catch (e) {
-      console.error("outbound persist failed", e);
+      logError("tg.webhook.outbound_persist_failed", {
+        targetSuffix: String(target).slice(-8),
+        error: e instanceof Error ? e.message : String(e),
+      });
     }
     await tgSendMessage(
       bossChatId,
@@ -370,12 +381,20 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const requestStartedAt = Date.now();
         const TG = process.env.TELEGRAM_API_KEY;
-        if (!TG) return new Response("not configured", { status: 500 });
+        if (!TG) {
+          logError("tg.webhook.misconfigured", { reason: "missing_telegram_api_key" });
+          return new Response("not configured", { status: 500 });
+        }
 
         const expected = deriveTelegramWebhookSecret(TG);
         const got = request.headers.get("X-Telegram-Bot-Api-Secret-Token") ?? "";
         if (!safeEqual(got, expected)) {
+          logWarn("tg.webhook.unauthorized", {
+            hasHeader: got.length > 0,
+            ip: request.headers.get("x-forwarded-for") ?? null,
+          });
           return new Response("Unauthorized", { status: 401 });
         }
 
@@ -383,13 +402,25 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         try {
           update = await request.json();
         } catch {
+          logWarn("tg.webhook.bad_json");
           return Response.json({ ok: true });
         }
         const msg = update.message ?? update.edited_message;
         const chatId: number | undefined = msg?.chat?.id;
         const text: string = msg?.text ?? "";
         const username: string = msg?.from?.username ?? "";
-        if (!chatId) return Response.json({ ok: true });
+        if (!chatId) {
+          logInfo("tg.webhook.no_chat_id", { updateId: update.update_id ?? null });
+          return Response.json({ ok: true });
+        }
+
+        logInfo("tg.webhook.received", {
+          updateId: update.update_id ?? null,
+          chatType: msg?.chat?.type ?? null,
+          chatIdSuffix: String(chatId).slice(-8),
+          edited: Boolean(update.edited_message),
+          textLen: text.length,
+        });
 
         // Persist every incoming message so the Boss inbox can render
         // chats/groups and conversation threads. Idempotent on update_id.
@@ -425,15 +456,36 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
             );
           }
         } catch (e) {
-          console.error("telegram inbox upsert failed", e);
+          logError("tg.webhook.inbox_upsert_failed", {
+            updateId: update.update_id ?? null,
+            error: e instanceof Error ? e.message : String(e),
+          });
         }
 
-        if (!text) return Response.json({ ok: true });
+        if (!text) {
+          logInfo("tg.webhook.handled", {
+            updateId: update.update_id ?? null,
+            ms: Date.now() - requestStartedAt,
+            kind: "non_text",
+          });
+          return Response.json({ ok: true });
+        }
 
         try {
           await handleCommand(text, chatId, username, msg);
+          logInfo("tg.webhook.handled", {
+            updateId: update.update_id ?? null,
+            ms: Date.now() - requestStartedAt,
+            kind: "command",
+          });
         } catch (e) {
-          console.error("telegram webhook handler error", e);
+          logError("tg.webhook.handler_error", {
+            updateId: update.update_id ?? null,
+            chatIdSuffix: String(chatId).slice(-8),
+            commandPrefix: text.split(/\s+/)[0]?.slice(0, 32) ?? null,
+            ms: Date.now() - requestStartedAt,
+            error: e instanceof Error ? e.message : String(e),
+          });
         }
         return Response.json({ ok: true });
       },
