@@ -975,6 +975,35 @@ html[data-mood="og"] {
       transform var(--portal-dur-out)  var(--portal-ease-in),
       filter    var(--portal-dur-fast) var(--portal-ease-in);
   }
+  /* Electric gold focus ring — keyboard-only (focus-visible). Pulses a
+     soft glow on entry using shared portal motion tokens, then settles
+     to a steady halo so the focused control reads as "live" without
+     distracting the eye. */
+  .portal-button-motion:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--mood-accent, #ffd166),
+      0 0 12px 2px color-mix(in oklab, var(--mood-accent, #ffd166) 55%, transparent),
+      0 0 28px 6px color-mix(in oklab, var(--mood-accent, #ffd166) 22%, transparent);
+    animation: portal-focus-pulse var(--portal-dur-in) var(--portal-ease-out) both;
+    transition:
+      box-shadow var(--portal-dur-in) var(--portal-ease-out),
+      filter     var(--portal-dur-fast) var(--portal-ease-out);
+  }
+  @keyframes portal-focus-pulse {
+    from {
+      box-shadow:
+        0 0 0 0 var(--mood-accent, #ffd166),
+        0 0 0 0 color-mix(in oklab, var(--mood-accent, #ffd166) 55%, transparent),
+        0 0 0 0 color-mix(in oklab, var(--mood-accent, #ffd166) 22%, transparent);
+    }
+    to {
+      box-shadow:
+        0 0 0 2px var(--mood-accent, #ffd166),
+        0 0 12px 2px color-mix(in oklab, var(--mood-accent, #ffd166) 55%, transparent),
+        0 0 28px 6px color-mix(in oklab, var(--mood-accent, #ffd166) 22%, transparent);
+    }
+  }
   @media (prefers-reduced-motion: reduce) {
     .portal-card-motion,
     .portal-card-motion:hover,
@@ -986,6 +1015,15 @@ html[data-mood="og"] {
       transition: none !important;
       transform: none !important;
       filter: none !important;
+    }
+    /* Static gold halo — no pulse, but the focus ring still reads
+       clearly for keyboard users in reduced-motion mode. */
+    .portal-button-motion:focus-visible {
+      animation: none !important;
+      transition: none !important;
+      outline: 2px solid var(--mood-accent, #ffd166);
+      outline-offset: 2px;
+      box-shadow: 0 0 0 4px color-mix(in oklab, var(--mood-accent, #ffd166) 30%, transparent);
     }
   }
   /* Staggered card reveal — runs once on mount. Uses the shared portal
