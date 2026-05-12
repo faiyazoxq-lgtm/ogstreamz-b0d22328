@@ -193,7 +193,7 @@ export const saveLetterHistory = createServerFn({ method: "POST" })
     title: raw?.title ? clip(raw.title, 140) : "",
   }))
   .handler(async ({ data, context }) => {
-    const { supabase, user } = context as { supabase: any; userId: string };
+    const { supabase, userId } = context as { supabase: any; userId: string };
     const title = data.title || titleFor(data.inputs);
     if (data.id) {
       const { data: row, error } = await supabase
@@ -231,7 +231,7 @@ export const saveLetterHistory = createServerFn({ method: "POST" })
 export const listLetterHistory = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase, user } = context as { supabase: any; userId: string };
+    const { supabase, userId } = context as { supabase: any; userId: string };
     const { data, error } = await supabase
       .from("letter_history")
       .select("id,title,inputs,letter,created_at,updated_at")
@@ -253,7 +253,7 @@ export const getLetterHistory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((raw: { id: string }) => ({ id: String(raw?.id || "").slice(0, 64) }))
   .handler(async ({ data, context }) => {
-    const { supabase, user } = context as { supabase: any; userId: string };
+    const { supabase, userId } = context as { supabase: any; userId: string };
     if (!data.id) return { ok: false as const, error: "Missing id", row: null as LetterHistoryRow | null };
     const { data: row, error } = await supabase
       .from("letter_history")
@@ -270,7 +270,7 @@ export const deleteLetterHistory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((raw: { id: string }) => ({ id: String(raw?.id || "").slice(0, 64) }))
   .handler(async ({ data, context }) => {
-    const { supabase, user } = context as { supabase: any; userId: string };
+    const { supabase, userId } = context as { supabase: any; userId: string };
     if (!data.id) return { ok: false as const, error: "Missing id" };
     const { error } = await supabase
       .from("letter_history")
