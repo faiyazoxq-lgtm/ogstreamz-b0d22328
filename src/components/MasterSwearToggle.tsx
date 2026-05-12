@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -10,16 +10,45 @@ import { effectiveSwearing } from "@/lib/swearing";
  * Flips `profile.feature_flags.swearing` for the signed-in user.
  * Replaces all per-panel/per-portal swearing on/off switches.
  */
+const GUEST_KEY = "og.swearing.guest";
+
+function readGuestPref(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    const v = window.localStorage.getItem(GUEST_KEY);
+    if (v === "0") return false;
+    return true; // default ON for everyone
+  } catch {
+    return true;
+  }
+}
+
 export function MasterSwearToggle({ compact: _compact = false }: { compact?: boolean }) {
   const { user, profile, refresh } = useAuth();
   const [busy, setBusy] = useState(false);
+  const [guestSwearing, setGuestSwearing] = useState<boolean>(true);
 
-  if (!user || !profile) return null;
-  const swearing = effectiveSwearing(profile);
+  useEffect(() => {
+    if (!user) setGuestSwearing(readGuestPref());
+  }, [user]);
+
+  const swearing = user && profile ? effectiveSwearing(profile) : guestSwearing;
 
   const toggle = async () => {
     if (busy) return;
     const next = !swearing;
+
+    if (!user || !profile) {
+      try {
+        window.localStorage.setItem(GUEST_KEY, next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
+      setGuestSwearing(next);
+      toast.success(next ? "Swearing Agent: ON 🖕" : "Safe Mode: ON 💚");
+      return;
+    }
+
     setBusy(true);
     try {
       const merged = { ...(profile.feature_flags ?? {}), swearing: next };

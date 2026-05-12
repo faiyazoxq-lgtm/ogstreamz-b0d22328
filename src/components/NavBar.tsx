@@ -281,38 +281,6 @@ export function NavBar() {
             }}
           />
         </Link>
-        {user && !isBoss && (
-          <Link
-            to="/store"
-            aria-label={`Coin wallet: ${profile?.credits ?? 0} coins — tap to top up`}
-            title={`Your coin balance — ${profile?.credits ?? 0} 🪙. Tap to top up.`}
-            className="shrink inline-flex items-center min-w-0 max-w-[40vw] sm:max-w-none gap-1 sm:gap-2 rounded-full border-2 border-amber-400/60 bg-gradient-to-r from-amber-500/25 via-amber-400/15 to-amber-500/25 hover:from-amber-500/35 hover:to-amber-500/35 px-1.5 py-1 sm:px-4 sm:py-2 font-bold text-amber-100 shadow-[0_0_22px_-4px_oklch(0.82_0.18_85/0.85)] transition-all outline-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-amber-300 focus-visible:ring-offset-[3px] focus-visible:ring-offset-background"
-          >
-            <span className="text-sm sm:text-lg leading-none shrink-0" aria-hidden>🪙</span>
-            <AnimatedCredits
-              value={profile?.credits ?? 0}
-              className="text-amber-50 text-sm sm:text-lg font-[Montserrat] font-black tabular-nums leading-none truncate min-w-0"
-            />
-            <span className="hidden sm:inline text-[9px] uppercase tracking-[0.25em] text-amber-200/90 leading-none">
-              coins
-            </span>
-          </Link>
-        )}
-        {user && isBoss && (
-          <Link
-            to="/admin"
-            hash="roster"
-            aria-label="Add or manage credits"
-            title="Add or manage member credits"
-            className="shrink inline-flex items-center min-w-0 max-w-[44vw] sm:max-w-none gap-1 sm:gap-2 rounded-full border-2 border-gold/60 bg-gradient-to-r from-gold/25 via-gold/15 to-gold/25 hover:from-gold/35 hover:to-gold/35 px-1.5 py-1 sm:px-4 sm:py-2 font-bold text-gold shadow-[0_0_22px_-4px_var(--gold)] transition-all outline-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-[3px] focus-visible:ring-offset-background"
-          >
-            <Coins className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" aria-hidden />
-            <span className="text-[11px] sm:text-sm font-bold uppercase tracking-[0.15em] leading-none truncate">
-              <span className="sm:hidden">Creds</span>
-              <span className="hidden sm:inline">Add / Manage Creds</span>
-            </span>
-          </Link>
-        )}
         <ul className="flex items-center flex-nowrap gap-2 sm:gap-3 shrink-0 ml-auto">
           <li className="hidden sm:block">
             <div className="flex items-center bg-white/[0.04] border border-white/10 rounded-full p-1 shadow-inner shadow-black/20 backdrop-blur-sm">
@@ -338,6 +306,32 @@ export function NavBar() {
           )}
           <li className="hidden sm:block">
             <div className="flex items-center gap-2">
+              {user && !isBoss && (
+                <Link
+                  to="/store"
+                  aria-label={`Coin wallet: ${profile?.credits ?? 0} coins — tap to top up`}
+                  title={`Your coin balance — ${profile?.credits ?? 0} 🪙. Tap to top up.`}
+                  className="inline-flex items-center gap-1.5 rounded-full border-2 border-amber-400/60 bg-gradient-to-r from-amber-500/25 via-amber-400/15 to-amber-500/25 hover:from-amber-500/35 hover:to-amber-500/35 px-3 py-1.5 font-bold text-amber-100 shadow-[0_0_22px_-4px_oklch(0.82_0.18_85/0.85)] transition-all outline-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-amber-300 focus-visible:ring-offset-[3px] focus-visible:ring-offset-background"
+                >
+                  <span className="text-base leading-none" aria-hidden>🪙</span>
+                  <AnimatedCredits
+                    value={profile?.credits ?? 0}
+                    className="text-amber-50 text-sm font-[Montserrat] font-black tabular-nums leading-none"
+                  />
+                </Link>
+              )}
+              {user && isBoss && (
+                <Link
+                  to="/admin"
+                  hash="roster"
+                  aria-label="Add or manage credits"
+                  title="Add or manage member credits"
+                  className="inline-flex items-center gap-1.5 rounded-full border-2 border-gold/60 bg-gradient-to-r from-gold/25 via-gold/15 to-gold/25 hover:from-gold/35 hover:to-gold/35 px-3 py-1.5 font-bold text-gold shadow-[0_0_22px_-4px_var(--gold)] transition-all outline-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-[3px] focus-visible:ring-offset-background"
+                >
+                  <Coins className="h-4 w-4" aria-hidden />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.15em] leading-none">Creds</span>
+                </Link>
+              )}
               <span
                 className={`hidden lg:inline-flex items-center gap-1 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-[0.2em] ${statusColor}`}
                 title={user ? (isBoss ? "Boss Account" : `Signed in as ${profile?.email ?? user.email}`) : "Not signed in"}
@@ -352,11 +346,9 @@ export function NavBar() {
               />
             </div>
           </li>
-          {user && (
-            <li className="block">
-              <MasterSwearToggle />
-            </li>
-          )}
+          <li className="block">
+            <MasterSwearToggle />
+          </li>
           <li className="sm:hidden">
             <MobileNavDrawer
               hubs={visibleHubs}
@@ -510,12 +502,10 @@ function MobileNavDrawer({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-4 pb-6">
-          {user && (
-            <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-border bg-secondary/40 px-3 py-2.5">
-              <span className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">Swearing Agent</span>
-              <MasterSwearToggle />
-            </div>
-          )}
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-border bg-secondary/40 px-3 py-2.5">
+            <span className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">Swearing Agent</span>
+            <MasterSwearToggle />
+          </div>
 
           {user && portals.length > 0 && <Section title="Portals" icon={DoorOpen} items={portals} />}
           <Section title="HUBS" icon={Rocket} items={hubs} gold />
