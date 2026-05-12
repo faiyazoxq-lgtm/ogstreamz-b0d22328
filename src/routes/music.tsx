@@ -13,6 +13,7 @@ import { MusicHubBalance } from "@/components/MusicHubBalance";
 import { FeaturedDropCard } from "@/components/FeaturedDropCard";
 import { VipPaywallInline } from "@/components/VipPaywallInline";
 import { PortalHeader, PortalStyleLine, mergeStyle } from "@/components/PortalHeader";
+import { HubsStrip } from "@/components/HubsStrip";
 
 const MUSIC_STYLE = "Cinematic neon street-rap with gritty bass and OG energy.";
 
@@ -111,7 +112,9 @@ function MusicPromptBuilder() {
   };
 
   return (
-    <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 animate-fade-in">
+    <>
+      <HubsStrip className="pt-6" />
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 animate-fade-in">
       <PortalHeader
         portalKey="music"
         name="MusicHUB"
@@ -203,6 +206,7 @@ function MusicPromptBuilder() {
         )}
       </section>
       <SpawnPortalCard kind="music" />
-    </main>
+      </main>
+    </>
   );
 }
