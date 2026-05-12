@@ -58,6 +58,7 @@ import { Route as BossTelegramSetupRouteImport } from './routes/boss.telegram-se
 import { Route as BossStreamQueueRouteImport } from './routes/boss.stream-queue'
 import { Route as BossSettingsRouteImport } from './routes/boss.settings'
 import { Route as BossSecretsInventoryRouteImport } from './routes/boss.secrets-inventory'
+import { Route as BossRealtimeDenialsRouteImport } from './routes/boss.realtime-denials'
 import { Route as BossPublishCheckRouteImport } from './routes/boss.publish-check'
 import { Route as BossPromotionsRouteImport } from './routes/boss.promotions'
 import { Route as BossPricingRouteImport } from './routes/boss.pricing'
@@ -334,6 +335,11 @@ const BossSecretsInventoryRoute = BossSecretsInventoryRouteImport.update({
   path: '/secrets-inventory',
   getParentRoute: () => BossRoute,
 } as any)
+const BossRealtimeDenialsRoute = BossRealtimeDenialsRouteImport.update({
+  id: '/realtime-denials',
+  path: '/realtime-denials',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossPublishCheckRoute = BossPublishCheckRouteImport.update({
   id: '/publish-check',
   path: '/publish-check',
@@ -545,6 +551,7 @@ export interface FileRoutesByFullPath {
   '/boss/pricing': typeof BossPricingRoute
   '/boss/promotions': typeof BossPromotionsRoute
   '/boss/publish-check': typeof BossPublishCheckRoute
+  '/boss/realtime-denials': typeof BossRealtimeDenialsRoute
   '/boss/secrets-inventory': typeof BossSecretsInventoryRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
@@ -625,6 +632,7 @@ export interface FileRoutesByTo {
   '/boss/pricing': typeof BossPricingRoute
   '/boss/promotions': typeof BossPromotionsRoute
   '/boss/publish-check': typeof BossPublishCheckRoute
+  '/boss/realtime-denials': typeof BossRealtimeDenialsRoute
   '/boss/secrets-inventory': typeof BossSecretsInventoryRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
@@ -707,6 +715,7 @@ export interface FileRoutesById {
   '/boss/pricing': typeof BossPricingRoute
   '/boss/promotions': typeof BossPromotionsRoute
   '/boss/publish-check': typeof BossPublishCheckRoute
+  '/boss/realtime-denials': typeof BossRealtimeDenialsRoute
   '/boss/secrets-inventory': typeof BossSecretsInventoryRoute
   '/boss/settings': typeof BossSettingsRoute
   '/boss/stream-queue': typeof BossStreamQueueRoute
@@ -790,6 +799,7 @@ export interface FileRouteTypes {
     | '/boss/pricing'
     | '/boss/promotions'
     | '/boss/publish-check'
+    | '/boss/realtime-denials'
     | '/boss/secrets-inventory'
     | '/boss/settings'
     | '/boss/stream-queue'
@@ -870,6 +880,7 @@ export interface FileRouteTypes {
     | '/boss/pricing'
     | '/boss/promotions'
     | '/boss/publish-check'
+    | '/boss/realtime-denials'
     | '/boss/secrets-inventory'
     | '/boss/settings'
     | '/boss/stream-queue'
@@ -951,6 +962,7 @@ export interface FileRouteTypes {
     | '/boss/pricing'
     | '/boss/promotions'
     | '/boss/publish-check'
+    | '/boss/realtime-denials'
     | '/boss/secrets-inventory'
     | '/boss/settings'
     | '/boss/stream-queue'
@@ -1374,6 +1386,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossSecretsInventoryRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/realtime-denials': {
+      id: '/boss/realtime-denials'
+      path: '/realtime-denials'
+      fullPath: '/boss/realtime-denials'
+      preLoaderRoute: typeof BossRealtimeDenialsRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/publish-check': {
       id: '/boss/publish-check'
       path: '/publish-check'
@@ -1621,6 +1640,7 @@ interface BossRouteChildren {
   BossPricingRoute: typeof BossPricingRoute
   BossPromotionsRoute: typeof BossPromotionsRoute
   BossPublishCheckRoute: typeof BossPublishCheckRoute
+  BossRealtimeDenialsRoute: typeof BossRealtimeDenialsRoute
   BossSecretsInventoryRoute: typeof BossSecretsInventoryRoute
   BossSettingsRoute: typeof BossSettingsRoute
   BossStreamQueueRoute: typeof BossStreamQueueRoute
@@ -1651,6 +1671,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossPricingRoute: BossPricingRoute,
   BossPromotionsRoute: BossPromotionsRoute,
   BossPublishCheckRoute: BossPublishCheckRoute,
+  BossRealtimeDenialsRoute: BossRealtimeDenialsRoute,
   BossSecretsInventoryRoute: BossSecretsInventoryRoute,
   BossSettingsRoute: BossSettingsRoute,
   BossStreamQueueRoute: BossStreamQueueRoute,
