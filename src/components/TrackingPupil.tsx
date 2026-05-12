@@ -155,7 +155,6 @@ export function TrackingPupil({
         height: `${pupilRatio * 130}%`,
         transform: `translate(-50%, -50%)`,
         transformOrigin: "center",
-        transition: "transform 80ms ease-out",
         // Hot red pupil — bright blood core fading to deep crimson, with an
         // outer red glow so it reads as a glowing eye even at small sizes.
         background:
