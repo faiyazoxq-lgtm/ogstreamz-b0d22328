@@ -4,6 +4,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+// Gate paid Perplexity calls behind VIP / paid tier so free users cannot drain credits.
+async function assertVipOrPaid(supabase: any, userId: string) {
+  const { data, error } = await supabase.rpc("has_active_vip", { _user: userId });
+  if (error) throw new Response("Unable to verify entitlement", { status: 500 });
+  if (data !== true) throw new Response("VIP / paid tier required", { status: 403 });
+}
+
 export type DeepSearchSource = {
   url: string;
   title: string;
