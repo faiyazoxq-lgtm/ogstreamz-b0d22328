@@ -485,7 +485,7 @@ function MobileNavDrawer({
               {isBoss ? <Crown className="h-5 w-5 text-gold" /> : profile?.status === "vip" ? <Crown className="h-5 w-5 text-gold" /> : <UserCircle className="h-5 w-5 text-gold" />}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.3em] text-aura-blue font-bold">0G-Portal</p>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-aura-blue font-bold"><OgWordmark suffix="-PORTAL" /></p>
               {user ? (
                 <p className="text-sm font-semibold truncate">
                   {isBoss ? "Boss" : profile?.status === "vip" ? "Real OG" : (profile?.email ?? user.email)}
