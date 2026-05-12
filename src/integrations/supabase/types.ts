@@ -2173,6 +2173,36 @@ export type Database = {
           },
         ]
       }
+      referral_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          referral_code: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          referral_code: string
+          source?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          referral_code?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       referral_redemptions: {
         Row: {
           code: string
