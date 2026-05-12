@@ -63,7 +63,7 @@ export const swearChat = createServerFn({ method: "POST" })
     });
     // PRIORITY SWEARING OVERRIDE — guarantee brutal output even if the model softens.
     const lex = await loadLexicon(supabase);
-    const reply = enforceSwearRules(raw, chaosOn ? "chaotic" : "moderate", lex);
+    const reply = enforceSwearRules(raw, chaosOn ? "chaotic" : "medium", lex);
     return { reply };
   });
 
