@@ -23,6 +23,7 @@ import { SpotlightEyes } from "../components/SpotlightEyes";
 import { ReducedMotionToggle } from "../components/ReducedMotionToggle";
 import { AuthGate } from "../components/AuthGate";
 import { VipPromoBanner } from "../components/VipPromoBanner";
+import { VipReferralPromoBanner } from "../components/VipReferralPromoBanner";
 import { SiteWallpaper } from "../components/SiteWallpaper";
 import { CloudflareAnalytics } from "../components/CloudflareAnalytics";
 import { DomainDenylistGuard } from "../components/DomainDenylistGuard";
@@ -155,6 +156,7 @@ function RootComponent() {
             <PaymentTestModeBanner />
             <SpotlightEyes />
             <VipPromoBanner />
+            <VipReferralPromoBanner />
             <AppShell>
               <HubsStripSlot />
               <AuthGate>
