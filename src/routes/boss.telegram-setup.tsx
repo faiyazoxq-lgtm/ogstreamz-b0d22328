@@ -17,6 +17,9 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { requireBoss } from "@/lib/route-guards";
+import { useServerFn } from "@tanstack/react-start";
+import { requestMembersConnectTelegram } from "@/lib/telegram-invites.functions";
+import { Megaphone, Loader2 } from "lucide-react";
 
 const BOT_USERNAME = "Ogstreamzbot";
 const BOTFATHER_URL = "https://t.me/BotFather";
@@ -192,6 +195,35 @@ function TelegramSetupPage() {
   );
   const pct = Math.round((completed / STEPS.length) * 100);
 
+  // Boss broadcast: prompt every unlinked member to add @Ogstreamzbot.
+  const sendInvites = useServerFn(requestMembersConnectTelegram);
+  const [inviting, setInviting] = useState(false);
+  const [lastInvite, setLastInvite] = useState<{
+    invited: number;
+    alreadyLinked: number;
+  } | null>(null);
+
+  const onInviteAll = async () => {
+    setInviting(true);
+    try {
+      const r = (await sendInvites()) as {
+        invited: number;
+        alreadyLinked: number;
+      };
+      setLastInvite({ invited: r.invited, alreadyLinked: r.alreadyLinked });
+      toast.success(
+        r.invited === 0
+          ? "Everyone is already linked to Telegram."
+          : `Invited ${r.invited} member${r.invited === 1 ? "" : "s"} to connect Telegram.`,
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Invite blast failed";
+      toast.error(msg);
+    } finally {
+      setInviting(false);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-zinc-950 to-black px-4 py-8">
       <div className="mx-auto max-w-3xl">
@@ -235,6 +267,53 @@ function TelegramSetupPage() {
         </header>
 
         <div className="mb-6 rounded-xl border border-border bg-card/60 p-4">
+          <div className="mb-4 rounded-2xl border border-amber-400/30 bg-amber-500/[0.06] p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0">
+                <span
+                  aria-hidden
+                  className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-amber-400/40 bg-amber-500/15 shrink-0"
+                >
+                  <Megaphone className="h-4 w-4 text-amber-300" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-[0.3em] font-black text-amber-300">
+                    Member outreach
+                  </p>
+                  <h2 className="font-[Montserrat] font-black text-lg text-foreground">
+                    Invite members to add @{BOT_USERNAME}
+                  </h2>
+                  <p className="mt-1 text-xs text-muted-foreground max-w-md">
+                    Sends an in-app prompt to every member who hasn't linked
+                    Telegram yet, with a one-tap link to grab their code at{" "}
+                    <code className="text-foreground">/account/passes</code>.
+                    Once they link, they can run <code>/me</code>,{" "}
+                    <code>/credits</code> and <code>/msg</code> from chat.
+                  </p>
+                  {lastInvite && (
+                    <p className="mt-2 text-[11px] font-mono text-amber-200/80">
+                      Last blast: {lastInvite.invited} invited ·{" "}
+                      {lastInvite.alreadyLinked} already linked
+                    </p>
+                  )}
+                </div>
+              </div>
+              <Button
+                type="button"
+                onClick={onInviteAll}
+                disabled={inviting}
+                className="bg-amber-500 hover:bg-amber-400 text-black font-black uppercase tracking-wider"
+              >
+                {inviting ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4 mr-2" />
+                )}
+                {inviting ? "Sending…" : "Send invites"}
+              </Button>
+            </div>
+          </div>
+
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs uppercase tracking-widest text-muted-foreground font-bold">
               Progress
