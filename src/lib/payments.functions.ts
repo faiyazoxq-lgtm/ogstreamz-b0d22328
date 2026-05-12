@@ -87,3 +87,37 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
 
     return session.client_secret;
   });
+
+/**
+ * Stripe Billing Portal session — lets the user upgrade, downgrade, cancel,
+ * resume, update payment method or download invoices in a hosted UI.
+ * Returns a one-time URL the client must open in a new tab.
+ */
+export const createPortalSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { returnUrl?: string; environment: StripeEnv }) => ({
+    ...data,
+    returnUrl: data.returnUrl ? validateReturnUrl(data.returnUrl) : undefined,
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: sub, error } = await supabase
+      .from("subscriptions")
+      .select("stripe_customer_id")
+      .eq("user_id", userId)
+      .eq("environment", data.environment)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error || !sub?.stripe_customer_id) {
+      throw new Error("No subscription found for this account.");
+    }
+
+    const stripe = createStripeClient(data.environment);
+    const portal = await stripe.billingPortal.sessions.create({
+      customer: sub.stripe_customer_id,
+      ...(data.returnUrl && { return_url: data.returnUrl }),
+    });
+    return portal.url;
+  });
