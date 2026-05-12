@@ -156,7 +156,7 @@ export const recordPortalCreation = createServerFn({ method: "POST" })
         user_id: userId,
         portal_key: data.portalKey,
         prompt: data.prompt,
-        output: data.output,
+        output: data.output as never,
       })
       .select("id, created_at")
       .single();
