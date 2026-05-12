@@ -4,6 +4,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+// Gate paid Perplexity calls behind VIP / paid tier so free users cannot drain credits.
+async function assertVipOrPaid(supabase: any, userId: string) {
+  const { data, error } = await supabase.rpc("has_active_vip", { _user: userId });
+  if (error) throw new Response("Unable to verify entitlement", { status: 500 });
+  if (data !== true) throw new Response("VIP / paid tier required", { status: 403 });
+}
+
 export type DeepSearchSource = {
   url: string;
   title: string;
@@ -192,7 +199,8 @@ export const deepSearch = createServerFn({ method: "POST" })
     recency: (d.recency === "day" || d.recency === "week" || d.recency === "month" ? d.recency : "hour") as "hour" | "day" | "week" | "month",
     minSources: Math.max(1, Math.min(10, Number(d.minSources ?? 5))),
   }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertVipOrPaid((context as any).supabase, (context as any).userId);
     if (!data.query) throw new Error("query required");
     return await runDeepSearch(data);
   });
@@ -204,7 +212,8 @@ export const peerReview = createServerFn({ method: "POST" })
     analysis: String(d.analysis || "").trim().slice(0, 4000),
     query: String(d.query || "").trim().slice(0, 500),
   }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertVipOrPaid((context as any).supabase, (context as any).userId);
     const ev = await runDeepSearch({ query: data.query || data.topic, recency: "hour", minSources: 5 });
     const review = await runPeerReview({ topic: data.topic, analysis: data.analysis, evidence: ev });
     return { evidence: ev, review };
