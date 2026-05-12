@@ -264,9 +264,11 @@ function VaultLoginPage() {
 
             <div className="mt-6 flex items-center justify-between text-[11px] text-cyan-200/60">
               <Link to="/auth" className="hover:text-cyan-100">Standard login</Link>
-              <Link to="/vip" className="inline-flex items-center gap-1 hover:text-cyan-100">
-                <Crown className="h-3 w-3" /> Get VIP Pass
-              </Link>
+              {!isVip && (
+                <Link to="/vip" className="inline-flex items-center gap-1 hover:text-cyan-100">
+                  <Crown className="h-3 w-3" /> Get VIP Pass
+                </Link>
+              )}
             </div>
           </div>
         </div>
