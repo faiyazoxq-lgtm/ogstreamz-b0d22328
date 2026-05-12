@@ -43,11 +43,19 @@ const MEMBER_ITEMS: QuickItem[] = [
  * Mobile-first bottom sheet for fast navigation between portals & member areas.
  * Renders a floating trigger pinned above the BottomDock on small screens.
  */
-export function QuickJumpDrawer({ user }: { user: boolean }) {
+export function QuickJumpDrawer({ user, isBoss = false }: { user: boolean; isBoss?: boolean }) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"portals" | "member">("portals");
   const [pendingTo, setPendingTo] = useState<string | null>(null);
-  const items = tab === "portals" || !user ? PORTAL_ITEMS : MEMBER_ITEMS;
+  // Hubs (PORTAL_ITEMS here) are Boss-only. Non-Boss visitors see the
+  // member shortcuts directly and the Portals tab is hidden.
+  const portalItems = isBoss ? PORTAL_ITEMS : [];
+  const effectiveTab = isBoss ? tab : "member";
+  const items = !user
+    ? portalItems
+    : effectiveTab === "portals"
+      ? portalItems
+      : MEMBER_ITEMS;
 
   const isNavigating = useRouterState({
     select: (s) => s.isLoading || s.isTransitioning,
@@ -100,7 +108,7 @@ export function QuickJumpDrawer({ user }: { user: boolean }) {
             </DrawerClose>
           </div>
 
-          {user && (
+          {user && isBoss && (
             <div role="tablist" aria-label="Quick jump category" className="mt-3 inline-flex self-start rounded-full border border-white/10 bg-black/40 p-0.5 text-[10px] font-bold uppercase tracking-[0.2em]">
               {(["portals", "member"] as const).map((t) => (
                 <button

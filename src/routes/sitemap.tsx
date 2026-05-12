@@ -6,6 +6,7 @@ import {
   Settings, LogIn, Coins,
 } from "lucide-react";
 import { OgWordmark } from "@/components/OgWordmark";
+import { useAuth } from "@/hooks/use-auth";
 
 /**
  * Human-readable sitemap. Mirrors the XML sitemap but grouped by intent
@@ -76,6 +77,11 @@ const GROUPS: ReadonlyArray<Group> = [
 ];
 
 function SitemapPage() {
+  const { isAdmin } = useAuth();
+  const isBoss = isAdmin;
+  // Hubs are Boss-only — hide the Hubs section from the human sitemap
+  // for everyone else.
+  const visibleGroups = GROUPS.filter((g) => g.title !== "Hubs" || isBoss);
   return (
     <main className="mx-auto max-w-6xl px-4 sm:px-8 py-10">
       <header className="mb-10 text-center">
@@ -93,7 +99,7 @@ function SitemapPage() {
       </header>
 
       <div className="grid gap-8 md:grid-cols-2">
-        {GROUPS.map((g) => {
+        {visibleGroups.map((g) => {
           const HeaderIcon = g.icon;
           return (
             <section

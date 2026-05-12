@@ -4,6 +4,7 @@ import {
   DoorOpen, Store, ShoppingBag, Crown, Map, Home, Sparkles, Receipt,
 } from "lucide-react";
 import { OgWordmark } from "@/components/OgWordmark";
+import { useAuth } from "@/hooks/use-auth";
 
 /**
  * Public footer — gives every visitor (signed in or not) a clear,
@@ -12,7 +13,9 @@ import { OgWordmark } from "@/components/OgWordmark";
  */
 export function SiteFooter() {
   const year = new Date().getFullYear();
-  const groups = [
+  const { isAdmin } = useAuth();
+  const isBoss = isAdmin;
+  const allGroups = [
     {
       title: "Hubs",
       icon: Rocket,
@@ -52,6 +55,8 @@ export function SiteFooter() {
       ],
     },
   ] as const;
+  // Hubs are Boss-only — hide the entire Hubs column for everyone else.
+  const groups = allGroups.filter((g) => g.title !== "Hubs" || isBoss);
 
   return (
     <footer

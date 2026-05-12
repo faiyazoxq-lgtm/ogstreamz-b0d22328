@@ -367,7 +367,7 @@ function Index() {
 
       <SyndicateGallery />
       <WelcomeAuthPrompt />
-      <QuickJumpDrawer user={!!user} />
+      <QuickJumpDrawer user={!!user} isBoss={isBoss} />
 
       <button
         type="button"
