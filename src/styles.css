@@ -1009,9 +1009,31 @@ html[data-mood="og"] {
     100% { box-shadow: 0 0 0 0 color-mix(in oklab, currentColor 0%, transparent); }
   }
   @media (prefers-reduced-motion: reduce) {
+    /* Reduced-motion users: no transitions, no animations, no shimmer.
+       Visibility flips instantly while every functional behavior stays
+       intact — React still updates aria-pressed, the visually-hidden
+       state label, the polite live region, and the focus-visible ring.
+       The ring itself is rendered statically (no transition), so it
+       still appears the moment a key gives focus. */
     .badge-toggle,
-    .badge-toggle[data-show="false"] { transition: none; }
+    .badge-toggle[data-show="false"] {
+      transition: none !important;
+    }
     .badge-toggle[data-show="true"],
-    .badge-toggle[data-show="true"]::after { animation: none; }
+    .badge-toggle[data-show="true"]::after,
+    .badge-toggle::after {
+      animation: none !important;
+      opacity: 0 !important; /* hide the sweep overlay entirely */
+    }
+    /* Snap the toggle controls too — color/background flips instantly
+       so the on/off state is unambiguous, but the focus ring stays
+       crisp and instant for keyboard users. */
+    .badge-toggle-group button {
+      transition: none !important;
+    }
+    .badge-toggle-group button:focus-visible {
+      outline: 2px solid var(--mood-accent, #ffd166);
+      outline-offset: 2px;
+    }
   }
 }
