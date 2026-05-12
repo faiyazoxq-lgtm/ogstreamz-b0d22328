@@ -331,7 +331,7 @@ export function NavBar() {
           </li>
           <li className="sm:hidden">
             <MobileNavDrawer
-              hubs={visibleHubs}
+              hubs={isBoss ? visibleHubs : []}
               stores={storeLinks}
               admin={isBoss ? [{ to: "/boss", label: "Boss Portal", icon: Crown, desc: "Admin · Civility · Analytics · Lexicon" }] : []}
               user={user}
@@ -347,8 +347,12 @@ export function NavBar() {
       <div className="hidden sm:block border-t border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 py-2.5 sm:py-3 flex items-center justify-center gap-3 sm:gap-4">
           <div className="flex items-center bg-white/[0.04] border border-white/10 rounded-full p-1 shadow-inner shadow-black/20 backdrop-blur-sm">
-            <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold currentPath={pathname} pill />
-            <span aria-hidden className="w-px h-4 bg-white/10" />
+            {isBoss && (
+              <>
+                <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold currentPath={pathname} pill />
+                <span aria-hidden className="w-px h-4 bg-white/10" />
+              </>
+            )}
             <NavDropdown label="Portals" icon={DoorOpen} items={navPortals.length ? navPortals : [{ to: "/portals", label: "Browse Portals", icon: Sparkles, desc: "No portals yet — open the directory" }]} softGold currentPath={pathname} pill />
             <span aria-hidden className="w-px h-4 bg-white/10" />
             <NavDropdown label={isBoss ? "Manage Store" : "Store"} icon={Store} items={storeLinks} currentPath={pathname} pill />
@@ -512,7 +516,7 @@ function MobileNavDrawer({
           </div>
 
           {user && portals.length > 0 && <Section title="Portals" icon={DoorOpen} items={portals} />}
-          <Section title="HUBS" icon={Rocket} items={hubs} gold />
+          {hubs.length > 0 && <Section title="HUBS" icon={Rocket} items={hubs} gold />}
           <Section title={isBoss ? "Manage Store" : "Store"} icon={Store} items={stores} />
           {admin.length > 0 && <Section title="Boss" icon={ShieldCheck} items={admin} />}
 
