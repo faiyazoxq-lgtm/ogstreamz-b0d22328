@@ -104,18 +104,20 @@ function Index() {
           <TelegramConnectBanner userId={user.id} />
         </div>
       )}
-      {/* Ambient glow */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[600px] w-[900px] rounded-full bg-[radial-gradient(closest-side,oklch(0.72_0.22_245_/_0.28),transparent)]" />
-        <div className="absolute top-1/2 left-0 h-[400px] w-[400px] rounded-full bg-[radial-gradient(closest-side,oklch(0.55_0.24_255_/_0.15),transparent)]" />
-      </div>
+      {/* Ambient glow — only for VIP/Boss; non-VIP gets a calm dark canvas. */}
+      {(isVipMember || isBoss) && (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[600px] w-[900px] rounded-full bg-[radial-gradient(closest-side,oklch(0.72_0.22_245_/_0.28),transparent)]" />
+          <div className="absolute top-1/2 left-0 h-[400px] w-[400px] rounded-full bg-[radial-gradient(closest-side,oklch(0.55_0.24_255_/_0.15),transparent)]" />
+        </div>
+      )}
 
       <section className="relative max-w-7xl mx-auto px-5 sm:px-8 pt-12 sm:pt-20 pb-16 text-center">
         <p className="text-xs sm:text-sm tracking-[0.4em] uppercase font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
           Street · Static · Stream
         </p>
         <h1 className="mt-6 text-5xl sm:text-7xl md:text-8xl leading-[0.95] flex justify-center">
-          <OgWordmark suffix="-PORTAL" className="animate-glitch" />
+          <OgWordmark suffix="-PORTAL" className={isVipMember || isBoss ? "animate-glitch" : undefined} />
         </h1>
         <p className="mt-6 max-w-xl mx-auto text-muted-foreground text-base sm:text-lg">
           One frequency. {portalsLabel}. Pick your channel.
@@ -132,14 +134,12 @@ function Index() {
         </div>
       </section>
 
-      {/* Best bulk-buy Coins deal — shown above the VIP pass on welcome page */}
-      <CoinsBulkPromoCard />
-
-      {/* Real OG one-off pass — hidden for existing VIPs */}
-      {!isVipMember && <RealOgPromoCard />}
-
-      {/* VIP Bundles — Real OG + Coins at a discounted total. Hidden for VIPs. */}
-      {!isVipMember && <RealOgBundlesCard />}
+      {/* Promo cards — only shown to VIP/Boss to keep the welcome page calm
+          for everyone else. Non-VIP users get a single subtle "Become VIP"
+          link in the footer + account menu instead. */}
+      {(isVipMember || isBoss) && <CoinsBulkPromoCard />}
+      {isBoss && <RealOgPromoCard />}
+      {isBoss && <RealOgBundlesCard />}
 
       {showStreamConnect && (
         <section className="relative max-w-3xl mx-auto px-5 sm:px-8 -mt-2 pb-6">
@@ -374,7 +374,7 @@ function Index() {
         })}
       </section>
 
-      <SyndicateGallery />
+      {(isVipMember || isBoss) && <SyndicateGallery />}
       <WelcomeAuthPrompt />
       <QuickJumpDrawer user={!!user} isBoss={isBoss} isVip={isVipMember} />
 
