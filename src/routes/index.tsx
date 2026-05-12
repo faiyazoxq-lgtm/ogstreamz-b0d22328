@@ -119,15 +119,14 @@ function Index() {
         <p className="mt-6 max-w-xl mx-auto text-muted-foreground text-base sm:text-lg">
           One frequency. {portalsLabel}. Pick your channel.
         </p>
-        <div className="mt-6 flex justify-center">
+        <div className="mt-8 flex justify-center">
           <Link
             to="/portals"
-            className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-[11px] uppercase tracking-[0.3em] font-bold backdrop-blur-xl hover:border-[oklch(0.72_0.22_245/0.7)]"
-            style={{ color: "var(--mood-accent, #ffd166)" }}
+            className="group inline-flex items-center gap-3 rounded-full border-2 border-white bg-white px-7 py-4 text-sm sm:text-base uppercase tracking-[0.3em] font-black text-black shadow-[0_0_50px_rgba(255,255,255,0.55)] hover:shadow-[0_0_80px_rgba(255,255,255,0.8)] hover:scale-[1.04] transition-all"
           >
-            <Sparkles className="h-3.5 w-3.5" />
+            <Sparkles className="h-5 w-5" />
             All Spawned Portals
-            <ArrowUpRight className="h-3.5 w-3.5" />
+            <ArrowUpRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </Link>
         </div>
       </section>
