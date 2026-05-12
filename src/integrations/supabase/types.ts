@@ -2505,6 +2505,33 @@ export type Database = {
         }
         Relationships: []
       }
+      stream_url_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          last_used_at: string | null
+          revoked: boolean
+          token_hash: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          last_used_at?: string | null
+          revoked?: boolean
+          token_hash: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          last_used_at?: string | null
+          revoked?: boolean
+          token_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       stream_verification_requests: {
         Row: {
           auto_expires_at: string | null
@@ -3773,6 +3800,14 @@ export type Database = {
         }[]
       }
       get_signup_bonus_credits: { Args: never; Returns: number }
+      get_stream_creds_for: {
+        Args: { _user_id: string }
+        Returns: {
+          password: string
+          server: string
+          username: string
+        }[]
+      }
       get_user_purchases_summary: { Args: never; Returns: Json }
       has_active_vip: {
         Args: { _env?: string; _user?: string }
