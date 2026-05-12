@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Tv, CheckCircle2, Loader2, AlertTriangle, Clock, CalendarClock, RefreshCw, CircleDashed, XCircle } from "lucide-react";
-import { verifyAndLinkStream, reverifyStream, getStreamConfigStatus, type StreamReasonCode, type RpcErrorCause, type StreamConfigStatus } from "@/lib/stream-link.functions";
+import { Tv, CheckCircle2, Loader2, AlertTriangle, Clock, CalendarClock, RefreshCw, CircleDashed, XCircle, Eye, EyeOff, Copy, Check } from "lucide-react";
+import { verifyAndLinkStream, reverifyStream, getStreamConfigStatus, getMyStreamM3uUrl, type StreamReasonCode, type RpcErrorCause, type StreamConfigStatus } from "@/lib/stream-link.functions";
 import { useAuth } from "@/hooks/use-auth";
 
 export function StreamLinkCard() {
@@ -9,6 +9,7 @@ export function StreamLinkCard() {
   const verify = useServerFn(verifyAndLinkStream);
   const reverify = useServerFn(reverifyStream);
   const checkConfig = useServerFn(getStreamConfigStatus);
+  const fetchM3u = useServerFn(getMyStreamM3uUrl);
   const [config, setConfig] = useState<StreamConfigStatus | null>(null);
   useEffect(() => {
     let alive = true;
@@ -29,6 +30,42 @@ export function StreamLinkCard() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [phaseLabel, setPhaseLabel] = useState<string>("");
   const usernameRef = useRef<HTMLInputElement | null>(null);
+  const [m3uUrl, setM3uUrl] = useState<string | null>(null);
+  const [m3uVisible, setM3uVisible] = useState(false);
+  const [m3uBusy, setM3uBusy] = useState(false);
+  const [m3uError, setM3uError] = useState<string | null>(null);
+  const [m3uCopied, setM3uCopied] = useState(false);
+
+  const revealM3u = async () => {
+    setM3uBusy(true);
+    setM3uError(null);
+    try {
+      if (!m3uUrl) {
+        const res = await fetchM3u();
+        if (!res.ok) {
+          setM3uError(res.error || "Couldn't build your playlist URL.");
+          return;
+        }
+        setM3uUrl(res.url);
+      }
+      setM3uVisible(true);
+    } catch (e: any) {
+      setM3uError(e?.message || "Couldn't build your playlist URL.");
+    } finally {
+      setM3uBusy(false);
+    }
+  };
+
+  const copyM3u = async () => {
+    if (!m3uUrl) return;
+    try {
+      await navigator.clipboard.writeText(m3uUrl);
+      setM3uCopied(true);
+      setTimeout(() => setM3uCopied(false), 1500);
+    } catch {
+      /* ignore */
+    }
+  };
 
   const REASON_TITLES: Record<StreamReasonCode | "client_validation", string> = {
     client_validation: "Fix the highlighted fields",
