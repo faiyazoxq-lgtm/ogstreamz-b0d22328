@@ -337,6 +337,13 @@ function BossContactsPage() {
     el.focus({ preventScroll: true });
   }, [activeMatchId]);
 
+  // Auto-clear the restored-row pulse after the animation finishes.
+  useEffect(() => {
+    if (!restoredPulseId) return;
+    const t = setTimeout(() => setRestoredPulseId(null), 1500);
+    return () => clearTimeout(t);
+  }, [restoredPulseId]);
+
   // Announce the currently highlighted match for screen readers as the user
   // navigates through matches with the keyboard.
   useEffect(() => {
