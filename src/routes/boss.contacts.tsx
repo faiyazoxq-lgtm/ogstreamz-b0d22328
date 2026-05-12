@@ -282,6 +282,7 @@ function BossContactsPage() {
                   e.preventDefault();
                   setQuery("");
                   setMatchIndex(0);
+                  e.currentTarget.focus();
                 }
                 return;
               }
