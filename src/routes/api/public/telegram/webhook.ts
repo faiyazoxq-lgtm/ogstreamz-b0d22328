@@ -21,8 +21,24 @@ function safeEqual(a: string, b: string) {
   return ab.length === bb.length && timingSafeEqual(ab, bb);
 }
 
-async function handleCommand(text: string, chatId: number, username: string) {
+async function handleCommand(
+  text: string,
+  chatId: number,
+  username: string,
+  msg: any,
+) {
   const trimmed = text.trim();
+
+  // --- Boss-only commands -------------------------------------------------
+  // Anything sent in the chat whose ID matches BOSS_TELEGRAM_API_KEY is
+  // treated as the operator. Boss commands let the operator send DMs back
+  // to members directly from Telegram, broadcast to all linked members,
+  // and inspect inbox state — fully two-way messaging without leaving chat.
+  const bossChatRaw = process.env.BOSS_TELEGRAM_API_KEY;
+  const bossChatId = bossChatRaw ? Number(bossChatRaw) : NaN;
+  if (bossChatRaw && Number.isFinite(bossChatId) && chatId === bossChatId) {
+    if (await handleBossCommand(trimmed, chatId, msg)) return;
+  }
 
   // --- Member self-service commands ---------------------------------------
   // /me /account /credits /unlink /msg <text> /help
@@ -178,6 +194,177 @@ function escapeHtml(s: string) {
     .replace(/"/g, "&quot;");
 }
 
+/**
+ * Boss-only command dispatcher. Returns true if the message was consumed
+ * (so the generic /link path doesn't also run for the boss). All replies
+ * land back in the boss's own chat for confirmation, and any outbound
+ * member DMs are persisted into `telegram_messages` so the Boss inbox UI
+ * stays in sync.
+ */
+async function handleBossCommand(
+  text: string,
+  bossChatId: number,
+  msg: any,
+): Promise<boolean> {
+  // Native Telegram reply: if the boss hits "Reply" on a forwarded member
+  // message and types text without a slash command, extract the originating
+  // chat_id from the quoted body (we always include "<code>chatId</code>"
+  // in the forward header) and DM that chat.
+  const replyTo = msg?.reply_to_message;
+  const isPlainReply =
+    replyTo && !text.startsWith("/") && text.length > 0;
+  if (isPlainReply) {
+    const quoted: string = replyTo?.text ?? "";
+    const idMatch = quoted.match(/(\d{5,})/); // first 5+ digit run
+    const target = idMatch ? Number(idMatch[1]) : NaN;
+    if (Number.isFinite(target) && target !== bossChatId) {
+      await deliverBossDm(target, text, bossChatId);
+      return true;
+    }
+  }
+
+  if (/^\/help\b/i.test(text)) {
+    await tgSendMessage(
+      bossChatId,
+      "<b>Boss commands</b>\n" +
+        "<code>/reply CHAT_ID TEXT</code> — DM a member by chat id\n" +
+        "<code>/dm CHAT_ID TEXT</code> — alias of /reply\n" +
+        "<code>/broadcast TEXT</code> — DM every linked member\n" +
+        "<code>/users</code> — count of linked members\n" +
+        "<code>/last [N]</code> — most recent N incoming messages (default 5)\n\n" +
+        "<i>Tip:</i> tap <b>Reply</b> on any forwarded member message and just " +
+        "type — your text is delivered to that member automatically.",
+    );
+    return true;
+  }
+
+  const reply = text.match(/^\/(reply|dm)\s+(-?\d{3,})\s+([\s\S]+)/i);
+  if (reply) {
+    const target = Number(reply[2]);
+    const body = reply[3].trim();
+    if (!body) {
+      await tgSendMessage(bossChatId, "Empty reply — nothing sent.");
+      return true;
+    }
+    await deliverBossDm(target, body, bossChatId);
+    return true;
+  }
+
+  if (/^\/broadcast\s+/i.test(text)) {
+    const body = text.replace(/^\/broadcast\s+/i, "").trim();
+    if (!body) {
+      await tgSendMessage(bossChatId, "Usage: <code>/broadcast TEXT</code>");
+      return true;
+    }
+    const sb = getSupabase() as any;
+    const { data: rows, error } = await sb
+      .from("telegram_user_links")
+      .select("chat_id")
+      .not("chat_id", "is", null);
+    if (error) {
+      await tgSendMessage(bossChatId, `Broadcast failed: ${escapeHtml(error.message)}`);
+      return true;
+    }
+    const targets = (rows ?? [])
+      .map((r: { chat_id: number | null }) => r.chat_id)
+      .filter((id: number | null): id is number => typeof id === "number");
+    let sent = 0;
+    let failed = 0;
+    const safeBody = `📣 <b>Notice</b>\n\n${escapeHtml(body).slice(0, 3500)}`;
+    for (const id of targets) {
+      try {
+        await tgSendMessage(id, safeBody);
+        sent++;
+      } catch (e) {
+        failed++;
+        console.error("broadcast send failed for", id, e);
+      }
+    }
+    await tgSendMessage(
+      bossChatId,
+      `📣 Broadcast complete — ${sent} delivered, ${failed} failed.`,
+    );
+    return true;
+  }
+
+  if (/^\/users\b/i.test(text)) {
+    const sb = getSupabase() as any;
+    const { count } = await sb
+      .from("telegram_user_links")
+      .select("user_id", { count: "exact", head: true })
+      .not("chat_id", "is", null);
+    await tgSendMessage(
+      bossChatId,
+      `👥 Linked members: <b>${count ?? 0}</b>`,
+    );
+    return true;
+  }
+
+  if (/^\/last\b/i.test(text)) {
+    const n = Math.min(20, Math.max(1, Number(text.split(/\s+/)[1]) || 5));
+    const sb = getSupabase() as any;
+    const { data: rows } = await sb
+      .from("telegram_messages")
+      .select("chat_id, from_username, from_name, text, message_date")
+      .neq("chat_id", bossChatId)
+      .order("message_date", { ascending: false })
+      .limit(n);
+    if (!rows?.length) {
+      await tgSendMessage(bossChatId, "Inbox is empty.");
+      return true;
+    }
+    const lines = rows
+      .map((r: any) => {
+        const who = r.from_name || (r.from_username ? `@${r.from_username}` : `chat ${r.chat_id}`);
+        const when = r.message_date ? r.message_date.slice(11, 16) : "";
+        const body = (r.text || "").slice(0, 140);
+        return `• <b>${escapeHtml(who)}</b> <code>${r.chat_id}</code> ${when}\n  ${escapeHtml(body)}`;
+      })
+      .join("\n");
+    await tgSendMessage(bossChatId, `<b>Last ${rows.length} messages</b>\n${lines}`);
+    return true;
+  }
+
+  // Not a recognized boss slash command — fall through to normal handling.
+  return false;
+}
+
+/**
+ * Send a DM from boss → member, with confirmation back to boss and an
+ * optimistic inbox row so the web Boss inbox renders the outbound message.
+ */
+async function deliverBossDm(target: number, body: string, bossChatId: number) {
+  const safe = escapeHtml(body).slice(0, 3500);
+  try {
+    await tgSendMessage(target, `💬 <b>OG-Streamz Team</b>\n\n${safe}`);
+    try {
+      const sb = getSupabase() as any;
+      await sb.from("telegram_messages").insert({
+        chat_id: target,
+        from_username: "boss",
+        from_name: "OG-Streamz Team",
+        text: body,
+        raw: { outbound: true, from_boss: true },
+        message_date: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error("outbound persist failed", e);
+    }
+    await tgSendMessage(
+      bossChatId,
+      `✅ Delivered to <code>${target}</code>:\n${safe.slice(0, 200)}${
+        safe.length > 200 ? "…" : ""
+      }`,
+    );
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    await tgSendMessage(
+      bossChatId,
+      `❌ Could not DM <code>${target}</code>: ${escapeHtml(msg).slice(0, 300)}`,
+    );
+  }
+}
+
 export const Route = createFileRoute("/api/public/telegram/webhook")({
   server: {
     handlers: {
@@ -243,7 +430,7 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         if (!text) return Response.json({ ok: true });
 
         try {
-          await handleCommand(text, chatId, username);
+          await handleCommand(text, chatId, username, msg);
         } catch (e) {
           console.error("telegram webhook handler error", e);
         }
