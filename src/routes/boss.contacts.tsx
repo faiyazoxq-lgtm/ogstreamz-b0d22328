@@ -232,6 +232,7 @@ function BossContactsPage() {
     const el = activeMatchRef.current;
     if (!el) return;
     el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.focus({ preventScroll: true });
   }, [activeMatchId]);
 
   return (
@@ -340,9 +341,10 @@ function BossContactsPage() {
             key={c.id}
             ref={isActiveMatch ? activeMatchRef : undefined}
             role="listitem"
+            tabIndex={isActiveMatch ? 0 : -1}
             aria-current={isActiveMatch ? "true" : undefined}
             aria-label={`${c.label}, ${toDisplay(c.phone)}${isActiveMatch ? ", current match" : ""}`}
-            className={`rounded-xl border bg-card/60 p-3 transition-colors ${
+            className={`rounded-xl border bg-card/60 p-3 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-gold ${
               isActiveMatch
                 ? "border-gold/70 ring-2 ring-gold/40 bg-gold/5"
                 : "border-border"
