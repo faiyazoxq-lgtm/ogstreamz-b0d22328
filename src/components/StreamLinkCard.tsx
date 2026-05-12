@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Tv, CheckCircle2, Loader2, AlertTriangle, Clock, CalendarClock, RefreshCw, CircleDashed, XCircle } from "lucide-react";
-import { verifyAndLinkStream, reverifyStream, getStreamConfigStatus, type StreamReasonCode, type RpcErrorCause, type StreamConfigStatus } from "@/lib/stream-link.functions";
+import { Tv, CheckCircle2, Loader2, AlertTriangle, Clock, CalendarClock, RefreshCw, CircleDashed, XCircle, Eye, EyeOff, Copy, Check } from "lucide-react";
+import { verifyAndLinkStream, reverifyStream, getStreamConfigStatus, getMyStreamM3uUrl, type StreamReasonCode, type RpcErrorCause, type StreamConfigStatus } from "@/lib/stream-link.functions";
 import { useAuth } from "@/hooks/use-auth";
 
 export function StreamLinkCard() {
@@ -9,6 +9,7 @@ export function StreamLinkCard() {
   const verify = useServerFn(verifyAndLinkStream);
   const reverify = useServerFn(reverifyStream);
   const checkConfig = useServerFn(getStreamConfigStatus);
+  const fetchM3u = useServerFn(getMyStreamM3uUrl);
   const [config, setConfig] = useState<StreamConfigStatus | null>(null);
   useEffect(() => {
     let alive = true;
@@ -29,6 +30,42 @@ export function StreamLinkCard() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [phaseLabel, setPhaseLabel] = useState<string>("");
   const usernameRef = useRef<HTMLInputElement | null>(null);
+  const [m3uUrl, setM3uUrl] = useState<string | null>(null);
+  const [m3uVisible, setM3uVisible] = useState(false);
+  const [m3uBusy, setM3uBusy] = useState(false);
+  const [m3uError, setM3uError] = useState<string | null>(null);
+  const [m3uCopied, setM3uCopied] = useState(false);
+
+  const revealM3u = async () => {
+    setM3uBusy(true);
+    setM3uError(null);
+    try {
+      if (!m3uUrl) {
+        const res = await fetchM3u();
+        if (!res.ok) {
+          setM3uError(res.error || "Couldn't build your playlist URL.");
+          return;
+        }
+        setM3uUrl(res.url);
+      }
+      setM3uVisible(true);
+    } catch (e: any) {
+      setM3uError(e?.message || "Couldn't build your playlist URL.");
+    } finally {
+      setM3uBusy(false);
+    }
+  };
+
+  const copyM3u = async () => {
+    if (!m3uUrl) return;
+    try {
+      await navigator.clipboard.writeText(m3uUrl);
+      setM3uCopied(true);
+      setTimeout(() => setM3uCopied(false), 1500);
+    } catch {
+      /* ignore */
+    }
+  };
 
   const REASON_TITLES: Record<StreamReasonCode | "client_validation", string> = {
     client_validation: "Fix the highlighted fields",
@@ -423,6 +460,50 @@ export function StreamLinkCard() {
             {reverifying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
             {reverifying ? "Checking…" : "Re-verify status"}
           </button>
+        </div>
+      )}
+
+      {linked && (
+        <div className="mt-4 rounded-md border border-border bg-background/40 p-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-foreground/80">
+                Your m3u playlist URL
+              </p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                Built from the username &amp; password you entered. Server &amp; domain stay private.
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <button
+                type="button"
+                onClick={m3uVisible ? () => setM3uVisible(false) : revealM3u}
+                disabled={m3uBusy}
+                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/60 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-foreground/80 hover:text-foreground hover:border-foreground/40 disabled:opacity-60"
+              >
+                {m3uBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : m3uVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                {m3uVisible ? "Hide" : m3uBusy ? "Loading…" : "Reveal"}
+              </button>
+              {m3uVisible && m3uUrl && (
+                <button
+                  type="button"
+                  onClick={copyM3u}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/60 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-foreground/80 hover:text-foreground hover:border-foreground/40"
+                >
+                  {m3uCopied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                  {m3uCopied ? "Copied" : "Copy"}
+                </button>
+              )}
+            </div>
+          </div>
+          {m3uVisible && m3uUrl && (
+            <p className="mt-2 break-all rounded border border-border bg-background/60 px-2 py-1.5 font-mono text-[11px] text-foreground/90">
+              {m3uUrl}
+            </p>
+          )}
+          {m3uError && (
+            <p className="mt-2 text-xs text-destructive">{m3uError}</p>
+          )}
         </div>
       )}
 
