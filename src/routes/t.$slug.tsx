@@ -45,11 +45,26 @@ export const Route = createFileRoute("/t/$slug")({
 
 function safeEval(expr: string, scope: Record<string, number>): number {
   // Defense-in-depth: even if a row in `calculators` was tampered with directly
-  // in the DB, only allow a strict whitelist of characters before constructing
-  // a Function. Blocks arbitrary JS injection at runtime.
-  const SAFE_FORMULA = /^[\sA-Za-z0-9_+\-*/().,**Math]+$/;
-  if (!SAFE_FORMULA.test(expr)) {
+  // in the DB, only allow a strict allowlist of tokens before constructing
+  // a Function. Blocks arbitrary JS / browser-global access (window, document,
+  // fetch, eval, etc.) by tokenising and checking each identifier against an
+  // allowlist made of Math members + the calculator's declared input keys.
+  const ALLOWED_MATH = new Set([
+    "Math", "PI", "E", "abs", "ceil", "floor", "round", "sqrt", "pow",
+    "log", "log2", "log10", "exp", "min", "max", "sign", "trunc",
+    "sin", "cos", "tan", "asin", "acos", "atan", "atan2",
+  ]);
+  const allowedIdents = new Set<string>([...ALLOWED_MATH, ...Object.keys(scope)]);
+  // Reject anything that isn't whitespace, digits, operators, parens, dot, comma, or identifier chars
+  if (!/^[\s0-9_+\-*/().,A-Za-z]+$/.test(expr)) {
     throw new Error("Formula contains unsafe characters");
+  }
+  // Extract every identifier (sequence starting with a letter/_) and check it
+  const idents = expr.match(/[A-Za-z_][A-Za-z0-9_]*/g) ?? [];
+  for (const ident of idents) {
+    if (!allowedIdents.has(ident)) {
+      throw new Error(`Formula uses disallowed identifier: ${ident}`);
+    }
   }
   // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
   const fn = new Function("Math", ...Object.keys(scope), `return (${expr});`);
