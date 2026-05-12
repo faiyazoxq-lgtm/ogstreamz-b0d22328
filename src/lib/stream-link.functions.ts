@@ -38,7 +38,7 @@ async function logStreamUrlAudit(entry: {
 }
 
 export type StreamConfigStatus =
-  | { ok: true; host: string }
+  | { ok: true }
   | { ok: false; code: "missing" | "malformed" | "bad_protocol" | "bad_host" | "has_credentials" | "has_path"; message: string };
 
 function checkServerUrl(): StreamConfigStatus {
@@ -67,7 +67,9 @@ function checkServerUrl(): StreamConfigStatus {
   if (url.pathname && url.pathname !== "/" && url.pathname !== "") {
     return { ok: false, code: "has_path", message: "STREAM_SERVER_URL must not include a path." };
   }
-  return { ok: true, host: url.host };
+  // Intentionally do NOT return the hostname/port to callers — that leaks
+  // internal infrastructure to anyone who can hit this endpoint.
+  return { ok: true };
 }
 
 function getServerUrl(): string {
