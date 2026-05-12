@@ -74,6 +74,7 @@ import { Route as BossFunctionGrantsRouteImport } from './routes/boss.function-g
 import { Route as BossFunctionAuditRouteImport } from './routes/boss.function-audit'
 import { Route as BossDomainDenylistRouteImport } from './routes/boss.domain-denylist'
 import { Route as BossDenylistAuditRouteImport } from './routes/boss.denylist-audit'
+import { Route as BossContactsRouteImport } from './routes/boss.contacts'
 import { Route as BossCivilityRouteImport } from './routes/boss.civility'
 import { Route as BossApiKeysRouteImport } from './routes/boss.api-keys'
 import { Route as BossAnalyticsSetupRouteImport } from './routes/boss.analytics-setup'
@@ -417,6 +418,11 @@ const BossDenylistAuditRoute = BossDenylistAuditRouteImport.update({
   path: '/denylist-audit',
   getParentRoute: () => BossRoute,
 } as any)
+const BossContactsRoute = BossContactsRouteImport.update({
+  id: '/contacts',
+  path: '/contacts',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossCivilityRoute = BossCivilityRouteImport.update({
   id: '/civility',
   path: '/civility',
@@ -549,6 +555,7 @@ export interface FileRoutesByFullPath {
   '/boss/analytics-setup': typeof BossAnalyticsSetupRoute
   '/boss/api-keys': typeof BossApiKeysRoute
   '/boss/civility': typeof BossCivilityRoute
+  '/boss/contacts': typeof BossContactsRoute
   '/boss/denylist-audit': typeof BossDenylistAuditRoute
   '/boss/domain-denylist': typeof BossDomainDenylistRoute
   '/boss/function-audit': typeof BossFunctionAuditRoute
@@ -632,6 +639,7 @@ export interface FileRoutesByTo {
   '/boss/analytics-setup': typeof BossAnalyticsSetupRoute
   '/boss/api-keys': typeof BossApiKeysRoute
   '/boss/civility': typeof BossCivilityRoute
+  '/boss/contacts': typeof BossContactsRoute
   '/boss/denylist-audit': typeof BossDenylistAuditRoute
   '/boss/domain-denylist': typeof BossDomainDenylistRoute
   '/boss/function-audit': typeof BossFunctionAuditRoute
@@ -717,6 +725,7 @@ export interface FileRoutesById {
   '/boss/analytics-setup': typeof BossAnalyticsSetupRoute
   '/boss/api-keys': typeof BossApiKeysRoute
   '/boss/civility': typeof BossCivilityRoute
+  '/boss/contacts': typeof BossContactsRoute
   '/boss/denylist-audit': typeof BossDenylistAuditRoute
   '/boss/domain-denylist': typeof BossDomainDenylistRoute
   '/boss/function-audit': typeof BossFunctionAuditRoute
@@ -803,6 +812,7 @@ export interface FileRouteTypes {
     | '/boss/analytics-setup'
     | '/boss/api-keys'
     | '/boss/civility'
+    | '/boss/contacts'
     | '/boss/denylist-audit'
     | '/boss/domain-denylist'
     | '/boss/function-audit'
@@ -886,6 +896,7 @@ export interface FileRouteTypes {
     | '/boss/analytics-setup'
     | '/boss/api-keys'
     | '/boss/civility'
+    | '/boss/contacts'
     | '/boss/denylist-audit'
     | '/boss/domain-denylist'
     | '/boss/function-audit'
@@ -970,6 +981,7 @@ export interface FileRouteTypes {
     | '/boss/analytics-setup'
     | '/boss/api-keys'
     | '/boss/civility'
+    | '/boss/contacts'
     | '/boss/denylist-audit'
     | '/boss/domain-denylist'
     | '/boss/function-audit'
@@ -1523,6 +1535,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossDenylistAuditRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/contacts': {
+      id: '/boss/contacts'
+      path: '/contacts'
+      fullPath: '/boss/contacts'
+      preLoaderRoute: typeof BossContactsRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/civility': {
       id: '/boss/civility'
       path: '/civility'
@@ -1665,6 +1684,7 @@ interface BossRouteChildren {
   BossAnalyticsSetupRoute: typeof BossAnalyticsSetupRoute
   BossApiKeysRoute: typeof BossApiKeysRoute
   BossCivilityRoute: typeof BossCivilityRoute
+  BossContactsRoute: typeof BossContactsRoute
   BossDenylistAuditRoute: typeof BossDenylistAuditRoute
   BossDomainDenylistRoute: typeof BossDomainDenylistRoute
   BossFunctionAuditRoute: typeof BossFunctionAuditRoute
@@ -1697,6 +1717,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossAnalyticsSetupRoute: BossAnalyticsSetupRoute,
   BossApiKeysRoute: BossApiKeysRoute,
   BossCivilityRoute: BossCivilityRoute,
+  BossContactsRoute: BossContactsRoute,
   BossDenylistAuditRoute: BossDenylistAuditRoute,
   BossDomainDenylistRoute: BossDomainDenylistRoute,
   BossFunctionAuditRoute: BossFunctionAuditRoute,
