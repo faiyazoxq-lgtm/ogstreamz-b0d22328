@@ -521,43 +521,94 @@ function MobileHeader({
  * ====================================================================== */
 function MobileTabBar({ isVip, isBoss }: { isVip: boolean; isBoss: boolean }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const tabs: ReadonlyArray<{ to: string; label: string; icon: ComponentType<{ className?: string }>; gold?: boolean }> = [
-    { to: "/", label: "Home", icon: Home },
-    { to: "/portals", label: "Hubs", icon: Rocket },
-    { to: "/store", label: "Store", icon: ShoppingBag },
-    { to: "/vip", label: isVip ? "VIP" : "Go VIP", icon: Crown, gold: true },
-    { to: isBoss ? "/boss" : "/dashboard", label: isBoss ? "Boss" : "Account", icon: isBoss ? ShieldCheck : UserCircle },
+  type Tab = {
+    to: string;
+    label: string;
+    icon: ComponentType<{ className?: string }>;
+    gold?: boolean;
+    /** Extra prefixes that should also keep this tab active. */
+    matches?: ReadonlyArray<string>;
+  };
+  const tabs: ReadonlyArray<Tab> = [
+    { to: "/", label: "Home", icon: Home, matches: ["/"] },
+    {
+      to: "/portals",
+      label: "Hubs",
+      icon: Rocket,
+      matches: ["/portals", "/p", "/hub", "/music", "/jokes", "/tools", "/trade", "/connect", "/battle", "/syndicate", "/letterhub", "/appealhub"],
+    },
+    {
+      to: "/store",
+      label: "Store",
+      icon: ShoppingBag,
+      matches: ["/store", "/checkout", "/wallet"],
+    },
+    {
+      to: "/vip",
+      label: isVip ? "VIP" : "Go VIP",
+      icon: Crown,
+      gold: true,
+      matches: ["/vip", "/account/passes", "/vault-login"],
+    },
+    {
+      to: isBoss ? "/boss" : "/dashboard",
+      label: isBoss ? "Boss" : "Account",
+      icon: isBoss ? ShieldCheck : UserCircle,
+      matches: isBoss
+        ? ["/boss"]
+        : ["/dashboard", "/profile", "/settings", "/history", "/account", "/connect-telegram"],
+    },
   ];
   return (
     <nav
-      aria-label="Primary"
+      aria-label="Primary mobile navigation"
+      role="navigation"
       className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-background/95 backdrop-blur"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <ul className="grid grid-cols-5">
+      <ul role="list" className="grid grid-cols-5">
         {tabs.map((t) => {
-          const active = isPathActive(pathname, t.to);
+          const active = isAnyPathActive(pathname, t.matches ?? [t.to]);
           return (
             <li key={t.to}>
               <Link
                 to={t.to}
                 aria-current={active ? "page" : undefined}
+                aria-label={`${t.label}${active ? ", current page" : ""}`}
+                data-active={active ? "true" : undefined}
                 className={[
-                  "flex flex-col items-center justify-center gap-0.5 min-h-14 px-1 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] transition-colors",
+                  "group/tab relative flex flex-col items-center justify-center gap-0.5 min-h-14 px-1 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em]",
+                  "outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold/70",
+                  "motion-safe:transition-colors duration-200",
                   active
                     ? t.gold
                       ? "text-gold [text-shadow:_0_0_10px_rgba(255,209,102,0.6)]"
                       : "text-primary"
                     : t.gold
-                      ? "text-gold/70"
+                      ? "text-gold/70 hover:text-gold"
                       : "text-muted-foreground hover:text-foreground",
                 ].join(" ")}
               >
-                <t.icon className={`h-5 w-5 ${active && t.gold ? "drop-shadow-[0_0_8px_rgba(255,209,102,0.7)]" : ""}`} />
+                <t.icon
+                  aria-hidden
+                  className={[
+                    "h-5 w-5 motion-safe:transition-transform duration-200",
+                    active ? "scale-110" : "scale-100 group-hover/tab:scale-105",
+                    active && t.gold ? "drop-shadow-[0_0_8px_rgba(255,209,102,0.7)]" : "",
+                  ].join(" ")}
+                />
                 <span className="leading-none">{t.label}</span>
-                {active && (
-                  <span aria-hidden className={`h-0.5 w-6 rounded-full ${t.gold ? "bg-gold shadow-[0_0_8px_rgba(255,209,102,0.8)]" : "bg-primary"}`} />
-                )}
+                <span
+                  aria-hidden
+                  className={[
+                    "h-0.5 rounded-full motion-safe:transition-all duration-200",
+                    active
+                      ? t.gold
+                        ? "w-7 bg-gold shadow-[0_0_8px_rgba(255,209,102,0.8)]"
+                        : "w-7 bg-primary"
+                      : "w-0 bg-transparent",
+                  ].join(" ")}
+                />
               </Link>
             </li>
           );
