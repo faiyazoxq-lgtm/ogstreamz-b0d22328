@@ -379,6 +379,39 @@ export type Database = {
         }
         Relationships: []
       }
+      boss_contacts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string
+          notes: string
+          phone: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label: string
+          notes?: string
+          phone: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          notes?: string
+          phone?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       boss_function_ideas: {
         Row: {
           category: string
