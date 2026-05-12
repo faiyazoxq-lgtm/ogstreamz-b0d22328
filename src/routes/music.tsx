@@ -13,6 +13,9 @@ import { MusicHubBalance } from "@/components/MusicHubBalance";
 import { FeaturedDropCard } from "@/components/FeaturedDropCard";
 import { VipPaywallInline } from "@/components/VipPaywallInline";
 import { ZeroGBadge } from "@/components/ZeroGBadge";
+import { PortalHeader, PortalStyleLine, mergeStyle } from "@/components/PortalHeader";
+
+const MUSIC_STYLE = "Cinematic neon street-rap with gritty bass and OG energy.";
 
 import { requireMember } from "@/lib/route-guards";
 export const Route = createFileRoute("/music")({
@@ -93,7 +96,7 @@ function MusicPromptBuilder() {
       const res = await spawnFn({
         data: {
           name: name.trim(),
-          description: description.trim(),
+          description: mergeStyle(MUSIC_STYLE, description),
           style_tags: used.join(", "),
           language,
           theme,
@@ -110,18 +113,13 @@ function MusicPromptBuilder() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 animate-fade-in">
-      <header className="mb-6 text-center">
-        <p className="text-[10px] sm:text-xs tracking-[0.4em] text-gold uppercase font-semibold">
-          MusicHUB · Prompt Studio
-        </p>
-        <h1 className="mt-2 font-[Montserrat] font-black text-3xl sm:text-5xl tracking-tight leading-[1.05]">
-          Write the <span className="text-gradient-gold">Sound.</span>
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Describe your track. Tap prompts to stack ideas — they vanish as you use them.
-        </p>
-        <ZeroGBadge className="mt-3" />
-      </header>
+      <PortalHeader
+        portalKey="music"
+        name="MusicHUB"
+        tagline="Prompt Studio"
+        seed="cinematic neon street-rap, gritty bass, OG energy, midnight stage lights"
+        accent="gold"
+      />
 
       <MusicHubBalance className="mb-6" />
 
@@ -185,6 +183,8 @@ function MusicPromptBuilder() {
           <Sparkles className="h-3.5 w-3.5 text-gold shrink-0" />
           <span className="truncate">0G-BRAIN designs the studio around your prompt</span>
         </div>
+
+        <PortalStyleLine sentence={MUSIC_STYLE} />
 
         {isVip ? (
           <Button
