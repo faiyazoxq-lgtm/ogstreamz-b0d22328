@@ -140,7 +140,7 @@ function WelcomePage() {
               Welcome
             </p>
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Login or sign up
+              Login / sign up
             </h1>
             <p className="mx-auto max-w-xl text-sm text-muted-foreground sm:text-base">
               Pick the door that fits what you're here for. You can switch between them
@@ -215,7 +215,7 @@ function WelcomePage() {
             <div className="relative space-y-1">
               <h2 className="text-xl font-semibold tracking-tight">0G STREAMZ Profile</h2>
               <p className="text-sm text-muted-foreground">
-                Login or sign up on the streaming domain to manage your line, expiry and devices.
+                Login / sign up on the streaming domain to manage your line, expiry and devices.
               </p>
             </div>
             <div className="relative mt-auto flex items-center justify-between text-sm font-medium text-primary">
