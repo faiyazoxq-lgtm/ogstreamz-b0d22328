@@ -468,12 +468,14 @@ function MobileHeader({
               </ul>
             </section>
 
-            <section>
-              <p className="px-1.5 mb-2 text-[10px] uppercase tracking-[0.3em] text-gold">Hubs</p>
-              <ul className="space-y-1.5">
-                {hubs.map((h) => <li key={h.to}><Row to={h.to} label={h.label} Icon={h.icon} desc={h.desc} /></li>)}
-              </ul>
-            </section>
+            {isBoss && (
+              <section>
+                <p className="px-1.5 mb-2 text-[10px] uppercase tracking-[0.3em] text-gold">Hubs · Boss</p>
+                <ul className="space-y-1.5">
+                  {hubs.map((h) => <li key={h.to}><Row to={h.to} label={h.label} Icon={h.icon} desc={h.desc} /></li>)}
+                </ul>
+              </section>
+            )}
 
             {portals.length > 0 && (
               <section>
