@@ -82,6 +82,7 @@ export const createTrack = createServerFn({ method: "POST" })
   });
 
 export const listPortalTracks = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { portal_slug: string }) => ({ portal_slug: String(d.portal_slug || "").trim().slice(0, 80) }))
   .handler(async ({ data }) => {
     const { createClient } = await import("@supabase/supabase-js");
