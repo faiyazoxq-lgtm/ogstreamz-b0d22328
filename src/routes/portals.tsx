@@ -188,31 +188,65 @@ function PortalsHub() {
   const setQ = (v: string) =>
     navigate({ search: (prev: PortalsSearch) => ({ ...prev, q: v }), replace: true });
   const [qrFor, setQrFor] = useState<Item | null>(null);
-  // Per-user badge visibility preferences. Persisted in localStorage —
-  // these are non-sensitive UI prefs only (no credentials), in line with
-  // project policy that bans secrets in browser storage.
+  // Per-user badge visibility preferences. Non-sensitive UI prefs only.
+  // Synced to profiles.ui_prefs.badges so they follow the user across
+  // devices. localStorage acts as an offline cache to avoid first-paint
+  // flicker before the profile row loads.
   const BADGE_PREFS_KEY = "portals.badgePrefs.v1";
   type BadgePrefs = { boss: boolean; mine: boolean; vip: boolean };
+  const normalizePrefs = (raw: any): BadgePrefs => ({
+    boss: raw?.boss !== false,
+    mine: raw?.mine !== false,
+    vip: raw?.vip !== false,
+  });
   const [badgePrefs, setBadgePrefs] = useState<BadgePrefs>({ boss: true, mine: true, vip: true });
+  // Hydrate from localStorage cache on mount (instant, no network).
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
       const raw = window.localStorage.getItem(BADGE_PREFS_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      setBadgePrefs({
-        boss: parsed?.boss !== false,
-        mine: parsed?.mine !== false,
-        vip: parsed?.vip !== false,
-      });
+      if (raw) setBadgePrefs(normalizePrefs(JSON.parse(raw)));
     } catch { /* ignore corrupt prefs */ }
   }, []);
+  // When signed in, pull authoritative prefs from profiles.ui_prefs and
+  // overwrite the local cache so they match across devices.
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error: e } = await supabase
+        .from("profiles")
+        .select("ui_prefs")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (cancelled || e || !data) return;
+      const remote = (data.ui_prefs as any)?.badges;
+      if (remote && typeof remote === "object") {
+        const next = normalizePrefs(remote);
+        setBadgePrefs(next);
+        try { window.localStorage.setItem(BADGE_PREFS_KEY, JSON.stringify(next)); } catch {}
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
   const toggleBadge = (key: keyof BadgePrefs) => {
     setBadgePrefs((prev) => {
       const next = { ...prev, [key]: !prev[key] };
       try {
         window.localStorage.setItem(BADGE_PREFS_KEY, JSON.stringify(next));
       } catch { /* storage may be unavailable in private mode */ }
+      // Fire-and-forget sync to profile. RLS limits this to the user's own row.
+      if (user?.id) {
+        (async () => {
+          const { data: cur } = await supabase
+            .from("profiles")
+            .select("ui_prefs")
+            .eq("id", user.id)
+            .maybeSingle();
+          const merged = { ...((cur?.ui_prefs as any) ?? {}), badges: next };
+          await supabase.from("profiles").update({ ui_prefs: merged }).eq("id", user.id);
+        })().catch(() => { /* best-effort sync */ });
+      }
       return next;
     });
   };
