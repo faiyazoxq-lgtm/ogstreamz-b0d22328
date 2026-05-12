@@ -1,9 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import { ArrowUpRight, Loader2, ShoppingBag, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PortalHeader } from "@/components/PortalHeader";
 import type { HubSection } from "@/lib/hub-sections";
+import { useDownloadCharge } from "@/hooks/use-download-charge";
 
 /**
  * Locked layout for boss-built custom hubs. Same typography, padding, and
@@ -179,18 +180,83 @@ function PortalGrid({
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.map((p) => (
-            <Link key={p.id} to={`${prefix}${p.slug}` as any}
-                  className="group block rounded-xl border bg-card p-5 transition hover:-translate-y-0.5 hover:shadow-[0_0_40px_-15px_var(--hub-accent)]"
-                  style={{ borderColor: `${accent}55` }}>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Sparkles className="h-3 w-3" /> {p.niche || kind}
-              </div>
-              <div className="mt-2 font-bold">{p.name}</div>
-              {p.vibe && <div className="mt-1 text-xs text-muted-foreground line-clamp-2">{p.vibe}</div>}
-            </Link>
+            <PortalTile key={p.id} portal={p} prefix={prefix} kind={kind} accent={accent} />
           ))}
         </div>
       )}
     </section>
+  );
+}
+
+function PortalTile({
+  portal, prefix, kind, accent,
+}: {
+  portal: { id: string; slug: string; name: string; niche?: string | null; vibe?: string | null };
+  prefix: string;
+  kind: string;
+  accent: string;
+}) {
+  const { charge, pending } = useDownloadCharge();
+  const [status, setStatus] = useState<null | { kind: "ok" | "err"; msg: string }>(null);
+
+  const onBuy = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setStatus(null);
+    const out = await charge({ portalId: portal.id, cost: 2 });
+    if (out.ok) {
+      setStatus({ kind: "ok", msg: out.mode === "vip_free" ? "Unlocked (VIP free pass)" : `Unlocked · ${out.balance} 🪙 left` });
+    } else {
+      setStatus({
+        kind: "err",
+        msg: out.reason === "insufficient" ? "Not enough coins" : out.message || "Couldn't unlock",
+      });
+    }
+  };
+
+  return (
+    <div
+      className="group relative rounded-xl border bg-card p-5 transition hover:-translate-y-0.5 hover:shadow-[0_0_40px_-15px_var(--hub-accent)]"
+      style={{ borderColor: `${accent}55` }}
+    >
+      <Link
+        to={`${prefix}${portal.slug}` as any}
+        className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.22_245/0.6)] rounded-lg"
+      >
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Sparkles className="h-3 w-3" /> {portal.niche || kind}
+        </div>
+        <div className="mt-2 font-bold flex items-center gap-1">
+          {portal.name}
+          <ArrowUpRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-70 transition" />
+        </div>
+        {portal.vibe && <div className="mt-1 text-xs text-muted-foreground line-clamp-2">{portal.vibe}</div>}
+      </Link>
+
+      <button
+        type="button"
+        onClick={onBuy}
+        disabled={pending}
+        aria-busy={pending}
+        className="portal-button-motion portal-button-motion--lg mt-4 w-full inline-flex items-center justify-center gap-2 font-black uppercase tracking-[0.2em] text-xs text-black border-2 disabled:opacity-70 disabled:cursor-wait"
+        style={{ background: accent, borderColor: accent, boxShadow: `0 0 32px -8px ${accent}` }}
+      >
+        {pending ? (
+          <><Loader2 className="h-4 w-4 animate-spin" /> Unlocking…</>
+        ) : (
+          <><ShoppingBag className="h-4 w-4" /> Buy for 2 🪙</>
+        )}
+      </button>
+      {status && (
+        <p
+          className={`mt-2 text-[11px] uppercase tracking-[0.2em] text-center ${
+            status.kind === "ok" ? "text-emerald-300" : "text-rose-300"
+          }`}
+          role="status"
+        >
+          {status.msg}
+        </p>
+      )}
+    </div>
   );
 }
