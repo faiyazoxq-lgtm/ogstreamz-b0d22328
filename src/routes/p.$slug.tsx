@@ -400,7 +400,7 @@ function PortalPage() {
         <motion.div whileTap={{ scale: 0.95 }} ref={hitContainerRef} className="mt-10 w-full max-w-md relative">
           <Button
             onClick={hit}
-            disabled={unlocking}
+            disabled={unlocking || charging}
             className="h-20 w-full text-2xl uppercase tracking-[0.4em] font-black border-4 rounded-2xl"
             style={{
               background: `linear-gradient(135deg, ${T.accent}, ${T.secondary})`,
@@ -410,10 +410,20 @@ function PortalPage() {
               boxShadow: `0 0 80px ${T.accent}99, inset 0 0 30px rgba(255,255,255,0.25)`,
             }}
           >
-            {unlocking ? <><Loader2 className="h-6 w-6 mr-2 animate-spin" />…</> : (!owned && portal.vip ? `UNLOCK · £${(portal.price_cents/100).toFixed(2)} (${Math.round(portal.price_cents/100)} 🪙)` : T.hitButton)}
+            {unlocking || charging ? (
+              <><Loader2 className="h-6 w-6 mr-2 animate-spin" />…</>
+            ) : !owned && portal.vip ? (
+              `UNLOCK · £${(portal.price_cents/100).toFixed(2)} (${Math.round(portal.price_cents/100)} 🪙)`
+            ) : useCost > 0 ? (
+              `${T.hitButton} · ${useCost} 🪙`
+            ) : (
+              T.hitButton
+            )}
           </Button>
           <p className="mt-3 text-center text-[10px] uppercase tracking-[0.3em] opacity-60">
-            {owned ? `${hits} hits · ${idx + 1}/${jokes.length}` : "Tap to unlock"}
+            {owned
+              ? `${hits} hits · ${idx + 1}/${jokes.length}${useCost > 0 ? ` · ${useCost} 🪙 each` : ""}`
+              : "Tap to unlock"}
           </p>
         </motion.div>
 
