@@ -49,6 +49,7 @@ import { Route as StoreCatalogRouteImport } from './routes/store.catalog'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
+import { Route as HubSlugRouteImport } from './routes/hub.$slug'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as BossUsersRouteImport } from './routes/boss.users'
 import { Route as BossTodoRouteImport } from './routes/boss.todo'
@@ -286,6 +287,11 @@ const JokesPortalRoute = JokesPortalRouteImport.update({
   id: '/portal',
   path: '/portal',
   getParentRoute: () => JokesRoute,
+} as any)
+const HubSlugRoute = HubSlugRouteImport.update({
+  id: '/hub/$slug',
+  path: '/hub/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   id: '/checkout/return',
@@ -541,6 +547,7 @@ export interface FileRoutesByFullPath {
   '/boss/todo': typeof BossTodoRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/hub/$slug': typeof HubSlugRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
   '/p/$slug': typeof PSlugRoute
@@ -619,6 +626,7 @@ export interface FileRoutesByTo {
   '/boss/todo': typeof BossTodoRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/hub/$slug': typeof HubSlugRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
   '/p/$slug': typeof PSlugRoute
@@ -699,6 +707,7 @@ export interface FileRoutesById {
   '/boss/todo': typeof BossTodoRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/hub/$slug': typeof HubSlugRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
   '/p/$slug': typeof PSlugRoute
@@ -780,6 +789,7 @@ export interface FileRouteTypes {
     | '/boss/todo'
     | '/boss/users'
     | '/checkout/return'
+    | '/hub/$slug'
     | '/jokes/portal'
     | '/m/$slug'
     | '/p/$slug'
@@ -858,6 +868,7 @@ export interface FileRouteTypes {
     | '/boss/todo'
     | '/boss/users'
     | '/checkout/return'
+    | '/hub/$slug'
     | '/jokes/portal'
     | '/m/$slug'
     | '/p/$slug'
@@ -937,6 +948,7 @@ export interface FileRouteTypes {
     | '/boss/todo'
     | '/boss/users'
     | '/checkout/return'
+    | '/hub/$slug'
     | '/jokes/portal'
     | '/m/$slug'
     | '/p/$slug'
@@ -991,6 +1003,7 @@ export interface RootRouteChildren {
   AccountPassesRoute: typeof AccountPassesRoute
   BSlugRoute: typeof BSlugRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
+  HubSlugRoute: typeof HubSlugRoute
   MSlugRoute: typeof MSlugRoute
   PSlugRoute: typeof PSlugRoute
   TSlugRoute: typeof TSlugRoute
@@ -1285,6 +1298,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/jokes/portal'
       preLoaderRoute: typeof JokesPortalRouteImport
       parentRoute: typeof JokesRoute
+    }
+    '/hub/$slug': {
+      id: '/hub/$slug'
+      path: '/hub/$slug'
+      fullPath: '/hub/$slug'
+      preLoaderRoute: typeof HubSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/checkout/return': {
       id: '/checkout/return'
@@ -1679,6 +1699,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountPassesRoute: AccountPassesRoute,
   BSlugRoute: BSlugRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
+  HubSlugRoute: HubSlugRoute,
   MSlugRoute: MSlugRoute,
   PSlugRoute: PSlugRoute,
   TSlugRoute: TSlugRoute,
