@@ -11,7 +11,6 @@ import {
   Loader2, Rocket, Search, Mail, Eye, MousePointerClick, Reply,
   Globe, Trash2, Plus, RefreshCw, ShieldCheck, Sparkles,
 } from "lucide-react";
-import { HubsStrip } from "@/components/HubsStrip";
 import {
   createConnectCampaign, launchConnectCampaign, getCampaignStats,
   listConnectCampaigns, listCampaignLeads,
@@ -178,7 +177,6 @@ function ConnectHubPage() {
         </div>
       </header>
 
-      <HubsStrip className="pt-6" />
       <main className="container mx-auto px-4 py-6 space-y-6">
 
         {/* Spawner */}
