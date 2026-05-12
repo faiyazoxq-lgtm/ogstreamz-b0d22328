@@ -186,9 +186,9 @@ function WelcomePage() {
                 <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
                 <p className="text-sm text-muted-foreground">{desc}</p>
               </div>
-              <div className="relative mt-auto inline-flex items-center gap-1 text-sm font-medium text-primary">
-                Login / sign up to {title}
-                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
+              <div className="relative mt-auto flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm font-medium text-primary">
+                <span className="break-words">Login / sign up to {title}</span>
+                <ArrowRight className="h-4 w-4 shrink-0 transition group-hover:translate-x-0.5" aria-hidden />
               </div>
             </Link>
           ))}
@@ -218,10 +218,10 @@ function WelcomePage() {
                 Login / sign up on the streaming domain to manage your line, expiry and devices.
               </p>
             </div>
-            <div className="relative mt-auto flex items-center justify-between text-sm font-medium text-primary">
-              <span className="inline-flex items-center gap-1">
-                Open {streamHost}
-                <ExternalLink className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
+            <div className="relative mt-auto flex flex-wrap items-center justify-between gap-2 text-sm font-medium text-primary">
+              <span className="inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-1">
+                <span className="break-all">Open {streamHost}</span>
+                <ExternalLink className="h-4 w-4 shrink-0 transition group-hover:translate-x-0.5" aria-hidden />
               </span>
             </div>
           </a>
@@ -242,16 +242,16 @@ function WelcomePage() {
           <SiteGuideSwearChat />
         </section>
 
-        <footer className="flex flex-col items-center gap-2 text-center text-xs text-muted-foreground">
-          <p>
+        <footer className="flex flex-col items-center gap-2 text-balance text-center text-xs text-muted-foreground">
+          <p className="max-w-xs sm:max-w-none">
             Already know where you're going?{" "}
-            <Link to="/auth" className="font-medium text-primary hover:underline">
+            <Link to="/auth" className="whitespace-nowrap font-medium text-primary hover:underline">
               Skip to login / sign up
             </Link>
           </p>
-          <p>
+          <p className="max-w-xs sm:max-w-none">
             New here?{" "}
-            <Link to="/auth" className="font-medium text-primary hover:underline">
+            <Link to="/auth" className="whitespace-nowrap font-medium text-primary hover:underline">
               Create an account
             </Link>
           </p>
