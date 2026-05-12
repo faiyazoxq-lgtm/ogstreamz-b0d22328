@@ -46,7 +46,7 @@ export function TrackingPupil({
   };
 
   useEffect(() => {
-    const update = (clientX: number, clientY: number) => {
+    const update = (clientX: number, clientY: number, snap = false) => {
       const el = ref.current?.parentElement;
       if (!el) return;
       const r = el.getBoundingClientRect();
@@ -57,11 +57,34 @@ export function TrackingPupil({
       const dist = Math.hypot(dx, dy) || 1;
       const t = r.width * travelRatio;
       const mag = Math.min(t, dist * followGain);
-      targetRef.current = { x: (dx / dist) * mag, y: (dy / dist) * mag };
+      const next = { x: (dx / dist) * mag, y: (dy / dist) * mag };
+      targetRef.current = next;
+      // Touch taps fire one pointerdown — easing it in over ~3·tau feels
+      // like lag. Snap the smoothed position straight to the target so the
+      // pupil locks onto the tap, then keep tracking with the low-pass for
+      // any subsequent drag.
+      if (snap) {
+        currentRef.current = { ...next };
+        writeTransform();
+      }
     };
-    const onPointer = (e: PointerEvent) => update(e.clientX, e.clientY);
-    window.addEventListener("pointermove", onPointer, { passive: true });
-    window.addEventListener("pointerdown", onPointer, { passive: true });
+    const onMove = (e: PointerEvent) => update(e.clientX, e.clientY, false);
+    const onDown = (e: PointerEvent) => {
+      // Snap on touch/pen taps; mouse keeps the silky low-pass on click too.
+      update(e.clientX, e.clientY, e.pointerType !== "mouse");
+    };
+    // Touch fallback for browsers where pointer events lag behind touch
+    // (older iOS Safari especially). touchstart/touchmove fire ~immediately
+    // and `passive: true` keeps native scrolling untouched.
+    const onTouch = (e: TouchEvent) => {
+      const t = e.touches[0] ?? e.changedTouches[0];
+      if (!t) return;
+      update(t.clientX, t.clientY, e.type === "touchstart");
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("pointerdown", onDown, { passive: true });
+    window.addEventListener("touchstart", onTouch, { passive: true });
+    window.addEventListener("touchmove", onTouch, { passive: true });
 
     // Critically-damped exponential low-pass with frame-rate-independent
     // step. tau (seconds) = `smoothing`; alpha = 1 - exp(-dt/tau) keeps the
@@ -97,8 +120,10 @@ export function TrackingPupil({
     };
     raf = requestAnimationFrame(tick);
     return () => {
-      window.removeEventListener("pointermove", onPointer);
-      window.removeEventListener("pointerdown", onPointer);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("touchstart", onTouch);
+      window.removeEventListener("touchmove", onTouch);
       cancelAnimationFrame(raf);
     };
   }, [travelRatio, smoothing, followGain]);
