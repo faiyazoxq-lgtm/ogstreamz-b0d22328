@@ -31,7 +31,7 @@ export const logRealtimeDenial = createServerFn({ method: "POST" })
       reason: data.reason ?? null,
       user_agent: userAgent || null,
       ip: ip || null,
-      metadata: data.metadata ?? {},
+      metadata: (data.metadata ?? {}) as never,
     });
     if (error) {
       // Don't surface DB errors to anonymous callers — just log server-side.
