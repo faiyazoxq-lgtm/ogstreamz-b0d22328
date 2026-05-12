@@ -82,7 +82,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         );
 
         const [portals, battles, calculators] = await Promise.all([
-          supabase.from("portals").select("slug, kind, updated_at").limit(2000),
+          supabase.from("portals_public").select("slug, kind, updated_at").limit(2000),
           supabase.from("battles").select("slug, updated_at, public").eq("public", true).limit(1000),
           supabase.from("calculators").select("slug, updated_at, published").eq("published", true).limit(1000),
         ]);

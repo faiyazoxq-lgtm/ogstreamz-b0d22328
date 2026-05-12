@@ -33,7 +33,7 @@ export const Route = createFileRoute("/m/$slug")({
   }),
   loader: async ({ params }) => {
     const { data, error } = await supabase
-      .from("portals")
+      .from("portals_public")
       .select("id, slug, name, language, style, vibe, theme, kind, swear_chat_enabled, jokes, music_hooks")
       .eq("slug", params.slug)
       .eq("kind", "music")

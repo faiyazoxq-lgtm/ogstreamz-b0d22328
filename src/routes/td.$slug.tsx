@@ -29,7 +29,7 @@ const CRIMSON = "#EF4444";
 export const Route = createFileRoute("/td/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
-      .from("portals")
+      .from("portals_public")
       .select("id, slug, name, niche, vip, theme_config, kind, jokes, trade_briefs")
       .eq("slug", params.slug)
       .maybeSingle();

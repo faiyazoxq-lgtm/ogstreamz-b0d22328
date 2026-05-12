@@ -68,7 +68,7 @@ type Portal = {
 export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
-      .from("portals")
+      .from("portals_public")
       .select("id, slug, name, niche, language, vibe, theme, jokes, music_hooks, trade_briefs, connect_openers, tool_ideas, vip, price_cents, theme_config, scout_meta, telegram_config, kind, audio_snippet_url, bg_video_url, bg_video_aspect, swear_chat_enabled, use_credit_cost")
       .eq("slug", params.slug)
       .maybeSingle();
