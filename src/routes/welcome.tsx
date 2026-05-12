@@ -7,6 +7,7 @@ import logo from "@/assets/logo.jpg";
 import { FlameBackdrop } from "@/components/FlameBackdrop";
 import { SiteGuideSwearChat } from "@/components/SiteGuideSwearChat";
 import { VerifyStreamAccessCard } from "@/components/VerifyStreamAccessCard";
+import { StreamStatusWidget } from "@/components/StreamStatusWidget";
 
 export const Route = createFileRoute("/welcome")({
   head: () => ({
@@ -251,6 +252,10 @@ function WelcomePage() {
             </p>
           </div>
           <SiteGuideSwearChat />
+        </section>
+
+        <section className="mx-auto w-full max-w-3xl">
+          <StreamStatusWidget />
         </section>
 
         <section className="mx-auto w-full max-w-3xl">
