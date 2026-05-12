@@ -100,6 +100,22 @@ function LetterHubPage() {
   const [touched, setTouched] = useState<Record<number, boolean>>({});
   const [previewMode, setPreviewMode] = useState<"preview" | "edit" | "split">("preview");
 
+  // When reopening a saved letter, the local autosaved draft for that slot
+  // may differ from what's in the database. Prompt the user to choose.
+  type LocalDraft = {
+    form?: LetterInput;
+    questions?: string[];
+    answers?: Record<number, string>;
+    letter?: string;
+    step?: 1 | 2 | 3 | 4;
+    savedAt?: number;
+  };
+  const [conflict, setConflict] = useState<null | {
+    id: string;
+    dbRow: any;
+    local: LocalDraft;
+  }>(null);
+
   // ---- Autosave (localStorage) ----
   // Keyed by historyId ("new" for unsaved drafts) and user id so multiple
   // accounts on the same browser don't clobber each other. We also persist
@@ -333,24 +349,75 @@ function LetterHubPage() {
         return;
       }
       const r = res.row;
-      setForm({ ...EMPTY, ...r.inputs });
-      setQuestions(Array.isArray(r.questions) ? r.questions : []);
-      const ansObj: Record<number, string> = {};
-      Object.entries(r.answers || {}).forEach(([k, v]) => {
-        const idx = Number(k);
-        if (Number.isFinite(idx)) ansObj[idx] = String(v ?? "");
-      });
-      setAnswers(ansObj);
-      setLetter(r.letter || "");
-      setHistoryId(r.id);
-      setStep(r.letter ? 4 : 2);
-      // Mark this slot as already restored so the restore effect doesn't
-      // overwrite the freshly loaded DB data with a stale local draft.
-      if (user) setRestoredKey(`letterhub:draft:${user.id}:${r.id}`);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      // Look for a local autosaved draft for this slot and compare.
+      let local: LocalDraft | null = null;
+      if (typeof window !== "undefined") {
+        try {
+          const raw = window.localStorage.getItem(`letterhub:draft:${user.id}:${id}`);
+          if (raw) local = JSON.parse(raw) as LocalDraft;
+        } catch {
+          local = null;
+        }
+      }
+      if (local && draftDiffersFromRow(local, r)) {
+        setConflict({ id: r.id, dbRow: r, local });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      applyDbRow(r);
     } finally {
       setLoading(false);
     }
+  };
+
+  const applyDbRow = (r: any) => {
+    setForm({ ...EMPTY, ...r.inputs });
+    setQuestions(Array.isArray(r.questions) ? r.questions : []);
+    const ansObj: Record<number, string> = {};
+    Object.entries(r.answers || {}).forEach(([k, v]) => {
+      const idx = Number(k);
+      if (Number.isFinite(idx)) ansObj[idx] = String(v ?? "");
+    });
+    setAnswers(ansObj);
+    setLetter(r.letter || "");
+    setHistoryId(r.id);
+    setStep(r.letter ? 4 : 2);
+    if (user) setRestoredKey(`letterhub:draft:${user.id}:${r.id}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const applyLocalDraft = (id: string, local: LocalDraft) => {
+    if (local.form) setForm({ ...EMPTY, ...local.form });
+    setQuestions(Array.isArray(local.questions) ? local.questions : []);
+    const ansObj: Record<number, string> = {};
+    Object.entries(local.answers || {}).forEach(([k, v]) => {
+      const idx = Number(k);
+      if (Number.isFinite(idx)) ansObj[idx] = String(v ?? "");
+    });
+    setAnswers(ansObj);
+    setLetter(typeof local.letter === "string" ? local.letter : "");
+    setHistoryId(id);
+    setStep(local.step ?? (local.letter ? 4 : 2));
+    if (local.savedAt) setLastSavedAt(local.savedAt);
+    if (user) setRestoredKey(`letterhub:draft:${user.id}:${id}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const draftDiffersFromRow = (local: LocalDraft, r: any): boolean => {
+    const norm = (s: unknown) => String(s ?? "").trim();
+    if (norm(local.letter) !== norm(r.letter)) return true;
+    const lf = { ...EMPTY, ...(local.form || {}) };
+    const rf = { ...EMPTY, ...(r.inputs || {}) };
+    for (const k of Object.keys(EMPTY) as (keyof LetterInput)[]) {
+      if (norm(lf[k]) !== norm(rf[k])) return true;
+    }
+    const la = local.answers || {};
+    const ra = r.answers || {};
+    const keys = new Set([...Object.keys(la), ...Object.keys(ra)]);
+    for (const k of keys) {
+      if (norm((la as any)[k]) !== norm((ra as any)[k])) return true;
+    }
+    return false;
   };
 
   const removeHistory = async (id: string) => {
