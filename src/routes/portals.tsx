@@ -54,6 +54,92 @@ const PORTAL_TO: Record<string, Item["to"]> = {
   form: "/f/$slug",
 };
 
+// Where to send users when they want to spawn a new portal of a given kind.
+const SPAWN_TO: Record<Item["kind"], string> = {
+  music: "/music",
+  joke: "/jokes",
+  trade: "/trade",
+  news: "/jokes",
+  form: "/formhub",
+  battle: "/battlehub",
+  tool: "/tools",
+};
+
+/**
+ * OG BoT empty-state card. Speaks with absolute profanity to roast the user
+ * (or the Boss) into spawning a portal. Used when a hub or a sub-group has
+ * no portals yet so the page never feels dead — clicking the CTA jumps to
+ * the spawn hub for that kind.
+ */
+function OgBotEmpty({
+  kind,
+  side,
+  compact = false,
+}: {
+  kind: Item["kind"];
+  side: "boss" | "mine" | "any";
+  compact?: boolean;
+}) {
+  const meta = KIND_META[kind];
+  const spawnHref = SPAWN_TO[kind];
+  const lines: Record<typeof side, { title: string; body: string; cta: string }> = {
+    boss: {
+      title: `Boss hasn't dropped a damn ${meta.label} portal yet.`,
+      body: `The lazy bastard's still asleep — nothing official to flex in ${meta.hub}. Spawn your own and rub it in.`,
+      cta: `Spawn a ${meta.label} portal`,
+    },
+    mine: {
+      title: `You haven't spawned a fucking ${meta.label} portal.`,
+      body: `Stop scrolling like a tourist and make some shit. Two clicks in ${meta.hub} and you're on the board.`,
+      cta: `Spawn one in ${meta.hub}`,
+    },
+    any: {
+      title: `${meta.hub} is bone fucking empty.`,
+      body: `No Boss drops, no user portals — absolute ghost town. Be the first prick to plant a flag.`,
+      cta: `Open ${meta.hub}`,
+    },
+  };
+  const copy = lines[side];
+  return (
+    <div
+      className={`relative overflow-hidden rounded-2xl border bg-black/40 backdrop-blur-xl ${compact ? "p-4" : "p-5 sm:p-6"}`}
+      style={{
+        borderColor: `color-mix(in oklab, ${meta.accent} 35%, transparent)`,
+        boxShadow: `0 0 40px -28px ${meta.accent}`,
+      }}
+    >
+      <div className="flex items-start gap-4">
+        <div
+          className="shrink-0 inline-flex items-center justify-center rounded-full h-12 w-12 sm:h-14 sm:w-14 ring-2"
+          style={{
+            background: `color-mix(in oklab, ${meta.accent} 15%, transparent)`,
+            color: meta.accent,
+            boxShadow: `inset 0 0 20px color-mix(in oklab, ${meta.accent} 30%, transparent)`,
+          }}
+        >
+          <Bot className="h-6 w-6 sm:h-7 sm:w-7" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] font-bold" style={{ color: meta.accent }}>
+            <Sparkles className="h-3 w-3" /> OG BoT
+          </div>
+          <p className="mt-1 font-[Montserrat] font-black text-base sm:text-lg leading-tight text-foreground">
+            {copy.title}
+          </p>
+          <p className="mt-1 text-[13px] text-muted-foreground">{copy.body}</p>
+          <Link
+            to={spawnHref as never}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-[11px] uppercase tracking-[0.2em] font-bold text-black transition hover:brightness-110 active:scale-[0.97]"
+            style={{ background: meta.accent }}
+          >
+            <PlusCircle className="h-3.5 w-3.5" /> {copy.cta}
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/portals")({
   beforeLoad: requireMember,
   head: () => ({
