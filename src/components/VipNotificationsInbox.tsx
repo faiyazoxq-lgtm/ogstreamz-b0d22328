@@ -53,12 +53,24 @@ export function VipNotificationsInbox() {
       const uid = data.user?.id;
       if (!uid || cancelled) return;
       const filter = `user_id=eq.${uid}`;
+      // Broadcast notifications use user_id IS NULL with audience='ogs'.
+      // Subscribe to those too so Real OGs receive shared announcements
+      // in real time. Row-level visibility is still enforced by the
+      // vip_notifications SELECT policy (only Real OGs receive broadcast
+      // rows on the wire).
+      const broadcastFilter = `user_id=is.null`;
       channel = supabase
         .channel(`vip_notifications:${uid}`)
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "vip_notifications", filter }, () => {
           void refresh();
         })
         .on("postgres_changes", { event: "DELETE", schema: "public", table: "vip_notifications", filter }, () => {
+          void refresh();
+        })
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "vip_notifications", filter: broadcastFilter }, () => {
+          void refresh();
+        })
+        .on("postgres_changes", { event: "DELETE", schema: "public", table: "vip_notifications", filter: broadcastFilter }, () => {
           void refresh();
         })
         .subscribe();
