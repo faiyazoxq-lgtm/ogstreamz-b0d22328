@@ -225,7 +225,7 @@ function TelegramSetupPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-black via-zinc-950 to-black px-4 py-8">
+    <main className="min-h-screen px-4 py-8">
       <div className="mx-auto max-w-3xl">
         <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-center gap-3">

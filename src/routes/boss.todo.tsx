@@ -102,7 +102,7 @@ function BossTodoPage() {
   const openP0P1 = items.filter(i => i.status !== "done" && (i.priority === "P0" || i.priority === "P1")).length;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen text-foreground">
       <div className="mx-auto max-w-6xl px-4 py-8">
         <header className="mb-6 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">

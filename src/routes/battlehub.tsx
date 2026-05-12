@@ -155,7 +155,7 @@ function BattleHubPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#f5e8c7]">
+    <div className="min-h-screen text-[#f5e8c7]">
       {/* Ambient gold glow */}
       <div
         aria-hidden

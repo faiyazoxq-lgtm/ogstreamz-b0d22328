@@ -171,7 +171,7 @@ function ConnectTelegramPage() {
   const codeIssued = !!code;
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 py-10 bg-gradient-to-b from-black via-zinc-950 to-black">
+    <main className="min-h-screen flex items-center justify-center px-4 py-10">
       <section
         role="region"
         aria-labelledby="tg-gate-title"

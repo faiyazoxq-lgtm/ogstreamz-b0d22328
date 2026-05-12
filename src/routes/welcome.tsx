@@ -313,7 +313,7 @@ function WelcomePage() {
   const allConnected = signedIn && telegramConnected && streamActive;
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-background text-foreground">
+    <div className="relative min-h-dvh overflow-hidden text-foreground">
       {/* Brand wallpaper */}
       <FlameBackdrop
         className="pointer-events-none absolute inset-0 h-full w-full object-cover object-bottom opacity-[0.10] mix-blend-overlay sm:opacity-[0.08] sm:object-center"

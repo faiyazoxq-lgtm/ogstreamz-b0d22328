@@ -62,7 +62,7 @@ function ResellerPage() {
   const refLink = typeof window !== "undefined" ? `${window.location.origin}/auth?ref=${user!.id}` : "";
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-screen text-foreground">
       <div className="max-w-6xl mx-auto px-5 sm:px-8 py-10">
         <header className="mb-8 rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-6 sm:p-8">
           <p className="text-[11px] uppercase tracking-[0.4em] text-primary">Reseller Console</p>
