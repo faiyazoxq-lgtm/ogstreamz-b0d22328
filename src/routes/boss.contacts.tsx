@@ -257,6 +257,10 @@ function BossContactsPage() {
       const idx = filtered.findIndex((c) => c.id === savedId);
       if (idx >= 0) {
         setMatchIndex(idx);
+        const c = filtered[idx];
+        const msg = `Restored previous match ${idx + 1} of ${filtered.length} for “${query.trim()}”: ${c.label}${c.phone ? `, ${c.phone}` : ""}.`;
+        setRestoreAnnouncement("");
+        setTimeout(() => setRestoreAnnouncement(msg), 30);
         return;
       }
       // Stale entry — drop it so we don't keep checking a missing contact.
