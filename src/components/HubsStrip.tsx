@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import {
   Music2, Smile, Wrench, ArrowUpRight, TrendingUp, Rocket, Swords,
   Sparkles, Radio, Bot, Brain, Zap, Star, Megaphone, Disc3, Satellite, Radar,
+  ClipboardList,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -18,6 +19,7 @@ const PORTALS = [
   { to: "/connect", title: "ConnectHUB", Icon: Rocket },
   { to: "/battle",  title: "BattleHUB",  Icon: Swords },
   { to: "/tools",   title: "ToolHUB",    Icon: Wrench },
+  { to: "/formhub", title: "FormHUB",    Icon: ClipboardList },
 ] as const;
 
 const BASE = "group inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-[11px] uppercase tracking-[0.18em] font-bold transition-colors";
