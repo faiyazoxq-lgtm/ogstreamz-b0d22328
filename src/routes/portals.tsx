@@ -752,7 +752,21 @@ function PortalsHub() {
                     <Link
                       to={i.to}
                       params={{ slug: i.slug }}
-                      className="portal-button-motion flex-1 min-w-0 inline-flex items-center justify-center gap-1 sm:gap-1.5 rounded-md px-1.5 sm:px-3 py-2 text-[10px] sm:text-[11px] uppercase tracking-[0.12em] sm:tracking-[0.18em] font-bold text-black outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      // Size variant by hub: MusicHUB → lg (hero CTA),
+                      // JokesHUB → md (default), ToolHUB → sm (compact).
+                      // The variant class owns padding/font/radius/min-h
+                      // and the matching --portal-focus-scale, so we drop
+                      // the Tailwind px/py/text-* utilities here to avoid
+                      // a double-sized footprint.
+                      className={`portal-button-motion ${
+                        i.kind === "music"
+                          ? "portal-button-motion--lg"
+                          : i.kind === "joke"
+                            ? "portal-button-motion--md"
+                            : i.kind === "tool"
+                              ? "portal-button-motion--sm"
+                              : "px-1.5 sm:px-3 py-2 text-[10px] sm:text-[11px] rounded-md"
+                      } flex-1 min-w-0 inline-flex items-center justify-center gap-1 sm:gap-1.5 uppercase tracking-[0.12em] sm:tracking-[0.18em] font-bold text-black outline-none focus-visible:ring-2 focus-visible:ring-primary`}
                       style={{ background: meta.accent }}
                     >
                       Open <ExternalLink className="h-3.5 w-3.5 shrink-0" />
