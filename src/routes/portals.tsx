@@ -590,6 +590,11 @@ function PortalsHub() {
             );
           })}
                 </div>
+                {missingSide && (
+                  <div className="mt-4">
+                    <OgBotEmpty kind={hubKind} side={missingSide} compact />
+                  </div>
+                )}
                 {paginated && remaining > 0 && (
                   <div className="mt-4 flex justify-center">
                     <button
