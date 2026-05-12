@@ -22,7 +22,7 @@ export const chargePortalUse = createServerFn({ method: "POST" })
 
     // Boss / admin = free.
     const [{ data: profile }, { data: roleRow }] = await Promise.all([
-      supabase.from("profiles").select("rank").eq("id", userId).maybeSingle(),
+      supabase.from("profiles").select("rank,status").eq("id", userId).maybeSingle(),
       supabase
         .from("user_roles")
         .select("role")
@@ -31,6 +31,17 @@ export const chargePortalUse = createServerFn({ method: "POST" })
         .maybeSingle(),
     ]);
     const privileged = profile?.rank === "boss" || !!roleRow;
+    const isVip = privileged || profile?.status === "vip" || profile?.rank === "vip";
+
+    // Members can browse portals but only VIPs (and boss/admin) can use them.
+    if (!isVip) {
+      return {
+        ok: false as const,
+        error: "vip_required",
+        cost: 0,
+        balance: null as number | null,
+      };
+    }
 
     const { data: portal, error: portalErr } = await supabase
       .from("portals")

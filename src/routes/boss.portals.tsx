@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Search, Pencil, Trash2, ArrowUpRight, Loader2, Eye, ArrowUpDown, ImageIcon } from "lucide-react";
+import { Search, Pencil, Trash2, ArrowUpRight, Loader2, Eye, ArrowUpDown, ImageIcon, Power, PowerOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ type Portal = {
   theme: string; vip: boolean; view_count: number;
   created_at: string; created_by: string | null;
   paid_services: Record<string, boolean>;
+  published: boolean;
 };
 
 const KIND_PATH: Record<string, (s: string) => string> = {
@@ -57,7 +58,7 @@ function PortalsManager() {
     setLoading(true);
     const { data, error } = await supabase
       .from("portals")
-      .select("id,slug,name,kind,niche,vibe,language,theme,vip,view_count,created_at,created_by,paid_services")
+      .select("id,slug,name,kind,niche,vibe,language,theme,vip,view_count,created_at,created_by,paid_services,published")
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) toast.error(error.message);
@@ -117,6 +118,21 @@ function PortalsManager() {
     const { error } = await supabase.from("portals").update({ vip: !p.vip }).eq("id", p.id);
     if (error) return toast.error(error.message);
     load();
+  }
+
+  async function togglePublished(p: Portal) {
+    const next = !p.published;
+    setRows((rs) => rs.map((r) => (r.id === p.id ? { ...r, published: next } : r)));
+    const { error } = await supabase.rpc("boss_set_portal_published", {
+      _portal_id: p.id,
+      _published: next,
+    });
+    if (error) {
+      toast.error(error.message);
+      load();
+      return;
+    }
+    toast.success(next ? "Portal published" : "Portal hidden from members");
   }
 
   async function generateCover(p: Portal) {
@@ -227,6 +243,7 @@ function PortalsManager() {
                         <p className="font-bold text-sm truncate">{p.name}</p>
                         <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{p.kind}</span>
                         {p.vip && <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">VIP</span>}
+                        {!p.published && <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">Hidden</span>}
                         <span className="text-[10px] text-muted-foreground inline-flex items-center gap-1"><Eye className="h-3 w-3" />{p.view_count}</span>
                         <CostTierControl
                           flags={p.paid_services}
@@ -238,6 +255,14 @@ function PortalsManager() {
                       <p className="text-xs text-muted-foreground/80 truncate">{p.niche}</p>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => togglePublished(p)}
+                        title={p.published ? "Hide from members" : "Publish for members"}
+                      >
+                        {p.published ? <Power className="h-4 w-4 text-emerald-400" /> : <PowerOff className="h-4 w-4 text-rose-400" />}
+                      </Button>
                       <Button variant="ghost" size="sm" onClick={() => toggleVip(p)} title="Toggle VIP">
                         {p.vip ? "Make free" : "Make VIP"}
                       </Button>

@@ -22,10 +22,10 @@ import {
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
 import { Document, Packer, Paragraph, TextRun, AlignmentType } from "docx";
-import { requireMember } from "@/lib/route-guards";
+import { requireBoss } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/letterhub")({
-  beforeLoad: requireMember,
+  beforeLoad: requireBoss,
   head: () => ({
     meta: [
       { title: "LetterHUB · Professional Letter Generator — 0G-STREAMZ" },

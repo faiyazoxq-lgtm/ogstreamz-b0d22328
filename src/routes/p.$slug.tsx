@@ -258,6 +258,13 @@ function PortalPage() {
       startUnlock();
       return;
     }
+    // VIP-only USE gate. Members can browse the portal, but actually using it
+    // (hit-button, charge per-action) is reserved for VIPs / boss / admin.
+    if (!isVipMember) {
+      toast.error("VIP only — upgrade to use this portal");
+      navigate({ to: "/vip", search: { upgrade: "vip", from: portal.slug } as never });
+      return;
+    }
     // Charge per-action coin cost if configured. Anonymous users are sent to
     // sign in; insufficient balance redirects to the credits top-up page.
     if (useCost > 0) {
@@ -268,7 +275,10 @@ function PortalPage() {
       try {
         const r = await chargeUseFn({ data: { slug: portal.slug } });
         if (!r.ok) {
-          if (r.error === "insufficient") {
+          if (r.error === "vip_required") {
+            toast.error("VIP only — upgrade to use this portal");
+            navigate({ to: "/vip", search: { upgrade: "vip", from: portal.slug } as never });
+          } else if (r.error === "insufficient") {
             toast.error(`Need ${useCost} 🪙 to use this portal — top up to continue`);
             navigate({
               to: "/wallet",

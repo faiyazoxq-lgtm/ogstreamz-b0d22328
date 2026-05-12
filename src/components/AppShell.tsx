@@ -293,7 +293,9 @@ function DesktopSidebar({
           pathname={pathname}
           gold={false}
         />
-        <SidebarSection title="Hubs" icon={Rocket} items={hubs} collapsed={collapsed} pathname={pathname} gold />
+        {isBoss && (
+          <SidebarSection title="Hubs · Boss" icon={Rocket} items={hubs} collapsed={collapsed} pathname={pathname} gold />
+        )}
         {portals.length > 0 && (
           <SidebarSection title="Your Portals" icon={DoorOpen} items={portals} collapsed={collapsed} pathname={pathname} />
         )}
@@ -466,12 +468,14 @@ function MobileHeader({
               </ul>
             </section>
 
-            <section>
-              <p className="px-1.5 mb-2 text-[10px] uppercase tracking-[0.3em] text-gold">Hubs</p>
-              <ul className="space-y-1.5">
-                {hubs.map((h) => <li key={h.to}><Row to={h.to} label={h.label} Icon={h.icon} desc={h.desc} /></li>)}
-              </ul>
-            </section>
+            {isBoss && (
+              <section>
+                <p className="px-1.5 mb-2 text-[10px] uppercase tracking-[0.3em] text-gold">Hubs · Boss</p>
+                <ul className="space-y-1.5">
+                  {hubs.map((h) => <li key={h.to}><Row to={h.to} label={h.label} Icon={h.icon} desc={h.desc} /></li>)}
+                </ul>
+              </section>
+            )}
 
             {portals.length > 0 && (
               <section>
@@ -553,7 +557,7 @@ function MobileTabBar({ isVip, isBoss }: { isVip: boolean; isBoss: boolean }) {
     { to: "/", label: "Home", icon: Home, matches: ["/"] },
     {
       to: "/portals",
-      label: "Hubs",
+      label: "Portals",
       icon: Rocket,
       matches: ["/portals", "/p", "/hub", "/music", "/jokes", "/tools", "/trade", "/connect", "/battle", "/syndicate", "/letterhub", "/appealhub"],
     },

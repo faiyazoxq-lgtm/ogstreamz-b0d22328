@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Copy, ExternalLink, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, Search, Crown, QrCode, Share2, Globe, Download, X } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
+import { requireMember } from "@/lib/route-guards";
 
 type PortalRow = {
   id: string;
@@ -48,6 +49,7 @@ const PORTAL_TO: Record<string, Item["to"]> = {
 };
 
 export const Route = createFileRoute("/portals")({
+  beforeLoad: requireMember,
   head: () => ({
     meta: [
       { title: "All Portals — 0G Share Hub" },
