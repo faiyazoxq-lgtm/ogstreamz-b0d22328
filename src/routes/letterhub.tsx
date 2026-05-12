@@ -100,18 +100,6 @@ function LetterHubPage() {
   const [touched, setTouched] = useState<Record<number, boolean>>({});
   const [previewMode, setPreviewMode] = useState<"preview" | "edit" | "split">("preview");
 
-  const saveNow = useCallback(() => {
-    if (!autosaveKey || typeof window === "undefined") return;
-    try {
-      const payload = { form, questions, answers, letter, step, savedAt: Date.now() };
-      window.localStorage.setItem(autosaveKey, JSON.stringify(payload));
-      setLastSavedAt(payload.savedAt);
-      toast.success("Draft saved locally");
-    } catch {
-      toast.error("Could not save draft locally");
-    }
-  }, [autosaveKey, form, questions, answers, letter, step]);
-
   // When reopening a saved letter, the local autosaved draft for that slot
   // may differ from what's in the database. Prompt the user to choose.
   type LocalDraft = {
@@ -137,6 +125,18 @@ function LetterHubPage() {
   const autosaveKey = user ? `letterhub:draft:${user.id}:${historyId ?? "new"}` : null;
   const [restoredKey, setRestoredKey] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+
+  const saveNow = useCallback(() => {
+    if (!autosaveKey || typeof window === "undefined") return;
+    try {
+      const payload = { form, questions, answers, letter, step, savedAt: Date.now() };
+      window.localStorage.setItem(autosaveKey, JSON.stringify(payload));
+      setLastSavedAt(payload.savedAt);
+      toast.success("Draft saved locally");
+    } catch {
+      toast.error("Could not save draft locally");
+    }
+  }, [autosaveKey, form, questions, answers, letter, step]);
 
   // On first mount per user, rehydrate the last-active historyId so the
   // autosave key resolves to the right draft slot.
