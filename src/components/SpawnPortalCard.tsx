@@ -32,7 +32,10 @@ const COPY: Record<Kind, Copy> = {
 };
 
 export function SpawnPortalCard({ kind }: { kind: Kind }) {
-  const { user, profile, refresh } = useAuth();
+  const { user, profile, isAdmin, refresh } = useAuth();
+  // Portal generation is currently boss/admin-only. Members and VIPs can
+  // browse portals freely but the "Spawn" panel is shown in a locked state.
+  const isBoss = isAdmin || profile?.rank === "boss";
   const spawn = useServerFn(spawnPortal);
   const describe = useServerFn(describePortal);
   const copy = COPY[kind];
@@ -316,6 +319,38 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
             >
               <LogIn className="h-3.5 w-3.5" />
               Sign in
+            </Link>
+          </div>
+        </div>
+      ) : !isBoss ? (
+        <div className="relative rounded-xl border border-[oklch(0.72_0.22_245/0.45)] bg-gradient-to-br from-[oklch(0.72_0.22_245/0.12)] via-background/60 to-amber-300/5 p-5 sm:p-6 overflow-hidden">
+          <div className="pointer-events-none absolute -top-16 -right-12 h-40 w-40 rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245/0.45),transparent)]" />
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 shrink-0 rounded-lg bg-[oklch(0.72_0.22_245/0.18)] border border-[oklch(0.72_0.22_245/0.55)] flex items-center justify-center">
+              <Lock className="h-5 w-5" style={{ color: "var(--neon-blue-bright, #6cb6ff)" }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] uppercase tracking-[0.3em] font-bold" style={{ color: "var(--neon-blue-bright, #6cb6ff)" }}>
+                Generation paused
+              </p>
+              <h3 className="mt-1 font-[Montserrat] font-black text-lg text-foreground">
+                Portal spawning is Boss-only right now
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                You can browse and use every portal already live. New portal
+                generation is reserved for the Boss while we tune the AI cost
+                model — check back soon.
+              </p>
+            </div>
+          </div>
+          <div className="mt-5 flex flex-wrap gap-2.5">
+            <Link
+              to="/portals"
+              className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.72_0.22_245)] hover:bg-[oklch(0.78_0.22_245)] text-black px-5 py-2.5 text-[11px] uppercase tracking-[0.25em] font-bold transition-colors"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Browse live portals
+              <ExternalLink className="h-3.5 w-3.5" />
             </Link>
           </div>
         </div>
