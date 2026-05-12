@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { HubsStrip } from "@/components/HubsStrip";
 
 export const Route = createFileRoute("/battle")({
   head: () => ({
@@ -53,7 +54,9 @@ function BattlePage() {
   useEffect(() => { refresh(); }, []);
 
   return (
-    <main className="max-w-6xl mx-auto px-5 sm:px-8 py-12">
+    <>
+      <HubsStrip className="pt-6" />
+      <main className="max-w-6xl mx-auto px-5 sm:px-8 py-12">
       <header className="mb-10">
         <p className="text-xs uppercase tracking-[0.4em] font-semibold" style={{ color: "var(--syndicate-glow)" }}>
           <Swords className="inline h-3.5 w-3.5 mr-2 neon-icon" />BattleHUB
@@ -82,7 +85,8 @@ function BattlePage() {
           </div>
         )}
       </section>
-    </main>
+      </main>
+    </>
   );
 }
 
