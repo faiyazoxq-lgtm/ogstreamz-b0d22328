@@ -7,7 +7,7 @@ import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
 import { ZeroGBadge } from "@/components/ZeroGBadge";
 
-import { requireMember } from "@/lib/route-guards";
+import { requireBoss } from "@/lib/route-guards";
 type TradePortal = {
   id: string; slug: string; name: string; niche: string; vip: boolean;
   theme_config: any;
@@ -17,7 +17,7 @@ type Tone = "clean" | "brutal" | "auto";
 const TONES: Tone[] = ["clean", "brutal", "auto"];
 
 export const Route = createFileRoute("/trade")({
-  beforeLoad: requireMember,
+  beforeLoad: requireBoss,
   validateSearch: (search: Record<string, unknown>): { tone: Tone } => {
     const raw = typeof search.tone === "string" ? search.tone.toLowerCase() : "";
     return { tone: (TONES as string[]).includes(raw) ? (raw as Tone) : "auto" };
