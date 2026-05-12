@@ -210,7 +210,7 @@ function ProfilePage() {
 
         {/* Status tag slot — sits directly under the name; reserved height keeps layout stable */}
         {!verifiedBoss && (
-          <section className="-mt-5 sm:-mt-6 mb-8 flex justify-center items-center min-h-[28px] sm:min-h-[30px] leading-none">
+          <section className="-mt-5 sm:-mt-6 mb-8 mx-auto max-w-[36ch] flex justify-center items-center min-h-[28px] sm:min-h-[30px] leading-none text-center">
             {isVip && !isBoss ? (
               <RealOgBadge variant="badge" size="lg" />
             ) : (
