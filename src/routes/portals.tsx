@@ -257,7 +257,7 @@ function PortalsHub() {
 
   return (
     <main className="max-w-7xl mx-auto px-5 sm:px-8 py-10 sm:py-14 pb-24 md:pb-14">
-      <header className="mb-8">
+      <header className="mb-12 sm:mb-16">
         <p className="text-xs tracking-[0.4em] uppercase font-semibold" style={{ color: "var(--mood-accent, #ffd166)" }}>
           0G · Share Hub
         </p>
@@ -273,7 +273,7 @@ function PortalsHub() {
       </header>
 
       {/* Controls */}
-      <div className="mb-6 grid gap-3 sm:flex sm:items-center sm:justify-between">
+      <div className="mb-8 grid gap-3 sm:flex sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-1.5">
           {((isBoss
               ? (["all","music","joke","trade","news","form","battle","tool"] as const)
@@ -300,6 +300,27 @@ function PortalsHub() {
           })}
         </div>
         <div className="flex items-center gap-2">
+          {/* Scope toggle: All / Boss-published / Yours */}
+          <div className="inline-flex items-center rounded-md border border-border bg-card p-0.5 text-[10px] uppercase tracking-[0.18em] font-bold">
+            {(["all","boss","mine"] as const).map((s) => {
+              const active = scope === s;
+              const label = s === "all" ? "All" : s === "boss" ? "Boss" : "Mine";
+              return (
+                <button
+                  key={s}
+                  onClick={() => setScope(s)}
+                  aria-pressed={active}
+                  className="px-2.5 py-1.5 rounded transition"
+                  style={{
+                    background: active ? "rgba(255,255,255,0.08)" : "transparent",
+                    color: active ? "var(--mood-accent,#ffd166)" : "rgba(255,255,255,0.65)",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <input
