@@ -120,7 +120,6 @@ export function TrackingPupil({
         borderRadius: "50% 50% 55% 55% / 42% 42% 58% 58%",
         boxShadow:
           "0 0 0.35em 0.05em rgba(255,80,40,0.9), 0 0 0.9em 0.15em rgba(255,30,0,0.7), 0 0 1.6em 0.3em rgba(255,0,0,0.45), inset 0 0 0.25em rgba(255,255,255,0.45)",
-        transition: "transform 120ms ease-out",
         willChange: "transform",
         ...style,
       }}
