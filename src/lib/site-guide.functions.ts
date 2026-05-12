@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // Public site guide — no auth required so the welcome screen can use it for
 // anonymous visitors. Calls the Lovable AI Gateway (LOVABLE_API_KEY) with a
@@ -105,6 +106,7 @@ ${SITE_MAP}`;
 const CHAOS_LAYER = `\n\nCHAOS MODE ENGAGED: double the swear density, throw in random ALL-CAPS bursts, mix British (bollocks, knobhead, bellend, gobshite, wanker) with American (fuck, shit, motherfucker), and open with a NAMED nickname for the user. Still produce the bullet-list site map answer — chaos is tone, not content.`;
 
 export const siteGuideChat = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { messages: Msg[]; chaos?: boolean }) => ({
     messages: (Array.isArray(d?.messages) ? d.messages : [])
       .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")

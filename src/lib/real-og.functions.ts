@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
+import { validateReturnUrl } from "@/lib/return-url";
 
 /**
  * One-off £20 Real OG Pass — auto-issues lifetime VIP on payment.
@@ -9,7 +10,7 @@ import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
 export const createRealOgCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { returnUrl: string; environment: StripeEnv; customerEmail?: string }) => ({
-    returnUrl: String(d.returnUrl || "").slice(0, 500),
+    returnUrl: validateReturnUrl(d.returnUrl),
     environment: d.environment,
     customerEmail: d.customerEmail,
   }))

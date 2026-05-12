@@ -84,6 +84,9 @@ export const createTrack = createServerFn({ method: "POST" })
 export const listPortalTracks = createServerFn({ method: "POST" })
   .inputValidator((d: { portal_slug: string }) => ({ portal_slug: String(d.portal_slug || "").trim().slice(0, 80) }))
   .handler(async ({ data }) => {
+    // Intentionally unauthenticated: anonymous visitors of /m/:slug must be
+    // able to sample preview audio before signing up. Signed URLs are
+    // short-lived and only point to preview clips (not full tracks).
     const { createClient } = await import("@supabase/supabase-js");
     const admin = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
     const { data: tracks, error } = await admin
@@ -97,7 +100,8 @@ export const listPortalTracks = createServerFn({ method: "POST" })
     const items = await Promise.all((tracks ?? []).map(async (t: any) => {
       let preview_url: string | null = null;
       if (t.preview_path) {
-        const { data: signed } = await admin.storage.from("tracks").createSignedUrl(t.preview_path, 60 * 60);
+        // Tight TTL (5 min) to limit enumeration-replay risk.
+        const { data: signed } = await admin.storage.from("tracks").createSignedUrl(t.preview_path, 5 * 60);
         preview_url = signed?.signedUrl ?? null;
       }
       return { id: t.id, title: t.title, price_cents: t.price_cents, currency: t.currency, preview_url };
