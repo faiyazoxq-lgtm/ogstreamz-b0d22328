@@ -582,15 +582,15 @@ function PortalsHub() {
                       pill heights keep the row visually aligned across all
                       cards regardless of which badges are present. */}
                   <div className="flex flex-wrap justify-end items-center gap-1 shrink-0 max-w-[60%]">
-                    {i.byBoss ? (
+                    {i.byBoss && badgePrefs.boss ? (
                       <span className="inline-flex items-center h-5 px-2 rounded-full text-[10px] leading-none uppercase tracking-widest font-bold bg-[oklch(0.72_0.22_245/0.15)] border border-[oklch(0.72_0.22_245/0.5)] text-[oklch(0.78_0.18_245)]">
                         Boss
                       </span>
-                    ) : (
+                    ) : !i.byBoss && badgePrefs.mine ? (
                       <span className="inline-flex items-center h-5 px-2 rounded-full text-[10px] leading-none uppercase tracking-widest font-bold bg-white/5 border border-white/20 text-white/80">
                         Mine
                       </span>
-                    )}
+                    ) : null}
                     {i.vip && (
                       <span className="inline-flex items-center gap-1 h-5 px-2 rounded-full text-[10px] leading-none uppercase tracking-widest font-bold bg-gold/15 border border-gold/50 text-gold">
                         <Crown className="h-3 w-3" /> VIP
