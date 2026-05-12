@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Lock, Loader2, Radio, BadgeCheck, Send, Crown, Satellite, RefreshCw, ExternalLink, Gauge, TrendingUp, TrendingDown, Activity, Calculator, Sparkles, Mail, Copy, Share2, X } from "lucide-react";
 import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
@@ -8,6 +8,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { createPortalUnlockCheckout, getPortalUnlockStatus } from "@/lib/portals.functions";
+import { chargePortalUse } from "@/lib/portal-use.functions";
 import { refreshNewsScout, type NewsScoutMeta, type NewsArticle } from "@/lib/news.functions";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
@@ -51,6 +52,7 @@ type Portal = {
   theme_config: ThemeConfig;
   kind: string;
   scout_meta: { sources?: string[]; headlines?: string[] };
+  use_credit_cost?: number;
   telegram_config: {
     groupLink?: string | null;
     vipLink?: string | null;
@@ -66,7 +68,7 @@ export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals")
-      .select("id, slug, name, niche, language, vibe, theme, jokes, music_hooks, trade_briefs, connect_openers, tool_ideas, vip, price_cents, theme_config, scout_meta, telegram_config, kind, audio_snippet_url, bg_video_url, bg_video_aspect, swear_chat_enabled")
+      .select("id, slug, name, niche, language, vibe, theme, jokes, music_hooks, trade_briefs, connect_openers, tool_ideas, vip, price_cents, theme_config, scout_meta, telegram_config, kind, audio_snippet_url, bg_video_url, bg_video_aspect, swear_chat_enabled, use_credit_cost")
       .eq("slug", params.slug)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -187,11 +189,14 @@ function PortalPage() {
   const vipLink = tg.vipLink || null;
   const checkoutFn = useServerFn(createPortalUnlockCheckout);
   const statusFn = useServerFn(getPortalUnlockStatus);
+  const chargeUseFn = useServerFn(chargePortalUse);
+  const navigate = useNavigate();
 
   const [idx, setIdx] = useState(0);
   const [hits, setHits] = useState(0);
   const [owned, setOwned] = useState<boolean>(!portal.vip);
   const [unlocking, setUnlocking] = useState(false);
+  const [charging, setCharging] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [sharedIdea, setSharedIdea] = useState<string | null>(null);
   const controls = useAnimationControls();
@@ -245,9 +250,38 @@ function PortalPage() {
     }
   };
 
+  const useCost = Math.max(0, Math.floor(Number(portal.use_credit_cost) || 0));
+
   const hit = async (e?: React.MouseEvent) => {
     if (!owned) {
       startUnlock();
+      return;
+    }
+    // Charge per-action coin cost if configured. Anonymous users are sent to
+    // sign in; insufficient balance redirects to the credits top-up page.
+    if (useCost > 0) {
+      if (!user) { toast.error("Sign in to use this portal"); return; }
+      if (charging) return;
+      const captured = e ? { x: e.clientX, y: e.clientY } : null;
+      setCharging(true);
+      try {
+        const r = await chargeUseFn({ data: { slug: portal.slug } });
+        if (!r.ok) {
+          if (r.error === "insufficient") {
+            toast.error(`Need ${useCost} 🪙 to use this portal — top up to continue`);
+            navigate({ to: "/wallet" });
+          } else {
+            toast.error(r.error || "Could not charge credits");
+          }
+          return;
+        }
+        setIdx((i) => (i + 1) % jokes.length);
+        setHits((h) => h + 1);
+        controls.start(HIT_ANIMS[T.animation] ?? HIT_ANIMS.pulse);
+        if (captured) spawnParticles(captured);
+      } finally {
+        setCharging(false);
+      }
       return;
     }
     setIdx((i) => (i + 1) % jokes.length);
@@ -366,7 +400,7 @@ function PortalPage() {
         <motion.div whileTap={{ scale: 0.95 }} ref={hitContainerRef} className="mt-10 w-full max-w-md relative">
           <Button
             onClick={hit}
-            disabled={unlocking}
+            disabled={unlocking || charging}
             className="h-20 w-full text-2xl uppercase tracking-[0.4em] font-black border-4 rounded-2xl"
             style={{
               background: `linear-gradient(135deg, ${T.accent}, ${T.secondary})`,
@@ -376,10 +410,20 @@ function PortalPage() {
               boxShadow: `0 0 80px ${T.accent}99, inset 0 0 30px rgba(255,255,255,0.25)`,
             }}
           >
-            {unlocking ? <><Loader2 className="h-6 w-6 mr-2 animate-spin" />…</> : (!owned && portal.vip ? `UNLOCK · £${(portal.price_cents/100).toFixed(2)} (${Math.round(portal.price_cents/100)} 🪙)` : T.hitButton)}
+            {unlocking || charging ? (
+              <><Loader2 className="h-6 w-6 mr-2 animate-spin" />…</>
+            ) : !owned && portal.vip ? (
+              `UNLOCK · £${(portal.price_cents/100).toFixed(2)} (${Math.round(portal.price_cents/100)} 🪙)`
+            ) : useCost > 0 ? (
+              `${T.hitButton} · ${useCost} 🪙`
+            ) : (
+              T.hitButton
+            )}
           </Button>
           <p className="mt-3 text-center text-[10px] uppercase tracking-[0.3em] opacity-60">
-            {owned ? `${hits} hits · ${idx + 1}/${jokes.length}` : "Tap to unlock"}
+            {owned
+              ? `${hits} hits · ${idx + 1}/${jokes.length}${useCost > 0 ? ` · ${useCost} 🪙 each` : ""}`
+              : "Tap to unlock"}
           </p>
         </motion.div>
 
