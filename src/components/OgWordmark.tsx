@@ -54,7 +54,7 @@ export function OgWordmark({
   const IRIS_W_PCT = 20;
   const IRIS_H_PCT = 34;
 
-  const irisRef = useRef<HTMLSpanElement>(null);
+  const irisRef = useRef<HTMLElement>(null);
   const [ownsLightning, setOwnsLightning] = useState(false);
 
   useEffect(() => {
