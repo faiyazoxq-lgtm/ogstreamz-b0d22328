@@ -68,49 +68,37 @@ function BattleHubPage() {
     const visitorId = getVisitorId();
 
     async function loadCounts() {
-      const { data, error } = await supabase
-        .from("battlehub_votes")
-        .select("side")
-        .eq("round_key", roundKey);
+      const { data, error } = await supabase.rpc("get_battlehub_vote_counts", {
+        _round_key: roundKey,
+      });
       if (cancelled || error || !data) return;
       const next = { gold: 0, shadow: 0 };
-      for (const row of data as { side: Side }[]) {
-        if (row.side === "gold" || row.side === "shadow") next[row.side]++;
+      for (const row of data as { side: Side; votes: number }[]) {
+        if (row.side === "gold" || row.side === "shadow") {
+          next[row.side] = Number(row.votes) || 0;
+        }
       }
       setVotes(next);
       // Restore "already voted" state across reloads
-      const { data: mine } = await supabase
-        .from("battlehub_votes")
-        .select("side")
-        .eq("round_key", roundKey)
-        .eq("visitor_id", visitorId)
-        .maybeSingle();
-      if (!cancelled && mine?.side) setPick(mine.side as Side);
+      const { data: mineSide } = await supabase.rpc("get_my_battlehub_vote", {
+        _round_key: roundKey,
+        _visitor_id: visitorId,
+      });
+      if (!cancelled && (mineSide === "gold" || mineSide === "shadow")) {
+        setPick(mineSide as Side);
+      }
     }
     loadCounts();
 
-    const channel = supabase
-      .channel(`battlehub-${roundKey}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "battlehub_votes",
-          filter: `round_key=eq.${roundKey}`,
-        },
-        (payload) => {
-          const side = (payload.new as { side?: Side })?.side;
-          if (side === "gold" || side === "shadow") {
-            setVotes((v) => ({ ...v, [side]: v[side] + 1 }));
-          }
-        },
-      )
-      .subscribe();
+    // Poll counts periodically — the underlying table is no longer publicly
+    // readable (voter identifiers are PII), so realtime subscription on it
+    // would require leaking those rows. Polling keeps the counter live without
+    // exposing voter identities.
+    const pollId = window.setInterval(loadCounts, 4000);
 
     return () => {
       cancelled = true;
-      supabase.removeChannel(channel);
+      window.clearInterval(pollId);
     };
   }, [roundKey]);
 
