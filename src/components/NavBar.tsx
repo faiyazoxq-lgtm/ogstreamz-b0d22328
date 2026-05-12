@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { TVStaticLogo } from "@/components/TVStaticLogo";
 import { OgWordmark } from "@/components/OgWordmark";
 import {
   Tooltip,
@@ -269,7 +268,6 @@ export function NavBar() {
           className="brand-glow group min-w-0 flex-1 sm:flex-initial h-full -ml-1 sm:ml-0 pl-1.5 pr-3 sm:pl-2 sm:pr-4 py-1 min-h-12 sm:min-h-0 rounded-2xl outline-none transition-all border border-white/10 hover:border-gold/30 bg-white/[0.02] hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:shadow-[0_0_24px_-4px_var(--gold)] touch-manipulation flex items-center"
           style={{ gap: "clamp(0.4rem, 0.9vw + 0.2rem, 0.9rem)" }}
         >
-          <TVStaticLogo className="shrink-0 self-center" />
           <OgWordmark
             suffix="-PORTAL"
             className="brand-glow__mark inline-flex items-center self-center min-w-0 flex-shrink whitespace-nowrap text-eye-ice bg-transparent leading-[0.9] transition-[color,text-shadow,filter,letter-spacing] duration-300 ease-out tracking-[-0.005em] sm:tracking-[-0.018em] md:tracking-[-0.028em] lg:tracking-[-0.034em] xl:tracking-[-0.04em]"
