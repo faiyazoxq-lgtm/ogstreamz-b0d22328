@@ -27,6 +27,7 @@ import { VipPromoBanner } from "../components/VipPromoBanner";
 import { SiteWallpaper } from "../components/SiteWallpaper";
 import { CloudflareAnalytics } from "../components/CloudflareAnalytics";
 import { DomainDenylistGuard } from "../components/DomainDenylistGuard";
+import { SiteFooter } from "../components/SiteFooter";
 
 function NotFoundComponent() {
   return (
@@ -154,6 +155,7 @@ function RootComponent() {
             <AuthGate>
               <Outlet />
             </AuthGate>
+            <SiteFooter />
             <TeleportOverlay />
             <EyeGlowTuner />
             <SystemGlitchOverlay />
