@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowUpRight, ShoppingBag, Sparkles } from "lucide-react";
+import { ArrowUpRight, Loader2, ShoppingBag, Sparkles, Sparkles as SparklesIcon, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PortalHeader } from "@/components/PortalHeader";
 import type { HubSection } from "@/lib/hub-sections";
@@ -9,7 +9,6 @@ import { useDownloadCharge } from "@/hooks/use-download-charge";
 import { peekPortalDownload } from "@/lib/portal-downloads.functions";
 import { cloneHubPortalForMe, type CloneResult } from "@/lib/portal-clone.functions";
 import { CoinPurchaseModal, type CoinPurchaseStatus } from "@/components/CoinPurchaseModal";
-import { Loader2, Sparkles as SparklesIcon, UserPlus } from "lucide-react";
 
 /**
  * Locked layout for boss-built custom hubs. Same typography, padding, and
