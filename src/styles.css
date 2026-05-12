@@ -324,16 +324,48 @@
   /* Brand wordmark hover/focus — subtle electric-gold halo that warms up
      the "0G-PORTAL" lockup on interaction without overpowering the eye. */
   .brand-glow .brand-glow__mark {
-    text-shadow: 0 0 0 transparent;
+    /* Premium display treatment: Montserrat Black with optical tracking,
+       a subtle silver→ice→silver vertical gradient for a brushed-metal
+       feel, and a tiny lift shadow so the lockup reads as a single
+       polished plate next to the eye logo. */
+    font-family: 'Montserrat', 'Inter', system-ui, sans-serif;
+    font-weight: 900;
+    font-stretch: 100%;
+    letter-spacing: -0.018em;
+    font-feature-settings: "ss01", "cv11", "kern";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: geometricPrecision;
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--eye-ice, #e8f4ff) 96%, white) 0%,
+      color-mix(in oklab, var(--eye-ice, #e8f4ff) 78%, white) 48%,
+      color-mix(in oklab, var(--eye-ice, #e8f4ff) 60%, var(--foreground)) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+    transition:
+      filter 320ms ease-out,
+      letter-spacing 320ms ease-out,
+      background 320ms ease-out;
   }
   .brand-glow:hover .brand-glow__mark,
   .brand-glow:focus-visible .brand-glow__mark {
-    color: var(--electric-gold-100);
-    text-shadow:
-      0 0 6px color-mix(in oklab, var(--electric-gold-glow) 55%, transparent),
-      0 0 18px color-mix(in oklab, var(--electric-gold-500) 45%, transparent),
-      0 0 32px color-mix(in oklab, var(--electric-gold-700) 30%, transparent);
-    filter: drop-shadow(0 0 10px color-mix(in oklab, var(--electric-gold-glow) 35%, transparent));
+    /* Warm the metallic plate to electric gold on interaction. */
+    background: linear-gradient(
+      180deg,
+      var(--electric-gold-100, #fff4cc) 0%,
+      var(--electric-gold-500, #f5c542) 55%,
+      var(--electric-gold-700, #b8860b) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    letter-spacing: -0.012em;
+    filter:
+      drop-shadow(0 0 10px color-mix(in oklab, var(--electric-gold-glow) 45%, transparent))
+      drop-shadow(0 1px 0 rgba(0, 0, 0, 0.45));
   }
   /* Keyboard focus on the entire brand lockup wrapper — paints a thick
      gold ring + soft outer halo around the icon AND wordmark together so
