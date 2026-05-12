@@ -60,10 +60,33 @@ export function CoinPurchaseModal({
     typeof balance === "number" && balance < total ? balance : null;
   const pending = status.kind === "pending";
   const done = status.kind === "ok";
+  const projected =
+    typeof balance === "number" && !done ? Math.max(0, balance - total) : null;
+  // Confirm button is the focus target on open. Radix Dialog already traps
+  // focus inside DialogContent and restores it on close — we just steer
+  // initial focus toward the primary action so keyboard users land on it.
+  const confirmRef = React.useRef<HTMLButtonElement | null>(null);
+  React.useEffect(() => {
+    if (open && !done && !pending) {
+      // Defer until after Radix mounts content so autoFocus inside
+      // DialogContent has settled.
+      const t = setTimeout(() => confirmRef.current?.focus(), 30);
+      return () => clearTimeout(t);
+    }
+  }, [open, done, pending]);
 
   return (
     <Dialog open={open} onOpenChange={(v) => (!pending ? onOpenChange(v) : null)}>
-      <DialogContent className="max-w-sm border-2" style={{ borderColor: `${accent}66` }}>
+      <DialogContent
+        className="max-w-sm border-2 sm:max-w-sm w-[min(100vw-1.5rem,24rem)]"
+        style={{ borderColor: `${accent}66` }}
+        onOpenAutoFocus={(e) => {
+          // Hand initial focus to the confirm button (or the close button
+          // when the receipt is already showing).
+          e.preventDefault();
+          confirmRef.current?.focus();
+        }}
+      >
         <DialogHeader>
           <div
             className="mx-auto mb-2 inline-flex h-12 w-12 items-center justify-center rounded-full"
@@ -79,20 +102,60 @@ export function CoinPurchaseModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="rounded-xl border bg-black/30 px-4 py-3 text-sm" style={{ borderColor: `${accent}33` }}>
-          <Row label="Item" value={itemName} mono={false} />
-          {quantity > 1 && <Row label="Quantity" value={`× ${quantity}`} />}
-          <Row label="Unit cost" value={`${cost.toLocaleString()} 🪙`} />
-          <div className="my-2 h-px bg-white/10" />
-          <Row label="Total" value={`${total.toLocaleString()} 🪙`} bold />
-          {typeof balance === "number" && (
-            <Row
-              label="Your balance"
-              value={`${balance.toLocaleString()} 🪙`}
-              tone={insufficient !== null ? "warn" : "muted"}
-            />
+        <section
+          aria-label="Cost breakdown"
+          className="rounded-xl border bg-black/30 px-3 py-2.5 text-[13px] leading-tight"
+          style={{ borderColor: `${accent}33` }}
+        >
+          <Row label="Item" value={itemName} mono={false} truncate />
+          {quantity > 1 && (
+            <Row label="Qty" value={`× ${quantity}`} />
           )}
-        </div>
+          <Row label="Unit" value={`${cost.toLocaleString()} 🪙`} />
+
+          <div className="my-1.5 h-px bg-white/10" />
+
+          {/* Total row — visually emphasised, large hit target row */}
+          <div className="flex items-baseline justify-between gap-2 py-0.5">
+            <span className="text-[10px] uppercase tracking-[0.25em] font-bold text-muted-foreground">
+              Total
+            </span>
+            <span
+              className="tabular-nums font-black text-base"
+              style={{ color: accent }}
+            >
+              {total.toLocaleString()} 🪙
+            </span>
+          </div>
+
+          {typeof balance === "number" && (
+            <div className="mt-1 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 pt-1.5 border-t border-white/5">
+              <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                Balance
+              </span>
+              <span className="flex items-baseline gap-1.5 tabular-nums">
+                <span className={insufficient !== null ? "text-amber-300 font-bold" : "text-foreground/80"}>
+                  {balance.toLocaleString()} 🪙
+                </span>
+                {projected !== null && insufficient === null && (
+                  <span className="text-[10px] text-muted-foreground">
+                    → <span className="tabular-nums font-bold text-foreground/90">{projected.toLocaleString()} 🪙</span> after
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
+        </section>
+
+        {/* Live region for screen readers — announces status changes */}
+        <p className="sr-only" aria-live="polite" aria-atomic="true">
+          {pending ? "Charging your coins, please wait."
+            : done ? `Purchase confirmed. ${status.message}`
+            : status.kind === "err" ? `Purchase failed: ${status.message}`
+            : insufficient !== null
+              ? `Insufficient balance. You need ${(total - insufficient).toLocaleString()} more coins.`
+              : `Total ${total.toLocaleString()} coins.`}
+        </p>
 
         {status.kind === "err" && (
           <p className="flex items-center gap-2 rounded-lg bg-rose-500/10 border border-rose-500/30 px-3 py-2 text-xs text-rose-200">
@@ -154,6 +217,7 @@ export function CoinPurchaseModal({
               </Button>
               <Button
                 type="button"
+                ref={confirmRef}
                 onClick={onConfirm}
                 disabled={pending || insufficient !== null}
                 aria-busy={pending}
