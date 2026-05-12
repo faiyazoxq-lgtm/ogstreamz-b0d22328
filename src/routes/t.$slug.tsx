@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import type { ToolConfig } from "@/lib/tools.functions";
+import { OgWordmark } from "@/components/OgWordmark";
 
 type ToolRow = { id: string; slug: string; name: string; description: string | null; vip: boolean; config: ToolConfig };
 
@@ -102,7 +103,7 @@ function ToolPage() {
         )}
 
         <footer className="mt-16 pt-8 border-t border-white/10 text-center text-xs uppercase tracking-[0.4em] text-white/40">
-          <BadgeCheck className="inline h-3 w-3 mr-2" />Syndicate Member · Powered by 0G-PORTAL
+          <BadgeCheck className="inline h-3 w-3 mr-2" />Syndicate Member · Powered by <OgWordmark suffix="-PORTAL" />
         </footer>
       </div>
     </main>
