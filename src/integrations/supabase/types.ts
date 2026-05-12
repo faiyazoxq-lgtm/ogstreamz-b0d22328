@@ -4142,6 +4142,7 @@ export type Database = {
           by_boss: boolean
           created_at: string
           id: string
+          kind: string
           name: string
           paid: boolean
           slug: string
