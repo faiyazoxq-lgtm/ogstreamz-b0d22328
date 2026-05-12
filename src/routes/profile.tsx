@@ -154,7 +154,8 @@ function ProfilePage() {
                   }}
                   maxLength={40}
                   placeholder="Your name"
-                  className="h-11 max-w-[320px] text-center text-2xl sm:text-3xl font-semibold"
+                  className="h-11 max-w-[320px] text-center font-semibold"
+                  style={{ fontSize: "clamp(1.25rem, 1rem + 1.2vw, 1.875rem)", letterSpacing: "0.005em" }}
                   disabled={savingName}
                 />
                 <button
