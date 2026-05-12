@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Lock, Loader2, Radio, BadgeCheck, Send, Crown, Satellite, RefreshCw, ExternalLink, Gauge, TrendingUp, TrendingDown, Activity, Calculator, Sparkles, Mail, Copy, Share2, X } from "lucide-react";
 import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
@@ -398,28 +399,57 @@ function PortalPage() {
 
         {/* HIT ME button */}
         <motion.div whileTap={{ scale: 0.95 }} ref={hitContainerRef} className="mt-10 w-full max-w-md relative">
-          <Button
-            onClick={hit}
-            disabled={unlocking || charging}
-            className="h-20 w-full text-2xl uppercase tracking-[0.4em] font-black border-4 rounded-2xl"
-            style={{
-              background: `linear-gradient(135deg, ${T.accent}, ${T.secondary})`,
-              color: "#000",
-              borderColor: T.accent,
-              fontFamily: T.fontFamily,
-              boxShadow: `0 0 80px ${T.accent}99, inset 0 0 30px rgba(255,255,255,0.25)`,
-            }}
-          >
-            {unlocking || charging ? (
-              <><Loader2 className="h-6 w-6 mr-2 animate-spin" />…</>
-            ) : !owned && portal.vip ? (
-              `UNLOCK · £${(portal.price_cents/100).toFixed(2)} (${Math.round(portal.price_cents/100)} 🪙)`
-            ) : useCost > 0 ? (
-              `${T.hitButton} · ${useCost} 🪙`
-            ) : (
-              T.hitButton
-            )}
-          </Button>
+          {owned && useCost > 0 && (
+            <div
+              className="absolute -top-3 right-3 z-10 inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.25em] font-bold backdrop-blur-sm"
+              style={{
+                borderColor: `${T.accent}99`,
+                background: `color-mix(in oklab, ${T.accent} 18%, #000)`,
+                color: "#fff",
+                boxShadow: `0 0 18px ${T.accent}66`,
+              }}
+              aria-label={`Each tap costs ${useCost} coins`}
+            >
+              <span aria-hidden>🪙</span>
+              <span className="tabular-nums">{useCost}</span>
+              <span className="opacity-70">/ tap</span>
+            </div>
+          )}
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={hit}
+                  disabled={unlocking || charging}
+                  className="h-20 w-full text-2xl uppercase tracking-[0.4em] font-black border-4 rounded-2xl"
+                  style={{
+                    background: `linear-gradient(135deg, ${T.accent}, ${T.secondary})`,
+                    color: "#000",
+                    borderColor: T.accent,
+                    fontFamily: T.fontFamily,
+                    boxShadow: `0 0 80px ${T.accent}99, inset 0 0 30px rgba(255,255,255,0.25)`,
+                  }}
+                >
+                  {unlocking || charging ? (
+                    <><Loader2 className="h-6 w-6 mr-2 animate-spin" />…</>
+                  ) : !owned && portal.vip ? (
+                    `UNLOCK · £${(portal.price_cents/100).toFixed(2)} (${Math.round(portal.price_cents/100)} 🪙)`
+                  ) : useCost > 0 ? (
+                    `${T.hitButton} · ${useCost} 🪙`
+                  ) : (
+                    T.hitButton
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={10}>
+                {!owned && portal.vip
+                  ? `One-time unlock: ${Math.round(portal.price_cents/100)} 🪙`
+                  : useCost > 0
+                    ? `Costs ${useCost} 🪙 per tap — deducted from your wallet`
+                    : "Free to use"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <p className="mt-3 text-center text-[10px] uppercase tracking-[0.3em] opacity-60">
             {owned
               ? `${hits} hits · ${idx + 1}/${jokes.length}${useCost > 0 ? ` · ${useCost} 🪙 each` : ""}`
