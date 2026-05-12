@@ -21,6 +21,7 @@ import {
 } from "@/lib/letter.functions";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
+import { Document, Packer, Paragraph, TextRun, AlignmentType } from "docx";
 import { requireMember } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/letterhub")({
@@ -290,6 +291,63 @@ function LetterHubPage() {
     );
     const safe = (form.subject || form.issue || "letter").replace(/[^a-z0-9]+/gi, "-");
     doc.save(`letter-${safe.toLowerCase()}.pdf`);
+  };
+
+  const downloadDocx = async () => {
+    if (!letter) return;
+    try {
+      const paragraphs = letter.split(/\n/).map(
+        (line) =>
+          new Paragraph({
+            alignment: AlignmentType.LEFT,
+            spacing: { after: 120 },
+            children: [new TextRun({ text: line, font: "Times New Roman", size: 22 })],
+          }),
+      );
+      paragraphs.push(
+        new Paragraph({
+          spacing: { before: 480 },
+          children: [
+            new TextRun({
+              text: "Drafted via LetterHUB · 0G-STREAMZ. Review carefully before sending.",
+              italics: true,
+              size: 16,
+              color: "808080",
+              font: "Times New Roman",
+            }),
+          ],
+        }),
+      );
+      const docx = new Document({
+        creator: "LetterHUB",
+        title: form.subject || form.issue || "Letter",
+        styles: {
+          default: { document: { run: { font: "Times New Roman", size: 22 } } },
+        },
+        sections: [
+          {
+            properties: {
+              page: {
+                margin: { top: 1440, bottom: 1440, left: 1440, right: 1440 },
+              },
+            },
+            children: paragraphs,
+          },
+        ],
+      });
+      const blob = await Packer.toBlob(docx);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const safe = (form.subject || form.issue || "letter").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+      a.href = url;
+      a.download = `letter-${safe}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      toast.error(e?.message || "Could not build DOCX");
+    }
   };
 
   const Pill = ({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) => (
@@ -643,6 +701,9 @@ function LetterHubPage() {
                     </Button>
                     <Button onClick={downloadPdf} className="btn-glass-blue uppercase tracking-[0.2em] font-black">
                       <FileDown className="h-4 w-4 mr-2" /> Download PDF
+                    </Button>
+                    <Button onClick={downloadDocx} variant="outline" className="uppercase tracking-[0.2em] font-black">
+                      <FileDown className="h-4 w-4 mr-2" /> DOCX
                     </Button>
                   </div>
                 </div>
