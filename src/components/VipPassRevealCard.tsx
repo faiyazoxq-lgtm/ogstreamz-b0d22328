@@ -222,9 +222,20 @@ export function VipPassRevealCard() {
           /* clipboard blocked — silent */
         }
         if (copied) {
-          const preview = referralUrl.replace(/^https?:\/\//, "");
+          const stripped = referralUrl.replace(/^https?:\/\//, "");
+          const short =
+            stripped.length > 42
+              ? `${stripped.slice(0, 28)}…${stripped.slice(-10)}`
+              : stripped;
           toast.success("Copied!", {
-            description: preview,
+            description: (
+              <span
+                title={referralUrl}
+                className="block max-w-full truncate font-mono text-xs cursor-help"
+              >
+                {short}
+              </span>
+            ),
             action: {
               label: "Open",
               onClick: () => window.open(referralUrl, "_blank", "noopener,noreferrer"),
