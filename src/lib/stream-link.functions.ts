@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getRequestHost, getRequestHeader } from "@tanstack/react-start/server";
 import { randomBytes, createHash } from "crypto";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type StreamConfigStatus =
   | { ok: true; host: string }
@@ -354,8 +355,7 @@ export const getMyStreamM3uUrl = createServerFn({ method: "GET" })
     const ttlHours = 24;
     const expiresAt = new Date(Date.now() + ttlHours * 60 * 60 * 1000).toISOString();
 
-    const { error: insErr } = await supabase
-      .schema("public")
+    const { error: insErr } = await supabaseAdmin
       .from("stream_url_tokens" as never)
       .insert({ token_hash: tokenHash, user_id: userId, expires_at: expiresAt } as never);
     if (insErr) {
