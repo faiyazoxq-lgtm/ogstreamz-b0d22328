@@ -231,6 +231,9 @@ function BossContactsPage() {
   const savedMatchIdRef = useRef<Map<string, string>>(new Map());
   const prevQueryRef = useRef<string>("");
   const prevMatchIdRef = useRef<string | null>(null);
+  // Tracks the matchIndex value last announced by the restore effect, so we
+  // only announce when the restored value actually differs from before.
+  const lastAnnouncedIndexRef = useRef<number | null>(null);
   useEffect(() => {
     prevMatchIdRef.current =
       query.trim() && filtered.length > 0
@@ -248,6 +251,7 @@ function BossContactsPage() {
     prevQueryRef.current = query;
     if (!next) {
       setRestoreAnnouncement("");
+      lastAnnouncedIndexRef.current = null;
       setMatchIndex(0);
       return;
     }
@@ -259,13 +263,14 @@ function BossContactsPage() {
       if (idx >= 0) {
         setMatchIndex(idx);
         // Only announce when the restored position is meaningfully different
-        // from the default (first match). idx === 0 is indistinguishable from
-        // a fresh query, so skip the announcement to avoid noisy reads.
-        if (idx > 0) {
+        // from the default (first match) AND differs from the last announced
+        // index, so re-entering the same query at the same position stays quiet.
+        if (idx > 0 && lastAnnouncedIndexRef.current !== idx) {
           const c = filtered[idx];
           const msg = `Restored previous match ${idx + 1} of ${filtered.length} for “${query.trim()}”: ${c.label}${c.phone ? `, ${c.phone}` : ""}.`;
           setRestoreAnnouncement("");
           setTimeout(() => setRestoreAnnouncement(msg), 30);
+          lastAnnouncedIndexRef.current = idx;
         } else {
           setRestoreAnnouncement("");
         }
@@ -276,6 +281,7 @@ function BossContactsPage() {
     }
     // No restore happened — clear any stale announcement from a prior query.
     setRestoreAnnouncement("");
+    lastAnnouncedIndexRef.current = null;
     setMatchIndex(0);
   }, [query, filtered]);
   const activeMatchId =
