@@ -332,6 +332,10 @@ function PortalsHub() {
             const hubItems = filtered.filter((i) => i.kind === hubKind);
             if (hubItems.length === 0) return null;
             const hubMeta = KIND_META[hubKind];
+            const paginated = PAGINATED_KINDS.includes(hubKind);
+            const visible = paginated ? (visibleCounts[hubKind] ?? PAGE_SIZE) : hubItems.length;
+            const shown = paginated ? hubItems.slice(0, visible) : hubItems;
+            const remaining = hubItems.length - shown.length;
             return (
               <section key={hubKind} aria-labelledby={`hub-${hubKind}`}>
                 <header className="mb-3 flex items-center gap-2">
@@ -344,11 +348,13 @@ function PortalsHub() {
                     {hubMeta.hub}
                   </h2>
                   <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                    {hubItems.length} portal{hubItems.length === 1 ? "" : "s"}
+                    {paginated && remaining > 0
+                      ? `${shown.length} of ${hubItems.length} portals`
+                      : `${hubItems.length} portal${hubItems.length === 1 ? "" : "s"}`}
                   </span>
                 </header>
                 <div className="grid gap-2.5 sm:gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] items-stretch">
-                  {hubItems.map((i) => {
+                  {shown.map((i) => {
             const meta = KIND_META[i.kind];
             const href = buildHref(i);
             return (
