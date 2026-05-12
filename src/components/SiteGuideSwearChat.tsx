@@ -8,11 +8,44 @@ import { siteGuideChat } from "@/lib/site-guide.functions";
 type Msg = { role: "user" | "assistant"; content: string };
 
 const SUGGESTIONS = [
+  "My stream stopped working",
   "Where do I top up credits?",
+  "How do I renew my pass?",
+  "I forgot my password",
   "I want to make money fast",
-  "Show me everything music-related",
   "How do I become VIP?",
+  "Show me everything music-related",
+  "I'm lost — where do I start?",
 ];
+
+// Render markdown links to internal routes as TanStack <Link> so navigation
+// stays SPA (no full page reload). External / hash / mailto stay as <a>.
+function MarkdownLink({ href, children, ...rest }: any) {
+  const url = String(href ?? "");
+  const isInternal = url.startsWith("/") && !url.startsWith("//");
+  if (isInternal) {
+    return (
+      <Link
+        to={url as never}
+        className="underline decoration-dotted underline-offset-2 hover:text-white"
+        style={{ color: "#ffb3c1" }}
+      >
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="underline hover:text-white"
+      {...rest}
+    >
+      {children}
+    </a>
+  );
+}
 
 export function SiteGuideSwearChat() {
   const send = useServerFn(siteGuideChat);
@@ -113,7 +146,7 @@ export function SiteGuideSwearChat() {
           >
             {m.role === "assistant" ? (
               <div className="prose prose-sm prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-code:text-pink-300">
-                <ReactMarkdown>{m.content}</ReactMarkdown>
+                <ReactMarkdown components={{ a: MarkdownLink }}>{m.content}</ReactMarkdown>
               </div>
             ) : (
               m.content
