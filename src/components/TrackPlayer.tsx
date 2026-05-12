@@ -175,7 +175,7 @@ export function TrackPlayer({ trackId, title, previewUrl, priceCents, owned, isV
           <p className="text-xs uppercase tracking-[0.3em] mb-2 opacity-80">Preview Ended</p>
           <Button
             onClick={onUnlock}
-            className="h-12 w-full text-xs uppercase tracking-[0.3em] font-black border-2 mb-2"
+            className="portal-button-motion portal-button-motion--lg w-full text-xs uppercase tracking-[0.3em] font-black border-2 mb-2"
             style={{ background: accent, color: "#000", borderColor: accent, boxShadow: `0 0 40px ${accent}` }}
           >
             <Unlock className="h-4 w-4 mr-2" /> {buyLabel}
