@@ -324,6 +324,44 @@ export function StreamLinkCard() {
         Link your stream/IPTV username &amp; password. We auto-check it against the server, then submit it to <strong className="text-foreground">Boss</strong> for OGSTREAMZ approval.
       </p>
 
+      {(status || linked) && (() => {
+        // Canonical 4-state label: Active / Expired / Banned / Disabled
+        // (with a fallback "Pending" while Boss reviews unrecognised states).
+        type Canon = "active" | "expired" | "banned" | "disabled" | "pending";
+        const s = (status || "").toLowerCase();
+        const canon: Canon = expired
+          ? "expired"
+          : s === "active"
+            ? "active"
+            : s.includes("ban")
+              ? "banned"
+              : s.includes("disabled")
+                ? "disabled"
+                : s.includes("expired")
+                  ? "expired"
+                  : "pending";
+        const UI: Record<Canon, { label: string; tone: string; Icon: any }> = {
+          active:   { label: "Active",   tone: "border-emerald-500/50 bg-emerald-500/10 text-emerald-300", Icon: CheckCircle2 },
+          expired:  { label: "Expired",  tone: "border-destructive/60 bg-destructive/10 text-destructive", Icon: AlertTriangle },
+          banned:   { label: "Banned",   tone: "border-destructive/60 bg-destructive/10 text-destructive", Icon: XCircle },
+          disabled: { label: "Disabled", tone: "border-amber-400/50 bg-amber-400/10 text-amber-200",       Icon: XCircle },
+          pending:  { label: "Pending",  tone: "border-amber-400/40 bg-amber-400/10 text-amber-200",       Icon: CircleDashed },
+        };
+        const { label, tone, Icon } = UI[canon];
+        return (
+          <div
+            role="status"
+            aria-live="polite"
+            aria-label={`Stream profile status: ${label}`}
+            className={`mt-4 inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-bold uppercase tracking-[0.22em] ${tone}`}
+          >
+            <Icon className="h-3.5 w-3.5" aria-hidden />
+            <span className="opacity-80">Status:</span>
+            <span>{label}</span>
+          </div>
+        );
+      })()}
+
       {(linked || status || expiryLabel) && (() => {
         // Derive a single, clear "state" for the prominent banner.
         type State = "expired" | "critical" | "warning" | "active" | "pending" | "unknown";
