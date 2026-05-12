@@ -6,3 +6,4 @@ Real OGs are addressed with street OG respect: never sworn at, never patronised,
 
 ## Memories
 - [VIP tone & terminology](mem://preferences/vip-tone) — Synonyms for VIP and required respectful tone
+- [Security monitoring](mem://features/security-monitoring) — Auth event logging, new-device detection, role/rank/ban triggers, Boss `/boss/security-events` feed
