@@ -1,5 +1,8 @@
 import * as React from "react";
-import { Loader2, ShoppingBag, Coins, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import {
+  Loader2, ShoppingBag, Coins, CheckCircle2, AlertTriangle, ArrowUpRight,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +16,7 @@ import { Button } from "@/components/ui/button";
 export type CoinPurchaseStatus =
   | { kind: "idle" }
   | { kind: "pending" }
-  | { kind: "ok"; message: string }
+  | { kind: "ok"; message: string; balance?: number; receiptId?: string }
   | { kind: "err"; message: string };
 
 /**
@@ -34,6 +37,8 @@ export function CoinPurchaseModal({
   onConfirm,
   description,
   children,
+  unlockedHref,
+  unlockedLabel = "View unlocked portal",
 }: {
   open: boolean;
   onOpenChange: (next: boolean) => void;
@@ -46,6 +51,9 @@ export function CoinPurchaseModal({
   onConfirm: () => void;
   description?: string;
   children?: React.ReactNode;
+  /** Where the "View unlocked portal" button links after a successful charge. */
+  unlockedHref?: string;
+  unlockedLabel?: string;
 }) {
   const total = Math.max(0, Math.round(cost * quantity));
   const insufficient =
@@ -92,9 +100,14 @@ export function CoinPurchaseModal({
           </p>
         )}
         {status.kind === "ok" && (
-          <p className="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-3 py-2 text-xs text-emerald-200">
-            <CheckCircle2 className="h-3.5 w-3.5" /> {status.message}
-          </p>
+          <SuccessReceipt
+            itemName={itemName}
+            paid={total}
+            balance={status.balance ?? balance ?? null}
+            message={status.message}
+            accent={accent}
+            receiptId={status.receiptId}
+          />
         )}
         {insufficient !== null && status.kind !== "err" && (
           <p className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/30 px-3 py-2 text-xs text-amber-200">
@@ -106,14 +119,28 @@ export function CoinPurchaseModal({
 
         <DialogFooter className="gap-2 sm:gap-2">
           {done ? (
-            <Button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="portal-button-motion portal-button-motion--lg w-full font-black uppercase tracking-[0.2em] text-xs text-black border-2"
-              style={{ background: accent, borderColor: accent }}
-            >
-              Done
-            </Button>
+            <div className="flex w-full flex-col-reverse sm:flex-row gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="flex-1 min-h-12"
+              >
+                Close
+              </Button>
+              {unlockedHref && (
+                <Button
+                  asChild
+                  type="button"
+                  className="portal-button-motion portal-button-motion--lg flex-1 inline-flex items-center justify-center gap-2 font-black uppercase tracking-[0.2em] text-xs text-black border-2"
+                  style={{ background: accent, borderColor: accent, boxShadow: `0 0 32px -8px ${accent}` }}
+                >
+                  <Link to={unlockedHref as any} onClick={() => onOpenChange(false)}>
+                    <ArrowUpRight className="h-4 w-4" /> {unlockedLabel}
+                  </Link>
+                </Button>
+              )}
+            </div>
           ) : (
             <>
               <Button
@@ -165,6 +192,79 @@ function Row({
       <span className={`${mono ? "tabular-nums" : ""} ${bold ? "font-black" : "font-semibold"} ${toneCls}`}>
         {value}
       </span>
+    </div>
+  );
+}
+
+function SuccessReceipt({
+  itemName, paid, balance, message, accent, receiptId,
+}: {
+  itemName: string;
+  paid: number;
+  balance: number | null;
+  message: string;
+  accent: string;
+  receiptId?: string;
+}) {
+  const stamp = React.useMemo(() => {
+    const d = new Date();
+    return d.toLocaleString(undefined, {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+  }, []);
+  const id = receiptId ?? `0G-${Date.now().toString(36).toUpperCase()}`;
+
+  return (
+    <div
+      className="relative overflow-hidden rounded-xl border bg-gradient-to-b from-emerald-500/10 to-black/40 px-4 py-3"
+      style={{ borderColor: `${accent}55` }}
+    >
+      {/* Perforated edge accent */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-1/2 h-[1px] -translate-y-1/2 opacity-30"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(to right, currentColor 0 4px, transparent 4px 8px)",
+        }}
+      />
+      <div className="flex items-center gap-2 mb-2">
+        <span
+          className="inline-flex h-7 w-7 items-center justify-center rounded-full"
+          style={{ background: `${accent}25`, color: accent }}
+        >
+          <CheckCircle2 className="h-4 w-4" />
+        </span>
+        <div className="flex-1">
+          <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-emerald-300">
+            Payment confirmed
+          </p>
+          <p className="text-[11px] text-emerald-100/80 leading-snug">{message}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-x-3 text-[11px]">
+        <span className="text-muted-foreground uppercase tracking-[0.2em]">Item</span>
+        <span className="text-right text-foreground truncate">{itemName}</span>
+        <span className="text-muted-foreground uppercase tracking-[0.2em]">Paid</span>
+        <span className="text-right tabular-nums font-bold">{paid.toLocaleString()} 🪙</span>
+        {typeof balance === "number" && (
+          <>
+            <span className="text-muted-foreground uppercase tracking-[0.2em]">Balance</span>
+            <span className="text-right tabular-nums font-bold" style={{ color: accent }}>
+              {balance.toLocaleString()} 🪙
+            </span>
+          </>
+        )}
+        <span className="text-muted-foreground uppercase tracking-[0.2em]">When</span>
+        <span className="text-right text-foreground/80">{stamp}</span>
+      </div>
+
+      <div className="mt-2 pt-2 border-t border-dashed border-white/10 flex items-center justify-between">
+        <span className="text-[9px] uppercase tracking-[0.3em] text-muted-foreground">Receipt</span>
+        <span className="text-[10px] tabular-nums text-foreground/70 font-mono">{id}</span>
+      </div>
     </div>
   );
 }

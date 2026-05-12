@@ -234,6 +234,7 @@ function PortalTile({
         message: out.mode === "vip_free"
           ? "Unlocked with VIP free pass."
           : `Unlocked. ${out.balance.toLocaleString()} 🪙 remaining.`,
+        balance: out.balance,
       });
       // VIP perk: mint a personalised clone seeded from the buyer's bio.
       // Non-VIPs get a `not_vip` outcome and we silently skip the banner.
@@ -289,6 +290,8 @@ function PortalTile({
         accent={accent}
         status={status}
         onConfirm={onConfirm}
+        unlockedHref={`${prefix}${portal.slug}`}
+        unlockedLabel="View unlocked portal"
       >
         {clone && status.kind === "ok" && <CloneBanner clone={clone} accent={accent} />}
       </CoinPurchaseModal>
