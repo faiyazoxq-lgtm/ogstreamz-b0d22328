@@ -224,7 +224,22 @@ function BossContactsPage() {
     });
   }, [items, query]);
 
-  useEffect(() => { setMatchIndex(0); }, [query]);
+  // Remember the matchIndex per (normalized) query so that clearing and
+  // re-entering the same query restores the user's previous position.
+  const savedIndexRef = useRef<Map<string, number>>(new Map());
+  const prevQueryRef = useRef<string>("");
+  const prevMatchIndexRef = useRef<number>(0);
+  useEffect(() => { prevMatchIndexRef.current = matchIndex; }, [matchIndex]);
+  useEffect(() => {
+    const prev = prevQueryRef.current.trim().toLowerCase();
+    const next = query.trim().toLowerCase();
+    if (prev === next) return;
+    // Save the position we had under the previous query before leaving it.
+    if (prev) savedIndexRef.current.set(prev, prevMatchIndexRef.current);
+    // Restore (or reset) for the new query.
+    setMatchIndex(next ? savedIndexRef.current.get(next) ?? 0 : 0);
+    prevQueryRef.current = query;
+  }, [query]);
   const activeMatchId =
     query.trim() && filtered.length > 0
       ? filtered[Math.min(matchIndex, filtered.length - 1)].id
