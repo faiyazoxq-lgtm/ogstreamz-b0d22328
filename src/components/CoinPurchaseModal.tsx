@@ -239,21 +239,22 @@ export function CoinPurchaseModal({
 }
 
 function Row({
-  label, value, bold, mono = true, tone = "default",
+  label, value, bold, mono = true, tone = "default", truncate = false,
 }: {
   label: string;
   value: string;
   bold?: boolean;
   mono?: boolean;
   tone?: "default" | "muted" | "warn";
+  truncate?: boolean;
 }) {
   const toneCls =
     tone === "muted" ? "text-muted-foreground" :
     tone === "warn"  ? "text-amber-300" : "text-foreground";
   return (
-    <div className="flex items-center justify-between py-1">
-      <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{label}</span>
-      <span className={`${mono ? "tabular-nums" : ""} ${bold ? "font-black" : "font-semibold"} ${toneCls}`}>
+    <div className="flex items-center justify-between gap-3 py-0.5">
+      <span className="text-[10px] uppercase tracking-[0.25em] font-bold text-muted-foreground shrink-0">{label}</span>
+      <span className={`${mono ? "tabular-nums" : ""} ${bold ? "font-black" : "font-semibold"} ${toneCls} ${truncate ? "truncate min-w-0 text-right" : ""}`}>
         {value}
       </span>
     </div>
