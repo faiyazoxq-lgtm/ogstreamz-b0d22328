@@ -1,0 +1,58 @@
+{
+  "_comment": "Server functions that MUST require Boss/Admin auth. Adding a new boss-only server fn? Append it here. Removing requireBoss from any of these will fail the security regression test.",
+  "boss_only_exports": {
+    "src/lib/agent-keys.functions.ts": [
+      "listAgentKeys",
+      "upsertAgentKey",
+      "updateAgentKeyMeta",
+      "deleteAgentKey",
+      "revealAgentKey"
+    ],
+    "src/lib/boss-users.functions.ts": [
+      "listRoster",
+      "setRank",
+      "setStatus",
+      "adjustCredits",
+      "setBanned",
+      "forceSignOut",
+      "setUserSwearing"
+    ],
+    "src/lib/command-deck.functions.ts": [
+      "runAgentTask",
+      "getOpsSnapshot",
+      "runMaintenance"
+    ],
+    "src/lib/realtime-monitor.functions.ts": [
+      "listRealtimeDenials"
+    ],
+    "src/lib/security-monitor.functions.ts": [
+      "listSecurityEvents"
+    ],
+    "src/lib/system-alerts.functions.ts": [
+      "listSystemAlerts",
+      "acknowledgeAlert",
+      "acknowledgeAllAlerts"
+    ],
+    "src/lib/telegram-invites.functions.ts": [
+      "requestMembersConnectTelegram",
+      "dmTelegramReconnectPrompt"
+    ],
+    "src/lib/topup-requests.functions.ts": [
+      "bossListTopupRequests",
+      "bossApproveTopup",
+      "bossDenyTopup",
+      "bossSetFriendsFamily",
+      "bossListFriendsFamily"
+    ],
+    "src/lib/vault.functions.ts": [
+      "listVaultCredentials",
+      "upsertVaultCredential",
+      "deleteVaultCredential"
+    ],
+    "src/lib/vip-pass-pool.functions.ts": [
+      "listVipPassPool",
+      "upsertVipPassPool",
+      "deleteVipPassPool"
+    ]
+  }
+}
