@@ -46,9 +46,28 @@ export function TrackingPupil({
   };
 
   useEffect(() => {
+    // Touch / coarse-pointer surfaces dispatch pointermove + touchmove
+    // continuously during scroll, which jitters the pupil. Detect coarse
+    // pointers and gate target updates while the page is actively
+    // scrolling so the pupil holds its last position instead of chasing
+    // the scroll-induced motion.
+    const isCoarse =
+      typeof window !== "undefined" && typeof window.matchMedia === "function"
+        ? window.matchMedia("(hover: none) and (pointer: coarse)").matches
+        : false;
+    let scrollingUntil = 0;
+    const SCROLL_QUIET_MS = 220;
+    const onScroll = () => {
+      scrollingUntil = performance.now() + SCROLL_QUIET_MS;
+    };
+    const isScrolling = () => performance.now() < scrollingUntil;
+
     const update = (clientX: number, clientY: number, snap = false) => {
       const el = ref.current?.parentElement;
       if (!el) return;
+      // While scrolling on touch devices, freeze the target. Pointer/touch
+      // events that fire mid-scroll are scroll artifacts, not real intent.
+      if (isCoarse && isScrolling()) return;
       const r = el.getBoundingClientRect();
       const cx = r.left + r.width / 2;
       const cy = r.top + r.height / 2;
@@ -85,6 +104,7 @@ export function TrackingPupil({
     window.addEventListener("pointerdown", onDown, { passive: true });
     window.addEventListener("touchstart", onTouch, { passive: true });
     window.addEventListener("touchmove", onTouch, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true, capture: true });
 
     // Critically-damped exponential low-pass with frame-rate-independent
     // step. tau (seconds) = `smoothing`; alpha = 1 - exp(-dt/tau) keeps the
@@ -124,6 +144,7 @@ export function TrackingPupil({
       window.removeEventListener("pointerdown", onDown);
       window.removeEventListener("touchstart", onTouch);
       window.removeEventListener("touchmove", onTouch);
+      window.removeEventListener("scroll", onScroll, { capture: true } as EventListenerOptions);
       cancelAnimationFrame(raf);
     };
   }, [travelRatio, smoothing, followGain]);
