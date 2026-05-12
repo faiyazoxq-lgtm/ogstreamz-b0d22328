@@ -64,7 +64,7 @@ export const Route = createFileRoute("/portals")({
 });
 
 function PortalsHub() {
-  const { isAdmin, profile } = useAuth();
+  const { user, isAdmin, profile } = useAuth();
   const isBoss = isAdmin || profile?.rank === "boss";
   const [items, setItems] = useState<Item[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -116,18 +116,37 @@ function PortalsHub() {
             });
           }
         } else {
-          // Members & VIPs: only Boss-published portals (no battles, no tools —
-          // those are hub content). Sourced from list_nav_portals which already
-          // enforces `published = true AND created_by is boss/admin`.
-          const { data, error: rpcErr } = await supabase.rpc("list_nav_portals");
-          if (rpcErr) throw rpcErr;
-          for (const p of (data ?? []) as Array<{ id: string; slug: string; name: string; kind: string; vip: boolean; by_boss?: boolean; created_at: string }>) {
+          // Members & VIPs: Boss-published portals (curated for everyone) +
+          // any portals the viewer themselves spawned. Both groups stream
+          // into the same hub-grouped grid below.
+          const [navRes, ownRes] = await Promise.all([
+            supabase.rpc("list_nav_portals"),
+            user?.id
+              ? supabase.from("portals")
+                  .select("id, slug, name, niche, kind, vip, view_count, created_at")
+                  .eq("created_by", user.id)
+                  .order("created_at", { ascending: false })
+              : Promise.resolve({ data: [] as PortalRow[], error: null } as any),
+          ]);
+          if (navRes.error) throw navRes.error;
+          const seen = new Set<string>();
+          for (const p of (navRes.data ?? []) as Array<{ id: string; slug: string; name: string; kind: string; vip: boolean; by_boss?: boolean; created_at: string }>) {
             if (p.by_boss === false) continue;
             const to = PORTAL_TO[p.kind] ?? "/p/$slug";
             const kind = (["music","joke","trade","news"].includes(p.kind) ? p.kind : "joke") as Item["kind"];
             out.push({
               id: p.id, slug: p.slug, name: p.name, subtitle: "",
               kind, to, vip: !!p.vip, views: 0, created_at: p.created_at,
+            });
+            seen.add(p.id);
+          }
+          for (const p of ((ownRes?.data ?? []) as PortalRow[])) {
+            if (seen.has(p.id)) continue;
+            const to = PORTAL_TO[p.kind] ?? "/p/$slug";
+            const kind = (["music","joke","trade","news"].includes(p.kind) ? p.kind : "joke") as Item["kind"];
+            out.push({
+              id: p.id, slug: p.slug, name: p.name, subtitle: p.niche || "",
+              kind, to, vip: !!p.vip, views: p.view_count || 0, created_at: p.created_at,
             });
           }
         }
@@ -137,7 +156,7 @@ function PortalsHub() {
         setError(e?.message ?? "Failed to load portals");
       }
     })();
-  }, [isBoss]);
+  }, [isBoss, user?.id]);
 
   const filtered = useMemo(() => {
     if (!items) return [];
