@@ -272,15 +272,18 @@ export function NavBar() {
           <TVStaticLogo className="shrink-0 self-center" />
           <OgWordmark
             suffix="-PORTAL"
-            className="brand-glow__mark inline-flex items-center self-center min-w-0 flex-shrink whitespace-nowrap text-eye-ice bg-transparent leading-[0.9] transition-[color,text-shadow,filter] duration-300 ease-out"
+            className="brand-glow__mark inline-flex items-center self-center min-w-0 flex-shrink whitespace-nowrap text-eye-ice bg-transparent leading-[0.9] transition-[color,text-shadow,filter,letter-spacing] duration-300 ease-out tracking-[-0.005em] sm:tracking-[-0.018em] md:tracking-[-0.028em] lg:tracking-[-0.034em] xl:tracking-[-0.04em]"
             style={{
               // Fully fluid clamp tuned so the full "0G-PORTAL" lockup
               // never wraps or clips between 320px → 1920px viewports.
               // The vw component keeps growth proportional, the rem floor
               // guarantees legibility on phones, and the rem ceiling keeps
               // the wordmark from dwarfing the nav on widescreen displays.
+              // Letter-spacing is handled per-breakpoint by the Tailwind
+              // tracking-* classes above so the optical tracking stays
+              // consistent at every font size (looser when small, tighter
+              // when large).
               fontSize: "clamp(0.95rem, 0.55rem + 1.5vw, 2rem)",
-              letterSpacing: "-0.028em",
               wordSpacing: "-0.05em",
             }}
           />
