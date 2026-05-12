@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Crown, Plus, Trash2, Save, Loader2, Eye, EyeOff, Power, PowerOff, KeyRound } from "lucide-react";
+import { Crown, Plus, Trash2, Save, Loader2, Eye, EyeOff, Power, PowerOff, KeyRound, Upload, FileSpreadsheet, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -23,6 +23,95 @@ type Draft = {
 };
 const empty: Draft = { id: null, label: "", code: "", username: "", password: "", active: true, sort_order: 0 };
 
+type CsvRow = {
+  label: string;
+  username: string;
+  password: string;
+  code: string;
+  active: boolean;
+  sort_order: number;
+  _line: number;
+  _error?: string;
+};
+
+/** Tiny CSV parser. Handles quoted fields, escaped quotes, comma OR semicolon. */
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cur = "";
+  let inQuotes = false;
+  // auto-detect delimiter from the first non-quoted line
+  const sample = text.split(/\r?\n/).find((l) => l.trim().length > 0) ?? "";
+  const delim = (sample.match(/;/g) || []).length > (sample.match(/,/g) || []).length ? ";" : ",";
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { cur += '"'; i++; } else { inQuotes = false; }
+      } else { cur += c; }
+    } else if (c === '"') { inQuotes = true; }
+    else if (c === delim) { row.push(cur); cur = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(cur); cur = "";
+      if (row.some((v) => v.trim().length > 0)) rows.push(row);
+      row = [];
+    } else { cur += c; }
+  }
+  if (cur.length > 0 || row.length > 0) {
+    row.push(cur);
+    if (row.some((v) => v.trim().length > 0)) rows.push(row);
+  }
+  return rows;
+}
+
+function norm(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+/** Map CSV table to typed rows. Detects header row by known column names. */
+function mapCsvRows(rows: string[][]): CsvRow[] {
+  if (rows.length === 0) return [];
+  const KNOWN: Record<string, "label" | "username" | "password" | "code" | "active" | "sort_order"> = {
+    label: "label", name: "label", title: "label",
+    username: "username", user: "username", login: "username", email: "username",
+    password: "password", pass: "password", pwd: "password", secret: "password",
+    code: "code", passcode: "code",
+    active: "active", enabled: "active", on: "active",
+    sort: "sort_order", sortorder: "sort_order", order: "sort_order",
+  };
+  const first = rows[0].map((c) => norm(c));
+  const isHeader = first.some((c) => c in KNOWN);
+  let columnMap: Record<number, string>;
+  let dataRows: string[][];
+  if (isHeader) {
+    columnMap = {};
+    first.forEach((h, idx) => { if (KNOWN[h]) columnMap[idx] = KNOWN[h]; });
+    dataRows = rows.slice(1);
+  } else {
+    // Positional fallback: label, username, password, code
+    columnMap = { 0: "label", 1: "username", 2: "password", 3: "code" };
+    dataRows = rows;
+  }
+  return dataRows.map((cells, i) => {
+    const out: CsvRow = {
+      label: "", username: "", password: "", code: "",
+      active: true, sort_order: 0, _line: i + (isHeader ? 2 : 1),
+    };
+    Object.entries(columnMap).forEach(([idxStr, key]) => {
+      const idx = Number(idxStr);
+      const v = (cells[idx] ?? "").trim();
+      if (key === "active") out.active = !["false", "0", "no", "off", ""].includes(v.toLowerCase());
+      else if (key === "sort_order") out.sort_order = Math.max(0, parseInt(v || "0", 10) || 0);
+      else (out as any)[key] = v;
+    });
+    const hasCred = !!out.username && !!out.password;
+    const hasCode = !!out.code;
+    if (!hasCred && !hasCode) out._error = "Need code OR username + password";
+    return out;
+  });
+}
+
 /** Boss-only: manage the VIP Pass Pool that gets randomly served to OGs. */
 export function VipPassPoolAdmin() {
   const list = useServerFn(listVipPassPool);
@@ -36,6 +125,9 @@ export function VipPassPoolAdmin() {
   const [showCode, setShowCode] = useState<Record<string, boolean>>({});
   const [showSecret, setShowSecret] = useState(false);
   const [bulk, setBulk] = useState("");
+  const [csvRows, setCsvRows] = useState<CsvRow[]>([]);
+  const [csvFileName, setCsvFileName] = useState<string>("");
+  const [importProgress, setImportProgress] = useState<{ done: number; total: number } | null>(null);
 
   const refresh = async () => {
     setLoading(true);
@@ -47,6 +139,66 @@ export function VipPassPoolAdmin() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const onCsvFile = async (file: File) => {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) return toast.error("CSV too large (max 2MB)");
+    try {
+      const text = await file.text();
+      const parsed = parseCsv(text);
+      const mapped = mapCsvRows(parsed);
+      if (mapped.length === 0) return toast.error("No rows found in CSV");
+      setCsvRows(mapped);
+      setCsvFileName(file.name);
+      const valid = mapped.filter((r) => !r._error).length;
+      toast.success(`Parsed ${mapped.length} row${mapped.length === 1 ? "" : "s"} · ${valid} ready`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to read CSV");
+    }
+  };
+
+  const importCsv = async () => {
+    const valid = csvRows.filter((r) => !r._error);
+    if (valid.length === 0) return toast.error("No valid rows to import");
+    setBusy(true);
+    setImportProgress({ done: 0, total: valid.length });
+    let added = 0, failed = 0;
+    for (let i = 0; i < valid.length; i++) {
+      const r = valid[i];
+      try {
+        await save({
+          data: {
+            id: null,
+            label: r.label,
+            code: r.code,
+            username: r.username,
+            password: r.password,
+            active: r.active,
+            sort_order: r.sort_order,
+          },
+        });
+        added++;
+      } catch {
+        failed++;
+      }
+      setImportProgress({ done: i + 1, total: valid.length });
+    }
+    setBusy(false);
+    setImportProgress(null);
+    setCsvRows([]);
+    setCsvFileName("");
+    await refresh();
+    toast.success(`Imported ${added}${failed ? ` · ${failed} failed` : ""}`);
+  };
+
+  const downloadTemplate = () => {
+    const csv = "label,username,password,code,active,sort_order\nStream A · 4K,streamuser01,s3cret-pass,,true,0\nStream B,streamuser02,another-pass,,true,0\nLegacy code,,,VIP-AAA-1111,true,0\n";
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "vip-passes-template.csv"; a.click();
+    URL.revokeObjectURL(url);
   };
   useEffect(() => { void refresh(); /* eslint-disable-next-line */ }, []);
 
@@ -214,6 +366,129 @@ export function VipPassPoolAdmin() {
             <Plus className="h-4 w-4 mr-1" /> Add all
           </Button>
         </div>
+      </section>
+
+      {/* CSV import */}
+      <section className="rounded-xl border border-cyan-400/30 bg-card/60 p-4 space-y-3">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-cyan-300">
+              <FileSpreadsheet className="h-3 w-3 inline mr-1" /> CSV import
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Columns: <code>label, username, password, code, active, sort_order</code>. Header row optional. Comma or semicolon delimiter.
+            </p>
+          </div>
+          <Button onClick={downloadTemplate} variant="ghost" size="sm" className="text-cyan-200 hover:text-white">
+            Download template
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-3 flex-wrap">
+          <label className="inline-flex items-center gap-2 rounded-md border border-cyan-400/40 bg-background/40 px-3 py-2 text-xs uppercase tracking-widest text-cyan-100 cursor-pointer hover:bg-cyan-400/10">
+            <Upload className="h-3.5 w-3.5" /> Choose CSV file
+            <input
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void onCsvFile(f);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          {csvFileName && (
+            <span className="text-xs text-muted-foreground inline-flex items-center gap-2">
+              <FileSpreadsheet className="h-3 w-3" /> {csvFileName}
+              <button
+                type="button"
+                onClick={() => { setCsvRows([]); setCsvFileName(""); }}
+                className="text-muted-foreground hover:text-white"
+                aria-label="Clear CSV"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+        </div>
+
+        {csvRows.length > 0 && (() => {
+          const valid = csvRows.filter((r) => !r._error).length;
+          const invalid = csvRows.length - valid;
+          return (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-3 flex-wrap text-xs">
+                <p className="text-muted-foreground">
+                  <strong className="text-emerald-300">{valid}</strong> ready
+                  {invalid > 0 && <> · <strong className="text-rose-300">{invalid}</strong> with errors</>}
+                  {" "}· total {csvRows.length}
+                </p>
+                {importProgress && (
+                  <p className="text-cyan-200 font-mono">
+                    Importing {importProgress.done} / {importProgress.total}…
+                  </p>
+                )}
+              </div>
+              <div className="max-h-64 overflow-auto rounded-md border border-border bg-background/40">
+                <table className="w-full text-xs min-w-[640px]">
+                  <thead className="sticky top-0 bg-card/95 backdrop-blur">
+                    <tr className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground border-b border-border">
+                      <th className="px-2 py-1.5 text-left">#</th>
+                      <th className="px-2 py-1.5 text-left">Label</th>
+                      <th className="px-2 py-1.5 text-left">Username</th>
+                      <th className="px-2 py-1.5 text-left">Password</th>
+                      <th className="px-2 py-1.5 text-left">Code</th>
+                      <th className="px-2 py-1.5 text-center">Active</th>
+                      <th className="px-2 py-1.5 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {csvRows.slice(0, 200).map((r, i) => (
+                      <tr key={i} className={`border-b border-border/40 ${r._error ? "bg-rose-500/5" : ""}`}>
+                        <td className="px-2 py-1 text-muted-foreground tabular-nums">{r._line}</td>
+                        <td className="px-2 py-1 text-white">{r.label || <span className="text-muted-foreground">—</span>}</td>
+                        <td className="px-2 py-1 font-mono text-cyan-200">{r.username || <span className="text-muted-foreground">—</span>}</td>
+                        <td className="px-2 py-1 font-mono text-cyan-200">{r.password ? "•".repeat(Math.min(10, r.password.length)) : <span className="text-muted-foreground">—</span>}</td>
+                        <td className="px-2 py-1 font-mono text-cyan-200">{r.code || <span className="text-muted-foreground">—</span>}</td>
+                        <td className="px-2 py-1 text-center">{r.active ? "✓" : "—"}</td>
+                        <td className="px-2 py-1">
+                          {r._error
+                            ? <span className="text-rose-300">{r._error}</span>
+                            : <span className="text-emerald-300">Ready</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {csvRows.length > 200 && (
+                  <p className="text-center py-2 text-[10px] text-muted-foreground">…showing first 200 rows of {csvRows.length}</p>
+                )}
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => { setCsvRows([]); setCsvFileName(""); }}
+                  disabled={busy}
+                  className="text-muted-foreground"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={importCsv}
+                  disabled={busy || valid === 0}
+                  className="bg-cyan-400 hover:bg-cyan-300 text-black font-bold"
+                >
+                  {busy
+                    ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Importing…</>
+                    : <><Plus className="h-4 w-4 mr-1" /> Import {valid} pass{valid === 1 ? "" : "es"}</>}
+                </Button>
+              </div>
+            </div>
+          );
+        })()}
       </section>
 
       {/* Existing list */}
