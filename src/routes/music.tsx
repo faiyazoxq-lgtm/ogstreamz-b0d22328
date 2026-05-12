@@ -16,9 +16,9 @@ import { PortalHeader, PortalStyleLine, mergeStyle } from "@/components/PortalHe
 
 const MUSIC_STYLE = "Cinematic neon street-rap with gritty bass and OG energy.";
 
-import { requireMember } from "@/lib/route-guards";
+import { requireVip } from "@/lib/route-guards";
 export const Route = createFileRoute("/music")({
-  beforeLoad: requireMember,
+  beforeLoad: requireVip,
   head: () => ({
     meta: [
       { title: "MusicHUB · Build Your Sound — 0G-STREAMZ" },
