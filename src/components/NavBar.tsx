@@ -260,7 +260,7 @@ export function NavBar() {
       }`}
     >
       <nav
-        className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap min-w-0 px-1.5 sm:px-8 py-2 sm:py-4 gap-1 sm:gap-2"
+        className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap min-w-0 px-2 sm:px-8 py-2 sm:py-3 gap-2 sm:gap-4"
         style={{ minHeight: "clamp(3.5rem, 2.5vw + 2.75rem, 5.5rem)" }}
       >
         <Link
@@ -288,7 +288,7 @@ export function NavBar() {
             }}
           />
         </Link>
-        <ul className="flex items-center flex-nowrap gap-2 sm:gap-3 shrink-0 ml-auto">
+        <ul className="flex items-center flex-nowrap gap-1.5 sm:gap-2.5 shrink-0 ml-auto">
           <li className="hidden sm:block">
             <div className="flex items-center gap-2">
               {user && !isBoss && (
@@ -350,7 +350,7 @@ export function NavBar() {
       {/* Secondary nav row — dropdown menus sit below the logo so the
           brand row stays clean and the menus get full breathing width. */}
       <div className="hidden sm:block border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-2 flex items-center justify-center gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-2.5 flex items-center justify-center gap-4">
           <div className="flex items-center bg-white/[0.04] border border-white/10 rounded-full p-1 shadow-inner shadow-black/20 backdrop-blur-sm">
             <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold currentPath={pathname} pill />
             <span aria-hidden className="w-px h-4 bg-white/10" />
