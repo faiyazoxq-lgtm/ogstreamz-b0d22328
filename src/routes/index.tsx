@@ -243,6 +243,7 @@ function Index() {
           </div>
 
           <QuickJumpMenu user={!!user} />
+          {/* QuickJumpMenu's "Portals" tab is hidden for non-boss; pass flag through */}
         </div>
       </section>
 
