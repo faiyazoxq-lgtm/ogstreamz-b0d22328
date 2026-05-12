@@ -907,3 +907,38 @@ html[data-mood="og"] {
     }
   }
 }
+
+@layer utilities {
+  /* Animated show/hide for portal card badges. Stays mounted so toggling
+     Boss / Mine / VIP collapses width + opacity + scale smoothly instead
+     of snapping the layout. */
+  .badge-toggle {
+    overflow: hidden;
+    max-width: 12rem;
+    padding-inline: 0.5rem; /* matches px-2 */
+    transform: scale(1);
+    opacity: 1;
+    transition:
+      max-width 240ms cubic-bezier(0.22, 1, 0.36, 1),
+      padding-inline 240ms cubic-bezier(0.22, 1, 0.36, 1),
+      margin-inline 240ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 180ms ease,
+      transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: max-width, opacity, transform;
+  }
+  .badge-toggle[data-show="false"] {
+    max-width: 0;
+    padding-inline: 0;
+    margin-inline: -0.125rem; /* eat the parent gap-1 so cards don't reserve space */
+    opacity: 0;
+    transform: scale(0.85);
+    pointer-events: none;
+    border-color: transparent;
+  }
+  .badge-toggle-inner {
+    white-space: nowrap;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .badge-toggle { transition: none; }
+  }
+}
