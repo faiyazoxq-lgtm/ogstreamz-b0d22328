@@ -1,8 +1,40 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { getRequestHost, getRequestHeader } from "@tanstack/react-start/server";
+import { getRequestHost, getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
 import { randomBytes, createHash } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+// Per-user mint quota: max N successful mints in WINDOW_MS.
+const MINT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const MINT_MAX_PER_WINDOW = 10;
+
+async function logStreamUrlAudit(entry: {
+  user_id: string | null;
+  action: string;
+  success: boolean;
+  reason?: string | null;
+  token_hash?: string | null;
+}) {
+  try {
+    const ip = (() => {
+      try { return getRequestIP({ xForwardedFor: true }) || null; } catch { return null; }
+    })();
+    const ua = (() => {
+      try { return getRequestHeader("user-agent") || null; } catch { return null; }
+    })();
+    await supabaseAdmin.from("stream_url_audit" as never).insert({
+      user_id: entry.user_id,
+      ip,
+      user_agent: ua,
+      action: entry.action,
+      success: entry.success,
+      reason: entry.reason ?? null,
+      token_hash: entry.token_hash ?? null,
+    } as never);
+  } catch (e: any) {
+    console.error("[stream-url-audit] log failed:", e?.message || e);
+  }
+}
 
 export type StreamConfigStatus =
   | { ok: true; host: string }
@@ -331,15 +363,40 @@ export const getMyStreamM3uUrl = createServerFn({ method: "GET" })
     try {
       getServerUrl();
     } catch (e: any) {
+      await logStreamUrlAudit({ user_id: userId, action: "mint", success: false, reason: "invalid_server" });
       return { ok: false as const, reason: "invalid_server" as const, error: e?.message || REASON_MESSAGES.invalid_server };
     }
+
+    // Rate limit: count recent mint rows for this user.
+    {
+      const since = new Date(Date.now() - MINT_WINDOW_MS).toISOString();
+      const { count, error: rlErr } = await supabaseAdmin
+        .from("stream_url_tokens" as never)
+        .select("token_hash", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .gte("created_at", since);
+      if (rlErr) {
+        console.error("[stream-url-mint] rate-limit lookup failed:", rlErr.message);
+      } else if ((count ?? 0) >= MINT_MAX_PER_WINDOW) {
+        await logStreamUrlAudit({ user_id: userId, action: "mint", success: false, reason: "rate_limited" });
+        return {
+          ok: false as const,
+          reason: "rpc_error" as const,
+          cause: "rate_limit" as const,
+          error: `Too many stream URL requests. Try again in an hour. (limit ${MINT_MAX_PER_WINDOW}/hr)`,
+        };
+      }
+    }
+
     // Confirm the member actually has saved credentials before minting a token.
     const { data: rows, error } = await supabase.rpc("get_my_stream_creds");
     if (error) {
+      await logStreamUrlAudit({ user_id: userId, action: "mint", success: false, reason: "creds_lookup_failed" });
       return { ok: false as const, reason: "rpc_error" as const, cause: classifyRpcError(error.message), error: error.message };
     }
     const creds = Array.isArray(rows) && rows[0] ? rows[0] : null;
     if (!creds || !creds.username || !creds.password) {
+      await logStreamUrlAudit({ user_id: userId, action: "mint", success: false, reason: "no_creds" });
       return {
         ok: false as const,
         reason: "rpc_error" as const,
@@ -359,6 +416,7 @@ export const getMyStreamM3uUrl = createServerFn({ method: "GET" })
       .from("stream_url_tokens" as never)
       .insert({ token_hash: tokenHash, user_id: userId, expires_at: expiresAt } as never);
     if (insErr) {
+      await logStreamUrlAudit({ user_id: userId, action: "mint", success: false, reason: `insert_failed:${insErr.message}` });
       return { ok: false as const, reason: "rpc_error" as const, cause: classifyRpcError(insErr.message), error: insErr.message };
     }
 
@@ -367,5 +425,6 @@ export const getMyStreamM3uUrl = createServerFn({ method: "GET" })
     const host = getRequestHost();
     const proto = forwardedProto || (host && host.startsWith("localhost") ? "http" : "https");
     const url = `${proto}://${host}/api/public/stream-m3u?t=${token}`;
+    await logStreamUrlAudit({ user_id: userId, action: "mint", success: true, token_hash: tokenHash });
     return { ok: true as const, url, expiresAt };
   });

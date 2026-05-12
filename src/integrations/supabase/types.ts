@@ -2505,6 +2505,42 @@ export type Database = {
         }
         Relationships: []
       }
+      stream_url_audit: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip: string | null
+          reason: string | null
+          success: boolean
+          token_hash: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip?: string | null
+          reason?: string | null
+          success: boolean
+          token_hash?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip?: string | null
+          reason?: string | null
+          success?: boolean
+          token_hash?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       stream_url_tokens: {
         Row: {
           created_at: string

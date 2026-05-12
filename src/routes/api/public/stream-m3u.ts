@@ -6,6 +6,31 @@ function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
+async function audit(req: Request, entry: {
+  user_id: string | null;
+  action: string;
+  success: boolean;
+  reason?: string | null;
+  token_hash?: string | null;
+}) {
+  try {
+    const xff = req.headers.get("x-forwarded-for") || "";
+    const ip = xff.split(",")[0].trim() || null;
+    const ua = req.headers.get("user-agent") || null;
+    await supabaseAdmin.from("stream_url_audit" as never).insert({
+      user_id: entry.user_id,
+      ip,
+      user_agent: ua,
+      action: entry.action,
+      success: entry.success,
+      reason: entry.reason ?? null,
+      token_hash: entry.token_hash ?? null,
+    } as never);
+  } catch (e: any) {
+    console.error("[stream-url-audit] proxy log failed:", e?.message || e);
+  }
+}
+
 export const Route = createFileRoute("/api/public/stream-m3u")({
   server: {
     handlers: {
@@ -13,6 +38,7 @@ export const Route = createFileRoute("/api/public/stream-m3u")({
         const url = new URL(request.url);
         const token = url.searchParams.get("t") || url.searchParams.get("token");
         if (!token || token.length < 16 || token.length > 256) {
+          await audit(request, { user_id: null, action: "fetch", success: false, reason: "invalid_token_format" });
           return new Response("Invalid token", { status: 400 });
         }
         const token_hash = hashToken(token);
@@ -23,9 +49,16 @@ export const Route = createFileRoute("/api/public/stream-m3u")({
           .eq("token_hash", token_hash)
           .maybeSingle();
 
-        if (error || !row) return new Response("Token not found", { status: 404 });
-        if (row.revoked) return new Response("Token revoked", { status: 410 });
+        if (error || !row) {
+          await audit(request, { user_id: null, action: "fetch", success: false, reason: "token_not_found", token_hash });
+          return new Response("Token not found", { status: 404 });
+        }
+        if (row.revoked) {
+          await audit(request, { user_id: row.user_id, action: "fetch", success: false, reason: "revoked", token_hash });
+          return new Response("Token revoked", { status: 410 });
+        }
         if (new Date(row.expires_at).getTime() < Date.now()) {
+          await audit(request, { user_id: row.user_id, action: "fetch", success: false, reason: "expired", token_hash });
           return new Response("Token expired", { status: 410 });
         }
 
@@ -33,14 +66,21 @@ export const Route = createFileRoute("/api/public/stream-m3u")({
           "get_stream_creds_for",
           { _user_id: row.user_id },
         );
-        if (cErr) return new Response("Credential lookup failed", { status: 500 });
+        if (cErr) {
+          await audit(request, { user_id: row.user_id, action: "fetch", success: false, reason: `creds_error:${cErr.message}`, token_hash });
+          return new Response("Credential lookup failed", { status: 500 });
+        }
         const creds = Array.isArray(credsRows) && credsRows[0] ? credsRows[0] : null;
         if (!creds?.username || !creds?.password) {
+          await audit(request, { user_id: row.user_id, action: "fetch", success: false, reason: "no_creds", token_hash });
           return new Response("No credentials on file", { status: 404 });
         }
 
         let server = (process.env.STREAM_SERVER_URL || "").trim();
-        if (!server) return new Response("Stream server not configured", { status: 500 });
+        if (!server) {
+          await audit(request, { user_id: row.user_id, action: "fetch", success: false, reason: "server_not_configured", token_hash });
+          return new Response("Stream server not configured", { status: 500 });
+        }
         if (!/^https?:\/\//i.test(server)) server = "http://" + server;
         server = server.replace(/\/+$/, "");
 
@@ -64,8 +104,11 @@ export const Route = createFileRoute("/api/public/stream-m3u")({
             headers: { "User-Agent": "OGStreamz/1.0" },
           });
         } catch (e: any) {
+          await audit(request, { user_id: row.user_id, action: "fetch", success: false, reason: `upstream_error:${e?.message || "unknown"}`, token_hash });
           return new Response("Upstream unreachable", { status: 502 });
         }
+
+        await audit(request, { user_id: row.user_id, action: "fetch", success: upstreamRes.ok, reason: upstreamRes.ok ? null : `upstream_status:${upstreamRes.status}`, token_hash });
 
         const headers = new Headers();
         const ct = upstreamRes.headers.get("content-type") || "application/vnd.apple.mpegurl";
