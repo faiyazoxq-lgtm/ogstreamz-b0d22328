@@ -189,11 +189,14 @@ function PortalPage() {
   const vipLink = tg.vipLink || null;
   const checkoutFn = useServerFn(createPortalUnlockCheckout);
   const statusFn = useServerFn(getPortalUnlockStatus);
+  const chargeUseFn = useServerFn(chargePortalUse);
+  const navigate = useNavigate();
 
   const [idx, setIdx] = useState(0);
   const [hits, setHits] = useState(0);
   const [owned, setOwned] = useState<boolean>(!portal.vip);
   const [unlocking, setUnlocking] = useState(false);
+  const [charging, setCharging] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [sharedIdea, setSharedIdea] = useState<string | null>(null);
   const controls = useAnimationControls();
@@ -247,9 +250,38 @@ function PortalPage() {
     }
   };
 
+  const useCost = Math.max(0, Math.floor(Number(portal.use_credit_cost) || 0));
+
   const hit = async (e?: React.MouseEvent) => {
     if (!owned) {
       startUnlock();
+      return;
+    }
+    // Charge per-action coin cost if configured. Anonymous users are sent to
+    // sign in; insufficient balance redirects to the credits top-up page.
+    if (useCost > 0) {
+      if (!user) { toast.error("Sign in to use this portal"); return; }
+      if (charging) return;
+      const captured = e ? { x: e.clientX, y: e.clientY } : null;
+      setCharging(true);
+      try {
+        const r = await chargeUseFn({ data: { slug: portal.slug } });
+        if (!r.ok) {
+          if (r.error === "insufficient") {
+            toast.error(`Need ${useCost} 🪙 to use this portal — top up to continue`);
+            navigate({ to: "/credits" });
+          } else {
+            toast.error(r.error || "Could not charge credits");
+          }
+          return;
+        }
+        setIdx((i) => (i + 1) % jokes.length);
+        setHits((h) => h + 1);
+        controls.start(HIT_ANIMS[T.animation] ?? HIT_ANIMS.pulse);
+        if (captured) spawnParticles(captured);
+      } finally {
+        setCharging(false);
+      }
       return;
     }
     setIdx((i) => (i + 1) % jokes.length);
