@@ -1124,6 +1124,13 @@ export type Database = {
             referencedRelation: "portals"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "form_submissions_portal_id_fkey"
+            columns: ["portal_id"]
+            isOneToOne: false
+            referencedRelation: "portals_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       function_exec_audit: {
@@ -1565,6 +1572,13 @@ export type Database = {
             columns: ["portal_id"]
             isOneToOne: false
             referencedRelation: "portals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_brief_versions_portal_id_fkey"
+            columns: ["portal_id"]
+            isOneToOne: false
+            referencedRelation: "portals_public"
             referencedColumns: ["id"]
           },
         ]
@@ -3650,6 +3664,117 @@ export type Database = {
       }
     }
     Views: {
+      portals_public: {
+        Row: {
+          audio_snippet_url: string | null
+          audio_url: string | null
+          bg_video_aspect: string | null
+          bg_video_prompt: string | null
+          bg_video_url: string | null
+          connect_openers: Json | null
+          created_at: string | null
+          id: string | null
+          jokes: Json | null
+          kind: string | null
+          language: string | null
+          lyric_text: string | null
+          music_hooks: Json | null
+          name: string | null
+          niche: string | null
+          price_cents: number | null
+          scout_meta: Json | null
+          seo_description: string | null
+          seo_image_url: string | null
+          seo_refreshed_at: string | null
+          seo_title: string | null
+          slug: string | null
+          style: string | null
+          swear_chat_enabled: boolean | null
+          telegram_config: Json | null
+          theme: string | null
+          theme_config: Json | null
+          tool_ideas: Json | null
+          trade_briefs: Json | null
+          updated_at: string | null
+          use_credit_cost: number | null
+          vibe: string | null
+          view_count: number | null
+          vip: boolean | null
+        }
+        Insert: {
+          audio_snippet_url?: string | null
+          audio_url?: string | null
+          bg_video_aspect?: string | null
+          bg_video_prompt?: string | null
+          bg_video_url?: string | null
+          connect_openers?: Json | null
+          created_at?: string | null
+          id?: string | null
+          jokes?: Json | null
+          kind?: string | null
+          language?: string | null
+          lyric_text?: string | null
+          music_hooks?: Json | null
+          name?: string | null
+          niche?: string | null
+          price_cents?: number | null
+          scout_meta?: Json | null
+          seo_description?: string | null
+          seo_image_url?: string | null
+          seo_refreshed_at?: string | null
+          seo_title?: string | null
+          slug?: string | null
+          style?: string | null
+          swear_chat_enabled?: boolean | null
+          telegram_config?: never
+          theme?: string | null
+          theme_config?: Json | null
+          tool_ideas?: Json | null
+          trade_briefs?: Json | null
+          updated_at?: string | null
+          use_credit_cost?: number | null
+          vibe?: string | null
+          view_count?: number | null
+          vip?: boolean | null
+        }
+        Update: {
+          audio_snippet_url?: string | null
+          audio_url?: string | null
+          bg_video_aspect?: string | null
+          bg_video_prompt?: string | null
+          bg_video_url?: string | null
+          connect_openers?: Json | null
+          created_at?: string | null
+          id?: string | null
+          jokes?: Json | null
+          kind?: string | null
+          language?: string | null
+          lyric_text?: string | null
+          music_hooks?: Json | null
+          name?: string | null
+          niche?: string | null
+          price_cents?: number | null
+          scout_meta?: Json | null
+          seo_description?: string | null
+          seo_image_url?: string | null
+          seo_refreshed_at?: string | null
+          seo_title?: string | null
+          slug?: string | null
+          style?: string | null
+          swear_chat_enabled?: boolean | null
+          telegram_config?: never
+          theme?: string | null
+          theme_config?: Json | null
+          tool_ideas?: Json | null
+          trade_briefs?: Json | null
+          updated_at?: string | null
+          use_credit_cost?: number | null
+          vibe?: string | null
+          view_count?: number | null
+          vip?: boolean | null
+        }
+        Relationships: []
+      }
       syndicate_gallery: {
         Row: {
           category: string | null
