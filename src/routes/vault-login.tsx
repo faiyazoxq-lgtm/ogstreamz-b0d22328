@@ -22,7 +22,13 @@ export const Route = createFileRoute("/vault-login")({
 
 function VaultLoginPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
+  const isVip =
+    isAdmin ||
+    profile?.status === "vip" ||
+    profile?.rank === "vip" ||
+    profile?.rank === "boss" ||
+    profile?.feature_flags?.real_og === true;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
