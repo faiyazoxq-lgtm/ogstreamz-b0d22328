@@ -2078,6 +2078,7 @@ export type Database = {
           stream_status: string | null
           stream_verified_at: string | null
           subscription_plan: Database["public"]["Enums"]["subscription_plan"]
+          ui_prefs: Json
           updated_at: string
         }
         Insert: {
@@ -2105,6 +2106,7 @@ export type Database = {
           stream_status?: string | null
           stream_verified_at?: string | null
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
+          ui_prefs?: Json
           updated_at?: string
         }
         Update: {
@@ -2132,6 +2134,7 @@ export type Database = {
           stream_status?: string | null
           stream_verified_at?: string | null
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
+          ui_prefs?: Json
           updated_at?: string
         }
         Relationships: []
