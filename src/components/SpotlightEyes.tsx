@@ -48,7 +48,30 @@ export function SpotlightEyes() {
     // return to rest.
     let tapClearTimer: number | undefined;
     const TAP_HOLD_MS = 380;
+    // Cooldown so frantic tapping (or accidental double-taps on touch)
+    // can't pile bolts + sparks onto the canvas faster than the rAF loop
+    // can clear them. We allow a quick burst (BURST_LIMIT taps) inside
+    // BURST_WINDOW_MS, then enforce a hard MIN_TAP_GAP_MS minimum gap
+    // between accepted taps until the burst counter decays.
+    const MIN_TAP_GAP_MS = 120;
+    const BURST_WINDOW_MS = 600;
+    const BURST_LIMIT = 4;
+    let lastTapAt = 0;
+    let burstCount = 0;
     const onPointerDown = (e: PointerEvent) => {
+      const now = performance.now();
+      const sinceLast = now - lastTapAt;
+      // Decay the burst counter once the window has elapsed since the
+      // last accepted tap.
+      if (sinceLast > BURST_WINDOW_MS) burstCount = 0;
+      // Hard minimum spacing — drops machine-gun taps below ~8/sec.
+      if (sinceLast < MIN_TAP_GAP_MS) return;
+      // Soft burst limit — after BURST_LIMIT rapid taps, require the
+      // burst window to elapse before accepting more.
+      if (burstCount >= BURST_LIMIT && sinceLast < BURST_WINDOW_MS) return;
+      lastTapAt = now;
+      burstCount++;
+
       const x = e.clientX;
       const y = e.clientY;
       mouseRef.current.x = x;
@@ -72,6 +95,14 @@ export function SpotlightEyes() {
       });
 
       if (reducedRef.current) return;
+      // Hard caps so the draw loop never has to chew through unbounded
+      // particle counts even if the cooldown is somehow bypassed.
+      if (boltsRef.current.length > 24) {
+        boltsRef.current.splice(0, boltsRef.current.length - 24);
+      }
+      if (sparksRef.current.length > 200) {
+        sparksRef.current.splice(0, sparksRef.current.length - 200);
+      }
       // Spark burst at the tap point.
       for (let i = 0; i < 8; i++) {
         const a = Math.random() * Math.PI * 2;
