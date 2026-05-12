@@ -21,7 +21,7 @@ export async function trackReferralEvent(
       referral_code: referralCode,
       event_type: eventType,
       source,
-      metadata,
+      metadata: metadata as never,
     });
   } catch {
     /* swallow */
