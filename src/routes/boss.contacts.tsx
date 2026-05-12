@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Phone, Plus, Trash2, Loader2, Copy, Pencil, Check, X, Search, UserPlus, UserMinus, ExternalLink } from "lucide-react";
@@ -220,6 +220,15 @@ function BossContactsPage() {
     });
   }, [items, query]);
 
+  const firstMatchId = query.trim() && filtered.length > 0 ? filtered[0].id : null;
+  const firstMatchRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!firstMatchId) return;
+    const el = firstMatchRef.current;
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [firstMatchId]);
+
   return (
     <div className="py-6 space-y-6">
       <header className="flex items-center gap-2">
@@ -291,8 +300,18 @@ function BossContactsPage() {
         {!loading && items.length > 0 && filtered.length === 0 && (
           <p className="text-sm text-muted-foreground">No contacts match your search.</p>
         )}
-        {filtered.map((c) => (
-          <div key={c.id} className="rounded-xl border border-border bg-card/60 p-3">
+        {filtered.map((c) => {
+          const isFirstMatch = c.id === firstMatchId;
+          return (
+          <div
+            key={c.id}
+            ref={isFirstMatch ? firstMatchRef : undefined}
+            className={`rounded-xl border bg-card/60 p-3 transition-colors ${
+              isFirstMatch
+                ? "border-gold/70 ring-2 ring-gold/40 bg-gold/5"
+                : "border-border"
+            }`}
+          >
             {editing === c.id ? (
               <div className="space-y-2">
                 <div className="grid sm:grid-cols-2 gap-2">
@@ -341,7 +360,8 @@ function BossContactsPage() {
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
       </section>
     </div>
   );
