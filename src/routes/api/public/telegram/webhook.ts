@@ -430,7 +430,7 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         if (!text) return Response.json({ ok: true });
 
         try {
-          await handleCommand(text, chatId, username);
+          await handleCommand(text, chatId, username, msg);
         } catch (e) {
           console.error("telegram webhook handler error", e);
         }
