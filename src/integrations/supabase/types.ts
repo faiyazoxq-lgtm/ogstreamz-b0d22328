@@ -1832,6 +1832,7 @@ export type Database = {
           niche: string
           paid_services: Json
           price_cents: number
+          published: boolean
           scout_meta: Json
           seo_description: string | null
           seo_image_url: string | null
@@ -1875,6 +1876,7 @@ export type Database = {
           niche: string
           paid_services?: Json
           price_cents?: number
+          published?: boolean
           scout_meta?: Json
           seo_description?: string | null
           seo_image_url?: string | null
@@ -1918,6 +1920,7 @@ export type Database = {
           niche?: string
           paid_services?: Json
           price_cents?: number
+          published?: boolean
           scout_meta?: Json
           seo_description?: string | null
           seo_image_url?: string | null
@@ -3926,6 +3929,10 @@ export type Database = {
       boss_set_banned: {
         Args: { _banned: boolean; _reason?: string; _user_id: string }
         Returns: undefined
+      }
+      boss_set_portal_published: {
+        Args: { _portal_id: string; _published: boolean }
+        Returns: boolean
       }
       boss_topup_reseller: {
         Args: { _delta: number; _reason: string; _user_id: string }
