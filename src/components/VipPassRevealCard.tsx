@@ -156,13 +156,28 @@ export function VipPassRevealCard() {
         files: [out.file],
         title: "OG-STREAMZ VIP Pass",
         text: "My OG-STREAMZ VIP pass — 15-min window.",
+        url: typeof window !== "undefined" ? window.location.href : undefined,
       };
       if (nav.share && nav.canShare && nav.canShare(shareData)) {
         await nav.share(shareData);
         toast.success("Shared");
       } else {
         triggerDownload(out.dataUrl, out.name);
-        toast.message("Sharing not supported — image downloaded instead");
+        const shareUrl = shareData.url ?? "";
+        let copied = false;
+        if (shareUrl) {
+          try {
+            await navigator.clipboard.writeText(shareUrl);
+            copied = true;
+          } catch {
+            /* clipboard blocked — silent */
+          }
+        }
+        toast.message(
+          copied
+            ? "Sharing not supported — image saved & link copied"
+            : "Sharing not supported — image downloaded instead",
+        );
       }
     } catch (e: any) {
       if (e?.name === "AbortError") return; // user cancelled
