@@ -293,7 +293,9 @@ function DesktopSidebar({
           pathname={pathname}
           gold={false}
         />
-        <SidebarSection title="Hubs" icon={Rocket} items={hubs} collapsed={collapsed} pathname={pathname} gold />
+        {isBoss && (
+          <SidebarSection title="Hubs · Boss" icon={Rocket} items={hubs} collapsed={collapsed} pathname={pathname} gold />
+        )}
         {portals.length > 0 && (
           <SidebarSection title="Your Portals" icon={DoorOpen} items={portals} collapsed={collapsed} pathname={pathname} />
         )}
