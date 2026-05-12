@@ -100,6 +100,7 @@ function BossContactsPage() {
   const [query, setQuery] = useState("");
   const [matchIndex, setMatchIndex] = useState(0);
   const [escapeAnnouncement, setEscapeAnnouncement] = useState("");
+  const [highlightAnnouncement, setHighlightAnnouncement] = useState("");
   const [draftLinked, setDraftLinked] = useState<ProfileLite | null>(null);
   const [editLinked, setEditLinked] = useState<ProfileLite | null>(null);
   const [profiles, setProfiles] = useState<Record<string, ProfileLite>>({});
@@ -247,6 +248,22 @@ function BossContactsPage() {
     el.focus({ preventScroll: true });
   }, [activeMatchId]);
 
+  // Announce the currently highlighted match for screen readers as the user
+  // navigates through matches with the keyboard.
+  useEffect(() => {
+    if (!query.trim() || filtered.length === 0) {
+      setHighlightAnnouncement("");
+      return;
+    }
+    const idx = Math.min(matchIndex, filtered.length - 1);
+    const c = filtered[idx];
+    const msg = `Highlighted match ${idx + 1} of ${filtered.length}: ${c.label}${c.phone ? `, ${c.phone}` : ""}.`;
+    // Reset first so consecutive moves to the same index still re-announce.
+    setHighlightAnnouncement("");
+    const t = setTimeout(() => setHighlightAnnouncement(msg), 30);
+    return () => clearTimeout(t);
+  }, [matchIndex, activeMatchId, filtered, query]);
+
   return (
     <div className="py-6 space-y-6">
       <header className="flex items-center gap-2">
@@ -347,6 +364,9 @@ function BossContactsPage() {
         </div>
         <div className="sr-only" role="status" aria-live="assertive" aria-atomic="true">
           {escapeAnnouncement}
+        </div>
+        <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+          {highlightAnnouncement}
         </div>
         <div
           id="boss-contacts-search-status"
