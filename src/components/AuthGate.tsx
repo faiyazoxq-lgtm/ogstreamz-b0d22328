@@ -60,8 +60,8 @@ function PromoLanding() {
 
           <h1 className="mt-5 text-3xl sm:text-5xl font-black uppercase tracking-tight text-white leading-[1.05]">
             Sign up to unlock
-            <span className="block bg-gradient-to-r from-[#7fd5ff] via-white to-[#ff77ff] bg-clip-text text-transparent">
-              0G-PORTAL
+            <span className="block mt-1">
+              <OgWordmark suffix="-PORTAL" />
             </span>
           </h1>
 
