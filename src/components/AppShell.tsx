@@ -373,19 +373,29 @@ function MobileHeader({
         to={to}
         onClick={close}
         aria-current={active ? "page" : undefined}
+        aria-label={`${label}${active ? ", current page" : ""}`}
         className={[
-          "relative flex items-center gap-3 min-h-12 w-full rounded-xl px-3 py-2.5 transition-colors",
+          "relative flex items-center gap-3 min-h-12 w-full rounded-xl px-3 py-2.5 motion-safe:transition-all duration-200",
+          "outline-none focus-visible:ring-2 focus-visible:ring-gold/70 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
           active ? "bg-gold/10 text-gold ring-1 ring-inset ring-gold/40" : "text-foreground hover:bg-secondary",
         ].join(" ")}
       >
-        {active && <span aria-hidden className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-gold shadow-[0_0_10px_rgba(255,209,102,0.6)]" />}
+        <span
+          aria-hidden
+          className={[
+            "absolute left-0 top-2 bottom-2 w-1 rounded-r-full motion-safe:transition-all duration-200",
+            active
+              ? "bg-gold shadow-[0_0_10px_rgba(255,209,102,0.6)] opacity-100"
+              : "bg-transparent opacity-0",
+          ].join(" ")}
+        />
         <span className={`h-9 w-9 shrink-0 rounded-lg flex items-center justify-center ${active ? "bg-gold/15 text-gold ring-1 ring-gold/40" : "bg-secondary text-gold/80"}`}>
-          <Icon className="h-5 w-5" />
+          <Icon aria-hidden className="h-5 w-5" />
         </span>
         <span className="flex-1 min-w-0">
           <span className={`flex items-center gap-1.5 text-[14px] font-semibold leading-tight ${active ? "text-gold" : "text-foreground"}`}>
             <span className="truncate">{label}</span>
-            {vip && <Crown className="h-3 w-3 text-gold" />}
+            {vip && <Crown aria-label="VIP" className="h-3 w-3 text-gold" />}
           </span>
           {desc && <span className="block text-[11px] text-muted-foreground truncate mt-0.5">{desc}</span>}
         </span>
