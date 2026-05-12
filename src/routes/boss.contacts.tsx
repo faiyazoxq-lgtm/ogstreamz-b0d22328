@@ -6,6 +6,7 @@ import { Phone, Plus, Trash2, Loader2, Copy, Pencil, Check, X } from "lucide-rea
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { parsePhone, toDisplay } from "@/lib/phone";
 
 export const Route = createFileRoute("/boss/contacts")({
   head: () => ({ meta: [{ title: "Boss Contacts · 0G-STREAMZ" }] }),
@@ -51,14 +52,18 @@ function BossContactsPage() {
 
   async function add() {
     const label = draft.label.trim();
-    const phone = draft.phone.trim();
-    if (!label || !phone) {
-      toast.error("Label and phone are required");
+    if (!label) {
+      toast.error("Label is required");
+      return;
+    }
+    const parsed = parsePhone(draft.phone);
+    if (!parsed.ok) {
+      toast.error(parsed.error);
       return;
     }
     setSaving(true);
     const { error } = await supabase.from("boss_contacts").insert({
-      label, phone, notes: draft.notes.trim(),
+      label, phone: parsed.e164, notes: draft.notes.trim(),
     });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
@@ -78,9 +83,11 @@ function BossContactsPage() {
   }
 
   async function saveEdit(id: string) {
+    const parsed = parsePhone(editDraft.phone);
+    if (!parsed.ok) { toast.error(parsed.error); return; }
     const { error } = await supabase.from("boss_contacts").update({
       label: editDraft.label.trim(),
-      phone: editDraft.phone.trim(),
+      phone: parsed.e164,
       notes: editDraft.notes.trim(),
     }).eq("id", id);
     if (error) { toast.error(error.message); return; }
@@ -155,7 +162,9 @@ function BossContactsPage() {
               <div className="flex items-start gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="text-xs uppercase tracking-[0.25em] text-gold font-bold">{c.label}</div>
-                  <a href={`tel:${c.phone}`} className="text-base font-mono text-foreground hover:underline">{c.phone}</a>
+                  <a href={`tel:${c.phone}`} className="text-base font-mono text-foreground hover:underline" title={c.phone}>
+                    {toDisplay(c.phone)}
+                  </a>
                   {c.notes && <p className="mt-1 text-xs text-muted-foreground whitespace-pre-wrap">{c.notes}</p>}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
