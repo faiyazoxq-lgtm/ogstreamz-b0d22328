@@ -168,40 +168,63 @@ export function VipPassRevealCard() {
     }
   };
 
+  // Renders the referral card (no creds) — cached per referral code.
+  const renderReferralFile = async (): Promise<{ file: File; dataUrl: string; name: string } | null> => {
+    if (!referralCardRef.current) return null;
+    const key = referralCode ?? "";
+    if (referralCache.current && referralCache.current.key === key && key) {
+      const c = referralCache.current;
+      return { file: c.file, dataUrl: c.dataUrl, name: c.name };
+    }
+    const dataUrl = await toPng(referralCardRef.current, {
+      cacheBust: true,
+      pixelRatio: 3,
+      backgroundColor: "#000308",
+    });
+    const stamp = new Date().toISOString().slice(0, 10);
+    const name = `og-vip-invite-${stamp}.png`;
+    const blob = await (await fetch(dataUrl)).blob();
+    const file = new File([blob], name, { type: "image/png" });
+    if (key) referralCache.current = { key, file, dataUrl, name };
+    return { file, dataUrl, name };
+  };
+
   const doShare = async () => {
+    if (!referralCode || !referralUrl) {
+      toast.error("Referral code not ready yet — try again in a moment");
+      return;
+    }
     setSharing(true);
     try {
-      const out = await renderPassFile();
+      const out = await renderReferralFile();
       if (!out) return;
       const nav = navigator as Navigator & {
         canShare?: (data: ShareData) => boolean;
         share?: (data: ShareData) => Promise<void>;
       };
+      const text = `Join me on OG-STREAMZ — use my VIP code ${referralCode} at signup and we both get +2 coins 🪙`;
       const shareData: ShareData = {
         files: [out.file],
-        title: "OG-STREAMZ VIP Pass",
-        text: "My OG-STREAMZ VIP pass — 15-min window.",
-        url: typeof window !== "undefined" ? window.location.href : undefined,
+        title: "Join me on OG-STREAMZ",
+        text,
+        url: referralUrl,
       };
       if (nav.share && nav.canShare && nav.canShare(shareData)) {
         await nav.share(shareData);
-        toast.success("Shared");
+        toast.success("Invite shared");
       } else {
         triggerDownload(out.dataUrl, out.name);
-        const shareUrl = shareData.url ?? "";
         let copied = false;
-        if (shareUrl) {
-          try {
-            await navigator.clipboard.writeText(shareUrl);
-            copied = true;
-          } catch {
-            /* clipboard blocked — silent */
-          }
+        try {
+          await navigator.clipboard.writeText(`${text}\n${referralUrl}`);
+          copied = true;
+        } catch {
+          /* clipboard blocked — silent */
         }
         toast.message(
           copied
-            ? "Sharing not supported — image saved & link copied"
-            : "Sharing not supported — image downloaded instead",
+            ? "Sharing not supported — invite saved & link copied"
+            : "Sharing not supported — invite image downloaded instead",
         );
       }
     } catch (e: any) {
