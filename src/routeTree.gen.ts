@@ -49,6 +49,7 @@ import { Route as StoreCatalogRouteImport } from './routes/store.catalog'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
+import { Route as HubSlugRouteImport } from './routes/hub.$slug'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as BossUsersRouteImport } from './routes/boss.users'
 import { Route as BossTodoRouteImport } from './routes/boss.todo'
@@ -81,6 +82,7 @@ import { Route as AccountPassesRouteImport } from './routes/account.passes'
 import { Route as BossHubsNewRouteImport } from './routes/boss.hubs.new'
 import { Route as ApiPublicSunoWebhookRouteImport } from './routes/api/public/suno-webhook'
 import { Route as ApiPublic0gOrchestratorRouteImport } from './routes/api/public/0g-orchestrator'
+import { Route as BossHubsIdEditRouteImport } from './routes/boss.hubs.$id.edit'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicHooksTelegramRemindersRouteImport } from './routes/api/public/hooks/telegram-reminders'
@@ -287,6 +289,11 @@ const JokesPortalRoute = JokesPortalRouteImport.update({
   path: '/portal',
   getParentRoute: () => JokesRoute,
 } as any)
+const HubSlugRoute = HubSlugRouteImport.update({
+  id: '/hub/$slug',
+  path: '/hub/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   id: '/checkout/return',
   path: '/checkout/return',
@@ -447,6 +454,11 @@ const ApiPublic0gOrchestratorRoute = ApiPublic0gOrchestratorRouteImport.update({
   path: '/api/public/0g-orchestrator',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BossHubsIdEditRoute = BossHubsIdEditRouteImport.update({
+  id: '/$id/edit',
+  path: '/$id/edit',
+  getParentRoute: () => BossHubsRoute,
+} as any)
 const ApiPublicTelegramWebhookRoute =
   ApiPublicTelegramWebhookRouteImport.update({
     id: '/api/public/telegram/webhook',
@@ -541,6 +553,7 @@ export interface FileRoutesByFullPath {
   '/boss/todo': typeof BossTodoRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/hub/$slug': typeof HubSlugRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
   '/p/$slug': typeof PSlugRoute
@@ -555,6 +568,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/telegram-reminders': typeof ApiPublicHooksTelegramRemindersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/boss/hubs/$id/edit': typeof BossHubsIdEditRoute
   '/api/public/fleet/webhook/$botId': typeof ApiPublicFleetWebhookBotIdRoute
 }
 export interface FileRoutesByTo {
@@ -619,6 +633,7 @@ export interface FileRoutesByTo {
   '/boss/todo': typeof BossTodoRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/hub/$slug': typeof HubSlugRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
   '/p/$slug': typeof PSlugRoute
@@ -633,6 +648,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/telegram-reminders': typeof ApiPublicHooksTelegramRemindersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/boss/hubs/$id/edit': typeof BossHubsIdEditRoute
   '/api/public/fleet/webhook/$botId': typeof ApiPublicFleetWebhookBotIdRoute
 }
 export interface FileRoutesById {
@@ -699,6 +715,7 @@ export interface FileRoutesById {
   '/boss/todo': typeof BossTodoRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/hub/$slug': typeof HubSlugRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
   '/p/$slug': typeof PSlugRoute
@@ -713,6 +730,7 @@ export interface FileRoutesById {
   '/api/public/hooks/telegram-reminders': typeof ApiPublicHooksTelegramRemindersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/boss/hubs/$id/edit': typeof BossHubsIdEditRoute
   '/api/public/fleet/webhook/$botId': typeof ApiPublicFleetWebhookBotIdRoute
 }
 export interface FileRouteTypes {
@@ -780,6 +798,7 @@ export interface FileRouteTypes {
     | '/boss/todo'
     | '/boss/users'
     | '/checkout/return'
+    | '/hub/$slug'
     | '/jokes/portal'
     | '/m/$slug'
     | '/p/$slug'
@@ -794,6 +813,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/telegram-reminders'
     | '/api/public/payments/webhook'
     | '/api/public/telegram/webhook'
+    | '/boss/hubs/$id/edit'
     | '/api/public/fleet/webhook/$botId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -858,6 +878,7 @@ export interface FileRouteTypes {
     | '/boss/todo'
     | '/boss/users'
     | '/checkout/return'
+    | '/hub/$slug'
     | '/jokes/portal'
     | '/m/$slug'
     | '/p/$slug'
@@ -872,6 +893,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/telegram-reminders'
     | '/api/public/payments/webhook'
     | '/api/public/telegram/webhook'
+    | '/boss/hubs/$id/edit'
     | '/api/public/fleet/webhook/$botId'
   id:
     | '__root__'
@@ -937,6 +959,7 @@ export interface FileRouteTypes {
     | '/boss/todo'
     | '/boss/users'
     | '/checkout/return'
+    | '/hub/$slug'
     | '/jokes/portal'
     | '/m/$slug'
     | '/p/$slug'
@@ -951,6 +974,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/telegram-reminders'
     | '/api/public/payments/webhook'
     | '/api/public/telegram/webhook'
+    | '/boss/hubs/$id/edit'
     | '/api/public/fleet/webhook/$botId'
   fileRoutesById: FileRoutesById
 }
@@ -991,6 +1015,7 @@ export interface RootRouteChildren {
   AccountPassesRoute: typeof AccountPassesRoute
   BSlugRoute: typeof BSlugRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
+  HubSlugRoute: typeof HubSlugRoute
   MSlugRoute: typeof MSlugRoute
   PSlugRoute: typeof PSlugRoute
   TSlugRoute: typeof TSlugRoute
@@ -1286,6 +1311,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JokesPortalRouteImport
       parentRoute: typeof JokesRoute
     }
+    '/hub/$slug': {
+      id: '/hub/$slug'
+      path: '/hub/$slug'
+      fullPath: '/hub/$slug'
+      preLoaderRoute: typeof HubSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/checkout/return': {
       id: '/checkout/return'
       path: '/checkout/return'
@@ -1510,6 +1542,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublic0gOrchestratorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/boss/hubs/$id/edit': {
+      id: '/boss/hubs/$id/edit'
+      path: '/$id/edit'
+      fullPath: '/boss/hubs/$id/edit'
+      preLoaderRoute: typeof BossHubsIdEditRouteImport
+      parentRoute: typeof BossHubsRoute
+    }
     '/api/public/telegram/webhook': {
       id: '/api/public/telegram/webhook'
       path: '/api/public/telegram/webhook'
@@ -1550,10 +1589,12 @@ declare module '@tanstack/react-router' {
 
 interface BossHubsRouteChildren {
   BossHubsNewRoute: typeof BossHubsNewRoute
+  BossHubsIdEditRoute: typeof BossHubsIdEditRoute
 }
 
 const BossHubsRouteChildren: BossHubsRouteChildren = {
   BossHubsNewRoute: BossHubsNewRoute,
+  BossHubsIdEditRoute: BossHubsIdEditRoute,
 }
 
 const BossHubsRouteWithChildren = BossHubsRoute._addFileChildren(
@@ -1679,6 +1720,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountPassesRoute: AccountPassesRoute,
   BSlugRoute: BSlugRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
+  HubSlugRoute: HubSlugRoute,
   MSlugRoute: MSlugRoute,
   PSlugRoute: PSlugRoute,
   TSlugRoute: TSlugRoute,

@@ -28,6 +28,8 @@ type Hub = {
   id: string; title: string; tagline: string; href: string;
   icon: string; accent: string; sort_order: number; published: boolean;
   paid_services: Record<string, boolean>;
+  visibility?: "public" | "signed_in" | "boss_only";
+  slug?: string | null;
 };
 
 export const Route = createFileRoute("/boss/hubs")({
@@ -284,21 +286,30 @@ function HubsManager() {
                         <div className="flex items-center gap-2">
                           <p className="font-bold text-sm truncate">{h.title}</p>
                           {!h.published && <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Hidden</span>}
+                          {h.visibility && h.visibility !== "public" && (
+                            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-amber-300/40 bg-amber-300/10 text-amber-200">
+                              {h.visibility === "signed_in" ? "Members" : "Boss"}
+                            </span>
+                          )}
                           <CostTierControl
                             flags={h.paid_services}
                             onChange={(next) => setHubServices(h, next)}
                             compact
                           />
                         </div>
-                        <p className="text-xs text-muted-foreground truncate">{h.tagline} · → {h.href}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {h.tagline} · → {h.slug ? `/hub/${h.slug}` : h.href}
+                        </p>
                       </div>
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="icon" title={h.published ? "Hide" : "Publish"} onClick={() => togglePublished(h)}>
                           {h.published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                         </Button>
-                        <Button variant="ghost" size="icon" title="Edit" onClick={() => { setEditing(h.id); setDraft(h); }}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                        <Link to="/boss/hubs/$id/edit" params={{ id: h.id }}>
+                          <Button variant="ghost" size="icon" title="Edit hub & sections">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </Link>
                         <a href={h.href} target={/^https?:/.test(h.href) ? "_blank" : undefined} rel="noopener noreferrer">
                           <Button variant="ghost" size="icon" title="Open"><ArrowUpRight className="h-4 w-4" /></Button>
                         </a>
