@@ -98,6 +98,7 @@ function BossContactsPage() {
   const [editing, setEditing] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState({ label: "", phone: "", notes: "", linked_user_id: null as string | null });
   const [query, setQuery] = useState("");
+  const [matchIndex, setMatchIndex] = useState(0);
   const [draftLinked, setDraftLinked] = useState<ProfileLite | null>(null);
   const [editLinked, setEditLinked] = useState<ProfileLite | null>(null);
   const [profiles, setProfiles] = useState<Record<string, ProfileLite>>({});
@@ -220,14 +221,18 @@ function BossContactsPage() {
     });
   }, [items, query]);
 
-  const firstMatchId = query.trim() && filtered.length > 0 ? filtered[0].id : null;
-  const firstMatchRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => { setMatchIndex(0); }, [query]);
+  const activeMatchId =
+    query.trim() && filtered.length > 0
+      ? filtered[Math.min(matchIndex, filtered.length - 1)].id
+      : null;
+  const activeMatchRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    if (!firstMatchId) return;
-    const el = firstMatchRef.current;
+    if (!activeMatchId) return;
+    const el = activeMatchRef.current;
     if (!el) return;
     el.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [firstMatchId]);
+  }, [activeMatchId]);
 
   return (
     <div className="py-6 space-y-6">
@@ -270,6 +275,18 @@ function BossContactsPage() {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && filtered.length > 0) {
+                e.preventDefault();
+                setMatchIndex((i) =>
+                  filtered.length === 0
+                    ? 0
+                    : (Math.min(i, filtered.length - 1) +
+                        (e.shiftKey ? -1 + filtered.length : 1)) %
+                      filtered.length,
+                );
+              }
+            }}
             placeholder="Search by label, phone, or notes…"
             className="pl-9"
             aria-label="Search contacts"
@@ -287,7 +304,9 @@ function BossContactsPage() {
         </div>
         {query && (
           <div className="text-xs text-muted-foreground text-right">
-            {filtered.length} of {items.length}
+            {filtered.length > 0
+              ? `${Math.min(matchIndex, filtered.length - 1) + 1} / ${filtered.length} match${filtered.length === 1 ? "" : "es"} · press Enter for next`
+              : `0 of ${items.length}`}
           </div>
         )}
       </section>
@@ -301,13 +320,13 @@ function BossContactsPage() {
           <p className="text-sm text-muted-foreground">No contacts match your search.</p>
         )}
         {filtered.map((c) => {
-          const isFirstMatch = c.id === firstMatchId;
+          const isActiveMatch = c.id === activeMatchId;
           return (
           <div
             key={c.id}
-            ref={isFirstMatch ? firstMatchRef : undefined}
+            ref={isActiveMatch ? activeMatchRef : undefined}
             className={`rounded-xl border bg-card/60 p-3 transition-colors ${
-              isFirstMatch
+              isActiveMatch
                 ? "border-gold/70 ring-2 ring-gold/40 bg-gold/5"
                 : "border-border"
             }`}
