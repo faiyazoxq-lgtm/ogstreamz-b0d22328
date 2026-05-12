@@ -18,6 +18,8 @@ import { CoinsBulkPromoCard } from "@/components/CoinsBulkPromoCard";
 import { RealOgBundlesCard } from "@/components/RealOgBundlesCard";
 import { VaultLoginModal } from "@/components/VaultLoginModal";
 import { StreamLinkCard } from "@/components/StreamLinkCard";
+import { VerifyStreamAccessCard } from "@/components/VerifyStreamAccessCard";
+import { StreamStatusWidget } from "@/components/StreamStatusWidget";
 import { Flame } from "lucide-react";
 import { TrackingEye } from "@/components/TrackingEye";
 import { VipPortalExplorer } from "@/components/VipPortalExplorer";
@@ -142,6 +144,13 @@ function Index() {
       {showStreamConnect && (
         <section className="relative max-w-3xl mx-auto px-5 sm:px-8 -mt-2 pb-6">
           <StreamLinkCard />
+        </section>
+      )}
+
+      {user && (
+        <section className="relative max-w-3xl mx-auto px-5 sm:px-8 -mt-2 pb-6 space-y-4">
+          <StreamStatusWidget />
+          <VerifyStreamAccessCard signedIn={!!user} />
         </section>
       )}
 
