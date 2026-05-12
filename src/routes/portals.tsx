@@ -73,6 +73,20 @@ function PortalsHub() {
   const [filter, setFilter] = useState<"all" | Item["kind"]>("all");
   const [q, setQ] = useState("");
   const [qrFor, setQrFor] = useState<Item | null>(null);
+  // Per-hub visible-count state: MusicHUB / JokesHUB / ToolHUB paginate
+  // long lists so the page stays fast even with hundreds of portals.
+  const PAGE_SIZE = 12;
+  const PAGINATED_KINDS: Item["kind"][] = ["music", "joke", "tool"];
+  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({
+    music: PAGE_SIZE,
+    joke: PAGE_SIZE,
+    tool: PAGE_SIZE,
+  });
+  // Reset paging whenever the filter or search query changes so users don't
+  // see a misleading "Show more" hidden behind a tiny filtered set.
+  useEffect(() => {
+    setVisibleCounts({ music: PAGE_SIZE, joke: PAGE_SIZE, tool: PAGE_SIZE });
+  }, [filter, q]);
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 
   useEffect(() => {
@@ -318,6 +332,10 @@ function PortalsHub() {
             const hubItems = filtered.filter((i) => i.kind === hubKind);
             if (hubItems.length === 0) return null;
             const hubMeta = KIND_META[hubKind];
+            const paginated = PAGINATED_KINDS.includes(hubKind);
+            const visible = paginated ? (visibleCounts[hubKind] ?? PAGE_SIZE) : hubItems.length;
+            const shown = paginated ? hubItems.slice(0, visible) : hubItems;
+            const remaining = hubItems.length - shown.length;
             return (
               <section key={hubKind} aria-labelledby={`hub-${hubKind}`}>
                 <header className="mb-3 flex items-center gap-2">
@@ -330,11 +348,13 @@ function PortalsHub() {
                     {hubMeta.hub}
                   </h2>
                   <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                    {hubItems.length} portal{hubItems.length === 1 ? "" : "s"}
+                    {paginated && remaining > 0
+                      ? `${shown.length} of ${hubItems.length} portals`
+                      : `${hubItems.length} portal${hubItems.length === 1 ? "" : "s"}`}
                   </span>
                 </header>
                 <div className="grid gap-2.5 sm:gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] items-stretch">
-                  {hubItems.map((i) => {
+                  {shown.map((i) => {
             const meta = KIND_META[i.kind];
             const href = buildHref(i);
             return (
@@ -439,6 +459,27 @@ function PortalsHub() {
             );
           })}
                 </div>
+                {paginated && remaining > 0 && (
+                  <div className="mt-4 flex justify-center">
+                    <button
+                      onClick={() =>
+                        setVisibleCounts((prev) => ({
+                          ...prev,
+                          [hubKind]: (prev[hubKind] ?? PAGE_SIZE) + PAGE_SIZE,
+                        }))
+                      }
+                      className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-[11px] uppercase tracking-[0.2em] font-bold transition hover:-translate-y-0.5"
+                      style={{
+                        borderColor: `color-mix(in oklab, ${hubMeta.accent} 50%, transparent)`,
+                        color: hubMeta.accent,
+                        background: `color-mix(in oklab, ${hubMeta.accent} 8%, transparent)`,
+                      }}
+                    >
+                      Show {Math.min(PAGE_SIZE, remaining)} more
+                      <span className="opacity-60">({remaining} left)</span>
+                    </button>
+                  </div>
+                )}
               </section>
             );
           })}
