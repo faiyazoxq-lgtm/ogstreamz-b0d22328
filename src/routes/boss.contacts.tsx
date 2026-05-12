@@ -101,6 +101,7 @@ function BossContactsPage() {
   const [matchIndex, setMatchIndex] = useState(0);
   const [escapeAnnouncement, setEscapeAnnouncement] = useState("");
   const [highlightAnnouncement, setHighlightAnnouncement] = useState("");
+  const [noMatchAnnouncement, setNoMatchAnnouncement] = useState("");
   const [draftLinked, setDraftLinked] = useState<ProfileLite | null>(null);
   const [editLinked, setEditLinked] = useState<ProfileLite | null>(null);
   const [profiles, setProfiles] = useState<Record<string, ProfileLite>>({});
@@ -264,6 +265,22 @@ function BossContactsPage() {
     return () => clearTimeout(t);
   }, [matchIndex, activeMatchId, filtered, query]);
 
+  // Announce when a search returns zero matches.
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) {
+      setNoMatchAnnouncement("");
+      return;
+    }
+    if (filtered.length === 0 && items.length > 0) {
+      const msg = `No contacts match “${q}” out of ${items.length}.`;
+      setNoMatchAnnouncement("");
+      const t = setTimeout(() => setNoMatchAnnouncement(msg), 30);
+      return () => clearTimeout(t);
+    }
+    setNoMatchAnnouncement("");
+  }, [query, filtered.length, items.length]);
+
   return (
     <div className="py-6 space-y-6">
       <header className="flex items-center gap-2">
@@ -367,6 +384,9 @@ function BossContactsPage() {
         </div>
         <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
           {highlightAnnouncement}
+        </div>
+        <div className="sr-only" role="alert" aria-live="assertive" aria-atomic="true">
+          {noMatchAnnouncement}
         </div>
         <div
           id="boss-contacts-search-status"
