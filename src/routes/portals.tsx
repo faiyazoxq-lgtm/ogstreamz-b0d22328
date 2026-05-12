@@ -182,11 +182,11 @@ function PortalsHub() {
   const { filter, scope, q } = Route.useSearch();
   const navigate = useNavigate({ from: "/portals" });
   const setFilter = (v: PortalsSearch["filter"]) =>
-    navigate({ search: (prev) => ({ ...prev, filter: v }), replace: true });
+    navigate({ search: (prev: PortalsSearch) => ({ ...prev, filter: v }), replace: true });
   const setScope = (v: PortalsSearch["scope"]) =>
-    navigate({ search: (prev) => ({ ...prev, scope: v }), replace: true });
+    navigate({ search: (prev: PortalsSearch) => ({ ...prev, scope: v }), replace: true });
   const setQ = (v: string) =>
-    navigate({ search: (prev) => ({ ...prev, q: v }), replace: true });
+    navigate({ search: (prev: PortalsSearch) => ({ ...prev, q: v }), replace: true });
   const [qrFor, setQrFor] = useState<Item | null>(null);
   // Per-hub visible-count state: MusicHUB / JokesHUB / ToolHUB paginate
   // long lists so the page stays fast even with hundreds of portals.
