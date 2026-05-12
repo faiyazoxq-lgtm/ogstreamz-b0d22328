@@ -296,3 +296,69 @@ function PortalTile({
     </div>
   );
 }
+
+function CloneBanner({
+  clone, accent,
+}: {
+  clone: CloneResult | { kind: "pending" };
+  accent: string;
+}) {
+  if ("kind" in clone && (clone as any).kind === "pending") {
+    return (
+      <p className="flex items-center gap-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-xs text-muted-foreground">
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        Crafting your VIP clone…
+      </p>
+    );
+  }
+  const c = clone as CloneResult;
+  if (!("ok" in c)) return null;
+  if (c.ok) {
+    return (
+      <div
+        className="rounded-lg border px-3 py-3 text-xs"
+        style={{ borderColor: `${accent}66`, background: `${accent}10`, color: accent }}
+      >
+        <p className="flex items-center gap-2 font-bold uppercase tracking-[0.2em]">
+          <SparklesIcon className="h-3.5 w-3.5" /> VIP perk unlocked
+        </p>
+        <p className="mt-1 text-foreground/90">
+          We minted <strong>{c.name}</strong> — a clone tuned to your bio. Ready when you are.
+        </p>
+        <Link
+          to={`${c.prefix}${c.slug}` as any}
+          className="portal-button-motion portal-button-motion--lg mt-3 w-full inline-flex items-center justify-center gap-2 font-black uppercase tracking-[0.2em] text-[11px] text-black border-2"
+          style={{ background: accent, borderColor: accent }}
+        >
+          <SparklesIcon className="h-3.5 w-3.5" /> Open my clone
+        </Link>
+      </div>
+    );
+  }
+  if (c.reason === "no_bio") {
+    return (
+      <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-3 text-xs text-amber-100">
+        <p className="flex items-center gap-2 font-bold uppercase tracking-[0.2em]">
+          <UserPlus className="h-3.5 w-3.5" /> Add a bio to claim your clone
+        </p>
+        <p className="mt-1 text-amber-100/90">
+          VIPs get a personalised clone of every portal they buy — but we need a bio
+          to tune it to you. Add one to your profile card.
+        </p>
+        <Link
+          to="/profile"
+          className="portal-button-motion portal-button-motion--lg mt-3 w-full inline-flex items-center justify-center gap-2 font-black uppercase tracking-[0.2em] text-[11px] text-black border-2"
+          style={{ background: "#fbbf24", borderColor: "#fbbf24" }}
+        >
+          <UserPlus className="h-3.5 w-3.5" /> Add bio in profile
+        </Link>
+      </div>
+    );
+  }
+  if (c.reason === "not_vip") return null;
+  return (
+    <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
+      Couldn't create your VIP clone: {c.message ?? c.reason}
+    </p>
+  );
+}
