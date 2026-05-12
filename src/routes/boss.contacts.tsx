@@ -102,6 +102,7 @@ function BossContactsPage() {
   const [escapeAnnouncement, setEscapeAnnouncement] = useState("");
   const [highlightAnnouncement, setHighlightAnnouncement] = useState("");
   const [noMatchAnnouncement, setNoMatchAnnouncement] = useState("");
+  const [restoreAnnouncement, setRestoreAnnouncement] = useState("");
   const [draftLinked, setDraftLinked] = useState<ProfileLite | null>(null);
   const [editLinked, setEditLinked] = useState<ProfileLite | null>(null);
   const [profiles, setProfiles] = useState<Record<string, ProfileLite>>({});
@@ -256,6 +257,10 @@ function BossContactsPage() {
       const idx = filtered.findIndex((c) => c.id === savedId);
       if (idx >= 0) {
         setMatchIndex(idx);
+        const c = filtered[idx];
+        const msg = `Restored previous match ${idx + 1} of ${filtered.length} for “${query.trim()}”: ${c.label}${c.phone ? `, ${c.phone}` : ""}.`;
+        setRestoreAnnouncement("");
+        setTimeout(() => setRestoreAnnouncement(msg), 30);
         return;
       }
       // Stale entry — drop it so we don't keep checking a missing contact.
@@ -451,6 +456,9 @@ function BossContactsPage() {
         </div>
         <div className="sr-only" role="alert" aria-live="assertive" aria-atomic="true">
           {noMatchAnnouncement}
+        </div>
+        <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+          {restoreAnnouncement}
         </div>
         <div
           id="boss-contacts-search-status"
