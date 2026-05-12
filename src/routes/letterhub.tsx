@@ -102,12 +102,41 @@ function LetterHubPage() {
 
   // ---- Autosave (localStorage) ----
   // Keyed by historyId ("new" for unsaved drafts) and user id so multiple
-  // accounts on the same browser don't clobber each other.
+  // accounts on the same browser don't clobber each other. We also persist
+  // the active historyId in a sibling key so a refresh restores the user
+  // back to the same letter they were editing.
+  const activeKey = user ? `letterhub:active:${user.id}` : null;
   const autosaveKey = user ? `letterhub:draft:${user.id}:${historyId ?? "new"}` : null;
   const [restoredKey, setRestoredKey] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
 
-  // Restore on mount / when switching between drafts
+  // On first mount per user, rehydrate the last-active historyId so the
+  // autosave key resolves to the right draft slot.
+  useEffect(() => {
+    if (!activeKey || typeof window === "undefined") return;
+    if (historyId !== null) return;
+    try {
+      const raw = window.localStorage.getItem(activeKey);
+      if (raw) setHistoryId(raw);
+    } catch {
+      /* ignore */
+    }
+    // intentionally only runs when activeKey becomes available
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeKey]);
+
+  // Persist active historyId whenever it changes
+  useEffect(() => {
+    if (!activeKey || typeof window === "undefined") return;
+    try {
+      if (historyId) window.localStorage.setItem(activeKey, historyId);
+      else window.localStorage.removeItem(activeKey);
+    } catch {
+      /* ignore */
+    }
+  }, [activeKey, historyId]);
+
+  // Restore wizard state on mount / when switching draft slots
   useEffect(() => {
     if (!autosaveKey || typeof window === "undefined") return;
     if (restoredKey === autosaveKey) return;
