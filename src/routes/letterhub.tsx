@@ -215,8 +215,21 @@ function LetterHubPage() {
         };
         window.localStorage.setItem(autosaveKey, JSON.stringify(payload));
         setLastSavedAt(payload.savedAt);
-      } catch {
-        /* quota or serialization issue — silent */
+        toast.success("Auto-saved", {
+          id: "letterhub-autosave",
+          duration: 1200,
+          description: new Date(payload.savedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        });
+      } catch (err: any) {
+        const msg = String(err?.name || err?.message || "");
+        const quota = /quota|exceeded|NS_ERROR_DOM_QUOTA/i.test(msg);
+        toast.error(quota ? "Autosave failed — browser storage is full" : "Autosave failed", {
+          id: "letterhub-autosave",
+          duration: 4000,
+          description: quota
+            ? "Free up space or delete old drafts from your history to keep autosaving."
+            : "Your latest edits weren't saved locally. Use Save now to retry.",
+        });
       }
     }, 600);
     return () => window.clearTimeout(t);
