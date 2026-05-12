@@ -7,6 +7,7 @@ import { UserPlus, LogIn, Gift, ShieldCheck, Sparkles, Music2, Smile, Wrench, Za
 export const SIGNUP_BONUS_CREDITS = 2;
 import { useEffect, type ReactNode } from "react";
 import { useSignupBonus } from "@/hooks/use-signup-bonus";
+import { OgWordmark } from "@/components/OgWordmark";
 
 const PUBLIC_PATHS = ["/auth", "/forgot-password", "/reset-password"];
 
