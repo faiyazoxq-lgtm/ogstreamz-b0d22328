@@ -43,17 +43,17 @@ export const swearChat = createServerFn({ method: "POST" })
     const { data: vip, error: vipErr } = await supabase.rpc("has_active_vip", { _user: userId });
     if (vipErr) throw new Response("Unable to verify entitlement", { status: 500 });
     if (vip !== true) throw new Response("VIP / paid tier required", { status: 403 });
-    // Read the user's master Swearing toggle. ON ⇒ layer CHAOS_SYS on top
-    // of the base persona for a noticeably more unhinged reply.
+    // Read the user's master Swearing toggle + Chaos Mode opt-in. Chaos
+    // Mode requires BOTH the master Swearing toggle ON *and* the dedicated
+    // chaos_mode flag set from the swearing settings screen.
     const { data: prof } = await supabase
       .from("profiles")
       .select("feature_flags")
       .eq("id", userId)
       .maybeSingle();
     const flags = (prof?.feature_flags ?? {}) as Record<string, unknown>;
-    // Default ON — matches the client's effectiveSwearing() default so the
-    // tone stays consistent if the flag is unset.
-    const chaosOn = flags.swearing !== false;
+    const swearingOn = flags.swearing !== false; // default ON for VIPs
+    const chaosOn = swearingOn && flags.chaos_mode === true;
     const systemPrompt = chaosOn ? `${SYS}\n\n${CHAOS_SYS}` : SYS;
     // Route through the Shapes API "swearing agent" — its persona owns the
     // foul-mouth tone; we still enforce profanity rules below as a backstop.
