@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Sparkles, FileDown, Loader2, ArrowRight, ArrowLeft, RotateCcw, Mail, History, Trash2, FileText } from "lucide-react";
+import { Sparkles, FileDown, Loader2, ArrowRight, ArrowLeft, RotateCcw, Mail, History, Trash2, FileText, Wand2, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +16,7 @@ import {
   listLetterHistory,
   getLetterHistory,
   deleteLetterHistory,
+  suggestLetterAnswer,
   type LetterInput,
 } from "@/lib/letter.functions";
 import { toast } from "sonner";
@@ -81,6 +82,7 @@ function LetterHubPage() {
   const listHistoryFn = useServerFn(listLetterHistory);
   const getHistoryFn = useServerFn(getLetterHistory);
   const deleteHistoryFn = useServerFn(deleteLetterHistory);
+  const suggestFn = useServerFn(suggestLetterAnswer);
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [form, setForm] = useState<LetterInput>(EMPTY);
@@ -93,6 +95,8 @@ function LetterHubPage() {
   const [history, setHistory] = useState<Array<{ id: string; title: string; created_at: string; updated_at: string; preview: string }>>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [savingHistory, setSavingHistory] = useState(false);
+  const [suggestingIdx, setSuggestingIdx] = useState<number | null>(null);
+  const [touched, setTouched] = useState<Record<number, boolean>>({});
 
   const refreshHistory = useCallback(async () => {
     if (!user) return;
@@ -121,6 +125,7 @@ function LetterHubPage() {
     setLetter("");
     setStep(1);
     setHistoryId(null);
+    setTouched({});
   };
 
   const canStep2 = form.issue && form.subIssue.trim() && form.format && form.tone && form.audience;
