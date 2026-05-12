@@ -9,6 +9,7 @@ import { useDownloadCharge } from "@/hooks/use-download-charge";
 import { peekPortalDownload } from "@/lib/portal-downloads.functions";
 import { cloneHubPortalForMe, type CloneResult } from "@/lib/portal-clone.functions";
 import { CoinPurchaseModal, type CoinPurchaseStatus } from "@/components/CoinPurchaseModal";
+import { Loader2, Sparkles as SparklesIcon, UserPlus } from "lucide-react";
 
 /**
  * Locked layout for boss-built custom hubs. Same typography, padding, and
