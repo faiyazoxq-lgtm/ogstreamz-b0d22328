@@ -10,11 +10,11 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { runPowerPack, listMyPowerPacks } from "@/lib/power-pack.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { requireBoss, requireTelegramLink } from "@/lib/route-guards";
+import { requireBossHub, requireTelegramLink } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/syndicate")({
   beforeLoad: async (ctx) => {
-    await requireBoss(ctx);
+    await requireBossHub(ctx);
     await requireTelegramLink(ctx);
   },
   head: () => ({

@@ -17,7 +17,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
-import { requireBoss } from "@/lib/route-guards";
+import { requireBossHub } from "@/lib/route-guards";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -101,7 +101,7 @@ const FIELD_SELECT = "h-11 bg-black/70 border-2 border-emerald-800/50 text-emera
 const PRIMARY_BTN = "h-11 text-base font-black tracking-wider uppercase shadow-lg";
 
 export const Route = createFileRoute("/syndicate-overlord")({
-  beforeLoad: requireBoss,
+  beforeLoad: requireBossHub,
   head: () => ({ meta: [{ title: "Boss Control Center · 0G-PORTAL" }] }),
   component: OverlordPage,
 });
