@@ -1634,6 +1634,36 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_use_audit: {
+        Row: {
+          cost: number
+          created_at: string
+          free: boolean
+          id: string
+          portal_id: string | null
+          portal_slug: string
+          user_id: string
+        }
+        Insert: {
+          cost?: number
+          created_at?: string
+          free?: boolean
+          id?: string
+          portal_id?: string | null
+          portal_slug: string
+          user_id: string
+        }
+        Update: {
+          cost?: number
+          created_at?: string
+          free?: boolean
+          id?: string
+          portal_id?: string | null
+          portal_slug?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       portal_view_events: {
         Row: {
           country: string | null
