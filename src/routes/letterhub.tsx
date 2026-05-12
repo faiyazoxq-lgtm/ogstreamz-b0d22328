@@ -100,6 +100,22 @@ function LetterHubPage() {
   const [touched, setTouched] = useState<Record<number, boolean>>({});
   const [previewMode, setPreviewMode] = useState<"preview" | "edit" | "split">("preview");
 
+  // When reopening a saved letter, the local autosaved draft for that slot
+  // may differ from what's in the database. Prompt the user to choose.
+  type LocalDraft = {
+    form?: LetterInput;
+    questions?: string[];
+    answers?: Record<number, string>;
+    letter?: string;
+    step?: 1 | 2 | 3 | 4;
+    savedAt?: number;
+  };
+  const [conflict, setConflict] = useState<null | {
+    id: string;
+    dbRow: any;
+    local: LocalDraft;
+  }>(null);
+
   // ---- Autosave (localStorage) ----
   // Keyed by historyId ("new" for unsaved drafts) and user id so multiple
   // accounts on the same browser don't clobber each other. We also persist
@@ -333,24 +349,75 @@ function LetterHubPage() {
         return;
       }
       const r = res.row;
-      setForm({ ...EMPTY, ...r.inputs });
-      setQuestions(Array.isArray(r.questions) ? r.questions : []);
-      const ansObj: Record<number, string> = {};
-      Object.entries(r.answers || {}).forEach(([k, v]) => {
-        const idx = Number(k);
-        if (Number.isFinite(idx)) ansObj[idx] = String(v ?? "");
-      });
-      setAnswers(ansObj);
-      setLetter(r.letter || "");
-      setHistoryId(r.id);
-      setStep(r.letter ? 4 : 2);
-      // Mark this slot as already restored so the restore effect doesn't
-      // overwrite the freshly loaded DB data with a stale local draft.
-      if (user) setRestoredKey(`letterhub:draft:${user.id}:${r.id}`);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      // Look for a local autosaved draft for this slot and compare.
+      let local: LocalDraft | null = null;
+      if (typeof window !== "undefined") {
+        try {
+          const raw = window.localStorage.getItem(`letterhub:draft:${user.id}:${id}`);
+          if (raw) local = JSON.parse(raw) as LocalDraft;
+        } catch {
+          local = null;
+        }
+      }
+      if (local && draftDiffersFromRow(local, r)) {
+        setConflict({ id: r.id, dbRow: r, local });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      applyDbRow(r);
     } finally {
       setLoading(false);
     }
+  };
+
+  const applyDbRow = (r: any) => {
+    setForm({ ...EMPTY, ...r.inputs });
+    setQuestions(Array.isArray(r.questions) ? r.questions : []);
+    const ansObj: Record<number, string> = {};
+    Object.entries(r.answers || {}).forEach(([k, v]) => {
+      const idx = Number(k);
+      if (Number.isFinite(idx)) ansObj[idx] = String(v ?? "");
+    });
+    setAnswers(ansObj);
+    setLetter(r.letter || "");
+    setHistoryId(r.id);
+    setStep(r.letter ? 4 : 2);
+    if (user) setRestoredKey(`letterhub:draft:${user.id}:${r.id}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const applyLocalDraft = (id: string, local: LocalDraft) => {
+    if (local.form) setForm({ ...EMPTY, ...local.form });
+    setQuestions(Array.isArray(local.questions) ? local.questions : []);
+    const ansObj: Record<number, string> = {};
+    Object.entries(local.answers || {}).forEach(([k, v]) => {
+      const idx = Number(k);
+      if (Number.isFinite(idx)) ansObj[idx] = String(v ?? "");
+    });
+    setAnswers(ansObj);
+    setLetter(typeof local.letter === "string" ? local.letter : "");
+    setHistoryId(id);
+    setStep(local.step ?? (local.letter ? 4 : 2));
+    if (local.savedAt) setLastSavedAt(local.savedAt);
+    if (user) setRestoredKey(`letterhub:draft:${user.id}:${id}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const draftDiffersFromRow = (local: LocalDraft, r: any): boolean => {
+    const norm = (s: unknown) => String(s ?? "").trim();
+    if (norm(local.letter) !== norm(r.letter)) return true;
+    const lf = { ...EMPTY, ...(local.form || {}) };
+    const rf = { ...EMPTY, ...(r.inputs || {}) };
+    for (const k of Object.keys(EMPTY) as (keyof LetterInput)[]) {
+      if (norm(lf[k]) !== norm(rf[k])) return true;
+    }
+    const la = local.answers || {};
+    const ra = r.answers || {};
+    const keys = new Set([...Object.keys(la), ...Object.keys(ra)]);
+    for (const k of keys) {
+      if (norm((la as any)[k]) !== norm((ra as any)[k])) return true;
+    }
+    return false;
   };
 
   const removeHistory = async (id: string) => {
@@ -472,6 +539,77 @@ function LetterHubPage() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 animate-fade-in">
+      {conflict && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="letterhub-conflict-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+        >
+          <div className="w-full max-w-lg rounded-2xl border border-[oklch(0.72_0.22_245/0.5)] bg-card shadow-[0_0_80px_oklch(0.72_0.22_245/0.25)] p-5">
+            <h2 id="letterhub-conflict-title" className="text-base font-black uppercase tracking-[0.2em] text-white">
+              Two versions found
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              You have unsaved local edits for this letter that differ from the saved version.
+              Which one do you want to continue with?
+            </p>
+            <div className="mt-4 grid sm:grid-cols-2 gap-3 text-xs">
+              <div className="rounded-xl border border-border bg-background/40 p-3">
+                <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">Saved version</div>
+                <div className="text-white/90">
+                  Updated {new Date(conflict.dbRow.updated_at).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
+                </div>
+                <p className="mt-1 line-clamp-3 text-muted-foreground">
+                  {String(conflict.dbRow.letter || "(no letter yet)").slice(0, 200)}
+                </p>
+              </div>
+              <div className="rounded-xl border border-[oklch(0.72_0.22_245/0.5)] bg-[oklch(0.72_0.22_245/0.06)] p-3">
+                <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">Local autosave</div>
+                <div className="text-white/90">
+                  {conflict.local.savedAt
+                    ? `Auto-saved ${new Date(conflict.local.savedAt).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}`
+                    : "On this device"}
+                </div>
+                <p className="mt-1 line-clamp-3 text-muted-foreground">
+                  {String(conflict.local.letter || "(no letter yet)").slice(0, 200)}
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // Discard local, use DB. Clear the local draft so it doesn't
+                  // re-trigger the prompt next time.
+                  if (user && typeof window !== "undefined") {
+                    try { window.localStorage.removeItem(`letterhub:draft:${user.id}:${conflict.id}`); } catch { /* ignore */ }
+                  }
+                  const dbRow = conflict.dbRow;
+                  setConflict(null);
+                  applyDbRow(dbRow);
+                  toast.success("Loaded saved version");
+                }}
+                className="uppercase tracking-[0.2em] font-black text-xs"
+              >
+                Use saved
+              </Button>
+              <Button
+                onClick={() => {
+                  const { id, local } = conflict;
+                  setConflict(null);
+                  applyLocalDraft(id, local);
+                  toast.success("Restored local draft");
+                }}
+                className="btn-glass-blue uppercase tracking-[0.2em] font-black text-xs"
+              >
+                Use local draft
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="mb-6">
         <div className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.72_0.22_245/0.5)] bg-[oklch(0.72_0.22_245/0.12)] px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: "var(--neon-blue-bright)" }}>
           <Mail className="h-3.5 w-3.5" /> LetterHUB
