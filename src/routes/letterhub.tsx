@@ -646,12 +646,71 @@ function LetterHubPage() {
                     </Button>
                   </div>
                 </div>
-                <pre className="whitespace-pre-wrap font-serif text-sm leading-relaxed bg-background/60 border border-border rounded-xl p-4 max-h-[60vh] overflow-y-auto">
-                  {letter}
-                </pre>
-                <p className="text-[11px] text-muted-foreground">
-                  Review carefully and add any final personal touches before sending.
-                </p>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <p className="text-[11px] text-muted-foreground">
+                    Live preview matches the PDF. Edits update instantly and are included in the download.
+                  </p>
+                  <div role="tablist" aria-label="Letter view" className="inline-flex rounded-lg border border-border bg-background/40 p-0.5 text-[10px] font-black uppercase tracking-[0.2em]">
+                    {([
+                      ["preview", "Preview", Eye],
+                      ["split", "Split", Columns2],
+                      ["edit", "Edit", Pencil],
+                    ] as const).map(([key, label, Icon]) => (
+                      <button
+                        key={key}
+                        role="tab"
+                        aria-selected={previewMode === key}
+                        onClick={() => setPreviewMode(key)}
+                        className={
+                          "inline-flex items-center gap-1 px-2.5 py-1 rounded-md transition-colors " +
+                          (previewMode === key
+                            ? "bg-[oklch(0.72_0.22_245/0.25)] text-white"
+                            : "text-muted-foreground hover:text-white")
+                        }
+                      >
+                        <Icon className="h-3 w-3" /> {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div
+                  className={
+                    "grid gap-4 " +
+                    (previewMode === "split" ? "lg:grid-cols-2" : "grid-cols-1")
+                  }
+                >
+                  {(previewMode === "edit" || previewMode === "split") && (
+                    <div className="flex flex-col">
+                      <Label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-1">Editable draft</Label>
+                      <Textarea
+                        value={letter}
+                        onChange={(e) => setLetter(e.target.value)}
+                        maxLength={20000}
+                        spellCheck
+                        className="bg-background/60 min-h-[60vh] font-mono text-sm leading-relaxed"
+                        aria-label="Letter draft editor"
+                      />
+                      <div className="mt-1 text-[11px] text-muted-foreground tabular-nums text-right">
+                        {letter.trim().split(/\s+/).filter(Boolean).length} words · {letter.length} chars
+                      </div>
+                    </div>
+                  )}
+                  {(previewMode === "preview" || previewMode === "split") && (
+                    <div className="flex flex-col items-center">
+                      <Label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-1 self-start">PDF preview · A4</Label>
+                      <div className="relative w-full max-w-[640px] aspect-[1/1.414] bg-[#f7f3ea] text-[#1a1a1a] rounded-md shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)] overflow-hidden border border-black/10">
+                        <div className="absolute inset-0 overflow-y-auto px-[8%] py-[7%]">
+                          <pre className="whitespace-pre-wrap font-serif text-[11.5px] leading-[1.55] m-0">
+                            {letter || "Your generated letter will appear here…"}
+                          </pre>
+                          <div className="mt-6 pt-3 border-t border-black/10 text-[8px] text-black/50 italic font-serif">
+                            Drafted via LetterHUB · 0G-STREAMZ. Review carefully before sending.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
