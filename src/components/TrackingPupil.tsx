@@ -93,11 +93,13 @@ export function TrackingPupil({
         height: `${pupilRatio * 400}%`,
         transform: `translate(calc(-50% + ${pupil.x}px), calc(-50% + ${pupil.y}px)) scaleY(${blink ? 0.1 : 1})`,
         transformOrigin: "center",
+        // Bloodshot blue pupil: cold-blue core fading to a faint red bloodshot
+        // halo so it reads as an electric-iris over the artwork's red pearl.
         background:
-          "radial-gradient(ellipse at 50% 50%, #050000 0%, #0a0000 55%, rgba(40,0,0,0) 100%)",
+          "radial-gradient(ellipse at 50% 45%, #cfe9ff 0%, #4ea8ff 22%, #0a3a8a 55%, rgba(8,18,60,0) 100%)",
         borderRadius: "45% / 50%",
         boxShadow:
-          "0 0 0.35em 0.05em rgba(255,90,0,0.55), 0 0 0.9em 0.15em rgba(255,40,0,0.35), inset 0 0 0.25em rgba(0,0,0,0.95)",
+          "0 0 0.3em 0.04em rgba(150,210,255,0.85), 0 0 0.8em 0.14em rgba(40,120,255,0.55), 0 0 1.4em 0.25em rgba(255,40,60,0.35), inset 0 0 0.22em rgba(255,255,255,0.6)",
         willChange: "transform",
         ...style,
       }}
