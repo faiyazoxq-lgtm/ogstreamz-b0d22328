@@ -43,7 +43,7 @@ const MEMBER_ITEMS: QuickItem[] = [
  * Mobile-first bottom sheet for fast navigation between portals & member areas.
  * Renders a floating trigger pinned above the BottomDock on small screens.
  */
-export function QuickJumpDrawer({ user, isBoss = false }: { user: boolean; isBoss?: boolean }) {
+export function QuickJumpDrawer({ user, isBoss = false, isVip = false }: { user: boolean; isBoss?: boolean; isVip?: boolean }) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"portals" | "member">("portals");
   const [pendingTo, setPendingTo] = useState<string | null>(null);
@@ -51,11 +51,13 @@ export function QuickJumpDrawer({ user, isBoss = false }: { user: boolean; isBos
   // member shortcuts directly and the Portals tab is hidden.
   const portalItems = isBoss ? PORTAL_ITEMS : [];
   const effectiveTab = isBoss ? tab : "member";
+  // VIP users don't need the "Get VIP" tile — they already have it.
+  const memberItems = isVip ? MEMBER_ITEMS.filter((i) => i.to !== "/vip") : MEMBER_ITEMS;
   const items = !user
     ? portalItems
     : effectiveTab === "portals"
       ? portalItems
-      : MEMBER_ITEMS;
+      : memberItems;
 
   const isNavigating = useRouterState({
     select: (s) => s.isLoading || s.isTransitioning,
