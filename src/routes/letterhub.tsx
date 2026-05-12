@@ -100,6 +100,100 @@ function LetterHubPage() {
   const [touched, setTouched] = useState<Record<number, boolean>>({});
   const [previewMode, setPreviewMode] = useState<"preview" | "edit" | "split">("preview");
 
+  // ---- Autosave (localStorage) ----
+  // Keyed by historyId ("new" for unsaved drafts) and user id so multiple
+  // accounts on the same browser don't clobber each other. We also persist
+  // the active historyId in a sibling key so a refresh restores the user
+  // back to the same letter they were editing.
+  const activeKey = user ? `letterhub:active:${user.id}` : null;
+  const autosaveKey = user ? `letterhub:draft:${user.id}:${historyId ?? "new"}` : null;
+  const [restoredKey, setRestoredKey] = useState<string | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+
+  // On first mount per user, rehydrate the last-active historyId so the
+  // autosave key resolves to the right draft slot.
+  useEffect(() => {
+    if (!activeKey || typeof window === "undefined") return;
+    if (historyId !== null) return;
+    try {
+      const raw = window.localStorage.getItem(activeKey);
+      if (raw) setHistoryId(raw);
+    } catch {
+      /* ignore */
+    }
+    // intentionally only runs when activeKey becomes available
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeKey]);
+
+  // Persist active historyId whenever it changes
+  useEffect(() => {
+    if (!activeKey || typeof window === "undefined") return;
+    try {
+      if (historyId) window.localStorage.setItem(activeKey, historyId);
+      else window.localStorage.removeItem(activeKey);
+    } catch {
+      /* ignore */
+    }
+  }, [activeKey, historyId]);
+
+  // Restore wizard state on mount / when switching draft slots
+  useEffect(() => {
+    if (!autosaveKey || typeof window === "undefined") return;
+    if (restoredKey === autosaveKey) return;
+    try {
+      const raw = window.localStorage.getItem(autosaveKey);
+      if (raw) {
+        const saved = JSON.parse(raw) as {
+          form?: LetterInput;
+          questions?: string[];
+          answers?: Record<number, string>;
+          letter?: string;
+          step?: 1 | 2 | 3 | 4;
+          savedAt?: number;
+        };
+        if (saved.form) setForm((f) => ({ ...f, ...saved.form }));
+        if (Array.isArray(saved.questions)) setQuestions(saved.questions);
+        if (saved.answers && typeof saved.answers === "object") {
+          const ans: Record<number, string> = {};
+          Object.entries(saved.answers).forEach(([k, v]) => {
+            const i = Number(k);
+            if (Number.isFinite(i)) ans[i] = String(v ?? "");
+          });
+          setAnswers(ans);
+        }
+        if (typeof saved.letter === "string") setLetter(saved.letter);
+        if (saved.step) setStep(saved.step);
+        if (saved.savedAt) setLastSavedAt(saved.savedAt);
+      }
+    } catch {
+      /* ignore corrupt drafts */
+    }
+    setRestoredKey(autosaveKey);
+  }, [autosaveKey, restoredKey]);
+
+  // Debounced persist on every change
+  useEffect(() => {
+    if (!autosaveKey || typeof window === "undefined") return;
+    if (restoredKey !== autosaveKey) return; // don't overwrite before restore
+    const t = window.setTimeout(() => {
+      try {
+        const payload = {
+          form,
+          questions,
+          answers,
+          letter,
+          step,
+          savedAt: Date.now(),
+        };
+        window.localStorage.setItem(autosaveKey, JSON.stringify(payload));
+        setLastSavedAt(payload.savedAt);
+      } catch {
+        /* quota or serialization issue — silent */
+      }
+    }, 600);
+    return () => window.clearTimeout(t);
+  }, [autosaveKey, restoredKey, form, questions, answers, letter, step]);
+
   const refreshHistory = useCallback(async () => {
     if (!user) return;
     setHistoryLoading(true);
@@ -121,6 +215,9 @@ function LetterHubPage() {
     setForm((f) => ({ ...f, [k]: v }));
 
   const reset = () => {
+    if (autosaveKey && typeof window !== "undefined") {
+      try { window.localStorage.removeItem(autosaveKey); } catch { /* ignore */ }
+    }
     setForm(EMPTY);
     setQuestions([]);
     setAnswers({});
@@ -128,6 +225,8 @@ function LetterHubPage() {
     setStep(1);
     setHistoryId(null);
     setTouched({});
+    setLastSavedAt(null);
+    setRestoredKey(null);
   };
 
   const canStep2 = form.issue && form.subIssue.trim() && form.format && form.tone && form.audience;
@@ -245,6 +344,9 @@ function LetterHubPage() {
       setLetter(r.letter || "");
       setHistoryId(r.id);
       setStep(r.letter ? 4 : 2);
+      // Mark this slot as already restored so the restore effect doesn't
+      // overwrite the freshly loaded DB data with a stale local draft.
+      if (user) setRestoredKey(`letterhub:draft:${user.id}:${r.id}`);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setLoading(false);
@@ -257,6 +359,9 @@ function LetterHubPage() {
     if (!res.ok) {
       toast.error(res.error || "Delete failed");
       return;
+    }
+    if (user && typeof window !== "undefined") {
+      try { window.localStorage.removeItem(`letterhub:draft:${user.id}:${id}`); } catch { /* ignore */ }
     }
     if (historyId === id) setHistoryId(null);
     setHistory((h) => h.filter((x) => x.id !== id));
@@ -681,7 +786,14 @@ function LetterHubPage() {
             {letter && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-lg font-black uppercase tracking-[0.2em]">Draft Letter</h2>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h2 className="text-lg font-black uppercase tracking-[0.2em]">Draft Letter</h2>
+                    {lastSavedAt && (
+                      <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                        Auto-saved {new Date(lastSavedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    )}
+                  </div>
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={reset} className="uppercase tracking-[0.2em] font-black text-xs">
                       <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> New
