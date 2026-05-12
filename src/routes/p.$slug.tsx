@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Lock, Loader2, Radio, BadgeCheck, Send, Crown, Satellite, RefreshCw, ExternalLink, Gauge, TrendingUp, TrendingDown, Activity, Calculator, Sparkles, Mail, Copy, Share2, X } from "lucide-react";
 import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
@@ -8,6 +8,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { createPortalUnlockCheckout, getPortalUnlockStatus } from "@/lib/portals.functions";
+import { chargePortalUse } from "@/lib/portal-use.functions";
 import { refreshNewsScout, type NewsScoutMeta, type NewsArticle } from "@/lib/news.functions";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
@@ -51,6 +52,7 @@ type Portal = {
   theme_config: ThemeConfig;
   kind: string;
   scout_meta: { sources?: string[]; headlines?: string[] };
+  use_credit_cost?: number;
   telegram_config: {
     groupLink?: string | null;
     vipLink?: string | null;
@@ -66,7 +68,7 @@ export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals")
-      .select("id, slug, name, niche, language, vibe, theme, jokes, music_hooks, trade_briefs, connect_openers, tool_ideas, vip, price_cents, theme_config, scout_meta, telegram_config, kind, audio_snippet_url, bg_video_url, bg_video_aspect, swear_chat_enabled")
+      .select("id, slug, name, niche, language, vibe, theme, jokes, music_hooks, trade_briefs, connect_openers, tool_ideas, vip, price_cents, theme_config, scout_meta, telegram_config, kind, audio_snippet_url, bg_video_url, bg_video_aspect, swear_chat_enabled, use_credit_cost")
       .eq("slug", params.slug)
       .maybeSingle();
     if (error) throw new Error(error.message);
