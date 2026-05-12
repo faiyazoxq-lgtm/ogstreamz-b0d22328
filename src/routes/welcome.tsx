@@ -10,13 +10,13 @@ import { SiteGuideSwearChat } from "@/components/SiteGuideSwearChat";
 export const Route = createFileRoute("/welcome")({
   head: () => ({
     meta: [
-      { title: "Welcome · Login or sign up — 0G-PORTAL" },
+      { title: "Welcome · Login / sign up — 0G-PORTAL" },
       {
         name: "description",
         content:
-          "Login or sign up to The HUB, your Dashboard, or the full 0G-PORTAL universe.",
+          "Login / sign up to The HUB, your Dashboard, or the full 0G-PORTAL universe.",
       },
-      { property: "og:title", content: "Welcome · Login or sign up — 0G-PORTAL" },
+      { property: "og:title", content: "Welcome · Login / sign up — 0G-PORTAL" },
       {
         property: "og:description",
         content: "Three doors. One Syndicate. Pick your entry point.",
