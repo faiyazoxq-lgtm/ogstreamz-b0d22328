@@ -32,6 +32,7 @@ type CsvRow = {
   sort_order: number;
   _line: number;
   _error?: string;
+  _duplicate?: string;
 };
 
 /** Tiny CSV parser. Handles quoted fields, escaped quotes, comma OR semicolon. */
@@ -112,6 +113,27 @@ function mapCsvRows(rows: string[][]): CsvRow[] {
   });
 }
 
+/** Annotate rows that collide with existing pool rows or earlier CSV rows. */
+function annotateDuplicates(csv: CsvRow[], existing: VipPassPoolRow[]): CsvRow[] {
+  const existingUsers = new Set(existing.filter((r) => r.username).map((r) => r.username.toLowerCase()));
+  const existingCodes = new Set(existing.filter((r) => r.code).map((r) => r.code.toLowerCase()));
+  const seenUsers = new Set<string>();
+  const seenCodes = new Set<string>();
+  return csv.map((r) => {
+    const next: CsvRow = { ...r, _duplicate: undefined };
+    if (next._error) return next;
+    const u = next.username.toLowerCase();
+    const c = next.code.toLowerCase();
+    if (u && existingUsers.has(u)) next._duplicate = `Username "${next.username}" exists`;
+    else if (c && existingCodes.has(c)) next._duplicate = `Code already in pool`;
+    else if (u && seenUsers.has(u)) next._duplicate = `Duplicate username in CSV`;
+    else if (c && seenCodes.has(c)) next._duplicate = `Duplicate code in CSV`;
+    if (u) seenUsers.add(u);
+    if (c) seenCodes.add(c);
+    return next;
+  });
+}
+
 /** Boss-only: manage the VIP Pass Pool that gets randomly served to OGs. */
 export function VipPassPoolAdmin() {
   const list = useServerFn(listVipPassPool);
@@ -128,6 +150,7 @@ export function VipPassPoolAdmin() {
   const [csvRows, setCsvRows] = useState<CsvRow[]>([]);
   const [csvFileName, setCsvFileName] = useState<string>("");
   const [importProgress, setImportProgress] = useState<{ done: number; total: number } | null>(null);
+  const [skipDuplicates, setSkipDuplicates] = useState(true);
 
   const refresh = async () => {
     setLoading(true);
@@ -147,19 +170,20 @@ export function VipPassPoolAdmin() {
     try {
       const text = await file.text();
       const parsed = parseCsv(text);
-      const mapped = mapCsvRows(parsed);
+      const mapped = annotateDuplicates(mapCsvRows(parsed), rows);
       if (mapped.length === 0) return toast.error("No rows found in CSV");
       setCsvRows(mapped);
       setCsvFileName(file.name);
-      const valid = mapped.filter((r) => !r._error).length;
-      toast.success(`Parsed ${mapped.length} row${mapped.length === 1 ? "" : "s"} · ${valid} ready`);
+      const valid = mapped.filter((r) => !r._error && !r._duplicate).length;
+      const dupes = mapped.filter((r) => r._duplicate).length;
+      toast.success(`Parsed ${mapped.length} row${mapped.length === 1 ? "" : "s"} · ${valid} ready${dupes ? ` · ${dupes} duplicate${dupes === 1 ? "" : "s"}` : ""}`);
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to read CSV");
     }
   };
 
   const importCsv = async () => {
-    const valid = csvRows.filter((r) => !r._error);
+    const valid = csvRows.filter((r) => !r._error && (skipDuplicates ? !r._duplicate : true));
     if (valid.length === 0) return toast.error("No valid rows to import");
     setBusy(true);
     setImportProgress({ done: 0, total: valid.length });
@@ -201,6 +225,13 @@ export function VipPassPoolAdmin() {
     URL.revokeObjectURL(url);
   };
   useEffect(() => { void refresh(); /* eslint-disable-next-line */ }, []);
+
+  // Re-annotate duplicates whenever the existing pool changes (e.g. after refresh).
+  useEffect(() => {
+    if (csvRows.length === 0) return;
+    setCsvRows((prev) => annotateDuplicates(prev, rows));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows]);
 
   const submit = async () => {
     const hasCode = !!draft.code.trim();
@@ -414,13 +445,16 @@ export function VipPassPoolAdmin() {
         </div>
 
         {csvRows.length > 0 && (() => {
-          const valid = csvRows.filter((r) => !r._error).length;
-          const invalid = csvRows.length - valid;
+          const dupes = csvRows.filter((r) => r._duplicate && !r._error).length;
+          const invalid = csvRows.filter((r) => r._error).length;
+          const ready = csvRows.filter((r) => !r._error && !r._duplicate).length;
+          const importable = skipDuplicates ? ready : ready + dupes;
           return (
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-3 flex-wrap text-xs">
                 <p className="text-muted-foreground">
-                  <strong className="text-emerald-300">{valid}</strong> ready
+                  <strong className="text-emerald-300">{ready}</strong> ready
+                  {dupes > 0 && <> · <strong className="text-amber-300">{dupes}</strong> duplicate{dupes === 1 ? "" : "s"}</>}
                   {invalid > 0 && <> · <strong className="text-rose-300">{invalid}</strong> with errors</>}
                   {" "}· total {csvRows.length}
                 </p>
@@ -430,6 +464,14 @@ export function VipPassPoolAdmin() {
                   </p>
                 )}
               </div>
+              {dupes > 0 && (
+                <label className="flex items-center justify-between gap-2 rounded-md border border-amber-400/30 bg-amber-500/5 px-3 py-2 text-xs">
+                  <span className="text-amber-200">
+                    Skip {dupes} duplicate{dupes === 1 ? "" : "s"} (rows that match an existing pass or repeat earlier in the file)
+                  </span>
+                  <Switch checked={skipDuplicates} onCheckedChange={setSkipDuplicates} />
+                </label>
+              )}
               <div className="max-h-64 overflow-auto rounded-md border border-border bg-background/40">
                 <table className="w-full text-xs min-w-[640px]">
                   <thead className="sticky top-0 bg-card/95 backdrop-blur">
@@ -445,7 +487,7 @@ export function VipPassPoolAdmin() {
                   </thead>
                   <tbody>
                     {csvRows.slice(0, 200).map((r, i) => (
-                      <tr key={i} className={`border-b border-border/40 ${r._error ? "bg-rose-500/5" : ""}`}>
+                      <tr key={i} className={`border-b border-border/40 ${r._error ? "bg-rose-500/5" : r._duplicate ? "bg-amber-500/5" : ""}`}>
                         <td className="px-2 py-1 text-muted-foreground tabular-nums">{r._line}</td>
                         <td className="px-2 py-1 text-white">{r.label || <span className="text-muted-foreground">—</span>}</td>
                         <td className="px-2 py-1 font-mono text-cyan-200">{r.username || <span className="text-muted-foreground">—</span>}</td>
@@ -455,6 +497,8 @@ export function VipPassPoolAdmin() {
                         <td className="px-2 py-1">
                           {r._error
                             ? <span className="text-rose-300">{r._error}</span>
+                            : r._duplicate
+                            ? <span className="text-amber-300">{r._duplicate}</span>
                             : <span className="text-emerald-300">Ready</span>}
                         </td>
                       </tr>
@@ -478,12 +522,12 @@ export function VipPassPoolAdmin() {
                 <Button
                   size="sm"
                   onClick={importCsv}
-                  disabled={busy || valid === 0}
+                  disabled={busy || importable === 0}
                   className="bg-cyan-400 hover:bg-cyan-300 text-black font-bold"
                 >
                   {busy
                     ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Importing…</>
-                    : <><Plus className="h-4 w-4 mr-1" /> Import {valid} pass{valid === 1 ? "" : "es"}</>}
+                    : <><Plus className="h-4 w-4 mr-1" /> Import {importable} pass{importable === 1 ? "" : "es"}</>}
                 </Button>
               </div>
             </div>
