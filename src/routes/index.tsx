@@ -26,7 +26,6 @@ import { VipPortalExplorer } from "@/components/VipPortalExplorer";
 import { OgVaultAccessSection } from "@/components/OgVaultAccessSection";
 import { usePortalCount } from "@/hooks/use-portal-count";
 import { TelegramConnectBanner } from "@/components/TelegramConnectBanner";
-import { HubsStrip } from "@/components/HubsStrip";
 
 const ICONS: Record<string, any> = {
   Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
@@ -131,9 +130,6 @@ function Index() {
           </Link>
         </div>
       </section>
-
-      {/* Top-level hubs nav — quick jump to every hub */}
-      <HubsStrip className="-mt-8 mb-8" />
 
       {/* Best bulk-buy Coins deal — shown above the VIP pass on welcome page */}
       <CoinsBulkPromoCard />
