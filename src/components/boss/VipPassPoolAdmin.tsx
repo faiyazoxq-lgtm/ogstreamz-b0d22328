@@ -32,6 +32,7 @@ type CsvRow = {
   sort_order: number;
   _line: number;
   _error?: string;
+  _duplicate?: string;
 };
 
 /** Tiny CSV parser. Handles quoted fields, escaped quotes, comma OR semicolon. */
@@ -109,6 +110,27 @@ function mapCsvRows(rows: string[][]): CsvRow[] {
     const hasCode = !!out.code;
     if (!hasCred && !hasCode) out._error = "Need code OR username + password";
     return out;
+  });
+}
+
+/** Annotate rows that collide with existing pool rows or earlier CSV rows. */
+function annotateDuplicates(csv: CsvRow[], existing: VipPassPoolRow[]): CsvRow[] {
+  const existingUsers = new Set(existing.filter((r) => r.username).map((r) => r.username.toLowerCase()));
+  const existingCodes = new Set(existing.filter((r) => r.code).map((r) => r.code.toLowerCase()));
+  const seenUsers = new Set<string>();
+  const seenCodes = new Set<string>();
+  return csv.map((r) => {
+    const next: CsvRow = { ...r, _duplicate: undefined };
+    if (next._error) return next;
+    const u = next.username.toLowerCase();
+    const c = next.code.toLowerCase();
+    if (u && existingUsers.has(u)) next._duplicate = `Username "${next.username}" exists`;
+    else if (c && existingCodes.has(c)) next._duplicate = `Code already in pool`;
+    else if (u && seenUsers.has(u)) next._duplicate = `Duplicate username in CSV`;
+    else if (c && seenCodes.has(c)) next._duplicate = `Duplicate code in CSV`;
+    if (u) seenUsers.add(u);
+    if (c) seenCodes.add(c);
+    return next;
   });
 }
 
