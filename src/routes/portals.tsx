@@ -33,14 +33,17 @@ type Item = {
   vip: boolean; views: number; created_at: string;
 };
 
-const KIND_META: Record<Item["kind"], { label: string; Icon: any; accent: string }> = {
-  music:  { label: "Music",  Icon: Music2,     accent: "#3ad6ff" },
-  joke:   { label: "Jokes",  Icon: Smile,      accent: "#ffd166" },
-  trade:  { label: "Trade",  Icon: TrendingUp, accent: "#D4AF37" },
-  news:   { label: "News",   Icon: Newspaper,  accent: "#a78bfa" },
-  battle: { label: "Battle", Icon: Swords,     accent: "#ff2e55" },
-  tool:   { label: "Tool",   Icon: Wrench,     accent: "#5cbdb9" },
+const KIND_META: Record<Item["kind"], { label: string; hub: string; Icon: any; accent: string }> = {
+  music:  { label: "Music",  hub: "MusicHUB",  Icon: Music2,     accent: "#3ad6ff" },
+  joke:   { label: "Jokes",  hub: "JokesHUB",  Icon: Smile,      accent: "#ffd166" },
+  trade:  { label: "Trade",  hub: "TradeHUB",  Icon: TrendingUp, accent: "#D4AF37" },
+  news:   { label: "News",   hub: "NewsHUB",   Icon: Newspaper,  accent: "#a78bfa" },
+  battle: { label: "Battle", hub: "BattleHUB", Icon: Swords,     accent: "#ff2e55" },
+  tool:   { label: "Tool",   hub: "ToolHUB",   Icon: Wrench,     accent: "#5cbdb9" },
 };
+
+// Display order for hub sections on the portals page.
+const HUB_ORDER: Item["kind"][] = ["music", "joke", "trade", "news", "battle", "tool"];
 
 const PORTAL_TO: Record<string, Item["to"]> = {
   music: "/m/$slug",
@@ -118,11 +121,13 @@ function PortalsHub() {
           // enforces `published = true AND created_by is boss/admin`.
           const { data, error: rpcErr } = await supabase.rpc("list_nav_portals");
           if (rpcErr) throw rpcErr;
-          for (const p of (data ?? []) as Array<{ id: string; slug: string; name: string; vip: boolean; by_boss?: boolean; created_at: string }>) {
+          for (const p of (data ?? []) as Array<{ id: string; slug: string; name: string; kind: string; vip: boolean; by_boss?: boolean; created_at: string }>) {
             if (p.by_boss === false) continue;
+            const to = PORTAL_TO[p.kind] ?? "/p/$slug";
+            const kind = (["music","joke","trade","news"].includes(p.kind) ? p.kind : "joke") as Item["kind"];
             out.push({
               id: p.id, slug: p.slug, name: p.name, subtitle: "",
-              kind: "joke", to: "/p/$slug", vip: !!p.vip, views: 0, created_at: p.created_at,
+              kind, to, vip: !!p.vip, views: 0, created_at: p.created_at,
             });
           }
         }
@@ -283,8 +288,28 @@ function PortalsHub() {
           <p className="text-sm text-muted-foreground">No portals match this filter yet. Spawn one from a hub.</p>
         </div>
       ) : (
-        <div className="grid gap-2.5 sm:gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] items-stretch">
-          {filtered.map((i) => {
+        <div className="space-y-10">
+          {HUB_ORDER.map((hubKind) => {
+            const hubItems = filtered.filter((i) => i.kind === hubKind);
+            if (hubItems.length === 0) return null;
+            const hubMeta = KIND_META[hubKind];
+            return (
+              <section key={hubKind} aria-labelledby={`hub-${hubKind}`}>
+                <header className="mb-3 flex items-center gap-2">
+                  <hubMeta.Icon className="h-4 w-4" style={{ color: hubMeta.accent }} />
+                  <h2
+                    id={`hub-${hubKind}`}
+                    className="font-[Montserrat] font-black tracking-tight text-xl sm:text-2xl"
+                    style={{ color: hubMeta.accent }}
+                  >
+                    {hubMeta.hub}
+                  </h2>
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                    {hubItems.length} portal{hubItems.length === 1 ? "" : "s"}
+                  </span>
+                </header>
+                <div className="grid gap-2.5 sm:gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] items-stretch">
+                  {hubItems.map((i) => {
             const meta = KIND_META[i.kind];
             const href = buildHref(i);
             return (
@@ -375,6 +400,10 @@ function PortalsHub() {
                   </div>
                 </div>
               </div>
+            );
+          })}
+                </div>
+              </section>
             );
           })}
         </div>
