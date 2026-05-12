@@ -30,6 +30,7 @@ import { DomainDenylistGuard } from "../components/DomainDenylistGuard";
 import { SiteFooter } from "../components/SiteFooter";
 import { AlignmentQAOverlay } from "../components/AlignmentQAOverlay";
 import { PupilCalibrator } from "../components/PupilCalibrator";
+import { HubsStrip } from "../components/HubsStrip";
 
 function NotFoundComponent() {
   return (
@@ -154,6 +155,7 @@ function RootComponent() {
             <SpotlightEyes />
             <VipPromoBanner />
             <NavBar />
+            <HubsStripSlot />
             <AuthGate>
               <Outlet />
             </AuthGate>
