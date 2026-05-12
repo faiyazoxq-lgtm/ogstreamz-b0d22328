@@ -31,6 +31,18 @@ export function VipPassRevealCard() {
   const [sharing, setSharing] = useState(false);
   const passCardRef = useRef<HTMLDivElement | null>(null);
   const tick = useRef<number | null>(null);
+  const renderCache = useRef<{ key: string; file: File; dataUrl: string; name: string } | null>(null);
+
+  // Stable identity for the currently-rendered pass. When this changes,
+  // the cached PNG is invalidated so Share/Save re-render once.
+  const passKey = useMemo(() => {
+    if (!data?.available) return "";
+    return [data.code ?? "", data.username ?? "", data.password ?? "", data.expires_at ?? ""].join("|");
+  }, [data]);
+
+  useEffect(() => {
+    renderCache.current = null;
+  }, [passKey]);
 
   const pull = async () => {
     setLoading(true);
@@ -91,6 +103,10 @@ export function VipPassRevealCard() {
 
   const renderPassFile = async (): Promise<{ file: File; dataUrl: string; name: string } | null> => {
     if (!passCardRef.current) return null;
+    if (renderCache.current && renderCache.current.key === passKey && passKey) {
+      const c = renderCache.current;
+      return { file: c.file, dataUrl: c.dataUrl, name: c.name };
+    }
     const dataUrl = await toPng(passCardRef.current, {
       cacheBust: true,
       pixelRatio: 3,
@@ -100,6 +116,7 @@ export function VipPassRevealCard() {
     const name = `og-vip-pass-${stamp}.png`;
     const blob = await (await fetch(dataUrl)).blob();
     const file = new File([blob], name, { type: "image/png" });
+    if (passKey) renderCache.current = { key: passKey, file, dataUrl, name };
     return { file, dataUrl, name };
   };
 
