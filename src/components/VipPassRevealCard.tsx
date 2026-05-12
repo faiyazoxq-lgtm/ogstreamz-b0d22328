@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { revealVipPass, type VipPassRevealResult } from "@/lib/vip-pass-pool.functions";
+import { trackReferralEvent } from "@/lib/track-referral";
 
 /** VIP / Real OG widget: press Reveal to be assigned a random VIP pass code
  *  from the boss-curated pool. The code stays valid for 15 minutes — once it
@@ -212,6 +213,9 @@ export function VipPassRevealCard() {
       if (nav.share && nav.canShare && nav.canShare(shareData)) {
         await nav.share(shareData);
         toast.success("Invite shared");
+        void trackReferralEvent(user?.id, referralCode, "shared", "vip_pass_card", {
+          channel: "web_share_api",
+        });
       } else {
         triggerDownload(out.dataUrl, out.name);
         let copied = false;
@@ -222,6 +226,9 @@ export function VipPassRevealCard() {
           /* clipboard blocked — silent */
         }
         if (copied) {
+          void trackReferralEvent(user?.id, referralCode, "copied", "vip_pass_card", {
+            channel: "clipboard_fallback",
+          });
           const stripped = referralUrl.replace(/^https?:\/\//, "");
           const short =
             stripped.length > 42
@@ -238,15 +245,26 @@ export function VipPassRevealCard() {
             ),
             action: {
               label: "Open",
-              onClick: () => window.open(referralUrl, "_blank", "noopener,noreferrer"),
+              onClick: () => {
+                void trackReferralEvent(user?.id, referralCode, "opened", "vip_pass_card", {
+                  channel: "toast_open_action",
+                });
+                window.open(referralUrl, "_blank", "noopener,noreferrer");
+              },
             },
           });
         } else {
+          void trackReferralEvent(user?.id, referralCode, "share_failed", "vip_pass_card", {
+            reason: "clipboard_blocked",
+          });
           toast.message("Sharing not supported — invite image downloaded instead");
         }
       }
     } catch (e: any) {
       if (e?.name === "AbortError") return; // user cancelled
+      void trackReferralEvent(user?.id, referralCode, "share_failed", "vip_pass_card", {
+        reason: e?.message ?? "unknown",
+      });
       toast.error(e?.message ?? "Share failed");
     } finally {
       setSharing(false);
