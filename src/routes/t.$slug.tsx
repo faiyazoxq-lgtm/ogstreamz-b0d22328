@@ -44,6 +44,13 @@ export const Route = createFileRoute("/t/$slug")({
 });
 
 function safeEval(expr: string, scope: Record<string, number>): number {
+  // Defense-in-depth: even if a row in `calculators` was tampered with directly
+  // in the DB, only allow a strict whitelist of characters before constructing
+  // a Function. Blocks arbitrary JS injection at runtime.
+  const SAFE_FORMULA = /^[\sA-Za-z0-9_+\-*/().,**Math]+$/;
+  if (!SAFE_FORMULA.test(expr)) {
+    throw new Error("Formula contains unsafe characters");
+  }
   // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
   const fn = new Function("Math", ...Object.keys(scope), `return (${expr});`);
   return Number(fn(Math, ...Object.values(scope)));
