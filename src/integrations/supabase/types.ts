@@ -4137,12 +4137,23 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_battlehub_vote_counts: {
+        Args: { _round_key: number }
+        Returns: {
+          side: string
+          votes: number
+        }[]
+      }
       get_cf_analytics_token: { Args: never; Returns: string }
       get_domain_denylist: {
         Args: never
         Returns: {
           domain: string
         }[]
+      }
+      get_my_battlehub_vote: {
+        Args: { _round_key: number; _visitor_id: string }
+        Returns: string
       }
       get_my_stream_creds: {
         Args: never
