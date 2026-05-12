@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Tv, CheckCircle2, AlertTriangle, XCircle, Clock } from "lucide-react";
+import { Tv, CheckCircle2, AlertTriangle, XCircle, Clock, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 
 type State = "loading" | "no_creds" | "active" | "expiring" | "expired" | "inactive";
 
@@ -24,7 +25,25 @@ function formatRemaining(ms: number): string {
 }
 
 export function StreamStatusWidget() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, refresh } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    const tid = toast.loading("Refreshing stream status…");
+    try {
+      await refresh();
+      toast.success("Stream status updated", { id: tid });
+    } catch (e) {
+      toast.error("Couldn't refresh status", {
+        id: tid,
+        description: e instanceof Error ? e.message : "Try again in a moment.",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const view = useMemo(() => {
     if (loading) return { state: "loading" as State };
@@ -133,6 +152,20 @@ export function StreamStatusWidget() {
               <tone.Icon className="h-3 w-3" />
               {tone.label}
             </span>
+            {user && (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="ml-auto h-7 px-2 text-xs"
+                onClick={handleRefresh}
+                disabled={refreshing || loading}
+                aria-label="Refresh stream status"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+                <span className="ml-1">{refreshing ? "Refreshing…" : "Refresh"}</span>
+              </Button>
+            )}
           </div>
 
           <div className="mt-2 text-xs text-muted-foreground space-y-0.5">
