@@ -164,6 +164,39 @@ export const generateLetter = createServerFn({ method: "POST" })
     }
   });
 
+export const suggestLetterAnswer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { question: string; inputs: Partial<LetterInput> }) => ({
+    question: clip(raw?.question, 400),
+    inputs: sanitize(raw?.inputs || {}),
+  }))
+  .handler(async ({ data }) => {
+    if (!data.question) return { ok: false as const, error: "Missing question", suggestion: "" };
+    try {
+      const d = data.inputs;
+      const suggestion = await callGateway(
+        [
+          {
+            role: "system",
+            content:
+              "You are LetterHUB's auto-fill assistant. Given the user's letter context and a clarifying question, produce ONE concise draft answer (1–3 sentences, max 60 words) the user can edit. " +
+              "Use only facts that are clearly supported by the provided context. If the context does not contain the answer, propose a plausible placeholder using clearly bracketed tokens like [date], [amount], [reference]. " +
+              "Output plain text only — no quotes, no preamble, no markdown.",
+          },
+          {
+            role: "user",
+            content:
+              `Letter context:\nIssue: ${d.issue} — ${d.subIssue}\nFormat: ${d.format} · Tone: ${d.tone} · Audience: ${d.audience}\nRecipient: ${d.recipientName} (${d.recipientOrg})\nSubject: ${d.subject}\nFacts:\n${d.context}\nDesired outcome:\n${d.outcome}\n\nClarifying question:\n${data.question}`,
+          },
+        ],
+        0.4,
+      );
+      return { ok: true as const, error: null, suggestion: clip(suggestion, 600) };
+    } catch (e: any) {
+      return { ok: false as const, error: e?.message || "AI error", suggestion: "" };
+    }
+  });
+
 // ===================== History =====================
 
 export type LetterHistoryRow = {
