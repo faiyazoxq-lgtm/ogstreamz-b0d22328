@@ -200,6 +200,8 @@ function PortalsHub() {
     vip: raw?.vip !== false,
   });
   const [badgePrefs, setBadgePrefs] = useState<BadgePrefs>({ boss: true, mine: true, vip: true });
+  // Polite SR announcement for the most recent badge toggle.
+  const [badgeAnnouncement, setBadgeAnnouncement] = useState("");
   // Hydrate from localStorage cache on mount (instant, no network).
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -232,6 +234,8 @@ function PortalsHub() {
   const toggleBadge = (key: keyof BadgePrefs) => {
     setBadgePrefs((prev) => {
       const next = { ...prev, [key]: !prev[key] };
+      const labels: Record<keyof BadgePrefs, string> = { boss: "Boss", mine: "Mine", vip: "VIP" };
+      setBadgeAnnouncement(`${labels[key]} badges ${next[key] ? "shown" : "hidden"}`);
       try {
         window.localStorage.setItem(BADGE_PREFS_KEY, JSON.stringify(next));
       } catch { /* storage may be unavailable in private mode */ }
@@ -496,8 +500,17 @@ function PortalsHub() {
               );
             })}
           </div>
-          {/* Badge visibility toggles — preferences persist in localStorage. */}
-          <div className="inline-flex items-center rounded-md border border-border bg-card p-0.5 text-[10px] uppercase tracking-[0.18em] font-bold" role="group" aria-label="Badge visibility">
+          {/* Badge visibility toggles — keyboard + screen-reader friendly.
+              role="group" + aria-label names the cluster; each button is a
+              toggle (aria-pressed) with a visually-hidden state label so
+              screen readers announce "Boss badges, hidden, toggle button"
+              instead of just "Boss". A polite live region announces the
+              change after activation. */}
+          <div
+            className="inline-flex items-center rounded-md border border-border bg-card p-0.5 text-[10px] uppercase tracking-[0.18em] font-bold"
+            role="group"
+            aria-label="Badge visibility"
+          >
             {([
               { key: "boss" as const, label: "Boss" },
               { key: "mine" as const, label: "Mine" },
@@ -507,21 +520,33 @@ function PortalsHub() {
               return (
                 <button
                   key={key}
+                  type="button"
                   onClick={() => toggleBadge(key)}
                   aria-pressed={on}
+                  aria-label={`${label} badges, ${on ? "shown" : "hidden"}`}
                   title={`${on ? "Hide" : "Show"} ${label} badges`}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded transition"
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded transition-colors duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--mood-accent,#ffd166)] focus-visible:ring-offset-1 focus-visible:ring-offset-card"
                   style={{
                     background: on ? "rgba(255,255,255,0.08)" : "transparent",
                     color: on ? "var(--mood-accent,#ffd166)" : "rgba(255,255,255,0.45)",
                   }}
                 >
-                  {on ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                  {label}
+                  {on ? (
+                    <Eye className="h-3 w-3" aria-hidden="true" />
+                  ) : (
+                    <EyeOff className="h-3 w-3" aria-hidden="true" />
+                  )}
+                  <span aria-hidden="true">{label}</span>
+                  <span className="sr-only">{on ? "shown" : "hidden"}</span>
                 </button>
               );
             })}
           </div>
+          {/* Polite live region — announces the latest toggle change without
+              stealing focus. Updated by toggleBadge via badgeAnnouncement. */}
+          <span className="sr-only" role="status" aria-live="polite">
+            {badgeAnnouncement}
+          </span>
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <input
