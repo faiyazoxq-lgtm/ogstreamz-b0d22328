@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Copy, ExternalLink, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, ClipboardList, Search, Crown, QrCode, Share2, Globe, Download, X } from "lucide-react";
+import { Copy, ExternalLink, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, ClipboardList, Search, Crown, QrCode, Share2, Globe, Download, X, Bot, Sparkles, PlusCircle } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 import { requireMember } from "@/lib/route-guards";
@@ -72,6 +72,8 @@ function PortalsHub() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | Item["kind"]>("all");
   const [q, setQ] = useState("");
+  // Scope toggle: All / Boss-published / Mine. Lives top-right next to search.
+  const [scope, setScope] = useState<"all" | "boss" | "mine">("all");
   const [qrFor, setQrFor] = useState<Item | null>(null);
   // Per-hub visible-count state: MusicHUB / JokesHUB / ToolHUB paginate
   // long lists so the page stays fast even with hundreds of portals.
@@ -82,11 +84,11 @@ function PortalsHub() {
     joke: PAGE_SIZE,
     tool: PAGE_SIZE,
   });
-  // Reset paging whenever the filter or search query changes so users don't
-  // see a misleading "Show more" hidden behind a tiny filtered set.
+  // Reset paging whenever the filter, search query, or scope changes so users
+  // don't see a misleading "Show more" hidden behind a tiny filtered set.
   useEffect(() => {
     setVisibleCounts({ music: PAGE_SIZE, joke: PAGE_SIZE, tool: PAGE_SIZE });
-  }, [filter, q]);
+  }, [filter, q, scope]);
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 
   useEffect(() => {
