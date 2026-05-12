@@ -97,7 +97,7 @@ function PortalUsage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-6 max-w-6xl mx-auto">
+    <div className="min-h-screen text-foreground p-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">

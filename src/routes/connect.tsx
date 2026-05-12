@@ -161,7 +161,7 @@ function ConnectHubPage() {
   const active = campaigns.find((c) => c.id === activeId);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen text-foreground">
       <header className="border-b border-border/40 bg-card/30 backdrop-blur sticky top-0 z-20">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">

@@ -143,7 +143,7 @@ function VipPage() {
   const scrollToPricing = () => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   return (
-    <main className="min-h-screen bg-black text-white overflow-x-hidden">
+    <main className="min-h-screen text-white overflow-x-hidden">
       <PaymentTestModeBanner />
 
       {/* Members area — only shown when the visitor is already VIP. */}

@@ -196,7 +196,7 @@ function OverlordPage() {
   }
 
   return (
-    <main className="relative min-h-screen bg-[#020a14] text-emerald-200 font-mono">
+    <main className="relative min-h-screen text-emerald-200 font-mono">
       <TerminalGrid />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-8 py-8">
         {/* Header */}
