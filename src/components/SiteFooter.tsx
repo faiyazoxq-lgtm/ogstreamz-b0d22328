@@ -61,7 +61,7 @@ export function SiteFooter() {
         { to: "/sitemap", label: "Sitemap", icon: Map },
       ],
     },
-  ] as const;
+  ];
   // Hubs are Boss-only — hide the entire Hubs column for everyone else.
   const groups = allGroups.filter((g) => g.title !== "Hubs" || isBoss);
 
