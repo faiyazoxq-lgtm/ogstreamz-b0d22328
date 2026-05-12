@@ -39,7 +39,7 @@ function TradeHubPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.from("portals")
+    supabase.from("portals_public")
       .select("id, slug, name, niche, vip, theme_config")
       .eq("kind", "trade")
       .order("created_at", { ascending: false })
