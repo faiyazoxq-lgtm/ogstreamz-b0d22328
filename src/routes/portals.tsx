@@ -184,10 +184,12 @@ function PortalsHub() {
     if (!items) return [];
     return items.filter((i) => {
       if (filter !== "all" && i.kind !== filter) return false;
+      if (scope === "boss" && !i.byBoss) return false;
+      if (scope === "mine" && i.byBoss) return false;
       if (q && !(`${i.name} ${i.subtitle} ${i.slug}`.toLowerCase().includes(q.toLowerCase()))) return false;
       return true;
     });
-  }, [items, filter, q]);
+  }, [items, filter, q, scope]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: items?.length ?? 0 };
