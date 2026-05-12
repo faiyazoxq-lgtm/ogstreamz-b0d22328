@@ -66,7 +66,12 @@ export function toNational(e164: string): string {
 
 /** Format an E.164 number for display, grouping digits in readable chunks. */
 export function toDisplay(e164: string): string {
-  if (!e164.startsWith("+")) return e164;
+  if (!e164.startsWith("+")) {
+    // Best-effort: try to normalize unstored legacy values.
+    const r = parsePhone(e164);
+    if (r.ok) return toDisplay(r.e164);
+    return e164;
+  }
   if (e164.startsWith("+44") && e164.length === 13) {
     const rest = e164.slice(3);
     return `+44 ${rest.slice(0, 4)} ${rest.slice(4, 7)} ${rest.slice(7)}`;
