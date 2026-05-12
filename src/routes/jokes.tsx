@@ -10,7 +10,6 @@ import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
 import { VipPaywallInline } from "@/components/VipPaywallInline";
 import { PortalHeader, PortalStyleLine, mergeStyle } from "@/components/PortalHeader";
-import { HubsStrip } from "@/components/HubsStrip";
 
 const JOKES_STYLE = "Razor-sharp punch-up roast, club-room timing, no slurs.";
 
@@ -125,9 +124,7 @@ function JokesPromptBuilder() {
   };
 
   return (
-    <>
-      <HubsStrip className="pt-6" />
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 animate-fade-in">
+    <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 animate-fade-in">
       <PortalHeader
         portalKey="jokes"
         name="JokesHUB"
@@ -243,7 +240,6 @@ function JokesPromptBuilder() {
       />
       <CreditWallet className="mt-10" />
       <SpawnPortalCard kind="jokes" />
-      </main>
-    </>
+    </main>
   );
 }
