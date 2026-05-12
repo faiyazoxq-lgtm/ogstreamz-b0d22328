@@ -16,7 +16,6 @@ import { AuthProvider } from "../hooks/use-auth";
 import { Toaster } from "../components/ui/sonner";
 import { PaymentTestModeBanner } from "../components/PaymentTestModeBanner";
 import { GlobalMoodProvider } from "../hooks/use-global-mood";
-import { BottomDock } from "../components/BottomDock";
 import { LiveThinkingFeed } from "../components/LiveThinkingFeed";
 import { SystemGlitchOverlay } from "../components/SystemGlitchOverlay";
 import { EnforcerConsole } from "../components/EnforcerConsole";
@@ -166,7 +165,6 @@ function RootComponent() {
             <SystemGlitchOverlay />
             <LiveThinkingFeed />
             <EnforcerConsole />
-            <BottomDock />
             <ReducedMotionToggle />
             <AlignmentQAOverlay />
             <PupilCalibrator />
