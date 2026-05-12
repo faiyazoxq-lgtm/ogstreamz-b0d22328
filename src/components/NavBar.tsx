@@ -283,28 +283,6 @@ export function NavBar() {
         </Link>
         <ul className="flex items-center flex-nowrap gap-2 sm:gap-3 shrink-0 ml-auto">
           <li className="hidden sm:block">
-            <div className="flex items-center bg-white/[0.04] border border-white/10 rounded-full p-1 shadow-inner shadow-black/20 backdrop-blur-sm">
-              <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold hideLabelOnMobile currentPath={pathname} pill />
-              <span aria-hidden className="w-px h-4 bg-white/10" />
-              <NavDropdown label="Portals" icon={DoorOpen} items={navPortals.length ? navPortals : [{ to: "/portals", label: "Browse Portals", icon: Sparkles, desc: "No portals yet — open the directory" }]} softGold hideLabelOnMobile currentPath={pathname} pill />
-              <span aria-hidden className="w-px h-4 bg-white/10" />
-              <NavDropdown label={isBoss ? "Manage Store" : "Store"} icon={Store} items={storeLinks} hideLabelOnMobile currentPath={pathname} pill />
-            </div>
-          </li>
-          {isBoss && (
-            <li className="hidden sm:block">
-              <Link
-                to="/boss"
-                aria-label="Boss portal"
-                data-active={pathname === "/boss" || pathname.startsWith("/boss/") ? "true" : undefined}
-                className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold uppercase tracking-[0.18em] rounded-full border border-gold/40 text-gold hover:bg-gold/10 data-[active=true]:bg-gold/15 data-[active=true]:border-gold/60 transition-colors outline-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              >
-                <Crown className="h-4 w-4" />
-                <span className="hidden sm:inline">Boss</span>
-              </Link>
-            </li>
-          )}
-          <li className="hidden sm:block">
             <div className="flex items-center gap-2">
               {user && !isBoss && (
                 <Link
@@ -362,6 +340,30 @@ export function NavBar() {
           </li>
         </ul>
       </nav>
+      {/* Secondary nav row — dropdown menus sit below the logo so the
+          brand row stays clean and the menus get full breathing width. */}
+      <div className="hidden sm:block border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-2 flex items-center justify-center gap-3">
+          <div className="flex items-center bg-white/[0.04] border border-white/10 rounded-full p-1 shadow-inner shadow-black/20 backdrop-blur-sm">
+            <NavDropdown label="HUBS" icon={Rocket} items={visibleHubs} gold currentPath={pathname} pill />
+            <span aria-hidden className="w-px h-4 bg-white/10" />
+            <NavDropdown label="Portals" icon={DoorOpen} items={navPortals.length ? navPortals : [{ to: "/portals", label: "Browse Portals", icon: Sparkles, desc: "No portals yet — open the directory" }]} softGold currentPath={pathname} pill />
+            <span aria-hidden className="w-px h-4 bg-white/10" />
+            <NavDropdown label={isBoss ? "Manage Store" : "Store"} icon={Store} items={storeLinks} currentPath={pathname} pill />
+          </div>
+          {isBoss && (
+            <Link
+              to="/boss"
+              aria-label="Boss portal"
+              data-active={pathname === "/boss" || pathname.startsWith("/boss/") ? "true" : undefined}
+              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold uppercase tracking-[0.18em] rounded-full border border-gold/40 text-gold hover:bg-gold/10 data-[active=true]:bg-gold/15 data-[active=true]:border-gold/60 transition-colors outline-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              <Crown className="h-4 w-4" />
+              <span>Boss</span>
+            </Link>
+          )}
+        </div>
+      </div>
       <div className="hidden md:block max-w-7xl mx-auto px-4 sm:px-8 pb-3">
         <SiteSearch />
       </div>
