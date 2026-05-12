@@ -142,8 +142,8 @@ export function StreamStatusWidget() {
       <div className="flex items-start gap-3">
         <Tv className="h-5 w-5 text-primary mt-0.5 shrink-0" />
         <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="text-sm font-bold uppercase tracking-[0.25em]">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+            <div className="text-sm font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em]">
               Stream Access
             </div>
             <span
@@ -157,7 +157,7 @@ export function StreamStatusWidget() {
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="ml-auto h-7 px-2 text-xs"
+                className="ml-auto h-7 px-2 text-xs shrink-0"
                 onClick={handleRefresh}
                 disabled={refreshing || loading}
                 aria-label="Refresh stream status"

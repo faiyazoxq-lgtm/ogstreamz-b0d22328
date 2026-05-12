@@ -148,7 +148,7 @@ function Index() {
       )}
 
       {user && (
-        <section className="relative max-w-3xl mx-auto px-5 sm:px-8 -mt-2 pb-6 space-y-4">
+        <section className="relative max-w-3xl mx-auto px-4 sm:px-8 -mt-2 pb-6 space-y-3 sm:space-y-4">
           <StreamStatusWidget />
           <VerifyStreamAccessCard signedIn={!!user} />
         </section>
