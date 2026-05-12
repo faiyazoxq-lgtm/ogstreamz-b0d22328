@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Crown, Eye, Copy, Check, Timer, Loader2, Flame, Lock, Download, Sparkles } from "lucide-react";
 import { toPng } from "html-to-image";
+import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { revealVipPass, type VipPassRevealResult } from "@/lib/vip-pass-pool.functions";
@@ -66,6 +67,15 @@ export function VipPassRevealCard() {
   }, [secondsLeft]);
 
   const expired = data?.available && secondsLeft <= 0;
+
+  // Payload encoded into the scannable QR. Prefer the pass code; fall back
+  // to a username:password pair so scanners always get something useful.
+  const qrPayload = useMemo(() => {
+    if (!data?.available) return "";
+    if (data.code) return data.code;
+    if (data.username && data.password) return `${data.username}:${data.password}`;
+    return data.username || data.password || "";
+  }, [data]);
 
   const doCopy = async (value: string) => {
     try {
@@ -213,6 +223,8 @@ export function VipPassRevealCard() {
                 </div>
 
                 <div className="relative space-y-2.5">
+                  <div className="flex items-stretch gap-3">
+                    <div className="flex-1 min-w-0 space-y-2.5">
                   {data.username && (
                     <div className="rounded-xl border border-cyan-300/30 bg-black/40 px-4 py-2.5 backdrop-blur-sm">
                       <p className="text-[9px] uppercase tracking-[0.35em] text-cyan-200/70 mb-0.5">Username</p>
@@ -243,6 +255,23 @@ export function VipPassRevealCard() {
                       </code>
                     </div>
                   )}
+                    </div>
+                    {qrPayload && (
+                      <div className="shrink-0 self-center rounded-xl border border-cyan-300/40 bg-white p-2 shadow-[0_0_18px_rgba(0,200,255,0.45)]">
+                        <QRCodeSVG
+                          value={qrPayload}
+                          size={104}
+                          level="M"
+                          bgColor="#ffffff"
+                          fgColor="#020617"
+                          marginSize={1}
+                        />
+                        <p className="mt-1 text-center text-[8px] uppercase tracking-[0.3em] font-black text-slate-700">
+                          Scan
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="relative mt-5 flex items-center justify-between text-[9px] uppercase tracking-[0.3em] text-cyan-200/70 font-mono">
