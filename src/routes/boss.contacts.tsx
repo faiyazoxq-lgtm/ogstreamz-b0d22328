@@ -227,6 +227,12 @@ function BossContactsPage() {
       ? filtered[Math.min(matchIndex, filtered.length - 1)].id
       : null;
   const activeMatchRef = useRef<HTMLDivElement | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const clearAndFocusSearch = () => {
+    setQuery("");
+    setMatchIndex(0);
+    searchInputRef.current?.focus();
+  };
   useEffect(() => {
     if (!activeMatchId) return;
     const el = activeMatchRef.current;
@@ -274,14 +280,14 @@ function BossContactsPage() {
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
+            ref={searchInputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Escape") {
                 if (query) {
                   e.preventDefault();
-                  setQuery("");
-                  setMatchIndex(0);
+                  clearAndFocusSearch();
                 }
                 return;
               }
@@ -352,6 +358,16 @@ function BossContactsPage() {
             tabIndex={isActiveMatch ? 0 : -1}
             aria-current={isActiveMatch ? "true" : undefined}
             aria-label={`${c.label}, ${toDisplay(c.phone)}${isActiveMatch ? ", current match" : ""}`}
+            onKeyDown={
+              isActiveMatch
+                ? (e) => {
+                    if (e.key === "Escape" && query) {
+                      e.preventDefault();
+                      clearAndFocusSearch();
+                    }
+                  }
+                : undefined
+            }
             className={`rounded-xl border bg-card/60 p-3 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-gold ${
               isActiveMatch
                 ? "border-gold/70 ring-2 ring-gold/40 bg-gold/5"
