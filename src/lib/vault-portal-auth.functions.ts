@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { tagOgStreamzUser } from "@/lib/stream-tag.server";
 
 const InputSchema = z.object({
   username: z.string().trim().min(1).max(128),
@@ -10,7 +11,7 @@ const InputSchema = z.object({
 export const vaultPortalLogin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => InputSchema.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const domain = process.env.VAULT_PORTAL_DOMAIN;
     if (!domain) {
       return { ok: false as const, error: "Vault not configured" };
@@ -41,11 +42,27 @@ export const vaultPortalLogin = createServerFn({ method: "POST" })
       }
       const auth = json?.user_info?.auth ?? json?.auth;
       if (Number(auth) === 1) {
+        const status = json?.user_info?.status ?? null;
+        const expRaw = json?.user_info?.exp_date ?? null;
+        // exp_date is usually a unix-seconds string from Xtream APIs.
+        let expiresAt: string | null = null;
+        if (expRaw != null) {
+          const n = Number(expRaw);
+          if (Number.isFinite(n) && n > 0) {
+            expiresAt = new Date(n * 1000).toISOString();
+          }
+        }
+        if (context?.userId) {
+          await tagOgStreamzUser(context.userId, "vault_login", {
+            expiresAt,
+            status: typeof status === "string" ? status : null,
+          });
+        }
         // Never persist credentials. Only return non-sensitive surface info.
         return {
           ok: true as const,
-          status: json?.user_info?.status ?? null,
-          expires: json?.user_info?.exp_date ?? null,
+          status,
+          expires: expRaw,
         };
       }
       return { ok: false as const, error: "Invalid credentials" };
