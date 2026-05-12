@@ -79,7 +79,7 @@ function escapeHtml(s: string) {
 
 /**
  * Auto-fires after the boss signs in: verifies the caller is the configured
- * BOSS_EMAIL, then DMs the boss's Telegram chat (BOSS_TELEGRAM_API_KEY) with
+ * BOSS_EMAIL, then DMs the boss's Telegram chat (BOSS_TELEGRAM_API_KEY_TEST) with
  * device type + IP country of the new session. No-ops silently for any
  * non-boss caller so it's safe to invoke on every sign-in.
  */
@@ -99,7 +99,7 @@ export const notifyBossLoginIfNeeded = createServerFn({ method: "POST" })
       return { notified: false, reason: "not_boss" };
     }
 
-    const chatId = process.env.BOSS_TELEGRAM_API_KEY;
+    const chatId = process.env.BOSS_TELEGRAM_API_KEY_TEST;
     if (!chatId) return { notified: false, reason: "no_chat_id" };
 
     const ua =
