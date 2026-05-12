@@ -23,13 +23,114 @@ function safeEqual(a: string, b: string) {
 
 async function handleCommand(text: string, chatId: number, username: string) {
   const trimmed = text.trim();
+
+  // --- Member self-service commands ---------------------------------------
+  // /me /account /credits /unlink /msg <text> /help
+  // All of these require the chat to already be linked to a profile.
+  if (/^\/(me|account|credits|unlink|msg|contact|boss)\b/i.test(trimmed)) {
+    const sb = getSupabase() as any;
+    const { data: link } = await sb
+      .from("telegram_user_links")
+      .select("user_id")
+      .eq("chat_id", chatId)
+      .maybeSingle();
+    if (!link?.user_id) {
+      await tgSendMessage(
+        chatId,
+        "You're not linked yet. Visit <b>/account/passes</b> on the site to get a code, then send <code>/link CODE</code> here.",
+      );
+      return;
+    }
+
+    if (/^\/(me|account|credits)\b/i.test(trimmed)) {
+      const { data: prof } = await sb
+        .from("profiles")
+        .select("email,display_name,status,rank,credits,stream_status,stream_expires_at")
+        .eq("id", link.user_id)
+        .maybeSingle();
+      if (!prof) {
+        await tgSendMessage(chatId, "Profile not found.");
+        return;
+      }
+      const exp = prof.stream_expires_at
+        ? new Date(prof.stream_expires_at).toISOString().slice(0, 10)
+        : "—";
+      await tgSendMessage(
+        chatId,
+        `<b>Your account</b>\n` +
+          `👤 ${escapeHtml(prof.display_name || prof.email || "—")}\n` +
+          `🎟 Status: <b>${escapeHtml(prof.status || "member")}</b>` +
+          (prof.rank ? ` · ${escapeHtml(prof.rank)}` : "") +
+          `\n💰 Credits: <b>${Number(prof.credits ?? 0)}</b>\n` +
+          `📺 Stream: ${escapeHtml(prof.stream_status || "none")} · expires ${exp}\n\n` +
+          `Commands: /me · /msg &lt;text&gt; · /unlink · /help`,
+      );
+      return;
+    }
+
+    if (/^\/unlink\b/i.test(trimmed)) {
+      await sb
+        .from("telegram_user_links")
+        .update({ chat_id: null, tg_username: null, linked_at: null })
+        .eq("user_id", link.user_id);
+      await tgSendMessage(
+        chatId,
+        "🔌 Unlinked. You will no longer receive DMs. Re-link any time from /account/passes.",
+      );
+      return;
+    }
+
+    if (/^\/(msg|contact|boss)\b/i.test(trimmed)) {
+      const body = trimmed.replace(/^\/(msg|contact|boss)\s*/i, "").trim();
+      if (!body) {
+        await tgSendMessage(
+          chatId,
+          "Send a message after the command, e.g. <code>/msg need help with my pass</code>",
+        );
+        return;
+      }
+      const bossChat = process.env.BOSS_TELEGRAM_API_KEY;
+      if (!bossChat) {
+        await tgSendMessage(chatId, "Inbox temporarily unavailable. Please try later.");
+        return;
+      }
+      const { data: prof } = await sb
+        .from("profiles")
+        .select("email,display_name")
+        .eq("id", link.user_id)
+        .maybeSingle();
+      const who =
+        (prof?.display_name as string) ||
+        (prof?.email as string) ||
+        (username ? `@${username}` : `chat ${chatId}`);
+      try {
+        await tgSendMessage(
+          bossChat,
+          `📨 <b>Member message</b>\n` +
+            `From: ${escapeHtml(who)} · <code>${chatId}</code>\n\n` +
+            escapeHtml(body).slice(0, 3500),
+        );
+        await tgSendMessage(chatId, "✅ Sent. The team will reply here shortly.");
+      } catch (e) {
+        console.error("forward to boss failed", e);
+        await tgSendMessage(chatId, "Could not deliver your message. Please try again.");
+      }
+      return;
+    }
+  }
+
   // /start CODE   /link CODE   /start  (no arg)
   const m = trimmed.match(/^\/(start|link)(?:@\w+)?(?:\s+(\S+))?/i);
   if (!m) {
     if (/^\/help/i.test(trimmed)) {
       await tgSendMessage(
         chatId,
-        "Send <code>/link YOURCODE</code> to bind this Telegram to your OG-Streamz account.\nGenerate a code at /account/passes."
+        "Available commands:\n" +
+          "<code>/link CODE</code> — bind this chat to your account\n" +
+          "<code>/me</code> — show your account status & credits\n" +
+          "<code>/msg TEXT</code> — message the OG-Streamz team\n" +
+          "<code>/unlink</code> — disconnect this chat\n\n" +
+          "Get your code at <b>/account/passes</b>.",
       );
     }
     return;
@@ -67,6 +168,14 @@ async function handleCommand(text: string, chatId: number, username: string) {
     chatId,
     "✅ Linked! You will now receive VIP pass updates, expiry reminders and live drops here."
   );
+}
+
+function escapeHtml(s: string) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 export const Route = createFileRoute("/api/public/telegram/webhook")({
