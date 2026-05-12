@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHash } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { tagOgStreamzUser } from "@/lib/stream-tag.server";
 
 function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
@@ -109,6 +110,12 @@ export const Route = createFileRoute("/api/public/stream-m3u")({
         }
 
         await audit(request, { user_id: row.user_id, action: "fetch", success: upstreamRes.ok, reason: upstreamRes.ok ? null : `upstream_status:${upstreamRes.status}`, token_hash });
+
+        // On a successful proxied fetch, tag the user as an OGStreamz stream user.
+        if (upstreamRes.ok && row.user_id) {
+          // Fire and forget — never block the playlist response.
+          tagOgStreamzUser(row.user_id, "m3u_fetch").catch(() => {});
+        }
 
         const headers = new Headers();
         const ct = upstreamRes.headers.get("content-type") || "application/vnd.apple.mpegurl";
