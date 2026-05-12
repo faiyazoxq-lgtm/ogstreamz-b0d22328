@@ -31,12 +31,13 @@ export function PupilCalibrator() {
   const bp = activeBp ?? autoBp;
   const cur = offsets[bp];
 
-  const update = (dx: number, dy: number) => {
+  const update = (dx: number, dy: number, fine = false) => {
+    const k = fine ? 0.2 : 1;
     const next: PupilOffsetMap = {
       ...offsets,
       [bp]: {
-        x: round(cur.x + dx),
-        y: round(cur.y + dy),
+        x: round(cur.x + dx * k),
+        y: round(cur.y + dy * k),
       },
     };
     setOffsets(next);
@@ -119,20 +120,20 @@ export function PupilCalibrator() {
 
       <div className="mx-auto mb-2 grid w-[120px] grid-cols-3 gap-1">
         <span />
-        <Btn onClick={() => update(0, -0.5)}>↑</Btn>
+        <Btn onClick={(e) => update(0, -0.5, e.shiftKey)}>↑</Btn>
         <span />
-        <Btn onClick={() => update(-0.5, 0)}>←</Btn>
+        <Btn onClick={(e) => update(-0.5, 0, e.shiftKey)}>←</Btn>
         <Btn onClick={reset}>·</Btn>
-        <Btn onClick={() => update(0.5, 0)}>→</Btn>
+        <Btn onClick={(e) => update(0.5, 0, e.shiftKey)}>→</Btn>
         <span />
-        <Btn onClick={() => update(0, 0.5)}>↓</Btn>
+        <Btn onClick={(e) => update(0, 0.5, e.shiftKey)}>↓</Btn>
         <span />
       </div>
 
       <div className="mb-2 flex justify-center gap-2 text-[10px] text-white/50">
         <span>step 0.5%</span>
         <span>·</span>
-        <span>shift = 0.1</span>
+        <span>shift = fine</span>
       </div>
 
       <div className="mb-2 text-[10px] leading-tight text-white/55">{summary}</div>
