@@ -4155,6 +4155,16 @@ export type Database = {
         Args: { _round_key: number; _visitor_id: string }
         Returns: string
       }
+      get_my_portal_brief_versions: {
+        Args: { _portal_id: string }
+        Returns: {
+          brief: Json
+          created_at: string
+          halalify: Json
+          id: string
+          version: number
+        }[]
+      }
       get_my_stream_creds: {
         Args: never
         Returns: {
@@ -4204,6 +4214,14 @@ export type Database = {
       mark_stream_verified: {
         Args: { _expires_at: string; _status: string; _user_id: string }
         Returns: undefined
+      }
+      my_pending_credit_grant_summary: {
+        Args: never
+        Returns: {
+          has_pending: boolean
+          pending_count: number
+          total_credits: number
+        }[]
       }
       notify_stream_expiring_soon: { Args: never; Returns: number }
       notify_user: {
