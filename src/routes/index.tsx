@@ -156,9 +156,17 @@ function Index() {
 
       {/* Intro / promo strip — free signup CTA for guests, members entrance for signed-in users */}
       <section className="relative max-w-5xl mx-auto px-5 sm:px-8 -mt-4 pb-10">
-        <div className="relative overflow-hidden rounded-3xl border border-[oklch(0.72_0.22_245/0.35)] bg-card/60 backdrop-blur-xl p-6 sm:p-8">
-          <div className="pointer-events-none absolute -top-24 -right-16 h-64 w-64 rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245/0.35),transparent)]" />
-          <div className="pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.55_0.24_300/0.25),transparent)]" />
+        <div className={
+          (isVipMember || isBoss)
+            ? "relative overflow-hidden rounded-3xl border border-[oklch(0.72_0.22_245/0.35)] bg-card/60 backdrop-blur-xl p-6 sm:p-8"
+            : "relative overflow-hidden rounded-2xl border border-white/10 bg-card/50 p-6 sm:p-8"
+        }>
+          {(isVipMember || isBoss) && (
+            <>
+              <div className="pointer-events-none absolute -top-24 -right-16 h-64 w-64 rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245/0.35),transparent)]" />
+              <div className="pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.55_0.24_300/0.25),transparent)]" />
+            </>
+          )}
 
           <p className="text-[10px] uppercase tracking-[0.4em] font-bold" style={{ color: "var(--neon-blue-bright)" }}>
             {user ? "Members entrance" : "Welcome to the Syndicate"}
