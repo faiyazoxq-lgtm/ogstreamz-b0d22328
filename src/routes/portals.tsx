@@ -200,6 +200,8 @@ function PortalsHub() {
     vip: raw?.vip !== false,
   });
   const [badgePrefs, setBadgePrefs] = useState<BadgePrefs>({ boss: true, mine: true, vip: true });
+  // Polite SR announcement for the most recent badge toggle.
+  const [badgeAnnouncement, setBadgeAnnouncement] = useState("");
   // Hydrate from localStorage cache on mount (instant, no network).
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -232,6 +234,8 @@ function PortalsHub() {
   const toggleBadge = (key: keyof BadgePrefs) => {
     setBadgePrefs((prev) => {
       const next = { ...prev, [key]: !prev[key] };
+      const labels: Record<keyof BadgePrefs, string> = { boss: "Boss", mine: "Mine", vip: "VIP" };
+      setBadgeAnnouncement(`${labels[key]} badges ${next[key] ? "shown" : "hidden"}`);
       try {
         window.localStorage.setItem(BADGE_PREFS_KEY, JSON.stringify(next));
       } catch { /* storage may be unavailable in private mode */ }
