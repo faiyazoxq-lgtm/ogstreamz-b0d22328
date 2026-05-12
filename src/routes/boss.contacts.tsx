@@ -277,6 +277,14 @@ function BossContactsPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                if (query) {
+                  e.preventDefault();
+                  setQuery("");
+                  setMatchIndex(0);
+                }
+                return;
+              }
               if (filtered.length === 0) return;
               const len = filtered.length;
               const step = (delta: number) => {
