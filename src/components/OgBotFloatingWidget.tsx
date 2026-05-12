@@ -10,20 +10,14 @@ import { SiteGuideSwearChat } from "@/components/SiteGuideSwearChat";
  * site guide anything from anywhere.
  */
 export function OgBotFloatingWidget() {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
 
   // Close the panel automatically when the user navigates so it never
   // covers fresh content after a route change.
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
-
-  // Hide on auth flows so the floating widget can't cover sign-in inputs.
-  const HIDE_PREFIXES = ["/auth", "/login", "/signup", "/forgot-password", "/reset-password", "/vault-login"];
-  if (HIDE_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
-    return null;
-  }
 
   return (
     <>
