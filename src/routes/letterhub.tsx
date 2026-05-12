@@ -510,6 +510,19 @@ function LetterHubPage() {
                     <Button variant="outline" onClick={reset} className="uppercase tracking-[0.2em] font-black text-xs">
                       <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> New
                     </Button>
+                    <Button
+                      variant="outline"
+                      onClick={saveCurrent}
+                      disabled={savingHistory}
+                      className="uppercase tracking-[0.2em] font-black text-xs"
+                    >
+                      {savingHistory ? (
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <History className="h-3.5 w-3.5 mr-1.5" />
+                      )}
+                      {historyId ? "Update saved" : "Save"}
+                    </Button>
                     <Button onClick={downloadPdf} className="btn-glass-blue uppercase tracking-[0.2em] font-black">
                       <FileDown className="h-4 w-4 mr-2" /> Download PDF
                     </Button>
