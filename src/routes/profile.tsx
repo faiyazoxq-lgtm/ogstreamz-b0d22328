@@ -208,9 +208,9 @@ function ProfilePage() {
           )}
         </header>
 
-        {/* Status tag slot — reserved row keeps header height stable for all tiers */}
+        {/* Status tag slot — sits directly under the name; reserved height keeps layout stable */}
         {!verifiedBoss && (
-          <section className="mb-8 flex justify-center min-h-[34px] items-center">
+          <section className="-mt-5 sm:-mt-6 mb-8 flex justify-center items-center min-h-[28px] sm:min-h-[30px] leading-none">
             {isVip && !isBoss ? (
               <RealOgBadge variant="badge" size="lg" />
             ) : (
