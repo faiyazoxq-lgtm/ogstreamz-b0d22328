@@ -33,6 +33,7 @@ export function CoinPurchaseModal({
   status,
   onConfirm,
   description,
+  children,
 }: {
   open: boolean;
   onOpenChange: (next: boolean) => void;
@@ -44,6 +45,7 @@ export function CoinPurchaseModal({
   status: CoinPurchaseStatus;
   onConfirm: () => void;
   description?: string;
+  children?: React.ReactNode;
 }) {
   const total = Math.max(0, Math.round(cost * quantity));
   const insufficient =
@@ -100,6 +102,7 @@ export function CoinPurchaseModal({
             You need {(total - insufficient).toLocaleString()} more 🪙 to complete this purchase.
           </p>
         )}
+        {children}
 
         <DialogFooter className="gap-2 sm:gap-2">
           {done ? (
