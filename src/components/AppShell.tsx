@@ -135,9 +135,10 @@ function SidebarSection({
                 <Link
                   to={it.to}
                   aria-current={active ? "page" : undefined}
+                  aria-label={`${it.label}${active ? ", current page" : ""}`}
                   title={collapsed ? it.label : undefined}
                   className={[
-                    "group/item relative flex items-center gap-3 rounded-lg outline-none transition-all min-h-10",
+                    "group/item relative flex items-center gap-3 rounded-lg outline-none motion-safe:transition-all duration-200 min-h-10",
                     collapsed ? "justify-center px-0 py-2" : "px-3 py-2",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                     active
@@ -145,7 +146,7 @@ function SidebarSection({
                       : "text-foreground/85 hover:bg-white/5 hover:text-foreground",
                   ].join(" ")}
                 >
-                  <it.icon className={`h-4 w-4 shrink-0 ${active ? "text-gold drop-shadow-[0_0_6px_rgba(255,209,102,0.6)]" : "text-gold/70 group-hover/item:text-gold"}`} />
+                  <it.icon aria-hidden className={`h-4 w-4 shrink-0 motion-safe:transition-all duration-200 ${active ? "text-gold drop-shadow-[0_0_6px_rgba(255,209,102,0.6)] scale-110" : "text-gold/70 group-hover/item:text-gold"}`} />
                   {!collapsed && (
                     <span className="flex-1 min-w-0">
                       <span className="flex items-center gap-1.5 text-[13px] font-semibold leading-tight">
