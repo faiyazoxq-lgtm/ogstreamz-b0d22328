@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Copy, ExternalLink, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, ClipboardList, Search, Crown, QrCode, Share2, Globe, Download, X, Bot, Sparkles, PlusCircle } from "lucide-react";
@@ -140,8 +140,29 @@ function OgBotEmpty({
   );
 }
 
+type PortalsSearch = {
+  filter: "all" | Item["kind"];
+  scope: "all" | "boss" | "mine";
+  q: string;
+};
+
+const FILTER_VALUES: PortalsSearch["filter"][] = ["all", "music", "joke", "trade", "news", "form", "battle", "tool"];
+const SCOPE_VALUES: PortalsSearch["scope"][] = ["all", "boss", "mine"];
+
 export const Route = createFileRoute("/portals")({
   beforeLoad: requireMember,
+  // Persist filter / scope / search query in the URL so the grouping and
+  // ordering of portals stays consistent across navigation and refresh.
+  validateSearch: (raw: Record<string, unknown>): PortalsSearch => {
+    const f = String(raw.filter ?? "all") as PortalsSearch["filter"];
+    const s = String(raw.scope ?? "all") as PortalsSearch["scope"];
+    const q = typeof raw.q === "string" ? raw.q.slice(0, 80) : "";
+    return {
+      filter: FILTER_VALUES.includes(f) ? f : "all",
+      scope: SCOPE_VALUES.includes(s) ? s : "all",
+      q,
+    };
+  },
   head: () => ({
     meta: [
       { title: "All Portals — 0G Share Hub" },
