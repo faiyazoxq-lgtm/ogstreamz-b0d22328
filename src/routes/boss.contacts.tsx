@@ -102,6 +102,7 @@ function BossContactsPage() {
   const [escapeAnnouncement, setEscapeAnnouncement] = useState("");
   const [highlightAnnouncement, setHighlightAnnouncement] = useState("");
   const [noMatchAnnouncement, setNoMatchAnnouncement] = useState("");
+  const [restoreAnnouncement, setRestoreAnnouncement] = useState("");
   const [draftLinked, setDraftLinked] = useState<ProfileLite | null>(null);
   const [editLinked, setEditLinked] = useState<ProfileLite | null>(null);
   const [profiles, setProfiles] = useState<Record<string, ProfileLite>>({});
