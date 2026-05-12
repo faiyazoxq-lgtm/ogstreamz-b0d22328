@@ -502,12 +502,10 @@ function MobileNavDrawer({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-4 pb-6">
-          {user && (
-            <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-border bg-secondary/40 px-3 py-2.5">
-              <span className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">Swearing Agent</span>
-              <MasterSwearToggle />
-            </div>
-          )}
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-border bg-secondary/40 px-3 py-2.5">
+            <span className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">Swearing Agent</span>
+            <MasterSwearToggle />
+          </div>
 
           {user && portals.length > 0 && <Section title="Portals" icon={DoorOpen} items={portals} />}
           <Section title="HUBS" icon={Rocket} items={hubs} gold />
