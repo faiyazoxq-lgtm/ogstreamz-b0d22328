@@ -127,7 +127,7 @@ export const bossChat = createServerFn({ method: "POST" })
     const text = enforceSwearRules(rawText, enforceMode, lex);
     // Log this user message for cooldown tracking
     try {
-      await supabase.from("boss_chat_messages").insert({
+      await supabaseAdmin.from("boss_chat_messages").insert({
         role: "user",
         source: "web",
         content: data.messages[data.messages.length - 1]?.content?.slice(0, 4000) ?? "",
