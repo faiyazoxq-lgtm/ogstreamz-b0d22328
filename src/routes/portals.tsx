@@ -631,7 +631,7 @@ function PortalsHub() {
             return (
               <div
                 key={`${i.kind}-${i.id}`}
-                className="group relative flex h-full flex-col gap-2.5 sm:gap-4 rounded-2xl border border-white/10 bg-black/40 p-3.5 sm:p-5 backdrop-blur-xl transition hover:-translate-y-0.5 min-h-[230px] sm:min-h-[280px]"
+                className="group portal-card-motion relative flex h-full flex-col gap-2.5 sm:gap-4 rounded-2xl border border-white/10 bg-black/40 p-3.5 sm:p-5 backdrop-blur-xl min-h-[230px] sm:min-h-[280px]"
                 style={{ boxShadow: `0 0 32px -24px ${meta.accent}` }}
               >
                 <div className="flex items-start justify-between gap-2 min-w-0">
@@ -696,7 +696,7 @@ function PortalsHub() {
                       wordmark, and a per-card accent halo layered on top of
                       the shared white→blue ice aura. */}
                   <h3
-                    className="m-0 text-eye-ice--bright tracking-[-0.02em] leading-[1.15] sm:leading-[1.1] lg:leading-[1.05] line-clamp-2 break-words transition-[text-shadow,filter] duration-300 group-hover:brightness-110"
+                    className="portal-card-title m-0 text-eye-ice--bright tracking-[-0.02em] leading-[1.15] sm:leading-[1.1] lg:leading-[1.05] line-clamp-2 break-words"
                     style={{
                       fontSize: "clamp(1rem, 3.6vw, 1.875rem)",
                       textShadow: `0 0 2px rgba(0,0,0,0.55), 0 0 8px rgba(0,0,0,0.4), 0 0 16px ${meta.accent}, 0 0 32px color-mix(in oklab, ${meta.accent} 55%, transparent)`,
