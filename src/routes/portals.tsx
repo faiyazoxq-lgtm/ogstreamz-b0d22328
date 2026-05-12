@@ -177,10 +177,16 @@ function PortalsHub() {
   const isBoss = isAdmin || profile?.rank === "boss";
   const [items, setItems] = useState<Item[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"all" | Item["kind"]>("all");
-  const [q, setQ] = useState("");
-  // Scope toggle: All / Boss-published / Mine. Lives top-right next to search.
-  const [scope, setScope] = useState<"all" | "boss" | "mine">("all");
+  // Filter / scope / search query are persisted in the URL via validateSearch
+  // so the grouping & ordering stay consistent across navigation and refresh.
+  const { filter, scope, q } = Route.useSearch();
+  const navigate = useNavigate({ from: "/portals" });
+  const setFilter = (v: PortalsSearch["filter"]) =>
+    navigate({ search: (prev) => ({ ...prev, filter: v }), replace: true });
+  const setScope = (v: PortalsSearch["scope"]) =>
+    navigate({ search: (prev) => ({ ...prev, scope: v }), replace: true });
+  const setQ = (v: string) =>
+    navigate({ search: (prev) => ({ ...prev, q: v }), replace: true });
   const [qrFor, setQrFor] = useState<Item | null>(null);
   // Per-hub visible-count state: MusicHUB / JokesHUB / ToolHUB paginate
   // long lists so the page stays fast even with hundreds of portals.
