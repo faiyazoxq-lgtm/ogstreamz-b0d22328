@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireBoss } from "@/integrations/supabase/boss-middleware";
 
 export type VipPassRevealResult =
   | {
@@ -37,7 +38,7 @@ export type VipPassPoolRow = {
 };
 
 export const listVipPassPool = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireBoss])
   .handler(async ({ context }): Promise<VipPassPoolRow[]> => {
     const { supabase } = context as { supabase: any };
     const { data, error } = await supabase.rpc("boss_list_vip_pass_pool");
@@ -46,7 +47,7 @@ export const listVipPassPool = createServerFn({ method: "GET" })
   });
 
 export const upsertVipPassPool = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireBoss])
   .inputValidator((d: {
     id?: string | null;
     label?: string;
@@ -85,7 +86,7 @@ export const upsertVipPassPool = createServerFn({ method: "POST" })
   });
 
 export const deleteVipPassPool = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireBoss])
   .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as { supabase: any };

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { enforceSwearRules, loadLexicon, type SwearMode } from "./swear-enforcer.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { perplexityChat, shapesChat } from "./ai-providers.server";
 import { effectiveSwearing, effectiveIntensity } from "./swearing";
 
@@ -48,15 +49,20 @@ export const bossChat = createServerFn({ method: "POST" })
 
     // ── Cooldown / abuse throttle (Boss-controlled in HubControls) ─────────
     try {
-      const { data: hub } = await supabase
+      // Use service-role admin client so non-boss callers can't bypass the
+      // cooldown by hitting RLS-blocked reads (which silently return null
+      // and disable rate limiting). Default to a 5s floor for non-boss users.
+      const { data: hub } = await supabaseAdmin
         .from("hub_settings")
         .select("tuning")
         .eq("hub_key", "boss-chat")
         .maybeSingle();
-      const cd = Math.max(0, Number((hub?.tuning as any)?.cooldown_seconds ?? 0) || 0);
+      const configured = Math.max(0, Number((hub?.tuning as any)?.cooldown_seconds ?? 0) || 0);
+      const isCallerBoss = !!(await supabase.rpc("is_boss", { _uid: userId }))?.data;
+      const cd = isCallerBoss ? configured : Math.max(configured, 5);
       if (cd > 0) {
         const since = new Date(Date.now() - cd * 1000).toISOString();
-        const { count } = await supabase
+        const { count } = await supabaseAdmin
           .from("boss_chat_messages")
           .select("id", { count: "exact", head: true })
           .eq("role", "user")
@@ -121,7 +127,7 @@ export const bossChat = createServerFn({ method: "POST" })
     const text = enforceSwearRules(rawText, enforceMode, lex);
     // Log this user message for cooldown tracking
     try {
-      await supabase.from("boss_chat_messages").insert({
+      await supabaseAdmin.from("boss_chat_messages").insert({
         role: "user",
         source: "web",
         content: data.messages[data.messages.length - 1]?.content?.slice(0, 4000) ?? "",

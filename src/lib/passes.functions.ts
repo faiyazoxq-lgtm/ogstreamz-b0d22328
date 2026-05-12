@@ -9,8 +9,10 @@ async function isBoss(supabase: any) {
 
 function makeToken() {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
   let s = "";
-  for (let i = 0; i < 8; i++) s += alphabet[Math.floor(Math.random() * alphabet.length)];
+  for (let i = 0; i < 8; i++) s += alphabet[bytes[i] % alphabet.length];
   return `0G-${s}`;
 }
 

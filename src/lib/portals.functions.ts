@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
+import { validateReturnUrl } from "@/lib/return-url";
 
 async function isAdmin(supabase: any, userId: string): Promise<boolean> {
   const { data } = await supabase
@@ -364,7 +365,7 @@ export const createPortalUnlockCheckout = createServerFn({ method: "POST" })
   .inputValidator((data: { portalId: string; environment: StripeEnv; customerEmail?: string; returnUrl: string }) => {
     if (!/^[a-zA-Z0-9-]{36}$/.test(data.portalId)) throw new Error("Invalid portalId");
     if (data.environment !== "sandbox" && data.environment !== "live") throw new Error("Invalid environment");
-    return data;
+    return { ...data, returnUrl: validateReturnUrl(data.returnUrl) };
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };

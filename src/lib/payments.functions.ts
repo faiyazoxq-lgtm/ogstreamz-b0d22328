@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { validateReturnUrl } from "@/lib/return-url";
 
 async function resolveOrCreateCustomer(
   stripe: ReturnType<typeof createStripeClient>,
@@ -47,7 +48,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       environment: StripeEnv;
     }) => {
       if (!/^[a-zA-Z0-9_-]+$/.test(data.priceId)) throw new Error("Invalid priceId");
-      return data;
+      return { ...data, returnUrl: validateReturnUrl(data.returnUrl) };
     },
   )
   .handler(async ({ data, context }) => {
