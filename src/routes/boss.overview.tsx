@@ -67,6 +67,7 @@ const TILES: Tile[] = [
   { to: "/boss/power",               label: "Power Controls",    blurb: "Freeze payments, freeze coins, reverse recent purchases",     Icon: Power,        tint: "#ff5577" },
   { to: "/boss/pricing",             label: "Pricing",           blurb: "Coin packs & store product catalogue",                        Icon: Tags,         tint: "#00e08a" },
   { to: "/boss/portal-costs",        label: "Coin Costs",        blurb: "Per-hub create & per-portal use costs",                       Icon: Coins,        tint: "#ffd166" },
+  { to: "/boss/portal-usage",        label: "Portal Usage Audit", blurb: "Every charged portal action — slug, user, cost, time",        Icon: Coins,        tint: "#ffd166" },
   { to: "/admin", hash: "topups",    label: "Top-Up Requests",   blurb: "Approve or deny credit top-ups",                              Icon: Inbox,        tint: "#ff5577" },
   { to: "/admin", hash: "roster",    label: "Adjust Credits",    blurb: "Boss-grant credits by email or user-id",                      Icon: Coins,        tint: "#ffd166" },
   { to: "/admin", hash: "passes",    label: "VIP Passes",        blurb: "Mint, grant, revoke, share signup passes",                    Icon: Ticket,       tint: "#a78bfa" },
