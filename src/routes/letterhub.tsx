@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Sparkles, FileDown, Loader2, ArrowRight, ArrowLeft, RotateCcw, Mail, History, Trash2, FileText, Wand2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Sparkles, FileDown, Loader2, ArrowRight, ArrowLeft, RotateCcw, Mail, History, Trash2, FileText, Wand2, CheckCircle2, AlertCircle, Eye, Pencil, Columns2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -97,6 +97,7 @@ function LetterHubPage() {
   const [savingHistory, setSavingHistory] = useState(false);
   const [suggestingIdx, setSuggestingIdx] = useState<number | null>(null);
   const [touched, setTouched] = useState<Record<number, boolean>>({});
+  const [previewMode, setPreviewMode] = useState<"preview" | "edit" | "split">("preview");
 
   const refreshHistory = useCallback(async () => {
     if (!user) return;
