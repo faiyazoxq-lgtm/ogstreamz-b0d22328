@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { LayoutDashboard, Sparkles, Compass, ArrowRight, Tv, ExternalLink, Send, CheckCircle2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -81,7 +81,6 @@ const CHOICES: Choice[] = [
 function WelcomePage() {
   const [streamUrl, setStreamUrl] = useState<string>("https://ogstreamz.co.uk");
   const { user, profile } = useAuth();
-  const navigate = useNavigate();
   const fetchTgStatus = useServerFn(getTelegramLinkStatus);
   const [tgLinked, setTgLinked] = useState<boolean | null>(null);
 
