@@ -52,6 +52,7 @@ import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
 import { Route as HubSlugRouteImport } from './routes/hub.$slug'
+import { Route as FSlugRouteImport } from './routes/f.$slug'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as BossUsersRouteImport } from './routes/boss.users'
 import { Route as BossTodoRouteImport } from './routes/boss.todo'
@@ -309,6 +310,11 @@ const JokesPortalRoute = JokesPortalRouteImport.update({
 const HubSlugRoute = HubSlugRouteImport.update({
   id: '/hub/$slug',
   path: '/hub/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FSlugRoute = FSlugRouteImport.update({
+  id: '/f/$slug',
+  path: '/f/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
@@ -601,6 +607,7 @@ export interface FileRoutesByFullPath {
   '/boss/todo': typeof BossTodoRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/f/$slug': typeof FSlugRoute
   '/hub/$slug': typeof HubSlugRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -688,6 +695,7 @@ export interface FileRoutesByTo {
   '/boss/todo': typeof BossTodoRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/f/$slug': typeof FSlugRoute
   '/hub/$slug': typeof HubSlugRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -777,6 +785,7 @@ export interface FileRoutesById {
   '/boss/todo': typeof BossTodoRoute
   '/boss/users': typeof BossUsersRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/f/$slug': typeof FSlugRoute
   '/hub/$slug': typeof HubSlugRoute
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
@@ -867,6 +876,7 @@ export interface FileRouteTypes {
     | '/boss/todo'
     | '/boss/users'
     | '/checkout/return'
+    | '/f/$slug'
     | '/hub/$slug'
     | '/jokes/portal'
     | '/m/$slug'
@@ -954,6 +964,7 @@ export interface FileRouteTypes {
     | '/boss/todo'
     | '/boss/users'
     | '/checkout/return'
+    | '/f/$slug'
     | '/hub/$slug'
     | '/jokes/portal'
     | '/m/$slug'
@@ -1042,6 +1053,7 @@ export interface FileRouteTypes {
     | '/boss/todo'
     | '/boss/users'
     | '/checkout/return'
+    | '/f/$slug'
     | '/hub/$slug'
     | '/jokes/portal'
     | '/m/$slug'
@@ -1101,6 +1113,7 @@ export interface RootRouteChildren {
   AccountPassesRoute: typeof AccountPassesRoute
   BSlugRoute: typeof BSlugRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
+  FSlugRoute: typeof FSlugRoute
   HubSlugRoute: typeof HubSlugRoute
   MSlugRoute: typeof MSlugRoute
   PSlugRoute: typeof PSlugRoute
@@ -1417,6 +1430,13 @@ declare module '@tanstack/react-router' {
       path: '/hub/$slug'
       fullPath: '/hub/$slug'
       preLoaderRoute: typeof HubSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/f/$slug': {
+      id: '/f/$slug'
+      path: '/f/$slug'
+      fullPath: '/f/$slug'
+      preLoaderRoute: typeof FSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout/return': {
@@ -1866,6 +1886,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountPassesRoute: AccountPassesRoute,
   BSlugRoute: BSlugRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
+  FSlugRoute: FSlugRoute,
   HubSlugRoute: HubSlugRoute,
   MSlugRoute: MSlugRoute,
   PSlugRoute: PSlugRoute,
@@ -1883,3 +1904,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
