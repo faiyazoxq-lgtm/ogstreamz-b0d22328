@@ -70,10 +70,14 @@ function FunctionAuditPage() {
   });
 
   const counts = useMemo(() => {
-    const c = { total: 0, anon: 0, needs_review: 0, justified: 0, revoke: 0 };
+    const c = { total: 0, anon: 0, definer: 0, needs_review: 0, justified: 0, revoke: 0 };
+    const seen = new Set<string>();
     for (const r of data ?? []) {
+      if (seen.has(r.signature)) continue; // dedupe by pg_proc signature
+      seen.add(r.signature);
       c.total++;
       if (r.anon_can_execute) c.anon++;
+      if (r.security_definer) c.definer++;
       c[r.status]++;
     }
     return c;
@@ -116,6 +120,7 @@ function FunctionAuditPage() {
           <div className="mt-4 flex flex-wrap gap-2 text-xs">
             <Stat label="Exposed total" value={counts.total} />
             <Stat label="Anon-callable" value={counts.anon} tone="rose" />
+            <Stat label="Unique definer fns" value={counts.definer} tone="amber" />
             <Stat label="Needs review" value={counts.needs_review} tone="amber" />
             <Stat label="Justified" value={counts.justified} tone="emerald" />
             <Stat label="Should revoke" value={counts.revoke} tone="rose" />

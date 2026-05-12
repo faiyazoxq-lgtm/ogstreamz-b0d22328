@@ -3551,6 +3551,15 @@ export type Database = {
         Args: { _approve: boolean; _id: string; _note?: string }
         Returns: Json
       }
+      boss_definer_signature_count: {
+        Args: never
+        Returns: {
+          anon_definer: number
+          authenticated_definer: number
+          public_definer: number
+          total_definer: number
+        }[]
+      }
       boss_delete_agent_key: { Args: { _key_name: string }; Returns: undefined }
       boss_delete_vault_credential: { Args: { _id: string }; Returns: boolean }
       boss_delete_vip_pass_pool: { Args: { _id: string }; Returns: boolean }
