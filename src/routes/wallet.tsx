@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { Coins, Plus, ArrowLeft } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Coins, Plus, ArrowLeft, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MusicHubBalance } from "@/components/MusicHubBalance";
 import { CoinActivity } from "@/components/CoinActivity";
@@ -10,6 +10,16 @@ import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/wallet")({
   beforeLoad: requireMember,
+  validateSearch: (search: Record<string, unknown>) => ({
+    topup: search.topup === 1 || search.topup === "1" ? 1 : undefined,
+    reason: typeof search.reason === "string" ? search.reason : undefined,
+    need: typeof search.need === "number"
+      ? search.need
+      : typeof search.need === "string" && /^\d+$/.test(search.need)
+        ? Number(search.need)
+        : undefined,
+    from: typeof search.from === "string" ? search.from.slice(0, 80) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Coin Wallet · 0G-PORTAL" },
@@ -23,6 +33,15 @@ function WalletPage() {
   const [topUpOpen, setTopUpOpen] = useState(false);
   const { profile } = useAuth();
   const isBoss = profile?.rank === "boss";
+  const { topup, reason, need, from } = Route.useSearch();
+  const insufficient = reason === "insufficient";
+
+  // Auto-open the top-up modal when arriving from an insufficient-balance
+  // redirect (e.g. portal HIT button -> /wallet?topup=1&reason=insufficient).
+  useEffect(() => {
+    if (topup === 1 && !isBoss) setTopUpOpen(true);
+  }, [topup, isBoss]);
+
   return (
     <main className="mx-auto max-w-3xl px-5 py-10 space-y-6">
       <header className="flex items-center justify-between gap-3">
@@ -34,6 +53,26 @@ function WalletPage() {
           <Link to="/profile"><ArrowLeft className="h-4 w-4 mr-1" /> Vault</Link>
         </Button>
       </header>
+
+      {insufficient && !isBoss && (
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-2xl border border-destructive/40 bg-destructive/10 p-4"
+        >
+          <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-destructive">Not enough 🪙 to continue</p>
+            <p className="mt-1 text-sm text-foreground/80">
+              {need
+                ? <>You needed <span className="font-bold tabular-nums">{need} 🪙</span> for that action{from ? <> in <code className="px-1 rounded bg-black/30">{from}</code></> : null}. Top up below to keep going.</>
+                : <>That action needs more coins than you have. Top up below to keep going.</>}
+            </p>
+          </div>
+          <Button size="sm" onClick={() => setTopUpOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" /> Top up
+          </Button>
+        </div>
+      )}
 
       <MusicHubBalance />
 
