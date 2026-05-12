@@ -42,9 +42,10 @@ export function OgWordmark({
   // eye reads as if it's tracking — same behavior as the previous stylized eye.
   const ART_ASPECT = 1920 / 1047;
   // Iris hotspot inside the artwork (left/top/size as % of the image box).
-  const IRIS_LEFT_PCT = 23.4; // left edge of iris bounding box
-  const IRIS_TOP_PCT = 39;
-  const IRIS_SIZE_PCT = 22; // iris is roughly square
+  const IRIS_LEFT_PCT = 23; // left edge of iris bounding box (% of art width)
+  const IRIS_TOP_PCT = 30;  // top edge (% of art height) → centers iris at 50%
+  const IRIS_W_PCT = 22;    // iris width as % of art width
+  const IRIS_H_PCT = 40;    // iris height as % of art height (≈ square pixels)
 
   return (
     <span
@@ -84,8 +85,8 @@ export function OgWordmark({
           style={{
             left: `${IRIS_LEFT_PCT}%`,
             top: `${IRIS_TOP_PCT}%`,
-            width: `${IRIS_SIZE_PCT}%`,
-            height: `${IRIS_SIZE_PCT * ART_ASPECT}%`,
+            width: `${IRIS_W_PCT}%`,
+            height: `${IRIS_H_PCT}%`,
           }}
         >
           <TrackingPupil pupilRatio={0.16} travelRatio={0.22} />
