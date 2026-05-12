@@ -31,6 +31,7 @@ import { Route as MusicRouteImport } from './routes/music'
 import { Route as LetterhubRouteImport } from './routes/letterhub'
 import { Route as JokesRouteImport } from './routes/jokes'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as FormhubRouteImport } from './routes/formhub'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FleetRouteImport } from './routes/fleet'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -205,6 +206,11 @@ const JokesRoute = JokesRouteImport.update({
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FormhubRoute = FormhubRouteImport.update({
+  id: '/formhub',
+  path: '/formhub',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -552,6 +558,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/formhub': typeof FormhubRoute
   '/history': typeof HistoryRoute
   '/jokes': typeof JokesRouteWithChildren
   '/letterhub': typeof LetterhubRoute
@@ -640,6 +647,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/formhub': typeof FormhubRoute
   '/history': typeof HistoryRoute
   '/jokes': typeof JokesRouteWithChildren
   '/letterhub': typeof LetterhubRoute
@@ -730,6 +738,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/fleet': typeof FleetRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/formhub': typeof FormhubRoute
   '/history': typeof HistoryRoute
   '/jokes': typeof JokesRouteWithChildren
   '/letterhub': typeof LetterhubRoute
@@ -821,6 +830,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/fleet'
     | '/forgot-password'
+    | '/formhub'
     | '/history'
     | '/jokes'
     | '/letterhub'
@@ -909,6 +919,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/fleet'
     | '/forgot-password'
+    | '/formhub'
     | '/history'
     | '/jokes'
     | '/letterhub'
@@ -998,6 +1009,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/fleet'
     | '/forgot-password'
+    | '/formhub'
     | '/history'
     | '/jokes'
     | '/letterhub'
@@ -1088,6 +1100,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   FleetRoute: typeof FleetRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  FormhubRoute: typeof FormhubRoute
   HistoryRoute: typeof HistoryRoute
   JokesRoute: typeof JokesRouteWithChildren
   LetterhubRoute: typeof LetterhubRoute
@@ -1283,6 +1296,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/formhub': {
+      id: '/formhub'
+      path: '/formhub'
+      fullPath: '/formhub'
+      preLoaderRoute: typeof FormhubRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -1861,6 +1881,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   FleetRoute: FleetRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  FormhubRoute: FormhubRoute,
   HistoryRoute: HistoryRoute,
   JokesRoute: JokesRouteWithChildren,
   LetterhubRoute: LetterhubRoute,
