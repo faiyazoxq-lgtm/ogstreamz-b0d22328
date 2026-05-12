@@ -786,7 +786,14 @@ function LetterHubPage() {
             {letter && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-lg font-black uppercase tracking-[0.2em]">Draft Letter</h2>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h2 className="text-lg font-black uppercase tracking-[0.2em]">Draft Letter</h2>
+                    {lastSavedAt && (
+                      <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                        Auto-saved {new Date(lastSavedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    )}
+                  </div>
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={reset} className="uppercase tracking-[0.2em] font-black text-xs">
                       <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> New
