@@ -6,6 +6,8 @@ export type VipPassRevealResult =
       available: true;
       label: string;
       code: string;
+      username?: string | null;
+      password?: string | null;
       revealed_at: string;
       expires_at: string;
       expires_in: number;
@@ -26,6 +28,8 @@ export type VipPassPoolRow = {
   id: string;
   label: string;
   code: string;
+  username: string;
+  password: string;
   active: boolean;
   sort_order: number;
   created_at: string;
@@ -36,11 +40,7 @@ export const listVipPassPool = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<VipPassPoolRow[]> => {
     const { supabase } = context as { supabase: any };
-    const { data, error } = await supabase
-      .from("vip_pass_pool")
-      .select("id,label,code,active,sort_order,created_at,updated_at")
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true });
+    const { data, error } = await supabase.rpc("boss_list_vip_pass_pool");
     if (error) throw new Error(error.message);
     return (data ?? []) as VipPassPoolRow[];
   });
@@ -50,25 +50,35 @@ export const upsertVipPassPool = createServerFn({ method: "POST" })
   .inputValidator((d: {
     id?: string | null;
     label?: string;
-    code: string;
+    code?: string;
+    username?: string;
+    password?: string;
     active?: boolean;
     sort_order?: number;
   }) => ({
     id: d.id ? String(d.id) : null,
     label: (d.label ?? "").trim().slice(0, 80),
     code: String(d.code ?? "").trim().slice(0, 200),
+    username: String(d.username ?? "").trim().slice(0, 200),
+    password: String(d.password ?? "").trim().slice(0, 400),
     active: d.active === undefined ? true : !!d.active,
     sort_order: Math.max(0, Math.trunc(Number(d.sort_order ?? 0))),
   }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as { supabase: any };
-    if (!data.code) throw new Error("Code required");
+    const hasCode = !!data.code;
+    const hasCred = !!data.username && !!data.password;
+    if (!hasCode && !hasCred) {
+      throw new Error("Provide a code OR a username and password");
+    }
     const { data: id, error } = await supabase.rpc("boss_upsert_vip_pass_pool", {
       _id: data.id,
       _label: data.label,
       _code: data.code,
       _active: data.active,
       _sort_order: data.sort_order,
+      _username: data.username || null,
+      _password: data.password || null,
     });
     if (error) throw new Error(error.message);
     return { id: id as string };
