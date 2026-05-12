@@ -98,7 +98,7 @@ function PortalsHub() {
           if (tErr) throw tErr;
           for (const p of (portals as PortalRow[] | null) ?? []) {
             const to = PORTAL_TO[p.kind] ?? "/p/$slug";
-            const kind = (["music","joke","trade","news"].includes(p.kind) ? p.kind : "joke") as Item["kind"];
+            const kind = (["music","joke","trade","news","form"].includes(p.kind) ? p.kind : "joke") as Item["kind"];
             out.push({
               id: p.id, slug: p.slug, name: p.name, subtitle: p.niche || "",
               kind, to, vip: !!p.vip, views: p.view_count || 0, created_at: p.created_at,
@@ -135,7 +135,7 @@ function PortalsHub() {
           for (const p of (navRes.data ?? []) as Array<{ id: string; slug: string; name: string; kind: string; vip: boolean; by_boss?: boolean; created_at: string }>) {
             if (p.by_boss === false) continue;
             const to = PORTAL_TO[p.kind] ?? "/p/$slug";
-            const kind = (["music","joke","trade","news"].includes(p.kind) ? p.kind : "joke") as Item["kind"];
+            const kind = (["music","joke","trade","news","form"].includes(p.kind) ? p.kind : "joke") as Item["kind"];
             out.push({
               id: p.id, slug: p.slug, name: p.name, subtitle: "",
               kind, to, vip: !!p.vip, views: 0, created_at: p.created_at,
@@ -145,7 +145,7 @@ function PortalsHub() {
           for (const p of ((ownRes?.data ?? []) as PortalRow[])) {
             if (seen.has(p.id)) continue;
             const to = PORTAL_TO[p.kind] ?? "/p/$slug";
-            const kind = (["music","joke","trade","news"].includes(p.kind) ? p.kind : "joke") as Item["kind"];
+            const kind = (["music","joke","trade","news","form"].includes(p.kind) ? p.kind : "joke") as Item["kind"];
             out.push({
               id: p.id, slug: p.slug, name: p.name, subtitle: p.niche || "",
               kind, to, vip: !!p.vip, views: p.view_count || 0, created_at: p.created_at,
