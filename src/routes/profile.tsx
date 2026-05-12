@@ -129,11 +129,11 @@ function ProfilePage() {
             Welcome back
           </h1>
           <div
-            className="mt-5 flex items-center justify-center gap-3 text-foreground font-[Montserrat] font-semibold"
+            className="mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-foreground font-[Montserrat] font-semibold max-w-[36ch] mx-auto [overflow-wrap:anywhere] [word-break:break-word] hyphens-auto"
             style={{
-              fontSize: "clamp(1.35rem, 1rem + 1.6vw, 2.25rem)",
+              fontSize: "clamp(1.625rem, 1.1rem + 2vw, 2.625rem)",
               letterSpacing: "0.005em",
-              lineHeight: 1.15,
+              lineHeight: 1.25,
             }}
           >
             {isBoss ? (
