@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import {
   Music2, Smile, Wrench, ArrowUpRight, TrendingUp, Rocket, Swords,
   Sparkles, Radio, Bot, Brain, Zap, Star, Megaphone, Disc3, Satellite, Radar,
@@ -27,6 +27,37 @@ const ACTIVE = "border-[oklch(0.72_0.22_245/0.9)] bg-[oklch(0.72_0.22_245/0.18)]
 export function HubsStrip({ className = "" }: { className?: string }) {
   const [customHubs, setCustomHubs] = useState<Array<{ id: string; title: string; href?: string | null; icon?: string | null }>>([]);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const listRef = useRef<HTMLUListElement | null>(null);
+
+  function handleKeyDown(e: KeyboardEvent<HTMLUListElement>) {
+    const ul = listRef.current;
+    if (!ul) return;
+    const links = Array.from(ul.querySelectorAll<HTMLAnchorElement>("a[href]"));
+    if (links.length === 0) return;
+    const current = document.activeElement as HTMLElement | null;
+    const idx = current ? links.indexOf(current as HTMLAnchorElement) : -1;
+    let next = -1;
+    switch (e.key) {
+      case "ArrowRight":
+        next = idx < 0 ? 0 : (idx + 1) % links.length;
+        break;
+      case "ArrowLeft":
+        next = idx < 0 ? links.length - 1 : (idx - 1 + links.length) % links.length;
+        break;
+      case "Home":
+        next = 0;
+        break;
+      case "End":
+        next = links.length - 1;
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+    const target = links[next];
+    target.focus();
+    target.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -59,7 +90,11 @@ export function HubsStrip({ className = "" }: { className?: string }) {
             {PORTALS.length + customHubs.length} live
           </span>
         </div>
-        <ul className="flex gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-none -mx-1 px-1">
+        <ul
+          ref={listRef}
+          onKeyDown={handleKeyDown}
+          className="flex gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-none -mx-1 px-1 focus-within:outline-none"
+        >
           {PORTALS.map(({ to, title, Icon }) => (
             <li key={to} className="snap-start shrink-0">
               <Link
