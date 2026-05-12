@@ -288,8 +288,28 @@ function PortalsHub() {
           <p className="text-sm text-muted-foreground">No portals match this filter yet. Spawn one from a hub.</p>
         </div>
       ) : (
-        <div className="grid gap-2.5 sm:gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] items-stretch">
-          {filtered.map((i) => {
+        <div className="space-y-10">
+          {HUB_ORDER.map((hubKind) => {
+            const hubItems = filtered.filter((i) => i.kind === hubKind);
+            if (hubItems.length === 0) return null;
+            const hubMeta = KIND_META[hubKind];
+            return (
+              <section key={hubKind} aria-labelledby={`hub-${hubKind}`}>
+                <header className="mb-3 flex items-center gap-2">
+                  <hubMeta.Icon className="h-4 w-4" style={{ color: hubMeta.accent }} />
+                  <h2
+                    id={`hub-${hubKind}`}
+                    className="font-[Montserrat] font-black tracking-tight text-xl sm:text-2xl"
+                    style={{ color: hubMeta.accent }}
+                  >
+                    {hubMeta.hub}
+                  </h2>
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                    {hubItems.length} portal{hubItems.length === 1 ? "" : "s"}
+                  </span>
+                </header>
+                <div className="grid gap-2.5 sm:gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] items-stretch">
+                  {hubItems.map((i) => {
             const meta = KIND_META[i.kind];
             const href = buildHref(i);
             return (
@@ -380,6 +400,10 @@ function PortalsHub() {
                   </div>
                 </div>
               </div>
+            );
+          })}
+                </div>
+              </section>
             );
           })}
         </div>
