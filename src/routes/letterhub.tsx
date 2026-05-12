@@ -344,6 +344,9 @@ function LetterHubPage() {
       setLetter(r.letter || "");
       setHistoryId(r.id);
       setStep(r.letter ? 4 : 2);
+      // Mark this slot as already restored so the restore effect doesn't
+      // overwrite the freshly loaded DB data with a stale local draft.
+      if (user) setRestoredKey(`letterhub:draft:${user.id}:${r.id}`);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setLoading(false);
@@ -356,6 +359,9 @@ function LetterHubPage() {
     if (!res.ok) {
       toast.error(res.error || "Delete failed");
       return;
+    }
+    if (user && typeof window !== "undefined") {
+      try { window.localStorage.removeItem(`letterhub:draft:${user.id}:${id}`); } catch { /* ignore */ }
     }
     if (historyId === id) setHistoryId(null);
     setHistory((h) => h.filter((x) => x.id !== id));
