@@ -193,7 +193,7 @@ export const saveLetterHistory = createServerFn({ method: "POST" })
     title: raw?.title ? clip(raw.title, 140) : "",
   }))
   .handler(async ({ data, context }) => {
-    const { supabase, user } = context as { supabase: any; user: { id: string } };
+    const { supabase, user } = context as { supabase: any; userId: string };
     const title = data.title || titleFor(data.inputs);
     if (data.id) {
       const { data: row, error } = await supabase
@@ -206,7 +206,7 @@ export const saveLetterHistory = createServerFn({ method: "POST" })
           letter: data.letter,
         })
         .eq("id", data.id)
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .select("id")
         .maybeSingle();
       if (error) return { ok: false as const, error: error.message, id: null as string | null };
@@ -215,7 +215,7 @@ export const saveLetterHistory = createServerFn({ method: "POST" })
     const { data: row, error } = await supabase
       .from("letter_history")
       .insert({
-        user_id: user.id,
+        user_id: userId,
         title,
         inputs: data.inputs,
         questions: data.questions,
@@ -231,11 +231,11 @@ export const saveLetterHistory = createServerFn({ method: "POST" })
 export const listLetterHistory = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase, user } = context as { supabase: any; user: { id: string } };
+    const { supabase, user } = context as { supabase: any; userId: string };
     const { data, error } = await supabase
       .from("letter_history")
       .select("id,title,inputs,letter,created_at,updated_at")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .order("updated_at", { ascending: false })
       .limit(50);
     if (error) return { ok: false as const, error: error.message, items: [] as Array<{ id: string; title: string; created_at: string; updated_at: string; preview: string }> };
@@ -253,13 +253,13 @@ export const getLetterHistory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((raw: { id: string }) => ({ id: String(raw?.id || "").slice(0, 64) }))
   .handler(async ({ data, context }) => {
-    const { supabase, user } = context as { supabase: any; user: { id: string } };
+    const { supabase, user } = context as { supabase: any; userId: string };
     if (!data.id) return { ok: false as const, error: "Missing id", row: null as LetterHistoryRow | null };
     const { data: row, error } = await supabase
       .from("letter_history")
       .select("id,title,inputs,questions,answers,letter,created_at,updated_at")
       .eq("id", data.id)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .maybeSingle();
     if (error) return { ok: false as const, error: error.message, row: null };
     if (!row) return { ok: false as const, error: "Not found", row: null };
@@ -270,13 +270,13 @@ export const deleteLetterHistory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((raw: { id: string }) => ({ id: String(raw?.id || "").slice(0, 64) }))
   .handler(async ({ data, context }) => {
-    const { supabase, user } = context as { supabase: any; user: { id: string } };
+    const { supabase, user } = context as { supabase: any; userId: string };
     if (!data.id) return { ok: false as const, error: "Missing id" };
     const { error } = await supabase
       .from("letter_history")
       .delete()
       .eq("id", data.id)
-      .eq("user_id", user.id);
+      .eq("user_id", userId);
     if (error) return { ok: false as const, error: error.message };
     return { ok: true as const, error: null };
   });
