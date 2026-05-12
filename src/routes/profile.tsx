@@ -182,10 +182,22 @@ function ProfilePage() {
           )}
         </header>
 
-        {/* Real 0G status tag — single large tag */}
-        {isVip && !isBoss && (
-          <section className="mb-8 flex justify-center">
-            <RealOgBadge variant="badge" size="lg" />
+        {/* Status tag slot — reserved row keeps header height stable for all tiers */}
+        {!verifiedBoss && (
+          <section className="mb-8 flex justify-center min-h-[34px] items-center">
+            {isVip && !isBoss ? (
+              <RealOgBadge variant="badge" size="lg" />
+            ) : (
+              <span
+                role="status"
+                aria-label="Free tier — VIP not active"
+                className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_oklab,var(--gold)_28%,transparent)] bg-[color-mix(in_oklab,var(--gold)_5%,transparent)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.32em] text-[color-mix(in_oklab,var(--gold)_72%,var(--muted-foreground))]"
+              >
+                <span aria-hidden="true" className="h-px w-4 bg-[color-mix(in_oklab,var(--gold)_55%,transparent)]" />
+                Free Tier
+                <span aria-hidden="true" className="h-px w-4 bg-[color-mix(in_oklab,var(--gold)_55%,transparent)]" />
+              </span>
+            )}
           </section>
         )}
 
