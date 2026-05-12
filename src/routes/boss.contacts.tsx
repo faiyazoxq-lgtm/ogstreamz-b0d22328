@@ -372,7 +372,8 @@ function BossContactsPage() {
             <button
               type="button"
               onClick={() => setQuery("")}
-              aria-label="Clear search"
+              aria-label="Clear search query"
+              title="Clear search"
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
             >
               <X className="h-4 w-4" />
@@ -439,10 +440,16 @@ function BossContactsPage() {
           <div
             key={c.id}
             ref={isActiveMatch ? activeMatchRef : undefined}
-            role="listitem"
+            role={isActiveMatch ? "group" : "listitem"}
             tabIndex={isActiveMatch ? 0 : -1}
             aria-current={isActiveMatch ? "true" : undefined}
-            aria-label={`${c.label}, ${toDisplay(c.phone)}${isActiveMatch ? ", current match" : ""}`}
+            aria-label={
+              isActiveMatch
+                ? `Highlighted match: ${c.label}, ${toDisplay(c.phone)}. Press Escape to clear search, Enter or Arrow keys to move between matches.`
+                : `${c.label}, ${toDisplay(c.phone)}`
+            }
+            aria-roledescription={isActiveMatch ? "highlighted search match" : undefined}
+            aria-describedby={isActiveMatch ? "boss-contacts-search-status" : undefined}
             onKeyDown={
               isActiveMatch
                 ? (e) => {
