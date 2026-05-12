@@ -3453,6 +3453,17 @@ export type Database = {
       }
     }
     Functions: {
+      _profile_self_update_safe: {
+        Args: {
+          _banned: boolean
+          _credits: number
+          _id: string
+          _rank: Database["public"]["Enums"]["syndicate_rank"]
+          _status: Database["public"]["Enums"]["account_status"]
+          _subscription_plan: Database["public"]["Enums"]["subscription_plan"]
+        }
+        Returns: boolean
+      }
       _stream_link_secret: { Args: never; Returns: string }
       admin_adjust_credits: {
         Args: { _delta: number; _reason: string; _user_id: string }
