@@ -224,22 +224,45 @@ function BossContactsPage() {
     });
   }, [items, query]);
 
-  // Remember the matchIndex per (normalized) query so that clearing and
-  // re-entering the same query restores the user's previous position.
-  const savedIndexRef = useRef<Map<string, number>>(new Map());
+  // Remember the highlighted contact id per (normalized) query so that
+  // clearing and re-entering the same query restores the user's previous
+  // position — but only if that contact is still in the filtered results.
+  const savedMatchIdRef = useRef<Map<string, string>>(new Map());
   const prevQueryRef = useRef<string>("");
-  const prevMatchIndexRef = useRef<number>(0);
-  useEffect(() => { prevMatchIndexRef.current = matchIndex; }, [matchIndex]);
+  const prevMatchIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    prevMatchIdRef.current =
+      query.trim() && filtered.length > 0
+        ? filtered[Math.min(matchIndex, filtered.length - 1)].id
+        : null;
+  }, [matchIndex, filtered, query]);
   useEffect(() => {
     const prev = prevQueryRef.current.trim().toLowerCase();
     const next = query.trim().toLowerCase();
     if (prev === next) return;
-    // Save the position we had under the previous query before leaving it.
-    if (prev) savedIndexRef.current.set(prev, prevMatchIndexRef.current);
-    // Restore (or reset) for the new query.
-    setMatchIndex(next ? savedIndexRef.current.get(next) ?? 0 : 0);
+    // Save the highlighted contact id under the previous query before leaving.
+    if (prev && prevMatchIdRef.current) {
+      savedMatchIdRef.current.set(prev, prevMatchIdRef.current);
+    }
     prevQueryRef.current = query;
-  }, [query]);
+    if (!next) {
+      setMatchIndex(0);
+      return;
+    }
+    // Only restore if the previously highlighted contact still appears in
+    // the new filtered results; otherwise fall back to the first match.
+    const savedId = savedMatchIdRef.current.get(next);
+    if (savedId) {
+      const idx = filtered.findIndex((c) => c.id === savedId);
+      if (idx >= 0) {
+        setMatchIndex(idx);
+        return;
+      }
+      // Stale entry — drop it so we don't keep checking a missing contact.
+      savedMatchIdRef.current.delete(next);
+    }
+    setMatchIndex(0);
+  }, [query, filtered]);
   const activeMatchId =
     query.trim() && filtered.length > 0
       ? filtered[Math.min(matchIndex, filtered.length - 1)].id
