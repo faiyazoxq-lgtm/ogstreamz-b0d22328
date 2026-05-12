@@ -314,3 +314,40 @@ export const reverifyStream = createServerFn({ method: "POST" })
 
     return { ok: true as const, status, expiresAt };
   });
+
+/**
+ * Build the personalised m3u_plus playlist URL for the signed-in user using
+ * the credentials they typed during verification. The host comes from the
+ * server-side STREAM_SERVER_URL secret, so members never see the domain in
+ * client code — they only ever see their own filled-in URL after auth.
+ */
+export const getMyStreamM3uUrl = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context as any;
+    let server: string;
+    try {
+      server = getServerUrl();
+    } catch (e: any) {
+      return { ok: false as const, reason: "invalid_server" as const, error: e?.message || REASON_MESSAGES.invalid_server };
+    }
+    const { data: rows, error } = await supabase.rpc("get_my_stream_creds");
+    if (error) {
+      return { ok: false as const, reason: "rpc_error" as const, cause: classifyRpcError(error.message), error: error.message };
+    }
+    const creds = Array.isArray(rows) && rows[0] ? rows[0] : null;
+    if (!creds || !creds.username || !creds.password) {
+      return {
+        ok: false as const,
+        reason: "rpc_error" as const,
+        cause: "resubmit_required" as const,
+        error: "No saved stream credentials yet. Verify your line first.",
+      };
+    }
+    const url =
+      `${server}/get.php` +
+      `?username=${encodeURIComponent(creds.username)}` +
+      `&password=${encodeURIComponent(creds.password)}` +
+      `&type=m3u_plus&output=ts`;
+    return { ok: true as const, url };
+  });
