@@ -336,11 +336,17 @@ function BossContactsPage() {
             type="button"
             size="sm"
             variant="outline"
-            onClick={clearAndFocusSearch}
+            onClick={() => {
+              clearAndFocusSearch();
+              announceEscape("Search cleared. Highlighted match reset to first match.");
+            }}
             disabled={!query}
           >
             <X className="h-4 w-4 mr-1" /> Clear
           </Button>
+        </div>
+        <div className="sr-only" role="status" aria-live="assertive" aria-atomic="true">
+          {escapeAnnouncement}
         </div>
         <div
           id="boss-contacts-search-status"
