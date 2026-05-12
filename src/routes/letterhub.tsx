@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Sparkles, FileDown, Loader2, ArrowRight, ArrowLeft, RotateCcw, Mail, History, Trash2, FileText } from "lucide-react";
+import { Sparkles, FileDown, Loader2, ArrowRight, ArrowLeft, RotateCcw, Mail, History, Trash2, FileText, Wand2, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +16,7 @@ import {
   listLetterHistory,
   getLetterHistory,
   deleteLetterHistory,
+  suggestLetterAnswer,
   type LetterInput,
 } from "@/lib/letter.functions";
 import { toast } from "sonner";
@@ -81,6 +82,7 @@ function LetterHubPage() {
   const listHistoryFn = useServerFn(listLetterHistory);
   const getHistoryFn = useServerFn(getLetterHistory);
   const deleteHistoryFn = useServerFn(deleteLetterHistory);
+  const suggestFn = useServerFn(suggestLetterAnswer);
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [form, setForm] = useState<LetterInput>(EMPTY);
@@ -93,6 +95,8 @@ function LetterHubPage() {
   const [history, setHistory] = useState<Array<{ id: string; title: string; created_at: string; updated_at: string; preview: string }>>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [savingHistory, setSavingHistory] = useState(false);
+  const [suggestingIdx, setSuggestingIdx] = useState<number | null>(null);
+  const [touched, setTouched] = useState<Record<number, boolean>>({});
 
   const refreshHistory = useCallback(async () => {
     if (!user) return;
@@ -121,6 +125,7 @@ function LetterHubPage() {
     setLetter("");
     setStep(1);
     setHistoryId(null);
+    setTouched({});
   };
 
   const canStep2 = form.issue && form.subIssue.trim() && form.format && form.tone && form.audience;
@@ -466,23 +471,120 @@ function LetterHubPage() {
             {!letter && (
               <>
                 <p className="text-sm text-muted-foreground">
-                  The agent needs a few more details to nail the wording. Answer what you can — leave blank if not applicable.
+                  The agent needs a few more details to nail the wording. Required questions are marked with <span className="text-rose-400">*</span> · use <span className="text-white font-semibold">Auto-fill</span> to draft an answer from your context.
                 </p>
+                {(() => {
+                  const required = questions.map((_, i) => i < Math.min(3, questions.length));
+                  const answered = required.filter((req, i) => !req || (answers[i] || "").trim().length >= 5).length;
+                  const total = required.filter(Boolean).length;
+                  return total > 0 ? (
+                    <div className="text-[11px] text-muted-foreground">
+                      <span className="text-white font-bold tabular-nums">{answered}</span> / {total} required answered
+                    </div>
+                  ) : null;
+                })()}
                 <div className="space-y-4">
                   {questions.length === 0 && (
                     <p className="text-sm text-muted-foreground italic">No questions returned. You can generate the letter directly.</p>
                   )}
-                  {questions.map((q, i) => (
-                    <div key={i}>
-                      <Label className="text-xs font-bold text-white/90">{i + 1}. {q}</Label>
-                      <Textarea
-                        value={answers[i] || ""}
-                        onChange={(e) => setAnswers((a) => ({ ...a, [i]: e.target.value }))}
-                        maxLength={500}
-                        className="mt-1 bg-background/60 min-h-[64px]"
-                      />
-                    </div>
-                  ))}
+                  {questions.map((q, i) => {
+                    const required = i < Math.min(3, questions.length);
+                    const val = answers[i] || "";
+                    const len = val.trim().length;
+                    const tooShort = required && touched[i] && len > 0 && len < 5;
+                    const missing = required && touched[i] && len === 0;
+                    const valid = required && len >= 5;
+                    const errorMsg = missing
+                      ? "This question is required."
+                      : tooShort
+                        ? "Add at least 5 characters or use Auto-fill."
+                        : "";
+                    const isSuggesting = suggestingIdx === i;
+                    const onAutofill = async () => {
+                      setSuggestingIdx(i);
+                      try {
+                        const res = await suggestFn({ data: { question: q, inputs: form } });
+                        if (!res.ok || !res.suggestion) {
+                          toast.error(res.error || "Could not draft a suggestion.");
+                          return;
+                        }
+                        setAnswers((a) => ({ ...a, [i]: res.suggestion }));
+                        setTouched((t) => ({ ...t, [i]: true }));
+                      } catch (e: any) {
+                        toast.error(e?.message || "AI error");
+                      } finally {
+                        setSuggestingIdx(null);
+                      }
+                    };
+                    return (
+                      <div
+                        key={i}
+                        className={
+                          "rounded-xl border p-3 transition-colors " +
+                          (errorMsg
+                            ? "border-rose-500/60 bg-rose-500/5"
+                            : valid
+                              ? "border-[oklch(0.72_0.22_245/0.5)] bg-[oklch(0.72_0.22_245/0.05)]"
+                              : "border-border bg-background/40")
+                        }
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-1.5">
+                          <Label className="text-xs font-bold text-white/90 leading-snug">
+                            {i + 1}. {q}
+                            {required && <span className="text-rose-400 ml-1" aria-hidden>*</span>}
+                            {!required && <span className="text-muted-foreground/70 ml-1 font-normal text-[10px] uppercase tracking-wider">optional</span>}
+                          </Label>
+                          <button
+                            type="button"
+                            onClick={onAutofill}
+                            disabled={isSuggesting || loading}
+                            className="shrink-0 inline-flex items-center gap-1 rounded-md border border-[oklch(0.72_0.22_245/0.5)] bg-[oklch(0.72_0.22_245/0.1)] px-2 py-1 text-[10px] font-black uppercase tracking-[0.15em] text-white hover:bg-[oklch(0.72_0.22_245/0.2)] disabled:opacity-50"
+                            aria-label={`Auto-fill answer for question ${i + 1}`}
+                          >
+                            {isSuggesting ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Wand2 className="h-3 w-3" />
+                            )}
+                            {isSuggesting ? "Drafting…" : "Auto-fill"}
+                          </button>
+                        </div>
+                        <Textarea
+                          value={val}
+                          onChange={(e) => setAnswers((a) => ({ ...a, [i]: e.target.value }))}
+                          onBlur={() => setTouched((t) => ({ ...t, [i]: true }))}
+                          maxLength={500}
+                          placeholder={
+                            required
+                              ? "Be specific — dates, names, amounts. Or hit Auto-fill."
+                              : "Optional — add detail if it helps."
+                          }
+                          aria-invalid={!!errorMsg}
+                          aria-describedby={errorMsg ? `q-${i}-err` : undefined}
+                          className={
+                            "bg-background/60 min-h-[64px] " +
+                            (errorMsg ? "border-rose-500/60 focus-visible:ring-rose-500/40" : "")
+                          }
+                        />
+                        <div className="mt-1 flex items-center justify-between text-[11px]">
+                          {errorMsg ? (
+                            <span id={`q-${i}-err`} className="inline-flex items-center gap-1 text-rose-400">
+                              <AlertCircle className="h-3 w-3" /> {errorMsg}
+                            </span>
+                          ) : valid ? (
+                            <span className="inline-flex items-center gap-1 text-emerald-400">
+                              <CheckCircle2 className="h-3 w-3" /> Looks good
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground/60">&nbsp;</span>
+                          )}
+                          <span className={"tabular-nums " + (len > 450 ? "text-amber-400" : "text-muted-foreground")}>
+                            {val.length} / 500
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
@@ -493,7 +595,22 @@ function LetterHubPage() {
                     <span className="text-[11px] text-muted-foreground">
                       Balance: <span className="text-white font-bold tabular-nums">{profile?.credits ?? 0}</span> credits · costs <span className="text-white font-bold">3</span>
                     </span>
-                    <Button disabled={loading} onClick={goGenerate} className="btn-glass-blue uppercase tracking-[0.2em] font-black">
+                    <Button
+                      disabled={
+                        loading ||
+                        questions.some((_, i) => i < Math.min(3, questions.length) && (answers[i] || "").trim().length < 5)
+                      }
+                      onClick={() => {
+                        // mark all required touched so errors surface
+                        const t: Record<number, boolean> = {};
+                        questions.forEach((_, i) => {
+                          if (i < Math.min(3, questions.length)) t[i] = true;
+                        });
+                        setTouched((prev) => ({ ...prev, ...t }));
+                        void goGenerate();
+                      }}
+                      className="btn-glass-blue uppercase tracking-[0.2em] font-black"
+                    >
                       {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
                       Generate letter
                     </Button>
