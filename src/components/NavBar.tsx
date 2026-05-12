@@ -279,7 +279,7 @@ export function NavBar() {
               // The vw component keeps growth proportional, the rem floor
               // guarantees legibility on phones, and the rem ceiling keeps
               // the wordmark from dwarfing the nav on widescreen displays.
-              fontSize: "clamp(0.95rem, 1.4rem + 1.6vw, 2.25rem)",
+              fontSize: "clamp(0.95rem, 0.55rem + 1.5vw, 2rem)",
               letterSpacing: "-0.028em",
               wordSpacing: "-0.05em",
             }}
