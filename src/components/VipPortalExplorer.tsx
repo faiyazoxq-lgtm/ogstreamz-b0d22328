@@ -12,7 +12,7 @@ const ICONS: Record<string, any> = {
   Zap, Star, Megaphone, Disc3, Satellite, Radar,
 };
 
-type Cat = "All" | "Portals" | "Custom";
+type Cat = "All" | "Portals";
 
 type Item = {
   key: string;
@@ -25,12 +25,12 @@ type Item = {
   accent?: string;
 };
 
-const CAT_ORDER: Cat[] = ["All", "Portals", "Custom"];
+const CAT_ORDER: Cat[] = ["All", "Portals"];
 
-export function VipPortalExplorer({
-  customHubs,
-}: {
-  customHubs: Array<{
+export function VipPortalExplorer(_: {
+  // Kept for backwards-compatibility with callers; custom hubs are
+  // intentionally excluded — VIPs only see Boss-published portals.
+  customHubs?: Array<{
     id: string; title: string; tagline?: string; href: string;
     icon?: string; accent?: string;
   }>;
@@ -64,18 +64,8 @@ export function VipPortalExplorer({
       Icon: DoorOpen,
       category: "Portals" as Cat,
     }));
-    const customItems: Item[] = customHubs.map((h) => ({
-      key: h.id,
-      to: h.href,
-      title: h.title,
-      desc: h.tagline || "Custom portal",
-      Icon: ICONS[h.icon ?? ""] ?? Sparkles,
-      category: "Custom" as Cat,
-      external: /^https?:\/\//i.test(h.href),
-      accent: h.accent,
-    }));
-    return [...portalItems, ...customItems];
-  }, [bossPortals, customHubs]);
+    return portalItems;
+  }, [bossPortals]);
 
   const counts = useMemo(() => {
     const map: Record<string, number> = { All: items.length };
