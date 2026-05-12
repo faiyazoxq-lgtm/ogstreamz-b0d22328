@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Copy, ExternalLink, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, ClipboardList, Search, Crown, QrCode, Share2, Globe, Download, X } from "lucide-react";
+import { Copy, ExternalLink, Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, ClipboardList, Search, Crown, QrCode, Share2, Globe, Download, X, Bot, Sparkles, PlusCircle } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 import { requireMember } from "@/lib/route-guards";
@@ -54,6 +54,92 @@ const PORTAL_TO: Record<string, Item["to"]> = {
   form: "/f/$slug",
 };
 
+// Where to send users when they want to spawn a new portal of a given kind.
+const SPAWN_TO: Record<Item["kind"], string> = {
+  music: "/music",
+  joke: "/jokes",
+  trade: "/trade",
+  news: "/jokes",
+  form: "/formhub",
+  battle: "/battlehub",
+  tool: "/tools",
+};
+
+/**
+ * OG BoT empty-state card. Speaks with absolute profanity to roast the user
+ * (or the Boss) into spawning a portal. Used when a hub or a sub-group has
+ * no portals yet so the page never feels dead — clicking the CTA jumps to
+ * the spawn hub for that kind.
+ */
+function OgBotEmpty({
+  kind,
+  side,
+  compact = false,
+}: {
+  kind: Item["kind"];
+  side: "boss" | "mine" | "any";
+  compact?: boolean;
+}) {
+  const meta = KIND_META[kind];
+  const spawnHref = SPAWN_TO[kind];
+  const lines: Record<typeof side, { title: string; body: string; cta: string }> = {
+    boss: {
+      title: `Boss hasn't dropped a damn ${meta.label} portal yet.`,
+      body: `The lazy bastard's still asleep — nothing official to flex in ${meta.hub}. Spawn your own and rub it in.`,
+      cta: `Spawn a ${meta.label} portal`,
+    },
+    mine: {
+      title: `You haven't spawned a fucking ${meta.label} portal.`,
+      body: `Stop scrolling like a tourist and make some shit. Two clicks in ${meta.hub} and you're on the board.`,
+      cta: `Spawn one in ${meta.hub}`,
+    },
+    any: {
+      title: `${meta.hub} is bone fucking empty.`,
+      body: `No Boss drops, no user portals — absolute ghost town. Be the first prick to plant a flag.`,
+      cta: `Open ${meta.hub}`,
+    },
+  };
+  const copy = lines[side];
+  return (
+    <div
+      className={`relative overflow-hidden rounded-2xl border bg-black/40 backdrop-blur-xl ${compact ? "p-4" : "p-5 sm:p-6"}`}
+      style={{
+        borderColor: `color-mix(in oklab, ${meta.accent} 35%, transparent)`,
+        boxShadow: `0 0 40px -28px ${meta.accent}`,
+      }}
+    >
+      <div className="flex items-start gap-4">
+        <div
+          className="shrink-0 inline-flex items-center justify-center rounded-full h-12 w-12 sm:h-14 sm:w-14 ring-2"
+          style={{
+            background: `color-mix(in oklab, ${meta.accent} 15%, transparent)`,
+            color: meta.accent,
+            boxShadow: `inset 0 0 20px color-mix(in oklab, ${meta.accent} 30%, transparent)`,
+          }}
+        >
+          <Bot className="h-6 w-6 sm:h-7 sm:w-7" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] font-bold" style={{ color: meta.accent }}>
+            <Sparkles className="h-3 w-3" /> OG BoT
+          </div>
+          <p className="mt-1 font-[Montserrat] font-black text-base sm:text-lg leading-tight text-foreground">
+            {copy.title}
+          </p>
+          <p className="mt-1 text-[13px] text-muted-foreground">{copy.body}</p>
+          <Link
+            to={spawnHref as never}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-[11px] uppercase tracking-[0.2em] font-bold text-black transition hover:brightness-110 active:scale-[0.97]"
+            style={{ background: meta.accent }}
+          >
+            <PlusCircle className="h-3.5 w-3.5" /> {copy.cta}
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/portals")({
   beforeLoad: requireMember,
   head: () => ({
@@ -72,6 +158,8 @@ function PortalsHub() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | Item["kind"]>("all");
   const [q, setQ] = useState("");
+  // Scope toggle: All / Boss-published / Mine. Lives top-right next to search.
+  const [scope, setScope] = useState<"all" | "boss" | "mine">("all");
   const [qrFor, setQrFor] = useState<Item | null>(null);
   // Per-hub visible-count state: MusicHUB / JokesHUB / ToolHUB paginate
   // long lists so the page stays fast even with hundreds of portals.
@@ -82,11 +170,11 @@ function PortalsHub() {
     joke: PAGE_SIZE,
     tool: PAGE_SIZE,
   });
-  // Reset paging whenever the filter or search query changes so users don't
-  // see a misleading "Show more" hidden behind a tiny filtered set.
+  // Reset paging whenever the filter, search query, or scope changes so users
+  // don't see a misleading "Show more" hidden behind a tiny filtered set.
   useEffect(() => {
     setVisibleCounts({ music: PAGE_SIZE, joke: PAGE_SIZE, tool: PAGE_SIZE });
-  }, [filter, q]);
+  }, [filter, q, scope]);
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 
   useEffect(() => {
@@ -182,10 +270,12 @@ function PortalsHub() {
     if (!items) return [];
     return items.filter((i) => {
       if (filter !== "all" && i.kind !== filter) return false;
+      if (scope === "boss" && !i.byBoss) return false;
+      if (scope === "mine" && i.byBoss) return false;
       if (q && !(`${i.name} ${i.subtitle} ${i.slug}`.toLowerCase().includes(q.toLowerCase()))) return false;
       return true;
     });
-  }, [items, filter, q]);
+  }, [items, filter, q, scope]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: items?.length ?? 0 };
@@ -253,7 +343,7 @@ function PortalsHub() {
 
   return (
     <main className="max-w-7xl mx-auto px-5 sm:px-8 py-10 sm:py-14 pb-24 md:pb-14">
-      <header className="mb-8">
+      <header className="mb-12 sm:mb-16">
         <p className="text-xs tracking-[0.4em] uppercase font-semibold" style={{ color: "var(--mood-accent, #ffd166)" }}>
           0G · Share Hub
         </p>
@@ -269,7 +359,7 @@ function PortalsHub() {
       </header>
 
       {/* Controls */}
-      <div className="mb-6 grid gap-3 sm:flex sm:items-center sm:justify-between">
+      <div className="mb-8 grid gap-3 sm:flex sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-1.5">
           {((isBoss
               ? (["all","music","joke","trade","news","form","battle","tool"] as const)
@@ -296,6 +386,27 @@ function PortalsHub() {
           })}
         </div>
         <div className="flex items-center gap-2">
+          {/* Scope toggle: All / Boss-published / Yours */}
+          <div className="inline-flex items-center rounded-md border border-border bg-card p-0.5 text-[10px] uppercase tracking-[0.18em] font-bold">
+            {(["all","boss","mine"] as const).map((s) => {
+              const active = scope === s;
+              const label = s === "all" ? "All" : s === "boss" ? "Boss" : "Mine";
+              return (
+                <button
+                  key={s}
+                  onClick={() => setScope(s)}
+                  aria-pressed={active}
+                  className="px-2.5 py-1.5 rounded transition"
+                  style={{
+                    background: active ? "rgba(255,255,255,0.08)" : "transparent",
+                    color: active ? "var(--mood-accent,#ffd166)" : "rgba(255,255,255,0.65)",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <input
@@ -323,8 +434,22 @@ function PortalsHub() {
       {!items ? (
         <div className="text-sm text-muted-foreground">Loading portals…</div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card p-10 text-center">
-          <p className="text-sm text-muted-foreground">No portals match this filter yet. Spawn one from a hub.</p>
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-xl p-5 sm:p-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              No portals match {q ? `“${q}”` : "this filter"} in <span className="font-bold text-foreground">{scope === "boss" ? "Boss-published" : scope === "mine" ? "your portals" : "any scope"}</span> yet.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(filter === "all" ? HUB_ORDER : [filter as Item["kind"]]).slice(0, 4).map((k) => (
+              <OgBotEmpty
+                key={k}
+                kind={k}
+                side={scope === "boss" ? "boss" : scope === "mine" ? "mine" : "any"}
+                compact
+              />
+            ))}
+          </div>
         </div>
       ) : (
         <div className="space-y-10">
@@ -336,6 +461,12 @@ function PortalsHub() {
             const visible = paginated ? (visibleCounts[hubKind] ?? PAGE_SIZE) : hubItems.length;
             const shown = paginated ? hubItems.slice(0, visible) : hubItems;
             const remaining = hubItems.length - shown.length;
+            // When scope === "all", detect if either Boss or Mine subgroup is
+            // empty within this hub so we can show a friendly OG BoT nudge.
+            const hasBoss = hubItems.some((i) => i.byBoss);
+            const hasMine = hubItems.some((i) => !i.byBoss);
+            const missingSide: "boss" | "mine" | null =
+              scope === "all" ? (!hasBoss ? "boss" : !hasMine ? "mine" : null) : null;
             return (
               <section key={hubKind} aria-labelledby={`hub-${hubKind}`}>
                 <header className="mb-3 flex items-center gap-2">
@@ -459,6 +590,11 @@ function PortalsHub() {
             );
           })}
                 </div>
+                {missingSide && (
+                  <div className="mt-4">
+                    <OgBotEmpty kind={hubKind} side={missingSide} compact />
+                  </div>
+                )}
                 {paginated && remaining > 0 && (
                   <div className="mt-4 flex justify-center">
                     <button
