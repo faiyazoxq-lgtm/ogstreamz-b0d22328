@@ -30,7 +30,6 @@ function BossContactsPage() {
   const [editing, setEditing] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState({ label: "", phone: "", notes: "" });
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<"all" | "spare" | "other">("all");
 
   async function load() {
     const { data, error } = await supabase
@@ -109,10 +108,8 @@ function BossContactsPage() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const qDigits = q.replace(/\D/g, "");
+    if (!q) return items;
     return items.filter((c) => {
-      if (filter === "spare" && !/\bspare\b/i.test(c.label)) return false;
-      if (filter === "other" && /\bspare\b/i.test(c.label)) return false;
-      if (!q) return true;
       const phoneDigits = c.phone.replace(/\D/g, "");
       const labelMatch = c.label.toLowerCase().includes(q);
       const notesMatch = (c.notes ?? "").toLowerCase().includes(q);
@@ -121,7 +118,7 @@ function BossContactsPage() {
         (qDigits.length >= 3 && phoneDigits.includes(qDigits));
       return labelMatch || notesMatch || phoneMatch;
     });
-  }, [items, query, filter]);
+  }, [items, query]);
 
   return (
     <div className="py-6 space-y-6">
@@ -179,25 +176,11 @@ function BossContactsPage() {
             </button>
           )}
         </div>
-        <div className="flex flex-wrap items-center gap-1 text-xs">
-          {(["all", "spare", "other"] as const).map((k) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => setFilter(k)}
-              className={`rounded-full px-3 py-1 uppercase tracking-[0.2em] border transition ${
-                filter === k
-                  ? "border-gold/60 bg-gold/10 text-gold"
-                  : "border-border text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {k === "all" ? "All" : k === "spare" ? "Spare" : "Other"}
-            </button>
-          ))}
-          <span className="ml-auto text-muted-foreground">
+        {query && (
+          <div className="text-xs text-muted-foreground text-right">
             {filtered.length} of {items.length}
-          </span>
-        </div>
+          </div>
+        )}
       </section>
 
       <section className="space-y-2">
