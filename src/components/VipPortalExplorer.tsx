@@ -1,24 +1,18 @@
 import { Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
-  Music2, Smile, Wrench, TrendingUp, Rocket, Swords, Sparkles,
+  Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles,
   Search, ArrowUpRight, Crown, Layers, Radio, Bot, Brain, Zap, Star,
-  Megaphone, Disc3, Satellite, Radar, ExternalLink,
+  Megaphone, Disc3, Satellite, Radar, ExternalLink, DoorOpen,
 } from "lucide-react";
 
 const ICONS: Record<string, any> = {
   Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
-  Zap, Star, Megaphone, Disc3, Satellite, Radar, Swords,
+  Zap, Star, Megaphone, Disc3, Satellite, Radar,
 };
 
-type Cat =
-  | "All"
-  | "Music"
-  | "Trade"
-  | "Outreach"
-  | "Social"
-  | "Tools"
-  | "Custom";
+type Cat = "All" | "Portals" | "Custom";
 
 type Item = {
   key: string;
@@ -31,16 +25,7 @@ type Item = {
   accent?: string;
 };
 
-const BUILTINS: Item[] = [
-  { key: "music",   to: "/music",   title: "MusicHUB",   desc: "Stream. Own. Repeat.",        Icon: Music2,      category: "Music"    },
-  { key: "trade",   to: "/trade",   title: "TradeHUB",   desc: "Live signals. Bias meters.",  Icon: TrendingUp,  category: "Trade"    },
-  { key: "connect", to: "/connect", title: "ConnectHUB", desc: "Scout. Enrich. Outreach.",    Icon: Rocket,      category: "Outreach" },
-  { key: "jokes",   to: "/jokes",   title: "JokesHUB",   desc: "Fast wit. Zero filler.",      Icon: Smile,       category: "Social"   },
-  { key: "battle",  to: "/battle",  title: "BattleHUB",  desc: "Every choice is a loss.",     Icon: Swords,      category: "Social"   },
-  { key: "tools",   to: "/tools",   title: "ToolHUB",    desc: "Sharp utilities, fast.",      Icon: Wrench,      category: "Tools"    },
-];
-
-const CAT_ORDER: Cat[] = ["All", "Music", "Trade", "Outreach", "Social", "Tools", "Custom"];
+const CAT_ORDER: Cat[] = ["All", "Portals", "Custom"];
 
 export function VipPortalExplorer({
   customHubs,
@@ -52,8 +37,33 @@ export function VipPortalExplorer({
 }) {
   const [cat, setCat] = useState<Cat>("All");
   const [q, setQ] = useState("");
+  // Boss-published portals only — VIPs see only what the Boss has toggled on.
+  // Backed by the `list_nav_portals` RPC, which already filters to
+  // `published = true AND created_by is boss/admin` for non-boss callers.
+  const [bossPortals, setBossPortals] = useState<
+    Array<{ id: string; slug: string; name: string }>
+  >([]);
+  useEffect(() => {
+    let alive = true;
+    void supabase.rpc("list_nav_portals").then(({ data }) => {
+      if (!alive) return;
+      const rows = (data ?? []) as Array<{ id: string; slug: string; name: string; by_boss?: boolean }>;
+      // Defence-in-depth: even though the RPC filters server-side, drop any
+      // row where by_boss is explicitly false.
+      setBossPortals(rows.filter((r) => r.by_boss !== false));
+    });
+    return () => { alive = false; };
+  }, []);
 
   const items: Item[] = useMemo(() => {
+    const portalItems: Item[] = bossPortals.map((p) => ({
+      key: `portal:${p.id}`,
+      to: `/p/${p.slug}`,
+      title: p.name,
+      desc: "Boss-published portal",
+      Icon: DoorOpen,
+      category: "Portals" as Cat,
+    }));
     const customItems: Item[] = customHubs.map((h) => ({
       key: h.id,
       to: h.href,
@@ -64,8 +74,8 @@ export function VipPortalExplorer({
       external: /^https?:\/\//i.test(h.href),
       accent: h.accent,
     }));
-    return [...BUILTINS, ...customItems];
-  }, [customHubs]);
+    return [...portalItems, ...customItems];
+  }, [bossPortals, customHubs]);
 
   const counts = useMemo(() => {
     const map: Record<string, number> = { All: items.length };
