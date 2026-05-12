@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Crown, Eye, Copy, Check, Timer, Loader2, Flame, Lock, Download, Sparkles, Share2 } from "lucide-react";
+import { Crown, Eye, Copy, Check, Timer, Loader2, Flame, Lock, Download, Sparkles, Share2, Gift } from "lucide-react";
 import { toPng } from "html-to-image";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 import { revealVipPass, type VipPassRevealResult } from "@/lib/vip-pass-pool.functions";
 
 /** VIP / Real OG widget: press Reveal to be assigned a random VIP pass code
@@ -30,8 +31,32 @@ export function VipPassRevealCard() {
   const [downloading, setDownloading] = useState(false);
   const [sharing, setSharing] = useState(false);
   const passCardRef = useRef<HTMLDivElement | null>(null);
+  const referralCardRef = useRef<HTMLDivElement | null>(null);
   const tick = useRef<number | null>(null);
   const renderCache = useRef<{ key: string; file: File; dataUrl: string; name: string } | null>(null);
+  const referralCache = useRef<{ key: string; file: File; dataUrl: string; name: string } | null>(null);
+
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+
+  // Pull this user's referral code so the share card embeds a reward link.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("referral_code")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!cancelled) setReferralCode(prof?.referral_code ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
+  const referralUrl = useMemo(() => {
+    if (!referralCode || typeof window === "undefined") return "";
+    return `${window.location.origin}/auth?mode=signup&vipref=${referralCode}`;
+  }, [referralCode]);
 
   // Stable identity for the currently-rendered pass. When this changes,
   // the cached PNG is invalidated so Share/Save re-render once.
