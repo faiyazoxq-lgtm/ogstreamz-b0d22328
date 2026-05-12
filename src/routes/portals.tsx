@@ -73,6 +73,20 @@ function PortalsHub() {
   const [filter, setFilter] = useState<"all" | Item["kind"]>("all");
   const [q, setQ] = useState("");
   const [qrFor, setQrFor] = useState<Item | null>(null);
+  // Per-hub visible-count state: MusicHUB / JokesHUB / ToolHUB paginate
+  // long lists so the page stays fast even with hundreds of portals.
+  const PAGE_SIZE = 12;
+  const PAGINATED_KINDS: Item["kind"][] = ["music", "joke", "tool"];
+  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({
+    music: PAGE_SIZE,
+    joke: PAGE_SIZE,
+    tool: PAGE_SIZE,
+  });
+  // Reset paging whenever the filter or search query changes so users don't
+  // see a misleading "Show more" hidden behind a tiny filtered set.
+  useEffect(() => {
+    setVisibleCounts({ music: PAGE_SIZE, joke: PAGE_SIZE, tool: PAGE_SIZE });
+  }, [filter, q]);
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 
   useEffect(() => {
