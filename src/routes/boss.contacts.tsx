@@ -8,6 +8,66 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { parsePhone, toDisplay } from "@/lib/phone";
 
+/**
+ * Phone input that live-validates as the user types and surfaces the
+ * predicted E.164 form (or an inline error) below the field.
+ */
+function PhoneField({
+  value,
+  onChange,
+  placeholder = "Phone number",
+  id,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  id?: string;
+}) {
+  const trimmed = value.trim();
+  const parsed = trimmed ? parsePhone(trimmed) : null;
+  const helperId = id ? `${id}-helper` : undefined;
+  const isError = parsed?.ok === false;
+  const isValid = parsed?.ok === true;
+
+  return (
+    <div className="space-y-1">
+      <Input
+        id={id}
+        placeholder={placeholder}
+        inputMode="tel"
+        autoComplete="tel"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-invalid={isError || undefined}
+        aria-describedby={helperId}
+        className={
+          isError
+            ? "border-destructive focus-visible:ring-destructive"
+            : isValid
+              ? "border-emerald-600/60 focus-visible:ring-emerald-500"
+              : undefined
+        }
+      />
+      <p
+        id={helperId}
+        className={`text-[11px] leading-tight ${
+          isError
+            ? "text-destructive"
+            : isValid
+              ? "text-emerald-500"
+              : "text-muted-foreground"
+        }`}
+      >
+        {isError
+          ? parsed!.error
+          : isValid
+            ? `Saved as ${parsed!.e164} (${parsed!.display})`
+            : "Format: E.164 e.g. +447347265145. UK 07… is auto-converted."}
+      </p>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/boss/contacts")({
   head: () => ({ meta: [{ title: "Boss Contacts · 0G-STREAMZ" }] }),
   component: BossContactsPage,
