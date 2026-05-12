@@ -69,7 +69,7 @@ export function VipPassRevealCard() {
       await navigator.clipboard.writeText(value);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1200);
-      toast.success("Pass code copied");
+      toast.success("Copied");
     } catch {
       toast.error("Copy failed");
     }
@@ -143,18 +143,39 @@ export function VipPassRevealCard() {
             {data.label && (
               <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-cyan-200/80">{data.label}</p>
             )}
-            <div className="flex items-center gap-2 rounded-lg border border-cyan-300/40 bg-[#001a3d]/80 px-3 py-3">
-              <code className="flex-1 font-mono text-base sm:text-lg font-black text-white break-all select-all [text-shadow:_0_0_10px_rgba(0,200,255,0.5)]">
-                {data.code}
-              </code>
-              <Button
-                size="sm"
-                onClick={() => doCopy(data.code)}
-                className="bg-cyan-400/20 hover:bg-cyan-400/40 text-cyan-100 border border-cyan-300/60"
-              >
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              </Button>
-            </div>
+            {data.username && (
+              <div className="rounded-lg border border-cyan-300/40 bg-[#001a3d]/80 px-3 py-3">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-200/70 mb-1">Username</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 font-mono text-base sm:text-lg font-black text-white break-all select-all">{data.username}</code>
+                  <Button size="sm" onClick={() => doCopy(data.username || "")} className="bg-cyan-400/20 hover:bg-cyan-400/40 text-cyan-100 border border-cyan-300/60">
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            {data.password && (
+              <div className="rounded-lg border border-cyan-300/40 bg-[#001a3d]/80 px-3 py-3">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-200/70 mb-1">Password</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 font-mono text-base sm:text-lg font-black text-white break-all select-all [text-shadow:_0_0_10px_rgba(0,200,255,0.5)]">{data.password}</code>
+                  <Button size="sm" onClick={() => doCopy(data.password || "")} className="bg-cyan-400/20 hover:bg-cyan-400/40 text-cyan-100 border border-cyan-300/60">
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            {data.code && (
+              <div className="flex items-center gap-2 rounded-lg border border-cyan-300/40 bg-[#001a3d]/80 px-3 py-3">
+                <div className="flex-1">
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-200/70 mb-1">Code</p>
+                  <code className="font-mono text-base sm:text-lg font-black text-white break-all select-all [text-shadow:_0_0_10px_rgba(0,200,255,0.5)]">{data.code}</code>
+                </div>
+                <Button size="sm" onClick={() => doCopy(data.code)} className="bg-cyan-400/20 hover:bg-cyan-400/40 text-cyan-100 border border-cyan-300/60">
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+            )}
 
             <div className="flex items-center justify-between gap-3 text-[11px] text-cyan-200/70 flex-wrap">
               <span>Pool size: <strong className="text-white">{data.pool_size}</strong></span>
