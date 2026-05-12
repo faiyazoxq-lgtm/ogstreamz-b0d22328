@@ -270,8 +270,17 @@ function BossContactsPage() {
   const activeMatchRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const clearAndFocusSearch = () => {
+    // Persist the highlighted contact for the current (non-empty) query so
+    // that when the user starts typing the same query again, the saved
+    // matchIndex can be restored. We capture this BEFORE clearing because
+    // the query-change effect would otherwise see an empty highlighted id.
+    const q = query.trim().toLowerCase();
+    if (q && activeMatchId) {
+      savedMatchIdRef.current.set(q, activeMatchId);
+    }
     setQuery("");
-    setMatchIndex(0);
+    // Don't reset matchIndex here — the query-change effect resets to 0 for
+    // the empty query and restores it when the user types the same query.
     searchInputRef.current?.focus();
   };
   // Close any popovers/overlays related to the search-results area
