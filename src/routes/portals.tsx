@@ -459,6 +459,27 @@ function PortalsHub() {
             );
           })}
                 </div>
+                {paginated && remaining > 0 && (
+                  <div className="mt-4 flex justify-center">
+                    <button
+                      onClick={() =>
+                        setVisibleCounts((prev) => ({
+                          ...prev,
+                          [hubKind]: (prev[hubKind] ?? PAGE_SIZE) + PAGE_SIZE,
+                        }))
+                      }
+                      className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-[11px] uppercase tracking-[0.2em] font-bold transition hover:-translate-y-0.5"
+                      style={{
+                        borderColor: `color-mix(in oklab, ${hubMeta.accent} 50%, transparent)`,
+                        color: hubMeta.accent,
+                        background: `color-mix(in oklab, ${hubMeta.accent} 8%, transparent)`,
+                      }}
+                    >
+                      Show {Math.min(PAGE_SIZE, remaining)} more
+                      <span className="opacity-60">({remaining} left)</span>
+                    </button>
+                  </div>
+                )}
               </section>
             );
           })}
