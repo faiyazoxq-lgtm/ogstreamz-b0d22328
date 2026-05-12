@@ -290,6 +290,8 @@ function BossContactsPage() {
             placeholder="Search by label, phone, or notes…"
             className="pl-9"
             aria-label="Search contacts"
+            aria-controls="boss-contacts-list"
+            aria-describedby="boss-contacts-search-status"
           />
           {query && (
             <button
@@ -302,16 +304,27 @@ function BossContactsPage() {
             </button>
           )}
         </div>
-        {query && (
-          <div className="text-xs text-muted-foreground text-right">
-            {filtered.length > 0
-              ? `${Math.min(matchIndex, filtered.length - 1) + 1} / ${filtered.length} match${filtered.length === 1 ? "" : "es"} · press Enter for next`
-              : `0 of ${items.length}`}
-          </div>
-        )}
+        <div
+          id="boss-contacts-search-status"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className={`text-xs text-muted-foreground text-right ${query ? "" : "sr-only"}`}
+        >
+          {query
+            ? filtered.length > 0
+              ? `Match ${Math.min(matchIndex, filtered.length - 1) + 1} of ${filtered.length}: ${filtered[Math.min(matchIndex, filtered.length - 1)].label}. Press Enter for next, Shift+Enter for previous.`
+              : `No contacts match your search out of ${items.length}.`
+            : ""}
+        </div>
       </section>
 
-      <section className="space-y-2">
+      <section
+        id="boss-contacts-list"
+        role="list"
+        aria-label="Contacts"
+        className="space-y-2"
+      >
         {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
         {!loading && items.length === 0 && (
           <p className="text-sm text-muted-foreground">No contacts yet.</p>
@@ -325,6 +338,9 @@ function BossContactsPage() {
           <div
             key={c.id}
             ref={isActiveMatch ? activeMatchRef : undefined}
+            role="listitem"
+            aria-current={isActiveMatch ? "true" : undefined}
+            aria-label={`${c.label}, ${toDisplay(c.phone)}${isActiveMatch ? ", current match" : ""}`}
             className={`rounded-xl border bg-card/60 p-3 transition-colors ${
               isActiveMatch
                 ? "border-gold/70 ring-2 ring-gold/40 bg-gold/5"
