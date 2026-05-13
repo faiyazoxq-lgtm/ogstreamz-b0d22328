@@ -10,6 +10,7 @@ type Todo = {
   priority: "P0" | "P1" | "P2" | "P3";
   status: "todo" | "in_progress" | "blocked" | "done";
   position: number;
+  category: string | null;
 };
 
 const PRIO_TINT: Record<Todo["priority"], string> = {
@@ -20,6 +21,17 @@ const PRIO_TINT: Record<Todo["priority"], string> = {
 };
 
 const PRIO_ORDER: Record<Todo["priority"], number> = { P0: 0, P1: 1, P2: 2, P3: 3 };
+
+// Quick-add categories. `ops` matches the existing table default so the
+// Boss notepad keeps backward-compatible behaviour when nothing is picked.
+const CATEGORIES = ["ops", "content", "growth"] as const;
+type Category = (typeof CATEGORIES)[number];
+
+const CAT_TINT: Record<Category, string> = {
+  ops: "#60a5fa",      // blue — operational / infra
+  content: "#a78bfa",  // violet — creative / content
+  growth: "#34d399",   // green — growth / acquisition
+};
 
 /**
  * Compact boss-only notepad widget for the home page.
@@ -36,14 +48,20 @@ export function BossTodoNotepad() {
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
+  // Category for the next quick-add. Persists across submits so power-user
+  // bulk-entry stays fast (pick once, then enter, enter, enter).
+  const [draftCategory, setDraftCategory] = useState<Category>("ops");
+  // List filter — `all` shows every category. Independent of draftCategory
+  // so you can be filtering Growth while logging an Ops note.
+  const [filter, setFilter] = useState<Category | "all">("all");
 
   async function load() {
     const { data, error } = await supabase
       .from("boss_todos")
-      .select("id,title,priority,status,position")
+      .select("id,title,priority,status,position,category")
       .neq("status", "done")
       .order("position", { ascending: true })
-      .limit(40);
+      .limit(80);
     if (error) {
       console.warn("[boss-todo-notepad] load failed", error.message);
       setLoading(false);
@@ -53,8 +71,7 @@ export function BossTodoNotepad() {
       .sort((a, b) => {
         const pa = PRIO_ORDER[a.priority] - PRIO_ORDER[b.priority];
         return pa !== 0 ? pa : a.position - b.position;
-      })
-      .slice(0, 8);
+      });
     setItems(sorted);
     setLoading(false);
   }
@@ -71,7 +88,7 @@ export function BossTodoNotepad() {
     const nextPos = (items.at(-1)?.position ?? 0) + 1;
     const { error } = await supabase
       .from("boss_todos")
-      .insert({ title, priority: "P2", category: "ops", status: "todo", position: nextPos });
+      .insert({ title, priority: "P2", category: draftCategory, status: "todo", position: nextPos });
     setSaving(false);
     if (error) {
       toast.error("Could not add", { description: error.message });
@@ -105,6 +122,13 @@ export function BossTodoNotepad() {
     }
   }
 
+  // Apply the active category filter, then cap at 8 (matches old visual
+  // density). Filtering happens client-side so toggling chips is instant.
+  const visible = (filter === "all"
+    ? items
+    : items.filter((t) => (t.category ?? "ops") === filter)
+  ).slice(0, 8);
+
   return (
     <section
       aria-label="Boss notepad"
@@ -121,7 +145,7 @@ export function BossTodoNotepad() {
             Boss notepad
           </h2>
           <span className="text-[10px] text-white/40">
-            {loading ? "…" : `${items.length} open`}
+            {loading ? "…" : `${visible.length}/${items.length} open`}
           </span>
           <Link
             to="/boss/todo"
@@ -129,6 +153,28 @@ export function BossTodoNotepad() {
           >
             Full board <ArrowUpRight className="h-3 w-3" />
           </Link>
+        </div>
+
+        {/* Filter chips — active chip is brighter, others muted. Counts
+            include hidden items so you can see how much each bucket holds. */}
+        <div className="flex items-center gap-1.5 border-b border-white/10 px-3 py-2">
+          <FilterChip
+            label="all"
+            active={filter === "all"}
+            count={items.length}
+            tint="#ffffff"
+            onClick={() => setFilter("all")}
+          />
+          {CATEGORIES.map((c) => (
+            <FilterChip
+              key={c}
+              label={c}
+              active={filter === c}
+              count={items.filter((t) => (t.category ?? "ops") === c).length}
+              tint={CAT_TINT[c]}
+              onClick={() => setFilter(c)}
+            />
+          ))}
         </div>
 
         {/* Quick add */}
@@ -146,6 +192,22 @@ export function BossTodoNotepad() {
             disabled={saving}
             className="flex-1 bg-transparent text-sm text-white placeholder:text-white/30 focus:outline-none"
           />
+          {/* Category for the next quick-add. Plain <select> for keyboard
+              + screen-reader support; visually styled to match the row. */}
+          <select
+            value={draftCategory}
+            onChange={(e) => setDraftCategory(e.target.value as Category)}
+            disabled={saving}
+            aria-label="Quick add category"
+            className="rounded border border-white/15 bg-black/50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/80 focus:outline-none"
+            style={{ color: CAT_TINT[draftCategory] }}
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c} style={{ color: "#000" }}>
+                {c}
+              </option>
+            ))}
+          </select>
           {saving && <Loader2 className="h-3.5 w-3.5 animate-spin text-white/50" />}
         </form>
 
@@ -156,13 +218,15 @@ export function BossTodoNotepad() {
               <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> Loading…
             </li>
           )}
-          {!loading && items.length === 0 && (
+          {!loading && visible.length === 0 && (
             <li className="px-3 py-4 text-center text-xs text-white/40">
-              All clear. Add a note above.
+              {items.length === 0
+                ? "All clear. Add a note above."
+                : `No open ${filter} items.`}
             </li>
           )}
           {!loading &&
-            items.map((t) => (
+            visible.map((t) => (
               <li
                 key={t.id}
                 className="group flex items-center gap-2 px-3 py-2 transition hover:bg-white/[0.03]"
@@ -184,6 +248,20 @@ export function BossTodoNotepad() {
                 >
                   {t.priority}
                 </span>
+                {/* Category dot — silent visual cue that scans faster than
+                    a text label and keeps the row narrow. */}
+                {(() => {
+                  const cat = (t.category ?? "ops") as string;
+                  const tint = (CAT_TINT as Record<string, string>)[cat] ?? "#64748b";
+                  return (
+                    <span
+                      aria-label={`Category ${cat}`}
+                      title={cat}
+                      className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
+                      style={{ background: tint }}
+                    />
+                  );
+                })()}
                 <span className="min-w-0 flex-1 truncate text-sm text-white/90">
                   {t.title}
                 </span>
@@ -209,3 +287,34 @@ export function BossTodoNotepad() {
 }
 
 export default BossTodoNotepad;
+
+function FilterChip({
+  label,
+  count,
+  active,
+  tint,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  tint: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider transition"
+      style={{
+        borderColor: active ? `${tint}aa` : "rgba(255,255,255,0.12)",
+        background: active ? `${tint}22` : "transparent",
+        color: active ? tint : "rgba(255,255,255,0.55)",
+      }}
+    >
+      {label}
+      <span className="opacity-60">{count}</span>
+    </button>
+  );
+}
