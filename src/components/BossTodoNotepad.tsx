@@ -1,8 +1,15 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ListChecks, Plus, Loader2, Check, ArrowUpRight, X, CalendarClock } from "lucide-react";
+import {
+  ListChecks, Plus, Loader2, Check, ArrowUpRight, X, CalendarClock,
+  RefreshCw, Sheet as SheetIcon, Link2,
+} from "lucide-react";
+import {
+  gsheetsStatus, gsheetsConnect, gsheetsPush, gsheetsPull,
+} from "@/lib/boss-gsheets.functions";
 
 type Todo = {
   id: string;
@@ -66,6 +73,22 @@ export function BossTodoNotepad() {
   const [editDraft, setEditDraft] = useState("");
   const [editSaving, setEditSaving] = useState(false);
 
+  // Google Sheets sync state. `syncState` drives the status pill colour:
+  //   idle   — connected and quiet
+  //   busy   — push or pull in flight
+  //   error  — last operation failed (hover for details via toast)
+  //   off    — not yet linked to a sheet
+  const [sheetUrl, setSheetUrl] = useState<string | null>(null);
+  const [sheetConnected, setSheetConnected] = useState(false);
+  const [syncState, setSyncState] = useState<"off" | "idle" | "busy" | "error">("off");
+  const [lastPullAt, setLastPullAt] = useState<string | null>(null);
+  const statusFn = useServerFn(gsheetsStatus);
+  const connectFn = useServerFn(gsheetsConnect);
+  const pushFn = useServerFn(gsheetsPush);
+  const pullFn = useServerFn(gsheetsPull);
+  // Debounce pushes so a burst of edits collapses into one Sheets write.
+  const pushTimer = useRef<number | null>(null);
+
   async function load() {
     const { data, error } = await supabase
       .from("boss_todos")
@@ -90,6 +113,97 @@ export function BossTodoNotepad() {
   useEffect(() => {
     void load();
   }, []);
+
+  // Initial sync probe: see if a sheet is already linked, then pull once.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const s = await statusFn();
+        if (cancelled) return;
+        setSheetUrl(s.sheetUrl ?? null);
+        setSheetConnected(s.connected);
+        setLastPullAt(s.lastPullAt ?? null);
+        setSyncState(s.connected ? (s.healthy ? "idle" : "error") : "off");
+        if (s.connected && s.healthy) {
+          await pullFn();
+          await load();
+        }
+      } catch {
+        if (!cancelled) setSyncState("error");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Background pull every 60s while the notepad is mounted. Skipped when a
+  // sheet isn't linked or another op is in flight.
+  useEffect(() => {
+    if (!sheetConnected) return;
+    const id = window.setInterval(async () => {
+      if (syncState === "busy") return;
+      try {
+        setSyncState("busy");
+        const r = await pullFn();
+        setLastPullAt(r.lastPullAt);
+        setSyncState("idle");
+        if (r.updated > 0 || r.inserted > 0) await load();
+      } catch {
+        setSyncState("error");
+      }
+    }, 60_000);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sheetConnected]);
+
+  /** Schedule a debounced push after a local mutation. */
+  const schedulePush = useCallback(() => {
+    if (!sheetConnected) return;
+    if (pushTimer.current) window.clearTimeout(pushTimer.current);
+    pushTimer.current = window.setTimeout(async () => {
+      try {
+        setSyncState("busy");
+        await pushFn();
+        setSyncState("idle");
+      } catch {
+        setSyncState("error");
+      }
+    }, 800);
+  }, [sheetConnected, pushFn]);
+
+  async function connectSheet() {
+    try {
+      setSyncState("busy");
+      const r = await connectFn();
+      setSheetUrl(r.sheetUrl ?? null);
+      setSheetConnected(true);
+      // Seed the sheet with the current notepad.
+      await pushFn();
+      setSyncState("idle");
+      toast.success("Notepad linked to Google Sheets");
+    } catch (e: any) {
+      setSyncState("error");
+      toast.error("Could not link sheet", { description: e?.message });
+    }
+  }
+
+  async function syncNow() {
+    try {
+      setSyncState("busy");
+      await pushFn();
+      const r = await pullFn();
+      setLastPullAt(r.lastPullAt);
+      setSyncState("idle");
+      await load();
+      toast.success("Synced with Google Sheets");
+    } catch (e: any) {
+      setSyncState("error");
+      toast.error("Sync failed", { description: e?.message });
+    }
+  }
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
@@ -120,6 +234,7 @@ export function BossTodoNotepad() {
     setDraft("");
     setDraftDue("");
     void load();
+    schedulePush();
   }
 
   async function complete(id: string) {
@@ -133,7 +248,9 @@ export function BossTodoNotepad() {
     if (error) {
       setItems(prev);
       toast.error("Could not complete", { description: error.message });
+      return;
     }
+    schedulePush();
   }
 
   async function remove(id: string) {
@@ -143,7 +260,9 @@ export function BossTodoNotepad() {
     if (error) {
       setItems(prev);
       toast.error("Could not delete", { description: error.message });
+      return;
     }
+    schedulePush();
   }
 
   function startEdit(t: Todo) {
@@ -174,7 +293,9 @@ export function BossTodoNotepad() {
     if (error) {
       setItems(prev);
       toast.error("Could not rename", { description: error.message });
+      return;
     }
+    schedulePush();
   }
 
   // Apply the active category filter, then cap at 8 (matches old visual
@@ -202,6 +323,14 @@ export function BossTodoNotepad() {
           <span className="text-[10px] text-white/40">
             {loading ? "…" : `${visible.length}/${items.length} open`}
           </span>
+          <SyncPill
+            state={syncState}
+            connected={sheetConnected}
+            sheetUrl={sheetUrl}
+            lastPullAt={lastPullAt}
+            onConnect={connectSheet}
+            onSync={syncNow}
+          />
           <Link
             to="/boss/todo"
             className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-white/60 hover:text-white"
