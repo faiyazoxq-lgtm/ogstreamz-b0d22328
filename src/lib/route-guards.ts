@@ -308,6 +308,6 @@ async function enforceTelegramLink(uid: string, location: GuardCtx["location"]) 
     try {
       sessionStorage.setItem("post_telegram_redirect", location.href || "/");
     } catch { /* ignore */ }
-    throw redirect({ to: "/connect-telegram", search: { reason: "vip_gate" } as never });
+    throw redirect({ to: "/connect-telegram" });
   }
 }
