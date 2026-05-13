@@ -27,6 +27,7 @@ import { OgVaultAccessSection } from "@/components/OgVaultAccessSection";
 import { VipReferralCard } from "@/components/VipReferralCard";
 import { usePortalCount } from "@/hooks/use-portal-count";
 import { TelegramConnectBanner } from "@/components/TelegramConnectBanner";
+import { WelcomeBroadcast } from "@/components/WelcomeBroadcast";
 
 const ICONS: Record<string, any> = {
   Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
@@ -99,11 +100,15 @@ function Index() {
 
   return (
     <main className="relative">
+      {/* Logged-out users see ONLY the broadcast welcome (hard-sell). */}
+      {!user && <WelcomeBroadcast />}
       {user && (
         <div className="relative max-w-7xl mx-auto px-5 sm:px-8 pt-4">
           <TelegramConnectBanner userId={user.id} />
         </div>
       )}
+      {user && (
+      <>
       {/* Ambient glow — only for VIP/Boss; non-VIP gets a calm dark canvas. */}
       {(isVipMember || isBoss) && (
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -396,6 +401,8 @@ function Index() {
         vault log in
       </button>
       <VaultLoginModal open={vaultOpen} onClose={() => setVaultOpen(false)} />
+      </>
+      )}
     </main>
   );
 }
