@@ -128,6 +128,30 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_key_presets_config: {
+        Row: {
+          id: number
+          placeholder: string
+          presets: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: number
+          placeholder?: string
+          presets?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: number
+          placeholder?: string
+          presets?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       ai_logs: {
         Row: {
           created_at: string

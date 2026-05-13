@@ -2,13 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { KeyRound, Plus, Eye, EyeOff, Trash2, Save, Loader2, ShieldAlert, Copy, Check } from "lucide-react";
+import { KeyRound, Plus, Eye, EyeOff, Trash2, Save, Loader2, ShieldAlert, Copy, Check, Settings2, RotateCcw } from "lucide-react";
 import {
   listAgentKeys,
   upsertAgentKey,
   deleteAgentKey,
   revealAgentKey,
   listAgentKeyPresets,
+  saveAgentKeyPresets,
+  getAgentKeyPresetDefaults,
   type AgentKeyPreset,
   type AgentKeyRow,
 } from "@/lib/agent-keys.functions";
@@ -39,6 +41,8 @@ function ApiKeysPage() {
   const deleteFn = useServerFn(deleteAgentKey);
   const revealFn = useServerFn(revealAgentKey);
   const fetchPresets = useServerFn(listAgentKeyPresets);
+  const savePresetsFn = useServerFn(saveAgentKeyPresets);
+  const fetchDefaultsFn = useServerFn(getAgentKeyPresetDefaults);
 
   const qc = useQueryClient();
   const { data, isLoading, error } = useQuery({
@@ -69,6 +73,7 @@ function ApiKeysPage() {
   }, [data]);
 
   const [showAdd, setShowAdd] = useState(false);
+  const [showPresetsEditor, setShowPresetsEditor] = useState(false);
 
   const upsertMut = useMutation({
     mutationFn: (input: { key_name: string; value: string; label?: string; agent_group?: string; description?: string }) =>
@@ -103,6 +108,13 @@ function ApiKeysPage() {
           </div>
           <button
             type="button"
+            onClick={() => setShowPresetsEditor((v) => !v)}
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-secondary px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground hover:bg-secondary/80"
+          >
+            <Settings2 className="h-4 w-4" /> Edit presets
+          </button>
+          <button
+            type="button"
             onClick={() => setShowAdd(true)}
             className="inline-flex items-center gap-2 rounded-md border border-gold/40 bg-gold/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-gold hover:bg-gold/25"
           >
@@ -123,6 +135,19 @@ function ApiKeysPage() {
         <div className="rounded-md border border-rose-500/40 bg-rose-500/10 p-3 text-sm text-rose-200">
           {(error as Error).message}
         </div>
+      )}
+
+      {showPresetsEditor && (
+        <PresetsEditor
+          initialPresets={presets}
+          initialPlaceholder={placeholder}
+          onClose={() => setShowPresetsEditor(false)}
+          onSave={async (payload) => {
+            await savePresetsFn({ data: payload });
+            await qc.invalidateQueries({ queryKey: ["agent-key-presets"] });
+          }}
+          onLoadDefaults={() => fetchDefaultsFn()}
+        />
       )}
 
       {showAdd && (
@@ -463,5 +488,123 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
       {children}
       {hint && <span className="mt-1 block text-[10px] text-muted-foreground/70">{hint}</span>}
     </label>
+  );
+}
+
+type PresetsPayload = { presets: AgentKeyPreset[]; placeholder: string };
+
+function PresetsEditor({
+  initialPresets,
+  initialPlaceholder,
+  onClose,
+  onSave,
+  onLoadDefaults,
+}: {
+  initialPresets: AgentKeyPreset[];
+  initialPlaceholder: string;
+  onClose: () => void;
+  onSave: (payload: PresetsPayload) => Promise<void>;
+  onLoadDefaults: () => Promise<PresetsPayload>;
+}) {
+  const [text, setText] = useState(() => JSON.stringify(initialPresets, null, 2));
+  const [placeholder, setPlaceholder] = useState(initialPlaceholder);
+  const [saving, setSaving] = useState(false);
+  const [parseErr, setParseErr] = useState<string | null>(null);
+
+  const submit = async () => {
+    setParseErr(null);
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(text);
+    } catch (e) {
+      setParseErr(`Invalid JSON: ${(e as Error).message}`);
+      return;
+    }
+    if (!Array.isArray(parsed)) {
+      setParseErr("Top-level value must be an array of preset groups.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSave({ presets: parsed as AgentKeyPreset[], placeholder: placeholder.trim() });
+      toast.success("Presets saved");
+      onClose();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const loadDefaults = async () => {
+    try {
+      const d = await onLoadDefaults();
+      setText(JSON.stringify(d.presets, null, 2));
+      setPlaceholder(d.placeholder);
+      toast.message("Loaded defaults — review then Save to persist.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-gold/30 bg-card p-4 sm:p-5 space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <Settings2 className="h-4 w-4 text-gold" />
+        <h2 className="syndicate-header text-base text-foreground">Edit preset groups</h2>
+        <span className="text-xs text-muted-foreground">
+          Stored in the database — changes apply instantly, no redeploy.
+        </span>
+      </div>
+      <Field
+        label="Presets (JSON array)"
+        hint='Each item: { "id": "ai", "label": "AI / LLM", "suggestions": ["MY_API_KEY", ...] }. IDs and suggestions must be UPPER_SNAKE_CASE alphanumerics.'
+      >
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={14}
+          spellCheck={false}
+          className="w-full rounded-md border border-border bg-secondary/40 px-3 py-2 text-xs font-mono outline-none focus:border-gold/50"
+        />
+      </Field>
+      <Field label="Default placeholder" hint="Shown in the key-name input. UPPER_SNAKE_CASE only.">
+        <input
+          value={placeholder}
+          onChange={(e) => setPlaceholder(e.target.value.toUpperCase())}
+          className="w-full rounded-md border border-border bg-secondary/40 px-3 py-2 text-sm font-mono outline-none focus:border-gold/50"
+        />
+      </Field>
+      {parseErr && (
+        <div className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
+          {parseErr}
+        </div>
+      )}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={loadDefaults}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-secondary px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground"
+        >
+          <RotateCcw className="h-3.5 w-3.5" /> Load defaults
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-md border border-border bg-secondary px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={submit}
+          disabled={saving}
+          className="inline-flex items-center gap-2 rounded-md border border-gold/40 bg-gold/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-gold hover:bg-gold/25 disabled:opacity-60"
+        >
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          Save presets
+        </button>
+      </div>
+    </div>
   );
 }
