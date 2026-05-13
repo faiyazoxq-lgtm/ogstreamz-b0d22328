@@ -6,6 +6,7 @@ import { listRoster, setRank as setRankFn, setStatus as setStatusFn, adjustCredi
 import { reverifyStream } from "@/lib/stream-link.functions";
 import { effectiveSwearing, effectiveIntensity, rankDefaultsToSafe } from "@/lib/swearing";
 import { BossOgPassCard } from "@/components/boss/BossOgPassCard";
+import { MemberDetailDrawer } from "@/components/boss/MemberDetailDrawer";
 
 export const Route = createFileRoute("/boss/users")({
   head: () => ({ meta: [{ title: "Users · Boss" }, { name: "description", content: "Full roster control: rank, status, credits, ban, force sign-out, stream-account verification." }] }),
@@ -36,6 +37,8 @@ function BossUsers() {
   const [search, setSearch] = useState("");
   const [rankFilter, setRankFilter] = useState<string>("");
   const [err, setErr] = useState<string | null>(null);
+  const [selected, setSelected] = useState<RosterRow | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const refresh = async () => {
     setLoading(true); setErr(null);
@@ -107,7 +110,13 @@ function BossUsers() {
           return (
             <article key={r.id} className="glass-obsidian-cmd rounded-2xl p-4 font-sans">
               {/* OG Pass identity card — same chips members see, plus boss-only fields */}
-              <BossOgPassCard row={r} />
+              <BossOgPassCard
+                row={r}
+                onSelect={(row) => {
+                  setSelected(row);
+                  setDrawerOpen(true);
+                }}
+              />
 
               {/* Action grid: clearly labelled sections */}
               <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 border-t border-white/5 pt-3">
@@ -210,6 +219,12 @@ function BossUsers() {
         })}
         {!loading && rows.length === 0 && <p className="text-center text-sm text-white/55 py-6">No users match.</p>}
       </div>
+
+      <MemberDetailDrawer
+        row={selected}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+      />
     </div>
   );
 }
