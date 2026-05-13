@@ -361,6 +361,11 @@ export function BossTodoNotepad() {
             connected={sheetConnected}
             sheetUrl={sheetUrl}
             lastPullAt={lastPullAt}
+            lastPushAt={lastPushAt}
+            lastPullInserted={lastPullInserted}
+            lastPullUpdated={lastPullUpdated}
+            lastPushCount={lastPushCount}
+            pendingPush={pendingPush}
             onConnect={connectSheet}
             onSync={syncNow}
           />
@@ -371,6 +376,36 @@ export function BossTodoNotepad() {
             Full board <ArrowUpRight className="h-3 w-3" />
           </Link>
         </div>
+
+        {/* Sync metrics — last pull/push timestamps + breakdown */}
+        {sheetConnected && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-white/10 px-3 py-1.5 text-[9px] uppercase tracking-wider text-white/55">
+            <span title={lastPullAt ? new Date(lastPullAt).toLocaleString() : "Never"}>
+              <span className="text-white/35">Pull</span>{" "}
+              <span className="text-emerald-300/90">
+                {lastPullAt ? relTime(lastPullAt) : "never"}
+              </span>
+              <span className="ml-1 text-white/40">
+                · +{lastPullInserted} new · ↻{lastPullUpdated} upd
+              </span>
+            </span>
+            <span className="text-white/20">|</span>
+            <span title={lastPushAt ? new Date(lastPushAt).toLocaleString() : "Never"}>
+              <span className="text-white/35">Push</span>{" "}
+              <span className="text-cyan-300/90">
+                {lastPushAt ? relTime(lastPushAt) : "never"}
+              </span>
+              <span className="ml-1 text-white/40">· {lastPushCount} rows</span>
+            </span>
+            <span className="text-white/20">|</span>
+            <span
+              className={pendingPush > 0 ? "text-amber-300" : "text-white/45"}
+              title="Local edits not yet pushed to the sheet"
+            >
+              {pendingPush > 0 ? `↑ ${pendingPush} pending push` : "in sync"}
+            </span>
+          </div>
+        )}
 
         {/* Filter chips — active chip is brighter, others muted. Counts
             include hidden items so you can see how much each bucket holds. */}
