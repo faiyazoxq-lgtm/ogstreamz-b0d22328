@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createClient } from "@supabase/supabase-js";
 import {
@@ -226,6 +225,3 @@ export const gsheetsDisconnect = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
-
-// Force zod into the bundle so unused-import linters don't strip it.
-void z;
