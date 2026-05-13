@@ -11,7 +11,7 @@ import { spawnMusicPortal } from "@/lib/music-spawn.functions";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { MusicHubBalance } from "@/components/MusicHubBalance";
 import { FeaturedDropCard } from "@/components/FeaturedDropCard";
-import { VipPaywallInline } from "@/components/VipPaywallInline";
+import { NonVipFormGate } from "@/components/NonVipFormGate";
 import { PortalHeader, PortalStyleLine, mergeStyle } from "@/components/PortalHeader";
 
 const MUSIC_STYLE = "Cinematic neon street-rap with gritty bass and OG energy.";
@@ -124,7 +124,8 @@ function MusicPromptBuilder() {
 
       <FeaturedDropCard />
 
-      {/* The writing area — main focus */}
+      {/* The writing area — main focus. Non-VIPs see OG-Bot draft mode. */}
+      <NonVipFormGate label="Spawn Studio">
       <section className="rounded-3xl border border-gold/40 bg-gradient-to-br from-card to-background p-4 sm:p-6 shadow-[0_0_80px_oklch(0.82_0.16_88_/_0.1)] backdrop-blur-xl">
         <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Track Name</label>
         <Input
@@ -185,10 +186,9 @@ function MusicPromptBuilder() {
 
         <PortalStyleLine sentence={MUSIC_STYLE} />
 
-        {isVip ? (
-          <Button
+        <Button
             onClick={onGenerate}
-            disabled={busy}
+            disabled={busy || !isVip}
             size="lg"
             className="mt-3 w-full bg-gold text-primary-foreground hover:bg-gold/90 font-bold tracking-wide"
           >
@@ -198,10 +198,8 @@ function MusicPromptBuilder() {
               <><Wand2 className="h-4 w-4 mr-2" /> Spawn Studio</>
             )}
           </Button>
-        ) : (
-          <VipPaywallInline hub="music" isAuthenticated={!!user} />
-        )}
       </section>
+      </NonVipFormGate>
       <SpawnPortalCard kind="music" />
     </main>
   );
