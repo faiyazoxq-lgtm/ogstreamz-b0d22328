@@ -60,7 +60,6 @@ export function WelcomeBroadcast({
       <div className="mt-auto flex w-full flex-col gap-4">
         <Link
           to="/auth"
-          search={{ mode: "signup" }}
           className="w-full py-5 text-lg font-black uppercase tracking-[0.25em] text-black transition-transform active:scale-[0.97]"
           style={{
             backgroundColor: "oklch(0.72 0.22 245)",
