@@ -504,6 +504,7 @@ export type Database = {
           created_at: string
           details: string | null
           done_at: string | null
+          due_at: string | null
           id: string
           link: string | null
           position: number
@@ -517,6 +518,7 @@ export type Database = {
           created_at?: string
           details?: string | null
           done_at?: string | null
+          due_at?: string | null
           id?: string
           link?: string | null
           position?: number
@@ -530,6 +532,7 @@ export type Database = {
           created_at?: string
           details?: string | null
           done_at?: string | null
+          due_at?: string | null
           id?: string
           link?: string | null
           position?: number
