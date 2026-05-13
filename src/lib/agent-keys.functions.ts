@@ -109,9 +109,16 @@ export function resolveAgentKeyPresets(input: {
 
   if (!presets) presets = DEFAULT_PRESETS;
   if (!placeholder) {
+    const firstWithSuggestion = presets.find(
+      (g) =>
+        g &&
+        typeof g === "object" &&
+        Array.isArray((g as AgentKeyPreset).suggestions) &&
+        (g as AgentKeyPreset).suggestions.length > 0
+    ) as AgentKeyPreset | undefined;
     placeholder =
       env.AGENT_KEY_NAME_PLACEHOLDER ||
-      presets.find((g) => g.suggestions.length > 0)?.suggestions[0] ||
+      firstWithSuggestion?.suggestions[0] ||
       K("OPENAI");
   }
   return { presets, placeholder };
