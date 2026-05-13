@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
+import { OgPassBadge } from "@/components/OgPassBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { effectiveSwearing } from "@/lib/swearing";
@@ -284,6 +285,11 @@ function SettingsPage() {
           <h1 className="mt-3 font-[Montserrat] font-black text-3xl sm:text-4xl text-metallic">
             Your Profile & Contact Card
           </h1>
+          {(profile as any)?.og_pass_no != null && (
+            <div className="mt-3">
+              <OgPassBadge number={(profile as any).og_pass_no} size="md" />
+            </div>
+          )}
           <p className="mt-2 text-sm text-muted-foreground">
             Update your picture, bio, and the ways people can reach out to you across the syndicate.
           </p>
