@@ -46,7 +46,7 @@ type Group = {
   id: string;
   label: string;
   desc: string;
-  Icon: React.ComponentType<{ className?: string }>;
+  Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   tint: string;
   panels: Panel[];
 };
