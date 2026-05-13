@@ -4,7 +4,7 @@ import {
   Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft,
   ShieldAlert, LogIn, Tv, Tags, Bell, Sparkles, Settings, Boxes, Grid3x3,
   Coins, Power, Rocket, KeyRound, Wallet, SlidersHorizontal, Lock, ScrollText,
-  ShieldOff, Lightbulb, Megaphone, Phone,
+  ShieldOff, Lightbulb, Megaphone, Phone, LayoutGrid,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { BossSearch } from "@/components/BossSearch";
@@ -20,6 +20,15 @@ export const Route = createFileRoute("/boss")({
 
 const TOP: RailItem = { to: "/boss/overview", label: "Command Centre", Icon: Crown, exact: true, desc: "Merged dashboard" };
 
+// Mega "everything in one page" console — added so the boss can land on a
+// single grouped surface instead of jumping between rail items.
+const CONTROL_CENTRE: RailItem = {
+  to: "/boss/control-centre",
+  label: "Control Centre",
+  Icon: LayoutGrid,
+  desc: "All toggles & commands grouped",
+};
+
 const GROUPS: RailGroup[] = [
   {
     id: "command",
@@ -27,6 +36,7 @@ const GROUPS: RailGroup[] = [
     Icon: Crown,
     tint: "#ffd166",
     items: [
+      CONTROL_CENTRE,
       { to: "/boss/alerts", label: "Alerts", Icon: Bell, desc: "Live incidents" },
       { to: "/boss/publish-check", label: "Publish", Icon: Rocket, desc: "Pre-publish validation" },
       { to: "/boss/analytics", label: "Analytics", Icon: BarChart3, desc: "Portal metrics" },
