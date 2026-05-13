@@ -14,6 +14,7 @@ import { PlanChip, StatusBadge } from "@/components/SubscriptionBadges";
 import { VipReferralCard } from "@/components/VipReferralCard";
 import { createPortalSession } from "@/lib/payments.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
+import { OgPassBadge } from "@/components/OgPassBadge";
 
 /**
  * Logged-in VIP member dashboard.
@@ -63,6 +64,7 @@ export function VipMembersDashboard() {
               <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                 <PlanChip planLabel={planLabel ?? (isBoss ? "Boss" : "VIP")} tone="amber" />
                 <StatusBadge sub={sub} />
+                <OgPassBadge number={(profile as any)?.og_pass_no} size="sm" />
                 <span className="inline-flex items-center gap-1 rounded-full border border-amber-300/30 bg-amber-400/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-amber-200">
                   <Calendar className="h-3 w-3" /> {billingLine}
                 </span>
