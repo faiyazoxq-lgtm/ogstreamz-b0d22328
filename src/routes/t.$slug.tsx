@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { Sparkles, Lock, Lightbulb, BadgeCheck, RotateCcw, Calculator, GraduationCap } from "lucide-react";
@@ -9,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import type { ToolConfig } from "@/lib/tools.functions";
+import { getToolVipContent } from "@/lib/tools.functions";
 import { OgWordmark } from "@/components/OgWordmark";
 
 type ToolRow = { id: string; slug: string; name: string; description: string | null; vip: boolean; config: ToolConfig };
@@ -23,7 +25,14 @@ export const Route = createFileRoute("/t/$slug")({
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!data) throw notFound();
-    return { tool: data as unknown as ToolRow };
+    // Strip VIP-only fields server-side so they never reach unauthorized
+    // visitors via the loader payload. The component fetches them through
+    // an authenticated server function when the viewer is actually VIP.
+    const raw = data as unknown as ToolRow;
+    const { deepExplanation: _d, steps: _s, kidExplain: _k, ...publicCfg } =
+      (raw.config ?? {}) as ToolConfig;
+    const tool: ToolRow = { ...raw, config: publicCfg as ToolConfig };
+    return { tool };
   },
   head: ({ loaderData }) => ({
     meta: [
@@ -75,15 +84,53 @@ function ToolPage() {
   const { tool } = Route.useLoaderData();
   const { user } = useAuth();
   const [isVip, setIsVip] = useState(false);
+  const [vipExtras, setVipExtras] = useState<{
+    deepExplanation?: string;
+    steps?: string[];
+    kidExplain?: string;
+  } | null>(null);
+  const fetchVip = useServerFn(getToolVipContent);
 
   useEffect(() => {
-    if (!user) return setIsVip(false);
+    if (!user) {
+      setIsVip(false);
+      setVipExtras(null);
+      return;
+    }
     supabase.from("profiles").select("status").eq("id", user.id).maybeSingle().then(({ data }) => {
       setIsVip(data?.status === "vip");
     });
   }, [user]);
 
-  const cfg = tool.config;
+  // Once we know the user is VIP, hydrate the locked-down fields from the
+  // server. Non-VIP users never receive these payload bytes.
+  useEffect(() => {
+    let cancelled = false;
+    if (!isVip) {
+      setVipExtras(null);
+      return;
+    }
+    fetchVip({ data: { slug: tool.slug } })
+      .then((extras) => {
+        if (!cancelled) setVipExtras(extras);
+      })
+      .catch(() => {
+        if (!cancelled) setVipExtras(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isVip, tool.slug, fetchVip]);
+
+  const cfg: ToolConfig = useMemo(
+    () => ({
+      ...tool.config,
+      deepExplanation: vipExtras?.deepExplanation ?? tool.config.deepExplanation ?? "",
+      steps: vipExtras?.steps ?? tool.config.steps,
+      kidExplain: vipExtras?.kidExplain ?? tool.config.kidExplain,
+    }),
+    [tool.config, vipExtras],
+  );
   const accent = cfg.theme?.accent || "#3ad6ff";
   const bg = cfg.theme?.bg || "#06121f";
 

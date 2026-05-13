@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { z } from "zod";
 
 async function isAdmin(supabase: any, userId: string): Promise<boolean> {
   const { data } = await supabase
@@ -171,4 +173,46 @@ No markdown. No commentary.`;
     if (error) throw new Error(error.message);
 
     return { tool: row, slug };
+  });
+
+/**
+ * Returns VIP-only fields for a calculator (deepExplanation, steps, kidExplain).
+ * Server-side enforcement: requires auth + VIP/admin/boss status. Without this,
+ * the public loader would leak paid content to every visitor.
+ */
+export const getToolVipContent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(z.object({ slug: z.string().min(1).max(120) }).parse)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+
+    // VIP entitlement check — VIP profile, admin role, or boss.
+    const [{ data: prof }, { data: roleRow }] = await Promise.all([
+      supabase.from("profiles").select("status").eq("id", userId).maybeSingle(),
+      supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .in("role", ["admin"])
+        .maybeSingle(),
+    ]);
+    const isVip =
+      prof?.status === "vip" || !!roleRow || (await isAdmin(supabase, userId));
+    if (!isVip) throw new Error("VIP required");
+
+    // Use admin client to read the full config regardless of row policies.
+    const { data: row, error } = await supabaseAdmin
+      .from("calculators")
+      .select("config")
+      .eq("slug", data.slug)
+      .eq("published", true)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) throw new Error("Tool not found");
+    const cfg = (row.config ?? {}) as Partial<ToolConfig>;
+    return {
+      deepExplanation: cfg.deepExplanation ?? "",
+      steps: cfg.steps ?? [],
+      kidExplain: cfg.kidExplain ?? "",
+    };
   });

@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getRequest } from "@tanstack/react-start/server";
+import { createClient } from "@supabase/supabase-js";
 
 /**
  * Portal Shell server functions: cached AI-generated header (title + short
@@ -36,6 +38,38 @@ export const getPortalHeader = createServerFn({ method: "POST" })
       .eq("portal_key", data.portalKey)
       .maybeSingle();
     if (existing.data) return existing.data as PortalHeader;
+
+    // Cache miss — AI generation is expensive (text + image via LOVABLE_API_KEY).
+    // Require authentication before triggering generation, otherwise an
+    // unauthenticated bot could enumerate unique portalKeys and exhaust credits.
+    // Anonymous viewers still get a sensible static placeholder for new portals.
+    const req = getRequest();
+    const authHeader = req?.headers.get("authorization") ?? "";
+    let authedUser = false;
+    if (authHeader.startsWith("Bearer ")) {
+      const token = authHeader.slice(7);
+      const SUPABASE_URL = process.env.SUPABASE_URL;
+      const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+      if (token && SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY) {
+        try {
+          const tmp = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+            auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+          });
+          const { data: claims } = await tmp.auth.getClaims(token);
+          authedUser = !!claims?.claims?.sub;
+        } catch {
+          authedUser = false;
+        }
+      }
+    }
+    if (!authedUser) {
+      return {
+        portal_key: data.portalKey,
+        title: data.name,
+        description: `${data.name} — generate, remix, ship.`,
+        bg_url: null,
+      };
+    }
 
     const LOVABLE = process.env.LOVABLE_API_KEY;
     if (!LOVABLE) throw new Error("AI gateway not configured");
