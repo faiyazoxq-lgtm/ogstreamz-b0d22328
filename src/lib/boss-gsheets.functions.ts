@@ -6,6 +6,9 @@ import {
   pingSheet,
   readSheetRows,
   writeAllRows,
+  upsertSheetRow,
+  removeSheetRow,
+  generateEncKeyB64,
   type SheetRow,
 } from "./boss-gsheets.server";
 
@@ -46,11 +49,25 @@ async function loadSettings() {
   const admin = adminClient();
   const { data, error } = await admin
     .from("boss_settings")
-    .select("id, gsheet_id, gsheet_url, gsheet_last_pull_at, gsheet_last_push_at, gsheet_last_pull_inserted, gsheet_last_pull_updated, gsheet_last_push_count")
+    .select("id, gsheet_id, gsheet_url, gsheet_enc_key, gsheet_last_pull_at, gsheet_last_push_at, gsheet_last_pull_inserted, gsheet_last_pull_updated, gsheet_last_push_count")
     .limit(1)
     .maybeSingle();
   if (error) throw new Error(error.message);
   return data ?? null;
+}
+
+/**
+ * Lazily mint the AES-256-GCM key used to encrypt sheet content. Stored on
+ * the singleton `boss_settings` row (admin/service-role only) so we never
+ * have to expose it as a build secret. Calls are cheap because the row is
+ * only updated when the column is null.
+ */
+async function ensureEncKey(settingsId: string, current: string | null): Promise<string> {
+  if (current && current.length > 16) return current;
+  const fresh = generateEncKeyB64();
+  const admin = adminClient();
+  await admin.from("boss_settings").update({ gsheet_enc_key: fresh }).eq("id", settingsId);
+  return fresh;
 }
 
 function rowFromTodo(t: any): SheetRow {
@@ -64,6 +81,18 @@ function rowFromTodo(t: any): SheetRow {
     position: t.position ?? 0,
     updated_at: t.updated_at ?? new Date().toISOString(),
   };
+}
+
+async function fetchTodoRow(id: string): Promise<SheetRow | null> {
+  const admin = adminClient();
+  const { data, error } = await admin
+    .from("boss_todos")
+    .select("id,title,category,priority,status,due_at,position,updated_at")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  return rowFromTodo(data);
 }
 
 /** Status pill data — connected? sheet URL? last pull time? */
@@ -144,6 +173,7 @@ export const gsheetsPush = createServerFn({ method: "POST" })
     await assertBoss(context.userId);
     const s = await loadSettings();
     if (!s?.gsheet_id) throw new Error("No sheet linked yet — connect first");
+    const key = await ensureEncKey(s.id as string, (s as any).gsheet_enc_key ?? null);
     const admin = adminClient();
     const { data: todos, error } = await admin
       .from("boss_todos")
@@ -152,7 +182,7 @@ export const gsheetsPush = createServerFn({ method: "POST" })
       .order("position", { ascending: true });
     if (error) throw new Error(error.message);
     const rows = (todos ?? []).map(rowFromTodo);
-    await writeAllRows(s.gsheet_id, rows);
+    await writeAllRows(s.gsheet_id, rows, key);
     const now = new Date().toISOString();
     await admin
       .from("boss_todos")
@@ -165,6 +195,65 @@ export const gsheetsPush = createServerFn({ method: "POST" })
         .eq("id", s.id);
     }
     return { pushed: rows.length, syncedAt: now, lastPushAt: now };
+  });
+
+/**
+ * Incremental upsert — write a single todo row in-place on the sheet.
+ * Called by the notepad UI right after add/edit/complete so we no longer
+ * rewrite the entire range for every keystroke.
+ */
+export const gsheetsUpsertOne = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
+  .handler(async ({ data, context }) => {
+    await assertBoss(context.userId);
+    const s = await loadSettings();
+    if (!s?.gsheet_id) return { ok: false, reason: "not_connected" as const };
+    const row = await fetchTodoRow(data.id);
+    if (!row) {
+      // Row is gone (deleted between request + handler) — treat as remove.
+      await removeSheetRow(s.gsheet_id, data.id).catch(() => {});
+      return { ok: true, removed: true };
+    }
+    // Mirror the "open todos only" rule used by gsheetsPush.
+    if (row.status === "done") {
+      await removeSheetRow(s.gsheet_id, data.id).catch(() => {});
+      const admin = adminClient();
+      await admin.from("boss_todos").update({ synced_at: new Date().toISOString() }).eq("id", data.id);
+      return { ok: true, removed: true };
+    }
+    const key = await ensureEncKey(s.id as string, (s as any).gsheet_enc_key ?? null);
+    const result = await upsertSheetRow(s.gsheet_id, row, key);
+    const now = new Date().toISOString();
+    const admin = adminClient();
+    await admin.from("boss_todos").update({ synced_at: now }).eq("id", data.id);
+    if (s.id) {
+      await admin
+        .from("boss_settings")
+        .update({ gsheet_last_push_at: now, gsheet_last_push_count: 1 })
+        .eq("id", s.id);
+    }
+    return { ok: true, inserted: result.inserted, rowIndex: result.rowIndex, lastPushAt: now };
+  });
+
+/** Incremental delete — clear a single row by id (no full rewrite). */
+export const gsheetsRemoveOne = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
+  .handler(async ({ data, context }) => {
+    await assertBoss(context.userId);
+    const s = await loadSettings();
+    if (!s?.gsheet_id) return { ok: false, reason: "not_connected" as const };
+    const removed = await removeSheetRow(s.gsheet_id, data.id);
+    const now = new Date().toISOString();
+    if (s.id) {
+      const admin = adminClient();
+      await admin
+        .from("boss_settings")
+        .update({ gsheet_last_push_at: now, gsheet_last_push_count: removed ? 1 : 0 })
+        .eq("id", s.id);
+    }
+    return { ok: true, removed, lastPushAt: now };
   });
 
 /**
@@ -181,8 +270,9 @@ export const gsheetsPull = createServerFn({ method: "POST" })
     await assertBoss(context.userId);
     const s = await loadSettings();
     if (!s?.gsheet_id) throw new Error("No sheet linked yet — connect first");
+    const key = await ensureEncKey(s.id as string, (s as any).gsheet_enc_key ?? null);
     const admin = adminClient();
-    const sheetRows = await readSheetRows(s.gsheet_id);
+    const sheetRows = await readSheetRows(s.gsheet_id, key);
 
     // Pull every open todo so we can compare timestamps.
     const { data: existing, error } = await admin
