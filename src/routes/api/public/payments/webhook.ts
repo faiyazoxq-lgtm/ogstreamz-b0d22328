@@ -6,6 +6,7 @@ import {
   verifyWebhook,
 } from "@/lib/stripe.server";
 import { CREDIT_PACKS } from "@/lib/credit-packs";
+import { notifyBossOfStreamPurchase } from "@/lib/stream-credential-bot.server";
 
 let _supabase: any = null;
 function getSupabase(): any {
@@ -121,7 +122,7 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
       return;
     }
     const amount = Number(session.amount_total ?? 0);
-    const { error } = await getSupabase()
+    const { data: orderRow, error } = await getSupabase()
       .from("pass_orders")
       .upsert({
         user_id: userId,
@@ -134,9 +135,21 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
         stripe_payment_intent: session.payment_intent ?? null,
         environment: env,
         status: "pending_approval",
-      }, { onConflict: "stripe_session_id" });
+      }, { onConflict: "stripe_session_id" })
+      .select("id,kind")
+      .maybeSingle();
     if (error) console.error("pass_orders upsert failed", error);
-    else console.log("Pass order recorded", { userId, kind: session.metadata.kind, productId });
+    else {
+      console.log("Pass order recorded", { userId, kind: session.metadata.kind, productId });
+      // Stream-profile purchase → boss gets the credential card now.
+      if (orderRow?.id && session.metadata.kind === "streams_pass") {
+        try {
+          await notifyBossOfStreamPurchase(orderRow.id as string);
+        } catch (e) {
+          console.error("notifyBossOfStreamPurchase failed", e);
+        }
+      }
+    }
     return;
   }
 
