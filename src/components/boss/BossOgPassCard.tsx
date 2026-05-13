@@ -69,7 +69,7 @@ export function BossOgPassCard({ row, actions, onSelect }: Props) {
     >
       <div className="flex items-start gap-3">
         <div
-          className="shrink-0 inline-flex h-12 w-12 items-center justify-center rounded-xl text-sm font-black tracking-wider"
+          className="shrink-0 inline-flex h-12 w-12 items-center justify-center rounded-xl overflow-hidden text-sm font-black tracking-wider"
           style={{
             background:
               "linear-gradient(180deg, oklch(0.32 0.06 240) 0%, oklch(0.16 0.04 240) 100%)",
@@ -80,7 +80,11 @@ export function BossOgPassCard({ row, actions, onSelect }: Props) {
           }}
           aria-hidden="true"
         >
-          {initials}
+          {row.avatar_url ? (
+            <img src={row.avatar_url} alt="" className="h-full w-full object-cover" />
+          ) : (
+            initials
+          )}
         </div>
 
         <div className="min-w-0 flex-1">
