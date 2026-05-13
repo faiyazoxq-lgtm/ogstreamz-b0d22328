@@ -2127,6 +2127,7 @@ export type Database = {
           free_clicks_used: number
           id: string
           member_tier: string | null
+          og_pass_no: number
           rank: Database["public"]["Enums"]["syndicate_rank"]
           referral_code: string | null
           referred_by_reseller: string | null
@@ -2156,6 +2157,7 @@ export type Database = {
           free_clicks_used?: number
           id: string
           member_tier?: string | null
+          og_pass_no?: number
           rank?: Database["public"]["Enums"]["syndicate_rank"]
           referral_code?: string | null
           referred_by_reseller?: string | null
@@ -2185,6 +2187,7 @@ export type Database = {
           free_clicks_used?: number
           id?: string
           member_tier?: string | null
+          og_pass_no?: number
           rank?: Database["public"]["Enums"]["syndicate_rank"]
           referral_code?: string | null
           referred_by_reseller?: string | null

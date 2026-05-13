@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { RealOgBadge } from "@/components/RealOgBadge";
+import { OgPassBadge } from "@/components/OgPassBadge";
 import { StreamLinkCard } from "@/components/StreamLinkCard";
 import { CoinActivity } from "@/components/CoinActivity";
 import { supabase } from "@/integrations/supabase/client";
@@ -204,6 +205,11 @@ function ProfilePage() {
                 <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
                 Verified Boss
               </span>
+            </div>
+          )}
+          {profile?.og_pass_no != null && (
+            <div className="mt-4 flex justify-center">
+              <OgPassBadge number={profile.og_pass_no} size="lg" />
             </div>
           )}
         </header>
