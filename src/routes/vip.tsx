@@ -19,6 +19,7 @@ import { VaultGuard } from "@/components/VaultGuard";
 import { VipReferralCard } from "@/components/VipReferralCard";
 import { VipMembersDashboard } from "@/components/VipMembersDashboard";
 import { requireMember } from "@/lib/route-guards";
+import { NonMemberTrap } from "@/components/NonMemberTrap";
 
 export const Route = createFileRoute("/vip")({
   beforeLoad: requireMember,
@@ -145,6 +146,10 @@ function VipPage() {
   return (
     <main className="min-h-screen text-white overflow-x-hidden">
       <PaymentTestModeBanner />
+
+      {/* Non-member trap — every tap on /vip spawns a "Buy VIP" CTA at
+          the tap location after a short lag, routing to coin top-up. */}
+      <NonMemberTrap active={!isVip} />
 
       {/* Members area — only shown when the visitor is already VIP. */}
       <VipMembersDashboard />
