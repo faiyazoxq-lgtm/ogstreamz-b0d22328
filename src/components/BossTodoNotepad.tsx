@@ -280,6 +280,38 @@ export function BossTodoNotepad() {
     }
   }
 
+  // Manual pull — forces an immediate read from the sheet and reconciles
+  // into the DB. Distinct from `refreshStatus` (metrics-only) and
+  // `syncNow` (push + pull). Used by the "Pull now" button so the boss
+  // can force-fetch the latest sheet edits without waiting for the 60s
+  // background poll.
+  async function pullNow() {
+    if (!sheetConnected) return;
+    try {
+      setSyncState("busy");
+      const r: any = await pullFn();
+      setLastPullAt(r.lastPullAt);
+      setLastPullInserted(r.inserted ?? 0);
+      setLastPullUpdated(r.updated ?? 0);
+      // Refresh pending-push count after reconcile.
+      try {
+        const s: any = await statusFn();
+        setPendingPush(s.pendingPush ?? 0);
+      } catch { /* ignore */ }
+      setSyncState("idle");
+      await load();
+      const changed = (r.inserted ?? 0) + (r.updated ?? 0);
+      toast.success(
+        changed > 0
+          ? `Pulled ${r.inserted ?? 0} new · ${r.updated ?? 0} updated`
+          : "Pulled — no changes",
+      );
+    } catch (e: any) {
+      setSyncState("error");
+      toast.error("Pull failed", { description: e?.message });
+    }
+  }
+
   async function add(e: React.FormEvent) {
     e.preventDefault();
     const title = draft.trim();
