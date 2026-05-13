@@ -59,6 +59,12 @@ export function BossTodoNotepad() {
   // List filter — `all` shows every category. Independent of draftCategory
   // so you can be filtering Growth while logging an Ops note.
   const [filter, setFilter] = useState<Category | "all">("all");
+  // Inline edit state — `editingId` is the row currently in edit mode and
+  // `editDraft` is the working title. Single-row at a time keeps the UX
+  // simple and avoids juggling a map of drafts.
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
 
   async function load() {
     const { data, error } = await supabase
@@ -137,6 +143,37 @@ export function BossTodoNotepad() {
     if (error) {
       setItems(prev);
       toast.error("Could not delete", { description: error.message });
+    }
+  }
+
+  function startEdit(t: Todo) {
+    setEditingId(t.id);
+    setEditDraft(t.title);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditDraft("");
+  }
+
+  async function saveEdit(id: string) {
+    const next = editDraft.trim();
+    const current = items.find((t) => t.id === id);
+    if (!current) return cancelEdit();
+    if (!next || next === current.title) return cancelEdit();
+    setEditSaving(true);
+    // Optimistic — revert the title on error.
+    const prev = items;
+    setItems((cur) => cur.map((t) => (t.id === id ? { ...t, title: next } : t)));
+    const { error } = await supabase
+      .from("boss_todos")
+      .update({ title: next })
+      .eq("id", id);
+    setEditSaving(false);
+    cancelEdit();
+    if (error) {
+      setItems(prev);
+      toast.error("Could not rename", { description: error.message });
     }
   }
 
@@ -290,9 +327,37 @@ export function BossTodoNotepad() {
                     />
                   );
                 })()}
-                <span className="min-w-0 flex-1 truncate text-sm text-white/90">
-                  {t.title}
-                </span>
+                {editingId === t.id ? (
+                  <input
+                    autoFocus
+                    type="text"
+                    value={editDraft}
+                    onChange={(e) => setEditDraft(e.target.value)}
+                    onBlur={() => void saveEdit(t.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void saveEdit(t.id);
+                      } else if (e.key === "Escape") {
+                        e.preventDefault();
+                        cancelEdit();
+                      }
+                    }}
+                    disabled={editSaving}
+                    maxLength={200}
+                    aria-label="Edit title"
+                    className="min-w-0 flex-1 rounded border border-[oklch(0.72_0.22_245/0.6)] bg-black/60 px-1.5 py-0.5 text-sm text-white focus:outline-none focus:border-[oklch(0.72_0.22_245)]"
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => startEdit(t)}
+                    title="Click to rename"
+                    className="min-w-0 flex-1 truncate text-left text-sm text-white/90 hover:text-white focus:outline-none focus-visible:underline focus-visible:decoration-dotted"
+                  >
+                    {t.title}
+                  </button>
+                )}
                 {/* Due date pill — overdue items pulse red, "today" amber,
                     everything else muted. Hidden when no due date is set. */}
                 {t.due_at && <DueBadge dueIso={t.due_at} />}
