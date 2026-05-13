@@ -193,6 +193,43 @@ async function handleCommand(
     chatId,
     "✅ Linked! You will now receive VIP pass updates, expiry reminders and live drops here."
   );
+
+  // Boss-only audit notice: tie this Telegram identity to the member's OG Pass.
+  try {
+    const sb = getSupabase() as any;
+    const { data: link } = await sb
+      .from("telegram_user_links")
+      .select("user_id")
+      .eq("chat_id", chatId)
+      .maybeSingle();
+    if (link?.user_id) {
+      const { data: prof } = await sb
+        .from("profiles")
+        .select("email,display_name,og_pass_no,status,rank")
+        .eq("id", link.user_id)
+        .maybeSingle();
+      const bossChat = getBossChatId();
+      if (bossChat && prof) {
+        const who = prof.display_name || prof.email || link.user_id;
+        const og = prof.og_pass_no != null ? `#${prof.og_pass_no}` : "—";
+        const handle = username ? `@${username}` : "(no username)";
+        await tgSendMessage(
+          bossChat,
+          `🔗 <b>Telegram linked</b>\n` +
+            `OG PASS: <b>${escapeHtml(String(og))}</b>\n` +
+            `Member: ${escapeHtml(String(who))}\n` +
+            (prof.email ? `Email: <code>${escapeHtml(prof.email)}</code>\n` : "") +
+            `Telegram: ${escapeHtml(handle)} · <code>${chatId}</code>\n` +
+            `Tier: ${escapeHtml(prof.status || "—")}${prof.rank ? ` · ${escapeHtml(prof.rank)}` : ""}`,
+        );
+      }
+    }
+  } catch (e) {
+    logError("tg.webhook.boss_link_notify_failed", {
+      chatIdSuffix: String(chatId).slice(-8),
+      error: e instanceof Error ? e.message : String(e),
+    });
+  }
 }
 
 function escapeHtml(s: string) {
