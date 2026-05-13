@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ListChecks, Plus, Loader2, Check, ArrowUpRight, X } from "lucide-react";
+import { ListChecks, Plus, Loader2, Check, ArrowUpRight, X, CalendarClock } from "lucide-react";
 
 type Todo = {
   id: string;
@@ -11,6 +11,7 @@ type Todo = {
   status: "todo" | "in_progress" | "blocked" | "done";
   position: number;
   category: string | null;
+  due_at: string | null;
 };
 
 const PRIO_TINT: Record<Todo["priority"], string> = {
@@ -51,6 +52,10 @@ export function BossTodoNotepad() {
   // Category for the next quick-add. Persists across submits so power-user
   // bulk-entry stays fast (pick once, then enter, enter, enter).
   const [draftCategory, setDraftCategory] = useState<Category>("ops");
+  // Optional due date for the next quick-add. Stored as a `YYYY-MM-DD`
+  // string from <input type="date">; cleared after each successful save so
+  // it doesn't silently stick to later notes.
+  const [draftDue, setDraftDue] = useState<string>("");
   // List filter — `all` shows every category. Independent of draftCategory
   // so you can be filtering Growth while logging an Ops note.
   const [filter, setFilter] = useState<Category | "all">("all");
@@ -58,7 +63,7 @@ export function BossTodoNotepad() {
   async function load() {
     const { data, error } = await supabase
       .from("boss_todos")
-      .select("id,title,priority,status,position,category")
+      .select("id,title,priority,status,position,category,due_at")
       .neq("status", "done")
       .order("position", { ascending: true })
       .limit(80);
@@ -86,15 +91,28 @@ export function BossTodoNotepad() {
     if (!title || saving) return;
     setSaving(true);
     const nextPos = (items.at(-1)?.position ?? 0) + 1;
+    // Treat a date-only input as end-of-day local so "due today" stays
+    // valid until midnight instead of flipping to overdue at 00:00.
+    const dueIso = draftDue
+      ? new Date(`${draftDue}T23:59:59`).toISOString()
+      : null;
     const { error } = await supabase
       .from("boss_todos")
-      .insert({ title, priority: "P2", category: draftCategory, status: "todo", position: nextPos });
+      .insert({
+        title,
+        priority: "P2",
+        category: draftCategory,
+        status: "todo",
+        position: nextPos,
+        due_at: dueIso,
+      });
     setSaving(false);
     if (error) {
       toast.error("Could not add", { description: error.message });
       return;
     }
     setDraft("");
+    setDraftDue("");
     void load();
   }
 
@@ -192,6 +210,16 @@ export function BossTodoNotepad() {
             disabled={saving}
             className="flex-1 bg-transparent text-sm text-white placeholder:text-white/30 focus:outline-none"
           />
+          {/* Optional due date. Native date input keeps the row compact
+              and gives free keyboard / picker support across platforms. */}
+          <input
+            type="date"
+            value={draftDue}
+            onChange={(e) => setDraftDue(e.target.value)}
+            disabled={saving}
+            aria-label="Quick add due date"
+            className="rounded border border-white/15 bg-black/50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/70 focus:outline-none [color-scheme:dark]"
+          />
           {/* Category for the next quick-add. Plain <select> for keyboard
               + screen-reader support; visually styled to match the row. */}
           <select
@@ -265,6 +293,9 @@ export function BossTodoNotepad() {
                 <span className="min-w-0 flex-1 truncate text-sm text-white/90">
                   {t.title}
                 </span>
+                {/* Due date pill — overdue items pulse red, "today" amber,
+                    everything else muted. Hidden when no due date is set. */}
+                {t.due_at && <DueBadge dueIso={t.due_at} />}
                 {t.status !== "todo" && (
                   <span className="flex-shrink-0 text-[9px] uppercase tracking-widest text-white/40">
                     {t.status === "in_progress" ? "wip" : t.status}
@@ -316,5 +347,48 @@ function FilterChip({
       {label}
       <span className="opacity-60">{count}</span>
     </button>
+  );
+}
+
+/**
+ * Compact pill that renders a relative due date and tints itself by urgency:
+ * - Overdue → red with a soft pulse
+ * - Today   → amber
+ * - Future  → muted neutral
+ */
+function DueBadge({ dueIso }: { dueIso: string }) {
+  const due = new Date(dueIso);
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const startOfDue = new Date(due.getFullYear(), due.getMonth(), due.getDate()).getTime();
+  const dayDiff = Math.round((startOfDue - startOfToday) / 86_400_000);
+
+  const overdue = due.getTime() < now.getTime();
+  const today = !overdue && dayDiff === 0;
+
+  const label =
+    overdue
+      ? dayDiff === 0
+        ? "overdue"
+        : `${Math.abs(dayDiff)}d late`
+      : today
+        ? "today"
+        : dayDiff === 1
+          ? "tomorrow"
+          : dayDiff < 7
+            ? `${dayDiff}d`
+            : due.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+
+  const tint = overdue ? "#ff2e55" : today ? "#ffd166" : "#94a3b8";
+
+  return (
+    <span
+      title={due.toLocaleString()}
+      className={`flex-shrink-0 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${overdue ? "animate-pulse" : ""}`}
+      style={{ background: `${tint}22`, color: tint }}
+    >
+      <CalendarClock className="h-2.5 w-2.5" />
+      {label}
+    </span>
   );
 }
