@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Send, Loader2, Copy, CheckCircle2, Unlink } from "lucide-react";
+import { Send, Loader2, Copy, CheckCircle2, Unlink, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -33,14 +33,59 @@ export function TelegramLinkCard() {
   const [status, setStatus] = useState<Status>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [opening, setOpening] = useState(false);
+  const pollRef = useRef<number | null>(null);
 
   const refresh = () =>
     fetchStatus().then((s: any) => setStatus(s as Status)).catch(() => setStatus(null));
 
   useEffect(() => { refresh().finally(() => setLoading(false)); }, []);
 
+  // Once a code is issued and we're not linked yet, poll until the
+  // webhook binds the chat_id (user pressed Start in Telegram).
+  useEffect(() => {
+    if (!status?.link_code || status?.chat_id) {
+      if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
+      return;
+    }
+    if (pollRef.current) return;
+    pollRef.current = window.setInterval(() => {
+      refresh().then(() => {
+        if (pollRef.current && (status?.chat_id)) {
+          window.clearInterval(pollRef.current);
+          pollRef.current = null;
+          toast.success("Telegram connected");
+        }
+      });
+    }, 4000);
+    return () => {
+      if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status?.link_code, status?.chat_id]);
+
   const linked = !!status?.chat_id;
   const code = status?.link_code;
+
+  const onConnect = async () => {
+    setOpening(true);
+    try {
+      let active = code ?? null;
+      if (!active) {
+        const res: any = await genCode();
+        active = res?.code ?? null;
+        await refresh();
+      }
+      if (active) {
+        const url = `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent(active)}`;
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not start Telegram link");
+    } finally {
+      setOpening(false);
+    }
+  };
 
   const onGenerate = async () => {
     setBusy(true);
@@ -90,15 +135,20 @@ export function TelegramLinkCard() {
           <p className="text-xs text-muted-foreground mb-3">
             Get your VIP pass details, expiry reminders and live drops sent straight to Telegram.
           </p>
+          <Button
+            onClick={onConnect}
+            disabled={opening}
+            className="font-bold bg-sky-500 hover:bg-sky-400 text-black w-full sm:w-auto"
+          >
+            {opening ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ExternalLink className="h-4 w-4 mr-2" />}
+            {code ? "Re-open Telegram" : "Connect Telegram"}
+          </Button>
           {code ? (
             <div className="space-y-3">
-              <div className="rounded-lg border border-border bg-background/40 p-3">
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Step 1 — Open the bot</p>
-                <a
-                  href={`https://t.me/${BOT_USERNAME}`} target="_blank" rel="noopener noreferrer"
-                  className="text-sm font-bold text-[color:var(--neon-blue-bright)] underline"
-                >@{BOT_USERNAME}</a>
-                <p className="mt-3 text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Step 2 — Send this message</p>
+              <div className="mt-3 rounded-lg border border-border bg-background/40 p-3">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 inline-flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Waiting for Telegram… or paste manually
+                </p>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 font-mono text-base bg-background border border-border rounded px-3 py-2 select-all">/link {code}</code>
                   <Button size="sm" variant="outline" onClick={onCopy}><Copy className="h-3.5 w-3.5" /></Button>
@@ -111,12 +161,7 @@ export function TelegramLinkCard() {
                 {busy ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : null}Generate fresh code
               </Button>
             </div>
-          ) : (
-            <Button onClick={onGenerate} disabled={busy} className="font-bold">
-              {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
-              Generate link code
-            </Button>
-          )}
+          ) : null}
         </>
       ) : (
         <div className="space-y-4">
