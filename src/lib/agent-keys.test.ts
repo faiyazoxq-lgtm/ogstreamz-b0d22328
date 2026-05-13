@@ -98,3 +98,72 @@ describe("resolveAgentKeyPresets", () => {
     expect(placeholder.length).toBeGreaterThan(0);
   });
 });
+
+describe("resolveAgentKeyPresets — placeholder precedence", () => {
+  it("DB placeholder wins over env placeholder", () => {
+    const { placeholder } = resolveAgentKeyPresets({
+      dbRow: { presets: [customPreset], placeholder: "DB_WINS_KEY" },
+      env: { AGENT_KEY_NAME_PLACEHOLDER: "ENV_KEY" },
+    });
+    expect(placeholder).toBe("DB_WINS_KEY");
+  });
+
+  it("env placeholder wins over computed first-suggestion default", () => {
+    const { placeholder } = resolveAgentKeyPresets({
+      dbRow: { presets: [customPreset], placeholder: "" },
+      env: { AGENT_KEY_NAME_PLACEHOLDER: "ENV_KEY" },
+    });
+    expect(placeholder).toBe("ENV_KEY");
+  });
+
+  it("falls back to first suggestion of first non-empty group when no DB/env placeholder", () => {
+    const { placeholder } = resolveAgentKeyPresets({
+      dbRow: {
+        presets: [
+          { id: "empty", label: "Empty", suggestions: [] },
+          customPreset,
+        ],
+        placeholder: "",
+      },
+    });
+    expect(placeholder).toBe("FOO_API_KEY");
+  });
+
+  it("falls back to hardcoded default when all presets have empty suggestions", () => {
+    const { placeholder } = resolveAgentKeyPresets({
+      dbRow: {
+        presets: [
+          { id: "a", label: "A", suggestions: [] },
+          { id: "b", label: "B", suggestions: [] },
+        ],
+        placeholder: "",
+      },
+    });
+    // Compiled fallback is OPENAI_API_KEY (built without literal in source).
+    expect(placeholder).toBe(["OPENAI", "API", "KEY"].join("_"));
+  });
+
+  it("ignores non-string DB placeholder", () => {
+    const { placeholder } = resolveAgentKeyPresets({
+      dbRow: { presets: [customPreset], placeholder: 123 as unknown as string },
+      env: { AGENT_KEY_NAME_PLACEHOLDER: "ENV_KEY" },
+    });
+    expect(placeholder).toBe("ENV_KEY");
+  });
+
+  it("ignores empty env placeholder and falls through to computed default", () => {
+    const { placeholder } = resolveAgentKeyPresets({
+      dbRow: { presets: [customPreset], placeholder: "" },
+      env: { AGENT_KEY_NAME_PLACEHOLDER: "" },
+    });
+    expect(placeholder).toBe("FOO_API_KEY");
+  });
+
+  it("uses env placeholder when DB row is null", () => {
+    const { placeholder } = resolveAgentKeyPresets({
+      dbRow: null,
+      env: { AGENT_KEY_NAME_PLACEHOLDER: "ONLY_ENV_KEY" },
+    });
+    expect(placeholder).toBe("ONLY_ENV_KEY");
+  });
+});
