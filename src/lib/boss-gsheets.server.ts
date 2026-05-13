@@ -71,6 +71,105 @@ async function gw(
   return text ? JSON.parse(text) : {};
 }
 
+/* ----------------------------- encryption ------------------------------ */
+
+/**
+ * AES-256-GCM encryption for sheet content. The key is held in
+ * `boss_settings.gsheet_enc_key` (base64) and never leaves the server. Even
+ * if the spreadsheet is shared or leaked, free-text content is unreadable
+ * without this key. Format: `enc1:<iv_b64>:<ct_b64>`.
+ *
+ * Rows still need machine-readable enum/integer columns (category, priority,
+ * status, position, updated_at) so sorts + sync logic keep working. We only
+ * encrypt the freeform fields: `title` and the literal date in `due_at`.
+ * If the key is missing or the value isn't tagged, we pass through plaintext
+ * so existing sheets keep working.
+ */
+
+const ENC_PREFIX = "enc1:";
+
+async function importKey(b64: string): Promise<CryptoKey | null> {
+  try {
+    const raw = Buffer.from(b64, "base64");
+    if (raw.length !== 32) return null;
+    return await crypto.subtle.importKey(
+      "raw",
+      raw,
+      { name: "AES-GCM" },
+      false,
+      ["encrypt", "decrypt"],
+    );
+  } catch {
+    return null;
+  }
+}
+
+export async function encryptText(plain: string, keyB64: string | null): Promise<string> {
+  if (!plain || !keyB64) return plain ?? "";
+  const key = await importKey(keyB64);
+  if (!key) return plain;
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(
+    await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv },
+      key,
+      new TextEncoder().encode(plain),
+    ),
+  );
+  return `${ENC_PREFIX}${Buffer.from(iv).toString("base64")}:${Buffer.from(ct).toString("base64")}`;
+}
+
+export async function decryptText(maybe: string, keyB64: string | null): Promise<string> {
+  if (!maybe || !maybe.startsWith(ENC_PREFIX) || !keyB64) return maybe;
+  const key = await importKey(keyB64);
+  if (!key) return maybe;
+  try {
+    const [, ivB, ctB] = maybe.split(":");
+    const iv = Buffer.from(ivB, "base64");
+    const ct = Buffer.from(ctB, "base64");
+    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ct);
+    return new TextDecoder().decode(pt);
+  } catch {
+    return maybe;
+  }
+}
+
+/** Generate a fresh 32-byte AES key in base64 for first-time setup. */
+export function generateEncKeyB64(): string {
+  const raw = crypto.getRandomValues(new Uint8Array(32));
+  return Buffer.from(raw).toString("base64");
+}
+
+/* ------------------------------ row codec ------------------------------ */
+
+async function rowToValues(row: SheetRow, keyB64: string | null): Promise<string[]> {
+  return [
+    row.id,
+    await encryptText(row.title, keyB64),
+    row.category,
+    row.priority,
+    row.status,
+    row.due_at ? await encryptText(row.due_at, keyB64) : "",
+    String(row.position),
+    row.updated_at,
+  ];
+}
+
+async function valuesToRow(r: string[], keyB64: string | null): Promise<SheetRow | null> {
+  const id = r[0]?.trim();
+  if (!id) return null;
+  return {
+    id,
+    title: await decryptText(r[1] ?? "", keyB64),
+    category: r[2] ?? "ops",
+    priority: r[3] ?? "P2",
+    status: r[4] ?? "todo",
+    due_at: r[5] ? await decryptText(r[5], keyB64) : null,
+    position: Number(r[6] ?? 0) || 0,
+    updated_at: r[7] ?? new Date(0).toISOString(),
+  };
+}
+
 /** Create a fresh "Boss Notepad" spreadsheet with the header row. */
 export async function createNotepadSheet(): Promise<{ id: string; url: string }> {
   const created = await gw("/spreadsheets", {
@@ -96,25 +195,17 @@ export async function createNotepadSheet(): Promise<{ id: string; url: string }>
 }
 
 /** Read every data row from the Notepad tab. */
-export async function readSheetRows(sheetId: string): Promise<SheetRow[]> {
+export async function readSheetRows(
+  sheetId: string,
+  keyB64: string | null = null,
+): Promise<SheetRow[]> {
   const data = await gw(`/spreadsheets/${sheetId}/values/${SHEET_RANGE}`);
   const values = (data.values ?? []) as string[][];
   if (values.length <= 1) return [];
   const rows: SheetRow[] = [];
   for (let i = 1; i < values.length; i++) {
-    const r = values[i];
-    const id = r[0]?.trim();
-    if (!id) continue;
-    rows.push({
-      id,
-      title: r[1] ?? "",
-      category: r[2] ?? "ops",
-      priority: r[3] ?? "P2",
-      status: r[4] ?? "todo",
-      due_at: r[5] ? r[5] : null,
-      position: Number(r[6] ?? 0) || 0,
-      updated_at: r[7] ?? new Date(0).toISOString(),
-    });
+    const row = await valuesToRow(values[i] ?? [], keyB64);
+    if (row) rows.push(row);
   }
   return rows;
 }
@@ -127,6 +218,7 @@ export async function readSheetRows(sheetId: string): Promise<SheetRow[]> {
 export async function writeAllRows(
   sheetId: string,
   rows: SheetRow[],
+  keyB64: string | null = null,
 ): Promise<void> {
   // Clear existing data (keep the header).
   await gw(
@@ -134,16 +226,8 @@ export async function writeAllRows(
     { method: "POST", body: {} },
   );
   if (rows.length === 0) return;
-  const values = rows.map((r) => [
-    r.id,
-    r.title,
-    r.category,
-    r.priority,
-    r.status,
-    r.due_at ?? "",
-    String(r.position),
-    r.updated_at,
-  ]);
+  const values: string[][] = [];
+  for (const r of rows) values.push(await rowToValues(r, keyB64));
   await gw(
     `/spreadsheets/${sheetId}/values/${SHEET_TAB}!A2?valueInputOption=RAW`,
     {
@@ -151,6 +235,63 @@ export async function writeAllRows(
       body: { range: `${SHEET_TAB}!A2`, values },
     },
   );
+}
+
+/* --------------------------- incremental ops --------------------------- */
+
+/** Locate a row in the Notepad tab by primary-key id. Returns 1-based row
+ *  index (so e.g. 2 = first data row), or null if absent. */
+async function findRowIndexById(sheetId: string, id: string): Promise<number | null> {
+  const data = await gw(`/spreadsheets/${sheetId}/values/${SHEET_TAB}!A2:A10000`);
+  const values = (data.values ?? []) as string[][];
+  for (let i = 0; i < values.length; i++) {
+    if ((values[i]?.[0] ?? "").trim() === id) return i + 2; // +1 for header, +1 for 1-based
+  }
+  return null;
+}
+
+/**
+ * Upsert a single todo row in-place. If the id already exists we PUT just
+ * that row (single Sheets API call); otherwise we append. Avoids rewriting
+ * the whole range on every keystroke.
+ */
+export async function upsertSheetRow(
+  sheetId: string,
+  row: SheetRow,
+  keyB64: string | null = null,
+): Promise<{ inserted: boolean; rowIndex: number }> {
+  const values = [await rowToValues(row, keyB64)];
+  const idx = await findRowIndexById(sheetId, row.id);
+  if (idx) {
+    await gw(
+      `/spreadsheets/${sheetId}/values/${SHEET_TAB}!A${idx}:H${idx}?valueInputOption=RAW`,
+      {
+        method: "PUT",
+        body: { range: `${SHEET_TAB}!A${idx}:H${idx}`, values },
+      },
+    );
+    return { inserted: false, rowIndex: idx };
+  }
+  const appended = await gw(
+    `/spreadsheets/${sheetId}/values/${SHEET_TAB}!A:H:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+    { method: "POST", body: { values } },
+  );
+  // Best-effort row index from the append response (e.g. "Notepad!A12:H12").
+  const rng = appended?.updates?.updatedRange ?? "";
+  const m = /![A-Z]+(\d+):/.exec(rng);
+  return { inserted: true, rowIndex: m ? Number(m[1]) : -1 };
+}
+
+/** Clear a single row's cells in-place (keeps row geometry, like a soft
+ *  delete). Safer than deleteDimension for an id-keyed sheet. */
+export async function removeSheetRow(sheetId: string, id: string): Promise<boolean> {
+  const idx = await findRowIndexById(sheetId, id);
+  if (!idx) return false;
+  await gw(
+    `/spreadsheets/${sheetId}/values/${SHEET_TAB}!A${idx}:H${idx}:clear`,
+    { method: "POST", body: {} },
+  );
+  return true;
 }
 
 /** Cheap reachability + permission check used by the status pill. */
