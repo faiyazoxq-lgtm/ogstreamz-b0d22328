@@ -513,6 +513,112 @@ export function BossTodoNotepad() {
 
 export default BossTodoNotepad;
 
+/**
+ * Compact pill that surfaces the Google Sheets sync state.
+ *
+ * Shape:
+ *   [icon] [label]  [↗ link to sheet]   [⟳ sync now button]
+ *
+ * States:
+ *   off    — no sheet linked → shows a single "Link Sheet" button.
+ *   idle   — green dot, last-pull timestamp on hover.
+ *   busy   — spinning refresh icon.
+ *   error  — red dot, click ⟳ to retry.
+ */
+function SyncPill({
+  state,
+  connected,
+  sheetUrl,
+  lastPullAt,
+  onConnect,
+  onSync,
+}: {
+  state: "off" | "idle" | "busy" | "error";
+  connected: boolean;
+  sheetUrl: string | null;
+  lastPullAt: string | null;
+  onConnect: () => void;
+  onSync: () => void;
+}) {
+  if (!connected || state === "off") {
+    return (
+      <button
+        type="button"
+        onClick={onConnect}
+        title="Create a Google Sheet mirror of this notepad"
+        className="inline-flex items-center gap-1 rounded-full border border-emerald-300/40 bg-emerald-400/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-200 hover:bg-emerald-400/20"
+      >
+        <SheetIcon className="h-3 w-3" /> Link sheet
+      </button>
+    );
+  }
+
+  const dot =
+    state === "busy"
+      ? "#fbbf24"
+      : state === "error"
+        ? "#ef4444"
+        : "#34d399";
+
+  const label =
+    state === "busy"
+      ? "syncing"
+      : state === "error"
+        ? "sync error"
+        : lastPullAt
+          ? `synced ${relTime(lastPullAt)}`
+          : "synced";
+
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-black/40 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/70"
+        title={lastPullAt ? new Date(lastPullAt).toLocaleString() : "Linked to Google Sheets"}
+      >
+        <span
+          className={`h-1.5 w-1.5 rounded-full ${state === "busy" ? "animate-pulse" : ""}`}
+          style={{ background: dot }}
+        />
+        {label}
+      </span>
+      {sheetUrl && (
+        <a
+          href={sheetUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Open Google Sheet"
+          className="inline-flex h-5 w-5 items-center justify-center rounded text-white/50 hover:bg-white/10 hover:text-white"
+        >
+          <Link2 className="h-3 w-3" />
+        </a>
+      )}
+      <button
+        type="button"
+        onClick={onSync}
+        disabled={state === "busy"}
+        aria-label="Sync now"
+        title="Sync now"
+        className="inline-flex h-5 w-5 items-center justify-center rounded text-white/50 transition hover:bg-white/10 hover:text-white disabled:opacity-40"
+      >
+        <RefreshCw className={`h-3 w-3 ${state === "busy" ? "animate-spin" : ""}`} />
+      </button>
+    </span>
+  );
+}
+
+/** Tiny relative-time helper: "12s ago", "5m ago", "2h ago", "3d ago". */
+function relTime(iso: string): string {
+  const ts = Date.parse(iso);
+  if (!Number.isFinite(ts)) return "";
+  const s = Math.max(1, Math.round((Date.now() - ts) / 1000));
+  if (s < 60) return `${s}s ago`;
+  const m = Math.round(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.round(h / 24)}d ago`;
+}
+
 function FilterChip({
   label,
   count,
