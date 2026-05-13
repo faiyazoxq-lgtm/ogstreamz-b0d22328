@@ -256,6 +256,30 @@ export function BossTodoNotepad() {
     }
   }
 
+  // Lightweight: re-read the sync status row from the server without
+  // triggering a push or a pull. Used by the manual "Refresh status"
+  // button in the header so the boss can confirm the latest pull/push
+  // metrics + pending-push count on demand.
+  async function refreshStatus() {
+    try {
+      setSyncState("busy");
+      const s: any = await statusFn();
+      setSheetUrl(s.sheetUrl ?? null);
+      setSheetConnected(s.connected);
+      setLastPullAt(s.lastPullAt ?? null);
+      setLastPushAt(s.lastPushAt ?? null);
+      setLastPullInserted(s.lastPullInserted ?? 0);
+      setLastPullUpdated(s.lastPullUpdated ?? 0);
+      setLastPushCount(s.lastPushCount ?? 0);
+      setPendingPush(s.pendingPush ?? 0);
+      setSyncState(s.connected ? (s.healthy ? "idle" : "error") : "off");
+      toast.success("Sync status refreshed");
+    } catch (e: any) {
+      setSyncState("error");
+      toast.error("Could not refresh status", { description: e?.message });
+    }
+  }
+
   async function add(e: React.FormEvent) {
     e.preventDefault();
     const title = draft.trim();
@@ -424,6 +448,16 @@ export function BossTodoNotepad() {
             >
               {pendingPush > 0 ? `↑ ${pendingPush} pending push` : "in sync"}
             </span>
+            <button
+              type="button"
+              onClick={refreshStatus}
+              disabled={syncState === "busy"}
+              title="Force an immediate pull/push state update"
+              className="ml-auto inline-flex items-center gap-1 rounded-md border border-white/15 bg-white/5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/70 hover:bg-white/10 hover:text-white disabled:opacity-50"
+            >
+              <RefreshCw className={`h-3 w-3 ${syncState === "busy" ? "animate-spin" : ""}`} />
+              Refresh status
+            </button>
           </div>
         )}
 
