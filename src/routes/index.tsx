@@ -100,9 +100,11 @@ function Index() {
 
   return (
     <main className="relative">
-      {/* Logged-out: dedicated broadcast welcome (hard-sell, no portal browsing). */}
-      {!user && <WelcomeBroadcast />}
-      {user && (
+      {/* Logged-out users see only the broadcast welcome — early return keeps
+          the dense logged-in dashboard out of the unauthenticated path. */}
+      {!user ? (
+        <WelcomeBroadcast />
+      ) : (
       <>
       {user && (
         <div className="relative max-w-7xl mx-auto px-5 sm:px-8 pt-4">
