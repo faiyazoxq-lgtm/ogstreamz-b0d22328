@@ -6,6 +6,8 @@ type Props = {
   row: any;
   /** Optional right-rail node (e.g. action buttons) shown alongside the card. */
   actions?: React.ReactNode;
+  /** When provided, the card becomes a button that opens a detail drawer. */
+  onSelect?: (row: any) => void;
 };
 
 const RANK_LABEL: Record<string, string> = {
@@ -24,7 +26,7 @@ const RANK_LABEL: Record<string, string> = {
  * boss-only fields (email, joined date, ban marker). Used in the user
  * roster, ban inspector, and any other boss view that surfaces a member.
  */
-export function BossOgPassCard({ row, actions }: Props) {
+export function BossOgPassCard({ row, actions, onSelect }: Props) {
   const initials = (row.display_name || row.email || "?").trim().slice(0, 2).toUpperCase();
   const rankLabel = RANK_LABEL[row.rank] ?? row.rank;
   const joined = row.created_at ? new Date(row.created_at).toLocaleDateString() : null;
@@ -48,7 +50,22 @@ export function BossOgPassCard({ row, actions }: Props) {
         "border border-[oklch(0.5_0.1_240/0.45)]",
         "bg-[linear-gradient(180deg,oklch(0.22_0.04_240)_0%,oklch(0.13_0.03_240)_55%,oklch(0.18_0.04_240)_100%)]",
         "shadow-[inset_0_1px_0_oklch(0.85_0.08_235/0.18),inset_0_-1px_0_oklch(0.05_0.02_240/0.7),0_8px_24px_-18px_oklch(0.72_0.22_245/0.6)]",
+        onSelect ? "cursor-pointer transition hover:border-[oklch(0.65_0.14_240/0.7)] hover:shadow-[0_10px_30px_-14px_oklch(0.72_0.22_245/0.8)] focus-within:ring-2 focus-within:ring-[oklch(0.7_0.18_245/0.6)]" : "",
       ].join(" ")}
+      onClick={onSelect ? () => onSelect(row) : undefined}
+      onKeyDown={
+        onSelect
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelect(row);
+              }
+            }
+          : undefined
+      }
+      role={onSelect ? "button" : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+      aria-label={onSelect ? `Open profile for ${row.display_name || row.email}` : undefined}
     >
       <div className="flex items-start gap-3">
         <div
