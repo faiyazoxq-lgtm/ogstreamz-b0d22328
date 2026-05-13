@@ -30,6 +30,7 @@ import { TelegramConnectBanner } from "@/components/TelegramConnectBanner";
 import { WelcomeBroadcast } from "@/components/WelcomeBroadcast";
 import { NonVipHome } from "@/components/NonVipHome";
 import { BossOpsStrip } from "@/components/BossOpsStrip";
+import { BossTodoNotepad } from "@/components/BossTodoNotepad";
 
 const ICONS: Record<string, any> = {
   Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
@@ -111,6 +112,7 @@ function Index() {
       )}
       {/* Boss-only ops shortcuts on top of the VIP creator dashboard. */}
       {user && isBoss && <BossOpsStrip />}
+      {user && isBoss && <BossTodoNotepad />}
       {user && (isVipMember || isBoss) && (
         <div className="relative max-w-7xl mx-auto px-5 sm:px-8 pt-4">
           <TelegramConnectBanner userId={user.id} />
