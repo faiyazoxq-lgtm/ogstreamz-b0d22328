@@ -161,6 +161,28 @@ export function PassStatusRow({
       : "px-2 py-0.5 text-[9px]";
   const iconSize = size === "lg" ? "h-3.5 w-3.5" : "h-3 w-3";
 
+  // Shared metallic silver-blue chrome — dark, 3D, electric edge.
+  const chipMetal =
+    "border border-[oklch(0.5_0.1_240/0.55)] " +
+    "bg-[linear-gradient(180deg,oklch(0.26_0.05_240)_0%,oklch(0.14_0.04_240)_50%,oklch(0.2_0.05_240)_100%)] " +
+    "text-[oklch(0.92_0.05_235)] " +
+    "shadow-[inset_0_1px_0_oklch(0.82_0.08_235/0.3),inset_0_-1px_0_oklch(0.08_0.02_240/0.75),0_1px_0_oklch(0.05_0.02_240/0.8),0_0_12px_-4px_oklch(0.72_0.22_245/0.5)]";
+  const chipMetalGold =
+    "border border-[oklch(0.65_0.16_85/0.5)] " +
+    "bg-[linear-gradient(180deg,oklch(0.3_0.06_85)_0%,oklch(0.16_0.04_70)_50%,oklch(0.22_0.05_80)_100%)] " +
+    "text-[oklch(0.93_0.1_85)] " +
+    "shadow-[inset_0_1px_0_oklch(0.85_0.14_85/0.35),inset_0_-1px_0_oklch(0.08_0.02_70/0.8),0_1px_0_oklch(0.05_0.02_70/0.85),0_0_14px_-4px_oklch(0.7_0.18_85/0.55)]";
+  const chipMetalCyan =
+    "border border-[oklch(0.6_0.14_215/0.55)] " +
+    "bg-[linear-gradient(180deg,oklch(0.28_0.06_215)_0%,oklch(0.14_0.04_220)_50%,oklch(0.2_0.05_215)_100%)] " +
+    "text-[oklch(0.94_0.08_215)] " +
+    "shadow-[inset_0_1px_0_oklch(0.85_0.12_215/0.35),inset_0_-1px_0_oklch(0.08_0.02_220/0.8),0_1px_0_oklch(0.05_0.02_220/0.85),0_0_14px_-4px_oklch(0.7_0.18_215/0.6)]";
+  const chipMetalDim =
+    "border border-[oklch(0.4_0.04_240/0.5)] " +
+    "bg-[linear-gradient(180deg,oklch(0.22_0.02_240)_0%,oklch(0.12_0.01_240)_50%,oklch(0.18_0.02_240)_100%)] " +
+    "text-muted-foreground " +
+    "shadow-[inset_0_1px_0_oklch(0.5_0.04_240/0.25),inset_0_-1px_0_oklch(0.05_0.01_240/0.8)]";
+
   return (
     <div className={["inline-flex flex-wrap items-center gap-1.5", className].join(" ")}>
       <OgPassBadge number={profile.og_pass_no} size={size} />
@@ -168,10 +190,8 @@ export function PassStatusRow({
         <span
           title={`Rank · ${rankChipLabel}`}
           className={[
-            "inline-flex items-center gap-1 rounded-full font-black uppercase tracking-[0.22em] border",
-            isBoss
-              ? "border-amber-300/60 bg-amber-400/10 text-amber-100 shadow-[0_0_14px_-6px_rgba(255,200,80,0.7)]"
-              : "border-border/60 bg-background/40 text-muted-foreground",
+            "inline-flex items-center gap-1 rounded-full font-black uppercase tracking-[0.22em]",
+            isBoss ? chipMetalGold : chipMetal,
             chipCls,
           ].join(" ")}
         >
@@ -184,7 +204,7 @@ export function PassStatusRow({
           title="VIP Lifetime Pass · Real OG for life"
           className={[
             "inline-flex items-center gap-1 rounded-full font-black uppercase tracking-[0.22em]",
-            "border border-amber-300/60 bg-amber-400/15 text-amber-100",
+            chipMetalGold,
             chipCls,
           ].join(" ")}
         >
@@ -205,10 +225,8 @@ export function PassStatusRow({
             : "Stream Profile inactive — yearly pass required"
         }
         className={[
-          "inline-flex items-center gap-1 rounded-full font-black uppercase tracking-[0.22em] border",
-          streamActive
-            ? "border-cyan-300/60 bg-cyan-400/10 text-cyan-100 shadow-[0_0_14px_-6px_rgba(56,189,248,0.7)]"
-            : "border-border/60 bg-background/40 text-muted-foreground",
+          "inline-flex items-center gap-1 rounded-full font-black uppercase tracking-[0.22em]",
+          streamActive ? chipMetalCyan : chipMetalDim,
           chipCls,
         ].join(" ")}
       >
@@ -220,9 +238,8 @@ export function PassStatusRow({
         <span
           title={`Coin balance · ${credits.toLocaleString()} 🪙`}
           className={[
-            "inline-flex items-center gap-1 rounded-full font-black uppercase tracking-[0.22em] border",
-            "border-amber-300/50 bg-gradient-to-r from-amber-400/15 to-amber-500/10 text-amber-100",
-            "shadow-[0_0_14px_-6px_rgba(255,200,80,0.6)] tabular-nums",
+            "inline-flex items-center gap-1 rounded-full font-black uppercase tracking-[0.22em] tabular-nums",
+            chipMetalGold,
             chipCls,
           ].join(" ")}
         >
@@ -233,7 +250,8 @@ export function PassStatusRow({
       {linkedSocials.length > 0 && (
         <span
           className={[
-            "inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40",
+            "inline-flex items-center gap-1.5 rounded-full",
+            chipMetal,
             size === "lg" ? "px-2.5 py-1" : "px-2 py-0.5",
           ].join(" ")}
           aria-label={`Linked socials: ${linkedSocials.map((s) => s.label).join(", ")}`}
