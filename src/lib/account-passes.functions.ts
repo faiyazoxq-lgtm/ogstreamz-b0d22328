@@ -1,6 +1,29 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+const TG_GATEWAY = "https://connector-gateway.lovable.dev/telegram";
+
+async function tg(method: string, body: Record<string, unknown>) {
+  const LOVABLE = process.env.LOVABLE_API_KEY;
+  const TG = process.env.TELEGRAM_API_KEY;
+  if (!LOVABLE) throw new Error("Telegram bot not configured (LOVABLE_API_KEY)");
+  if (!TG) throw new Error("Telegram bot not configured (TELEGRAM_API_KEY)");
+  const r = await fetch(`${TG_GATEWAY}/${method}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${LOVABLE}`,
+      "X-Connection-Api-Key": TG,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  const j: any = await r.json().catch(() => ({}));
+  if (!r.ok || j?.ok === false) {
+    throw new Error(`Telegram ${method} failed [${r.status}]: ${j?.description ?? "unknown"}`);
+  }
+  return j.result;
+}
+
 function makeCode(): string {
   // 8-char URL-safe code, easy to type in Telegram.
   const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
