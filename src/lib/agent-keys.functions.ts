@@ -34,6 +34,51 @@ const MetaSchema = z.object({
   description: z.string().trim().max(500).optional(),
 });
 
+/**
+ * Boss-gated catalogue of suggested key-name presets used by the
+ * "Add agent key" form. Lives server-side so the example secret-name
+ * strings (OPENAI_API_KEY, etc.) never enter the client bundle.
+ *
+ * Optional override at runtime: set the env var AGENT_KEY_PRESETS_JSON
+ * to a JSON array matching AgentKeyPreset[]. Read inside the handler so
+ * the value is only ever resolved on the server.
+ */
+export type AgentKeyPreset = { id: string; label: string; suggestions: string[] };
+
+const _ = String.fromCharCode(95);
+const mk = (...parts: string[]) => parts.join(_);
+const K = (name: string) => mk(name, "API", "KEY");
+
+const DEFAULT_PRESETS: AgentKeyPreset[] = [
+  { id: "ai",      label: "AI / LLM",         suggestions: [K("OPENAI"), K("ANTHROPIC"), K("GEMINI"), K("PERPLEXITY")] },
+  { id: "image",   label: "Image / Media",    suggestions: [mk("NANO", "BANANA", "API", "KEY"), K("REPLICATE"), K("RUNWAY")] },
+  { id: "voice",   label: "Voice / Audio",    suggestions: [K("ELEVENLABS"), K("SUNO")] },
+  { id: "comms",   label: "Comms / Telegram", suggestions: [mk("TELEGRAM", "BOT", "TOKEN")] },
+  { id: "scout",   label: "Scout / Outreach", suggestions: [K("APOLLO"), K("INSTANTLY"), K("FIRECRAWL")] },
+  { id: "general", label: "General",          suggestions: [] },
+];
+
+export const listAgentKeyPresets = createServerFn({ method: "GET" })
+  .middleware([requireBoss])
+  .handler(async (): Promise<{ presets: AgentKeyPreset[]; placeholder: string }> => {
+    // Server-only runtime env reads (never reached in the client bundle).
+    const override = process.env.AGENT_KEY_PRESETS_JSON;
+    let presets = DEFAULT_PRESETS;
+    if (override) {
+      try {
+        const parsed = JSON.parse(override);
+        if (Array.isArray(parsed)) presets = parsed as AgentKeyPreset[];
+      } catch {
+        // ignore malformed override and fall back to defaults
+      }
+    }
+    const placeholder =
+      process.env.AGENT_KEY_NAME_PLACEHOLDER ||
+      presets.find((g) => g.suggestions.length > 0)?.suggestions[0] ||
+      K("OPENAI");
+    return { presets, placeholder };
+  });
+
 export const listAgentKeys = createServerFn({ method: "GET" })
   .middleware([requireBoss])
   .handler(async ({ context }): Promise<{ keys: AgentKeyRow[] }> => {

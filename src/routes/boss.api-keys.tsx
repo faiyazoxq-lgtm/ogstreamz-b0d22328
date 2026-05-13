@@ -8,6 +8,8 @@ import {
   upsertAgentKey,
   deleteAgentKey,
   revealAgentKey,
+  listAgentKeyPresets,
+  type AgentKeyPreset,
   type AgentKeyRow,
 } from "@/lib/agent-keys.functions";
 import { requireBoss } from "@/lib/route-guards";
@@ -25,32 +27,31 @@ export const Route = createFileRoute("/boss/api-keys")({
   }),
 });
 
-// Suggestion names are assembled at runtime via String.fromCharCode so the
-// minifier cannot constant-fold them back into literal "OPENAI_API_KEY" etc.,
-// which would trip the build-time bundle secret scanner.
-const _ = String.fromCharCode(95); // "_"
-const mk = (...parts: string[]) => parts.join(_);
-const K = (name: string) => mk(name, "API", "KEY");
-const PRESET_GROUPS = [
-  { id: "ai",      label: "AI / LLM",          suggestions: [K("OPENAI"), K("ANTHROPIC"), K("GEMINI"), K("PERPLEXITY")] },
-  { id: "image",   label: "Image / Media",     suggestions: [mk("NANO", "BANANA", "API", "KEY"), K("REPLICATE"), K("RUNWAY")] },
-  { id: "voice",   label: "Voice / Audio",     suggestions: [K("ELEVENLABS"), K("SUNO")] },
-  { id: "comms",   label: "Comms / Telegram",  suggestions: [mk("TELEGRAM", "BOT", "TOKEN")] },
-  { id: "scout",   label: "Scout / Outreach",  suggestions: [K("APOLLO"), K("INSTANTLY"), K("FIRECRAWL")] },
-  { id: "general", label: "General",           suggestions: [] },
-];
+// Preset suggestions and the input placeholder are loaded from the server
+// at runtime via `listAgentKeyPresets` so example secret-name strings never
+// appear in the client bundle. The server reads optional overrides from
+// process.env.AGENT_KEY_PRESETS_JSON / AGENT_KEY_NAME_PLACEHOLDER.
+const EMPTY_PRESETS: AgentKeyPreset[] = [];
 
 function ApiKeysPage() {
   const fetchList = useServerFn(listAgentKeys);
   const upsertFn = useServerFn(upsertAgentKey);
   const deleteFn = useServerFn(deleteAgentKey);
   const revealFn = useServerFn(revealAgentKey);
+  const fetchPresets = useServerFn(listAgentKeyPresets);
 
   const qc = useQueryClient();
   const { data, isLoading, error } = useQuery({
     queryKey: ["agent-keys"],
     queryFn: () => fetchList({ data: {} as never }),
   });
+  const { data: presetData } = useQuery({
+    queryKey: ["agent-key-presets"],
+    queryFn: () => fetchPresets(),
+    staleTime: 5 * 60_000,
+  });
+  const presets = presetData?.presets ?? EMPTY_PRESETS;
+  const placeholder = presetData?.placeholder ?? "";
 
   const grouped = useMemo(() => {
     const map = new Map<string, AgentKeyRow[]>();
@@ -125,6 +126,8 @@ function ApiKeysPage() {
           submitting={upsertMut.isPending}
           onCancel={() => setShowAdd(false)}
           onSubmit={(v) => upsertMut.mutate(v)}
+          presets={presets}
+          placeholder={placeholder}
         />
       )}
 
@@ -141,7 +144,7 @@ function ApiKeysPage() {
           {grouped.map(([group, rows]) => (
             <div key={group} className="space-y-2">
               <h2 className="text-[11px] uppercase tracking-[0.3em] text-gold font-bold">
-                {PRESET_GROUPS.find((g) => g.id === group)?.label ?? group} <span className="text-muted-foreground">· {rows.length}</span>
+                {presets.find((g) => g.id === group)?.label ?? group} <span className="text-muted-foreground">· {rows.length}</span>
               </h2>
               <ul className="space-y-2">
                 {rows.map((k) => (
@@ -178,12 +181,16 @@ function KeyForm({
   submitting,
   onCancel,
   onSubmit,
+  presets,
+  placeholder,
 }: {
   mode: "create" | "edit";
   initial?: Partial<AgentKeyRow>;
   submitting: boolean;
   onCancel: () => void;
   onSubmit: (v: { key_name: string; value: string; label?: string; agent_group?: string; description?: string }) => void;
+  presets: AgentKeyPreset[];
+  placeholder: string;
 }) {
   const [keyName, setKeyName] = useState(initial?.key_name ?? "");
   const [value, setValue] = useState("");
@@ -191,7 +198,7 @@ function KeyForm({
   const [group, setGroup] = useState(initial?.agent_group ?? "ai");
   const [description, setDescription] = useState(initial?.description ?? "");
 
-  const suggestions = PRESET_GROUPS.find((g) => g.id === group)?.suggestions ?? [];
+  const suggestions = presets.find((g) => g.id === group)?.suggestions ?? [];
 
   return (
     <form
@@ -215,7 +222,7 @@ function KeyForm({
             onChange={(e) => setKeyName(e.target.value)}
             disabled={mode === "edit"}
             required
-            placeholder={["OPENAI", "API", "KEY"].join(String.fromCharCode(95))}
+            placeholder={placeholder}
             className="w-full rounded-md border border-border bg-secondary/40 px-3 py-2 text-sm font-mono uppercase outline-none focus:border-gold/50"
           />
           {suggestions.length > 0 && (
@@ -239,7 +246,7 @@ function KeyForm({
             onChange={(e) => setGroup(e.target.value)}
             className="w-full rounded-md border border-border bg-secondary/40 px-3 py-2 text-sm outline-none focus:border-gold/50"
           >
-            {PRESET_GROUPS.map((g) => (
+            {presets.map((g) => (
               <option key={g.id} value={g.id}>{g.label}</option>
             ))}
           </select>
