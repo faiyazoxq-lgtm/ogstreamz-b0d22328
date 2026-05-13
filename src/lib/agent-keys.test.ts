@@ -167,3 +167,105 @@ describe("resolveAgentKeyPresets — placeholder precedence", () => {
     expect(placeholder).toBe("ONLY_ENV_KEY");
   });
 });
+
+describe("resolveAgentKeyPresets — defensive against unexpected shapes", () => {
+  it("does not throw when input is empty object", () => {
+    expect(() => resolveAgentKeyPresets({})).not.toThrow();
+  });
+
+  it("does not throw when dbRow is null", () => {
+    expect(() => resolveAgentKeyPresets({ dbRow: null })).not.toThrow();
+  });
+
+  it("does not throw when dbRow is undefined", () => {
+    expect(() => resolveAgentKeyPresets({ dbRow: undefined })).not.toThrow();
+  });
+
+  it("does not throw when env is undefined", () => {
+    expect(() => resolveAgentKeyPresets({ env: undefined })).not.toThrow();
+  });
+
+  it("does not throw on dbRow with missing fields", () => {
+    expect(() =>
+      resolveAgentKeyPresets({ dbRow: {} as unknown as { presets?: unknown } })
+    ).not.toThrow();
+    const defaults = resolveAgentKeyPresets({});
+    const result = resolveAgentKeyPresets({ dbRow: {} });
+    expect(result.presets).toEqual(defaults.presets);
+  });
+
+  it("ignores non-array presets on dbRow", () => {
+    const defaults = resolveAgentKeyPresets({});
+    const cases: unknown[] = [null, undefined, "string", 42, true, { id: "x" }];
+    for (const presets of cases) {
+      const { presets: out } = resolveAgentKeyPresets({
+        dbRow: { presets: presets as unknown, placeholder: "" },
+      });
+      expect(out).toEqual(defaults.presets);
+    }
+  });
+
+  it("ignores non-string placeholder on dbRow", () => {
+    const cases: unknown[] = [null, undefined, 0, false, {}, []];
+    for (const placeholder of cases) {
+      expect(() =>
+        resolveAgentKeyPresets({
+          dbRow: { presets: [customPreset], placeholder: placeholder as unknown as string },
+        })
+      ).not.toThrow();
+    }
+  });
+
+  it("does not throw when env override JSON contains non-object preset entries", () => {
+    expect(() =>
+      resolveAgentKeyPresets({
+        env: {
+          AGENT_KEY_PRESETS_JSON: JSON.stringify([null, 1, "x", true, []]),
+        },
+      })
+    ).not.toThrow();
+  });
+
+  it("does not throw when DB presets array contains non-object entries", () => {
+    // Resolver does not validate entry shape — must still survive the
+    // placeholder-fallback loop without throwing.
+    expect(() =>
+      resolveAgentKeyPresets({
+        dbRow: {
+          presets: [null, 0, "x", { id: "ok", label: "Ok", suggestions: ["A_KEY"] }],
+          placeholder: "",
+        },
+      })
+    ).not.toThrow();
+  });
+
+  it("does not throw when DB preset entries are missing suggestions", () => {
+    expect(() =>
+      resolveAgentKeyPresets({
+        dbRow: {
+          presets: [{ id: "a", label: "A" }, { id: "b", label: "B", suggestions: null }],
+          placeholder: "",
+        },
+      })
+    ).not.toThrow();
+  });
+
+  it("never returns presets=null/undefined for any of these shapes", () => {
+    const shapes: Array<Parameters<typeof resolveAgentKeyPresets>[0]> = [
+      {},
+      { dbRow: null },
+      { dbRow: {} },
+      { dbRow: { presets: null } },
+      { dbRow: { presets: "junk" } },
+      { env: { AGENT_KEY_PRESETS_JSON: "garbage" } },
+      { env: { AGENT_KEY_PRESETS_JSON: "null" } },
+    ];
+    for (const input of shapes) {
+      const { presets, placeholder } = resolveAgentKeyPresets(input);
+      expect(Array.isArray(presets)).toBe(true);
+      expect(presets.length).toBeGreaterThan(0);
+      expect(typeof placeholder).toBe("string");
+      expect(placeholder.length).toBeGreaterThan(0);
+    }
+  });
+});
