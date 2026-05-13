@@ -58,25 +58,84 @@ const DEFAULT_PRESETS: AgentKeyPreset[] = [
   { id: "general", label: "General",          suggestions: [] },
 ];
 
+const PresetSchema = z.object({
+  id: z.string().trim().min(1).max(40).regex(/^[a-z0-9_-]+$/i),
+  label: z.string().trim().min(1).max(60),
+  suggestions: z.array(z.string().trim().min(1).max(120).regex(/^[A-Z0-9_]+$/)).max(40),
+});
+const PresetsConfigSchema = z.object({
+  presets: z.array(PresetSchema).max(40),
+  placeholder: z.string().trim().max(120).regex(/^[A-Z0-9_]*$/),
+});
+
 export const listAgentKeyPresets = createServerFn({ method: "GET" })
   .middleware([requireBoss])
-  .handler(async (): Promise<{ presets: AgentKeyPreset[]; placeholder: string }> => {
-    // Server-only runtime env reads (never reached in the client bundle).
-    const override = process.env.AGENT_KEY_PRESETS_JSON;
-    let presets = DEFAULT_PRESETS;
-    if (override) {
-      try {
-        const parsed = JSON.parse(override);
-        if (Array.isArray(parsed)) presets = parsed as AgentKeyPreset[];
-      } catch {
-        // ignore malformed override and fall back to defaults
+  .handler(async ({ context }): Promise<{ presets: AgentKeyPreset[]; placeholder: string }> => {
+    const { supabase } = context;
+
+    // 1. DB-managed config (Boss-editable, no redeploy needed).
+    const { data: row } = await supabase
+      .from("agent_key_presets_config" as never)
+      .select("presets, placeholder")
+      .eq("id", 1)
+      .maybeSingle();
+
+    let presets: AgentKeyPreset[] | null = null;
+    let placeholder: string | null = null;
+    if (row) {
+      const r = row as { presets: unknown; placeholder: unknown };
+      if (Array.isArray(r.presets) && r.presets.length > 0) {
+        presets = r.presets as AgentKeyPreset[];
+      }
+      if (typeof r.placeholder === "string" && r.placeholder.length > 0) {
+        placeholder = r.placeholder;
       }
     }
-    const placeholder =
-      process.env.AGENT_KEY_NAME_PLACEHOLDER ||
-      presets.find((g) => g.suggestions.length > 0)?.suggestions[0] ||
-      K("OPENAI");
+
+    // 2. Optional env override (legacy / bootstrap).
+    if (!presets) {
+      const override = process.env.AGENT_KEY_PRESETS_JSON;
+      if (override) {
+        try {
+          const parsed = JSON.parse(override);
+          if (Array.isArray(parsed)) presets = parsed as AgentKeyPreset[];
+        } catch { /* ignore */ }
+      }
+    }
+
+    // 3. Fall back to compiled defaults.
+    if (!presets) presets = DEFAULT_PRESETS;
+    if (!placeholder) {
+      placeholder =
+        process.env.AGENT_KEY_NAME_PLACEHOLDER ||
+        presets.find((g) => g.suggestions.length > 0)?.suggestions[0] ||
+        K("OPENAI");
+    }
     return { presets, placeholder };
+  });
+
+export const saveAgentKeyPresets = createServerFn({ method: "POST" })
+  .middleware([requireBoss])
+  .inputValidator((d: unknown) => PresetsConfigSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("agent_key_presets_config" as never)
+      .upsert({
+        id: 1,
+        presets: data.presets,
+        placeholder: data.placeholder,
+        updated_by: userId,
+        updated_at: new Date().toISOString(),
+      } as never);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const getAgentKeyPresetDefaults = createServerFn({ method: "GET" })
+  .middleware([requireBoss])
+  .handler(async (): Promise<{ presets: AgentKeyPreset[]; placeholder: string }> => {
+    return { presets: DEFAULT_PRESETS, placeholder: K("OPENAI") };
   });
 
 export const listAgentKeys = createServerFn({ method: "GET" })
