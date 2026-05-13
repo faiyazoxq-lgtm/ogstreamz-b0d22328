@@ -83,25 +83,49 @@ export function PortalHeader({
       {/* Vignette removed so the wallpaper shows through; text relies on its own drop-shadow. */}
 
       <div className="relative">
-        {tagline && (
-          <p
-            className="text-[10px] sm:text-xs uppercase tracking-[0.4em] font-semibold"
-            style={{ color: accentColor }}
+        {/* Soft radial scrim that fades to transparent — keeps wallpaper visible
+            but lifts headline contrast just behind the text. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 mx-auto h-[140%] max-w-2xl"
+          style={{
+            background:
+              "radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 45%, transparent 75%)",
+          }}
+        />
+        <div className="relative">
+          {tagline && (
+            <p
+              className="text-[10px] sm:text-xs uppercase tracking-[0.4em] font-semibold"
+              style={{
+                color: accentColor,
+                textShadow: "0 1px 6px rgba(0,0,0,0.7), 0 0 14px rgba(0,0,0,0.5)",
+              }}
+            >
+              {tagline}
+            </p>
+          )}
+          <h1
+            className="mt-2 font-[Montserrat] font-black text-4xl sm:text-6xl tracking-tight leading-[1.02] text-white"
+            style={{
+              textShadow:
+                "0 2px 4px rgba(0,0,0,0.85), 0 4px 24px rgba(0,0,0,0.7), 0 0 40px rgba(0,0,0,0.45)",
+            }}
           >
-            {tagline}
+            {name}
+          </h1>
+          <p
+            className="mx-auto mt-3 max-w-xl text-sm sm:text-base text-white/90 min-h-[1.5em]"
+            aria-live="polite"
+            style={{
+              textShadow: "0 1px 3px rgba(0,0,0,0.85), 0 2px 12px rgba(0,0,0,0.6)",
+            }}
+          >
+            {header?.description ?? (error ? error : <span className="opacity-60">Conjuring portal…</span>)}
           </p>
-        )}
-        <h1 className="mt-2 font-[Montserrat] font-black text-4xl sm:text-6xl tracking-tight leading-[1.02] text-white drop-shadow-[0_2px_18px_rgba(0,0,0,0.6)]">
-          {name}
-        </h1>
-        <p
-          className="mx-auto mt-3 max-w-xl text-sm sm:text-base text-white/85 drop-shadow-[0_1px_8px_rgba(0,0,0,0.7)] min-h-[1.5em]"
-          aria-live="polite"
-        >
-          {header?.description ?? (error ? error : <span className="opacity-60">Conjuring portal…</span>)}
-        </p>
-        <div className="mt-4 flex justify-center">
-          <ZeroGBadge />
+          <div className="mt-4 flex justify-center drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]">
+            <ZeroGBadge />
+          </div>
         </div>
       </div>
     </header>
