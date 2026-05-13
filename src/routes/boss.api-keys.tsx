@@ -8,6 +8,8 @@ import {
   upsertAgentKey,
   deleteAgentKey,
   revealAgentKey,
+  listAgentKeyPresets,
+  type AgentKeyPreset,
   type AgentKeyRow,
 } from "@/lib/agent-keys.functions";
 import { requireBoss } from "@/lib/route-guards";
@@ -25,32 +27,31 @@ export const Route = createFileRoute("/boss/api-keys")({
   }),
 });
 
-// Suggestion names are assembled at runtime via String.fromCharCode so the
-// minifier cannot constant-fold them back into literal "OPENAI_API_KEY" etc.,
-// which would trip the build-time bundle secret scanner.
-const _ = String.fromCharCode(95); // "_"
-const mk = (...parts: string[]) => parts.join(_);
-const K = (name: string) => mk(name, "API", "KEY");
-const PRESET_GROUPS = [
-  { id: "ai",      label: "AI / LLM",          suggestions: [K("OPENAI"), K("ANTHROPIC"), K("GEMINI"), K("PERPLEXITY")] },
-  { id: "image",   label: "Image / Media",     suggestions: [mk("NANO", "BANANA", "API", "KEY"), K("REPLICATE"), K("RUNWAY")] },
-  { id: "voice",   label: "Voice / Audio",     suggestions: [K("ELEVENLABS"), K("SUNO")] },
-  { id: "comms",   label: "Comms / Telegram",  suggestions: [mk("TELEGRAM", "BOT", "TOKEN")] },
-  { id: "scout",   label: "Scout / Outreach",  suggestions: [K("APOLLO"), K("INSTANTLY"), K("FIRECRAWL")] },
-  { id: "general", label: "General",           suggestions: [] },
-];
+// Preset suggestions and the input placeholder are loaded from the server
+// at runtime via `listAgentKeyPresets` so example secret-name strings never
+// appear in the client bundle. The server reads optional overrides from
+// process.env.AGENT_KEY_PRESETS_JSON / AGENT_KEY_NAME_PLACEHOLDER.
+const EMPTY_PRESETS: AgentKeyPreset[] = [];
 
 function ApiKeysPage() {
   const fetchList = useServerFn(listAgentKeys);
   const upsertFn = useServerFn(upsertAgentKey);
   const deleteFn = useServerFn(deleteAgentKey);
   const revealFn = useServerFn(revealAgentKey);
+  const fetchPresets = useServerFn(listAgentKeyPresets);
 
   const qc = useQueryClient();
   const { data, isLoading, error } = useQuery({
     queryKey: ["agent-keys"],
     queryFn: () => fetchList({ data: {} as never }),
   });
+  const { data: presetData } = useQuery({
+    queryKey: ["agent-key-presets"],
+    queryFn: () => fetchPresets(),
+    staleTime: 5 * 60_000,
+  });
+  const presets = presetData?.presets ?? EMPTY_PRESETS;
+  const placeholder = presetData?.placeholder ?? "";
 
   const grouped = useMemo(() => {
     const map = new Map<string, AgentKeyRow[]>();
