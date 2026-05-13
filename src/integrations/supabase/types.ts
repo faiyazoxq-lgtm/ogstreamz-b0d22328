@@ -1433,7 +1433,10 @@ export type Database = {
       pass_orders: {
         Row: {
           amount_cents: number
+          boss_chat_id: number | null
           boss_decision_note: string | null
+          boss_draft_state: string
+          boss_draft_username: string | null
           created_at: string
           currency: string
           decided_at: string | null
@@ -1455,7 +1458,10 @@ export type Database = {
         }
         Insert: {
           amount_cents: number
+          boss_chat_id?: number | null
           boss_decision_note?: string | null
+          boss_draft_state?: string
+          boss_draft_username?: string | null
           created_at?: string
           currency?: string
           decided_at?: string | null
@@ -1477,7 +1483,10 @@ export type Database = {
         }
         Update: {
           amount_cents?: number
+          boss_chat_id?: number | null
           boss_decision_note?: string | null
+          boss_draft_state?: string
+          boss_draft_username?: string | null
           created_at?: string
           currency?: string
           decided_at?: string | null
@@ -2117,6 +2126,7 @@ export type Database = {
           feature_flags: Json
           free_clicks_used: number
           id: string
+          member_tier: string | null
           rank: Database["public"]["Enums"]["syndicate_rank"]
           referral_code: string | null
           referred_by_reseller: string | null
@@ -2145,6 +2155,7 @@ export type Database = {
           feature_flags?: Json
           free_clicks_used?: number
           id: string
+          member_tier?: string | null
           rank?: Database["public"]["Enums"]["syndicate_rank"]
           referral_code?: string | null
           referred_by_reseller?: string | null
@@ -2173,6 +2184,7 @@ export type Database = {
           feature_flags?: Json
           free_clicks_used?: number
           id?: string
+          member_tier?: string | null
           rank?: Database["public"]["Enums"]["syndicate_rank"]
           referral_code?: string | null
           referred_by_reseller?: string | null
@@ -4118,6 +4130,10 @@ export type Database = {
         }[]
       }
       boss_purge_view_events: { Args: never; Returns: number }
+      boss_record_stream_credentials: {
+        Args: { _order_id: string; _password: string; _username: string }
+        Returns: Json
+      }
       boss_restore_function_execute: {
         Args: { _log_id: string }
         Returns: boolean
@@ -4324,6 +4340,16 @@ export type Database = {
           halalify: Json
           id: string
           version: number
+        }[]
+      }
+      get_my_stream_credentials: {
+        Args: never
+        Returns: {
+          expires_at: string
+          password: string
+          status: string
+          updated_at: string
+          username: string
         }[]
       }
       get_my_stream_creds: {

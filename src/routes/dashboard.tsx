@@ -18,6 +18,7 @@ import { VaultRevealCard } from "@/components/VaultRevealCard";
 import { VipPassRevealCard } from "@/components/VipPassRevealCard";
 import { VipNotificationsInbox } from "@/components/VipNotificationsInbox";
 import { PassesPanel } from "@/components/PassesPanel";
+import { StreamCredentialsCard } from "@/components/StreamCredentialsCard";
 import { OgWordmark } from "@/components/OgWordmark";
 import { LiveCostEstimator } from "@/components/LiveCostEstimator";
 import { useSubscription } from "@/hooks/use-subscription";
@@ -126,6 +127,10 @@ function DashboardPage() {
           value={profile.rank === "prospect" ? `${freeLeft}/5` : "∞"}
           hint={profile.rank === "prospect" ? "Upgrade for unlimited" : "Unlimited access unlocked"}
         />
+      </section>
+
+      <section className="mb-6">
+        <StreamCredentialsCard />
       </section>
 
       {(planLabel || activeSub || renewalLabel) && (

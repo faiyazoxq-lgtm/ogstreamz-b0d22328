@@ -4,6 +4,10 @@ import { timingSafeEqual } from "crypto";
 import { tgSendMessage, deriveTelegramWebhookSecret } from "@/lib/telegram-bot.server";
 import { getBossChatId } from "@/lib/boss-chat.server";
 import { logInfo, logWarn, logError } from "@/lib/server-log.server";
+import {
+  handleCredsCallback,
+  handleBossCredsReply,
+} from "@/lib/stream-credential-bot.server";
 
 let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
@@ -405,6 +409,17 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           logWarn("tg.webhook.bad_json");
           return Response.json({ ok: true });
         }
+        // Inline-button taps from the boss credential card.
+        if (update.callback_query) {
+          try {
+            await handleCredsCallback(update.callback_query);
+          } catch (e) {
+            logError("tg.webhook.callback_failed", {
+              error: e instanceof Error ? e.message : String(e),
+            });
+          }
+          return Response.json({ ok: true });
+        }
         const msg = update.message ?? update.edited_message;
         const chatId: number | undefined = msg?.chat?.id;
         const text: string = msg?.text ?? "";
@@ -469,6 +484,19 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
             kind: "non_text",
           });
           return Response.json({ ok: true });
+        }
+
+        // Boss is replying to one of our credential force-reply prompts —
+        // intercept BEFORE the generic /reply DM logic so it's not treated
+        // as a member chat reply.
+        try {
+          if (await handleBossCredsReply(msg)) {
+            return Response.json({ ok: true });
+          }
+        } catch (e) {
+          logError("tg.webhook.creds_reply_failed", {
+            error: e instanceof Error ? e.message : String(e),
+          });
         }
 
         try {

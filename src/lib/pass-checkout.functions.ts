@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { validateReturnUrl } from "@/lib/return-url";
+import { notifyBossOfStreamRequest } from "@/lib/stream-credential-bot.server";
 
 let _admin: any = null;
 function admin() {
@@ -105,6 +106,41 @@ export const createPassCheckoutSession = createServerFn({ method: "POST" })
         durationDays: String(product.duration_days),
       },
     } as any);
+
+    // Pre-payment heads-up to the boss the moment a streams-pass checkout
+    // is opened. Best-effort — never block the checkout if Telegram is down.
+    if (product.kind === "streams_pass") {
+      const placeholderId = (session as any)?.id ?? "pending-" + Date.now();
+      // We don't have a pass_orders row yet (created on webhook), so send a
+      // lightweight notification keyed by the Stripe session id.
+      void (async () => {
+        try {
+          // Insert a provisional pass_orders row so the boss can see it
+          // immediately; webhook upsert later flips status to pending_approval.
+          const { data: row } = await admin()
+            .from("pass_orders")
+            .upsert(
+              {
+                user_id: userId,
+                product_id: product.id,
+                kind: product.kind,
+                duration_days: product.duration_days,
+                amount_cents: product.price_cents,
+                currency: (product.currency || "usd").toLowerCase(),
+                stripe_session_id: placeholderId,
+                environment: data.environment,
+                status: "checkout_opened",
+              },
+              { onConflict: "stripe_session_id" },
+            )
+            .select("id")
+            .maybeSingle();
+          if (row?.id) await notifyBossOfStreamRequest(row.id as string);
+        } catch (e) {
+          console.error("notifyBossOfStreamRequest failed", e);
+        }
+      })();
+    }
 
     return session.client_secret;
   });
