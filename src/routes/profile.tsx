@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { RealOgBadge } from "@/components/RealOgBadge";
+import { OgPassBadge } from "@/components/OgPassBadge";
 import { StreamLinkCard } from "@/components/StreamLinkCard";
 import { CoinActivity } from "@/components/CoinActivity";
 import { supabase } from "@/integrations/supabase/client";
