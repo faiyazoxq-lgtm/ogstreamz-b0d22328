@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, Circle, Loader2, Send, Copy, ExternalLink, ShieldCheck, Users, Bell } from "lucide-react";
+import { CheckCircle2, Circle, Loader2, Send, Copy, ExternalLink, ShieldCheck, Users, Bell, Ticket } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -71,7 +71,11 @@ function ChecklistItem({
 }
 
 function ConnectTelegramPage() {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
+  const ogPassNo = profile?.og_pass_no ?? null;
+  const ogPassTag = ogPassNo
+    ? `OG#${String(ogPassNo).padStart(5, "0")}`
+    : null;
   const navigate = useNavigate();
   const fetchStatus = useServerFn(getTelegramLinkStatus);
   const genCode = useServerFn(generateTelegramLinkCode);
@@ -161,8 +165,19 @@ function ConnectTelegramPage() {
   const handleCopy = async () => {
     if (!code) return;
     try {
-      await navigator.clipboard.writeText(`/link ${code}`);
+      const text = ogPassTag ? `/link ${code} ${ogPassTag}` : `/link ${code}`;
+      await navigator.clipboard.writeText(text);
       toast.success(`Copied — paste it to @${BOT_USERNAME}`);
+    } catch {
+      toast.error("Copy failed");
+    }
+  };
+
+  const handleCopyPass = async () => {
+    if (!ogPassTag) return;
+    try {
+      await navigator.clipboard.writeText(ogPassTag);
+      toast.success("OG Pass # copied");
     } catch {
       toast.error("Copy failed");
     }
@@ -199,6 +214,37 @@ function ConnectTelegramPage() {
           Telegram. To use any group feature you must link your account to
           @{BOT_USERNAME} first — it takes 10 seconds.
         </p>
+
+        {ogPassTag && !linked && (
+          <div className="mb-5 rounded-2xl border-2 border-amber-400/60 bg-amber-500/10 p-4">
+            <p className="text-[10px] uppercase tracking-[0.3em] font-black text-amber-300 mb-1.5 inline-flex items-center gap-1.5">
+              <Ticket className="h-3.5 w-3.5" /> Your OG Pass number
+            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <code className="font-mono text-lg sm:text-xl font-black tracking-wider text-amber-100 bg-black/40 border border-amber-300/40 rounded-lg px-3 py-1.5 select-all">
+                {ogPassTag}
+              </code>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleCopyPass}
+                className="h-9 px-2 border-amber-400/50 text-amber-100 hover:bg-amber-500/10"
+                aria-label="Copy OG Pass number"
+              >
+                <Copy className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            <p className="mt-2 text-xs text-amber-100/80 leading-snug">
+              <b>Paste this OG Pass # into Telegram</b> right after your link
+              code so the bot can confirm the chat belongs to you. The full
+              command will look like{" "}
+              <code className="font-mono bg-black/40 border border-amber-300/30 rounded px-1.5 py-0.5">
+                /link CODE {ogPassTag}
+              </code>
+              .
+            </p>
+          </div>
+        )}
 
         <p className="text-[10px] uppercase tracking-[0.3em] font-black text-white/55 mb-2">
           Permission checklist
@@ -248,16 +294,27 @@ function ConnectTelegramPage() {
         ) : (
           <>
             {code && (
-              <div className="mb-4 flex flex-wrap items-center gap-2">
-                <code className="font-mono text-sm bg-background/60 border border-border rounded px-2 py-1 select-all">
-                  /link {code}
-                </code>
-                <Button size="sm" variant="outline" onClick={handleCopy} className="h-8 px-2" aria-label="Copy link command">
-                  <Copy className="h-3.5 w-3.5" />
-                </Button>
-                <span className="text-[10px] uppercase tracking-widest text-white/50 inline-flex items-center gap-1">
-                  <Loader2 className="h-3 w-3 animate-spin" /> Waiting for Telegram…
-                </span>
+              <div className="mb-4">
+                <p className="text-[10px] uppercase tracking-[0.3em] font-black text-white/55 mb-2">
+                  Paste this in @{BOT_USERNAME}
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <code className="font-mono text-sm bg-background/60 border border-border rounded px-2 py-1 select-all">
+                    /link {code}{ogPassTag ? ` ${ogPassTag}` : ""}
+                  </code>
+                  <Button size="sm" variant="outline" onClick={handleCopy} className="h-8 px-2" aria-label="Copy link command">
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                  <span className="text-[10px] uppercase tracking-widest text-white/50 inline-flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Waiting for Telegram…
+                  </span>
+                </div>
+                {ogPassTag && (
+                  <p className="mt-2 text-[11px] text-white/55 leading-snug">
+                    Includes your OG Pass # ({ogPassTag}) so the boss can
+                    verify the link belongs to you.
+                  </p>
+                )}
               </div>
             )}
 
