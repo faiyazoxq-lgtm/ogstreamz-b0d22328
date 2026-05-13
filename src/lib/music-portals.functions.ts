@@ -86,7 +86,7 @@ export const formatLyrics = createServerFn({ method: "POST" })
     const { supabase } = context as { supabase: any };
     if (!data.raw) throw new Error("Add some text to format");
     const { data: portal } = await supabase
-      .from("portals")
+      .from("portals_public")
       .select("language, style, vibe, name, swear_chat_enabled")
       .eq("slug", data.slug)
       .maybeSingle();
