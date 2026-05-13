@@ -120,6 +120,23 @@ function scanBundle() {
         /role%22%3A%22service_role/.test(txt)) {
       violations.push({ file: relative(ROOT, f), name: "<service_role JWT>" });
     }
+    // Detect raw API key value patterns. We exclude pk_live_/pk_test_ because
+    // those are publishable Stripe keys (safe to ship to the client).
+    const VALUE_PATTERNS = [
+      [/\bsk_live_[A-Za-z0-9]{20,}/g, "<stripe live secret key>"],
+      [/\bsk_test_[A-Za-z0-9]{20,}/g, "<stripe test secret key>"],
+      [/\brk_live_[A-Za-z0-9]{20,}/g, "<stripe restricted key>"],
+      [/\bsk-ant-[A-Za-z0-9_-]{20,}/g, "<anthropic api key>"],
+      [/\bsk-proj-[A-Za-z0-9_-]{20,}/g, "<openai project key>"],
+      [/\bpplx-[A-Za-z0-9]{20,}/g, "<perplexity api key>"],
+      [/\bAIza[0-9A-Za-z_-]{30,}/g, "<google api key>"],
+      [/\bre_[A-Za-z0-9_-]{20,}/g, "<resend api key>"],
+      [/\bfc-[A-Za-z0-9]{20,}/g, "<firecrawl api key>"],
+      [/\b[0-9]{8,12}:AA[A-Za-z0-9_-]{30,}/g, "<telegram bot token>"],
+    ];
+    for (const [re, label] of VALUE_PATTERNS) {
+      if (re.test(txt)) violations.push({ file: relative(ROOT, f), name: label });
+    }
   }
   return violations;
 }
