@@ -27,6 +27,7 @@ import { OgVaultAccessSection } from "@/components/OgVaultAccessSection";
 import { VipReferralCard } from "@/components/VipReferralCard";
 import { usePortalCount } from "@/hooks/use-portal-count";
 import { TelegramConnectBanner } from "@/components/TelegramConnectBanner";
+import { WelcomeBroadcast } from "@/components/WelcomeBroadcast";
 
 const ICONS: Record<string, any> = {
   Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
@@ -99,6 +100,10 @@ function Index() {
 
   return (
     <main className="relative">
+      {/* Logged-out: dedicated broadcast welcome (hard-sell, no portal browsing). */}
+      {!user && <WelcomeBroadcast />}
+      {user && (
+      <>
       {user && (
         <div className="relative max-w-7xl mx-auto px-5 sm:px-8 pt-4">
           <TelegramConnectBanner userId={user.id} />
