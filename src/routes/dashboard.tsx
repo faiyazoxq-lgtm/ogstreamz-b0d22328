@@ -129,6 +129,10 @@ function DashboardPage() {
         />
       </section>
 
+      <section className="mb-6">
+        <StreamCredentialsCard />
+      </section>
+
       {(planLabel || activeSub || renewalLabel) && (
         <section className="mb-6 rounded-2xl border border-border bg-card p-5">
           <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-3">Subscription</p>
