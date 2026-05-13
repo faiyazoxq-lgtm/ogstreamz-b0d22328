@@ -1,4 +1,4 @@
-import { Crown, Tv, TvMinimal } from "lucide-react";
+import { Crown, Tv, TvMinimal, Infinity as InfinityIcon } from "lucide-react";
 import { OgPassBadge } from "@/components/OgPassBadge";
 
 type ProfileLike = {
@@ -18,6 +18,15 @@ function isStreamActive(p: ProfileLike): boolean {
     return new Date(p.stream_expires_at).getTime() > Date.now();
   }
   return false;
+}
+
+function streamExpiryLabel(p: ProfileLike): string {
+  if (!p?.stream_expires_at) return "Active";
+  const ms = new Date(p.stream_expires_at).getTime() - Date.now();
+  if (ms <= 0) return "Expired";
+  const days = Math.ceil(ms / 86400_000);
+  if (days > 360) return `${Math.round(days / 30)}mo left`;
+  return `${days}d left`;
 }
 
 /**
@@ -50,7 +59,7 @@ export function PassStatusRow({
       <OgPassBadge number={profile.og_pass_no} size={size} />
       {isVip && (
         <span
-          title="VIP pass active"
+          title="VIP Lifetime Pass · Real OG for life"
           className={[
             "inline-flex items-center gap-1 rounded-full font-black uppercase tracking-[0.22em]",
             "border border-amber-300/60 bg-amber-400/15 text-amber-100",
@@ -58,10 +67,21 @@ export function PassStatusRow({
           ].join(" ")}
         >
           <Crown className="h-3 w-3" /> VIP
+          <span className="opacity-80 inline-flex items-center gap-0.5">
+            <InfinityIcon className="h-3 w-3" />Lifetime
+          </span>
         </span>
       )}
       <span
-        title={streamActive ? "OG-Streamz member · stream pass active" : "Stream pass inactive"}
+        title={
+          streamActive
+            ? `OG-Streamz · Stream Profile active${
+                profile.stream_expires_at
+                  ? ` until ${new Date(profile.stream_expires_at).toLocaleDateString()}`
+                  : ""
+              }`
+            : "Stream Profile inactive — yearly pass required"
+        }
         className={[
           "inline-flex items-center gap-1 rounded-full font-black uppercase tracking-[0.22em] border",
           streamActive
@@ -72,7 +92,7 @@ export function PassStatusRow({
       >
         {streamActive ? <Tv className="h-3 w-3" /> : <TvMinimal className="h-3 w-3 opacity-60" />}
         OG-Streamz
-        <span className="opacity-80">{streamActive ? "Active" : "Off"}</span>
+        <span className="opacity-80">{streamActive ? streamExpiryLabel(profile) : "Off"}</span>
       </span>
     </div>
   );
