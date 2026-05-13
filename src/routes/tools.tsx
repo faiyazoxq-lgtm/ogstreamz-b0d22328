@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { spawnTool, type ToolAudience } from "@/lib/tools.functions";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
-import { VipPaywallInline } from "@/components/VipPaywallInline";
+import { NonVipFormGate } from "@/components/NonVipFormGate";
 import { PortalHeader, PortalStyleLine, mergeStyle } from "@/components/PortalHeader";
 
 const TOOLS_STYLE = "Concise, decisive, OG-tone explanation with one actionable next step.";
@@ -131,6 +131,7 @@ function ToolPromptBuilder() {
         accent="gold"
       />
 
+      <NonVipFormGate label="Spawn Tool">
       <section className="rounded-3xl border border-gold/40 bg-gradient-to-br from-card to-background p-4 sm:p-6 shadow-[0_0_80px_oklch(0.82_0.16_88_/_0.1)] backdrop-blur-xl">
         <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Tool Name</label>
         <Input
@@ -215,10 +216,9 @@ function ToolPromptBuilder() {
 
         <PortalStyleLine sentence={TOOLS_STYLE} />
 
-        {isVip ? (
-          <Button
+        <Button
             onClick={onGenerate}
-            disabled={busy}
+            disabled={busy || !isVip}
             size="lg"
             className="mt-3 w-full bg-gold text-primary-foreground hover:bg-gold/90 font-bold tracking-wide"
           >
@@ -228,10 +228,8 @@ function ToolPromptBuilder() {
               <><Wand2 className="h-4 w-4 mr-2" /> Spawn Tool</>
             )}
           </Button>
-        ) : (
-          <VipPaywallInline hub="tools" isAuthenticated={!!user} />
-        )}
       </section>
+      </NonVipFormGate>
 
       {spawned.length > 0 && (
         <section className="mt-12">
