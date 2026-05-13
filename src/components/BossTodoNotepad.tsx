@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import {
   gsheetsStatus, gsheetsConnect, gsheetsPush, gsheetsPull,
+  gsheetsUpsertOne, gsheetsRemoveOne,
 } from "@/lib/boss-gsheets.functions";
 
 type Todo = {
@@ -91,6 +92,8 @@ export function BossTodoNotepad() {
   const connectFn = useServerFn(gsheetsConnect);
   const pushFn = useServerFn(gsheetsPush);
   const pullFn = useServerFn(gsheetsPull);
+  const upsertOneFn = useServerFn(gsheetsUpsertOne);
+  const removeOneFn = useServerFn(gsheetsRemoveOne);
   // Debounce pushes so a burst of edits collapses into one Sheets write.
   const pushTimer = useRef<number | null>(null);
 
@@ -184,23 +187,38 @@ export function BossTodoNotepad() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sheetConnected]);
 
-  /** Schedule a debounced push after a local mutation. */
-  const schedulePush = useCallback(() => {
+  /** Push a single affected row to the sheet (incremental). Falls back to
+   *  silent no-op when sheet isn't linked yet. */
+  const pushRow = useCallback(async (id: string) => {
     if (!sheetConnected) return;
-    if (pushTimer.current) window.clearTimeout(pushTimer.current);
-    pushTimer.current = window.setTimeout(async () => {
-      try {
-        setSyncState("busy");
-        const r: any = await pushFn();
-        setLastPushAt(r?.lastPushAt ?? new Date().toISOString());
-        setLastPushCount(r?.pushed ?? 0);
-        setPendingPush(0);
-        setSyncState("idle");
-      } catch {
-        setSyncState("error");
-      }
-    }, 800);
-  }, [sheetConnected, pushFn]);
+    try {
+      setSyncState("busy");
+      const r: any = await upsertOneFn({ data: { id } });
+      setLastPushAt(r?.lastPushAt ?? new Date().toISOString());
+      setLastPushCount(1);
+      setPendingPush(0);
+      setSyncState("idle");
+    } catch {
+      setSyncState("error");
+    }
+  }, [sheetConnected, upsertOneFn]);
+
+  const removeRow = useCallback(async (id: string) => {
+    if (!sheetConnected) return;
+    try {
+      setSyncState("busy");
+      const r: any = await removeOneFn({ data: { id } });
+      setLastPushAt(r?.lastPushAt ?? new Date().toISOString());
+      setLastPushCount(r?.removed ? 1 : 0);
+      setPendingPush(0);
+      setSyncState("idle");
+    } catch {
+      setSyncState("error");
+    }
+  }, [sheetConnected, removeOneFn]);
+
+  // Keep the legacy debounce timer cleanup so we don't leak on unmount.
+  useEffect(() => () => { if (pushTimer.current) window.clearTimeout(pushTimer.current); }, []);
 
   async function connectSheet() {
     try {
@@ -249,7 +267,7 @@ export function BossTodoNotepad() {
     const dueIso = draftDue
       ? new Date(`${draftDue}T23:59:59`).toISOString()
       : null;
-    const { error } = await supabase
+    const { data: inserted, error } = await supabase
       .from("boss_todos")
       .insert({
         title,
@@ -258,7 +276,9 @@ export function BossTodoNotepad() {
         status: "todo",
         position: nextPos,
         due_at: dueIso,
-      });
+      })
+      .select("id")
+      .maybeSingle();
     setSaving(false);
     if (error) {
       toast.error("Could not add", { description: error.message });
@@ -267,7 +287,7 @@ export function BossTodoNotepad() {
     setDraft("");
     setDraftDue("");
     void load();
-    schedulePush();
+    if (inserted?.id) void pushRow(inserted.id as string);
   }
 
   async function complete(id: string) {
@@ -283,7 +303,7 @@ export function BossTodoNotepad() {
       toast.error("Could not complete", { description: error.message });
       return;
     }
-    schedulePush();
+    void removeRow(id);
   }
 
   async function remove(id: string) {
@@ -295,7 +315,7 @@ export function BossTodoNotepad() {
       toast.error("Could not delete", { description: error.message });
       return;
     }
-    schedulePush();
+    void removeRow(id);
   }
 
   function startEdit(t: Todo) {
@@ -328,7 +348,7 @@ export function BossTodoNotepad() {
       toast.error("Could not rename", { description: error.message });
       return;
     }
-    schedulePush();
+    void pushRow(id);
   }
 
   // Apply the active category filter, then cap at 8 (matches old visual

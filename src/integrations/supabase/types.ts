@@ -501,6 +501,7 @@ export type Database = {
       boss_settings: {
         Row: {
           created_at: string
+          gsheet_enc_key: string | null
           gsheet_id: string | null
           gsheet_last_pull_at: string | null
           gsheet_last_pull_inserted: number
@@ -514,6 +515,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          gsheet_enc_key?: string | null
           gsheet_id?: string | null
           gsheet_last_pull_at?: string | null
           gsheet_last_pull_inserted?: number
@@ -527,6 +529,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          gsheet_enc_key?: string | null
           gsheet_id?: string | null
           gsheet_last_pull_at?: string | null
           gsheet_last_pull_inserted?: number

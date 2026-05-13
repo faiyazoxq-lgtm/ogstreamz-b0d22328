@@ -1,0 +1,1 @@
+ALTER TABLE public.boss_settings ADD COLUMN IF NOT EXISTS gsheet_enc_key text;
