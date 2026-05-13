@@ -498,6 +498,36 @@ export type Database = {
         }
         Relationships: []
       }
+      boss_settings: {
+        Row: {
+          created_at: string
+          gsheet_id: string | null
+          gsheet_last_pull_at: string | null
+          gsheet_url: string | null
+          id: string
+          singleton: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          gsheet_id?: string | null
+          gsheet_last_pull_at?: string | null
+          gsheet_url?: string | null
+          id?: string
+          singleton?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          gsheet_id?: string | null
+          gsheet_last_pull_at?: string | null
+          gsheet_url?: string | null
+          id?: string
+          singleton?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       boss_todos: {
         Row: {
           category: string
@@ -510,6 +540,7 @@ export type Database = {
           position: number
           priority: string
           status: string
+          synced_at: string | null
           title: string
           updated_at: string
         }
@@ -524,6 +555,7 @@ export type Database = {
           position?: number
           priority?: string
           status?: string
+          synced_at?: string | null
           title: string
           updated_at?: string
         }
@@ -538,6 +570,7 @@ export type Database = {
           position?: number
           priority?: string
           status?: string
+          synced_at?: string | null
           title?: string
           updated_at?: string
         }
