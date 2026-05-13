@@ -82,6 +82,11 @@ export function BossTodoNotepad() {
   const [sheetConnected, setSheetConnected] = useState(false);
   const [syncState, setSyncState] = useState<"off" | "idle" | "busy" | "error">("off");
   const [lastPullAt, setLastPullAt] = useState<string | null>(null);
+  const [lastPushAt, setLastPushAt] = useState<string | null>(null);
+  const [lastPullInserted, setLastPullInserted] = useState(0);
+  const [lastPullUpdated, setLastPullUpdated] = useState(0);
+  const [lastPushCount, setLastPushCount] = useState(0);
+  const [pendingPush, setPendingPush] = useState(0);
   const statusFn = useServerFn(gsheetsStatus);
   const connectFn = useServerFn(gsheetsConnect);
   const pushFn = useServerFn(gsheetsPush);
