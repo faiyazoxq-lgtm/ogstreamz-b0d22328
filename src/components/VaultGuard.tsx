@@ -1,5 +1,5 @@
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Loader2, Lock } from "lucide-react";
 import { isVaultUnlocked } from "@/lib/vault-unlock";
 import { VaultLockButton } from "@/components/VaultLockButton";
@@ -25,21 +25,25 @@ type Props = {
  */
 export function VaultGuard({ children, redirectTo = "/vault-login", fallback }: Props) {
   const navigate = useNavigate();
-  const location = useRouterState({ select: (s) => s.location });
+  const href = useRouterState({ select: (s) => s.location.href });
   const [checked, setChecked] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
+  const redirectedRef = useRef(false);
 
   useEffect(() => {
     const evaluate = () => {
       const ok = isVaultUnlocked();
       setUnlocked(ok);
       setChecked(true);
-      if (!ok) {
+      if (!ok && !redirectedRef.current) {
+        redirectedRef.current = true;
         navigate({
           to: redirectTo,
-          search: { redirect: location.href },
+          search: { redirect: href },
           replace: true,
         } as never);
+      } else if (ok) {
+        redirectedRef.current = false;
       }
     };
     evaluate();
@@ -50,7 +54,7 @@ export function VaultGuard({ children, redirectTo = "/vault-login", fallback }: 
       window.removeEventListener("vault:unlock-changed", onChange);
       window.removeEventListener("storage", onChange);
     };
-  }, [navigate, location.href, redirectTo]);
+  }, [navigate, redirectTo]);
 
   if (!checked || !unlocked) {
     return (
