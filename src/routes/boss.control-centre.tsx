@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { lazy, Suspense, useState, useMemo } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { lazy, Suspense, useMemo, useCallback } from "react";
 import {
   Boxes, Grid3x3, Users, Globe2, ShieldCheck, Wallet, SlidersHorizontal,
   ChevronRight, Loader2, Search, ExternalLink,
@@ -11,6 +11,22 @@ import { requireBoss } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/boss/control-centre")({
   beforeLoad: requireBoss,
+  // URL-backed UI state so refreshing or sharing the link restores the
+  // exact same set of expanded panels and the active search filter.
+  //   ?open=hub:hubs,site:overview   – which accordion items are open
+  //   ?q=pricing                     – panel search filter
+  validateSearch: (raw: Record<string, unknown>) => {
+    // Default TanStack search serialiser JSON-encodes arrays, but human-
+    // edited / shared URLs may also use a comma list. Accept both.
+    let open: string[] = [];
+    if (Array.isArray(raw.open)) {
+      open = (raw.open as unknown[]).filter((v): v is string => typeof v === "string");
+    } else if (typeof raw.open === "string" && raw.open.length > 0) {
+      open = raw.open.split(",").map((s) => s.trim()).filter(Boolean);
+    }
+    const q = typeof raw.q === "string" ? raw.q.slice(0, 80) : "";
+    return { open, q };
+  },
   head: () => ({
     meta: [
       { title: "Boss Control Centre — All Toggles & Commands" },
@@ -167,8 +183,34 @@ const GROUPS: Group[] = [
 ];
 
 function BossControlCentre() {
-  const [q, setQ] = useState("");
-  const [open, setOpen] = useState<string[]>([]);
+  const { open, q } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+
+  const setOpen = useCallback(
+    (next: string[] | ((prev: string[]) => string[])) => {
+      navigate({
+        search: (prev: any) => {
+          const prevOpen: string[] = Array.isArray(prev?.open) ? prev.open : [];
+          const value = typeof next === "function" ? (next as any)(prevOpen) : next;
+          return { ...prev, open: value };
+        },
+        replace: true,
+        resetScroll: false,
+      });
+    },
+    [navigate],
+  );
+
+  const setQ = useCallback(
+    (value: string) => {
+      navigate({
+        search: (prev: any) => ({ ...prev, q: value }),
+        replace: true,
+        resetScroll: false,
+      });
+    },
+    [navigate],
+  );
 
   const filteredGroups = useMemo(() => {
     const needle = q.trim().toLowerCase();
