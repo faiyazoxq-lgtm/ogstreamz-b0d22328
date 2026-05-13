@@ -216,7 +216,9 @@ export async function shapesChat(opts: {
   const KEY = process.env.SHAPES_API_KEY;
   if (!KEY) throw new Error("SHAPES_API_KEY missing");
 
-  const shape = opts.shape || process.env.SHAPES_SHAPE_USERNAME || "swearing-ai";
+  // All chatbots route through the OG bot shape. Caller-supplied `shape` is
+  // ignored on purpose — env var still wins so Boss can swap shapes at runtime.
+  const shape = process.env.SHAPES_SHAPE_USERNAME || "og-bot";
   const model = shape.startsWith("shapesinc/") ? shape : `shapesinc/${shape}`;
 
   const headers: Record<string, string> = {
