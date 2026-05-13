@@ -162,10 +162,10 @@ export const importTelegramAvatar = createServerFn({ method: "POST" })
 
 /** Set or clear the member's profile avatar URL. */
 export const setProfileAvatar = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { avatar_url: string | null }) => ({
     avatar_url: d?.avatar_url == null ? null : String(d.avatar_url).trim().slice(0, 2000) || null,
   }))
-  .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     const { error } = await supabase
