@@ -46,7 +46,7 @@ async function loadSettings() {
   const admin = adminClient();
   const { data, error } = await admin
     .from("boss_settings")
-    .select("id, gsheet_id, gsheet_url, gsheet_last_pull_at")
+    .select("id, gsheet_id, gsheet_url, gsheet_last_pull_at, gsheet_last_push_at, gsheet_last_pull_inserted, gsheet_last_pull_updated, gsheet_last_push_count")
     .limit(1)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -73,15 +73,39 @@ export const gsheetsStatus = createServerFn({ method: "GET" })
     await assertBoss(context.userId);
     const s = await loadSettings();
     if (!s?.gsheet_id) {
-      return { connected: false, sheetId: null, sheetUrl: null, healthy: false, lastPullAt: null };
+      return {
+        connected: false, sheetId: null, sheetUrl: null, healthy: false,
+        lastPullAt: null, lastPushAt: null,
+        lastPullInserted: 0, lastPullUpdated: 0, lastPushCount: 0,
+        pendingPush: 0, openCount: 0,
+      };
     }
     const healthy = await pingSheet(s.gsheet_id);
+    // Compute live "needs push" count: open todos whose updated_at is newer
+    // than synced_at (or never synced).
+    const admin = adminClient();
+    const { data: openRows } = await admin
+      .from("boss_todos")
+      .select("updated_at, synced_at")
+      .neq("status", "done");
+    const open = openRows ?? [];
+    const pendingPush = open.reduce((n, r: any) => {
+      const u = Date.parse(r.updated_at ?? "");
+      const s2 = r.synced_at ? Date.parse(r.synced_at) : 0;
+      return n + (Number.isFinite(u) && u > s2 ? 1 : 0);
+    }, 0);
     return {
       connected: true,
       sheetId: s.gsheet_id,
       sheetUrl: s.gsheet_url,
       healthy,
       lastPullAt: s.gsheet_last_pull_at,
+      lastPushAt: (s as any).gsheet_last_push_at ?? null,
+      lastPullInserted: (s as any).gsheet_last_pull_inserted ?? 0,
+      lastPullUpdated: (s as any).gsheet_last_pull_updated ?? 0,
+      lastPushCount: (s as any).gsheet_last_push_count ?? 0,
+      pendingPush,
+      openCount: open.length,
     };
   });
 
@@ -134,7 +158,13 @@ export const gsheetsPush = createServerFn({ method: "POST" })
       .from("boss_todos")
       .update({ synced_at: now })
       .in("id", rows.map((r) => r.id));
-    return { pushed: rows.length, syncedAt: now };
+    if (s.id) {
+      await admin
+        .from("boss_settings")
+        .update({ gsheet_last_push_at: now, gsheet_last_push_count: rows.length })
+        .eq("id", s.id);
+    }
+    return { pushed: rows.length, syncedAt: now, lastPushAt: now };
   });
 
 /**
@@ -204,7 +234,11 @@ export const gsheetsPull = createServerFn({ method: "POST" })
     if (s.id) {
       await admin
         .from("boss_settings")
-        .update({ gsheet_last_pull_at: now })
+        .update({
+          gsheet_last_pull_at: now,
+          gsheet_last_pull_inserted: inserted,
+          gsheet_last_pull_updated: updated,
+        })
         .eq("id", s.id);
     }
     return { read: sheetRows.length, updated, inserted, lastPullAt: now };

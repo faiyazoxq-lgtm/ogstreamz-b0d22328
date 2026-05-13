@@ -82,6 +82,11 @@ export function BossTodoNotepad() {
   const [sheetConnected, setSheetConnected] = useState(false);
   const [syncState, setSyncState] = useState<"off" | "idle" | "busy" | "error">("off");
   const [lastPullAt, setLastPullAt] = useState<string | null>(null);
+  const [lastPushAt, setLastPushAt] = useState<string | null>(null);
+  const [lastPullInserted, setLastPullInserted] = useState(0);
+  const [lastPullUpdated, setLastPullUpdated] = useState(0);
+  const [lastPushCount, setLastPushCount] = useState(0);
+  const [pendingPush, setPendingPush] = useState(0);
   const statusFn = useServerFn(gsheetsStatus);
   const connectFn = useServerFn(gsheetsConnect);
   const pushFn = useServerFn(gsheetsPush);
@@ -124,9 +129,22 @@ export function BossTodoNotepad() {
         setSheetUrl(s.sheetUrl ?? null);
         setSheetConnected(s.connected);
         setLastPullAt(s.lastPullAt ?? null);
+        setLastPushAt((s as any).lastPushAt ?? null);
+        setLastPullInserted((s as any).lastPullInserted ?? 0);
+        setLastPullUpdated((s as any).lastPullUpdated ?? 0);
+        setLastPushCount((s as any).lastPushCount ?? 0);
+        setPendingPush((s as any).pendingPush ?? 0);
         setSyncState(s.connected ? (s.healthy ? "idle" : "error") : "off");
         if (s.connected && s.healthy) {
           await pullFn();
+          // Refresh metrics after the initial pull
+          const s2: any = await statusFn();
+          setLastPullAt(s2.lastPullAt ?? null);
+          setLastPushAt(s2.lastPushAt ?? null);
+          setLastPullInserted(s2.lastPullInserted ?? 0);
+          setLastPullUpdated(s2.lastPullUpdated ?? 0);
+          setLastPushCount(s2.lastPushCount ?? 0);
+          setPendingPush(s2.pendingPush ?? 0);
           await load();
         }
       } catch {
@@ -149,8 +167,15 @@ export function BossTodoNotepad() {
         setSyncState("busy");
         const r = await pullFn();
         setLastPullAt(r.lastPullAt);
+        setLastPullInserted(r.inserted ?? 0);
+        setLastPullUpdated(r.updated ?? 0);
         setSyncState("idle");
         if (r.updated > 0 || r.inserted > 0) await load();
+        // Refresh pending-push count after reconcile
+        try {
+          const s3: any = await statusFn();
+          setPendingPush(s3.pendingPush ?? 0);
+        } catch { /* ignore */ }
       } catch {
         setSyncState("error");
       }
@@ -166,7 +191,10 @@ export function BossTodoNotepad() {
     pushTimer.current = window.setTimeout(async () => {
       try {
         setSyncState("busy");
-        await pushFn();
+        const r: any = await pushFn();
+        setLastPushAt(r?.lastPushAt ?? new Date().toISOString());
+        setLastPushCount(r?.pushed ?? 0);
+        setPendingPush(0);
         setSyncState("idle");
       } catch {
         setSyncState("error");
@@ -193,9 +221,14 @@ export function BossTodoNotepad() {
   async function syncNow() {
     try {
       setSyncState("busy");
-      await pushFn();
+      const p: any = await pushFn();
+      setLastPushAt(p?.lastPushAt ?? new Date().toISOString());
+      setLastPushCount(p?.pushed ?? 0);
+      setPendingPush(0);
       const r = await pullFn();
       setLastPullAt(r.lastPullAt);
+      setLastPullInserted(r.inserted ?? 0);
+      setLastPullUpdated(r.updated ?? 0);
       setSyncState("idle");
       await load();
       toast.success("Synced with Google Sheets");
@@ -328,6 +361,11 @@ export function BossTodoNotepad() {
             connected={sheetConnected}
             sheetUrl={sheetUrl}
             lastPullAt={lastPullAt}
+            lastPushAt={lastPushAt}
+            lastPullInserted={lastPullInserted}
+            lastPullUpdated={lastPullUpdated}
+            lastPushCount={lastPushCount}
+            pendingPush={pendingPush}
             onConnect={connectSheet}
             onSync={syncNow}
           />
@@ -338,6 +376,36 @@ export function BossTodoNotepad() {
             Full board <ArrowUpRight className="h-3 w-3" />
           </Link>
         </div>
+
+        {/* Sync metrics — last pull/push timestamps + breakdown */}
+        {sheetConnected && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-white/10 px-3 py-1.5 text-[9px] uppercase tracking-wider text-white/55">
+            <span title={lastPullAt ? new Date(lastPullAt).toLocaleString() : "Never"}>
+              <span className="text-white/35">Pull</span>{" "}
+              <span className="text-emerald-300/90">
+                {lastPullAt ? relTime(lastPullAt) : "never"}
+              </span>
+              <span className="ml-1 text-white/40">
+                · +{lastPullInserted} new · ↻{lastPullUpdated} upd
+              </span>
+            </span>
+            <span className="text-white/20">|</span>
+            <span title={lastPushAt ? new Date(lastPushAt).toLocaleString() : "Never"}>
+              <span className="text-white/35">Push</span>{" "}
+              <span className="text-cyan-300/90">
+                {lastPushAt ? relTime(lastPushAt) : "never"}
+              </span>
+              <span className="ml-1 text-white/40">· {lastPushCount} rows</span>
+            </span>
+            <span className="text-white/20">|</span>
+            <span
+              className={pendingPush > 0 ? "text-amber-300" : "text-white/45"}
+              title="Local edits not yet pushed to the sheet"
+            >
+              {pendingPush > 0 ? `↑ ${pendingPush} pending push` : "in sync"}
+            </span>
+          </div>
+        )}
 
         {/* Filter chips — active chip is brighter, others muted. Counts
             include hidden items so you can see how much each bucket holds. */}
@@ -530,6 +598,8 @@ function SyncPill({
   connected,
   sheetUrl,
   lastPullAt,
+  lastPushAt,
+  pendingPush,
   onConnect,
   onSync,
 }: {
@@ -537,6 +607,11 @@ function SyncPill({
   connected: boolean;
   sheetUrl: string | null;
   lastPullAt: string | null;
+  lastPushAt: string | null;
+  lastPullInserted?: number;
+  lastPullUpdated?: number;
+  lastPushCount?: number;
+  pendingPush?: number;
   onConnect: () => void;
   onSync: () => void;
 }) {
@@ -565,15 +640,22 @@ function SyncPill({
       ? "syncing"
       : state === "error"
         ? "sync error"
-        : lastPullAt
-          ? `synced ${relTime(lastPullAt)}`
-          : "synced";
+        : (pendingPush ?? 0) > 0
+          ? `${pendingPush} to push`
+          : lastPullAt
+            ? `synced ${relTime(lastPullAt)}`
+            : "synced";
+
+  const tipParts: string[] = [];
+  if (lastPullAt) tipParts.push(`Last pull: ${new Date(lastPullAt).toLocaleString()}`);
+  if (lastPushAt) tipParts.push(`Last push: ${new Date(lastPushAt).toLocaleString()}`);
+  const tip = tipParts.join("\n") || "Linked to Google Sheets";
 
   return (
     <span className="inline-flex items-center gap-1.5">
       <span
         className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-black/40 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/70"
-        title={lastPullAt ? new Date(lastPullAt).toLocaleString() : "Linked to Google Sheets"}
+        title={tip}
       >
         <span
           className={`h-1.5 w-1.5 rounded-full ${state === "busy" ? "animate-pulse" : ""}`}
