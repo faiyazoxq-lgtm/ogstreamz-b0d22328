@@ -20,6 +20,9 @@ export type RosterRow = {
   stream_expires_at: string | null;
   created_at: string;
   feature_flags: Record<string, any> | null;
+  og_pass_no: number | null;
+  member_tier: string | null;
+  contact_card: Record<string, any> | null;
 };
 
 export const listRoster = createServerFn({ method: "GET" })
@@ -33,7 +36,7 @@ export const listRoster = createServerFn({ method: "GET" })
     const { supabase } = context as any;
     let q = supabase
       .from("profiles")
-      .select("id,email,display_name,rank,status,credits,banned,banned_reason,stream_status,stream_verified_at,stream_expires_at,created_at,feature_flags")
+      .select("id,email,display_name,rank,status,credits,banned,banned_reason,stream_status,stream_verified_at,stream_expires_at,created_at,feature_flags,og_pass_no,member_tier,contact_card")
       .order("created_at", { ascending: false })
       .limit(data.limit);
     if (data.rank) q = q.eq("rank", data.rank);
