@@ -12,7 +12,7 @@ import {
   Shield,
 } from "lucide-react";
 import { OgPassBadge } from "@/components/OgPassBadge";
-import { socialToUrl, type SocialKey as NormSocialKey } from "@/lib/social-handles";
+import { socialToUrl } from "@/lib/social-handles";
 
 type ContactCard = Record<string, string | null | undefined> | null | undefined;
 
