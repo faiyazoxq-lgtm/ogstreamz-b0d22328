@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Users, Search, Coins, ShieldOff, ShieldCheck, LogOut, RefreshCw, Tv, Flame } from "lucide-react";
 import { listRoster, setRank as setRankFn, setStatus as setStatusFn, adjustCredits, setBanned, forceSignOut, setUserSwearing, type RosterRow } from "@/lib/boss-users.functions";
@@ -33,22 +33,58 @@ function BossUsers() {
 
   const [rows, setRows] = useState<RosterRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [rankFilter, setRankFilter] = useState<string>("");
   const [err, setErr] = useState<string | null>(null);
   const [selected, setSelected] = useState<RosterRow | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  const refresh = async () => {
+  const PAGE_SIZE = 25;
+
+  const refresh = useCallback(async () => {
     setLoading(true); setErr(null);
     try {
-      const { rows } = await list({ data: { search, rank: rankFilter, limit: 200 } });
-      setRows(rows);
+      const res = await list({ data: { search, rank: rankFilter, limit: PAGE_SIZE, cursor: null } });
+      setRows(res.rows);
+      setCursor(res.nextCursor ?? null);
+      setHasMore(!!res.hasMore);
     } catch (e: any) { setErr(e?.message ?? "Failed to load"); }
     finally { setLoading(false); }
-  };
+  }, [list, search, rankFilter]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || loading || !hasMore || !cursor) return;
+    setLoadingMore(true); setErr(null);
+    try {
+      const res = await list({ data: { search, rank: rankFilter, limit: PAGE_SIZE, cursor } });
+      setRows((prev) => {
+        const seen = new Set(prev.map((r) => r.id));
+        return [...prev, ...res.rows.filter((r) => !seen.has(r.id))];
+      });
+      setCursor(res.nextCursor ?? null);
+      setHasMore(!!res.hasMore);
+    } catch (e: any) { setErr(e?.message ?? "Failed to load more"); }
+    finally { setLoadingMore(false); }
+  }, [list, search, rankFilter, cursor, hasMore, loading, loadingMore]);
+
   useEffect(() => { refresh(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [rankFilter]);
+
+  // Infinite scroll: auto-load next page when sentinel is in view.
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || !hasMore) return;
+    const io = new IntersectionObserver(
+      (entries) => { if (entries[0]?.isIntersecting) loadMore(); },
+      { rootMargin: "240px 0px" }
+    );
+    io.observe(node);
+    return () => io.disconnect();
+  }, [hasMore, loadMore]);
 
   const counts = useMemo(() => rows.reduce<Record<string, number>>((acc, r) => {
     acc[r.rank] = (acc[r.rank] ?? 0) + 1; return acc;
