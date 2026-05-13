@@ -256,6 +256,23 @@ function BossUsers() {
         {!loading && rows.length === 0 && <p className="text-center text-sm text-white/55 py-6">No users match.</p>}
       </div>
 
+      {/* Pagination sentinel + manual load-more (mobile-friendly) */}
+      {rows.length > 0 && (
+        <div ref={sentinelRef} className="pt-2 pb-6 flex flex-col items-center gap-2">
+          {hasMore ? (
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="rounded-md border border-border bg-secondary px-4 py-2 text-xs font-bold hover:bg-secondary/80 disabled:opacity-50"
+            >
+              {loadingMore ? "Loading…" : "Load more"}
+            </button>
+          ) : (
+            <p className="text-[11px] text-white/40 uppercase tracking-[0.25em]">End of roster · {rows.length} shown</p>
+          )}
+        </div>
+      )}
+
       <MemberDetailDrawer
         row={selected}
         open={drawerOpen}
