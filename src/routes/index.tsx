@@ -28,6 +28,8 @@ import { VipReferralCard } from "@/components/VipReferralCard";
 import { usePortalCount } from "@/hooks/use-portal-count";
 import { TelegramConnectBanner } from "@/components/TelegramConnectBanner";
 import { WelcomeBroadcast } from "@/components/WelcomeBroadcast";
+import { NonVipHome } from "@/components/NonVipHome";
+import { BossOpsStrip } from "@/components/BossOpsStrip";
 
 const ICONS: Record<string, any> = {
   Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
@@ -102,12 +104,19 @@ function Index() {
     <main className="relative">
       {/* Logged-out users see ONLY the broadcast welcome (hard-sell). */}
       {!user && <WelcomeBroadcast />}
-      {user && (
+      {/* Logged-in non-VIP: OG-Bot chat home + plain category list +
+          sticky Become-VIP upsell. They don't get the dense dashboard. */}
+      {user && !isVipMember && !isBoss && (
+        <NonVipHome displayName={profile?.display_name ?? null} />
+      )}
+      {/* Boss-only ops shortcuts on top of the VIP creator dashboard. */}
+      {user && isBoss && <BossOpsStrip />}
+      {user && (isVipMember || isBoss) && (
         <div className="relative max-w-7xl mx-auto px-5 sm:px-8 pt-4">
           <TelegramConnectBanner userId={user.id} />
         </div>
       )}
-      {user && (
+      {user && (isVipMember || isBoss) && (
       <>
       {/* Ambient glow — only for VIP/Boss; non-VIP gets a calm dark canvas. */}
       {(isVipMember || isBoss) && (
