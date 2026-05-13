@@ -598,6 +598,8 @@ function SyncPill({
   connected,
   sheetUrl,
   lastPullAt,
+  lastPushAt,
+  pendingPush,
   onConnect,
   onSync,
 }: {
@@ -605,6 +607,11 @@ function SyncPill({
   connected: boolean;
   sheetUrl: string | null;
   lastPullAt: string | null;
+  lastPushAt: string | null;
+  lastPullInserted?: number;
+  lastPullUpdated?: number;
+  lastPushCount?: number;
+  pendingPush?: number;
   onConnect: () => void;
   onSync: () => void;
 }) {
@@ -633,15 +640,22 @@ function SyncPill({
       ? "syncing"
       : state === "error"
         ? "sync error"
-        : lastPullAt
-          ? `synced ${relTime(lastPullAt)}`
-          : "synced";
+        : (pendingPush ?? 0) > 0
+          ? `${pendingPush} to push`
+          : lastPullAt
+            ? `synced ${relTime(lastPullAt)}`
+            : "synced";
+
+  const tipParts: string[] = [];
+  if (lastPullAt) tipParts.push(`Last pull: ${new Date(lastPullAt).toLocaleString()}`);
+  if (lastPushAt) tipParts.push(`Last push: ${new Date(lastPushAt).toLocaleString()}`);
+  const tip = tipParts.join("\n") || "Linked to Google Sheets";
 
   return (
     <span className="inline-flex items-center gap-1.5">
       <span
         className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-black/40 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/70"
-        title={lastPullAt ? new Date(lastPullAt).toLocaleString() : "Linked to Google Sheets"}
+        title={tip}
       >
         <span
           className={`h-1.5 w-1.5 rounded-full ${state === "busy" ? "animate-pulse" : ""}`}
