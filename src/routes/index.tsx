@@ -107,6 +107,8 @@ function Index() {
           <TelegramConnectBanner userId={user.id} />
         </div>
       )}
+      {user && (
+      <>
       {/* Ambient glow — only for VIP/Boss; non-VIP gets a calm dark canvas. */}
       {(isVipMember || isBoss) && (
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
