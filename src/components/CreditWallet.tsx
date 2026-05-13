@@ -30,7 +30,7 @@ export function CreditWallet({ className }: { className?: string }) {
     return (
       <div
         className={[
-          "rounded-2xl border border-border bg-card p-4 flex flex-wrap items-center gap-3",
+          "rounded-2xl border border-transparent bg-transparent p-4 flex flex-wrap items-center gap-3",
           className ?? "",
         ].join(" ")}
       >

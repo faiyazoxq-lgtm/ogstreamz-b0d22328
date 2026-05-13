@@ -134,7 +134,7 @@ function JokesPromptBuilder() {
       />
 
       <NonVipFormGate label="Activate Portal">
-      <section className="rounded-3xl border border-[oklch(0.72_0.22_245/0.4)] bg-gradient-to-br from-card to-background p-4 sm:p-6 shadow-[0_0_80px_oklch(0.72_0.22_245/0.1)] backdrop-blur-xl">
+      <section className="rounded-3xl border border-transparent bg-transparent p-4 sm:p-6">
         <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Portal Name</label>
         <Input
           value={name}

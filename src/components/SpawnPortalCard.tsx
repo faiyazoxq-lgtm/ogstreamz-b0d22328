@@ -258,7 +258,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
   );
 
   return (
-    <section className="mt-10 rounded-2xl border border-[oklch(0.72_0.22_245/0.4)] bg-card p-6 sm:p-8">
+    <section className="mt-10 rounded-2xl border border-transparent bg-transparent p-6 sm:p-8">
       <header className="flex items-center gap-3 mb-1 flex-wrap">
         <Sparkles className="h-5 w-5 text-[oklch(0.72_0.22_245)]" />
         <h2 className="font-[Montserrat] font-black text-xl text-foreground">{copy.title}</h2>
