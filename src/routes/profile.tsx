@@ -207,6 +207,11 @@ function ProfilePage() {
               </span>
             </div>
           )}
+          {profile?.og_pass_no != null && (
+            <div className="mt-4 flex justify-center">
+              <OgPassBadge number={profile.og_pass_no} size="lg" />
+            </div>
+          )}
         </header>
 
         {/* Status tag slot — sits directly under the name; reserved height keeps layout stable */}
