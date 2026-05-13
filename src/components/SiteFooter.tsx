@@ -68,7 +68,7 @@ export function SiteFooter() {
   return (
     <footer
       role="contentinfo"
-      className="relative z-10 mt-16 border-t border-white/10 bg-black/40 backdrop-blur-md print:hidden"
+      className="relative z-10 mt-16 border-t border-transparent bg-transparent print:hidden"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-8 py-10 pb-24 md:pb-10">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">

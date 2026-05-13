@@ -158,8 +158,8 @@ function Index() {
       <section className="relative max-w-5xl mx-auto px-5 sm:px-8 -mt-4 pb-10">
         <div className={
           (isVipMember || isBoss)
-            ? "relative overflow-hidden rounded-3xl border border-[oklch(0.72_0.22_245/0.35)] bg-card/60 backdrop-blur-xl p-6 sm:p-8"
-            : "relative overflow-hidden rounded-2xl border border-white/10 bg-card/50 p-6 sm:p-8"
+            ? "relative overflow-hidden rounded-3xl border border-transparent bg-transparent p-6 sm:p-8"
+            : "relative overflow-hidden rounded-2xl border border-transparent bg-transparent p-6 sm:p-8"
         }>
           {(isVipMember || isBoss) && (
             <>
