@@ -21,6 +21,7 @@ import { StreamLinkCard } from "@/components/StreamLinkCard";
 import { TelegramLinkCard } from "@/components/TelegramLinkCard";
 import { SocialConnectionsCard } from "@/components/SocialConnectionsCard";
 import { CoinActivity } from "@/components/CoinActivity";
+import { IdentityCardPreview } from "@/components/IdentityCardPreview";
 import { supabase } from "@/integrations/supabase/client";
 
 import { requireMember } from "@/lib/route-guards";
@@ -336,6 +337,7 @@ function ProfilePage() {
             </p>
           </header>
 
+          <IdentityCardPreview profile={profile as any} />
           <SocialConnectionsCard />
           <TelegramLinkCard />
           <StreamLinkCard />
