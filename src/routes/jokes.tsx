@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { VaultLockedDialog } from "@/components/VaultLockedDialog";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
-import { VipPaywallInline } from "@/components/VipPaywallInline";
+import { NonVipFormGate } from "@/components/NonVipFormGate";
 import { PortalHeader, PortalStyleLine, mergeStyle } from "@/components/PortalHeader";
 
 const JOKES_STYLE = "Razor-sharp punch-up roast, club-room timing, no slurs.";
