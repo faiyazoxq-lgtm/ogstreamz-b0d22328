@@ -503,6 +503,10 @@ export type Database = {
           created_at: string
           gsheet_id: string | null
           gsheet_last_pull_at: string | null
+          gsheet_last_pull_inserted: number
+          gsheet_last_pull_updated: number
+          gsheet_last_push_at: string | null
+          gsheet_last_push_count: number
           gsheet_url: string | null
           id: string
           singleton: boolean
@@ -512,6 +516,10 @@ export type Database = {
           created_at?: string
           gsheet_id?: string | null
           gsheet_last_pull_at?: string | null
+          gsheet_last_pull_inserted?: number
+          gsheet_last_pull_updated?: number
+          gsheet_last_push_at?: string | null
+          gsheet_last_push_count?: number
           gsheet_url?: string | null
           id?: string
           singleton?: boolean
@@ -521,6 +529,10 @@ export type Database = {
           created_at?: string
           gsheet_id?: string | null
           gsheet_last_pull_at?: string | null
+          gsheet_last_pull_inserted?: number
+          gsheet_last_pull_updated?: number
+          gsheet_last_push_at?: string | null
+          gsheet_last_push_count?: number
           gsheet_url?: string | null
           id?: string
           singleton?: boolean
