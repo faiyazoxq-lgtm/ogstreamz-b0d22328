@@ -63,6 +63,11 @@ function QaHubs() {
   const [scale, setScale] = useState<number>(0.6);
   const [showWallpaper, setShowWallpaper] = useState(true);
   const [diagBg, setDiagBg] = useState(false);
+  const [alphaMask, setAlphaMask] = useState(false);
+  // Threshold 0..1 — alpha values >= threshold are painted as the highlight
+  // colour, everything else collapses to fully transparent. 0.05 catches even
+  // faint glows / vignettes; raise it to ignore subtle gradients.
+  const [alphaThreshold, setAlphaThreshold] = useState(0.05);
   const [customHubs, setCustomHubs] = useState<Hub[]>([]);
 
   // Custom hubs added via the boss UI live in the `custom_hubs` table and
@@ -117,8 +122,42 @@ function QaHubs() {
   const frameW = 411;
   const frameH = 900;
 
+  // Build a 256-entry discrete LUT for the alpha channel: every alpha sample
+  // below the threshold becomes 0, every sample at/above becomes 1. This
+  // produces a hard mask with no anti-alias smear, so leftovers show as
+  // crisp shapes instead of soft blobs.
+  const alphaLut = (() => {
+    const cutoff = Math.round(alphaThreshold * 255);
+    const vals: string[] = new Array(256);
+    for (let i = 0; i < 256; i++) vals[i] = i >= cutoff ? "1" : "0";
+    return vals.join(" ");
+  })();
+
   return (
     <main className="relative min-h-screen w-full text-white">
+      {/* SVG filter defs — applied to each iframe via CSS `filter: url(#…)`.
+          feColorMatrix forces RGB to a fixed neon highlight (ignoring source
+          colour entirely) and preserves alpha. feComponentTransfer then
+          thresholds the alpha channel into a binary mask so we see a sharp
+          silhouette of every non-transparent pixel inside the hub. */}
+      <svg width="0" height="0" className="absolute" aria-hidden>
+        <defs>
+          <filter id="hub-alpha-mask" x="0" y="0" width="100%" height="100%">
+            <feColorMatrix
+              type="matrix"
+              values="
+                0 0 0 0 0.227
+                0 0 0 0 1
+                0 0 0 0 0.353
+                0 0 0 1 0"
+            />
+            <feComponentTransfer>
+              <feFuncA type="discrete" tableValues={alphaLut} />
+            </feComponentTransfer>
+          </filter>
+        </defs>
+      </svg>
+
       {/* Toolbar */}
       <header
         className="sticky top-0 z-30 flex flex-wrap items-center gap-3 border-b border-white/10 px-4 py-3 sm:px-6"
@@ -147,6 +186,31 @@ function QaHubs() {
             />
             Magenta diagnostic background
           </label>
+          <label className="flex items-center gap-2 text-[11px]">
+            <input
+              type="checkbox"
+              checked={alphaMask}
+              onChange={(e) => setAlphaMask(e.target.checked)}
+            />
+            Alpha mask
+          </label>
+          {alphaMask && (
+            <label className="flex items-center gap-2 text-[11px] text-white/70">
+              threshold
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={alphaThreshold}
+                onChange={(e) => setAlphaThreshold(parseFloat(e.target.value))}
+                className="w-24"
+              />
+              <span className="tabular-nums text-white/50">
+                {alphaThreshold.toFixed(2)}
+              </span>
+            </label>
+          )}
           <select
             value={scale}
             onChange={(e) => setScale(parseFloat(e.target.value))}
@@ -234,6 +298,7 @@ function QaHubs() {
                     transformOrigin: "top left",
                     border: "0",
                     background: "transparent",
+                    filter: alphaMask ? "url(#hub-alpha-mask)" : undefined,
                   }}
                   // allow-same-origin so app auth/state mirror the parent.
                   sandbox="allow-same-origin allow-scripts allow-forms"
