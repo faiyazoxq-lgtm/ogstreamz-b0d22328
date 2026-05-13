@@ -49,6 +49,7 @@ import { Route as BossIndexRouteImport } from './routes/boss.index'
 import { Route as TdSlugRouteImport } from './routes/td.$slug'
 import { Route as TSlugRouteImport } from './routes/t.$slug'
 import { Route as StoreCatalogRouteImport } from './routes/store.catalog'
+import { Route as QaHubsRouteImport } from './routes/qa.hubs'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as JokesPortalRouteImport } from './routes/jokes.portal'
@@ -297,6 +298,11 @@ const StoreCatalogRoute = StoreCatalogRouteImport.update({
   id: '/catalog',
   path: '/catalog',
   getParentRoute: () => StoreRoute,
+} as any)
+const QaHubsRoute = QaHubsRouteImport.update({
+  id: '/qa/hubs',
+  path: '/qa/hubs',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PSlugRoute = PSlugRouteImport.update({
   id: '/p/$slug',
@@ -619,6 +625,7 @@ export interface FileRoutesByFullPath {
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
   '/p/$slug': typeof PSlugRoute
+  '/qa/hubs': typeof QaHubsRoute
   '/store/catalog': typeof StoreCatalogRoute
   '/t/$slug': typeof TSlugRoute
   '/td/$slug': typeof TdSlugRoute
@@ -708,6 +715,7 @@ export interface FileRoutesByTo {
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
   '/p/$slug': typeof PSlugRoute
+  '/qa/hubs': typeof QaHubsRoute
   '/store/catalog': typeof StoreCatalogRoute
   '/t/$slug': typeof TSlugRoute
   '/td/$slug': typeof TdSlugRoute
@@ -799,6 +807,7 @@ export interface FileRoutesById {
   '/jokes/portal': typeof JokesPortalRoute
   '/m/$slug': typeof MSlugRoute
   '/p/$slug': typeof PSlugRoute
+  '/qa/hubs': typeof QaHubsRoute
   '/store/catalog': typeof StoreCatalogRoute
   '/t/$slug': typeof TSlugRoute
   '/td/$slug': typeof TdSlugRoute
@@ -891,6 +900,7 @@ export interface FileRouteTypes {
     | '/jokes/portal'
     | '/m/$slug'
     | '/p/$slug'
+    | '/qa/hubs'
     | '/store/catalog'
     | '/t/$slug'
     | '/td/$slug'
@@ -980,6 +990,7 @@ export interface FileRouteTypes {
     | '/jokes/portal'
     | '/m/$slug'
     | '/p/$slug'
+    | '/qa/hubs'
     | '/store/catalog'
     | '/t/$slug'
     | '/td/$slug'
@@ -1070,6 +1081,7 @@ export interface FileRouteTypes {
     | '/jokes/portal'
     | '/m/$slug'
     | '/p/$slug'
+    | '/qa/hubs'
     | '/store/catalog'
     | '/t/$slug'
     | '/td/$slug'
@@ -1130,6 +1142,7 @@ export interface RootRouteChildren {
   HubSlugRoute: typeof HubSlugRoute
   MSlugRoute: typeof MSlugRoute
   PSlugRoute: typeof PSlugRoute
+  QaHubsRoute: typeof QaHubsRoute
   TSlugRoute: typeof TSlugRoute
   TdSlugRoute: typeof TdSlugRoute
   ApiPublic0gOrchestratorRoute: typeof ApiPublic0gOrchestratorRoute
@@ -1423,6 +1436,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/store/catalog'
       preLoaderRoute: typeof StoreCatalogRouteImport
       parentRoute: typeof StoreRoute
+    }
+    '/qa/hubs': {
+      id: '/qa/hubs'
+      path: '/qa/hubs'
+      fullPath: '/qa/hubs'
+      preLoaderRoute: typeof QaHubsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/p/$slug': {
       id: '/p/$slug'
@@ -1911,6 +1931,7 @@ const rootRouteChildren: RootRouteChildren = {
   HubSlugRoute: HubSlugRoute,
   MSlugRoute: MSlugRoute,
   PSlugRoute: PSlugRoute,
+  QaHubsRoute: QaHubsRoute,
   TSlugRoute: TSlugRoute,
   TdSlugRoute: TdSlugRoute,
   ApiPublic0gOrchestratorRoute: ApiPublic0gOrchestratorRoute,
