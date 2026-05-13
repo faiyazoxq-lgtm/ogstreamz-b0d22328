@@ -16,11 +16,14 @@ export const Route = createFileRoute("/boss/control-centre")({
   //   ?open=hub:hubs,site:overview   – which accordion items are open
   //   ?q=pricing                     – panel search filter
   validateSearch: (raw: Record<string, unknown>) => {
-    const rawOpen = typeof raw.open === "string" ? raw.open : "";
-    const open = rawOpen
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+    // Default TanStack search serialiser JSON-encodes arrays, but human-
+    // edited / shared URLs may also use a comma list. Accept both.
+    let open: string[] = [];
+    if (Array.isArray(raw.open)) {
+      open = (raw.open as unknown[]).filter((v): v is string => typeof v === "string");
+    } else if (typeof raw.open === "string" && raw.open.length > 0) {
+      open = raw.open.split(",").map((s) => s.trim()).filter(Boolean);
+    }
     const q = typeof raw.q === "string" ? raw.q.slice(0, 80) : "";
     return { open, q };
   },
