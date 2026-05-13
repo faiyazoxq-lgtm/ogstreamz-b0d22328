@@ -18,6 +18,8 @@ import { RealOgBadge } from "@/components/RealOgBadge";
 import { OgPassBadge } from "@/components/OgPassBadge";
 import { PassStatusRow } from "@/components/PassStatusRow";
 import { StreamLinkCard } from "@/components/StreamLinkCard";
+import { TelegramLinkCard } from "@/components/TelegramLinkCard";
+import { SocialConnectionsCard } from "@/components/SocialConnectionsCard";
 import { CoinActivity } from "@/components/CoinActivity";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -320,8 +322,22 @@ function ProfilePage() {
           </header>
         </section>
 
-        {/* Stream Account Link */}
-        <section className="mt-10">
+        {/* Connections — socials + verified accounts */}
+        <section className="mt-10 space-y-5">
+          <header className="text-center">
+            <p className="text-xs uppercase tracking-[0.4em] font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
+              Connections
+            </p>
+            <h2 className="mt-2 font-[Montserrat] font-black text-2xl sm:text-3xl text-metallic">
+              Link your world
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Public socials, Telegram bot, and OGSTREAMZ verification — all in one place.
+            </p>
+          </header>
+
+          <SocialConnectionsCard />
+          <TelegramLinkCard />
           <StreamLinkCard />
         </section>
 
