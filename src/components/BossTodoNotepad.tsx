@@ -129,9 +129,22 @@ export function BossTodoNotepad() {
         setSheetUrl(s.sheetUrl ?? null);
         setSheetConnected(s.connected);
         setLastPullAt(s.lastPullAt ?? null);
+        setLastPushAt((s as any).lastPushAt ?? null);
+        setLastPullInserted((s as any).lastPullInserted ?? 0);
+        setLastPullUpdated((s as any).lastPullUpdated ?? 0);
+        setLastPushCount((s as any).lastPushCount ?? 0);
+        setPendingPush((s as any).pendingPush ?? 0);
         setSyncState(s.connected ? (s.healthy ? "idle" : "error") : "off");
         if (s.connected && s.healthy) {
           await pullFn();
+          // Refresh metrics after the initial pull
+          const s2: any = await statusFn();
+          setLastPullAt(s2.lastPullAt ?? null);
+          setLastPushAt(s2.lastPushAt ?? null);
+          setLastPullInserted(s2.lastPullInserted ?? 0);
+          setLastPullUpdated(s2.lastPullUpdated ?? 0);
+          setLastPushCount(s2.lastPushCount ?? 0);
+          setPendingPush(s2.pendingPush ?? 0);
           await load();
         }
       } catch {
@@ -154,8 +167,15 @@ export function BossTodoNotepad() {
         setSyncState("busy");
         const r = await pullFn();
         setLastPullAt(r.lastPullAt);
+        setLastPullInserted(r.inserted ?? 0);
+        setLastPullUpdated(r.updated ?? 0);
         setSyncState("idle");
         if (r.updated > 0 || r.inserted > 0) await load();
+        // Refresh pending-push count after reconcile
+        try {
+          const s3: any = await statusFn();
+          setPendingPush(s3.pendingPush ?? 0);
+        } catch { /* ignore */ }
       } catch {
         setSyncState("error");
       }
@@ -171,7 +191,10 @@ export function BossTodoNotepad() {
     pushTimer.current = window.setTimeout(async () => {
       try {
         setSyncState("busy");
-        await pushFn();
+        const r: any = await pushFn();
+        setLastPushAt(r?.lastPushAt ?? new Date().toISOString());
+        setLastPushCount(r?.pushed ?? 0);
+        setPendingPush(0);
         setSyncState("idle");
       } catch {
         setSyncState("error");
@@ -198,9 +221,14 @@ export function BossTodoNotepad() {
   async function syncNow() {
     try {
       setSyncState("busy");
-      await pushFn();
+      const p: any = await pushFn();
+      setLastPushAt(p?.lastPushAt ?? new Date().toISOString());
+      setLastPushCount(p?.pushed ?? 0);
+      setPendingPush(0);
       const r = await pullFn();
       setLastPullAt(r.lastPullAt);
+      setLastPullInserted(r.inserted ?? 0);
+      setLastPullUpdated(r.updated ?? 0);
       setSyncState("idle");
       await load();
       toast.success("Synced with Google Sheets");
