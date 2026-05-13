@@ -45,7 +45,12 @@ function ApiKeysPage() {
     queryKey: ["agent-keys"],
     queryFn: () => fetchList({ data: {} as never }),
   });
-  const { data: presetData } = useQuery({
+  const {
+    data: presetData,
+    isLoading: presetsLoading,
+    error: presetsError,
+    refetch: refetchPresets,
+  } = useQuery({
     queryKey: ["agent-key-presets"],
     queryFn: () => fetchPresets(),
     staleTime: 5 * 60_000,
@@ -128,6 +133,9 @@ function ApiKeysPage() {
           onSubmit={(v) => upsertMut.mutate(v)}
           presets={presets}
           placeholder={placeholder}
+          presetsLoading={presetsLoading}
+          presetsError={presetsError as Error | null}
+          onRetryPresets={() => refetchPresets()}
         />
       )}
 
@@ -183,6 +191,9 @@ function KeyForm({
   onSubmit,
   presets,
   placeholder,
+  presetsLoading,
+  presetsError,
+  onRetryPresets,
 }: {
   mode: "create" | "edit";
   initial?: Partial<AgentKeyRow>;
@@ -191,6 +202,9 @@ function KeyForm({
   onSubmit: (v: { key_name: string; value: string; label?: string; agent_group?: string; description?: string }) => void;
   presets: AgentKeyPreset[];
   placeholder: string;
+  presetsLoading?: boolean;
+  presetsError?: Error | null;
+  onRetryPresets?: () => void;
 }) {
   const [keyName, setKeyName] = useState(initial?.key_name ?? "");
   const [value, setValue] = useState("");
@@ -215,6 +229,25 @@ function KeyForm({
       }}
       className="rounded-2xl border border-gold/30 bg-card p-4 sm:p-5 space-y-4"
     >
+      {presetsLoading && (
+        <div className="flex items-center gap-2 rounded-md border border-border bg-secondary/40 px-3 py-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading presets…
+        </div>
+      )}
+      {presetsError && !presetsLoading && (
+        <div className="flex items-center justify-between gap-2 rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
+          <span>Couldn’t load presets: {presetsError.message}</span>
+          {onRetryPresets && (
+            <button
+              type="button"
+              onClick={onRetryPresets}
+              className="rounded border border-rose-400/40 bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-rose-100 hover:bg-rose-500/20"
+            >
+              Retry
+            </button>
+          )}
+        </div>
+      )}
       <div className="grid sm:grid-cols-2 gap-3">
         <Field label="Key name (env-style)" hint="UPPER_SNAKE_CASE, A-Z 0-9 _">
           <input
