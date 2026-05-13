@@ -2,13 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { KeyRound, Plus, Eye, EyeOff, Trash2, Save, Loader2, ShieldAlert, Copy, Check } from "lucide-react";
+import { KeyRound, Plus, Eye, EyeOff, Trash2, Save, Loader2, ShieldAlert, Copy, Check, Settings2, RotateCcw } from "lucide-react";
 import {
   listAgentKeys,
   upsertAgentKey,
   deleteAgentKey,
   revealAgentKey,
   listAgentKeyPresets,
+  saveAgentKeyPresets,
+  getAgentKeyPresetDefaults,
   type AgentKeyPreset,
   type AgentKeyRow,
 } from "@/lib/agent-keys.functions";
@@ -39,6 +41,8 @@ function ApiKeysPage() {
   const deleteFn = useServerFn(deleteAgentKey);
   const revealFn = useServerFn(revealAgentKey);
   const fetchPresets = useServerFn(listAgentKeyPresets);
+  const savePresetsFn = useServerFn(saveAgentKeyPresets);
+  const fetchDefaultsFn = useServerFn(getAgentKeyPresetDefaults);
 
   const qc = useQueryClient();
   const { data, isLoading, error } = useQuery({
@@ -69,6 +73,7 @@ function ApiKeysPage() {
   }, [data]);
 
   const [showAdd, setShowAdd] = useState(false);
+  const [showPresetsEditor, setShowPresetsEditor] = useState(false);
 
   const upsertMut = useMutation({
     mutationFn: (input: { key_name: string; value: string; label?: string; agent_group?: string; description?: string }) =>
@@ -103,6 +108,13 @@ function ApiKeysPage() {
           </div>
           <button
             type="button"
+            onClick={() => setShowPresetsEditor((v) => !v)}
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-secondary px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground hover:bg-secondary/80"
+          >
+            <Settings2 className="h-4 w-4" /> Edit presets
+          </button>
+          <button
+            type="button"
             onClick={() => setShowAdd(true)}
             className="inline-flex items-center gap-2 rounded-md border border-gold/40 bg-gold/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-gold hover:bg-gold/25"
           >
@@ -123,6 +135,19 @@ function ApiKeysPage() {
         <div className="rounded-md border border-rose-500/40 bg-rose-500/10 p-3 text-sm text-rose-200">
           {(error as Error).message}
         </div>
+      )}
+
+      {showPresetsEditor && (
+        <PresetsEditor
+          initialPresets={presets}
+          initialPlaceholder={placeholder}
+          onClose={() => setShowPresetsEditor(false)}
+          onSave={async (payload) => {
+            await savePresetsFn({ data: payload });
+            await qc.invalidateQueries({ queryKey: ["agent-key-presets"] });
+          }}
+          onLoadDefaults={() => fetchDefaultsFn()}
+        />
       )}
 
       {showAdd && (
