@@ -112,7 +112,7 @@ export function SocialConnectionsCard() {
   const { user, profile, refresh } = useAuth();
   const initial = useMemo<ContactCardJson>(
     () => ((profile as any)?.contact_card ?? {}) as ContactCardJson,
-    [profile?.id, profile?.updated_at],
+    [profile?.id, (profile as any)?.updated_at],
   );
   const [values, setValues] = useState<Partial<Record<SocialKey, string>>>({});
   const [editing, setEditing] = useState<SocialKey | null>(null);
