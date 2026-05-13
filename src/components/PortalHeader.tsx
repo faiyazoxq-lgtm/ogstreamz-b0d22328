@@ -59,7 +59,7 @@ export function PortalHeader({
 
   return (
     <header
-      className={`relative mb-6 overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-b from-card/60 to-background/40 px-4 py-10 sm:px-8 sm:py-14 text-center ${className}`}
+      className={`relative mb-6 overflow-hidden rounded-3xl border border-transparent bg-transparent px-4 py-10 sm:px-8 sm:py-14 text-center ${className}`}
     >
       {/* AI-generated background */}
       {header?.bg_url ? (
@@ -80,15 +80,7 @@ export function PortalHeader({
           }}
         />
       )}
-      {/* Vignette so text always reads */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(to bottom, rgba(0,0,0,0.35), rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.85))",
-        }}
-      />
+      {/* Vignette removed so the wallpaper shows through; text relies on its own drop-shadow. */}
 
       <div className="relative">
         {tagline && (
