@@ -490,6 +490,16 @@ export function BossTodoNotepad() {
               <RefreshCw className={`h-3 w-3 ${syncState === "busy" ? "animate-spin" : ""}`} />
               Refresh status
             </button>
+            <button
+              type="button"
+              onClick={pullNow}
+              disabled={syncState === "busy" || !sheetConnected}
+              title="Force an immediate pull of the latest sheet data"
+              className="inline-flex items-center gap-1 rounded-md border border-emerald-300/30 bg-emerald-300/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-200 hover:bg-emerald-300/20 hover:text-emerald-100 disabled:opacity-50"
+            >
+              <DownloadCloud className={`h-3 w-3 ${syncState === "busy" ? "animate-pulse" : ""}`} />
+              Pull now
+            </button>
           </div>
         )}
 
