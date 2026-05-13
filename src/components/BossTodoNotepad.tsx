@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   ListChecks, Plus, Loader2, Check, ArrowUpRight, X, CalendarClock,
-  RefreshCw, Sheet as SheetIcon, Link2,
+  RefreshCw, Sheet as SheetIcon, Link2, DownloadCloud,
 } from "lucide-react";
 import {
   gsheetsStatus, gsheetsConnect, gsheetsPush, gsheetsPull,
@@ -280,6 +280,38 @@ export function BossTodoNotepad() {
     }
   }
 
+  // Manual pull — forces an immediate read from the sheet and reconciles
+  // into the DB. Distinct from `refreshStatus` (metrics-only) and
+  // `syncNow` (push + pull). Used by the "Pull now" button so the boss
+  // can force-fetch the latest sheet edits without waiting for the 60s
+  // background poll.
+  async function pullNow() {
+    if (!sheetConnected) return;
+    try {
+      setSyncState("busy");
+      const r: any = await pullFn();
+      setLastPullAt(r.lastPullAt);
+      setLastPullInserted(r.inserted ?? 0);
+      setLastPullUpdated(r.updated ?? 0);
+      // Refresh pending-push count after reconcile.
+      try {
+        const s: any = await statusFn();
+        setPendingPush(s.pendingPush ?? 0);
+      } catch { /* ignore */ }
+      setSyncState("idle");
+      await load();
+      const changed = (r.inserted ?? 0) + (r.updated ?? 0);
+      toast.success(
+        changed > 0
+          ? `Pulled ${r.inserted ?? 0} new · ${r.updated ?? 0} updated`
+          : "Pulled — no changes",
+      );
+    } catch (e: any) {
+      setSyncState("error");
+      toast.error("Pull failed", { description: e?.message });
+    }
+  }
+
   async function add(e: React.FormEvent) {
     e.preventDefault();
     const title = draft.trim();
@@ -457,6 +489,16 @@ export function BossTodoNotepad() {
             >
               <RefreshCw className={`h-3 w-3 ${syncState === "busy" ? "animate-spin" : ""}`} />
               Refresh status
+            </button>
+            <button
+              type="button"
+              onClick={pullNow}
+              disabled={syncState === "busy" || !sheetConnected}
+              title="Force an immediate pull of the latest sheet data"
+              className="inline-flex items-center gap-1 rounded-md border border-emerald-300/30 bg-emerald-300/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-200 hover:bg-emerald-300/20 hover:text-emerald-100 disabled:opacity-50"
+            >
+              <DownloadCloud className={`h-3 w-3 ${syncState === "busy" ? "animate-pulse" : ""}`} />
+              Pull now
             </button>
           </div>
         )}
