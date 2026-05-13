@@ -44,7 +44,7 @@ export function BossCommandRail({ top, groups, alertsUnread, alertsTo }: Props) 
   return (
     <nav
       aria-label="Boss command rail"
-      className="sticky top-[8.5rem] md:top-[6rem] z-20 -mx-3 sm:-mx-6 mb-4 backdrop-blur-xl bg-background/85 border-b border-gold/15"
+      className="sticky top-[7.5rem] md:top-[6.75rem] z-20 -mx-3 sm:-mx-6 mb-4 backdrop-blur-xl bg-background/85 border-b border-gold/15 shadow-[0_8px_20px_-22px_rgba(255,209,102,0.6)]"
     >
       {/* Row 1: Categories */}
       <ScrollRow className="px-3 sm:px-6 pt-2">
@@ -61,6 +61,7 @@ export function BossCommandRail({ top, groups, alertsUnread, alertsTo }: Props) 
           const active = activeGroupId === g.id;
           const opened = openId === g.id;
           const showAlert = g.id === "command" && alertsUnread > 0;
+          const tintColor = g.tint;
           return (
             <button
               key={g.id}
@@ -69,15 +70,17 @@ export function BossCommandRail({ top, groups, alertsUnread, alertsTo }: Props) 
               aria-expanded={opened}
               aria-current={active ? "page" : undefined}
               className={[
-                "relative inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] transition shrink-0 active:scale-[0.97]",
+                "relative inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] transition-all duration-200 shrink-0 active:scale-[0.97]",
                 opened
-                  ? "ring-1 shadow-[0_0_16px_-6px_currentColor]"
+                  ? "ring-1 shadow-[0_0_18px_-5px_currentColor] scale-[1.02]"
                   : "ring-1 ring-white/10 hover:ring-white/30",
               ].join(" ")}
               style={{
-                color: opened ? g.tint : "rgba(255,255,255,0.7)",
-                background: opened ? `${g.tint}1a` : "rgba(255,255,255,0.03)",
-                borderColor: opened ? `${g.tint}66` : undefined,
+                color: opened ? tintColor : "rgba(255,255,255,0.7)",
+                background: opened
+                  ? `linear-gradient(135deg, ${tintColor}26, ${tintColor}10)`
+                  : "rgba(255,255,255,0.03)",
+                borderColor: opened ? `${tintColor}66` : undefined,
               }}
             >
               <g.Icon className="h-3.5 w-3.5" />
@@ -174,6 +177,17 @@ function ScrollRow({ children, className }: { children: React.ReactNode; classNa
 
   return (
     <div className={`relative ${className ?? ""}`}>
+      {/* Edge fades */}
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute inset-y-0 left-0 w-6 z-[5] transition-opacity ${overflow.left ? "opacity-100" : "opacity-0"}`}
+        style={{ background: "linear-gradient(to right, var(--background) 0%, transparent 100%)" }}
+      />
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute inset-y-0 right-0 w-6 z-[5] transition-opacity ${overflow.right ? "opacity-100" : "opacity-0"}`}
+        style={{ background: "linear-gradient(to left, var(--background) 0%, transparent 100%)" }}
+      />
       {overflow.left && (
         <button
           type="button"
