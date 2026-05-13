@@ -126,6 +126,8 @@ function ApiKeysPage() {
           submitting={upsertMut.isPending}
           onCancel={() => setShowAdd(false)}
           onSubmit={(v) => upsertMut.mutate(v)}
+          presets={presets}
+          placeholder={placeholder}
         />
       )}
 
@@ -142,7 +144,7 @@ function ApiKeysPage() {
           {grouped.map(([group, rows]) => (
             <div key={group} className="space-y-2">
               <h2 className="text-[11px] uppercase tracking-[0.3em] text-gold font-bold">
-                {PRESET_GROUPS.find((g) => g.id === group)?.label ?? group} <span className="text-muted-foreground">· {rows.length}</span>
+                {presets.find((g) => g.id === group)?.label ?? group} <span className="text-muted-foreground">· {rows.length}</span>
               </h2>
               <ul className="space-y-2">
                 {rows.map((k) => (
@@ -179,12 +181,16 @@ function KeyForm({
   submitting,
   onCancel,
   onSubmit,
+  presets,
+  placeholder,
 }: {
   mode: "create" | "edit";
   initial?: Partial<AgentKeyRow>;
   submitting: boolean;
   onCancel: () => void;
   onSubmit: (v: { key_name: string; value: string; label?: string; agent_group?: string; description?: string }) => void;
+  presets: AgentKeyPreset[];
+  placeholder: string;
 }) {
   const [keyName, setKeyName] = useState(initial?.key_name ?? "");
   const [value, setValue] = useState("");
@@ -192,7 +198,7 @@ function KeyForm({
   const [group, setGroup] = useState(initial?.agent_group ?? "ai");
   const [description, setDescription] = useState(initial?.description ?? "");
 
-  const suggestions = PRESET_GROUPS.find((g) => g.id === group)?.suggestions ?? [];
+  const suggestions = presets.find((g) => g.id === group)?.suggestions ?? [];
 
   return (
     <form
