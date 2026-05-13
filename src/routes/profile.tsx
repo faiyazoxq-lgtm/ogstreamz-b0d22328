@@ -19,6 +19,7 @@ import { OgPassBadge } from "@/components/OgPassBadge";
 import { PassStatusRow } from "@/components/PassStatusRow";
 import { StreamLinkCard } from "@/components/StreamLinkCard";
 import { TelegramLinkCard } from "@/components/TelegramLinkCard";
+import { AvatarManagerCard } from "@/components/AvatarManagerCard";
 import { SocialConnectionsCard } from "@/components/SocialConnectionsCard";
 import { CoinActivity } from "@/components/CoinActivity";
 import { IdentityCardPreview } from "@/components/IdentityCardPreview";
@@ -338,6 +339,7 @@ function ProfilePage() {
           </header>
 
           <IdentityCardPreview profile={profile as any} />
+          <AvatarManagerCard />
           <SocialConnectionsCard />
           <TelegramLinkCard />
           <StreamLinkCard />
