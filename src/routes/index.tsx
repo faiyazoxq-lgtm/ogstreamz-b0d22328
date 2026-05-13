@@ -100,12 +100,8 @@ function Index() {
 
   return (
     <main className="relative">
-      {/* Logged-out users see only the broadcast welcome — early return keeps
-          the dense logged-in dashboard out of the unauthenticated path. */}
-      {!user ? (
-        <WelcomeBroadcast />
-      ) : (
-      <>
+      {/* Logged-out users see ONLY the broadcast welcome (hard-sell). */}
+      {!user && <WelcomeBroadcast />}
       {user && (
         <div className="relative max-w-7xl mx-auto px-5 sm:px-8 pt-4">
           <TelegramConnectBanner userId={user.id} />
