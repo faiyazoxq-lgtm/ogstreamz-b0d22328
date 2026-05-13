@@ -68,6 +68,55 @@ const PresetsConfigSchema = z.object({
   placeholder: z.string().trim().max(120).regex(/^[A-Z0-9_]*$/),
 });
 
+/**
+ * Pure resolver for the presets config — no DB/server bindings, so it is
+ * safe to import from unit tests. Precedence:
+ *   1. DB row (Boss-managed)
+ *   2. AGENT_KEY_PRESETS_JSON env override (must be a JSON array)
+ *   3. Compiled defaults
+ * Malformed JSON in the env override is silently ignored — defaults win.
+ */
+export function resolveAgentKeyPresets(input: {
+  dbRow?: { presets?: unknown; placeholder?: unknown } | null;
+  env?: { AGENT_KEY_PRESETS_JSON?: string; AGENT_KEY_NAME_PLACEHOLDER?: string };
+}): { presets: AgentKeyPreset[]; placeholder: string } {
+  const env = input.env ?? {};
+  const row = input.dbRow ?? null;
+
+  let presets: AgentKeyPreset[] | null = null;
+  let placeholder: string | null = null;
+
+  if (row) {
+    if (Array.isArray(row.presets) && row.presets.length > 0) {
+      presets = row.presets as AgentKeyPreset[];
+    }
+    if (typeof row.placeholder === "string" && row.placeholder.length > 0) {
+      placeholder = row.placeholder;
+    }
+  }
+
+  if (!presets) {
+    const override = env.AGENT_KEY_PRESETS_JSON;
+    if (override) {
+      try {
+        const parsed = JSON.parse(override);
+        if (Array.isArray(parsed)) presets = parsed as AgentKeyPreset[];
+      } catch {
+        // Malformed JSON → fall through to defaults.
+      }
+    }
+  }
+
+  if (!presets) presets = DEFAULT_PRESETS;
+  if (!placeholder) {
+    placeholder =
+      env.AGENT_KEY_NAME_PLACEHOLDER ||
+      presets.find((g) => g.suggestions.length > 0)?.suggestions[0] ||
+      K("OPENAI");
+  }
+  return { presets, placeholder };
+}
+
 export const listAgentKeyPresets = createServerFn({ method: "GET" })
   .middleware([requireBoss])
   .handler(async ({ context }): Promise<{ presets: AgentKeyPreset[]; placeholder: string }> => {
@@ -80,38 +129,13 @@ export const listAgentKeyPresets = createServerFn({ method: "GET" })
       .eq("id", 1)
       .maybeSingle();
 
-    let presets: AgentKeyPreset[] | null = null;
-    let placeholder: string | null = null;
-    if (row) {
-      const r = row as { presets: unknown; placeholder: unknown };
-      if (Array.isArray(r.presets) && r.presets.length > 0) {
-        presets = r.presets as AgentKeyPreset[];
-      }
-      if (typeof r.placeholder === "string" && r.placeholder.length > 0) {
-        placeholder = r.placeholder;
-      }
-    }
-
-    // 2. Optional env override (legacy / bootstrap).
-    if (!presets) {
-      const override = process.env.AGENT_KEY_PRESETS_JSON;
-      if (override) {
-        try {
-          const parsed = JSON.parse(override);
-          if (Array.isArray(parsed)) presets = parsed as AgentKeyPreset[];
-        } catch { /* ignore */ }
-      }
-    }
-
-    // 3. Fall back to compiled defaults.
-    if (!presets) presets = DEFAULT_PRESETS;
-    if (!placeholder) {
-      placeholder =
-        process.env.AGENT_KEY_NAME_PLACEHOLDER ||
-        presets.find((g) => g.suggestions.length > 0)?.suggestions[0] ||
-        K("OPENAI");
-    }
-    return { presets, placeholder };
+    return resolveAgentKeyPresets({
+      dbRow: row as { presets?: unknown; placeholder?: unknown } | null,
+      env: {
+        AGENT_KEY_PRESETS_JSON: process.env.AGENT_KEY_PRESETS_JSON,
+        AGENT_KEY_NAME_PLACEHOLDER: process.env.AGENT_KEY_NAME_PLACEHOLDER,
+      },
+    });
   });
 
 export const saveAgentKeyPresets = createServerFn({ method: "POST" })
