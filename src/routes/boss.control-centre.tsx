@@ -39,7 +39,7 @@ type Panel = {
   label: string;
   desc: string;
   to: string;
-  load: () => Promise<{ default: React.ComponentType<any> }>;
+  load: () => Promise<any>;
 };
 
 type Group = {
