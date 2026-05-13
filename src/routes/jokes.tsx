@@ -133,6 +133,7 @@ function JokesPromptBuilder() {
         accent="blue"
       />
 
+      <NonVipFormGate label="Activate Portal">
       <section className="rounded-3xl border border-[oklch(0.72_0.22_245/0.4)] bg-gradient-to-br from-card to-background p-4 sm:p-6 shadow-[0_0_80px_oklch(0.72_0.22_245/0.1)] backdrop-blur-xl">
         <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Portal Name</label>
         <Input
@@ -217,20 +218,17 @@ function JokesPromptBuilder() {
 
         <PortalStyleLine sentence={JOKES_STYLE} />
 
-        {isVip ? (
-          <Button
+        <Button
             onClick={launch}
-            disabled={!canLaunch}
+            disabled={!canLaunch || !isVip}
             size="lg"
             className="mt-3 w-full btn-glass-blue text-white font-black tracking-[0.3em] uppercase"
           >
             <Power className="h-4 w-4 mr-2" />
             Activate Portal
           </Button>
-        ) : (
-          <VipPaywallInline hub="jokes" isAuthenticated={!!user} />
-        )}
       </section>
+      </NonVipFormGate>
 
       <VaultLockedDialog
         open={locked}
