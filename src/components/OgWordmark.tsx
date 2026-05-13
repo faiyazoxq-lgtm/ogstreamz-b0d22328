@@ -116,6 +116,12 @@ export function OgWordmark({
           transform: "translateZ(0)",
           backfaceVisibility: "hidden",
           willChange: "transform, filter",
+          // Safari only honors mix-blend-mode reliably when the parent
+          // creates its own stacking / isolation context. Without this,
+          // `screen` is silently dropped on <video> in WebKit and the
+          // artwork shows its black source background.
+          isolation: "isolate",
+          backgroundColor: "transparent",
         }}
       >
         <video
@@ -143,6 +149,10 @@ export function OgWordmark({
               "contrast(1.18) saturate(1.18) brightness(1.05) drop-shadow(0 0 6px oklch(0.72 0.22 245 / 0.55))",
             imageRendering: "auto" as React.CSSProperties["imageRendering"],
             transform: "translateZ(0)",
+            // Some Safari versions render <video> with an opaque default
+            // background that defeats `screen` blending — force transparency.
+            backgroundColor: "transparent",
+            WebkitBackfaceVisibility: "hidden",
           }}
         >
           <source src="/brand/og-blink.webm" type="video/webm" />
