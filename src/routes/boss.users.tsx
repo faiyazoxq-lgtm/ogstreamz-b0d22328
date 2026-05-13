@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Users, Search, Coins, ShieldOff, ShieldCheck, LogOut, RefreshCw, Crown, Tv, Flame } from "lucide-react";
+import { Users, Search, Coins, ShieldOff, ShieldCheck, LogOut, RefreshCw, Tv, Flame } from "lucide-react";
 import { listRoster, setRank as setRankFn, setStatus as setStatusFn, adjustCredits, setBanned, forceSignOut, setUserSwearing, type RosterRow } from "@/lib/boss-users.functions";
 import { reverifyStream } from "@/lib/stream-link.functions";
 import { effectiveSwearing, effectiveIntensity, rankDefaultsToSafe } from "@/lib/swearing";
+import { BossOgPassCard } from "@/components/boss/BossOgPassCard";
 
 export const Route = createFileRoute("/boss/users")({
   head: () => ({ meta: [{ title: "Users · Boss" }, { name: "description", content: "Full roster control: rank, status, credits, ban, force sign-out, stream-account verification." }] }),
@@ -103,38 +104,10 @@ function BossUsers() {
       <div className="grid grid-cols-1 gap-3">
         {rows.map((r) => {
           const busy = busyId === r.id;
-          const initials = (r.display_name || r.email || "?").trim().slice(0, 2).toUpperCase();
           return (
             <article key={r.id} className="glass-obsidian-cmd rounded-2xl p-4 font-sans">
-              {/* Identity row */}
-              <div className="flex items-start gap-3">
-                <div
-                  className="shrink-0 inline-flex h-10 w-10 items-center justify-center rounded-full text-xs font-black"
-                  style={{ background: `${RANK_TINT[r.rank]}22`, color: RANK_TINT[r.rank], border: `1px solid ${RANK_TINT[r.rank]}66` }}
-                >
-                  {initials}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-base font-bold text-white truncate">{r.display_name || r.email}</span>
-                    <span
-                      className="text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded font-bold"
-                      style={{ background: `${RANK_TINT[r.rank]}1f`, color: RANK_TINT[r.rank], border: `1px solid ${RANK_TINT[r.rank]}55` }}
-                    >
-                      {r.rank === "boss" && <Crown className="inline h-3 w-3 mr-0.5 -mt-0.5" />}
-                      {RANK_LABEL[r.rank] ?? r.rank}
-                    </span>
-                    {r.banned && <span className="text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded font-bold bg-destructive/15 text-destructive border border-destructive/40">Banned</span>}
-                    {r.stream_status === "Active" && <span className="text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/40">Stream ✓</span>}
-                  </div>
-                  <p className="text-xs text-white/60 mt-0.5 truncate">{r.email}</p>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-white/55">
-                    <span className="inline-flex items-center gap-1 text-gold/90"><Coins className="h-3 w-3" /> {r.credits} 🪙</span>
-                    <span>· Status <span className="text-white/80 font-semibold">{r.status.toUpperCase()}</span></span>
-                    {r.stream_expires_at && <span>· stream until {new Date(r.stream_expires_at).toLocaleDateString()}</span>}
-                  </div>
-                </div>
-              </div>
+              {/* OG Pass identity card — same chips members see, plus boss-only fields */}
+              <BossOgPassCard row={r} />
 
               {/* Action grid: clearly labelled sections */}
               <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 border-t border-white/5 pt-3">
