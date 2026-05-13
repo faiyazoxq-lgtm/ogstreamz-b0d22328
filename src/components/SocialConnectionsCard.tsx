@@ -3,6 +3,7 @@ import { Send, Tv, Youtube, Instagram, Twitter, Music2, Globe, Pencil, Check, X,
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeSocial, socialToUrl, socialDisplay, type SocialKey as NormSocialKey } from "@/lib/social-handles";
 
 type SocialKey = "telegram" | "youtube" | "tiktok" | "instagram" | "twitter" | "website";
 
@@ -24,10 +25,7 @@ const FIELDS: Field[] = [
     placeholder: "@username",
     Icon: Send,
     tint: "oklch(0.72 0.16 230)",
-    toUrl: (v) => {
-      const h = v.replace(/^@/, "").replace(/^https?:\/\/(t\.me|telegram\.me)\//i, "");
-      return h ? `https://t.me/${h}` : null;
-    },
+    toUrl: (v) => socialToUrl("telegram", v),
   },
   {
     key: "youtube",
@@ -35,11 +33,7 @@ const FIELDS: Field[] = [
     placeholder: "@channel",
     Icon: Youtube,
     tint: "oklch(0.65 0.22 25)",
-    toUrl: (v) => {
-      if (/^https?:\/\//i.test(v)) return v;
-      const h = v.replace(/^@/, "");
-      return h ? `https://youtube.com/@${h}` : null;
-    },
+    toUrl: (v) => socialToUrl("youtube", v),
   },
   {
     key: "tiktok",
@@ -47,11 +41,7 @@ const FIELDS: Field[] = [
     placeholder: "@handle",
     Icon: Music2,
     tint: "oklch(0.72 0.20 320)",
-    toUrl: (v) => {
-      if (/^https?:\/\//i.test(v)) return v;
-      const h = v.replace(/^@/, "");
-      return h ? `https://tiktok.com/@${h}` : null;
-    },
+    toUrl: (v) => socialToUrl("tiktok", v),
   },
   {
     key: "instagram",
@@ -59,11 +49,7 @@ const FIELDS: Field[] = [
     placeholder: "@handle",
     Icon: Instagram,
     tint: "oklch(0.70 0.20 0)",
-    toUrl: (v) => {
-      if (/^https?:\/\//i.test(v)) return v;
-      const h = v.replace(/^@/, "");
-      return h ? `https://instagram.com/${h}` : null;
-    },
+    toUrl: (v) => socialToUrl("instagram", v),
   },
   {
     key: "twitter",
@@ -71,11 +57,7 @@ const FIELDS: Field[] = [
     placeholder: "@handle",
     Icon: Twitter,
     tint: "oklch(0.85 0 0)",
-    toUrl: (v) => {
-      if (/^https?:\/\//i.test(v)) return v;
-      const h = v.replace(/^@/, "");
-      return h ? `https://x.com/${h}` : null;
-    },
+    toUrl: (v) => socialToUrl("twitter", v),
   },
   {
     key: "website",
@@ -83,20 +65,14 @@ const FIELDS: Field[] = [
     placeholder: "https://yoursite.com",
     Icon: Globe,
     tint: "oklch(0.78 0.14 145)",
-    toUrl: (v) => (v ? (/^https?:\/\//i.test(v) ? v : `https://${v}`) : null),
+    toUrl: (v) => socialToUrl("website", v),
   },
 ];
 
 type ContactCardJson = Partial<Record<SocialKey, string>> & Record<string, any>;
 
 function shortHandle(field: Field, raw: string): string {
-  const v = raw.trim();
-  if (!v) return "";
-  if (field.key === "website") return v.replace(/^https?:\/\//i, "").replace(/\/$/, "");
-  if (/^https?:\/\//i.test(v)) {
-    return "@" + v.replace(/\/$/, "").split("/").pop()!.replace(/^@/, "");
-  }
-  return v.startsWith("@") ? v : `@${v}`;
+  return socialDisplay(field.key as NormSocialKey, raw);
 }
 
 /**
@@ -140,19 +116,28 @@ export function SocialConnectionsCard() {
   const persist = async (key: SocialKey, raw: string) => {
     if (!user) return;
     const trimmed = raw.trim().slice(0, 300);
+    let storageValue = "";
+    if (trimmed) {
+      const norm = normalizeSocial(key as NormSocialKey, trimmed);
+      if (!norm.ok) {
+        toast.error(norm.error);
+        return;
+      }
+      storageValue = norm.storage;
+    }
     setSaving(key);
     try {
       const merged: ContactCardJson = { ...initial };
-      if (trimmed) merged[key] = trimmed;
+      if (storageValue) merged[key] = storageValue;
       else delete merged[key];
       const { error } = await supabase
         .from("profiles")
         .update({ contact_card: merged })
         .eq("id", user.id);
       if (error) throw new Error(error.message);
-      setValues((v) => ({ ...v, [key]: trimmed }));
+      setValues((v) => ({ ...v, [key]: storageValue }));
       await refresh?.();
-      toast.success(trimmed ? "Linked" : "Removed");
+      toast.success(storageValue ? "Linked" : "Removed");
       setEditing(null);
     } catch (e: any) {
       toast.error(e?.message ?? "Could not save");

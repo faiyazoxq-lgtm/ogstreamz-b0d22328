@@ -12,6 +12,7 @@ import {
   Shield,
 } from "lucide-react";
 import { OgPassBadge } from "@/components/OgPassBadge";
+import { socialToUrl } from "@/lib/social-handles";
 
 type ContactCard = Record<string, string | null | undefined> | null | undefined;
 
@@ -57,48 +58,42 @@ const SOCIAL_FIELDS: Array<{
     label: "Telegram",
     Icon: Send,
     tint: "rgb(56,189,248)",
-    toUrl: (v) => {
-      const h = v.replace(/^@/, "").replace(/^https?:\/\/(t\.me|telegram\.me)\//i, "");
-      return h ? `https://t.me/${h}` : null;
-    },
+    toUrl: (v) => socialToUrl("telegram", v),
   },
   {
     key: "youtube",
     label: "YouTube",
     Icon: Youtube,
     tint: "rgb(248,113,113)",
-    toUrl: (v) => (/^https?:\/\//i.test(v) ? v : v ? `https://youtube.com/@${v.replace(/^@/, "")}` : null),
+    toUrl: (v) => socialToUrl("youtube", v),
   },
   {
     key: "tiktok",
     label: "TikTok",
     Icon: Music2,
     tint: "rgb(232,121,249)",
-    toUrl: (v) => (/^https?:\/\//i.test(v) ? v : v ? `https://tiktok.com/@${v.replace(/^@/, "")}` : null),
+    toUrl: (v) => socialToUrl("tiktok", v),
   },
   {
     key: "instagram",
     label: "Instagram",
     Icon: Instagram,
     tint: "rgb(244,114,182)",
-    toUrl: (v) => (/^https?:\/\//i.test(v) ? v : v ? `https://instagram.com/${v.replace(/^@/, "")}` : null),
+    toUrl: (v) => socialToUrl("instagram", v),
   },
   {
     key: "twitter",
     label: "X",
     Icon: Twitter,
     tint: "rgb(226,232,240)",
-    toUrl: (v) => (/^https?:\/\//i.test(v) ? v : v ? `https://x.com/${v.replace(/^@/, "")}` : null),
+    toUrl: (v) => socialToUrl("twitter", v),
   },
   {
     key: "website",
     label: "Website",
     Icon: Globe,
     tint: "rgb(125,211,252)",
-    toUrl: (v) => {
-      if (!v) return null;
-      return /^https?:\/\//i.test(v) ? v : `https://${v}`;
-    },
+    toUrl: (v) => socialToUrl("website", v),
   },
 ];
 
