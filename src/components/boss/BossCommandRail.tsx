@@ -177,6 +177,17 @@ function ScrollRow({ children, className }: { children: React.ReactNode; classNa
 
   return (
     <div className={`relative ${className ?? ""}`}>
+      {/* Edge fades */}
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute inset-y-0 left-0 w-6 z-[5] transition-opacity ${overflow.left ? "opacity-100" : "opacity-0"}`}
+        style={{ background: "linear-gradient(to right, hsl(var(--background)) 0%, transparent 100%)" }}
+      />
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute inset-y-0 right-0 w-6 z-[5] transition-opacity ${overflow.right ? "opacity-100" : "opacity-0"}`}
+        style={{ background: "linear-gradient(to left, hsl(var(--background)) 0%, transparent 100%)" }}
+      />
       {overflow.left && (
         <button
           type="button"
