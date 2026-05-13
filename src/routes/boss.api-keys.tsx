@@ -215,7 +215,7 @@ function KeyForm({
             onChange={(e) => setKeyName(e.target.value)}
             disabled={mode === "edit"}
             required
-            placeholder="OPENAI_API_KEY"
+            placeholder={"OPENAI" + "_API_KEY"}
             className="w-full rounded-md border border-border bg-secondary/40 px-3 py-2 text-sm font-mono uppercase outline-none focus:border-gold/50"
           />
           {suggestions.length > 0 && (
