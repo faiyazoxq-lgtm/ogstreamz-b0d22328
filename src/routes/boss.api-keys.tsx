@@ -222,7 +222,7 @@ function KeyForm({
             onChange={(e) => setKeyName(e.target.value)}
             disabled={mode === "edit"}
             required
-            placeholder={["OPENAI", "API", "KEY"].join(String.fromCharCode(95))}
+            placeholder={placeholder}
             className="w-full rounded-md border border-border bg-secondary/40 px-3 py-2 text-sm font-mono uppercase outline-none focus:border-gold/50"
           />
           {suggestions.length > 0 && (
@@ -246,7 +246,7 @@ function KeyForm({
             onChange={(e) => setGroup(e.target.value)}
             className="w-full rounded-md border border-border bg-secondary/40 px-3 py-2 text-sm outline-none focus:border-gold/50"
           >
-            {PRESET_GROUPS.map((g) => (
+            {presets.map((g) => (
               <option key={g.id} value={g.id}>{g.label}</option>
             ))}
           </select>
