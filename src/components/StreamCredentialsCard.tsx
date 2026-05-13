@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Tv, Copy, Check, Eye, EyeOff, Loader2 } from "lucide-react";
 import { getMyStreamCredentials } from "@/lib/stream-credentials.functions";
+import { useAuth } from "@/hooks/use-auth";
+import { OgPassBadge } from "@/components/OgPassBadge";
 
 export function StreamCredentialsCard() {
+  const { profile } = useAuth();
   const fetchCreds = useServerFn(getMyStreamCredentials);
   const [loading, setLoading] = useState(true);
   const [creds, setCreds] = useState<{
@@ -64,9 +67,12 @@ export function StreamCredentialsCard() {
             Your Stream Profile
           </h3>
         </div>
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-          Expires {exp}
-        </span>
+        <div className="flex items-center gap-2">
+          <OgPassBadge number={(profile as any)?.og_pass_no} size="sm" />
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Expires {exp}
+          </span>
+        </div>
       </div>
 
       <div className="grid sm:grid-cols-2 gap-2">
