@@ -90,6 +90,10 @@ export async function requireUsageAccess({ location }: GuardCtx) {
     // Marketing-only members → send to profile so they can link a stream.
     throw redirect({ to: "/profile", search: { upgrade: "stream" } as never });
   }
+
+  // Boss/admin bypass Telegram link requirement so they can always manage.
+  if (rank === "boss" || !!roleRow) return;
+  await enforceTelegramLink(uid, location);
 }
 
 /**
@@ -129,6 +133,10 @@ export async function requireVip({ location }: GuardCtx) {
   if (!isVip) {
     throw redirect({ to: "/vip", search: { upgrade: "vip" } as never });
   }
+
+  // Boss/admin bypass Telegram link requirement so they can always manage.
+  if (rank === "boss" || !!adminRow) return;
+  await enforceTelegramLink(uid, location);
 }
 
 /**
@@ -281,6 +289,25 @@ export async function requireTelegramLink({ location }: GuardCtx) {
 
   if (!link?.chat_id) {
     try { sessionStorage.setItem("post_telegram_redirect", location.href || "/"); } catch { /* ignore */ }
+    throw redirect({ to: "/connect-telegram" });
+  }
+}
+
+/**
+ * Internal helper: ensure the given user has a Telegram chat_id linked.
+ * Used to compose the Telegram link requirement on top of VIP/Streams
+ * paid-tier guards. Throws a redirect to /connect-telegram on failure.
+ */
+async function enforceTelegramLink(uid: string, location: GuardCtx["location"]) {
+  const { data: link } = await supabase
+    .from("telegram_user_links")
+    .select("chat_id")
+    .eq("user_id", uid)
+    .maybeSingle();
+  if (!link?.chat_id) {
+    try {
+      sessionStorage.setItem("post_telegram_redirect", location.href || "/");
+    } catch { /* ignore */ }
     throw redirect({ to: "/connect-telegram" });
   }
 }
