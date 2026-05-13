@@ -23,6 +23,7 @@ export type RosterRow = {
   og_pass_no: number | null;
   member_tier: string | null;
   contact_card: Record<string, any> | null;
+  avatar_url: string | null;
 };
 
 export const listRoster = createServerFn({ method: "GET" })
