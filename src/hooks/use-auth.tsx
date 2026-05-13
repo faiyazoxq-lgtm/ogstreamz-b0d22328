@@ -26,6 +26,7 @@ type Profile = {
   stream_boss_verified_at?: string | null;
   stream_auto_checked_at?: string | null;
   og_pass_no?: number | null;
+  member_tier?: string | null;
 };
 
 type AuthCtx = {
@@ -59,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (s?.access_token) await promoteBossIfNeeded({ data: { accessToken: s.access_token } });
     } catch { /* non-fatal */ }
     const [{ data: prof }, { data: roles }] = await Promise.all([
-      supabase.from("profiles").select("id,email,status,credits,rank,feature_flags,free_clicks_used,display_name,banned,stream_status,stream_expires_at,stream_boss_verified_at,stream_auto_checked_at,og_pass_no").eq("id", uid).maybeSingle(),
+      supabase.from("profiles").select("id,email,status,credits,rank,feature_flags,free_clicks_used,display_name,banned,stream_status,stream_expires_at,stream_boss_verified_at,stream_auto_checked_at,og_pass_no,member_tier").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
     setProfile(prof as Profile | null);
