@@ -94,6 +94,16 @@ function VipPage() {
   const [loading, setLoading] = useState(false);
   const checkoutFn = useServerFn(createCheckoutSession);
 
+  const SECTION_NAV = [
+    { id: "perks", label: "Perks" },
+    { id: "pricing", label: "Pricing" },
+    { id: "compare", label: "Compare" },
+    { id: "social", label: "Social" },
+    { id: "faq", label: "FAQ" },
+  ];
+  const scrollToId = (id: string) =>
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+
   // Shared subscription view (env-filtered + realtime). Mirrors /dashboard.
   const { sub: activeSub, planLabel, renewalExact, timezone } = useSubscription({
     userId: user?.id ?? null,
@@ -153,6 +163,39 @@ function VipPage() {
 
       {/* Members area — only shown when the visitor is already VIP. */}
       <VipMembersDashboard />
+
+      {/* STICKY IN-PAGE NAV */}
+      <nav
+        aria-label="VIP page sections"
+        className="sticky top-0 z-30 backdrop-blur-xl bg-black/70 border-b border-cyan-300/15"
+      >
+        <div className="max-w-6xl mx-auto px-2 sm:px-6">
+          <ul className="flex items-center gap-1 overflow-x-auto no-scrollbar py-2">
+            {SECTION_NAV.map((s) => (
+              <li key={s.id} className="shrink-0">
+                <button
+                  type="button"
+                  onClick={() => scrollToId(s.id)}
+                  className="rounded-full border border-cyan-300/20 bg-white/[0.03] hover:border-cyan-300/50 hover:bg-cyan-400/10 px-3 py-1.5 text-[10px] sm:text-[11px] uppercase tracking-[0.25em] font-bold text-cyan-100/80 hover:text-cyan-50 transition"
+                >
+                  {s.label}
+                </button>
+              </li>
+            ))}
+            {!isVip && (
+              <li className="ml-auto shrink-0 pl-2">
+                <button
+                  type="button"
+                  onClick={scrollToPricing}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-black uppercase tracking-[0.25em] px-3 py-1.5 text-[10px] sm:text-[11px]"
+                >
+                  <Crown className="h-3 w-3" /> Get VIP
+                </button>
+              </li>
+            )}
+          </ul>
+        </div>
+      </nav>
 
       {/* STATUS BANNER — clear, prominent state of the user's VIP */}
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-6">
@@ -280,7 +323,7 @@ function VipPage() {
 
       {/* PERKS GRID */}
       {/* ANNOUNCEMENT — official 0G VIP Pass to the Vault */}
-      <section className="relative max-w-4xl mx-auto px-4 sm:px-6 pt-4 pb-2">
+      <section className="relative max-w-4xl mx-auto px-4 sm:px-6 pt-6 pb-4 scroll-mt-20">
         <div className="relative overflow-hidden rounded-3xl border border-amber-300/40 bg-gradient-to-br from-amber-500/15 via-cyan-500/10 to-transparent p-6 sm:p-8 shadow-[0_0_80px_-15px_rgba(255,200,80,0.45)]">
           <div className="pointer-events-none absolute -top-20 -right-20 h-60 w-60 rounded-full bg-amber-400/20 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-cyan-400/20 blur-3xl" />
@@ -344,10 +387,10 @@ function VipPage() {
         </div>
       </section>
 
-      <section className="relative max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      <section id="perks" className="relative max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16 scroll-mt-20">
         <div className="text-center mb-10">
           <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-300/80 font-bold">What you get</p>
-          <h2 className="mt-2 text-3xl sm:text-4xl font-black text-white">The full vault. No gimmicks.</h2>
+          <h2 className="mt-2 text-2xl sm:text-3xl md:text-4xl font-black text-white">The full vault. No gimmicks.</h2>
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -368,23 +411,17 @@ function VipPage() {
       </section>
 
       {/* PRICING */}
-      <section id="pricing" className="relative max-w-4xl mx-auto px-4 sm:px-6 py-16 scroll-mt-20">
+      <section id="pricing" className="relative max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 scroll-mt-20">
         <div className="text-center mb-8">
           <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-300/80 font-bold">Pick your pass</p>
-          <h2 className="mt-2 text-3xl sm:text-4xl font-black text-white">One sub. Every portal.</h2>
+          <h2 className="mt-2 text-2xl sm:text-3xl md:text-4xl font-black text-white">One sub. Every portal.</h2>
           <p className="mt-2 text-sm text-cyan-100/70">Or grab the £20 (20 🪙) lifetime <Link to="/store" className="underline text-amber-300">Real 0G one-off</Link>.</p>
         </div>
 
         {isVip ? (
-          <div className="rounded-3xl border border-amber-400/40 bg-gradient-to-br from-amber-500/15 to-amber-600/5 p-8 text-center shadow-[0_0_80px_-10px_rgba(255,200,80,0.5)]">
-            <Crown className="h-12 w-12 mx-auto mb-3 text-amber-300" />
-            <p className="text-xl font-black uppercase tracking-[0.25em] text-amber-200">You're VIP</p>
-            <p className="mt-1 text-sm text-amber-100/80">Every portal is unlocked for your account. Wear the crown.</p>
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-              <Link to="/dashboard"><Button className="bg-amber-400 text-black hover:bg-amber-300 font-bold uppercase tracking-[0.2em]">Go to dashboard</Button></Link>
-              <Link to="/vault-login"><Button variant="outline" className="border-cyan-300/40 text-cyan-100 hover:bg-cyan-400/10">Open Vault</Button></Link>
-            </div>
-          </div>
+          <p className="text-center text-xs uppercase tracking-[0.3em] text-amber-200/80">
+            You're already VIP — your status is shown at the top of the page.
+          </p>
         ) : !clientSecret ? (
           <>
             <div className="grid sm:grid-cols-2 gap-4 mb-8">
@@ -436,10 +473,10 @@ function VipPage() {
       </section>
 
       {/* COMPARE */}
-      <section className="relative max-w-5xl mx-auto px-4 sm:px-6 py-16">
+      <section id="compare" className="relative max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16 scroll-mt-20">
         <div className="text-center mb-8">
           <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-300/80 font-bold">Free vs VIP</p>
-          <h2 className="mt-2 text-3xl sm:text-4xl font-black text-white">See the difference.</h2>
+          <h2 className="mt-2 text-2xl sm:text-3xl md:text-4xl font-black text-white">See the difference.</h2>
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-cyan-300/20 bg-gradient-to-br from-[#0b1424] to-[#02060f]">
@@ -463,10 +500,10 @@ function VipPage() {
       </section>
 
       {/* TESTIMONIALS */}
-      <section className="relative max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      <section className="relative max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <div className="text-center mb-10">
           <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-300/80 font-bold">From the syndicate</p>
-          <h2 className="mt-2 text-3xl sm:text-4xl font-black text-white">Real OGs. Real talk.</h2>
+          <h2 className="mt-2 text-2xl sm:text-3xl md:text-4xl font-black text-white">Real OGs. Real talk.</h2>
         </div>
         <div className="grid sm:grid-cols-3 gap-4">
           {TESTIMONIALS.map((t) => (
@@ -483,10 +520,10 @@ function VipPage() {
       </section>
 
       {/* SOCIALS */}
-      <section className="relative max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      <section id="social" className="relative max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16 scroll-mt-20">
         <div className="text-center mb-10">
           <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-300/80 font-bold">Tap in</p>
-          <h2 className="mt-2 text-3xl sm:text-4xl font-black text-white">Follow the syndicate.</h2>
+          <h2 className="mt-2 text-2xl sm:text-3xl md:text-4xl font-black text-white">Follow the syndicate.</h2>
           <p className="mt-2 text-sm text-cyan-100/70">VIPs get drops first on Telegram. Everyone else finds out late.</p>
         </div>
 
@@ -526,10 +563,10 @@ function VipPage() {
       </section>
 
       {/* FAQ */}
-      <section className="relative max-w-3xl mx-auto px-4 sm:px-6 py-16">
+      <section id="faq" className="relative max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16 scroll-mt-20">
         <div className="text-center mb-8">
           <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-300/80 font-bold">FAQ</p>
-          <h2 className="mt-2 text-3xl sm:text-4xl font-black text-white">Straight answers.</h2>
+          <h2 className="mt-2 text-2xl sm:text-3xl md:text-4xl font-black text-white">Straight answers.</h2>
         </div>
         <div className="space-y-3">
           {FAQ.map((f) => (
@@ -545,7 +582,7 @@ function VipPage() {
       </section>
 
       {/* FINAL CTA */}
-      <section className="relative max-w-5xl mx-auto px-4 sm:px-6 py-20">
+      <section className="relative max-w-5xl mx-auto px-4 sm:px-6 py-14 sm:py-20">
         <div className="relative overflow-hidden rounded-3xl border-2 border-cyan-300/40 bg-gradient-to-br from-[#02060f] via-[#040a1a] to-[#02060f] p-8 sm:p-12 text-center shadow-[0_0_120px_-20px_rgba(56,189,248,0.7)]">
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -top-20 left-1/2 -translate-x-1/2 h-60 w-60 rounded-full blur-3xl bg-[radial-gradient(closest-side,rgba(56,189,248,0.6),transparent)]" />
@@ -553,7 +590,7 @@ function VipPage() {
             <Flame className="absolute bottom-4 left-4 h-6 w-6 text-cyan-300/70 animate-pulse" />
           </div>
           <Crown className="relative h-12 w-12 mx-auto text-amber-300" />
-          <h2 className="relative mt-3 font-[Montserrat] font-black text-3xl sm:text-5xl text-cyan-100 [text-shadow:_0_0_40px_rgba(56,189,248,0.55)]">
+          <h2 className="relative mt-3 font-[Montserrat] font-black text-2xl sm:text-4xl md:text-5xl text-cyan-100 [text-shadow:_0_0_40px_rgba(56,189,248,0.55)]">
             Stop renting. Own the vault.
           </h2>
           <p className="relative mt-3 text-sm sm:text-base text-cyan-100/80 max-w-xl mx-auto">
