@@ -27,10 +27,11 @@ export type RosterRow = {
 
 export const listRoster = createServerFn({ method: "GET" })
   .middleware([requireBoss])
-  .inputValidator((d: { search?: string; rank?: string; limit?: number } | undefined) => ({
+  .inputValidator((d: { search?: string; rank?: string; limit?: number; cursor?: string | null } | undefined) => ({
     search: (d?.search ?? "").trim().slice(0, 120),
     rank: d?.rank && RANKS.includes(d.rank as Rank) ? (d.rank as Rank) : "",
-    limit: Math.min(500, Math.max(1, Math.trunc(Number(d?.limit ?? 200)))),
+    limit: Math.min(100, Math.max(1, Math.trunc(Number(d?.limit ?? 25)))),
+    cursor: d?.cursor && typeof d.cursor === "string" ? d.cursor : null,
   }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
@@ -38,12 +39,18 @@ export const listRoster = createServerFn({ method: "GET" })
       .from("profiles")
       .select("id,email,display_name,rank,status,credits,banned,banned_reason,stream_status,stream_verified_at,stream_expires_at,created_at,feature_flags,og_pass_no,member_tier,contact_card")
       .order("created_at", { ascending: false })
-      .limit(data.limit);
+      .order("id", { ascending: false })
+      .limit(data.limit + 1);
     if (data.rank) q = q.eq("rank", data.rank);
     if (data.search) q = q.or(`email.ilike.%${data.search}%,display_name.ilike.%${data.search}%`);
+    if (data.cursor) q = q.lt("created_at", data.cursor);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    return { rows: (rows ?? []) as RosterRow[] };
+    const all = (rows ?? []) as RosterRow[];
+    const hasMore = all.length > data.limit;
+    const pageRows = hasMore ? all.slice(0, data.limit) : all;
+    const nextCursor = hasMore ? pageRows[pageRows.length - 1]?.created_at ?? null : null;
+    return { rows: pageRows, nextCursor, hasMore };
   });
 
 export const setRank = createServerFn({ method: "POST" })
