@@ -286,20 +286,6 @@ export function NavBar() {
         <ul className="flex items-center flex-nowrap gap-1.5 sm:gap-2.5 shrink-0 ml-auto">
           <li className="hidden sm:block">
             <div className="flex items-center gap-2">
-              {user && !isBoss && (
-                <Link
-                  to="/store"
-                  aria-label={`Coin wallet: ${profile?.credits ?? 0} coins — tap to top up`}
-                  title={`Your coin balance — ${profile?.credits ?? 0} 🪙. Tap to top up.`}
-                  className="inline-flex items-center gap-1.5 rounded-full border-2 border-amber-400/60 bg-gradient-to-r from-amber-500/25 via-amber-400/15 to-amber-500/25 hover:from-amber-500/35 hover:to-amber-500/35 px-3 py-1.5 font-bold text-amber-100 shadow-[0_0_22px_-4px_oklch(0.82_0.18_85/0.85)] transition-all outline-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-amber-300 focus-visible:ring-offset-[3px] focus-visible:ring-offset-background"
-                >
-                  <span className="text-base leading-none" aria-hidden>🪙</span>
-                  <AnimatedCredits
-                    value={profile?.credits ?? 0}
-                    className="text-amber-50 text-sm font-[Montserrat] font-black tabular-nums leading-none"
-                  />
-                </Link>
-              )}
               {user && isBoss && (
                 <Link
                   to="/admin"
@@ -312,6 +298,7 @@ export function NavBar() {
                   <span className="text-[11px] font-bold uppercase tracking-[0.15em] leading-none">Creds</span>
                 </Link>
               )}
+              {isBoss && (
               <span
                 className={`hidden lg:inline-flex items-center gap-1 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-[0.2em] ${statusColor}`}
                 title={user ? (isBoss ? "Boss Account" : `Signed in as ${profile?.email ?? user.email}`) : "Not signed in"}
@@ -319,6 +306,7 @@ export function NavBar() {
                 {isBoss || isVip ? <Crown className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
                 {statusLabel}
               </span>
+              )}
               <AccountMenu
                 user={user}
                 profile={profile}
@@ -326,9 +314,11 @@ export function NavBar() {
               />
             </div>
           </li>
-          <li className="block">
-            <MasterSwearToggle />
-          </li>
+          {isBoss && (
+            <li className="block">
+              <MasterSwearToggle />
+            </li>
+          )}
           <li className="sm:hidden">
             <MobileNavDrawer
               hubs={isBoss ? visibleHubs : []}
