@@ -401,6 +401,8 @@ function Index() {
         vault log in
       </button>
       <VaultLoginModal open={vaultOpen} onClose={() => setVaultOpen(false)} />
+      </>
+      )}
     </main>
   );
 }
