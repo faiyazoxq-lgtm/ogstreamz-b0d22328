@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   ListChecks, Plus, Loader2, Check, ArrowUpRight, X, CalendarClock,
-  RefreshCw, Sheet as SheetIcon, Link2,
+  RefreshCw, Sheet as SheetIcon, Link2, DownloadCloud,
 } from "lucide-react";
 import {
   gsheetsStatus, gsheetsConnect, gsheetsPush, gsheetsPull,
