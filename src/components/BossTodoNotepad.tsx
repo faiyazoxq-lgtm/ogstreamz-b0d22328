@@ -448,6 +448,16 @@ export function BossTodoNotepad() {
             >
               {pendingPush > 0 ? `↑ ${pendingPush} pending push` : "in sync"}
             </span>
+            <button
+              type="button"
+              onClick={refreshStatus}
+              disabled={syncState === "busy"}
+              title="Force an immediate pull/push state update"
+              className="ml-auto inline-flex items-center gap-1 rounded-md border border-white/15 bg-white/5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/70 hover:bg-white/10 hover:text-white disabled:opacity-50"
+            >
+              <RefreshCw className={`h-3 w-3 ${syncState === "busy" ? "animate-spin" : ""}`} />
+              Refresh status
+            </button>
           </div>
         )}
 
