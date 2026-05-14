@@ -261,15 +261,33 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
   );
 
   return (
-    <section className="mt-10 rounded-2xl border border-transparent bg-transparent p-6 sm:p-8">
-      <header className="flex items-center gap-3 mb-1 flex-wrap">
-        <Sparkles className="h-5 w-5 text-[oklch(0.72_0.22_245)]" />
-        <h2 className="font-[Montserrat] font-black text-xl text-foreground">{copy.title}</h2>
-        <span className="ml-auto inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.3em] text-muted-foreground border border-border rounded-full px-2 py-1">
-          <Coins className="h-3 w-3" /> 1 🪙
-        </span>
+    <section
+      aria-labelledby={`spawn-${kind}-title`}
+      className="relative mt-10 rounded-2xl border border-border/70 bg-gradient-to-b from-background/80 via-background/60 to-background/30 p-5 sm:p-7 shadow-[0_30px_80px_-40px_oklch(0.72_0.22_245/0.5)] overflow-hidden"
+    >
+      {/* Decorative glow — purely visual */}
+      <div aria-hidden="true" className="pointer-events-none absolute -top-24 -right-24 h-56 w-56 rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245/0.18),transparent)]" />
+      <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -left-24 h-56 w-56 rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.78_0.18_85/0.12),transparent)]" />
+
+      <header className="relative mb-5 flex flex-wrap items-start gap-3">
+        <div className="h-10 w-10 shrink-0 rounded-xl border border-[oklch(0.72_0.22_245/0.45)] bg-[oklch(0.72_0.22_245/0.10)] inline-flex items-center justify-center">
+          <Sparkles className="h-5 w-5 text-[oklch(0.72_0.22_245)]" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] uppercase tracking-[0.32em] text-muted-foreground font-bold">
+            {kind} hub · portal wizard
+          </p>
+          <h2 id={`spawn-${kind}-title`} className="font-[Montserrat] font-black text-xl sm:text-2xl text-foreground leading-tight">
+            {copy.title}
+          </h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">{copy.subtitle}. Public on the home grid.</p>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.28em] text-foreground/80 border border-amber-300/40 bg-amber-300/10 rounded-full px-2.5 py-1 font-bold">
+            <Coins className="h-3 w-3 text-amber-300" /> 1 🪙
+          </span>
+        </div>
       </header>
-      <p className="text-xs text-muted-foreground mb-4">{copy.subtitle}. Public on the home grid.</p>
 
       {!user ? (
         <div className="relative rounded-xl border border-amber-300/40 bg-gradient-to-br from-amber-300/10 via-background/60 to-[oklch(0.72_0.22_245/0.12)] p-5 sm:p-6 overflow-hidden">
@@ -359,7 +377,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
         </div>
       ) : (
         <>
-          {/* Wizard stepper */}
+          {/* Wizard stepper — numbered nodes + connector + progress bar */}
           {(() => {
             const STEPS = [
               { key: 0, label: "Name",     Icon: Type },
@@ -368,45 +386,66 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
               { key: 3, label: "Language", Icon: Languages },
               { key: 4, label: "Review",   Icon: Sparkles },
             ] as const;
+            const pct = Math.round((step / (STEPS.length - 1)) * 100);
+            const current = STEPS[step];
             return (
-              <ol className="flex items-center gap-1.5 mb-5 overflow-x-auto" aria-label="Portal wizard progress">
-                {STEPS.map((s, i) => {
-                  const done = step > s.key;
-                  const active = step === s.key;
-                  const Icon = s.Icon;
-                  return (
-                    <li key={s.key} className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => !loading && setStep(s.key)}
-                        aria-current={active ? "step" : undefined}
-                        className={[
-                          "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] font-bold transition",
-                          active
-                            ? "border-amber-300/70 bg-amber-300/15 text-foreground"
-                            : done
-                            ? "border-[oklch(0.72_0.22_245/0.5)] bg-[oklch(0.72_0.22_245/0.08)] text-foreground"
-                            : "border-border text-muted-foreground hover:border-foreground/40",
-                        ].join(" ")}
-                      >
-                        <span className="inline-flex h-4 w-4 items-center justify-center">
-                          {done ? <Check className="h-3 w-3" /> : <Icon className="h-3 w-3" />}
-                        </span>
-                        <span className="hidden sm:inline">{s.label}</span>
-                        <span className="sm:hidden">{s.key + 1}</span>
-                      </button>
-                      {i < STEPS.length - 1 && (
-                        <span aria-hidden="true" className={`h-px w-4 ${done ? "bg-[oklch(0.72_0.22_245/0.6)]" : "bg-border"}`} />
-                      )}
-                    </li>
-                  );
-                })}
-              </ol>
+              <div className="mb-5" aria-label="Portal wizard progress">
+                <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-2">
+                  <span className="font-bold">Step {step + 1} of {STEPS.length}</span>
+                  <span className="text-foreground/80">{current.label}</span>
+                </div>
+                <div
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={pct}
+                  className="h-1 w-full rounded-full bg-border overflow-hidden"
+                >
+                  <div
+                    className="h-full bg-gradient-to-r from-[oklch(0.72_0.22_245)] to-amber-300 transition-[width] duration-300"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <ol className="mt-3 grid grid-cols-5 gap-1.5">
+                  {STEPS.map((s) => {
+                    const done = step > s.key;
+                    const active = step === s.key;
+                    const Icon = s.Icon;
+                    return (
+                      <li key={s.key}>
+                        <button
+                          type="button"
+                          onClick={() => !loading && setStep(s.key)}
+                          aria-current={active ? "step" : undefined}
+                          aria-label={`Go to step ${s.key + 1}: ${s.label}`}
+                          className="group flex w-full flex-col items-center gap-1.5 focus:outline-none"
+                        >
+                          <span
+                            className={[
+                              "inline-flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-bold transition-all",
+                              active
+                                ? "border-amber-300/70 bg-amber-300/15 text-foreground shadow-[0_0_0_4px_oklch(0.78_0.18_85/0.10)]"
+                                : done
+                                ? "border-[oklch(0.72_0.22_245/0.55)] bg-[oklch(0.72_0.22_245/0.12)] text-foreground"
+                                : "border-border text-muted-foreground group-hover:border-foreground/40",
+                            ].join(" ")}
+                          >
+                            {done ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
+                          </span>
+                          <span className={`text-[9px] uppercase tracking-[0.22em] truncate w-full text-center ${active ? "text-foreground font-bold" : "text-muted-foreground"}`}>
+                            {s.label}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
             );
           })()}
 
           {/* Step content */}
-          <div className="rounded-xl border border-border bg-background/40 p-4 sm:p-5 min-h-[180px]">
+          <div className="rounded-xl border border-border/70 bg-background/60 backdrop-blur-sm p-5 sm:p-6 min-h-[200px]">
             {step === 0 && (
               <div>
                 <label htmlFor="wiz-name" className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
@@ -586,17 +625,17 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
           </div>
 
           {/* Wizard navigation */}
-          <div className="mt-4 flex items-center justify-between gap-3 flex-wrap">
+          <div className="mt-4 flex items-center justify-between gap-3">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={() => setStep((s) => (Math.max(0, s - 1) as 0 | 1 | 2 | 3 | 4))}
               disabled={step === 0 || loading}
-              className="h-10"
+              className="h-10 text-[11px] uppercase tracking-[0.22em] font-bold disabled:opacity-30"
             >
               <ArrowLeft className="h-4 w-4 mr-1.5" /> Back
             </Button>
-            {step < 4 ? (
+            {step < 4 && (
               <Button
                 type="button"
                 onClick={() => {
@@ -606,11 +645,11 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                   setStep((s) => (Math.min(4, s + 1) as 0 | 1 | 2 | 3 | 4));
                 }}
                 disabled={loading}
-                className="h-10 ml-auto"
+                className="h-10 px-5 text-[11px] uppercase tracking-[0.22em] font-bold bg-foreground/10 hover:bg-foreground/20 text-foreground border border-border"
               >
-                Next <ArrowRight className="h-4 w-4 ml-1.5" />
+                {step === 3 ? "Review" : "Next"} <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
-            ) : null}
+            )}
           </div>
 
           {step === 4 && (
