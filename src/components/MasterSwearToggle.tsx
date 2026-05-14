@@ -45,7 +45,7 @@ export function MasterSwearToggle({ compact: _compact = false }: { compact?: boo
         /* ignore */
       }
       setGuestSwearing(next);
-      toast.success(next ? "Swearing Agent: ON 🖕" : "Safe Mode: ON 💚");
+      toast.success(next ? "OG-MODE (NSFW): ON 🖕" : "Family-Friendly: ON 💚");
       return;
     }
 
@@ -58,7 +58,7 @@ export function MasterSwearToggle({ compact: _compact = false }: { compact?: boo
         .eq("id", user.id);
       if (error) throw new Error(error.message);
       await refresh();
-      toast.success(next ? "Swearing Agent: ON 🖕" : "Safe Mode: ON 💚");
+      toast.success(next ? "OG-MODE (NSFW): ON 🖕" : "Family-Friendly: ON 💚");
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to toggle swearing");
     } finally {
@@ -72,8 +72,8 @@ export function MasterSwearToggle({ compact: _compact = false }: { compact?: boo
       onClick={toggle}
       disabled={busy}
       aria-pressed={swearing}
-      aria-label={swearing ? "Swearing Agent on — tap for Safe Mode" : "Safe Mode on — tap to enable Swearing Agent"}
-      title={swearing ? "Swearing Agent ON — tap for Safe Mode" : "Safe Mode ON — tap to enable Swearing Agent"}
+      aria-label={swearing ? "OG-MODE (NSFW) on — tap for Family-Friendly" : "Family-Friendly on — tap to enable OG-MODE (NSFW)"}
+      title={swearing ? "OG-MODE (NSFW) ON — tap for Family-Friendly" : "Family-Friendly ON — tap to enable OG-MODE (NSFW)"}
       className={[
         "inline-flex h-8 w-8 items-center justify-center rounded-full border transition-all select-none",
         "active:scale-95 disabled:opacity-60",
