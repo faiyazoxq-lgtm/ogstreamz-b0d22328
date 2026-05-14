@@ -28,6 +28,9 @@ export function validateReturnUrl(input: unknown): string {
   const ok =
     ALLOWED_RETURN_ORIGINS.includes(origin) ||
     /\.lovable\.app$/i.test(url.hostname) ||
+    /\.lovable\.dev$/i.test(url.hostname) ||
+    /\.lovableproject\.com$/i.test(url.hostname) ||
+    /\.sandbox\.lovable\.dev$/i.test(url.hostname) ||
     url.hostname === "localhost" ||
     url.hostname === "127.0.0.1";
   if (!ok) throw new Error("Invalid returnUrl: origin not allowed");
