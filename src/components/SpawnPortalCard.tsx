@@ -263,7 +263,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
   return (
     <section
       aria-labelledby={`spawn-${kind}-title`}
-      className="relative mt-10 rounded-2xl border border-border/70 bg-gradient-to-b from-background/80 via-background/60 to-background/30 p-5 sm:p-7 shadow-[0_30px_80px_-40px_oklch(0.72_0.22_245/0.5)] overflow-hidden"
+      className="relative mt-10 rounded-2xl border border-border/70 bg-gradient-to-b from-background/80 via-background/60 to-background/30 p-4 sm:p-7 shadow-[0_30px_80px_-40px_oklch(0.72_0.22_245/0.5)] overflow-hidden"
     >
       {/* Decorative glow — purely visual */}
       <div aria-hidden="true" className="pointer-events-none absolute -top-24 -right-24 h-56 w-56 rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245/0.18),transparent)]" />
@@ -406,23 +406,23 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                     style={{ width: `${pct}%` }}
                   />
                 </div>
-                <ol className="mt-3 grid grid-cols-5 gap-1.5">
+                <ol className="mt-3 grid grid-cols-5 gap-1 sm:gap-1.5 min-w-0">
                   {STEPS.map((s) => {
                     const done = step > s.key;
                     const active = step === s.key;
                     const Icon = s.Icon;
                     return (
-                      <li key={s.key}>
+                      <li key={s.key} className="min-w-0">
                         <button
                           type="button"
                           onClick={() => !loading && setStep(s.key)}
                           aria-current={active ? "step" : undefined}
                           aria-label={`Go to step ${s.key + 1}: ${s.label}`}
-                          className="group flex w-full flex-col items-center gap-1.5 focus:outline-none"
+                          className="group flex w-full min-w-0 flex-col items-center gap-1 sm:gap-1.5 focus:outline-none"
                         >
                           <span
                             className={[
-                              "inline-flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-bold transition-all",
+                              "inline-flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full border text-[11px] font-bold transition-all shrink-0",
                               active
                                 ? "border-amber-300/70 bg-amber-300/15 text-foreground shadow-[0_0_0_4px_oklch(0.78_0.18_85/0.10)]"
                                 : done
@@ -432,7 +432,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                           >
                             {done ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
                           </span>
-                          <span className={`text-[9px] uppercase tracking-[0.22em] truncate w-full text-center ${active ? "text-foreground font-bold" : "text-muted-foreground"}`}>
+                          <span className={`hidden sm:block text-[9px] uppercase tracking-[0.22em] truncate w-full text-center ${active ? "text-foreground font-bold" : "text-muted-foreground"}`}>
                             {s.label}
                           </span>
                         </button>
@@ -445,7 +445,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
           })()}
 
           {/* Step content */}
-          <div className="rounded-xl border border-border/70 bg-background/60 backdrop-blur-sm p-5 sm:p-6 min-h-[200px]">
+          <div className="rounded-xl border border-border/70 bg-background/60 backdrop-blur-sm p-4 sm:p-6 min-h-[200px]">
             {step === 0 && (
               <div>
                 <label htmlFor="wiz-name" className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
@@ -625,7 +625,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
           </div>
 
           {/* Wizard navigation */}
-          <div className="mt-4 flex items-center justify-between gap-3">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 sm:gap-3">
             <Button
               type="button"
               variant="ghost"
