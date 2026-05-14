@@ -1,10 +1,14 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, ClipboardList, ArrowLeft, Search, ExternalLink, Eye, Crown } from "lucide-react";
 import { requireMember } from "@/lib/route-guards";
 
 type HubKey = "music" | "jokes" | "trade" | "news" | "forms" | "battles" | "tools";
+type SortKey = "newest" | "views" | "vip";
+const SORT_KEYS: SortKey[] = ["newest", "views", "vip"];
 
 type HubMeta = {
   slug: HubKey;
@@ -45,6 +49,12 @@ export const Route = createFileRoute("/vip/portals/$hub")({
     if (!(ctx.params.hub in HUBS)) throw notFound();
     await requireMember(ctx as any);
   },
+  validateSearch: (search: Record<string, unknown>) => {
+    const rawSort = typeof search.sort === "string" ? search.sort : "newest";
+    const sort: SortKey = (SORT_KEYS as string[]).includes(rawSort) ? (rawSort as SortKey) : "newest";
+    const q = typeof search.q === "string" ? search.q.slice(0, 200) : "";
+    return { sort, q };
+  },
   head: ({ params }) => {
     const meta = HUBS[params.hub as HubKey];
     const title = meta ? `${meta.hub} Portals — VIP` : "VIP Portals";
@@ -77,11 +87,22 @@ export const Route = createFileRoute("/vip/portals/$hub")({
 
 function VipPortalsByHub() {
   const { hub } = Route.useParams();
+  const { sort, q } = Route.useSearch();
+  const navigate = useNavigate({ from: "/vip/portals/$hub" });
   const meta = HUBS[hub as HubKey];
   const [items, setItems] = useState<Item[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [q, setQ] = useState("");
-  const [sort, setSort] = useState<"newest" | "views" | "vip">("newest");
+
+  const setQ = (next: string) =>
+    navigate({
+      search: (prev) => ({ ...prev, q: next || undefined }),
+      replace: true,
+    });
+  const setSort = (next: SortKey) =>
+    navigate({
+      search: (prev) => ({ ...prev, sort: next === "newest" ? undefined : next }),
+      replace: true,
+    });
 
   useEffect(() => {
     let cancelled = false;
