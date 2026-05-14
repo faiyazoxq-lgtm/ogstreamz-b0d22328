@@ -13,6 +13,7 @@ import { clarifyAppeal, generateAppeal, type AppealInput } from "@/lib/appeal.fu
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
 import { requireBossHub } from "@/lib/route-guards";
+import { OGBotDraftPanel } from "@/components/og-bot/OGBotDraftPanel";
 
 export const Route = createFileRoute("/appealhub")({
   beforeLoad: requireBossHub,
@@ -301,6 +302,24 @@ function AppealHubPage() {
 
             <div>
               <Label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">What happened? (your facts)</Label>
+              <div className="mb-2">
+                <OGBotDraftPanel
+                  surface="appeal-draft"
+                  kind="appeal"
+                  contextHint="User is on /appealhub drafting a penalty appeal."
+                  placeholder="Tell me what happened — dates, who, where, evidence."
+                  fieldHints={[
+                    { key: "facts", description: "Detailed factual account of what happened", max: 2000 },
+                    { key: "issuer", description: "Issuing authority (optional)", max: 160 },
+                    { key: "noticeRef", description: "Notice reference (optional)", max: 80 },
+                  ]}
+                  onApply={(f) => {
+                    if (f.facts) set("facts", f.facts);
+                    if (f.issuer) set("issuer", f.issuer);
+                    if (f.noticeRef) set("noticeRef", f.noticeRef);
+                  }}
+                />
+              </div>
               <Textarea
                 value={form.facts}
                 onChange={(e) => set("facts", e.target.value)}
