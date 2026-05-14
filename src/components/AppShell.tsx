@@ -299,7 +299,14 @@ function DesktopSidebar({
         {portals.length > 0 && (
           <SidebarSection title="Your Portals" icon={DoorOpen} items={portals} collapsed={collapsed} pathname={pathname} />
         )}
-        <SidebarSection title={isBoss ? "Manage Store" : "Store"} icon={Store} items={STORE} collapsed={collapsed} pathname={pathname} defaultOpen={false} />
+        <SidebarSection
+          title={isBoss ? "Manage Store" : "Store"}
+          icon={Store}
+          items={isBoss ? STORE.filter((s) => s.to !== "/store") : STORE}
+          collapsed={collapsed}
+          pathname={pathname}
+          defaultOpen={false}
+        />
         <SidebarSection title="Account" icon={UserCircle} items={ACCOUNT} collapsed={collapsed} pathname={pathname} defaultOpen={false} />
         {isBoss && (
           <SidebarSection
@@ -489,7 +496,9 @@ function MobileHeader({
             <section>
               <p className="px-1.5 mb-2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">{isBoss ? "Manage Store" : "Store"}</p>
               <ul className="space-y-1.5">
-                {STORE.map((s) => <li key={s.to}><Row to={s.to} label={s.label} Icon={s.icon} desc={s.desc} /></li>)}
+                {(isBoss ? STORE.filter((s) => s.to !== "/store") : STORE).map((s) => (
+                  <li key={s.to}><Row to={s.to} label={s.label} Icon={s.icon} desc={s.desc} /></li>
+                ))}
               </ul>
             </section>
 
