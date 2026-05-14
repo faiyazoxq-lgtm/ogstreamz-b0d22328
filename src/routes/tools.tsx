@@ -13,6 +13,7 @@ import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
 import { NonVipFormGate } from "@/components/NonVipFormGate";
 import { PortalHeader, PortalStyleLine, mergeStyle } from "@/components/PortalHeader";
+import { OGBotDraftPanel } from "@/components/og-bot/OGBotDraftPanel";
 
 const TOOLS_STYLE = "Concise, decisive, OG-tone explanation with one actionable next step.";
 
@@ -133,6 +134,24 @@ function ToolPromptBuilder() {
 
       <NonVipFormGate label="Spawn Tool">
       <section className="rounded-3xl border border-transparent bg-transparent p-4 sm:p-6">
+        <div className="mb-5">
+          <OGBotDraftPanel
+            surface="tool-spawn"
+            kind="tools"
+            contextHint="User is on /tools spawning a micro-tool."
+            placeholder="Describe the tool — what it solves, who for, the vibe."
+            fieldHints={[
+              { key: "name", description: "Tool name, max 80 chars", max: 80 },
+              { key: "description", description: "Logic/brief explaining what the tool does", max: 500 },
+              { key: "vibe", description: "Visual mood, e.g. 'cockpit dashboard, amber HUD'", max: 120 },
+            ]}
+            onApply={(f) => {
+              if (f.name) setName(f.name);
+              if (f.description) setDescription(f.description);
+              if (f.vibe) setVibe(f.vibe);
+            }}
+          />
+        </div>
         <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Tool Name</label>
         <Input
           value={name}
