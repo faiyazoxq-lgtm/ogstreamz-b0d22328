@@ -3,6 +3,63 @@ import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { validateReturnUrl } from "@/lib/return-url";
 
+/** Promo config for the one-time first-order discount. */
+export const FIRST_ORDER_DISCOUNT = {
+  couponId: "first30",
+  percentOff: 30,
+  label: "FIRST-ORDER 30% OFF",
+} as const;
+
+/**
+ * True iff the authenticated user has never completed a paid checkout on this
+ * account (no credit packs, no subscriptions, no VIP unlocks). Used to gate
+ * the first-order discount banner client-side AND re-validated server-side
+ * before any coupon is attached.
+ */
+async function isFirstTimeBuyer(supabase: any, userId: string): Promise<boolean> {
+  const tables = ["credit_purchases", "subscriptions", "portal_unlocks", "track_purchases"];
+  for (const t of tables) {
+    const { data, error } = await supabase.from(t).select("id").eq("user_id", userId).limit(1).maybeSingle();
+    if (error) {
+      // If a table is missing or RLS blocks, fail closed — no discount.
+      console.warn(`[firstOrder] check ${t} failed`, error.message);
+      return false;
+    }
+    if (data) return false;
+  }
+  return true;
+}
+
+export const getFirstOrderEligibility = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const eligible = await isFirstTimeBuyer(supabase, userId);
+    return {
+      eligible,
+      percentOff: FIRST_ORDER_DISCOUNT.percentOff,
+      label: FIRST_ORDER_DISCOUNT.label,
+    };
+  });
+
+/**
+ * Idempotently ensure the Stripe coupon used for the first-order discount
+ * exists in the target environment. Stripe's `coupons.retrieve` 404s when
+ * the coupon is missing, so we catch and create it on demand.
+ */
+async function ensureFirstOrderCoupon(stripe: ReturnType<typeof createStripeClient>) {
+  try {
+    return await stripe.coupons.retrieve(FIRST_ORDER_DISCOUNT.couponId);
+  } catch {
+    return await stripe.coupons.create({
+      id: FIRST_ORDER_DISCOUNT.couponId,
+      percent_off: FIRST_ORDER_DISCOUNT.percentOff,
+      duration: "once",
+      name: "First-Order 30% Off",
+    });
+  }
+}
+
 async function resolveOrCreateCustomer(
   stripe: ReturnType<typeof createStripeClient>,
   options: { email?: string; userId?: string },
@@ -46,6 +103,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       userId?: string;
       returnUrl: string;
       environment: StripeEnv;
+      applyFirstOrderDiscount?: boolean;
     }) => {
       if (!/^[a-zA-Z0-9_-]+$/.test(data.priceId)) throw new Error("Invalid priceId");
       return { ...data, returnUrl: validateReturnUrl(data.returnUrl) };
@@ -70,6 +128,21 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       userId,
     });
 
+    // Re-verify first-order eligibility on the server. The client flag is
+    // a hint only — the truth lives in our purchase tables. The discount
+    // is one-time-only per account: as soon as ANY purchase row exists,
+    // eligibility flips to false on the next checkout creation.
+    let discounts: { coupon: string }[] | undefined;
+    let firstOrderApplied = false;
+    if (data.applyFirstOrderDiscount && !isRecurring) {
+      const eligible = await isFirstTimeBuyer(context.supabase, userId);
+      if (eligible) {
+        await ensureFirstOrderCoupon(stripe);
+        discounts = [{ coupon: FIRST_ORDER_DISCOUNT.couponId }];
+        firstOrderApplied = true;
+      }
+    }
+
     const session = await stripe.checkout.sessions.create({
       line_items: [{ price: stripePrice.id, quantity: data.quantity || 1 }],
       mode: isRecurring ? "subscription" : "payment",
@@ -77,7 +150,12 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       return_url: data.returnUrl,
       customer: customerId,
       managed_payments: { enabled: true },
-      metadata: { userId, priceId: data.priceId },
+      metadata: {
+        userId,
+        priceId: data.priceId,
+        ...(firstOrderApplied && { firstOrderDiscount: "true" }),
+      },
+      ...(discounts && { discounts }),
       ...(isRecurring && {
         subscription_data: {
           metadata: { userId, priceId: data.priceId },
