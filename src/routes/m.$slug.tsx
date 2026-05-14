@@ -326,6 +326,39 @@ function MusicPortalPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackJobId, trackStatus]);
 
+  // Hydrate from ?job=<id> when arriving from "My Generations" so the studio
+  // reopens with the same track context (audio versions, unlock state).
+  useEffect(() => {
+    if (!jobParam) return;
+    if (trackJobId === jobParam) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const j = await getJobFn({ data: { jobId: jobParam } });
+        if (cancelled) return;
+        setTrackJobId(jobParam);
+        if (j.audio_url_v1) setAudioV1(j.audio_url_v1);
+        if (j.audio_url_v2) setAudioV2(j.audio_url_v2);
+        setDownloadUnlocked(!!j.download_unlocked);
+        if (j.audio_url_v1 || j.status === "complete") {
+          setTrackStatus("ready");
+        } else if (j.status === "failed") {
+          setTrackStatus("failed");
+        } else {
+          setTrackStatus("generating");
+        }
+        // Smooth-scroll the player into view so the track is the focal point.
+        requestAnimationFrame(() => {
+          document.getElementById("studio-track-preview")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+      } catch (e: any) {
+        toast.error(e?.message ?? "Could not reopen this track");
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobParam]);
+
   const onUnlockDownload = async () => {
     if (!trackJobId || unlocking || downloadUnlocked) return;
     setUnlocking(true);
