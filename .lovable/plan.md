@@ -1,68 +1,47 @@
-## Stream-Profile Credential Bot
+## Goal
 
-When a user buys a stream-profile pass, the boss gets a Telegram card with the member's profile and a "Send Credentials" button. Tapping it walks the boss through `username` then `password` via Telegram's force-reply prompts. On send: credentials are encrypted, stored on the user, DM'd to the member, mirrored into their dashboard, and the member's profile is flagged with the new "OG-Streamz member" tier.
+Replace the "Copy to Suno" flow with end-to-end generation. When the user picks a style, we kick off Suno (which returns 2 versions by default), preview both for 30 seconds free, then charge 2 credits to unlock the full MP3 download or share to socials.
 
----
+## Changes
 
-### 1. Database (one migration)
+### 1. Database (migration)
 
-**`profiles.member_tier`** — new text column (nullable, values like `og_streamz_member`). Used to render the "OG-STREAMZ MEMBER · BELOW VIP STATUS" badge anywhere ranks/tags appear.
+`suno_jobs` currently only stores one `audio_url`. Suno returns 2 clips per task.
 
-**`pass_orders`** — add three columns to drive the boss-reply state machine:
-- `boss_chat_id bigint` — which boss chat is currently filling in this order
-- `boss_draft_state text` — `idle` | `awaiting_username` | `awaiting_password` | `delivered`
-- `boss_draft_username text` — temp staging while waiting for password (cleared after delivery)
+- Add `audio_url_v1 text` and `audio_url_v2 text` columns (keep existing `audio_url` for back-compat, set it to v1).
+- Add `image_url_v1 text`, `image_url_v2 text`.
+- Add `download_unlocked_at timestamptz` (when user spent 2 credits to unlock).
 
-Credentials at rest reuse the existing `stream_account_links` table (encrypted `bytea` columns). No new credential storage table.
+### 2. Suno webhook (`src/routes/api/public/suno-webhook.ts`)
 
-**RPC `boss_record_stream_credentials(order_id, username, password)`** — security definer. Encrypts via existing `pgp_sym_encrypt`, upserts `stream_account_links` for the user, sets `profiles.member_tier='og_streamz_member'`, marks the order `delivered`.
+- Stop using `pickFirstClip`; instead pick the first 2 clips with audio and store them as `audio_url_v1` / `audio_url_v2`. Keep mirroring v1 to existing `audio_url` for the rest of the app.
 
-### 2. Server library — `src/lib/stream-credential-bot.server.ts`
+### 3. New server functions (`src/lib/music-portals.functions.ts`)
 
-Single file owning all bot logic. Three entry points, all called from existing routes:
+- `generatePortalTrack({ slug, style })` — auth-required. Builds the stack (existing logic), then calls Suno `spawnMusic` with the stack's `formatted` prompt + `timbre` tags + portal title. Returns `{ jobId, taskId }`. Charges 1 credit (the existing stack credit covers the spawn).
+- `getPortalTrackJob({ jobId })` — auth-required. Returns `{ status, audio_url_v1, audio_url_v2, image_url, download_unlocked }`. v1/v2 always returned (server doesn't gate previews — client will cap them at 30s).
+- `unlockPortalTrackDownload({ jobId })` — auth-required. Charges 2 credits via `spend_credits` RPC (`reason: 'suno-download'`), sets `download_unlocked_at`. Returns `{ audio_url_v1, audio_url_v2 }` (same URLs but now marked unlocked).
 
-- `notifyBossOfStreamRequest(orderId)` — pre-payment heads-up card. Plain text, no buttons. "🟡 Pending payment from {name} · {email} · {product}".
-- `notifyBossOfStreamPurchase(orderId)` — post-payment actionable card. Includes member avatar (Telegram `sendPhoto`), display name, email, rank, current member_tier, product/duration, Stripe ref. Inline keyboard: `[ Send Credentials ]` with `callback_data = creds:start:<orderId>`.
-- `handleCredsCallback(cb)` — answers the callback, marks order `awaiting_username`, sends a force-reply prompt: *"👤 Reply with the USERNAME for order {short id}"*. The order id is encoded in the prompt text so we can recover it from `reply_to_message`.
-- `handleBossCredsReply(msg)` — on any boss reply whose `reply_to_message.text` matches our prompt format, extracts the order id + state, validates, stores, and either:
-  - if state was `awaiting_username` → save to `boss_draft_username`, send the password prompt
-  - if state was `awaiting_password` → call the RPC, DM the member their creds + a "view in dashboard" link, confirm to boss, clear draft
+### 4. UI (`src/routes/m.$slug.tsx`)
 
-### 3. Wire-ups (no logic in routes)
+Replace the current Stack section's "Copy to Suno" flow:
 
-- `src/routes/api/public/payments/webhook.ts` — after the existing `pass_orders` upsert for `streams_pass`, await `notifyBossOfStreamPurchase(orderId)`. The pre-payment alert fires from the existing checkout-creation server fn (`pass-checkout.functions.ts`) once the order row pre-exists, or if not, we add it after Stripe `checkout.session.created`. Choice in implementation: simplest is to fire `notifyBossOfStreamRequest` from the existing checkout server fn right after `stripe.checkout.sessions.create` succeeds.
-- `src/routes/api/public/telegram/webhook.ts` — extend the existing handler to route:
-  - `update.callback_query` → `handleCredsCallback`
-  - boss messages with `reply_to_message` matching our prompt → `handleBossCredsReply` (runs before the existing generic boss-reply DM logic so the prompt-reply isn't sent to a member by mistake)
+- Click a style preset → calls `generatePortalTrack` → shows "Generating your track…" with a progress shimmer.
+- Poll `getPortalTrackJob` every 4s until `status='complete'` and both audio URLs land (or 5 min timeout with retry).
+- Render 2 audio cards ("Version A" / "Version B"), each with `<audio>` tag. Use a `timeupdate` listener that pauses + resets to 0 once `currentTime >= 30` to enforce the free preview cap. Show a small "🔒 30s preview" badge.
+- Below: a single primary CTA — **"Unlock Full Track (2 credits)"**. On click → `unlockPortalTrackDownload` → on success, remove the 30s cap, swap CTA into two buttons: **"Download MP3"** (per version, triggers `<a download>` from the audio URL) and **"Share"** (uses Web Share API with the URL; falls back to a copy-to-clipboard toast on desktop).
 
-### 4. Member-side delivery
+### 5. Cost registry
 
-- **Telegram DM**: pulled from `telegram_user_links.chat_id`. Message format: bold heading "🎬 Your stream credentials", then `<code>username</code>` / `<code>password</code>` blocks, footer "View any time in your dashboard ↗".
-- **Dashboard surface**: a new `<StreamCredentialsCard>` on `/dashboard` that calls a new `getMyStreamCredentials` server fn (auth-required, decrypts via `pgp_sym_decrypt`, returns plain creds only to the owning user). One-click copy buttons; never logged.
+- Add `suno-download: 2` to `src/lib/cost-registry.ts` so the credit charge is visible.
 
-### 5. Member-tier badge
+## Out of scope
 
-Render `OG-STREAMZ MEMBER · BELOW VIP STATUS` wherever rank chips appear when `profiles.member_tier === 'og_streamz_member'` and rank isn't `vip` / `boss`. Three call-sites only: the profile card on the boss queue, the user dashboard header, and the small chip in the site nav.
+- Server-side audio trimming (we cap previews client-side via `<audio>` listener — simpler and free).
+- Re-encoding to MP3 if Suno returns MP4/M4A (Suno already serves MP3).
+- Direct cross-posting to TikTok/IG (Web Share API is the standard mobile-native handoff).
 
-### 6. Out of scope
+## Notes
 
-- Rotating/changing creds after delivery (boss can re-send; member has no self-serve change yet).
-- Multiple stream accounts per user (current `stream_account_links` is unique on `user_id`).
-- Audit log of who saw the creds (can add later).
-
----
-
-### Files touched
-
-**New**
-- `src/lib/stream-credential-bot.server.ts`
-- `src/lib/stream-credentials.functions.ts` (auth-protected `getMyStreamCredentials`)
-- `src/components/StreamCredentialsCard.tsx`
-- One migration file
-
-**Edited**
-- `src/routes/api/public/payments/webhook.ts` (add notify call)
-- `src/routes/api/public/telegram/webhook.ts` (add callback_query + reply routing)
-- `src/lib/pass-checkout.functions.ts` (add pre-payment notify)
-- `src/routes/dashboard.tsx` (mount the credentials card)
-- 2–3 small UI files for the member-tier badge
+- The webhook secret + `SUNO_API_KEY` are already configured (existing `spawnMusic` works in other parts of the app).
+- Realtime is already enabled on `suno_jobs` — we could subscribe instead of polling, but polling is simpler and more reliable for a first pass.
