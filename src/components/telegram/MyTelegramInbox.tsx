@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, RefreshCw, Send, MessageSquare, Paperclip, X, Check, AlertCircle, Ban } from "lucide-react";
+import { Loader2, RefreshCw, Send, MessageSquare, Paperclip, X, Check, AlertCircle, Ban, RotateCw } from "lucide-react";
 type AttachmentItem = {
   id: string;
   file: File;
@@ -177,6 +177,82 @@ export function MyTelegramInbox() {
     cancelledRef.current = true;
     try { activeReaderRef.current?.abort(); } catch { /* noop */ }
   };
+
+  // Re-upload only the specified attachment ids (used for "Retry").
+  const retry = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const items = attachments.filter((a) => ids.includes(a.id));
+      if (items.length === 0) return { ok: true, retriedIds: [] as string[] };
+      cancelledRef.current = false;
+      setProgress((prev) => ({
+        ...prev,
+        ...Object.fromEntries(items.map((it) => [it.id, { status: "pending" as UploadStatus }])),
+      }));
+      const succeeded: string[] = [];
+      for (const item of items) {
+        if (cancelledRef.current) {
+          setProgress((prev) => ({ ...prev, [item.id]: { status: "cancelled" } }));
+          continue;
+        }
+        setProgress((prev) => ({ ...prev, [item.id]: { status: "reading", percent: 0 } }));
+        try {
+          const reader = new FileReader();
+          activeReaderRef.current = reader;
+          const dataBase64 = await fileToBase64(item.file, reader, (percent) => {
+            setProgress((prev) =>
+              prev[item.id]?.status === "reading"
+                ? { ...prev, [item.id]: { status: "reading", percent } }
+                : prev,
+            );
+          });
+          activeReaderRef.current = null;
+          if (cancelledRef.current) throw new CancelledError();
+          setProgress((prev) => ({ ...prev, [item.id]: { status: "sending" } }));
+          await sendAttachment({
+            data: {
+              filename: item.file.name,
+              mime: item.file.type || "application/octet-stream",
+              dataBase64,
+              caption: item.caption.trim() || undefined,
+            },
+          });
+          setProgress((prev) => ({ ...prev, [item.id]: { status: "sent" } }));
+          succeeded.push(item.id);
+        } catch (err) {
+          activeReaderRef.current = null;
+          if (err instanceof CancelledError || cancelledRef.current) {
+            setProgress((prev) => ({ ...prev, [item.id]: { status: "cancelled" } }));
+            continue;
+          }
+          const msg = err instanceof Error ? err.message : "Failed";
+          setProgress((prev) => ({ ...prev, [item.id]: { status: "error", error: msg } }));
+        }
+      }
+      return { ok: true, retriedIds: succeeded };
+    },
+    onSuccess: ({ retriedIds }) => {
+      if (retriedIds.length === 0) return;
+      // Drop the now-sent items from the composer; keep any remaining failures/queue.
+      setAttachments((prev) => prev.filter((a) => !retriedIds.includes(a.id)));
+      setProgress((prev) => {
+        const next = { ...prev };
+        for (const id of retriedIds) delete next[id];
+        return next;
+      });
+      toast.success(
+        retriedIds.length === 1 ? "Resent 1 file" : `Resent ${retriedIds.length} files`,
+      );
+      qc.invalidateQueries({ queryKey: ["my-tg-inbox"] });
+    },
+    onError: (e: unknown) => {
+      toast.error(e instanceof Error ? e.message : "Retry failed");
+    },
+  });
+
+  const failedIds = attachments
+    .filter((a) => progress[a.id]?.status === "error")
+    .map((a) => a.id);
+  const isBusy = send.isPending || retry.isPending;
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
