@@ -429,7 +429,15 @@ export const unlockPortalTrackDownload = createServerFn({ method: "POST" })
     if (job.user_id !== userId) throw new Error("Not your track");
 
     if (!job.download_unlocked_at) {
-      const { error: spendErr } = await supabase.rpc("spend_credits", {
+      // Capture previous balance for receipt UI
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("credits")
+        .eq("id", userId)
+        .maybeSingle();
+      const previousBalance = (prof?.credits as number | undefined) ?? null;
+
+      const { data: newBalance, error: spendErr } = await supabase.rpc("spend_credits", {
         _amount: 2,
         _reason: "suno-download",
       });
@@ -443,11 +451,25 @@ export const unlockPortalTrackDownload = createServerFn({ method: "POST" })
         .update({ download_unlocked_at: new Date().toISOString() })
         .eq("id", data.jobId);
       if (upErr) throw new Error(upErr.message);
+
+      return {
+        audio_url_v1: (job.audio_url_v1 ?? job.audio_url) as string | null,
+        audio_url_v2: job.audio_url_v2 as string | null,
+        download_unlocked: true,
+        charged: true,
+        cost: 2,
+        previous_balance: previousBalance,
+        balance: (newBalance as number | null) ?? null,
+      };
     }
 
     return {
       audio_url_v1: (job.audio_url_v1 ?? job.audio_url) as string | null,
       audio_url_v2: job.audio_url_v2 as string | null,
       download_unlocked: true,
+      charged: false,
+      cost: 0,
+      previous_balance: null as number | null,
+      balance: null as number | null,
     };
   });
