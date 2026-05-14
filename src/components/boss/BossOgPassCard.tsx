@@ -92,6 +92,12 @@ export function BossOgPassCard({ row, actions, onSelect }: Props) {
             <h3 className="text-base font-bold text-white truncate" title={row.display_name || row.email}>
               {row.display_name?.trim() || row.email}
             </h3>
+            <span
+              className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.18em] px-1.5 py-0.5 rounded font-black bg-amber-500/15 text-amber-200 border border-amber-400/40"
+              title={`${Number(row.credits ?? 0).toLocaleString()} coins`}
+            >
+              🪙 {Number(row.credits ?? 0).toLocaleString()}
+            </span>
             <span className="text-[10px] uppercase tracking-[0.22em] text-white/55 font-bold">
               {rankLabel}
             </span>
