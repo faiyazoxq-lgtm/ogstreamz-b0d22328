@@ -1223,6 +1223,7 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
   const createCode = useServerFn(createLifetimeVipCode);
   const listCodes = useServerFn(listLifetimeVipCodes);
   const deleteCode = useServerFn(deleteLifetimeVipCode);
+  const checkCode = useServerFn(checkLifetimeVipCodeAvailable);
   const [passes, setPasses] = useState<any[]>([]);
   const [userId, setUserId] = useState("");
   const [preset, setPreset] = useState<"30" | "90" | "180" | "365" | "custom">("30");
@@ -1234,6 +1235,13 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
   const [codeBusy, setCodeBusy] = useState(false);
   const [codeCustom, setCodeCustom] = useState("");
   const [codeCredits, setCodeCredits] = useState<number>(1);
+  const [codeStatus, setCodeStatus] = useState<
+    | { state: "idle" }
+    | { state: "checking" }
+    | { state: "ok" }
+    | { state: "invalid"; msg: string }
+    | { state: "taken" }
+  >({ state: "idle" });
 
   const refresh = async () => {
     try { const r = await list(); setPasses(r.passes ?? []); }
