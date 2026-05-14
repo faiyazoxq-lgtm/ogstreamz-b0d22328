@@ -69,7 +69,7 @@ function unitToDays(amount: string, unit: Draft["duration_unit"]): number | null
 function emptyDraft(kind: KindV): Draft {
   return {
     id: null, sku: "", kind, title: "", description: "",
-    image_url: "", price_cents: "0", currency: "usd", duration_days: "",
+    image_url: "", price_cents: "0", currency: "gbp", duration_days: "",
     duration_amount: "", duration_unit: "n/a",
     asset_url: "", metadata: "{}", active: true, sort_order: "0",
   };
@@ -163,7 +163,7 @@ export function StoreProductsPanel() {
           description: draft.description || null,
           image_url: draft.image_url || null,
           price_cents: Number(draft.price_cents) || 0,
-          currency: draft.currency || "usd",
+          currency: draft.currency || "gbp",
           duration_days: unitToDays(draft.duration_amount, draft.duration_unit),
           asset_url: draft.asset_url || null,
           metadata: draft.metadata.trim() || "{}",
