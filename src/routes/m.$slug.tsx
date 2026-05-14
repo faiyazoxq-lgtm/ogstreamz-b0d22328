@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Music, Wand2, Loader2, ArrowLeft, Disc3, Lock, BadgeCheck, Layers, Sparkles, Download, Share2, Play, Pause } from "lucide-react";
+import { Music, Wand2, Loader2, ArrowLeft, Disc3, Lock, BadgeCheck, Layers, Sparkles, Download, Share2, Play, Pause, Link2, Twitter, Facebook, MessageCircle, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
@@ -895,6 +895,62 @@ function PreviewPlayer({
         )}
       </div>
       <audio ref={audioRef} src={url} preload="metadata" controls className="w-full" />
+      {unlocked && <SocialShareRow url={url} label={label} accent={accent} />}
+    </div>
+  );
+}
+
+function SocialShareRow({ url, label, accent }: { url: string; label: string; accent: string }) {
+  const text = `🎧 ${label} — fresh track on OG Streamz`;
+  const enc = encodeURIComponent;
+  const links = [
+    { name: "X / Twitter", Icon: Twitter, href: `https://twitter.com/intent/tweet?text=${enc(text)}&url=${enc(url)}` },
+    { name: "Facebook",    Icon: Facebook, href: `https://www.facebook.com/sharer/sharer.php?u=${enc(url)}&quote=${enc(text)}` },
+    { name: "WhatsApp",    Icon: MessageCircle, href: `https://wa.me/?text=${enc(text + " " + url)}` },
+    { name: "Telegram",    Icon: Send, href: `https://t.me/share/url?url=${enc(url)}&text=${enc(text)}` },
+  ];
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied — paste anywhere");
+    } catch {
+      toast.error("Copy failed");
+    }
+  };
+  return (
+    <div
+      className="flex items-center gap-1.5 flex-wrap pt-2 border-t"
+      style={{ borderColor: `${accent}22` }}
+      role="group"
+      aria-label={`Share ${label} to social`}
+    >
+      <span className="text-[9px] uppercase tracking-[0.3em] mr-1" style={{ color: accent, opacity: 0.7 }}>
+        Share
+      </span>
+      {links.map(({ name, Icon, href }) => (
+        <a
+          key={name}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Share ${label} on ${name}`}
+          title={`Share on ${name}`}
+          className="h-7 w-7 inline-flex items-center justify-center rounded-md border transition hover:scale-110"
+          style={{ borderColor: `${accent}55`, color: accent, background: `${accent}10` }}
+        >
+          <Icon className="h-3.5 w-3.5" />
+        </a>
+      ))}
+      <button
+        type="button"
+        onClick={copy}
+        aria-label={`Copy ${label} link`}
+        title="Copy link"
+        className="h-7 w-7 inline-flex items-center justify-center rounded-md border transition hover:scale-110"
+        style={{ borderColor: `${accent}55`, color: accent, background: `${accent}10` }}
+      >
+        <Link2 className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }
