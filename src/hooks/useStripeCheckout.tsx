@@ -7,6 +7,7 @@ interface CheckoutOptions {
   customerEmail?: string;
   userId?: string;
   returnUrl?: string;
+  applyFirstOrderDiscount?: boolean;
 }
 
 export function useStripeCheckout() {
