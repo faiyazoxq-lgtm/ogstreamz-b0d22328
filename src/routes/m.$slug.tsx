@@ -9,7 +9,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { formatLyrics, requestStudioTrack, generatePortalTrack, getPortalTrackJob, unlockPortalTrackDownload } from "@/lib/music-portals.functions";
 import { spawnMusic } from "@/lib/suno.functions";
 import { listPortalTracks, getTrackOwnership } from "@/lib/tracks.functions";
-import { spawnMusic } from "@/lib/suno.functions";
 import { TrackPlayer } from "@/components/TrackPlayer";
 import { SwearChatPanel } from "@/components/SwearChatPanel";
 import { OgWordmark } from "@/components/OgWordmark";
