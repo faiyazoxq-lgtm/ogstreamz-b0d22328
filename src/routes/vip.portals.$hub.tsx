@@ -41,9 +41,9 @@ type Item = {
 };
 
 export const Route = createFileRoute("/vip/portals/$hub")({
-  beforeLoad: ({ params }) => {
-    if (!(params.hub in HUBS)) throw notFound();
-    return requireMember({ location: { pathname: `/vip/portals/${params.hub}` } } as any);
+  beforeLoad: async (ctx) => {
+    if (!(ctx.params.hub in HUBS)) throw notFound();
+    await requireMember(ctx as any);
   },
   head: ({ params }) => {
     const meta = HUBS[params.hub as HubKey];
