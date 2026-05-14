@@ -532,6 +532,19 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         }
         // Inline-button taps from the boss credential card.
         if (update.callback_query) {
+          const cbData: string = update.callback_query?.data ?? "";
+          // Welcome-card buttons (data prefix "wc:") are handled inline
+          // here so they work for every linked member, not just boss creds.
+          if (cbData.startsWith("wc:")) {
+            try {
+              await handleWelcomeCallback(update.callback_query);
+            } catch (e) {
+              logError("tg.webhook.welcome_callback_failed", {
+                error: e instanceof Error ? e.message : String(e),
+              });
+            }
+            return Response.json({ ok: true });
+          }
           try {
             await handleCredsCallback(update.callback_query);
           } catch (e) {
