@@ -40,3 +40,33 @@ export const requireBoss = createMiddleware({ type: "function" })
 
     return next({ context: { isBoss, isAdmin } });
   });
+
+/**
+ * Server-fn middleware that REJECTS Boss callers. Boss accounts have an
+ * unlimited Credits Reserve and must never go through paid checkout, top-up,
+ * or coin-spend flows — direct API calls from a Boss session must 403 even
+ * when the UI hides the buttons.
+ *
+ * Composes on top of `requireSupabaseAuth`. Failure modes:
+ *  - 401 if the bearer token is missing/invalid
+ *  - 403 if the caller is rank=boss
+ *
+ * Admins who are NOT Boss are allowed through (so support staff can run
+ * test purchases). Only `is_boss` truthiness blocks the call.
+ */
+export const rejectBoss = createMiddleware({ type: "function" })
+  .middleware([requireSupabaseAuth])
+  .server(async ({ next, context }) => {
+    const { supabase, userId } = context as {
+      supabase: any;
+      userId: string;
+    };
+    const { data } = await supabase.rpc("is_boss", { _uid: userId });
+    if (data) {
+      throw new Response(
+        "Forbidden: Boss accounts cannot purchase credits — your Reserve is unlimited.",
+        { status: 403 }
+      );
+    }
+    return next();
+  });

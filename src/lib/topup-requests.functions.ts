@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { requireBoss } from "@/integrations/supabase/boss-middleware";
+import { requireBoss, rejectBoss } from "@/integrations/supabase/boss-middleware";
 
 export const requestTopup = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([rejectBoss])
   .inputValidator((d: { credits: number; reason?: string }) => ({
     credits: Math.max(1, Math.min(500, Math.trunc(Number(d.credits ?? 10)))),
     reason: String(d.reason ?? "").slice(0, 500),

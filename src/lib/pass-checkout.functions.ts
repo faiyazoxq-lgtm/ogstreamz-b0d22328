@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { rejectBoss } from "@/integrations/supabase/boss-middleware";
 import { validateReturnUrl } from "@/lib/return-url";
 import { notifyBossOfStreamRequest } from "@/lib/stream-credential-bot.server";
 
@@ -19,7 +20,7 @@ function admin() {
 const UUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
 export const createPassCheckoutSession = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([rejectBoss])
   .inputValidator((data: {
     productId: string;
     userId?: string;

@@ -1,10 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { rejectBoss } from "@/integrations/supabase/boss-middleware";
 
 export type CoinPurchaseKind = "track_unlock" | "real_og" | "store_pass";
 
 export const purchaseWithCoins = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([rejectBoss])
   .inputValidator((d: { kind: CoinPurchaseKind; ref?: string }) => {
     const kind = d.kind;
     if (kind !== "track_unlock" && kind !== "real_og" && kind !== "store_pass") {
