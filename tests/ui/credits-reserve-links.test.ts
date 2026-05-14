@@ -42,4 +42,15 @@ describe("Credits Reserve card buttons", () => {
     expect(() => readFileSync(resolve(ROOT, "src/routes/boss.users.tsx"), "utf8")).not.toThrow();
     expect(() => readFileSync(resolve(ROOT, "src/routes/boss.tsx"), "utf8")).not.toThrow();
   });
+
+  it("both target routes are guarded by requireBoss (directly or via parent layout)", () => {
+    const bossLayout = readFileSync(resolve(ROOT, "src/routes/boss.tsx"), "utf8");
+    const bossUsers = readFileSync(resolve(ROOT, "src/routes/boss.users.tsx"), "utf8");
+    // /boss layout must call requireBoss in beforeLoad — it cascades to all
+    // children, including /boss/users.
+    expect(bossLayout).toMatch(/beforeLoad:\s*requireBoss/);
+    // /boss/users also declares its own guard as a defence-in-depth measure
+    // so it stays protected even if the parent layout is restructured.
+    expect(bossUsers).toMatch(/beforeLoad:\s*requireBoss/);
+  });
 });
