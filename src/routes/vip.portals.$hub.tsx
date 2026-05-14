@@ -81,6 +81,7 @@ function VipPortalsByHub() {
   const [items, setItems] = useState<Item[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState("");
+  const [sort, setSort] = useState<"newest" | "views" | "vip">("newest");
 
   useEffect(() => {
     let cancelled = false;
@@ -139,10 +140,19 @@ function VipPortalsByHub() {
 
   const filtered = useMemo(() => {
     if (!items) return [];
-    if (!q.trim()) return items;
-    const needle = q.toLowerCase();
-    return items.filter((i) => `${i.name} ${i.subtitle} ${i.slug}`.toLowerCase().includes(needle));
-  }, [items, q]);
+    const needle = q.trim().toLowerCase();
+    const base = needle
+      ? items.filter((i) => `${i.name} ${i.subtitle} ${i.slug}`.toLowerCase().includes(needle))
+      : items.slice();
+    if (sort === "views") {
+      base.sort((a, b) => b.views - a.views || +new Date(b.created_at) - +new Date(a.created_at));
+    } else if (sort === "vip") {
+      base.sort((a, b) => Number(b.vip) - Number(a.vip) || +new Date(b.created_at) - +new Date(a.created_at));
+    } else {
+      base.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+    }
+    return base;
+  }, [items, q, sort]);
 
   const Icon = meta.Icon;
 
@@ -182,14 +192,37 @@ function VipPortalsByHub() {
         </Link>
       </header>
 
-      <div className="relative mb-6 max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder={`Search ${meta.label.toLowerCase()} portals…`}
-          className="w-full pl-9 pr-3 py-2 rounded-lg bg-black/40 border border-white/10 text-sm focus:outline-none focus:border-white/30"
-        />
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-[220px] max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={`Search ${meta.label.toLowerCase()} portals…`}
+            className="w-full pl-9 pr-3 py-2 rounded-lg bg-black/40 border border-white/10 text-sm focus:outline-none focus:border-white/30"
+          />
+        </div>
+        <div className="inline-flex rounded-lg border border-white/10 bg-black/40 p-1 text-xs font-semibold">
+          {([
+            { key: "newest", label: "Newest" },
+            { key: "views",  label: "Most viewed" },
+            { key: "vip",    label: "VIP first" },
+          ] as const).map((opt) => {
+            const active = sort === opt.key;
+            return (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setSort(opt.key)}
+                className={`px-3 py-1.5 rounded-md transition ${active ? "bg-white/10 text-white" : "text-white/60 hover:text-white/90"}`}
+                style={active ? { color: meta.accent } : undefined}
+                aria-pressed={active}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {error && (
