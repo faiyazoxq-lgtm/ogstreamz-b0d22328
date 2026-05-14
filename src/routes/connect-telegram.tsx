@@ -142,6 +142,18 @@ function ConnectTelegramPage() {
   const code = status?.link_code ?? null;
   const linked = !!status?.chat_id;
 
+  // Telegram's `start` parameter only accepts [A-Za-z0-9_-], so we join the
+  // link code and the OG Pass tag with a double underscore. The bot splits
+  // on `__` to recover both halves and bind the chat to the right profile.
+  const startParam = code
+    ? ogPassTag
+      ? `${code}__${ogPassTag}`
+      : code
+    : null;
+  const tgUrl = startParam
+    ? `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent(startParam)}`
+    : null;
+
   const handleConnect = async () => {
     setBusy(true);
     try {
@@ -152,7 +164,8 @@ function ConnectTelegramPage() {
         active = s?.link_code ?? null;
       }
       if (active) {
-        const url = `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent(active)}`;
+        const param = ogPassTag ? `${active}__${ogPassTag}` : active;
+        const url = `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent(param)}`;
         // Mobile browsers block window.open() after an awaited server call
         // (the click is no longer a "trusted" user gesture). Navigate the
         // current tab instead — Telegram's universal link opens the app and
@@ -169,10 +182,9 @@ function ConnectTelegramPage() {
   };
 
   const handleCopy = async () => {
-    if (!code) return;
+    if (!tgUrl) return;
     try {
-      const url = `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent(code)}`;
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(tgUrl);
       toast.success("Link copied — paste it in Telegram or your browser");
     } catch {
       toast.error("Copy failed");
@@ -306,7 +318,7 @@ function ConnectTelegramPage() {
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
                   <code className="font-mono text-xs sm:text-sm bg-background/60 border border-border rounded px-2 py-1 select-all break-all">
-                    https://t.me/{BOT_USERNAME}?start={code}
+                    {tgUrl}
                   </code>
                   <Button size="sm" variant="outline" onClick={handleCopy} className="h-8 px-2" aria-label="Copy link command">
                     <Copy className="h-3.5 w-3.5" />
