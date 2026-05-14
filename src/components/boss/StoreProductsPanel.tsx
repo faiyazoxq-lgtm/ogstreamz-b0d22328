@@ -4,7 +4,7 @@ import {
   Loader2, RefreshCw, Plus, Save, Trash2, X, Crown, Tv, Package, Image as ImageIcon, ArrowUp, ArrowDown, Upload,
 } from "lucide-react";
 import { toast } from "sonner";
-import { coinChip } from "@/lib/coins";
+import { coinChip, centsToCoins, formatGbp, COIN } from "@/lib/coins";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -69,7 +69,7 @@ function unitToDays(amount: string, unit: Draft["duration_unit"]): number | null
 function emptyDraft(kind: KindV): Draft {
   return {
     id: null, sku: "", kind, title: "", description: "",
-    image_url: "", price_cents: "0", currency: "usd", duration_days: "",
+    image_url: "", price_cents: "0", currency: "gbp", duration_days: "",
     duration_amount: "", duration_unit: "n/a",
     asset_url: "", metadata: "{}", active: true, sort_order: "0",
   };
@@ -97,12 +97,17 @@ function rowToDraft(r: StoreProductRow): Draft {
 }
 
 function fmtMoney(cents: number, currency: string) {
+  const cur = (currency || "gbp").toLowerCase();
+  // Coins are the default unit on this admin panel — display as "N 🪙 (£X)".
+  if (cur === "gbp" || cur === "coins") {
+    return `${centsToCoins(cents).toLocaleString()} ${COIN} (${formatGbp(cents)})`;
+  }
   try {
-    const base = new Intl.NumberFormat(undefined, { style: "currency", currency: (currency || "gbp").toUpperCase() })
+    const base = new Intl.NumberFormat(undefined, { style: "currency", currency: cur.toUpperCase() })
       .format((cents ?? 0) / 100);
-    return (currency || "gbp").toLowerCase() === "gbp" ? `${base} ${coinChip(cents)}` : base;
+    return base;
   } catch {
-    return `${(cents / 100).toFixed(2)} ${currency?.toUpperCase() ?? ""} ${coinChip(cents)}`;
+    return `${(cents / 100).toFixed(2)} ${cur.toUpperCase()} ${coinChip(cents)}`;
   }
 }
 
@@ -158,7 +163,7 @@ export function StoreProductsPanel() {
           description: draft.description || null,
           image_url: draft.image_url || null,
           price_cents: Number(draft.price_cents) || 0,
-          currency: draft.currency || "usd",
+          currency: draft.currency || "gbp",
           duration_days: unitToDays(draft.duration_amount, draft.duration_unit),
           asset_url: draft.asset_url || null,
           metadata: draft.metadata.trim() || "{}",
@@ -617,11 +622,23 @@ function DraftEditor({
               )}
             </div>
           </FieldShell>
-          <FieldShell label="Price (cents)">
+          <FieldShell label={`Price (cents${(draft.currency || "gbp").toLowerCase() === "gbp" ? " · 100 = 1 🪙 = £1" : ""})`}>
             <Input type="number" min={0} value={draft.price_cents} onChange={(e) => set("price_cents", e.target.value)} />
           </FieldShell>
           <FieldShell label="Currency">
-            <Input value={draft.currency} onChange={(e) => set("currency", e.target.value)} placeholder="usd" />
+            <Select
+              value={(draft.currency || "gbp").toLowerCase()}
+              onValueChange={(v) => set("currency", v)}
+            >
+              <SelectTrigger className="bg-black/70 border-2 border-emerald-800/50 text-emerald-100 font-bold uppercase tracking-wider text-xs h-10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="gbp">Coins (default · 1 🪙 = £1)</SelectItem>
+                <SelectItem value="usd">USD</SelectItem>
+                <SelectItem value="eur">EUR</SelectItem>
+              </SelectContent>
+            </Select>
           </FieldShell>
           <FieldShell label="Duration" className="sm:col-span-2">
             <div className="flex gap-2">
