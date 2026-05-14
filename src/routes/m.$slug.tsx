@@ -414,24 +414,33 @@ function MusicPortalPage() {
             </h2>
           </div>
           <p className="text-xs opacity-70 mb-3">
-            Describe a vibe — we'll layer Genre/Timbre, Mood/BPM/Key, Vocal Texture and Structure tags into a Suno-perfect prompt.
+            Pick one style — we auto-blend it with this portal's description into a 4-layer Genre/Timbre, Mood/BPM/Key, Vocal Texture & Structure stack.
           </p>
-          <input
-            type="text"
-            value={stackVibe}
-            onChange={(e) => setStackVibe(e.target.value)}
-            placeholder="e.g. lo-fi DX7 night drive, breathy vocals, 92 BPM"
-            className="w-full bg-black/40 border rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2"
-            style={{ borderColor: `${theme.accent}40`, color: "#fff" }}
-          />
-          <Button
-            onClick={onBuildStack}
-            disabled={stackLoading}
-            className="mt-4 h-11 px-6 text-xs uppercase tracking-[0.25em] font-bold border"
-            style={{ background: `${theme.accent}20`, color: theme.accent, borderColor: theme.accent }}
-          >
-            {stackLoading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Stacking…</> : <><Layers className="h-4 w-4 mr-2" />Build Stack (1 cr)</>}
-          </Button>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {STYLE_PRESETS.map((preset) => {
+              const active = selectedStyle === preset;
+              const isLoading = stackLoading && active;
+              return (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => onPickStyle(preset)}
+                  disabled={stackLoading}
+                  className="h-12 px-3 text-[11px] uppercase tracking-[0.18em] font-bold border rounded-md transition disabled:opacity-50 flex items-center justify-center text-center"
+                  style={{
+                    background: active ? theme.accent : `${theme.accent}10`,
+                    color: active ? "#000" : theme.accent,
+                    borderColor: theme.accent,
+                  }}
+                >
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : preset}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[10px] opacity-50 mt-2 uppercase tracking-[0.25em]">
+            1 credit per stack · pick a different style to re-roll
+          </p>
 
           {stack && (
             <div className="mt-6 space-y-3">
