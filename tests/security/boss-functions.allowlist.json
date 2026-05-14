@@ -17,6 +17,10 @@
       "forceSignOut",
       "setUserSwearing"
     ],
+    "src/lib/boss-spend.functions.ts": [
+      "getBossSpendSummary",
+      "listBossSpendEntries"
+    ],
     "src/lib/command-deck.functions.ts": [
       "runAgentTask",
       "getOpsSnapshot",
