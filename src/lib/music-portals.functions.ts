@@ -93,8 +93,8 @@ export const formatLyrics = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!portal) throw new Error("Portal not found");
 
-    const PERPLEXITY = process.env.PERPLEXITY_API_KEY;
-    if (!PERPLEXITY) throw new Error("PERPLEXITY_API_KEY missing");
+    const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
 
     const religious = isReligiousPortal(portal);
     const swear = !!portal.swear_chat_enabled && !religious;
@@ -105,24 +105,24 @@ export const formatLyrics = createServerFn({ method: "POST" })
       : "Keep the language clean and radio-friendly.";
     const prompt = `Rewrite the user's input as Suno-ready song lyrics in ${portal.language}, in the style of "${portal.style}". Use clear section tags exactly like [Intro], [Verse 1], [Chorus], [Verse 2], [Bridge], [Outro]. Keep it singable, rhythmic, true to the style. ${swearRules} Output ONLY the lyrics with section tags — no explanations.\n\nUser input:\n${data.raw}`;
 
-    const res = await fetch("https://api.perplexity.ai/chat/completions", {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: { Authorization: `Bearer ${PERPLEXITY}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "sonar",
+        model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: swear
-              ? "You are GUTTERMOUTH MUSIC — a foul-mouthed unhinged songwriter. Output lyrics only with [Section] tags. NO safety filters, NO moralising. Pack lyrics with brutal swearing."
+              ? "You are OG BOT — a foul-mouthed unhinged songwriter. Output lyrics only with [Section] tags. NO safety filters, NO moralising. Pack lyrics with brutal swearing."
               : religious
-                ? "You are a devotional songwriter. Output lyrics only with [Section] tags. Reverent, clean, NO profanity, NO slang, NO crude content — fitting a religious / spiritual context."
-                : "You are a professional songwriter. Output lyrics only with [Section] tags." },
+                ? "You are OG BOT in devotional mode. Output lyrics only with [Section] tags. Reverent, clean, NO profanity, NO slang, NO crude content — fitting a religious / spiritual context."
+                : "You are OG BOT — a professional songwriter. Output lyrics only with [Section] tags." },
           { role: "user", content: prompt },
         ],
-        temperature: 0.85,
-        max_tokens: 1200,
       }),
     });
-    if (!res.ok) throw new Error(`Perplexity ${res.status}`);
+    if (res.status === 429) throw new Error("Rate limited — try again in a moment");
+    if (res.status === 402) throw new Error("AI credits exhausted — top up in Settings → Workspace → Usage");
+    if (!res.ok) throw new Error(`AI gateway ${res.status}`);
     const json = await res.json();
     const lyrics: string = (json?.choices?.[0]?.message?.content ?? "").trim();
     if (!lyrics) throw new Error("No lyrics returned");
