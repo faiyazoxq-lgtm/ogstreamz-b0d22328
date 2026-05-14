@@ -302,11 +302,11 @@ function ConnectTelegramPage() {
             {code && (
               <div className="mb-4">
                 <p className="text-[10px] uppercase tracking-[0.3em] font-black text-white/55 mb-2">
-                  Paste this in @{BOT_USERNAME}
+                  Your personal connect link
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
-                  <code className="font-mono text-sm bg-background/60 border border-border rounded px-2 py-1 select-all">
-                    /link {code}{ogPassTag ? ` ${ogPassTag}` : ""}
+                  <code className="font-mono text-xs sm:text-sm bg-background/60 border border-border rounded px-2 py-1 select-all break-all">
+                    https://t.me/{BOT_USERNAME}?start={code}
                   </code>
                   <Button size="sm" variant="outline" onClick={handleCopy} className="h-8 px-2" aria-label="Copy link command">
                     <Copy className="h-3.5 w-3.5" />
@@ -317,8 +317,8 @@ function ConnectTelegramPage() {
                 </div>
                 {ogPassTag && (
                   <p className="mt-2 text-[11px] text-white/55 leading-snug">
-                    Includes your OG Pass # ({ogPassTag}) so the boss can
-                    verify the link belongs to you.
+                    Tap or paste this link in Telegram — it opens @{BOT_USERNAME}
+                    and binds the chat to your profile ({ogPassTag}).
                   </p>
                 )}
               </div>
