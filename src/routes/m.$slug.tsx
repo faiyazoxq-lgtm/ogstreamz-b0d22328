@@ -644,6 +644,46 @@ function MusicPortalPage() {
           <span style={{ color: theme.accent }}>▣</span> Powered by <OgWordmark suffix="-PORTAL" />
         </Link>
       </footer>
+
+      <AlertDialog open={confirmUnlockOpen} onOpenChange={setConfirmUnlockOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unlock full track?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>
+                  Removes the 30s preview cap on both versions and enables MP3 download + share.
+                </p>
+                <div className="rounded-md border p-3 bg-muted/40 space-y-1 tabular-nums">
+                  <div className="flex justify-between"><span>Cost</span><span className="font-bold">2 {COIN}</span></div>
+                  <div className="flex justify-between"><span>Your balance</span><span className="font-bold">{(profile?.credits ?? 0).toLocaleString()} {COIN}</span></div>
+                  <div className="flex justify-between border-t pt-1 mt-1">
+                    <span>After unlock</span>
+                    <span className="font-bold" style={{ color: (profile?.credits ?? 0) >= 2 ? theme.accent : "#ef4444" }}>
+                      {Math.max(0, (profile?.credits ?? 0) - 2).toLocaleString()} {COIN}
+                    </span>
+                  </div>
+                </div>
+                {(profile?.credits ?? 0) < 2 && (
+                  <p className="text-xs text-red-500">
+                    Not enough coins. <Link to="/wallet" className="underline">Top up</Link>.
+                  </p>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={unlocking}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); onUnlockDownload(); }}
+              disabled={unlocking || (profile?.credits ?? 0) < 2}
+              style={{ background: theme.accent, color: "#000" }}
+            >
+              {unlocking ? "Unlocking…" : `Confirm · 2 ${COIN}`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
