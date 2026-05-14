@@ -24,6 +24,7 @@ import {
   adjustCredits, setRank, setFeatureFlags, createRedeemCode,
   grantVipPass, revokeVipPass, listVipPasses,
   grantByEmail, listPendingGrants, deletePendingGrant,
+  createLifetimeVipCode, listLifetimeVipCodes, deleteLifetimeVipCode,
 } from "@/lib/overlord.functions";
 import { bossListResellers, bossCreateReseller, bossTopupReseller } from "@/lib/reseller.functions";
 import { PassShareCardPanel } from "@/components/overlord/PassShareCardPanel";
@@ -1218,6 +1219,9 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
   const grant = useServerFn(grantVipPass);
   const revoke = useServerFn(revokeVipPass);
   const list = useServerFn(listVipPasses);
+  const createCode = useServerFn(createLifetimeVipCode);
+  const listCodes = useServerFn(listLifetimeVipCodes);
+  const deleteCode = useServerFn(deleteLifetimeVipCode);
   const [passes, setPasses] = useState<any[]>([]);
   const [userId, setUserId] = useState("");
   const [preset, setPreset] = useState<"30" | "90" | "180" | "365" | "custom">("30");
@@ -1225,6 +1229,10 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
+  const [codes, setCodes] = useState<any[]>([]);
+  const [codeBusy, setCodeBusy] = useState(false);
+  const [codeCustom, setCodeCustom] = useState("");
+  const [codeCredits, setCodeCredits] = useState<number>(1);
 
   const refresh = async () => {
     try { const r = await list(); setPasses(r.passes ?? []); }
@@ -1234,7 +1242,15 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
       toast.error(msg ?? "Failed to load passes");
     }
   };
-  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
+  const refreshCodes = async () => {
+    try { const r = await listCodes(); setCodes(r.codes ?? []); }
+    catch (e: any) {
+      let msg = e?.message;
+      if (e instanceof Response) { try { msg = await e.text(); } catch { msg = `HTTP ${e.status}`; } }
+      toast.error(msg ?? "Failed to load codes");
+    }
+  };
+  useEffect(() => { refresh(); refreshCodes(); /* eslint-disable-next-line */ }, []);
 
   const computeExpiry = (): string | null => {
     if (preset === "custom") {
@@ -1358,6 +1374,128 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
             )}
           </div>
         ))}
+      </div>
+
+      {/* Lifetime VIP one-time codes */}
+      <div className="mt-8 rounded-xl border border-yellow-700/30 bg-black/40 p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Ticket className="h-4 w-4 text-yellow-300" />
+          <h4 className="text-sm font-black uppercase tracking-[0.2em] text-yellow-200">
+            Lifetime VIP one-time codes
+          </h4>
+        </div>
+        <p className="text-[11px] text-emerald-700 mb-4">
+          Generate a single-use code. When redeemed it grants the user a lifetime VIP pass — revocable any time from the list above.
+        </p>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <Field label="Custom code" hint="Leave blank to auto-generate" icon={Ticket} className="lg:col-span-2">
+            <Input
+              value={codeCustom}
+              onChange={(e) => setCodeCustom(e.target.value.toUpperCase())}
+              placeholder="AUTO-GENERATE"
+              className={FIELD_INPUT}
+              maxLength={32}
+            />
+          </Field>
+          <Field label="Bonus credits" hint="Bundled on redeem" icon={Coins}>
+            <Input
+              type="number"
+              min={1}
+              value={codeCredits}
+              onChange={(e) => setCodeCredits(Math.max(1, Number(e.target.value) || 1))}
+              className={FIELD_INPUT}
+            />
+          </Field>
+          <div className="flex items-end">
+            <Button
+              onClick={async () => {
+                setCodeBusy(true);
+                try {
+                  const r = await createCode({ data: { code: codeCustom || undefined, credits: codeCredits } });
+                  toast.success(`Code created: ${r.code.code}`);
+                  setCodeCustom("");
+                  refreshCodes();
+                } catch (e: any) {
+                  let msg = e?.message;
+                  if (e instanceof Response) { try { msg = await e.text(); } catch { msg = `HTTP ${e.status}`; } }
+                  toast.error(msg ?? "Failed");
+                } finally { setCodeBusy(false); }
+              }}
+              disabled={codeBusy}
+              className={`${PRIMARY_BTN} w-full bg-yellow-500 hover:bg-yellow-400 text-black`}
+            >
+              {codeBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="h-4 w-4 mr-2" />Generate code</>}
+            </Button>
+          </div>
+        </div>
+
+        <div className="mt-4 divide-y divide-yellow-900/20">
+          {codes.length === 0 && (
+            <p className="text-xs text-emerald-700 py-3">No lifetime codes yet.</p>
+          )}
+          {codes.map((c) => {
+            const redeemed = (c.uses ?? 0) >= (c.max_uses ?? 1);
+            return (
+              <div key={c.id} className="flex items-center justify-between gap-3 py-3 text-sm">
+                <div className="min-w-0">
+                  <p className="text-yellow-200 font-mono flex items-center gap-2">
+                    {c.code}
+                    <Badge
+                      variant="outline"
+                      className={redeemed
+                        ? "border-rose-700 text-rose-300"
+                        : "border-emerald-700 text-emerald-300"}
+                    >
+                      {redeemed ? "redeemed" : "unused"}
+                    </Badge>
+                  </p>
+                  <p className="text-[10px] text-emerald-700">
+                    +{c.credits} credits · created {new Date(c.created_at).toLocaleDateString()}
+                    {c.expires_at ? ` · code expires ${new Date(c.expires_at).toLocaleDateString()}` : ""}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(c.code).then(
+                        () => toast.success("Copied"),
+                        () => toast.error("Copy failed"),
+                      );
+                    }}
+                    className="h-7 bg-emerald-800 hover:bg-emerald-700 text-white"
+                  >
+                    <Copy className="h-3 w-3 mr-1" /> Copy
+                  </Button>
+                  {!redeemed && (
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          await deleteCode({ data: { id: c.id } });
+                          toast.success("Code deleted");
+                          refreshCodes();
+                        } catch (e: any) {
+                          let msg = e?.message;
+                          if (e instanceof Response) { try { msg = await e.text(); } catch { msg = `HTTP ${e.status}`; } }
+                          toast.error(msg ?? "Failed");
+                        }
+                      }}
+                      className="h-7 bg-rose-700 hover:bg-rose-600 text-white"
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" /> Delete
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {codes.some((c) => (c.uses ?? 0) >= (c.max_uses ?? 1)) && (
+          <p className="text-[10px] text-emerald-700 mt-3 italic">
+            Tip: redeemed codes appear as active VIP passes above — revoke from there to remove the user's lifetime VIP.
+          </p>
+        )}
       </div>
     </section>
   );

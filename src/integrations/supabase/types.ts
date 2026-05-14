@@ -2438,6 +2438,7 @@ export type Database = {
           expires_at: string | null
           grant_rank: Database["public"]["Enums"]["syndicate_rank"] | null
           id: string
+          lifetime_vip: boolean
           max_uses: number
           price_cents: number
           reseller_id: string | null
@@ -2451,6 +2452,7 @@ export type Database = {
           expires_at?: string | null
           grant_rank?: Database["public"]["Enums"]["syndicate_rank"] | null
           id?: string
+          lifetime_vip?: boolean
           max_uses?: number
           price_cents?: number
           reseller_id?: string | null
@@ -2464,6 +2466,7 @@ export type Database = {
           expires_at?: string | null
           grant_rank?: Database["public"]["Enums"]["syndicate_rank"] | null
           id?: string
+          lifetime_vip?: boolean
           max_uses?: number
           price_cents?: number
           reseller_id?: string | null
@@ -4098,6 +4101,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      _lifetime_vip_expiry: { Args: never; Returns: string }
       _profile_self_update_safe:
         | {
             Args: {
