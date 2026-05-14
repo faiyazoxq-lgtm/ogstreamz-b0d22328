@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
-import { Bot, X } from "lucide-react";
+import { X } from "lucide-react";
 import { SiteGuideSwearChat } from "@/components/SiteGuideSwearChat";
+import ogBotAvatar from "@/assets/og-streamz-wallpaper.png";
 
 /**
  * Global floating "OG Bot" assistant. Pinned to the bottom-right corner on
@@ -90,12 +91,10 @@ export function OgBotFloatingWidget() {
         aria-hidden={modalOpen || undefined}
         tabIndex={modalOpen ? -1 : 0}
         onClick={() => setOpen((o) => !o)}
-        className={`fixed inline-flex items-center justify-center rounded-full border border-[oklch(0.72_0.22_245/0.6)] bg-black/70 text-white shadow-[0_0_30px_-6px_oklch(0.72_0.22_245/0.7)] backdrop-blur-xl transition hover:scale-105 hover:border-[oklch(0.72_0.22_245)] ${
+        className={`group fixed inline-flex items-center justify-center rounded-full border-2 border-[oklch(0.72_0.22_245/0.7)] bg-black/60 text-white shadow-[0_0_40px_-8px_oklch(0.72_0.22_245/0.9)] backdrop-blur-xl transition-all duration-300 hover:scale-110 hover:border-[oklch(0.72_0.22_245)] hover:shadow-[0_0_55px_-6px_oklch(0.72_0.22_245)] ${
           isAuthRoute
-            ? // Tucked into the top-right on auth flows so it can't cover
-              // email/password fields or the primary CTA on small screens.
-              "right-3 top-3 md:right-6 md:top-6 h-11 w-11"
-            : "right-4 bottom-20 md:bottom-6 h-14 w-14"
+            ? "right-3 top-3 md:right-6 md:top-6 h-11 w-11"
+            : "right-4 bottom-20 md:bottom-6 h-16 w-16"
         } ${
           modalOpen
             ? "z-0 pointer-events-none opacity-0 scale-90"
@@ -106,7 +105,22 @@ export function OgBotFloatingWidget() {
         {open ? (
           <X className={isAuthRoute ? "h-4 w-4" : "h-5 w-5"} />
         ) : (
-          <Bot className={isAuthRoute ? "h-5 w-5" : "h-6 w-6"} style={{ color: "var(--neon-blue-bright, #6cb6ff)" }} />
+          <>
+            <img
+              src={ogBotAvatar}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full rounded-full object-cover"
+            />
+            {/* Subtle inner ring + gradient sheen */}
+            <span className="absolute inset-0 rounded-full ring-1 ring-white/15" />
+            <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-black/40 via-transparent to-white/10" />
+            {/* Live status pulse dot */}
+            <span
+              className={`absolute ${isAuthRoute ? "right-0 top-0 h-2.5 w-2.5" : "right-0.5 top-0.5 h-3 w-3"} rounded-full bg-emerald-400 ring-2 ring-black animate-pulse`}
+              aria-hidden="true"
+            />
+          </>
         )}
         <span className="sr-only">OG Bot assistant</span>
       </button>
