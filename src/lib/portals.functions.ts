@@ -216,6 +216,62 @@ function inferTheme(vibe: string, niche: string): string {
   return "street";
 }
 
+/**
+ * Translate a free-form vibe string into a short, unambiguous direction
+ * the LLM can actually act on. Falls through to the raw vibe verbatim when
+ * we don't recognize a keyword, so users keep full control.
+ */
+function expandVibe(vibe: string): string {
+  const v = vibe.trim();
+  if (!v) return "bold, modern, on-trend";
+  const k = v.toLowerCase();
+  const hints: { match: RegExp; tone: string }[] = [
+    { match: /(savage|brutal|roast|spicy|harsh)/, tone: "savage roast energy — sharp, mean, punchline-first, never wholesome" },
+    { match: /(wholesome|family|kid|clean|safe)/, tone: "wholesome and clean — no profanity, no innuendo, broadly safe for all ages" },
+    { match: /(dark|edgy|nihilist|gallows)/, tone: "dark / gallows humor — bleak, dry, deadpan; no slurs, no shock-for-shock" },
+    { match: /(dad|pun|groan)/, tone: "classic dad-joke / pun energy — setup + groan-worthy wordplay punchline" },
+    { match: /(absurd|surreal|weird|chaotic)/, tone: "absurdist surreal humor — non-sequitur logic, escalating weirdness" },
+    { match: /(corporate|office|workplace|saas)/, tone: "corporate / office humor — Slack-thread cadence, jargon, meeting pain" },
+    { match: /(drill|trap|grime|street)/, tone: "street / drill cadence — short bars, internal rhyme, swagger, hard consonants" },
+    { match: /(lofi|lo-fi|chill|chillhop)/, tone: "lo-fi chill — soft, melodic, nocturnal, study-vibe imagery" },
+    { match: /(afrobeat|amapiano|dancehall)/, tone: "afrobeats / amapiano cadence — call-and-response hook, percussive language" },
+    { match: /(country|americana|folk)/, tone: "country / Americana storytelling — concrete imagery, plainspoken, narrative hook" },
+    { match: /(nasheed|sacred|spiritual|devotional)/, tone: "devotional / sacred tone — reverent, melodic, no profanity, no romance tropes" },
+    { match: /(metal|hardcore|punk)/, tone: "metal / hardcore — aggressive, declarative, anthemic shout-along hook" },
+    { match: /(minimal|clean|swiss|brutal\w*)/, tone: "minimalist precision — no fluff, single-purpose, plainspoken" },
+    { match: /(playful|fun|whimsical|cartoon)/, tone: "playful and whimsical — light, energetic, friendly cadence" },
+    { match: /(luxury|premium|elegant|refined)/, tone: "premium editorial tone — refined diction, restrained, confident" },
+  ];
+  const matched = hints.find((h) => h.match.test(k));
+  return matched ? `${v} — ${matched.tone}` : v;
+}
+
+/** Cheap heuristic: does `s` look like it's actually written in `lang`? */
+function looksLikeLanguage(s: string, lang: string): boolean {
+  const L = lang.trim().toLowerCase();
+  if (!L || L === "english") {
+    // Reject strings that are *mostly* non-Latin when English was requested.
+    const nonLatin = (s.match(/[^\x00-\x7F]/g) ?? []).length;
+    return nonLatin / Math.max(s.length, 1) < 0.3;
+  }
+  const tests: Record<string, RegExp> = {
+    arabic: /[\u0600-\u06FF]/,
+    chinese: /[\u4E00-\u9FFF]/,
+    japanese: /[\u3040-\u30FF\u4E00-\u9FFF]/,
+    korean: /[\uAC00-\uD7AF]/,
+    russian: /[\u0400-\u04FF]/,
+    hebrew: /[\u0590-\u05FF]/,
+    hindi: /[\u0900-\u097F]/,
+    thai: /[\u0E00-\u0E7F]/,
+    greek: /[\u0370-\u03FF]/,
+  };
+  for (const [k, re] of Object.entries(tests)) {
+    if (L.includes(k)) return re.test(s);
+  }
+  // Romance / Germanic langs: at least don't be predominantly CJK / Cyrillic.
+  return !/[\u0400-\u04FF\u4E00-\u9FFF\u3040-\u30FF\uAC00-\uD7AF]/.test(s);
+}
+
 export const spawnPortal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { name: string; niche: string; language: string; vibe: string; vip?: boolean; useScout?: boolean; kind?: string }) => ({
@@ -277,6 +333,9 @@ export const spawnPortal = createServerFn({ method: "POST" })
     const ctx = scoutMeta.headlines.length
       ? `\nRecent intel:\n- ${scoutMeta.headlines.join("\n- ")}\nContext: ${scoutMeta.summary}`
       : "";
+    const vibeDirective = expandVibe(data.vibe);
+    const langLine = `OUTPUT LANGUAGE: ${data.language}. Every item MUST be written entirely in ${data.language}. Do NOT mix English unless the language is English. Do NOT translate or transliterate — write natively.`;
+    const vibeLine = `VIBE DIRECTIVE: ${vibeDirective}. Every item must visibly embody this vibe in word choice, cadence, and subject matter — not just topic.`;
     // Hub-specific seed content. Each kind asks Perplexity for 5 short items
     // tuned to that hub. We reuse the `jokes` jsonb column as a generic
     // "items" array so existing renderers keep working for jokes, and the
@@ -285,13 +344,33 @@ export const spawnPortal = createServerFn({ method: "POST" })
     {
       const seedSpecs: Record<typeof data.kind, { system: string; userPrompt: string; jsonKey: string }> = {
         jokes: {
-          system: "You output strict JSON only. No markdown.",
-          userPrompt: `Generate exactly 5 short original SAVAGE jokes in ${data.language}. Niche/theme: ${data.niche}. Vibe: ${data.vibe || "n/a"}.${ctx}\nEach joke 1-3 sentences. Punchy, sharp, on-trend. Return STRICT JSON ONLY: { "jokes": ["...", "..."] }. No commentary.`,
+          system: "You are a stand-up writer's room. You output strict JSON only — no markdown, no commentary. Every joke has a clear setup and a punchline that lands; no shaggy-dog rambles, no 'and that's why...' filler.",
+          userPrompt: `Write exactly 5 ORIGINAL jokes for the JokesHUB.
+Niche / topic: ${data.niche}.
+${langLine}
+${vibeLine}${ctx}
+RULES:
+- 1–3 sentences each. Setup → punchline. Punchline must subvert the setup.
+- Specific over generic: use proper nouns, real verbs, concrete imagery from the niche.
+- No "Why did the X cross the Y" templates. No recycled internet jokes.
+- Never break character of the requested vibe (e.g. wholesome vibe = zero profanity / innuendo).
+- No meta-commentary, no emojis unless the vibe explicitly calls for them.
+Return STRICT JSON ONLY: { "jokes": ["...", "...", "...", "...", "..."] }`,
           jsonKey: "jokes",
         },
         music: {
-          system: "You output strict JSON only. No markdown.",
-          userPrompt: `You are a hit-making A&R. Generate exactly 5 short original song hooks (2-4 lines each) in ${data.language} for a music portal. Niche/style: ${data.niche}. Vibe: ${data.vibe || "n/a"}.${ctx}\nEvery hook must be singable, rhythmic and instantly memorable. Return STRICT JSON ONLY: { "items": ["...", "..."] }. No commentary.`,
+          system: "You are a hit-making A&R + topline writer. You output strict JSON only — no markdown, no commentary. Every hook is singable out loud on the first read.",
+          userPrompt: `Write exactly 5 ORIGINAL song hooks for the MusicHUB.
+Genre / style: ${data.niche}.
+${langLine}
+${vibeLine}${ctx}
+RULES:
+- 2–4 lines per hook, line-broken with "\\n". Each line 4–9 syllables, easy to chant.
+- Use rhyme or near-rhyme on lines 2 & 4. Internal rhyme welcome.
+- Hook must contain a single concrete, repeatable phrase (the "tag") — the line a listener would shout back.
+- Match the vibe's cadence (e.g. drill = short hard bars; lo-fi = soft melodic; nasheed = devotional, no romance).
+- No song titles, no [verse]/[chorus] labels, no artist names, no production notes.
+Return STRICT JSON ONLY: { "items": ["line1\\nline2\\nline3\\nline4", "..."] }`,
           jsonKey: "items",
         },
         trade: {
@@ -305,35 +384,61 @@ export const spawnPortal = createServerFn({ method: "POST" })
           jsonKey: "items",
         },
         tools: {
-          system: "You output strict JSON only. No markdown.",
-          userPrompt: `Generate exactly 5 short ${data.language} micro-tool / calculator ideas for a tools portal. Niche: ${data.niche}. Vibe: ${data.vibe || "n/a"}.${ctx}\nEach idea: "<Tool name> — <one-sentence what it computes and the inputs>". Practical, single-purpose, no "AI assistant" generic answers. Return STRICT JSON ONLY: { "items": ["...", "..."] }. No commentary.`,
+          system: "You are a senior product engineer designing single-purpose micro-tools. You output strict JSON only — no markdown, no commentary. Every idea is something a competent dev could ship in under a day.",
+          userPrompt: `Design exactly 5 ORIGINAL micro-tool / calculator ideas for the ToolHUB.
+Niche / domain: ${data.niche}.
+${langLine}
+${vibeLine}${ctx}
+RULES:
+- Format EXACTLY: "<Tool Name> — <one sentence: what it computes, listing the concrete inputs and the concrete output>".
+- Inputs must be NAMED and TYPED implicitly (e.g. "monthly revenue (USD), churn rate (%), ARPU (USD)"), not vague ("some numbers").
+- Output must be a single decision-grade number, verdict, or short table — not a "report" or "analysis".
+- No generic "AI assistant", no "chatbot", no "dashboard". Single calculation per tool.
+- Tool name is 2–4 words, Title Case, niche-flavored. No emojis unless vibe calls for them.
+Return STRICT JSON ONLY: { "items": ["...", "...", "...", "...", "..."] }`,
           jsonKey: "items",
         },
       };
       const spec = seedSpecs[data.kind];
-      const res = await fetch("https://api.perplexity.ai/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${PERPLEXITY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "sonar",
-          messages: [
-            { role: "system", content: spec.system },
-            { role: "user", content: spec.userPrompt },
-          ],
-          temperature: 0.8,
-          max_tokens: 900,
-        }),
-      });
-      if (!res.ok) throw new Error(`Perplexity ${res.status}`);
-      const json = await res.json();
-      const raw: string = json?.choices?.[0]?.message?.content ?? "{}";
-      const match = raw.match(/\{[\s\S]*\}/);
-      let parsed: Record<string, unknown> = {};
-      try { parsed = JSON.parse(match ? match[0] : raw); } catch { /* */ }
-      const arr = (parsed[spec.jsonKey] ?? parsed.items ?? parsed.jokes) as unknown;
-      jokes = (Array.isArray(arr) ? arr : [])
-        .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
-        .slice(0, 5);
+
+      const callSeed = async (extraSystem?: string): Promise<string[]> => {
+        const res = await fetch("https://api.perplexity.ai/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${PERPLEXITY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "sonar",
+            messages: [
+              { role: "system", content: extraSystem ? `${spec.system}\n${extraSystem}` : spec.system },
+              { role: "user", content: spec.userPrompt },
+            ],
+            temperature: 0.85,
+            max_tokens: 1100,
+          }),
+        });
+        if (!res.ok) throw new Error(`Perplexity ${res.status}`);
+        const json = await res.json();
+        const raw: string = json?.choices?.[0]?.message?.content ?? "{}";
+        const match = raw.match(/\{[\s\S]*\}/);
+        let parsed: Record<string, unknown> = {};
+        try { parsed = JSON.parse(match ? match[0] : raw); } catch { /* */ }
+        const arr = (parsed[spec.jsonKey] ?? parsed.items ?? parsed.jokes) as unknown;
+        return (Array.isArray(arr) ? arr : [])
+          .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
+          .slice(0, 5);
+      };
+
+      jokes = await callSeed();
+      // Language-fidelity guard: if half or more items don't look like the
+      // requested language, retry once with a stricter directive.
+      const offLang = jokes.filter((j) => !looksLikeLanguage(j, data.language)).length;
+      if (jokes.length > 0 && offLang * 2 >= jokes.length) {
+        try {
+          const retry = await callSeed(
+            `STRICT REWRITE: the previous response had items not written in ${data.language}. Every single item MUST be in ${data.language}. Do not include any English words or transliteration unless ${data.language} itself is English.`,
+          );
+          if (retry.length > 0) jokes = retry;
+        } catch { /* keep original */ }
+      }
       if (jokes.length === 0) {
         throw new Error(`No ${data.kind} seeds generated — try a more specific niche`);
       }
@@ -342,12 +447,26 @@ export const spawnPortal = createServerFn({ method: "POST" })
     // ───── Creative Director: Perplexity-generated Style Dictionary ─────
     let themeConfig: any = null;
     try {
+      const kindBrandHint: Record<typeof data.kind, string> = {
+        jokes: "JokesHUB — comedy stage / club / spotlight energy. Bold display fonts, contrasty palette.",
+        music: "MusicHUB — concert / studio energy. Type pair must support song-lyric layouts. Palette = stage lighting.",
+        trade: "TradeHUB — terminal / tape / chart energy. Mono or grotesk type. Cool, neutral palette.",
+        connect: "ConnectHUB — network / professional energy. Clean, trustworthy type. Restrained accent.",
+        tools: "ToolHUB — engineered / blueprint / utility energy. Mono or geometric sans. Calm, technical palette.",
+      };
       const directorPrompt = `You are 0G-PORTAL's Creative Director. Expand this short brief into a complete visual identity for a web page.
-Brief: name="${data.name}", niche="${data.niche}", vibe="${data.vibe || "n/a"}".
+Brief: name="${data.name}", niche="${data.niche}", vibe="${expandVibe(data.vibe)}", language="${data.language}".
+Hub directive: ${kindBrandHint[data.kind]}
 Examples of mapping:
 - "Nasheed" => glowing blue mosaic background, elegant Amiri/Cormorant serif, gold accents, vibe "Sacred Geometry".
 - "Drill" => deep purple/black gradient, Bebas Neue + Inter, neon magenta accents, vibe "Cyber-Street".
 - "Kids math" => playful pastel gradient, Fredoka + Nunito, candy accents, vibe "Saturday Cartoon".
+
+Hard rules:
+- The vibe directive is the law. Refuse to default to generic neon/cyber unless the vibe says so.
+- Pick a Google Font pair that natively supports the script of language="${data.language}" (e.g. Arabic → Amiri/Tajawal, CJK → Noto Sans SC/JP/KR, Cyrillic → PT Sans, Devanagari → Noto Sans Devanagari). For Latin-script languages, pick fonts whose mood matches the vibe.
+- Heading and body fonts must be visually distinct (display+text, not two grotesks).
+- Palette must hit WCAG AA contrast for text on bg1.
 
 Return STRICT JSON ONLY (no prose, no markdown), exactly this shape:
 {
