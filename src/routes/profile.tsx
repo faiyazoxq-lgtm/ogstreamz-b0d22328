@@ -315,13 +315,28 @@ function ProfilePage() {
         {/* Boss-only Credits Reserve status card (replaces purchase UI) */}
         {isBoss && (
           <section className="mt-12">
-            <div className="rounded-2xl border border-[oklch(0.65_0.16_85/0.55)] bg-card p-6 sm:p-8 relative overflow-hidden shadow-[0_0_60px_-20px_oklch(0.7_0.18_85/0.5)]">
+            <div
+              className="rounded-2xl p-[1.5px] relative overflow-hidden shadow-[0_0_50px_-12px_oklch(0.72_0.22_245/0.55),0_0_120px_-40px_oklch(0.85_0.18_235/0.4)]"
+              style={{
+                background:
+                  "linear-gradient(135deg, oklch(0.95 0.005 240) 0%, oklch(0.72 0.22 245) 22%, oklch(0.55 0.02 240) 48%, oklch(0.85 0.18 235) 72%, oklch(0.95 0.01 240) 100%)",
+              }}
+            >
+            <div className="rounded-[14px] bg-[oklch(0.13_0.02_250)] p-6 sm:p-8 relative overflow-hidden">
               <div
                 aria-hidden
-                className="pointer-events-none absolute inset-0 opacity-30"
+                className="pointer-events-none absolute inset-0 opacity-60"
                 style={{
                   background:
-                    "radial-gradient(ellipse at top right, oklch(0.7_0.18_85/0.25), transparent 60%), radial-gradient(ellipse at bottom left, oklch(0.72_0.22_245/0.18), transparent 55%)",
+                    "radial-gradient(ellipse at top right, oklch(0.85 0.18 235 / 0.22), transparent 60%), radial-gradient(ellipse at bottom left, oklch(0.72 0.22 245 / 0.18), transparent 55%), linear-gradient(180deg, transparent 0%, oklch(0.72 0.22 245 / 0.05) 100%)",
+                }}
+              />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 top-0 h-px"
+                style={{
+                  background:
+                    "linear-gradient(90deg, transparent, oklch(0.95 0.01 240 / 0.9), transparent)",
                 }}
               />
               <div className="relative">
@@ -330,7 +345,17 @@ function ProfilePage() {
                     <Crown className="h-4 w-4" />
                     Boss · Credits Reserve
                   </div>
-                  <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.25em] font-black rounded-full border border-emerald-400/50 bg-emerald-400/10 px-2.5 py-1 text-emerald-300">
+                  <span
+                    className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.25em] font-black rounded-full px-2.5 py-1"
+                    style={{
+                      color: "var(--neon-blue-bright)",
+                      border: "1px solid oklch(0.72 0.22 245 / 0.55)",
+                      background:
+                        "linear-gradient(180deg, oklch(0.72 0.22 245 / 0.18), oklch(0.72 0.22 245 / 0.06))",
+                      boxShadow:
+                        "inset 0 1px 0 oklch(0.95 0.01 240 / 0.25), 0 0 18px -4px oklch(0.72 0.22 245 / 0.6)",
+                    }}
+                  >
                     <BadgeCheck className="h-3 w-3" /> Active
                   </span>
                 </div>
@@ -353,7 +378,14 @@ function ProfilePage() {
                   ].map(({ label, value, Icon }) => (
                     <div
                       key={label}
-                      className="rounded-lg border border-border/40 bg-background/40 px-3 py-2.5 flex items-center gap-2"
+                      className="rounded-lg px-3 py-2.5 flex items-center gap-2"
+                      style={{
+                        border: "1px solid oklch(0.72 0.22 245 / 0.28)",
+                        background:
+                          "linear-gradient(180deg, oklch(0.18 0.02 250 / 0.85), oklch(0.13 0.02 250 / 0.9))",
+                        boxShadow:
+                          "inset 0 1px 0 oklch(0.95 0.01 240 / 0.08), 0 0 24px -16px oklch(0.72 0.22 245 / 0.7)",
+                      }}
                     >
                       <Icon className="h-3.5 w-3.5" style={{ color: "var(--neon-blue-bright)" }} />
                       <div className="min-w-0">
@@ -371,18 +403,35 @@ function ProfilePage() {
                 <div className="mt-5 flex flex-wrap gap-2">
                   <Link
                     to="/boss/users"
-                    className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-background/40 px-3 py-1.5 text-[11px] uppercase tracking-[0.22em] font-bold hover:bg-background/70"
+                    className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] uppercase tracking-[0.22em] font-bold transition-all hover:-translate-y-px"
+                    style={{
+                      color: "var(--neon-blue-bright)",
+                      border: "1px solid oklch(0.72 0.22 245 / 0.5)",
+                      background:
+                        "linear-gradient(180deg, oklch(0.2 0.02 250 / 0.85), oklch(0.13 0.02 250 / 0.95))",
+                      boxShadow:
+                        "inset 0 1px 0 oklch(0.95 0.01 240 / 0.18), 0 0 20px -8px oklch(0.72 0.22 245 / 0.7)",
+                    }}
                   >
                     <Coins className="h-3.5 w-3.5" /> Adjust member credits
                   </Link>
                   <Link
                     to="/boss"
-                    className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-background/40 px-3 py-1.5 text-[11px] uppercase tracking-[0.22em] font-bold hover:bg-background/70"
+                    className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] uppercase tracking-[0.22em] font-bold transition-all hover:-translate-y-px"
+                    style={{
+                      color: "var(--neon-blue-bright)",
+                      border: "1px solid oklch(0.72 0.22 245 / 0.5)",
+                      background:
+                        "linear-gradient(180deg, oklch(0.2 0.02 250 / 0.85), oklch(0.13 0.02 250 / 0.95))",
+                      boxShadow:
+                        "inset 0 1px 0 oklch(0.95 0.01 240 / 0.18), 0 0 20px -8px oklch(0.72 0.22 245 / 0.7)",
+                    }}
                   >
                     <Shield className="h-3.5 w-3.5" /> Boss console
                   </Link>
                 </div>
               </div>
+            </div>
             </div>
           </section>
         )}
