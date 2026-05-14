@@ -24,6 +24,7 @@ import {
   adjustCredits, setRank, setFeatureFlags, createRedeemCode,
   grantVipPass, revokeVipPass, listVipPasses,
   grantByEmail, listPendingGrants, deletePendingGrant,
+  createLifetimeVipCode, listLifetimeVipCodes, deleteLifetimeVipCode,
 } from "@/lib/overlord.functions";
 import { bossListResellers, bossCreateReseller, bossTopupReseller } from "@/lib/reseller.functions";
 import { PassShareCardPanel } from "@/components/overlord/PassShareCardPanel";
