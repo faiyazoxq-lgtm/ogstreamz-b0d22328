@@ -70,12 +70,12 @@ export function TelegramLinkCard() {
   const onConnect = async () => {
     setOpening(true);
     try {
-      let active = code ?? null;
-      if (!active) {
-        const res: any = await genCode();
-        active = res?.code ?? null;
-        await refresh();
-      }
+      // Always mint a fresh code for the *current* signed-in opener so a
+      // leaked link from a previous session/device can't be redeemed by
+      // someone else's Telegram against this account.
+      const res: any = await genCode();
+      const active = res?.code ?? null;
+      await refresh();
       if (active) {
         const url = `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent(active)}`;
         window.open(url, "_blank", "noopener,noreferrer");

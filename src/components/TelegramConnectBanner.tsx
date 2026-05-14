@@ -32,6 +32,11 @@ export function TelegramConnectBanner({ userId }: { userId: string | null }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  // Code minted in *this* browser session for *this* signed-in user.
+  // We never trust a pre-existing DB code for the deep-link, so a leaked
+  // /link CODE from a previous device/session can't be redeemed by someone
+  // else's Telegram against this account.
+  const [sessionCode, setSessionCode] = useState<string | null>(null);
   const pollRef = useRef<number | null>(null);
 
   // Per-session dismissal — clears when the tab closes, so they get
@@ -56,6 +61,8 @@ export function TelegramConnectBanner({ userId }: { userId: string | null }) {
   useEffect(() => {
     if (!userId) { setLoading(false); return; }
     refresh().finally(() => setLoading(false));
+    // New auth identity → drop any code minted for a previous opener.
+    setSessionCode(null);
     return () => {
       if (pollRef.current) window.clearInterval(pollRef.current);
     };
@@ -65,7 +72,7 @@ export function TelegramConnectBanner({ userId }: { userId: string | null }) {
   // Once a code exists, poll status so the banner flips to "Connected"
   // automatically as soon as the user hits Start in Telegram.
   useEffect(() => {
-    if (!status?.link_code || status?.chat_id) {
+    if (!sessionCode || status?.chat_id) {
       if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
       return;
     }
@@ -78,22 +85,24 @@ export function TelegramConnectBanner({ userId }: { userId: string | null }) {
       }
     }, 4000);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status?.link_code, status?.chat_id]);
+  }, [sessionCode, status?.chat_id]);
 
   if (!userId || loading || dismissed) return null;
   if (status?.chat_id) return null; // Already linked → never show.
 
-  const code = status?.link_code ?? null;
+  // Only the code minted in this opener's session is shown / used.
+  const code = sessionCode;
 
   const handleConnect = async () => {
     setBusy(true);
     try {
-      let active = code;
-      if (!active) {
-        await genCode();
-        const s = await refresh();
-        active = s?.link_code ?? null;
-      }
+      // Always mint a fresh code for the *current* signed-in opener.
+      // Server upserts on user_id, invalidating any prior code so a
+      // leaked link from a previous session/device can't be redeemed.
+      const minted = await genCode();
+      const active = (minted as { code?: string })?.code ?? null;
+      if (active) setSessionCode(active);
+      await refresh();
       if (active) {
         // Deep-link straight into the bot with the token as /start arg —
         // pressing Start in Telegram triggers the webhook to bind chat_id.
