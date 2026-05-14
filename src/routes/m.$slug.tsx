@@ -1,12 +1,12 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Music, Wand2, Loader2, ArrowLeft, Disc3, Lock, BadgeCheck, Layers, Copy, Check, Sparkles } from "lucide-react";
+import { Music, Wand2, Loader2, ArrowLeft, Disc3, Lock, BadgeCheck, Layers, Sparkles, Download, Share2, Play, Pause } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { formatLyrics, requestStudioTrack, generateSunoStack, type SunoStack } from "@/lib/music-portals.functions";
+import { formatLyrics, requestStudioTrack, generatePortalTrack, getPortalTrackJob, unlockPortalTrackDownload } from "@/lib/music-portals.functions";
 import { listPortalTracks, getTrackOwnership } from "@/lib/tracks.functions";
 import { spawnMusic } from "@/lib/suno.functions";
 import { TrackPlayer } from "@/components/TrackPlayer";
@@ -134,8 +134,9 @@ function MusicPortalPage() {
   const requestFn = useServerFn(requestStudioTrack);
   const listTracksFn = useServerFn(listPortalTracks);
   const ownershipFn = useServerFn(getTrackOwnership);
-  const stackFn = useServerFn(generateSunoStack);
-  const spawnFn = useServerFn(spawnMusic);
+  const generateTrackFn = useServerFn(generatePortalTrack);
+  const getJobFn = useServerFn(getPortalTrackJob);
+  const unlockFn = useServerFn(unlockPortalTrackDownload);
 
   type T = { id: string; title: string; price_cents: number; preview_url: string | null };
   const [tracks, setTracks] = useState<T[]>([]);
@@ -231,9 +232,12 @@ function MusicPortalPage() {
   const [generating, setGenerating] = useState(false);
   const [submitted, setSubmitted] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
-  const [stack, setStack] = useState<SunoStack | null>(null);
-  const [stackLoading, setStackLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [trackJobId, setTrackJobId] = useState<string | null>(null);
+  const [trackStatus, setTrackStatus] = useState<"idle" | "generating" | "ready" | "failed">("idle");
+  const [audioV1, setAudioV1] = useState<string | null>(null);
+  const [audioV2, setAudioV2] = useState<string | null>(null);
+  const [downloadUnlocked, setDownloadUnlocked] = useState(false);
+  const [unlocking, setUnlocking] = useState(false);
 
   const STYLE_PRESETS = [
     "Aggressive & Raw",
@@ -247,31 +251,92 @@ function MusicPortalPage() {
   ];
 
   const onPickStyle = async (preset: string) => {
-    if (!user) return toast.error("Sign in to build a Suno stack");
-    if (stackLoading) return;
+    if (!user) return toast.error("Sign in to generate");
+    if (trackStatus === "generating") return;
     setSelectedStyle(preset);
-    const autoVibe = `${portal.vibe ?? portal.style ?? "studio session"} — style: ${preset}`;
-    setStackLoading(true);
+    setTrackStatus("generating");
+    setAudioV1(null);
+    setAudioV2(null);
+    setDownloadUnlocked(false);
+    setTrackJobId(null);
     try {
-      const r = await stackFn({ data: { slug: portal.slug, vibe: autoVibe } });
-      setStack(r);
-      toast.success("Suno V5.5 stack ready");
+      const r = await generateTrackFn({ data: { slug: portal.slug, style: preset } });
+      setTrackJobId(r.jobId);
+      toast.success("Generating · 2 versions on the way (~60s)");
     } catch (e: any) {
-      toast.error(e?.message ?? "Stack failed");
-    } finally {
-      setStackLoading(false);
+      toast.error(e?.message ?? "Generation failed");
+      setTrackStatus("failed");
     }
   };
 
-  const onCopyStack = async () => {
-    if (!stack) return;
+  // Poll the suno job until both audio URLs land or timeout.
+  useEffect(() => {
+    if (!trackJobId || trackStatus !== "generating") return;
+    let cancelled = false;
+    let tries = 0;
+    const poll = async () => {
+      tries += 1;
+      try {
+        const j = await getJobFn({ data: { jobId: trackJobId } });
+        if (cancelled) return;
+        if (j.audio_url_v1) setAudioV1(j.audio_url_v1);
+        if (j.audio_url_v2) setAudioV2(j.audio_url_v2);
+        setDownloadUnlocked(j.download_unlocked);
+        if (j.audio_url_v1 || j.status === "complete") {
+          setTrackStatus("ready");
+          toast.success("🎧 Track ready — preview below");
+          return;
+        }
+        if (j.status === "failed") {
+          setTrackStatus("failed");
+          toast.error("Generation failed");
+          return;
+        }
+      } catch (e: any) {
+        console.error("poll", e);
+      }
+      if (tries >= 75) {
+        // ~5 min
+        setTrackStatus("failed");
+        toast.error("Generation timed out — try again");
+        return;
+      }
+      setTimeout(poll, 4000);
+    };
+    poll();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trackJobId, trackStatus]);
+
+  const onUnlockDownload = async () => {
+    if (!trackJobId || unlocking || downloadUnlocked) return;
+    setUnlocking(true);
     try {
-      await navigator.clipboard.writeText(stack.formatted);
-      setCopied(true);
-      toast.success("Copied — paste into Suno Custom Mode");
-      setTimeout(() => setCopied(false), 1800);
+      const r = await unlockFn({ data: { jobId: trackJobId } });
+      if (r.audio_url_v1) setAudioV1(r.audio_url_v1);
+      if (r.audio_url_v2) setAudioV2(r.audio_url_v2);
+      setDownloadUnlocked(true);
+      toast.success("Unlocked — full track + downloads enabled");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Unlock failed");
+    } finally {
+      setUnlocking(false);
+    }
+  };
+
+  const onShare = async (url: string, label: string) => {
+    const shareData = { title: portal.name, text: `${portal.name} — ${selectedStyle ?? ""} (${label})`, url };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success("Track link copied — paste into your socials");
+      }
     } catch {
-      toast.error("Copy failed");
+      /* user cancelled */
     }
   };
 
