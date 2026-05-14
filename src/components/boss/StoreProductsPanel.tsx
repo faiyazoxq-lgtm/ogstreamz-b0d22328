@@ -489,11 +489,33 @@ function DraftEditor({
           <FieldShell label="Currency">
             <Input value={draft.currency} onChange={(e) => set("currency", e.target.value)} placeholder="usd" />
           </FieldShell>
-          <FieldShell label="Duration (days, blank = N/A, 0 = lifetime)">
-            <Input type="number" min={0} value={draft.duration_days} onChange={(e) => set("duration_days", e.target.value)} />
-          </FieldShell>
-          <FieldShell label="Sort order">
-            <Input type="number" value={draft.sort_order} onChange={(e) => set("sort_order", e.target.value)} />
+          <FieldShell label="Duration" className="sm:col-span-2">
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                min={0}
+                value={draft.duration_amount}
+                disabled={draft.duration_unit === "lifetime" || draft.duration_unit === "n/a"}
+                onChange={(e) => set("duration_amount", e.target.value)}
+                placeholder={draft.duration_unit === "lifetime" ? "Lifetime" : draft.duration_unit === "n/a" ? "N/A" : "e.g. 30"}
+                className="flex-1"
+              />
+              <Select
+                value={draft.duration_unit}
+                onValueChange={(v) => set("duration_unit", v as Draft["duration_unit"])}
+              >
+                <SelectTrigger className="w-[160px] bg-black/70 border-2 border-emerald-800/50 text-emerald-100">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="n/a">N/A</SelectItem>
+                  <SelectItem value="days">Days</SelectItem>
+                  <SelectItem value="months">Months</SelectItem>
+                  <SelectItem value="years">Years</SelectItem>
+                  <SelectItem value="lifetime">Lifetime</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </FieldShell>
           <FieldShell label="Asset URL (digital/nft download or link)" className="sm:col-span-2">
             <Input value={draft.asset_url} onChange={(e) => set("asset_url", e.target.value)} placeholder="https://…" />
