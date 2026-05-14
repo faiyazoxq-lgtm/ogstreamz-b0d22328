@@ -616,9 +616,14 @@ function DraftEditor({
           <Button onClick={onClose} variant="outline" className="border-emerald-800/50 text-emerald-200 uppercase tracking-wider text-xs font-black">
             Cancel
           </Button>
-          <Button onClick={onSave} disabled={busy} className="bg-emerald-600 hover:bg-emerald-500 text-black uppercase tracking-wider text-xs font-black">
-            {busy ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
-            Save
+          <Button
+            onClick={onSave}
+            disabled={busy || uploading}
+            title={uploading ? "Wait for the image upload to finish" : undefined}
+            className="bg-emerald-600 hover:bg-emerald-500 text-black uppercase tracking-wider text-xs font-black disabled:opacity-50"
+          >
+            {busy || uploading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
+            {uploading ? `Uploading ${uploadPct}%` : "Save"}
           </Button>
         </div>
       </div>
