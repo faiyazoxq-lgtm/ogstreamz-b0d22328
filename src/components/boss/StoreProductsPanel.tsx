@@ -622,11 +622,23 @@ function DraftEditor({
               )}
             </div>
           </FieldShell>
-          <FieldShell label="Price (cents)">
+          <FieldShell label={`Price (cents${(draft.currency || "gbp").toLowerCase() === "gbp" ? " · 100 = 1 🪙 = £1" : ""})`}>
             <Input type="number" min={0} value={draft.price_cents} onChange={(e) => set("price_cents", e.target.value)} />
           </FieldShell>
           <FieldShell label="Currency">
-            <Input value={draft.currency} onChange={(e) => set("currency", e.target.value)} placeholder="usd" />
+            <Select
+              value={(draft.currency || "gbp").toLowerCase()}
+              onValueChange={(v) => set("currency", v)}
+            >
+              <SelectTrigger className="bg-black/70 border-2 border-emerald-800/50 text-emerald-100 font-bold uppercase tracking-wider text-xs h-10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="gbp">Coins (default · 1 🪙 = £1)</SelectItem>
+                <SelectItem value="usd">USD</SelectItem>
+                <SelectItem value="eur">EUR</SelectItem>
+              </SelectContent>
+            </Select>
           </FieldShell>
           <FieldShell label="Duration" className="sm:col-span-2">
             <div className="flex gap-2">
