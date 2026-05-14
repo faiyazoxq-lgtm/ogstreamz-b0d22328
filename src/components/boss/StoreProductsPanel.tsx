@@ -40,21 +40,43 @@ type Draft = {
   price_cents: string;
   currency: string;
   duration_days: string;
+  duration_amount: string;
+  duration_unit: "n/a" | "days" | "months" | "years" | "lifetime";
   asset_url: string;
   metadata: string;
   active: boolean;
   sort_order: string;
 };
 
+function daysToUnit(d: number | null | undefined): { amount: string; unit: Draft["duration_unit"] } {
+  if (d == null) return { amount: "", unit: "n/a" };
+  if (d === 0) return { amount: "", unit: "lifetime" };
+  if (d % 365 === 0) return { amount: String(d / 365), unit: "years" };
+  if (d % 30 === 0) return { amount: String(d / 30), unit: "months" };
+  return { amount: String(d), unit: "days" };
+}
+
+function unitToDays(amount: string, unit: Draft["duration_unit"]): number | null {
+  if (unit === "n/a") return null;
+  if (unit === "lifetime") return 0;
+  const n = Number(amount);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  if (unit === "years") return Math.round(n * 365);
+  if (unit === "months") return Math.round(n * 30);
+  return Math.round(n);
+}
+
 function emptyDraft(kind: KindV): Draft {
   return {
     id: null, sku: "", kind, title: "", description: "",
     image_url: "", price_cents: "0", currency: "usd", duration_days: "",
+    duration_amount: "", duration_unit: "n/a",
     asset_url: "", metadata: "{}", active: true, sort_order: "0",
   };
 }
 
 function rowToDraft(r: StoreProductRow): Draft {
+  const du = daysToUnit(r.duration_days);
   return {
     id: r.id,
     sku: r.sku,
@@ -65,6 +87,8 @@ function rowToDraft(r: StoreProductRow): Draft {
     price_cents: String(r.price_cents),
     currency: r.currency,
     duration_days: r.duration_days == null ? "" : String(r.duration_days),
+    duration_amount: du.amount,
+    duration_unit: du.unit,
     asset_url: r.asset_url ?? "",
     metadata: JSON.stringify(r.metadata ?? {}, null, 2),
     active: r.active,
@@ -135,7 +159,7 @@ export function StoreProductsPanel() {
           image_url: draft.image_url || null,
           price_cents: Number(draft.price_cents) || 0,
           currency: draft.currency || "usd",
-          duration_days: draft.duration_days === "" ? null : Number(draft.duration_days),
+          duration_days: unitToDays(draft.duration_amount, draft.duration_unit),
           asset_url: draft.asset_url || null,
           metadata: draft.metadata.trim() || "{}",
           active: draft.active,
@@ -465,11 +489,33 @@ function DraftEditor({
           <FieldShell label="Currency">
             <Input value={draft.currency} onChange={(e) => set("currency", e.target.value)} placeholder="usd" />
           </FieldShell>
-          <FieldShell label="Duration (days, blank = N/A, 0 = lifetime)">
-            <Input type="number" min={0} value={draft.duration_days} onChange={(e) => set("duration_days", e.target.value)} />
-          </FieldShell>
-          <FieldShell label="Sort order">
-            <Input type="number" value={draft.sort_order} onChange={(e) => set("sort_order", e.target.value)} />
+          <FieldShell label="Duration" className="sm:col-span-2">
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                min={0}
+                value={draft.duration_amount}
+                disabled={draft.duration_unit === "lifetime" || draft.duration_unit === "n/a"}
+                onChange={(e) => set("duration_amount", e.target.value)}
+                placeholder={draft.duration_unit === "lifetime" ? "Lifetime" : draft.duration_unit === "n/a" ? "N/A" : "e.g. 30"}
+                className="flex-1"
+              />
+              <Select
+                value={draft.duration_unit}
+                onValueChange={(v) => set("duration_unit", v as Draft["duration_unit"])}
+              >
+                <SelectTrigger className="w-[160px] bg-black/70 border-2 border-emerald-800/50 text-emerald-100">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="n/a">N/A</SelectItem>
+                  <SelectItem value="days">Days</SelectItem>
+                  <SelectItem value="months">Months</SelectItem>
+                  <SelectItem value="years">Years</SelectItem>
+                  <SelectItem value="lifetime">Lifetime</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </FieldShell>
           <FieldShell label="Asset URL (digital/nft download or link)" className="sm:col-span-2">
             <Input value={draft.asset_url} onChange={(e) => set("asset_url", e.target.value)} placeholder="https://…" />
