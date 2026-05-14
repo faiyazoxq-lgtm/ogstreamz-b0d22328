@@ -85,9 +85,8 @@ export function SiteSearch({ className = "" }: { className?: string }) {
           .eq("public", true)
           .or(`name.ilike.${like},slug.ilike.${like},tagline.ilike.${like}`)
           .limit(4),
-        supabase.from("calculators")
+        supabase.from("calculators_public")
           .select("id, slug, name, description, published")
-          .eq("published", true)
           .or(`name.ilike.${like},slug.ilike.${like},description.ilike.${like}`)
           .limit(4),
       ]);

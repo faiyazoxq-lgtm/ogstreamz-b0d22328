@@ -297,7 +297,7 @@ function PortalsHub() {
               supabase.from("battles")
                 .select("id, slug, name, tagline, view_count, created_at, public")
                 .order("created_at", { ascending: false }),
-              supabase.from("calculators")
+              supabase.from("calculators_public")
                 .select("id, slug, name, description, vip, created_at, published")
                 .order("created_at", { ascending: false }),
             ]);
