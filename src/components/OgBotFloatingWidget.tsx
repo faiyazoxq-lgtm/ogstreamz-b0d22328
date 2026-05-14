@@ -110,7 +110,8 @@ export function OgBotFloatingWidget() {
               src={ogBotAvatar}
               alt=""
               aria-hidden="true"
-              className="absolute inset-0 h-full w-full rounded-full object-cover"
+              className="absolute inset-0 h-full w-full rounded-full object-cover scale-[1.15]"
+              style={{ objectPosition: "78% 48%" }}
             />
             {/* Subtle inner ring + gradient sheen */}
             <span className="absolute inset-0 rounded-full ring-1 ring-white/15" />
