@@ -7,8 +7,10 @@ import { reverifyStream } from "@/lib/stream-link.functions";
 import { effectiveSwearing, effectiveIntensity, rankDefaultsToSafe } from "@/lib/swearing";
 import { BossOgPassCard } from "@/components/boss/BossOgPassCard";
 import { MemberDetailDrawer } from "@/components/boss/MemberDetailDrawer";
+import { requireBoss } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/boss/users")({
+  beforeLoad: requireBoss,
   head: () => ({ meta: [{ title: "Users · Boss" }, { name: "description", content: "Full roster control: rank, status, credits, ban, force sign-out, stream-account verification." }] }),
   component: BossUsers,
 });
