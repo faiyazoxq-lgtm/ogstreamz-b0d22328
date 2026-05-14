@@ -82,6 +82,7 @@ import { Route as BossFunctionIdeasRouteImport } from './routes/boss.function-id
 import { Route as BossFunctionGrantsRouteImport } from './routes/boss.function-grants'
 import { Route as BossFunctionAuditRouteImport } from './routes/boss.function-audit'
 import { Route as BossDomainDenylistRouteImport } from './routes/boss.domain-denylist'
+import { Route as BossDomainRouteImport } from './routes/boss.domain'
 import { Route as BossDenylistAuditRouteImport } from './routes/boss.denylist-audit'
 import { Route as BossControlCentreRouteImport } from './routes/boss.control-centre'
 import { Route as BossContactsRouteImport } from './routes/boss.contacts'
@@ -469,6 +470,11 @@ const BossDomainDenylistRoute = BossDomainDenylistRouteImport.update({
   path: '/domain-denylist',
   getParentRoute: () => BossRoute,
 } as any)
+const BossDomainRoute = BossDomainRouteImport.update({
+  id: '/domain',
+  path: '/domain',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossDenylistAuditRoute = BossDenylistAuditRouteImport.update({
   id: '/denylist-audit',
   path: '/denylist-audit',
@@ -628,6 +634,7 @@ export interface FileRoutesByFullPath {
   '/boss/contacts': typeof BossContactsRoute
   '/boss/control-centre': typeof BossControlCentreRoute
   '/boss/denylist-audit': typeof BossDenylistAuditRoute
+  '/boss/domain': typeof BossDomainRoute
   '/boss/domain-denylist': typeof BossDomainDenylistRoute
   '/boss/function-audit': typeof BossFunctionAuditRoute
   '/boss/function-grants': typeof BossFunctionGrantsRoute
@@ -723,6 +730,7 @@ export interface FileRoutesByTo {
   '/boss/contacts': typeof BossContactsRoute
   '/boss/control-centre': typeof BossControlCentreRoute
   '/boss/denylist-audit': typeof BossDenylistAuditRoute
+  '/boss/domain': typeof BossDomainRoute
   '/boss/domain-denylist': typeof BossDomainDenylistRoute
   '/boss/function-audit': typeof BossFunctionAuditRoute
   '/boss/function-grants': typeof BossFunctionGrantsRoute
@@ -820,6 +828,7 @@ export interface FileRoutesById {
   '/boss/contacts': typeof BossContactsRoute
   '/boss/control-centre': typeof BossControlCentreRoute
   '/boss/denylist-audit': typeof BossDenylistAuditRoute
+  '/boss/domain': typeof BossDomainRoute
   '/boss/domain-denylist': typeof BossDomainDenylistRoute
   '/boss/function-audit': typeof BossFunctionAuditRoute
   '/boss/function-grants': typeof BossFunctionGrantsRoute
@@ -918,6 +927,7 @@ export interface FileRouteTypes {
     | '/boss/contacts'
     | '/boss/control-centre'
     | '/boss/denylist-audit'
+    | '/boss/domain'
     | '/boss/domain-denylist'
     | '/boss/function-audit'
     | '/boss/function-grants'
@@ -1013,6 +1023,7 @@ export interface FileRouteTypes {
     | '/boss/contacts'
     | '/boss/control-centre'
     | '/boss/denylist-audit'
+    | '/boss/domain'
     | '/boss/domain-denylist'
     | '/boss/function-audit'
     | '/boss/function-grants'
@@ -1109,6 +1120,7 @@ export interface FileRouteTypes {
     | '/boss/contacts'
     | '/boss/control-centre'
     | '/boss/denylist-audit'
+    | '/boss/domain'
     | '/boss/domain-denylist'
     | '/boss/function-audit'
     | '/boss/function-grants'
@@ -1729,6 +1741,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossDomainDenylistRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/domain': {
+      id: '/boss/domain'
+      path: '/domain'
+      fullPath: '/boss/domain'
+      preLoaderRoute: typeof BossDomainRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/denylist-audit': {
       id: '/boss/denylist-audit'
       path: '/denylist-audit'
@@ -1902,6 +1921,7 @@ interface BossRouteChildren {
   BossContactsRoute: typeof BossContactsRoute
   BossControlCentreRoute: typeof BossControlCentreRoute
   BossDenylistAuditRoute: typeof BossDenylistAuditRoute
+  BossDomainRoute: typeof BossDomainRoute
   BossDomainDenylistRoute: typeof BossDomainDenylistRoute
   BossFunctionAuditRoute: typeof BossFunctionAuditRoute
   BossFunctionGrantsRoute: typeof BossFunctionGrantsRoute
@@ -1938,6 +1958,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossContactsRoute: BossContactsRoute,
   BossControlCentreRoute: BossControlCentreRoute,
   BossDenylistAuditRoute: BossDenylistAuditRoute,
+  BossDomainRoute: BossDomainRoute,
   BossDomainDenylistRoute: BossDomainDenylistRoute,
   BossFunctionAuditRoute: BossFunctionAuditRoute,
   BossFunctionGrantsRoute: BossFunctionGrantsRoute,

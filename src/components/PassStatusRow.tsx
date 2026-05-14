@@ -11,6 +11,7 @@ import {
   Globe,
   Shield,
 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { OgPassBadge } from "@/components/OgPassBadge";
 import { socialToUrl } from "@/lib/social-handles";
 
@@ -180,7 +181,14 @@ export function PassStatusRow({
 
   return (
     <div className={["inline-flex flex-wrap items-center gap-1.5", className].join(" ")}>
-      <OgPassBadge number={profile.og_pass_no} size={size} />
+      <Link
+        to={isBoss ? "/boss/users" : "/account/passes"}
+        title={isBoss ? "View all OG Passes" : "View my passes"}
+        className="rounded-full transition hover:scale-[1.04] focus:outline-none focus-visible:ring-1 focus-visible:ring-foreground/40"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <OgPassBadge number={profile.og_pass_no} size={size} />
+      </Link>
       {rankChipLabel && (
         <span
           title={`Rank · ${rankChipLabel}`}
@@ -195,10 +203,12 @@ export function PassStatusRow({
         </span>
       )}
       {isVip && (
-        <span
+        <Link
+          to="/vip"
+          onClick={(e) => e.stopPropagation()}
           title="VIP Lifetime Pass · Real OG for life"
           className={[
-            "inline-flex items-center gap-1 rounded-full font-black uppercase tracking-[0.22em]",
+            "inline-flex items-center gap-1 rounded-full font-black uppercase tracking-[0.22em] transition hover:scale-[1.04] focus:outline-none focus-visible:ring-1 focus-visible:ring-foreground/40",
             chipMetalGold,
             chipCls,
           ].join(" ")}
@@ -207,28 +217,43 @@ export function PassStatusRow({
           <span className="opacity-80 inline-flex items-center gap-0.5">
             <InfinityIcon className={iconSize} />Lifetime
           </span>
-        </span>
+        </Link>
       )}
-      <span
-        title={
-          streamActive
-            ? `OG-Streamz · Stream Profile active${
-                profile.stream_expires_at
-                  ? ` until ${new Date(profile.stream_expires_at).toLocaleDateString()}`
-                  : ""
-              }`
-            : "Stream Profile inactive — yearly pass required"
-        }
-        className={[
-          "inline-flex items-center gap-1 rounded-full font-black uppercase tracking-[0.22em]",
+      {(() => {
+        const streamTitle = isBoss
+          ? "OG-Streamz · Domain & DNS settings"
+          : streamActive
+          ? `OG-Streamz · Stream Profile active${
+              profile.stream_expires_at
+                ? ` until ${new Date(profile.stream_expires_at).toLocaleDateString()}`
+                : ""
+            }`
+          : "Stream Profile inactive — yearly pass required";
+        const streamCls = [
+          "inline-flex items-center gap-1 rounded-full font-black uppercase tracking-[0.22em] transition hover:scale-[1.04] focus:outline-none focus-visible:ring-1 focus-visible:ring-foreground/40",
           streamActive ? chipMetalCyan : chipMetalDim,
           chipCls,
-        ].join(" ")}
-      >
-        {streamActive ? <Tv className={iconSize} /> : <TvMinimal className={`${iconSize} opacity-60`} />}
-        OG-Streamz
-        <span className="opacity-80">{streamActive ? streamExpiryLabel(profile) : "Off"}</span>
-      </span>
+        ].join(" ");
+        const inner = (
+          <>
+            {streamActive ? <Tv className={iconSize} /> : <TvMinimal className={`${iconSize} opacity-60`} />}
+            OG-Streamz
+            <span className="opacity-80">{streamActive ? streamExpiryLabel(profile) : "Off"}</span>
+          </>
+        );
+        if (isBoss) {
+          return (
+            <Link to="/boss/domain" title={streamTitle} className={streamCls} onClick={(e) => e.stopPropagation()}>
+              {inner}
+            </Link>
+          );
+        }
+        return (
+          <span title={streamTitle} className={streamCls}>
+            {inner}
+          </span>
+        );
+      })()}
       {showCoins && credits != null && (
         <span
           title={`Coin balance · ${credits.toLocaleString()} 🪙`}
