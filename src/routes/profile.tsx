@@ -312,17 +312,19 @@ function ProfilePage() {
           </div>
         </section>
 
-        {/* Buy Credits */}
-        <section className="mt-12">
-          <header className="text-center mb-6">
-            <p className="text-xs uppercase tracking-[0.4em] font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
-              Vault Wallet
-            </p>
-            <h2 className="mt-3 font-[Montserrat] font-black text-2xl sm:text-3xl text-metallic">
-              Buy 0G Credits
-            </h2>
-          </header>
-        </section>
+        {/* Buy Credits — hidden for Boss (unlimited reserve) */}
+        {!isBoss && (
+          <section className="mt-12">
+            <header className="text-center mb-6">
+              <p className="text-xs uppercase tracking-[0.4em] font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
+                Vault Wallet
+              </p>
+              <h2 className="mt-3 font-[Montserrat] font-black text-2xl sm:text-3xl text-metallic">
+                Buy 0G Credits
+              </h2>
+            </header>
+          </section>
+        )}
 
         {/* Connections — socials + verified accounts */}
         <section className="mt-10 space-y-5">
@@ -350,9 +352,10 @@ function ProfilePage() {
           <CoinActivity limit={8} />
         </section>
 
-        <section className="mt-12">
-          <div className="grid sm:grid-cols-3 gap-4">
-            {CREDIT_PACK_LIST.map((p) => {
+        {!isBoss && (
+          <section className="mt-12">
+            <div className="grid sm:grid-cols-3 gap-4">
+              {CREDIT_PACK_LIST.map((p) => {
               const Icon = p.priceId === "starter_pack_10" ? Zap : p.priceId === "enforcer_pack_50" ? Flame : Skull;
               const featured = p.recurring;
               return (
@@ -379,17 +382,18 @@ function ProfilePage() {
                     <span className="text-sm text-muted-foreground font-bold uppercase tracking-[0.2em]">Coins</span>
                     {p.recurring && <span className="text-sm text-muted-foreground font-normal">/mo</span>}
                   </p>
-                  <Button
-                    onClick={() => buy(p.priceId)}
-                    className="btn-glass-blue mt-5 w-full text-white text-xs uppercase tracking-[0.25em] font-bold py-5"
-                  >
-                    {p.recurring ? "Go Boss" : "Top Up"}
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+                    <Button
+                      onClick={() => buy(p.priceId)}
+                      className="btn-glass-blue mt-5 w-full text-white text-xs uppercase tracking-[0.25em] font-bold py-5"
+                    >
+                      {p.recurring ? "Go Boss" : "Top Up"}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         <section className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
