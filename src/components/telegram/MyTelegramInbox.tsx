@@ -307,32 +307,37 @@ export function MyTelegramInbox() {
         onSubmit={onSubmit}
         className="border-t border-white/10 p-2 space-y-2"
       >
-        {attachment && (
-          <div className="flex items-center gap-2 rounded-md border border-sky-500/30 bg-sky-950/20 px-2 py-1.5 text-xs text-white/85">
-            <Paperclip className="h-3.5 w-3.5 text-sky-300 shrink-0" />
-            <span className="truncate flex-1" title={attachment.name}>
-              {attachment.name}
-            </span>
-            <span className="text-white/45 shrink-0">
-              {(attachment.size / 1024).toFixed(0)} KB
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                setAttachment(null);
-                if (fileInputRef.current) fileInputRef.current.value = "";
-              }}
-              className="rounded p-0.5 text-white/55 hover:text-white hover:bg-white/10"
-              title="Remove"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
+        {attachments.length > 0 && (
+          <div className="space-y-1">
+            {attachments.map((file, idx) => (
+              <div
+                key={`${file.name}-${idx}`}
+                className="flex items-center gap-2 rounded-md border border-sky-500/30 bg-sky-950/20 px-2 py-1.5 text-xs text-white/85"
+              >
+                <Paperclip className="h-3.5 w-3.5 text-sky-300 shrink-0" />
+                <span className="truncate flex-1" title={file.name}>
+                  {file.name}
+                </span>
+                <span className="text-white/45 shrink-0">
+                  {(file.size / 1024).toFixed(0)} KB
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeAttachment(idx)}
+                  className="rounded p-0.5 text-white/55 hover:text-white hover:bg-white/10"
+                  title="Remove"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
           </div>
         )}
         <div className="flex items-end gap-2">
           <input
             ref={fileInputRef}
             type="file"
+            multiple
             className="hidden"
             onChange={onPickFile}
             disabled={send.isPending || q.isError}
@@ -342,7 +347,7 @@ export function MyTelegramInbox() {
             onClick={() => fileInputRef.current?.click()}
             disabled={send.isPending || q.isError}
             className="inline-flex items-center justify-center rounded-md border border-white/10 bg-black/40 px-2 py-2 text-white/65 hover:text-white hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed"
-            title="Attach image or file (max 10 MB)"
+            title="Attach images or files (max 10 MB each)"
           >
             <Paperclip className="h-4 w-4" />
           </button>
@@ -350,9 +355,9 @@ export function MyTelegramInbox() {
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder={
-              attachment
+              attachments.length > 0
                 ? "Add a caption (optional)…"
-                : "Send a message to your Telegram (HTML allowed)…"
+                : "Send a message to your Telegram (HTML allowed) — drop files anywhere…"
             }
             disabled={send.isPending || q.isError}
             rows={2}
@@ -366,7 +371,7 @@ export function MyTelegramInbox() {
           />
           <button
             type="submit"
-            disabled={(!draft.trim() && !attachment) || send.isPending || q.isError}
+            disabled={(!draft.trim() && attachments.length === 0) || send.isPending || q.isError}
             className="inline-flex items-center gap-1.5 rounded-md bg-sky-500 hover:bg-sky-400 text-black disabled:opacity-40 disabled:cursor-not-allowed px-3 py-2 text-xs font-bold uppercase tracking-[0.2em]"
             title="Send (⌘/Ctrl + Enter)"
           >
