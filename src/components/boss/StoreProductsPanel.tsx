@@ -549,13 +549,70 @@ function DraftEditor({
                 Tip: drag &amp; drop an image anywhere on this dialog to upload it.
               </p>
               {draft.image_url && (
-                <div className="flex items-center gap-3 rounded-md border border-emerald-900/40 bg-black/40 p-2">
-                  <img
-                    src={draft.image_url}
-                    alt="Product preview"
-                    className="h-16 w-16 rounded object-cover bg-black/40"
-                  />
-                  <span className="text-[11px] text-emerald-700 truncate">{draft.image_url}</span>
+                <div className="rounded-lg border border-emerald-900/50 bg-black/50 p-3">
+                  <div className="flex items-start gap-3">
+                    <a
+                      href={draft.image_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 group relative block"
+                      title="Open full-size image"
+                    >
+                      <img
+                        src={draft.image_url}
+                        alt="Product thumbnail preview"
+                        className="h-24 w-24 rounded-md object-cover bg-black/40 border border-emerald-800/50 group-hover:border-cyan-400 transition-colors"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).style.display = "none";
+                          const sib = (e.currentTarget.nextElementSibling as HTMLElement | null);
+                          if (sib) sib.style.display = "flex";
+                        }}
+                      />
+                      <div
+                        style={{ display: "none" }}
+                        className="h-24 w-24 rounded-md border border-rose-700/60 bg-rose-950/30 text-rose-300 items-center justify-center text-[10px] font-bold uppercase tracking-widest text-center px-1"
+                      >
+                        Image failed to load
+                      </div>
+                    </a>
+                    <div className="flex-1 min-w-0 flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] uppercase tracking-widest text-emerald-300 font-black">
+                          Final asset preview
+                        </span>
+                      </div>
+                      <span
+                        className="text-[11px] text-emerald-700 truncate font-mono"
+                        title={draft.image_url}
+                      >
+                        {draft.image_url}
+                      </span>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={uploading}
+                          onClick={() => fileInputRef.current?.click()}
+                          className="h-7 border-cyan-700/50 text-cyan-200 hover:bg-cyan-900/40"
+                        >
+                          <Upload className="h-3 w-3 mr-1" />
+                          Replace
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={uploading}
+                          onClick={() => set("image_url", "")}
+                          className="h-7 border-rose-700/50 text-rose-200 hover:bg-rose-900/40"
+                        >
+                          <Trash2 className="h-3 w-3 mr-1" />
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
