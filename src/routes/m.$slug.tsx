@@ -248,6 +248,12 @@ function MusicPortalPage() {
   const [submitted, setSubmitted] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [trackJobId, setTrackJobId] = useState<string | null>(null);
+  // Friendly hydration error surfaced inline so a bad/expired/foreign
+  // `?job=` from "Open in Studio" doesn't leave a broken-looking page.
+  const [jobLoadError, setJobLoadError] = useState<
+    | { kind: "auth" | "missing" | "failed" | "network"; message: string }
+    | null
+  >(null);
   const [trackStatus, setTrackStatus] = useState<"idle" | "generating" | "ready" | "failed">("idle");
   const [audioV1, setAudioV1] = useState<string | null>(null);
   const [audioV2, setAudioV2] = useState<string | null>(null);
@@ -334,6 +340,7 @@ function MusicPortalPage() {
     let cancelled = false;
     (async () => {
       try {
+        setJobLoadError(null);
         const j = await getJobFn({ data: { jobId: jobParam } });
         if (cancelled) return;
         setTrackJobId(jobParam);
@@ -344,6 +351,11 @@ function MusicPortalPage() {
           setTrackStatus("ready");
         } else if (j.status === "failed") {
           setTrackStatus("failed");
+          setJobLoadError({
+            kind: "failed",
+            message:
+              "This generation failed on the previous run. Spawn a fresh track below — you won't be charged for the broken one.",
+          });
         } else {
           setTrackStatus("generating");
         }
@@ -352,7 +364,28 @@ function MusicPortalPage() {
           document.getElementById("studio-track-preview")?.scrollIntoView({ behavior: "smooth", block: "center" });
         });
       } catch (e: any) {
-        toast.error(e?.message ?? "Could not reopen this track");
+        if (cancelled) return;
+        const raw = String(e?.message ?? "");
+        const isAuth = /unauthor|forbidden|not signed|auth/i.test(raw);
+        const isMissing = /not found|no rows|does not exist/i.test(raw);
+        const kind: "auth" | "missing" | "failed" | "network" =
+          isAuth ? "auth" : isMissing ? "missing" : raw ? "failed" : "network";
+        const friendly =
+          kind === "auth"
+            ? "Sign in with the account that created this track to reopen it."
+            : kind === "missing"
+            ? "We couldn't find that generation — it may have been removed or belongs to a different account."
+            : kind === "network"
+            ? "Couldn't reach the studio right now. Check your connection and try again."
+            : "Something went wrong reopening this track. Try again or spawn a new one below.";
+        setJobLoadError({ kind, message: friendly });
+        // Drop the broken ?job= so a refresh doesn't re-trigger the same error.
+        navigate({
+          to: "/m/$slug",
+          params: { slug: portal.slug },
+          search: (prev) => ({ ...prev, job: undefined }),
+          replace: true,
+        });
       }
     })();
     return () => { cancelled = true; };
