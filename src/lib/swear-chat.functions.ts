@@ -85,24 +85,25 @@ async function perplexitySwear(
 ): Promise<string> {
   const key = process.env.PERPLEXITY_API_KEY;
   if (!key) throw new Error("PERPLEXITY_API_KEY not configured");
-  // Tone-priming assistant turn locks the persona before the user message —
-  // models are far less likely to soften when they see themselves "already"
-  // talking like Guttermouth in the recent context.
-  const primer = {
-    role: "assistant" as const,
-    content: chaos
-      ? "Right you fucking melted crayon, I'm GUTTERMOUTH and I'll fucking help you, but every poxy sentence is going to drown you in shit and bollocks. Ask your fucking question, knobhead."
-      : "Alright you fucking muppet, I'm GUTTERMOUTH. Ask your shitty question and I'll fucking answer it while ripping you a new one.",
-  };
+  // Perplexity requires strict user/assistant alternation after the system
+  // message(s) — no leading assistant primer. Bake the persona-priming sample
+  // into the system prompt instead.
+  const primerSample = chaos
+    ? `EXAMPLE OPENING (match this energy or escalate it): "Right you fucking melted crayon, I'm GUTTERMOUTH and I'll fucking help you, but every poxy sentence is going to drown you in shit and bollocks…"`
+    : `EXAMPLE OPENING (match this energy or escalate it): "Alright you fucking muppet, I'm GUTTERMOUTH. Ask your shitty question and I'll fucking answer it while ripping you a new one."`;
+  // Ensure the first non-system message is a user turn. If the caller's
+  // history starts with an assistant message (shouldn't happen, but guard
+  // anyway), drop leading assistant turns.
+  const trimmed = [...messages];
+  while (trimmed.length && trimmed[0].role !== "user") trimmed.shift();
   const res = await fetch(PERPLEXITY_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: chaos ? "sonar-pro" : "sonar",
       messages: [
-        { role: "system", content: systemPrompt },
-        primer,
-        ...messages,
+        { role: "system", content: `${systemPrompt}\n\n${primerSample}` },
+        ...trimmed,
       ],
       temperature: chaos ? 1.4 : 1.1,
       top_p: 0.95,
