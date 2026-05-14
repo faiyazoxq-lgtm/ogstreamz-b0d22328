@@ -414,9 +414,47 @@ function MusicPortalPage() {
         if (saved) {
           const y = Number(saved);
           if (Number.isFinite(y) && y > 0) {
-            // Wait one frame so the page has its full height before scrolling.
+            // Honour reduced-motion users with an instant jump; everyone else
+            // gets a custom eased tween so the restore feels like a graceful
+            // return to where they left off instead of a hard snap.
+            const prefersReduced =
+              typeof window.matchMedia === "function" &&
+              window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+            // Land just above the saved spot, then ease into it — gives a
+            // brief sense of "settling" onto the player.
+            const start = Math.max(0, y - Math.min(220, y * 0.35));
+
+            // Wait two frames so the page has measured its real height
+            // (audio player, lyrics, etc.) before we tween into position.
             requestAnimationFrame(() => {
-              window.scrollTo({ top: y, behavior: "auto" });
+              requestAnimationFrame(() => {
+                if (prefersReduced) {
+                  window.scrollTo({ top: y, behavior: "auto" });
+                  return;
+                }
+                window.scrollTo({ top: start, behavior: "auto" });
+                const from = window.scrollY;
+                const distance = y - from;
+                if (Math.abs(distance) < 4) return;
+                // Ease-in-out cubic — slow start, slow finish, smooth glide.
+                const ease = (t: number) =>
+                  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                const duration = Math.min(900, 350 + Math.abs(distance) * 0.6);
+                const t0 = performance.now();
+                let userInterrupted = false;
+                const cancel = () => { userInterrupted = true; };
+                window.addEventListener("wheel", cancel, { passive: true, once: true });
+                window.addEventListener("touchstart", cancel, { passive: true, once: true });
+                window.addEventListener("keydown", cancel, { once: true });
+                const tick = (now: number) => {
+                  if (userInterrupted) return;
+                  const p = Math.min(1, (now - t0) / duration);
+                  window.scrollTo({ top: from + distance * ease(p), behavior: "auto" });
+                  if (p < 1) requestAnimationFrame(tick);
+                };
+                requestAnimationFrame(tick);
+              });
             });
           }
         }
