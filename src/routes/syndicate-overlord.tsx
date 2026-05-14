@@ -25,6 +25,7 @@ import {
   grantVipPass, revokeVipPass, listVipPasses,
   grantByEmail, listPendingGrants, deletePendingGrant,
   createLifetimeVipCode, listLifetimeVipCodes, deleteLifetimeVipCode,
+  checkLifetimeVipCodeAvailable,
 } from "@/lib/overlord.functions";
 import { bossListResellers, bossCreateReseller, bossTopupReseller } from "@/lib/reseller.functions";
 import { PassShareCardPanel } from "@/components/overlord/PassShareCardPanel";
