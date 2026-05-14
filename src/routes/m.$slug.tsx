@@ -1,14 +1,14 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Music, Wand2, Loader2, ArrowLeft, Disc3, Lock, BadgeCheck, Layers, Copy, Check, Sparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Music, Wand2, Loader2, ArrowLeft, Disc3, Lock, BadgeCheck, Layers, Sparkles, Download, Share2, Play, Pause } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { formatLyrics, requestStudioTrack, generateSunoStack, type SunoStack } from "@/lib/music-portals.functions";
-import { listPortalTracks, getTrackOwnership } from "@/lib/tracks.functions";
+import { formatLyrics, requestStudioTrack, generatePortalTrack, getPortalTrackJob, unlockPortalTrackDownload } from "@/lib/music-portals.functions";
 import { spawnMusic } from "@/lib/suno.functions";
+import { listPortalTracks, getTrackOwnership } from "@/lib/tracks.functions";
 import { TrackPlayer } from "@/components/TrackPlayer";
 import { SwearChatPanel } from "@/components/SwearChatPanel";
 import { OgWordmark } from "@/components/OgWordmark";
@@ -134,7 +134,9 @@ function MusicPortalPage() {
   const requestFn = useServerFn(requestStudioTrack);
   const listTracksFn = useServerFn(listPortalTracks);
   const ownershipFn = useServerFn(getTrackOwnership);
-  const stackFn = useServerFn(generateSunoStack);
+  const generateTrackFn = useServerFn(generatePortalTrack);
+  const getJobFn = useServerFn(getPortalTrackJob);
+  const unlockFn = useServerFn(unlockPortalTrackDownload);
   const spawnFn = useServerFn(spawnMusic);
 
   type T = { id: string; title: string; price_cents: number; preview_url: string | null };
@@ -231,9 +233,12 @@ function MusicPortalPage() {
   const [generating, setGenerating] = useState(false);
   const [submitted, setSubmitted] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
-  const [stack, setStack] = useState<SunoStack | null>(null);
-  const [stackLoading, setStackLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [trackJobId, setTrackJobId] = useState<string | null>(null);
+  const [trackStatus, setTrackStatus] = useState<"idle" | "generating" | "ready" | "failed">("idle");
+  const [audioV1, setAudioV1] = useState<string | null>(null);
+  const [audioV2, setAudioV2] = useState<string | null>(null);
+  const [downloadUnlocked, setDownloadUnlocked] = useState(false);
+  const [unlocking, setUnlocking] = useState(false);
 
   const STYLE_PRESETS = [
     "Aggressive & Raw",
@@ -247,31 +252,92 @@ function MusicPortalPage() {
   ];
 
   const onPickStyle = async (preset: string) => {
-    if (!user) return toast.error("Sign in to build a Suno stack");
-    if (stackLoading) return;
+    if (!user) return toast.error("Sign in to generate");
+    if (trackStatus === "generating") return;
     setSelectedStyle(preset);
-    const autoVibe = `${portal.vibe ?? portal.style ?? "studio session"} — style: ${preset}`;
-    setStackLoading(true);
+    setTrackStatus("generating");
+    setAudioV1(null);
+    setAudioV2(null);
+    setDownloadUnlocked(false);
+    setTrackJobId(null);
     try {
-      const r = await stackFn({ data: { slug: portal.slug, vibe: autoVibe } });
-      setStack(r);
-      toast.success("Suno V5.5 stack ready");
+      const r = await generateTrackFn({ data: { slug: portal.slug, style: preset } });
+      setTrackJobId(r.jobId);
+      toast.success("Generating · 2 versions on the way (~60s)");
     } catch (e: any) {
-      toast.error(e?.message ?? "Stack failed");
-    } finally {
-      setStackLoading(false);
+      toast.error(e?.message ?? "Generation failed");
+      setTrackStatus("failed");
     }
   };
 
-  const onCopyStack = async () => {
-    if (!stack) return;
+  // Poll the suno job until both audio URLs land or timeout.
+  useEffect(() => {
+    if (!trackJobId || trackStatus !== "generating") return;
+    let cancelled = false;
+    let tries = 0;
+    const poll = async () => {
+      tries += 1;
+      try {
+        const j = await getJobFn({ data: { jobId: trackJobId } });
+        if (cancelled) return;
+        if (j.audio_url_v1) setAudioV1(j.audio_url_v1);
+        if (j.audio_url_v2) setAudioV2(j.audio_url_v2);
+        setDownloadUnlocked(j.download_unlocked);
+        if (j.audio_url_v1 || j.status === "complete") {
+          setTrackStatus("ready");
+          toast.success("🎧 Track ready — preview below");
+          return;
+        }
+        if (j.status === "failed") {
+          setTrackStatus("failed");
+          toast.error("Generation failed");
+          return;
+        }
+      } catch (e: any) {
+        console.error("poll", e);
+      }
+      if (tries >= 75) {
+        // ~5 min
+        setTrackStatus("failed");
+        toast.error("Generation timed out — try again");
+        return;
+      }
+      setTimeout(poll, 4000);
+    };
+    poll();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trackJobId, trackStatus]);
+
+  const onUnlockDownload = async () => {
+    if (!trackJobId || unlocking || downloadUnlocked) return;
+    setUnlocking(true);
     try {
-      await navigator.clipboard.writeText(stack.formatted);
-      setCopied(true);
-      toast.success("Copied — paste into Suno Custom Mode");
-      setTimeout(() => setCopied(false), 1800);
+      const r = await unlockFn({ data: { jobId: trackJobId } });
+      if (r.audio_url_v1) setAudioV1(r.audio_url_v1);
+      if (r.audio_url_v2) setAudioV2(r.audio_url_v2);
+      setDownloadUnlocked(true);
+      toast.success("Unlocked — full track + downloads enabled");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Unlock failed");
+    } finally {
+      setUnlocking(false);
+    }
+  };
+
+  const onShare = async (url: string, label: string) => {
+    const shareData = { title: portal.name, text: `${portal.name} — ${selectedStyle ?? ""} (${label})`, url };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success("Track link copied — paste into your socials");
+      }
     } catch {
-      toast.error("Copy failed");
+      /* user cancelled */
     }
   };
 
@@ -296,7 +362,9 @@ function MusicPortalPage() {
     setGenerating(true);
     try {
       const styleTags =
-        stack?.timbre || `${portal.style ?? "studio"}, ${portal.vibe ?? "cinematic"}`;
+        selectedStyle
+          ? `${portal.style ?? "studio"}, ${selectedStyle}`
+          : `${portal.style ?? "studio"}, ${portal.vibe ?? "cinematic"}`;
       const r = await spawnFn({
         data: {
           prompt: lyrics,
@@ -414,18 +482,18 @@ function MusicPortalPage() {
             </h2>
           </div>
           <p className="text-xs opacity-70 mb-3">
-            Pick one style — we auto-blend it with this portal's description into a 4-layer Genre/Timbre, Mood/BPM/Key, Vocal Texture & Structure stack.
+            Pick one style — we auto-blend it with this portal's description and Suno spits out 2 versions. Preview free for 30s, unlock the full track + downloads for 2 coins.
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {STYLE_PRESETS.map((preset) => {
               const active = selectedStyle === preset;
-              const isLoading = stackLoading && active;
+              const isLoading = trackStatus === "generating" && active;
               return (
                 <button
                   key={preset}
                   type="button"
                   onClick={() => onPickStyle(preset)}
-                  disabled={stackLoading}
+                  disabled={trackStatus === "generating"}
                   className="h-12 px-3 text-[11px] uppercase tracking-[0.18em] font-bold border rounded-md transition disabled:opacity-50 flex items-center justify-center text-center"
                   style={{
                     background: active ? theme.accent : `${theme.accent}10`,
@@ -439,29 +507,48 @@ function MusicPortalPage() {
             })}
           </div>
           <p className="text-[10px] opacity-50 mt-2 uppercase tracking-[0.25em]">
-            1 credit per stack · pick a different style to re-roll
+            1 coin to generate · 2 coins to unlock full track + downloads
           </p>
 
-          {stack && (
+          {trackStatus === "generating" && (
+            <div className="mt-6 flex items-center gap-3 p-4 rounded-md border" style={{ borderColor: `${theme.accent}30`, background: "rgba(0,0,0,0.4)" }}>
+              <Loader2 className="h-5 w-5 animate-spin" style={{ color: theme.accent }} />
+              <p className="text-xs uppercase tracking-[0.25em]" style={{ color: theme.accent }}>
+                Generating 2 versions · ~60s
+              </p>
+            </div>
+          )}
+
+          {(audioV1 || audioV2) && trackStatus !== "generating" && (
             <div className="mt-6 space-y-3">
               {[
-                { label: "Genre / Timbre", value: stack.timbre },
-                { label: "Mood / BPM / Key", value: stack.moodKey },
-                { label: "Vocal Texture", value: stack.vocal },
-                { label: "Structure Tags", value: stack.structure },
-              ].map((row) => (
-                <div key={row.label} className="rounded-md border p-3" style={{ borderColor: `${theme.accent}30`, background: "rgba(0,0,0,0.4)" }}>
-                  <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 mb-1" style={{ color: theme.accent }}>{row.label}</p>
-                  <p className="text-sm leading-relaxed">{row.value}</p>
-                </div>
+                { label: "Version A", url: audioV1 },
+                { label: "Version B", url: audioV2 },
+              ].filter((v) => v.url).map((v) => (
+                <PreviewPlayer
+                  key={v.label}
+                  label={v.label}
+                  url={v.url!}
+                  unlocked={downloadUnlocked}
+                  accent={theme.accent}
+                  onShare={() => onShare(v.url!, v.label)}
+                />
               ))}
-              <Button
-                onClick={onCopyStack}
-                className="w-full h-12 text-xs uppercase tracking-[0.3em] font-bold"
-                style={{ background: theme.accent, color: "#000" }}
-              >
-                {copied ? <><Check className="h-4 w-4 mr-2" />Copied</> : <><Copy className="h-4 w-4 mr-2" />Copy to Suno</>}
-              </Button>
+              {!downloadUnlocked && (
+                <Button
+                  onClick={onUnlockDownload}
+                  disabled={unlocking}
+                  className="w-full h-12 text-xs uppercase tracking-[0.3em] font-bold"
+                  style={{ background: theme.accent, color: "#000" }}
+                >
+                  {unlocking ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Unlocking…</> : <><Lock className="h-4 w-4 mr-2" />Unlock full track (2 coins)</>}
+                </Button>
+              )}
+              {downloadUnlocked && (
+                <p className="text-[10px] uppercase tracking-[0.3em] text-center" style={{ color: theme.accent }}>
+                  ✓ Unlocked · download or share each version
+                </p>
+              )}
             </div>
           )}
         </section>
@@ -615,5 +702,101 @@ function MusicHooksSection({
         ))}
       </ol>
     </section>
+  );
+}
+
+function PreviewPlayer({
+  label,
+  url,
+  unlocked,
+  accent,
+  onShare,
+}: {
+  label: string;
+  url: string;
+  unlocked: boolean;
+  accent: string;
+  onShare: () => void;
+}) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+
+  // Cap free preview at 30s
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    const onTime = () => {
+      if (!unlocked && el.currentTime >= 30) {
+        el.pause();
+        el.currentTime = 0;
+        setPlaying(false);
+        toast.info("30s preview · unlock for the full track");
+      }
+    };
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+    el.addEventListener("timeupdate", onTime);
+    el.addEventListener("play", onPlay);
+    el.addEventListener("pause", onPause);
+    return () => {
+      el.removeEventListener("timeupdate", onTime);
+      el.removeEventListener("play", onPlay);
+      el.removeEventListener("pause", onPause);
+    };
+  }, [unlocked]);
+
+  const toggle = () => {
+    const el = audioRef.current;
+    if (!el) return;
+    if (el.paused) el.play(); else el.pause();
+  };
+
+  const filename = `${label.replace(/\s+/g, "_").toLowerCase()}.mp3`;
+
+  return (
+    <div className="rounded-md border p-3 space-y-2" style={{ borderColor: `${accent}30`, background: "rgba(0,0,0,0.4)" }}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggle}
+            className="h-9 w-9 rounded-full inline-flex items-center justify-center"
+            style={{ background: accent, color: "#000" }}
+            aria-label={playing ? "Pause" : "Play"}
+          >
+            {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
+          </button>
+          <p className="text-[11px] uppercase tracking-[0.3em] font-bold" style={{ color: accent }}>
+            {label}
+            {!unlocked && <span className="ml-2 opacity-60">· 30s preview</span>}
+          </p>
+        </div>
+        {unlocked && (
+          <div className="flex items-center gap-1">
+            <a
+              href={url}
+              download={filename}
+              target="_blank"
+              rel="noreferrer"
+              className="h-8 w-8 inline-flex items-center justify-center rounded-md border"
+              style={{ borderColor: `${accent}66`, color: accent, background: `${accent}10` }}
+              aria-label="Download MP3"
+            >
+              <Download className="h-3.5 w-3.5" />
+            </a>
+            <button
+              type="button"
+              onClick={onShare}
+              className="h-8 w-8 inline-flex items-center justify-center rounded-md border"
+              style={{ borderColor: `${accent}66`, color: accent, background: `${accent}10` }}
+              aria-label="Share"
+            >
+              <Share2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+      </div>
+      <audio ref={audioRef} src={url} preload="metadata" controls className="w-full" />
+    </div>
   );
 }

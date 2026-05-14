@@ -3021,11 +3021,16 @@ export type Database = {
       suno_jobs: {
         Row: {
           audio_url: string | null
+          audio_url_v1: string | null
+          audio_url_v2: string | null
           created_at: string
+          download_unlocked_at: string | null
           fallback_brief: Json | null
           fallback_provider: string | null
           id: string
           image_url: string | null
+          image_url_v1: string | null
+          image_url_v2: string | null
           lyric_text: string | null
           make_instrumental: boolean
           portal_id: string | null
@@ -3043,11 +3048,16 @@ export type Database = {
         }
         Insert: {
           audio_url?: string | null
+          audio_url_v1?: string | null
+          audio_url_v2?: string | null
           created_at?: string
+          download_unlocked_at?: string | null
           fallback_brief?: Json | null
           fallback_provider?: string | null
           id?: string
           image_url?: string | null
+          image_url_v1?: string | null
+          image_url_v2?: string | null
           lyric_text?: string | null
           make_instrumental?: boolean
           portal_id?: string | null
@@ -3065,11 +3075,16 @@ export type Database = {
         }
         Update: {
           audio_url?: string | null
+          audio_url_v1?: string | null
+          audio_url_v2?: string | null
           created_at?: string
+          download_unlocked_at?: string | null
           fallback_brief?: Json | null
           fallback_provider?: string | null
           id?: string
           image_url?: string | null
+          image_url_v1?: string | null
+          image_url_v2?: string | null
           lyric_text?: string | null
           make_instrumental?: boolean
           portal_id?: string | null

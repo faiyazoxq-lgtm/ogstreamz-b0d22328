@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function isAdmin(supabase: any, userId: string): Promise<boolean> {
   const { data } = await supabase
@@ -257,4 +258,196 @@ Return JSON:
 [Structure] ${structure}${swear ? "\n[Explicit] aggressive, swearing, brutal, raw vocals, explicit lyrics" : ""}`;
 
     return { timbre, moodKey, vocal, structure, formatted };
+  });
+
+// =====================================================================
+// Portal Track generation: build stack → spawn Suno (2 versions) → poll
+// =====================================================================
+
+const SUNO_BASE = "https://api.sunoapi.com/api/v1";
+
+async function buildStackPrompt(portal: any, style: string) {
+  const PERPLEXITY = process.env.PERPLEXITY_API_KEY;
+  if (!PERPLEXITY) throw new Error("PERPLEXITY_API_KEY missing");
+  const religious = isReligiousPortal(portal);
+  const swear = !!portal.swear_chat_enabled && !religious;
+  const sys =
+    "You are a Suno V5.5 prompt engineer. Output STRICT JSON only — no markdown. " +
+    "Build a 4-layer Style Vector Stack." +
+    (swear
+      ? " BRUTAL MODE: aggressive, raw, explicit, swearing, gritty vocals."
+      : religious
+      ? " RELIGIOUS PORTAL: reverent, clean, no swearing, no aggressive sub-genres."
+      : "");
+  const user = `Portal style: ${portal.style}
+Language: ${portal.language}
+Portal vibe: ${portal.vibe || "n/a"}
+Selected style: ${style}
+
+Return JSON: {"timbre":"...","moodKey":"...","vocal":"...","structure":"[Intro],[Verse],[Chorus]"}`;
+  const res = await fetch("https://api.perplexity.ai/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${PERPLEXITY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "sonar",
+      messages: [{ role: "system", content: sys }, { role: "user", content: user }],
+      temperature: 0.7,
+      max_tokens: 500,
+    }),
+  });
+  if (!res.ok) throw new Error(`Perplexity ${res.status}`);
+  const json = await res.json();
+  const raw: string = json?.choices?.[0]?.message?.content ?? "";
+  const m = raw.match(/\{[\s\S]*\}/);
+  const parsed = JSON.parse(m ? m[0] : raw);
+  const timbre = String(parsed.timbre || "").trim();
+  const moodKey = String(parsed.moodKey || "").trim();
+  const vocal = String(parsed.vocal || "").trim();
+  const structure = String(parsed.structure || "").trim();
+  const formatted = `[Genre/Timbre] ${timbre}
+[Mood/BPM/Key] ${moodKey}
+[Vocal Texture] ${vocal}
+[Structure] ${structure}${swear ? "\n[Explicit] aggressive swearing brutal raw" : ""}`;
+  return { timbre, moodKey, vocal, structure, formatted, swear };
+}
+
+export const generatePortalTrack = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { slug: string; style: string }) => ({
+    slug: String(d.slug || "").trim().slice(0, 80),
+    style: String(d.style || "").trim().slice(0, 80),
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    if (!data.slug || !data.style) throw new Error("Slug and style required");
+
+    const { data: portal } = await supabase
+      .from("portals_public")
+      .select("id, slug, name, language, style, vibe, swear_chat_enabled")
+      .eq("slug", data.slug)
+      .maybeSingle();
+    if (!portal) throw new Error("Portal not found");
+
+    // Charge 1 credit for the stack + spawn
+    const { error: spendErr } = await supabase.rpc("spend_credits", {
+      _amount: 1,
+      _reason: "suno-generate",
+    });
+    if (spendErr) {
+      const msg = (spendErr.message || "").toLowerCase();
+      if (msg.includes("insufficient")) throw new Error("Insufficient credits");
+      throw new Error(spendErr.message);
+    }
+
+    const stack = await buildStackPrompt(portal, data.style);
+
+    const apiKey = process.env.SUNO_API_KEY;
+    if (!apiKey) throw new Error("SUNO_API_KEY not configured");
+    const webhookBase =
+      process.env.PUBLIC_SITE_URL ||
+      "https://project--ae4b10fa-6c9c-44d9-bbd5-85d320d62dff.lovable.app";
+    const callbackUrl = `${webhookBase.replace(/\/$/, "")}/api/public/suno-webhook`;
+
+    const title = `${portal.name ?? portal.slug} — ${data.style}`;
+    const payload = {
+      custom_mode: true,
+      mv: "suno-v5-5",
+      prompt: stack.formatted,
+      tags: stack.timbre,
+      title,
+      make_instrumental: false,
+      webhook_url: callbackUrl,
+    };
+    const res = await fetch(`${SUNO_BASE}/suno/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify(payload),
+    });
+    const json: any = await res.json().catch(() => ({}));
+    const taskId: string | undefined =
+      json?.data?.task_id ?? json?.task_id ?? json?.data?.id ?? json?.id;
+    if (!res.ok || !taskId) {
+      throw new Error(json?.message || `Suno create failed (${res.status})`);
+    }
+
+    const { data: job, error: insErr } = await supabaseAdmin
+      .from("suno_jobs")
+      .insert({
+        task_id: taskId,
+        portal_id: portal.id,
+        portal_slug: portal.slug,
+        user_id: userId,
+        status: "pending",
+        prompt: stack.formatted,
+        style_tags: stack.timbre,
+        title,
+        make_instrumental: false,
+        raw: json,
+      })
+      .select("id, task_id, status")
+      .single();
+    if (insErr) throw new Error(insErr.message);
+
+    return { jobId: job.id, taskId, stack };
+  });
+
+export const getPortalTrackJob = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { jobId: string }) => ({ jobId: String(d.jobId).slice(0, 64) }))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context as { supabase: any };
+    const { data: job, error } = await supabase
+      .from("suno_jobs")
+      .select("id, status, audio_url, audio_url_v1, audio_url_v2, image_url_v1, image_url_v2, title, download_unlocked_at")
+      .eq("id", data.jobId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!job) throw new Error("Job not found");
+    return {
+      status: job.status as string,
+      audio_url_v1: (job.audio_url_v1 ?? job.audio_url) as string | null,
+      audio_url_v2: job.audio_url_v2 as string | null,
+      image_url_v1: job.image_url_v1 as string | null,
+      image_url_v2: job.image_url_v2 as string | null,
+      title: job.title as string | null,
+      download_unlocked: !!job.download_unlocked_at,
+    };
+  });
+
+export const unlockPortalTrackDownload = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { jobId: string }) => ({ jobId: String(d.jobId).slice(0, 64) }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    const { data: job, error } = await supabase
+      .from("suno_jobs")
+      .select("id, user_id, audio_url, audio_url_v1, audio_url_v2, download_unlocked_at")
+      .eq("id", data.jobId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!job) throw new Error("Job not found");
+    if (job.user_id !== userId) throw new Error("Not your track");
+
+    if (!job.download_unlocked_at) {
+      const { error: spendErr } = await supabase.rpc("spend_credits", {
+        _amount: 2,
+        _reason: "suno-download",
+      });
+      if (spendErr) {
+        const msg = (spendErr.message || "").toLowerCase();
+        if (msg.includes("insufficient")) throw new Error("Insufficient credits (need 2)");
+        throw new Error(spendErr.message);
+      }
+      const { error: upErr } = await supabaseAdmin
+        .from("suno_jobs")
+        .update({ download_unlocked_at: new Date().toISOString() })
+        .eq("id", data.jobId);
+      if (upErr) throw new Error(upErr.message);
+    }
+
+    return {
+      audio_url_v1: (job.audio_url_v1 ?? job.audio_url) as string | null,
+      audio_url_v2: job.audio_url_v2 as string | null,
+      download_unlocked: true,
+    };
   });
