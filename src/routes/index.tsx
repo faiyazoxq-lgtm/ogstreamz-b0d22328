@@ -136,7 +136,13 @@ function Index() {
           <OgWordmark suffix="-PORTAL" className={isVipMember || isBoss ? "animate-glitch" : undefined} />
         </h1>
         <p className="mt-6 max-w-xl mx-auto text-muted-foreground text-base sm:text-lg">
-          One frequency. {portalsLabel}. Pick your channel.
+          One frequency.{" "}
+          <span className="font-bold text-foreground tabular-nums">{portalsLabel}</span>{" "}
+          live. Pick your channel.
+        </p>
+        <p className="mt-2 max-w-xl mx-auto text-[12px] sm:text-sm text-muted-foreground/80">
+          <Sparkles className="inline h-3.5 w-3.5 -mt-0.5 mr-1" style={{ color: "var(--neon-blue-bright)" }} />
+          More portals spawning every week — built &amp; voted in by the growing 0G syndicate.
         </p>
         <div className="mt-8 flex justify-center">
           <Link
@@ -188,9 +194,9 @@ function Index() {
             {user ? "Members entrance" : "Welcome to the Syndicate"}
           </p>
           <h2 className="mt-2 font-[Montserrat] font-black text-2xl sm:text-3xl md:text-4xl tracking-tight text-metallic">
-            {user
+          {user
               ? `Back at the decks${profile?.display_name ? `, ${profile.display_name}` : ""}.`
-              : `One frequency. ${portalsLabel}. Yours, free.`}
+              : `One frequency. ${portalsLabel} live. Yours, free.`}
           </h2>
           <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-2xl">
             {user
