@@ -1987,6 +1987,8 @@ export type Database = {
           vibe: string | null
           view_count: number
           vip: boolean
+          wallpaper_prompt: string | null
+          wallpaper_url: string | null
         }
         Insert: {
           audio_snippet_url?: string | null
@@ -2031,6 +2033,8 @@ export type Database = {
           vibe?: string | null
           view_count?: number
           vip?: boolean
+          wallpaper_prompt?: string | null
+          wallpaper_url?: string | null
         }
         Update: {
           audio_snippet_url?: string | null
@@ -2075,6 +2079,8 @@ export type Database = {
           vibe?: string | null
           view_count?: number
           vip?: boolean
+          wallpaper_prompt?: string | null
+          wallpaper_url?: string | null
         }
         Relationships: []
       }
@@ -3805,6 +3811,8 @@ export type Database = {
           vibe: string | null
           view_count: number | null
           vip: boolean | null
+          wallpaper_prompt: string | null
+          wallpaper_url: string | null
         }
         Insert: {
           audio_snippet_url?: string | null
@@ -3841,6 +3849,8 @@ export type Database = {
           vibe?: string | null
           view_count?: number | null
           vip?: boolean | null
+          wallpaper_prompt?: string | null
+          wallpaper_url?: string | null
         }
         Update: {
           audio_snippet_url?: string | null
@@ -3877,6 +3887,8 @@ export type Database = {
           vibe?: string | null
           view_count?: number | null
           vip?: boolean | null
+          wallpaper_prompt?: string | null
+          wallpaper_url?: string | null
         }
         Relationships: []
       }
