@@ -428,7 +428,34 @@ Use HIGH CONTRAST hex colors. Heading & body MUST be real Google Fonts. Match mo
       .single();
     if (error) throw new Error(error.message);
 
-    return { portal, jokeCount: jokes.length, scout: scoutMeta };
+    // Best-effort: generate a custom wallpaper from the hub's brief so every
+    // portal ships with a unique cover image. Same prompt template across
+    // all hubs — only the niche/vibe/kind differ. Non-fatal if it fails.
+    const wallpaper = await generatePortalWallpaper({
+      slug,
+      name: data.name,
+      niche: data.niche,
+      vibe: data.vibe,
+      kind: data.kind,
+    });
+    if (wallpaper) {
+      await supabaseAdmin
+        .from("portals")
+        .update({
+          wallpaper_url: wallpaper.url,
+          wallpaper_prompt: wallpaper.prompt,
+          // Mirror to seo_image_url so social shares match the wallpaper
+          // unless one was set later by the SEO refresher.
+          seo_image_url: wallpaper.url,
+        })
+        .eq("id", portal.id);
+    }
+
+    return {
+      portal: { ...portal, wallpaper_url: wallpaper?.url ?? null },
+      jokeCount: jokes.length,
+      scout: scoutMeta,
+    };
     } catch (err: any) {
       if (charged > 0) {
         await refundCredits(userId, charged, `spawn_portal:${data.kind}`);
