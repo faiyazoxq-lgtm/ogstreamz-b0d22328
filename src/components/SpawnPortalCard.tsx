@@ -19,6 +19,7 @@ import { spawnPortal } from "@/lib/portals.functions";
 import { describePortal } from "@/lib/portal-describe.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { OGBotDraftPanel } from "@/components/og-bot/OGBotDraftPanel";
 
 type Kind = "jokes" | "music" | "trade" | "connect" | "tools";
 
@@ -509,6 +510,23 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
 
           {/* Step content */}
           <div className="rounded-xl border border-border/70 bg-background/60 backdrop-blur-sm p-4 sm:p-6 min-h-[200px]">
+            {/* OG Bot — chat-driven draft. Fills the whole form at once and
+                jumps you to Review. Memory is per-user, RLS-scoped. */}
+            <div className="mb-4">
+              <OGBotDraftPanel
+                surface="portal-create"
+                kind={kind}
+                intro={`Tell me what kind of ${kind} portal you want — I'll fill the form.`}
+                onApply={(f) => {
+                  if (f.name) setName(f.name);
+                  if (f.niche) setNiche(f.niche);
+                  if (f.vibe) setVibe(f.vibe);
+                  if (f.language) setLanguage(f.language);
+                  // jump to review if the bot gave us the essentials
+                  if (f.name && f.niche) setStep(4);
+                }}
+              />
+            </div>
             {step === 0 && (
               <div>
                 <label htmlFor="wiz-name" className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
