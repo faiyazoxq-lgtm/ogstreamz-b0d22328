@@ -584,10 +584,7 @@ export function StreamLinkCard() {
         </div>
       )}
 
-      {configBlocked && (
-        <BossStreamServerUrlCard />
-      )}
-      {!configBlocked && <BossStreamServerUrlCard />}
+      <BossStreamServerUrlCard />
       {configBlocked && (
         <div role="alert" className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-3">
           <div className="flex items-start gap-2">
