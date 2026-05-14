@@ -81,7 +81,9 @@ function SitemapPage() {
   const isBoss = isAdmin;
   // Hubs are Boss-only — hide the Hubs section from the human sitemap
   // for everyone else.
-  const visibleGroups = GROUPS.filter((g) => g.title !== "Hubs" || isBoss);
+  const visibleGroups = GROUPS
+    .filter((g) => g.title !== "Hubs" || isBoss)
+    .filter((g) => g.title !== "Store" || !isBoss);
   return (
     <main className="mx-auto max-w-6xl px-4 sm:px-8 py-10">
       <header className="mb-10 text-center">

@@ -452,7 +452,8 @@ const MEMBER_ITEMS: QuickItem[] = [
 function QuickJumpMenu({ user, isBoss }: { user: boolean; isBoss: boolean }) {
   // Hubs are Boss-only — non-boss users only see the Members quick-jump.
   const [tab, setTab] = useState<"portals" | "member">(isBoss ? "portals" : "member");
-  const items = !isBoss ? MEMBER_ITEMS : tab === "portals" ? PORTAL_ITEMS : MEMBER_ITEMS;
+  const memberItems = isBoss ? MEMBER_ITEMS.filter((i) => i.to !== "/store") : MEMBER_ITEMS;
+  const items = !isBoss ? memberItems : tab === "portals" ? PORTAL_ITEMS : memberItems;
   return (
     <nav aria-labelledby="quick-jump-label" className="mt-5 pt-4 border-t border-white/10">
       <div className="flex items-center justify-between gap-3 mb-3">
