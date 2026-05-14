@@ -1,7 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { timingSafeEqual } from "crypto";
-import { tgSendMessage, tgSendPhoto, deriveTelegramWebhookSecret } from "@/lib/telegram-bot.server";
+import {
+  tgSendMessage,
+  tgSendPhoto,
+  tgCall,
+  deriveTelegramWebhookSecret,
+  type TgInlineKeyboard,
+} from "@/lib/telegram-bot.server";
 import { getBossChatId } from "@/lib/boss-chat.server";
 import { logInfo, logWarn, logError } from "@/lib/server-log.server";
 import {
@@ -263,6 +269,38 @@ function escapeHtml(s: string) {
 }
 
 /**
+ * Handle inline-button taps from the branded welcome card. Buttons use the
+ * "wc:" callback_data prefix so they're routed here. We acknowledge the tap
+ * with answerCallbackQuery (otherwise Telegram leaves the button spinning)
+ * and reply in-chat with the requested action.
+ */
+async function handleWelcomeCallback(cb: any): Promise<void> {
+  const data: string = cb?.data ?? "";
+  const chatId: number | undefined = cb?.message?.chat?.id;
+  const cbId: string | undefined = cb?.id;
+  if (!chatId || !cbId) return;
+
+  // Acknowledge first so the client stops the loading spinner immediately.
+  try {
+    await tgCall("answerCallbackQuery", { callback_query_id: cbId }, { tag: "tg.answerCb", silent: true });
+  } catch {
+    // Non-fatal — the in-chat reply is the real payload.
+  }
+
+  if (data === "wc:help") {
+    await tgSendMessage(
+      chatId,
+      "<b>OG-Streamz commands</b>\n" +
+        "<code>/me</code> — account &amp; credits\n" +
+        "<code>/msg TEXT</code> — message the team\n" +
+        "<code>/unlink</code> — disconnect this chat\n" +
+        "<code>/start</code> — re-show the welcome card\n\n" +
+        "Tap <b>VIP Pass</b> or <b>Live Drops</b> on the welcome card to jump back to the site.",
+    );
+  }
+}
+
+/**
  * Branded /start welcome card. Sent on:
  *  - successful /link CODE (returning=false, fresh link)
  *  - /start with no code from an already-linked chat (returning=true)
@@ -297,15 +335,24 @@ async function sendBrandedWelcome(
     `<code>/msg TEXT</code> · message the team\n` +
     `<code>/help</code> · see everything\n\n` +
     `🌐 ${siteBase}`;
+  const reply_markup: TgInlineKeyboard = {
+    inline_keyboard: [
+      [
+        { text: "🎟 VIP Pass", url: `${siteBase}/account/passes` },
+        { text: "📡 Live Drops", url: `${siteBase}/` },
+      ],
+      [{ text: "❓ Help", callback_data: "wc:help" }],
+    ],
+  };
   try {
-    await tgSendPhoto(chatId, wallpaperUrl, caption);
+    await tgSendPhoto(chatId, wallpaperUrl, caption, { reply_markup });
   } catch (e) {
     logError("tg.webhook.welcome_failed", {
       chatIdSuffix: String(chatId).slice(-8),
       returning: opts.returning,
       error: e instanceof Error ? e.message : String(e),
     });
-    await tgSendMessage(chatId, caption);
+    await tgSendMessage(chatId, caption, { reply_markup });
   }
 }
 
@@ -517,6 +564,19 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         }
         // Inline-button taps from the boss credential card.
         if (update.callback_query) {
+          const cbData: string = update.callback_query?.data ?? "";
+          // Welcome-card buttons (data prefix "wc:") are handled inline
+          // here so they work for every linked member, not just boss creds.
+          if (cbData.startsWith("wc:")) {
+            try {
+              await handleWelcomeCallback(update.callback_query);
+            } catch (e) {
+              logError("tg.webhook.welcome_callback_failed", {
+                error: e instanceof Error ? e.message : String(e),
+              });
+            }
+            return Response.json({ ok: true });
+          }
           try {
             await handleCredsCallback(update.callback_query);
           } catch (e) {
