@@ -12,6 +12,18 @@ import { listPortalTracks, getTrackOwnership } from "@/lib/tracks.functions";
 import { TrackPlayer } from "@/components/TrackPlayer";
 import { SwearChatPanel } from "@/components/SwearChatPanel";
 import { OgWordmark } from "@/components/OgWordmark";
+import { CoinBalance } from "@/components/CoinBalance";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { COIN } from "@/lib/coins";
 
 type MusicPortal = {
   id: string;
@@ -128,7 +140,7 @@ function MusicPortalPage() {
   const { unlocked: unlockedParam } = Route.useSearch();
   const navigate = useNavigate();
   const theme = THEMES[portal.theme] ?? THEMES["studio-blue"];
-  const { user, profile, isAdmin } = useAuth();
+  const { user, profile, isAdmin, refresh: refreshAuth } = useAuth();
   const isVip = isAdmin || profile?.status === "vip";
   const formatFn = useServerFn(formatLyrics);
   const requestFn = useServerFn(requestStudioTrack);
@@ -239,6 +251,7 @@ function MusicPortalPage() {
   const [audioV2, setAudioV2] = useState<string | null>(null);
   const [downloadUnlocked, setDownloadUnlocked] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
+  const [confirmUnlockOpen, setConfirmUnlockOpen] = useState(false);
 
   const STYLE_PRESETS = [
     "Aggressive & Raw",
@@ -319,11 +332,27 @@ function MusicPortalPage() {
       if (r.audio_url_v1) setAudioV1(r.audio_url_v1);
       if (r.audio_url_v2) setAudioV2(r.audio_url_v2);
       setDownloadUnlocked(true);
-      toast.success("Unlocked — full track + downloads enabled");
+      // Refresh profile balance in the header chip
+      refreshAuth().catch(() => {});
+      if (r.charged) {
+        const prev = r.previous_balance;
+        const next = r.balance;
+        const desc =
+          prev !== null && next !== null
+            ? `Charged ${r.cost} ${COIN} · ${prev} → ${next} ${COIN}`
+            : `Charged ${r.cost} ${COIN}`;
+        toast.success("Track unlocked — full versions + downloads enabled", {
+          description: desc,
+          duration: 6000,
+        });
+      } else {
+        toast.success("Already unlocked — no coins charged");
+      }
     } catch (e: any) {
       toast.error(e?.message ?? "Unlock failed");
     } finally {
       setUnlocking(false);
+      setConfirmUnlockOpen(false);
     }
   };
 
@@ -393,9 +422,12 @@ function MusicPortalPage() {
     <div style={{ background: theme.bg, color: "#fff", minHeight: "100vh" }} className="relative flex flex-col">
       <div className="absolute inset-0 pointer-events-none" style={{ background: theme.pattern }} />
       <div className="relative flex-1 px-5 sm:px-8 py-12 max-w-3xl mx-auto w-full">
-        <Link to="/" className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.3em] opacity-60 hover:opacity-100 mb-8">
-          <ArrowLeft className="h-3.5 w-3.5" /> 0G
-        </Link>
+        <div className="flex items-center justify-between mb-8">
+          <Link to="/" className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.3em] opacity-60 hover:opacity-100">
+            <ArrowLeft className="h-3.5 w-3.5" /> 0G
+          </Link>
+          <CoinBalance accent={theme.accent} />
+        </div>
 
         <header className="text-center mb-12">
           <p className="text-xs uppercase tracking-[0.5em]" style={{ color: theme.accent }}>{theme.label}</p>
@@ -536,7 +568,7 @@ function MusicPortalPage() {
               ))}
               {!downloadUnlocked && (
                 <Button
-                  onClick={onUnlockDownload}
+                  onClick={() => setConfirmUnlockOpen(true)}
                   disabled={unlocking}
                   className="w-full h-12 text-xs uppercase tracking-[0.3em] font-bold"
                   style={{ background: theme.accent, color: "#000" }}
