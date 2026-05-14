@@ -15,6 +15,89 @@ async function isAdmin(supabase: any, userId: string): Promise<boolean> {
 }
 
 /**
+ * Unified wallpaper template — every hub uses the same prompt skeleton so
+ * that all spawned portals share a consistent visual language. The hub's
+ * niche/vibe/kind seed the imagery; the structural rules (no text, dark
+ * center, cinematic widescreen) stay constant.
+ */
+function buildWallpaperPrompt(opts: {
+  name: string;
+  niche: string;
+  vibe: string;
+  kind: string;
+}): string {
+  const kindHint: Record<string, string> = {
+    jokes: "comedy stage / club energy",
+    music: "concert lighting, audio waveforms, stage haze",
+    trade: "abstract market charts, glowing tickers, data grid",
+    connect: "professional network constellations, soft node graph",
+    tools: "blueprint / schematic / engineered surfaces",
+  };
+  const hint = kindHint[opts.kind] ?? "abstract atmospheric scene";
+  return [
+    `Cinematic widescreen wallpaper for an online portal called "${opts.name}".`,
+    `Theme: ${opts.niche}. Mood / vibe: ${opts.vibe || "bold, modern"}.`,
+    `Visual motif: ${hint}.`,
+    `Style: hyper-detailed, cinematic, premium editorial; deep blacks with neon highlights; subtle film grain; 16:9 composition.`,
+    `Composition rule: keep the horizontal center band (~30%) intentionally darker / less busy so overlaid white text remains legible.`,
+    `Hard constraints: NO text, NO letters, NO numbers, NO logos, NO watermarks, NO borders, NO UI chrome, NO faces of real people.`,
+  ].join(" ");
+}
+
+/**
+ * Generate a custom wallpaper via Lovable AI (Nano Banana) and upload it
+ * to the public `portal-bg` bucket. Best-effort — returns null on any
+ * failure so portal creation never blocks on imagery.
+ */
+async function generatePortalWallpaper(opts: {
+  slug: string;
+  name: string;
+  niche: string;
+  vibe: string;
+  kind: string;
+}): Promise<{ url: string; prompt: string } | null> {
+  const LOVABLE = process.env.LOVABLE_API_KEY;
+  if (!LOVABLE) return null;
+  const prompt = buildWallpaperPrompt(opts);
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${LOVABLE}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-image",
+        messages: [{ role: "user", content: prompt }],
+        modalities: ["image", "text"],
+      }),
+    });
+    if (!res.ok) {
+      console.error("[wallpaper] gateway", res.status, await res.text().catch(() => ""));
+      return null;
+    }
+    const json = await res.json();
+    const dataUrl: string | undefined =
+      json?.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    if (!dataUrl?.startsWith("data:image")) return null;
+    const [meta, b64] = dataUrl.split(",");
+    const mime = /data:(.*?);base64/.exec(meta)?.[1] ?? "image/png";
+    const ext = (mime.split("/")[1] ?? "png").replace("jpeg", "jpg");
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const path = `portals/${opts.slug}.${ext}`;
+    const up = await supabaseAdmin.storage
+      .from("portal-bg")
+      .upload(path, bytes, { contentType: mime, upsert: true, cacheControl: "31536000" });
+    if (up.error) {
+      console.error("[wallpaper] upload", up.error.message);
+      return null;
+    }
+    const pub = supabaseAdmin.storage.from("portal-bg").getPublicUrl(path);
+    return { url: pub.data.publicUrl, prompt };
+  } catch (e: any) {
+    console.error("[wallpaper] error", e?.message ?? e);
+    return null;
+  }
+}
+
+/**
  * Hard cap for any single user's credit balance. Postgres `integer` tops out
  * at ~2.1B but we keep wallets well under that to prevent abuse and overflow.
  */
