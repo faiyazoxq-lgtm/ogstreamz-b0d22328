@@ -51,7 +51,7 @@ function MarkdownLink({ href, children, ...rest }: any) {
 export function SiteGuideSwearChat() {
   const send = useServerFn(siteGuideChat);
   const [draft, setDraft] = useState("");
-  const [chaos, setChaos] = useState(false);
+  const [chaos, setChaos] = useState(true);
   const [sending, setSending] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
