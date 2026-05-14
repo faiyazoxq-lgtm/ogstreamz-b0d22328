@@ -1,0 +1,1 @@
+delete from public.portals where id = 'a75ec628-dda4-4db5-824b-7438fa967c53' and kind = 'joke' and slug = 'test';
