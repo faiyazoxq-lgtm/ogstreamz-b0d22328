@@ -540,11 +540,33 @@ export function MyTelegramInbox() {
                       >
                         <Ban className="h-3.5 w-3.5" />
                       </button>
+                    ) : status === "error" ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => retry.mutate([item.id])}
+                          disabled={isBusy}
+                          className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] uppercase tracking-[0.18em] text-sky-200 hover:text-white hover:bg-sky-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                          title="Retry this file"
+                        >
+                          <RotateCw className="h-3 w-3" />
+                          Retry
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeAttachment(item.id)}
+                          disabled={isBusy}
+                          className="rounded p-0.5 text-white/55 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                          title="Remove"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </>
                     ) : (
                       <button
                         type="button"
                         onClick={() => removeAttachment(item.id)}
-                        disabled={send.isPending}
+                        disabled={isBusy}
                         className="rounded p-0.5 text-white/55 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
                         title="Remove"
                       >
@@ -557,7 +579,7 @@ export function MyTelegramInbox() {
                     value={item.caption}
                     onChange={(e) => updateCaption(item.id, e.target.value)}
                     placeholder="Caption for this file (optional)…"
-                    disabled={send.isPending}
+                    disabled={isBusy}
                     maxLength={1024}
                     className="mt-1 w-full rounded border border-white/10 bg-black/40 px-2 py-1 text-[11px] text-white placeholder:text-white/30 focus:outline-none focus:border-sky-400/50 disabled:opacity-60"
                   />
@@ -584,6 +606,24 @@ export function MyTelegramInbox() {
                 </div>
               );
             })}
+            {failedIds.length > 1 && (
+              <div className="flex justify-end pt-1">
+                <button
+                  type="button"
+                  onClick={() => retry.mutate(failedIds)}
+                  disabled={isBusy}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-sky-400/40 bg-sky-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-sky-100 hover:bg-sky-500/25 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Retry all failed uploads"
+                >
+                  {retry.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <RotateCw className="h-3 w-3" />
+                  )}
+                  Retry {failedIds.length} failed
+                </button>
+              </div>
+            )}
           </div>
         )}
         <div className="flex items-end gap-2">
