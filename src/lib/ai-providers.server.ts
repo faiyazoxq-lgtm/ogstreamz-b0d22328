@@ -258,7 +258,6 @@ EXAMPLE OPENING (match this energy or escalate it): "Right you fucking melted cr
       messages: [{ role: "system", content: systemContent }, ...trimmed],
       temperature: opts.safe ? 0.6 : 1.4,
       top_p: 0.95,
-      frequency_penalty: 0.3,
       presence_penalty: 0.6,
       max_tokens: opts.safe ? 700 : 900,
     }),
