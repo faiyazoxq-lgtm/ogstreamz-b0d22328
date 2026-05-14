@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Music, Wand2, Loader2, ArrowLeft, Disc3, Lock, BadgeCheck, Layers, Sparkles, Download, Share2, Play, Pause, Link2, Twitter, Facebook, MessageCircle, Send } from "lucide-react";
+import { Music, Wand2, Loader2, ArrowLeft, Disc3, Lock, BadgeCheck, Layers, Sparkles, Download, Share2, Play, Pause, Link2, Twitter, Facebook, MessageCircle, Send, AlertTriangle, X, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
@@ -248,6 +248,12 @@ function MusicPortalPage() {
   const [submitted, setSubmitted] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [trackJobId, setTrackJobId] = useState<string | null>(null);
+  // Friendly hydration error surfaced inline so a bad/expired/foreign
+  // `?job=` from "Open in Studio" doesn't leave a broken-looking page.
+  const [jobLoadError, setJobLoadError] = useState<
+    | { kind: "auth" | "missing" | "failed" | "network"; message: string }
+    | null
+  >(null);
   const [trackStatus, setTrackStatus] = useState<"idle" | "generating" | "ready" | "failed">("idle");
   const [audioV1, setAudioV1] = useState<string | null>(null);
   const [audioV2, setAudioV2] = useState<string | null>(null);
@@ -334,6 +340,7 @@ function MusicPortalPage() {
     let cancelled = false;
     (async () => {
       try {
+        setJobLoadError(null);
         const j = await getJobFn({ data: { jobId: jobParam } });
         if (cancelled) return;
         setTrackJobId(jobParam);
@@ -344,6 +351,11 @@ function MusicPortalPage() {
           setTrackStatus("ready");
         } else if (j.status === "failed") {
           setTrackStatus("failed");
+          setJobLoadError({
+            kind: "failed",
+            message:
+              "This generation failed on the previous run. Spawn a fresh track below — you won't be charged for the broken one.",
+          });
         } else {
           setTrackStatus("generating");
         }
@@ -352,7 +364,28 @@ function MusicPortalPage() {
           document.getElementById("studio-track-preview")?.scrollIntoView({ behavior: "smooth", block: "center" });
         });
       } catch (e: any) {
-        toast.error(e?.message ?? "Could not reopen this track");
+        if (cancelled) return;
+        const raw = String(e?.message ?? "");
+        const isAuth = /unauthor|forbidden|not signed|auth/i.test(raw);
+        const isMissing = /not found|no rows|does not exist/i.test(raw);
+        const kind: "auth" | "missing" | "failed" | "network" =
+          isAuth ? "auth" : isMissing ? "missing" : raw ? "failed" : "network";
+        const friendly =
+          kind === "auth"
+            ? "Sign in with the account that created this track to reopen it."
+            : kind === "missing"
+            ? "We couldn't find that generation — it may have been removed or belongs to a different account."
+            : kind === "network"
+            ? "Couldn't reach the studio right now. Check your connection and try again."
+            : "Something went wrong reopening this track. Try again or spawn a new one below.";
+        setJobLoadError({ kind, message: friendly });
+        // Drop the broken ?job= so a refresh doesn't re-trigger the same error.
+        navigate({
+          to: "/m/$slug",
+          params: { slug: portal.slug },
+          search: (prev: Record<string, unknown>) => ({ ...prev, job: undefined }),
+          replace: true,
+        });
       }
     })();
     return () => { cancelled = true; };
@@ -608,6 +641,54 @@ function MusicPortalPage() {
               <p className="text-xs uppercase tracking-[0.25em]" style={{ color: theme.accent }}>
                 Generating 2 versions · ~60s
               </p>
+            </div>
+          )}
+
+          {jobLoadError && (
+            <div
+              role="alert"
+              className="mt-6 flex items-start gap-3 rounded-md border border-amber-300/40 bg-amber-300/5 p-4"
+            >
+              <AlertTriangle className="h-5 w-5 text-amber-300 mt-0.5 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs uppercase tracking-[0.25em] font-bold text-amber-200">
+                  {jobLoadError.kind === "auth"
+                    ? "Sign-in required"
+                    : jobLoadError.kind === "missing"
+                    ? "Track unavailable"
+                    : jobLoadError.kind === "network"
+                    ? "Connection issue"
+                    : "Couldn't reopen track"}
+                </p>
+                <p className="mt-1 text-sm text-foreground/80 leading-snug">
+                  {jobLoadError.message}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {jobLoadError.kind === "auth" && !user && (
+                    <Link
+                      to="/auth"
+                      search={{ redirect: typeof window !== "undefined" ? window.location.pathname + window.location.search : `/m/${portal.slug}` } as never}
+                      className="inline-flex items-center gap-1.5 rounded-md bg-amber-300 hover:bg-amber-200 text-black px-3 py-1.5 text-[11px] uppercase tracking-[0.22em] font-bold"
+                    >
+                      <LogIn className="h-3.5 w-3.5" /> Sign in
+                    </Link>
+                  )}
+                  <Link
+                    to="/my-generations"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border hover:bg-muted px-3 py-1.5 text-[11px] uppercase tracking-[0.22em] font-bold text-foreground"
+                  >
+                    My Generations
+                  </Link>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setJobLoadError(null)}
+                aria-label="Dismiss"
+                className="text-muted-foreground hover:text-foreground transition-colors p-1 -mr-1 -mt-1 shrink-0"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
           )}
 
