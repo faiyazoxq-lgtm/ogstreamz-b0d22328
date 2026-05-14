@@ -4,8 +4,19 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { runOGBotDraft } from "./og-bot-draft.server";
 
 const Schema = z.object({
-  surface: z.literal("portal-create"),
-  kind: z.enum(["jokes", "music", "trade", "connect", "tools"]).optional(),
+  surface: z.string().min(1).max(60),
+  kind: z.string().min(1).max(40).optional(),
+  intro: z.string().max(400).optional(),
+  fieldHints: z
+    .array(
+      z.object({
+        key: z.string().min(1).max(40).regex(/^[a-zA-Z][a-zA-Z0-9_]*$/),
+        description: z.string().min(1).max(200),
+        max: z.number().int().min(1).max(4000).optional(),
+      }),
+    )
+    .max(20)
+    .optional(),
   message: z.string().min(1).max(1000),
   history: z
     .array(
@@ -28,6 +39,8 @@ export const ogBotDraft = createServerFn({ method: "POST" })
       userId,
       surface: data.surface,
       kind: data.kind,
+      intro: data.intro,
+      fieldHints: data.fieldHints,
       history: data.history,
       message: data.message,
     });

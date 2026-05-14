@@ -19,6 +19,7 @@ import {
   broadcastFleetCommand,
 } from "@/lib/fleet.functions";
 import { requireAdmin } from "@/lib/route-guards";
+import { OGBotDraftPanel } from "@/components/og-bot/OGBotDraftPanel";
 
 export const Route = createFileRoute("/fleet")({
   beforeLoad: requireAdmin,
@@ -159,6 +160,24 @@ function FleetPage() {
       {/* Spawn */}
       <section className="rounded-lg border bg-card p-5">
         <h2 className="text-lg font-semibold flex items-center gap-2 mb-3"><Plus className="h-4 w-4" /> Spawn Bot</h2>
+        <div className="mb-3">
+          <OGBotDraftPanel
+            surface="fleet-bot"
+            kind="fleet"
+            contextHint="User is on /fleet spawning a per-pair Telegram bot."
+            placeholder="Tell me the trading pair and bot personality."
+            fieldHints={[
+              { key: "pairName", description: "Pair code (e.g. EURUSD), no spaces", max: 30 },
+              { key: "pairLabel", description: "Display label (e.g. EUR / USD)", max: 40 },
+              { key: "bias", description: "One of: good, bad, neutral", max: 10 },
+            ]}
+            onApply={(f) => {
+              if (f.pairName) setPairName(f.pairName);
+              if (f.pairLabel) setPairLabel(f.pairLabel);
+              if (f.bias === "good" || f.bias === "bad" || f.bias === "neutral") setBias(f.bias);
+            }}
+          />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Input placeholder="Pair name (e.g. EURUSD)" value={pairName} onChange={e => setPairName(e.target.value)} />
           <Input placeholder="Display label (e.g. EUR / USD)" value={pairLabel} onChange={e => setPairLabel(e.target.value)} />
@@ -184,6 +203,20 @@ function FleetPage() {
       <section className="rounded-lg border bg-card p-5">
         <h2 className="text-lg font-semibold flex items-center gap-2 mb-3"><Megaphone className="h-4 w-4" /> Master Broadcast</h2>
         <p className="text-xs text-muted-foreground mb-2">Sent simultaneously through every active pair-bot to its own channel.</p>
+        <div className="mb-3">
+          <OGBotDraftPanel
+            surface="fleet-broadcast"
+            kind="fleet"
+            contextHint="User is drafting a fleet-wide broadcast message."
+            placeholder="What should the fleet announce? Tone, urgency, content."
+            fieldHints={[
+              { key: "broadcastMsg", description: "The broadcast text — punchy, single message", max: 600 },
+            ]}
+            onApply={(f) => {
+              if (f.broadcastMsg) setBroadcastMsg(f.broadcastMsg);
+            }}
+          />
+        </div>
         <Textarea placeholder="e.g. NFP Data Release in 5 mins!" value={broadcastMsg} onChange={e => setBroadcastMsg(e.target.value)} rows={3} />
         <Button
           onClick={() => broadcast.mutate()}

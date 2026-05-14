@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { jsPDF } from "jspdf";
 import { Document, Packer, Paragraph, TextRun, AlignmentType } from "docx";
 import { requireBossHub } from "@/lib/route-guards";
+import { OGBotDraftPanel } from "@/components/og-bot/OGBotDraftPanel";
 
 export const Route = createFileRoute("/letterhub")({
   beforeLoad: requireBossHub,
@@ -720,6 +721,22 @@ function LetterHubPage() {
 
         {step === 2 && (
           <div className="space-y-4">
+            <OGBotDraftPanel
+              surface="letter-draft"
+              kind="letter"
+              contextHint="User is on /letterhub drafting a formal letter."
+              placeholder="Tell me what the letter is about and the outcome you want."
+              fieldHints={[
+                { key: "subject", description: "Subject line, max 160 chars", max: 160 },
+                { key: "context", description: "What happened — facts, dates, references", max: 2000 },
+                { key: "outcome", description: "Desired outcome from the recipient", max: 600 },
+              ]}
+              onApply={(f) => {
+                if (f.subject) set("subject", f.subject);
+                if (f.context) set("context", f.context);
+                if (f.outcome) set("outcome", f.outcome);
+              }}
+            />
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <Label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Your full name</Label>

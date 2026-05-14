@@ -17,6 +17,7 @@ import {
   togglePublishFormPortal,
   listFormSubmissions,
 } from "@/lib/form-portals.functions";
+import { OGBotDraftPanel } from "@/components/og-bot/OGBotDraftPanel";
 
 export const Route = createFileRoute("/formhub")({
   beforeLoad: requireBossHub,
@@ -156,6 +157,24 @@ function FormHubPage() {
 
       {/* Wizard */}
       <section className="rounded-2xl border border-sky-500/30 bg-gradient-to-br from-card to-background p-5 sm:p-7 mb-12">
+        <div className="mb-5">
+          <OGBotDraftPanel
+            surface="form-portal"
+            kind="form"
+            contextHint="User is on /formhub designing a contact or survey form."
+            placeholder="Tell me what you're collecting and from whom."
+            fieldHints={[
+              { key: "name", description: "Form name, max 80 chars", max: 80 },
+              { key: "prompt", description: "Detailed brief — fields needed, audience, tone", max: 800 },
+              { key: "formType", description: "Either 'contact' or 'survey'", max: 10 },
+            ]}
+            onApply={(f) => {
+              if (f.name) setName(f.name);
+              if (f.prompt) setPrompt(f.prompt);
+              if (f.formType === "contact" || f.formType === "survey") setFormType(f.formType);
+            }}
+          />
+        </div>
         <div className="grid gap-4 sm:grid-cols-[180px_1fr]">
           <div>
             <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Form type</label>

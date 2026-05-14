@@ -11,6 +11,7 @@ import {
 } from "@/lib/hub-style";
 import { HubSectionsZ, type HubSection } from "@/lib/hub-sections";
 import { HubSectionsEditor } from "@/components/HubSectionsEditor";
+import { OGBotDraftPanel } from "@/components/og-bot/OGBotDraftPanel";
 
 export const Route = createFileRoute("/boss/hubs/$id/edit")({
   component: HubEditPage,
@@ -83,6 +84,24 @@ function HubEditPage() {
 
       <div className="grid lg:grid-cols-2 gap-5">
         <div className="rounded-2xl border bg-card p-5 space-y-3">
+          <OGBotDraftPanel
+            surface="hub-edit"
+            kind="hub"
+            contextHint={`User is editing custom hub "${hub.title}".`}
+            placeholder="Tell me what to change — title, tagline, description."
+            fieldHints={[
+              { key: "title", description: "Hub title", max: 40 },
+              { key: "tagline", description: "Short tagline", max: 60 },
+              { key: "description", description: "One-line summary", max: 200 },
+            ]}
+            onApply={(f) => {
+              const p: any = {};
+              if (f.title) p.title = f.title;
+              if (f.tagline) p.tagline = f.tagline;
+              if (f.description) p.description = f.description;
+              if (Object.keys(p).length) patch(p);
+            }}
+          />
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="text-xs uppercase tracking-wider text-muted-foreground">Title</label>

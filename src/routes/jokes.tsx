@@ -10,6 +10,7 @@ import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
 import { NonVipFormGate } from "@/components/NonVipFormGate";
 import { PortalHeader, PortalStyleLine, mergeStyle } from "@/components/PortalHeader";
+import { OGBotDraftPanel } from "@/components/og-bot/OGBotDraftPanel";
 
 const JOKES_STYLE = "Razor-sharp punch-up roast, club-room timing, no slurs.";
 
@@ -135,6 +136,22 @@ function JokesPromptBuilder() {
 
       <NonVipFormGate label="Activate Portal">
       <section className="rounded-3xl border border-transparent bg-transparent p-4 sm:p-6">
+        <div className="mb-5">
+          <OGBotDraftPanel
+            surface="jokes-portal"
+            kind="jokes"
+            contextHint="User is on /jokes spawning a comedy portal."
+            placeholder="Tell me the angle — region, audience, attitude."
+            fieldHints={[
+              { key: "name", description: "Portal name, max 80 chars", max: 80 },
+              { key: "description", description: "Comedy brief paragraph", max: 1000 },
+            ]}
+            onApply={(f) => {
+              if (f.name) setName(f.name);
+              if (f.description) setDescription(f.description);
+            }}
+          />
+        </div>
         <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Portal Name</label>
         <Input
           value={name}

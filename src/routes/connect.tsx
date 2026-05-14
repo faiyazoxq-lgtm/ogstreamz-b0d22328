@@ -11,6 +11,7 @@ import {
   Loader2, Rocket, Search, Mail, Eye, MousePointerClick, Reply,
   Globe, Trash2, Plus, RefreshCw, ShieldCheck, Sparkles,
 } from "lucide-react";
+import { OGBotDraftPanel } from "@/components/og-bot/OGBotDraftPanel";
 import {
   createConnectCampaign, launchConnectCampaign, getCampaignStats,
   listConnectCampaigns, listCampaignLeads,
@@ -182,6 +183,24 @@ function ConnectHubPage() {
         {/* Spawner */}
         <section className="rounded-xl border border-border/50 bg-card/50 p-5 space-y-4">
           <div className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /><h2 className="font-semibold">Campaign Spawner</h2></div>
+          <OGBotDraftPanel
+            surface="connect-campaign"
+            kind="connect"
+            contextHint="User is on /connect drafting an outbound campaign."
+            placeholder="Tell me the target, the ICP, and the offer."
+            fieldHints={[
+              { key: "target", description: "Target business name", max: 120 },
+              { key: "url", description: "Target URL (optional)", max: 200 },
+              { key: "icp", description: "Ideal customer profile, 1-2 lines", max: 400 },
+              { key: "offer", description: "The offer — what they get", max: 400 },
+            ]}
+            onApply={(f) => {
+              if (f.target) setTarget(f.target);
+              if (f.url) setUrl(f.url);
+              if (f.icp) setIcp(f.icp);
+              if (f.offer) setOffer(f.offer);
+            }}
+          />
           <div className="grid md:grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-muted-foreground">Target Business Name</label>
