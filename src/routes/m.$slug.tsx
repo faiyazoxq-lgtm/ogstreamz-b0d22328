@@ -426,7 +426,20 @@ function MusicPortalPage() {
           <Link to="/" className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.3em] opacity-60 hover:opacity-100">
             <ArrowLeft className="h-3.5 w-3.5" /> 0G
           </Link>
-          <CoinBalance accent={theme.accent} />
+          <div className="flex items-center gap-2">
+            {user && (
+              <Link
+                to="/my-generations"
+                title="My generations"
+                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-full border text-[10px] font-bold uppercase tracking-[0.2em] transition hover:scale-105"
+                style={{ borderColor: `${theme.accent}80`, background: `${theme.accent}10`, color: theme.accent }}
+              >
+                <Disc3 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">History</span>
+              </Link>
+            )}
+            <CoinBalance accent={theme.accent} />
+          </div>
         </div>
 
         <header className="text-center mb-12">
