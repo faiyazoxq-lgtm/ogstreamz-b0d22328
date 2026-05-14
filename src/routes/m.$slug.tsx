@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Music, Wand2, Loader2, ArrowLeft, Disc3, Lock, BadgeCheck, Layers, Sparkles, Download, Share2, Play, Pause, Link2, Twitter, Facebook, MessageCircle, Send } from "lucide-react";
+import { Music, Wand2, Loader2, ArrowLeft, Disc3, Lock, BadgeCheck, Layers, Sparkles, Download, Share2, Play, Pause, Link2, Twitter, Facebook, MessageCircle, Send, AlertTriangle, X, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
@@ -641,6 +641,54 @@ function MusicPortalPage() {
               <p className="text-xs uppercase tracking-[0.25em]" style={{ color: theme.accent }}>
                 Generating 2 versions · ~60s
               </p>
+            </div>
+          )}
+
+          {jobLoadError && (
+            <div
+              role="alert"
+              className="mt-6 flex items-start gap-3 rounded-md border border-amber-300/40 bg-amber-300/5 p-4"
+            >
+              <AlertTriangle className="h-5 w-5 text-amber-300 mt-0.5 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs uppercase tracking-[0.25em] font-bold text-amber-200">
+                  {jobLoadError.kind === "auth"
+                    ? "Sign-in required"
+                    : jobLoadError.kind === "missing"
+                    ? "Track unavailable"
+                    : jobLoadError.kind === "network"
+                    ? "Connection issue"
+                    : "Couldn't reopen track"}
+                </p>
+                <p className="mt-1 text-sm text-foreground/80 leading-snug">
+                  {jobLoadError.message}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {jobLoadError.kind === "auth" && !user && (
+                    <Link
+                      to="/auth"
+                      search={{ redirect: typeof window !== "undefined" ? window.location.pathname + window.location.search : `/m/${portal.slug}` } as never}
+                      className="inline-flex items-center gap-1.5 rounded-md bg-amber-300 hover:bg-amber-200 text-black px-3 py-1.5 text-[11px] uppercase tracking-[0.22em] font-bold"
+                    >
+                      <LogIn className="h-3.5 w-3.5" /> Sign in
+                    </Link>
+                  )}
+                  <Link
+                    to="/my-generations"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border hover:bg-muted px-3 py-1.5 text-[11px] uppercase tracking-[0.22em] font-bold text-foreground"
+                  >
+                    My Generations
+                  </Link>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setJobLoadError(null)}
+                aria-label="Dismiss"
+                className="text-muted-foreground hover:text-foreground transition-colors p-1 -mr-1 -mt-1 shrink-0"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
           )}
 
