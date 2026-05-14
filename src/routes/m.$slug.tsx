@@ -272,19 +272,29 @@ function MusicPortalPage() {
     "Trap / 808 Heavy",
   ];
 
-  const onPickStyle = async (preset: string) => {
-    if (!user) return toast.error("Sign in to generate");
+  // Step 1 — picking a style only selects it; generation is gated behind
+  // the explicit "Generate" button so users can review/swap before spending
+  // a coin and triggering the Suno spawn.
+  const onPickStyle = (preset: string) => {
     if (trackStatus === "generating") return;
-    setSelectedStyle(preset);
+    setSelectedStyle((cur) => (cur === preset ? null : preset));
+  };
+
+  // Step 2 — explicit Generate. Spends 1 coin, spawns Suno (V5.5 fast,
+  // commercial-rights, 2 versions), then polling renders the 30s previews.
+  const onGenerateTrack = async () => {
+    if (!user) return toast.error("Sign in to generate");
+    if (!selectedStyle) return toast.error("Pick a style first");
+    if (trackStatus === "generating") return;
     setTrackStatus("generating");
     setAudioV1(null);
     setAudioV2(null);
     setDownloadUnlocked(false);
     setTrackJobId(null);
     try {
-      const r = await generateTrackFn({ data: { slug: portal.slug, style: preset } });
+      const r = await generateTrackFn({ data: { slug: portal.slug, style: selectedStyle } });
       setTrackJobId(r.jobId);
-      toast.success("Generating · 2 versions on the way (~60s)");
+      toast.success("Generating · full-length, commercial-rights · 2 versions (~60s)");
     } catch (e: any) {
       toast.error(e?.message ?? "Generation failed");
       setTrackStatus("failed");
