@@ -1261,6 +1261,39 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
   };
   useEffect(() => { refresh(); refreshCodes(); /* eslint-disable-next-line */ }, []);
 
+  // Debounced live validation + uniqueness check for the custom code input.
+  useEffect(() => {
+    const raw = codeCustom.trim();
+    if (!raw) { setCodeStatus({ state: "idle" }); return; }
+    if (raw.length < 3 || raw.length > 32) {
+      setCodeStatus({ state: "invalid", msg: "Must be 3–32 characters" });
+      return;
+    }
+    if (!/^[A-Z0-9_-]+$/.test(raw)) {
+      setCodeStatus({ state: "invalid", msg: "Only A–Z, 0–9, _ and - allowed" });
+      return;
+    }
+    // Optimistic local duplicate check against already-loaded codes.
+    if (codes.some((c) => String(c.code).toUpperCase() === raw)) {
+      setCodeStatus({ state: "taken" });
+      return;
+    }
+    setCodeStatus({ state: "checking" });
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const r = await checkCode({ data: { code: raw } });
+        if (cancelled) return;
+        if (r.available) setCodeStatus({ state: "ok" });
+        else if (r.reason === "taken") setCodeStatus({ state: "taken" });
+        else setCodeStatus({ state: "invalid", msg: "Invalid format" });
+      } catch {
+        if (!cancelled) setCodeStatus({ state: "idle" });
+      }
+    }, 350);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [codeCustom, codes, checkCode]);
+
   const computeExpiry = (): string | null => {
     if (preset === "custom") {
       if (!customDate) return null;
