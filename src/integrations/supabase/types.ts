@@ -1469,6 +1469,39 @@ export type Database = {
         }
         Relationships: []
       }
+      og_bot_audit: {
+        Row: {
+          args: Json
+          created_at: string
+          id: string
+          ok: boolean
+          result: Json
+          surface: string
+          tool: string
+          user_id: string
+        }
+        Insert: {
+          args?: Json
+          created_at?: string
+          id?: string
+          ok?: boolean
+          result?: Json
+          surface: string
+          tool: string
+          user_id: string
+        }
+        Update: {
+          args?: Json
+          created_at?: string
+          id?: string
+          ok?: boolean
+          result?: Json
+          surface?: string
+          tool?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       og_bot_memory: {
         Row: {
           created_at: string
