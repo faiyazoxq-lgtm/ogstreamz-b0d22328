@@ -482,18 +482,18 @@ function MusicPortalPage() {
             </h2>
           </div>
           <p className="text-xs opacity-70 mb-3">
-            Pick one style — we auto-blend it with this portal's description into a 4-layer Genre/Timbre, Mood/BPM/Key, Vocal Texture & Structure stack.
+            Pick one style — we auto-blend it with this portal's description and Suno spits out 2 versions. Preview free for 30s, unlock the full track + downloads for 2 coins.
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {STYLE_PRESETS.map((preset) => {
               const active = selectedStyle === preset;
-              const isLoading = stackLoading && active;
+              const isLoading = trackStatus === "generating" && active;
               return (
                 <button
                   key={preset}
                   type="button"
                   onClick={() => onPickStyle(preset)}
-                  disabled={stackLoading}
+                  disabled={trackStatus === "generating"}
                   className="h-12 px-3 text-[11px] uppercase tracking-[0.18em] font-bold border rounded-md transition disabled:opacity-50 flex items-center justify-center text-center"
                   style={{
                     background: active ? theme.accent : `${theme.accent}10`,
@@ -507,29 +507,48 @@ function MusicPortalPage() {
             })}
           </div>
           <p className="text-[10px] opacity-50 mt-2 uppercase tracking-[0.25em]">
-            1 credit per stack · pick a different style to re-roll
+            1 coin to generate · 2 coins to unlock full track + downloads
           </p>
 
-          {stack && (
+          {trackStatus === "generating" && (
+            <div className="mt-6 flex items-center gap-3 p-4 rounded-md border" style={{ borderColor: `${theme.accent}30`, background: "rgba(0,0,0,0.4)" }}>
+              <Loader2 className="h-5 w-5 animate-spin" style={{ color: theme.accent }} />
+              <p className="text-xs uppercase tracking-[0.25em]" style={{ color: theme.accent }}>
+                Generating 2 versions · ~60s
+              </p>
+            </div>
+          )}
+
+          {(audioV1 || audioV2) && trackStatus !== "generating" && (
             <div className="mt-6 space-y-3">
               {[
-                { label: "Genre / Timbre", value: stack.timbre },
-                { label: "Mood / BPM / Key", value: stack.moodKey },
-                { label: "Vocal Texture", value: stack.vocal },
-                { label: "Structure Tags", value: stack.structure },
-              ].map((row) => (
-                <div key={row.label} className="rounded-md border p-3" style={{ borderColor: `${theme.accent}30`, background: "rgba(0,0,0,0.4)" }}>
-                  <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 mb-1" style={{ color: theme.accent }}>{row.label}</p>
-                  <p className="text-sm leading-relaxed">{row.value}</p>
-                </div>
+                { label: "Version A", url: audioV1 },
+                { label: "Version B", url: audioV2 },
+              ].filter((v) => v.url).map((v) => (
+                <PreviewPlayer
+                  key={v.label}
+                  label={v.label}
+                  url={v.url!}
+                  unlocked={downloadUnlocked}
+                  accent={theme.accent}
+                  onShare={() => onShare(v.url!, v.label)}
+                />
               ))}
-              <Button
-                onClick={onCopyStack}
-                className="w-full h-12 text-xs uppercase tracking-[0.3em] font-bold"
-                style={{ background: theme.accent, color: "#000" }}
-              >
-                {copied ? <><Check className="h-4 w-4 mr-2" />Copied</> : <><Copy className="h-4 w-4 mr-2" />Copy to Suno</>}
-              </Button>
+              {!downloadUnlocked && (
+                <Button
+                  onClick={onUnlockDownload}
+                  disabled={unlocking}
+                  className="w-full h-12 text-xs uppercase tracking-[0.3em] font-bold"
+                  style={{ background: theme.accent, color: "#000" }}
+                >
+                  {unlocking ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Unlocking…</> : <><Lock className="h-4 w-4 mr-2" />Unlock full track (2 coins)</>}
+                </Button>
+              )}
+              {downloadUnlocked && (
+                <p className="text-[10px] uppercase tracking-[0.3em] text-center" style={{ color: theme.accent }}>
+                  ✓ Unlocked · download or share each version
+                </p>
+              )}
             </div>
           )}
         </section>
