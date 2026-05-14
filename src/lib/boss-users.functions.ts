@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireBoss } from "@/integrations/supabase/boss-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { logBossAction } from "@/lib/boss-audit.functions";
 
 const RANKS = ["prospect", "enforcer", "stream_user", "vip", "boss"] as const;
 type Rank = typeof RANKS[number];
@@ -63,8 +64,17 @@ export const setRank = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
     const status = data.rank === "vip" || data.rank === "boss" ? "vip" : "free";
+    const { data: prev } = await supabase
+      .from("profiles").select("rank,status").eq("id", data.userId).maybeSingle();
     const { error } = await supabase.from("profiles").update({ rank: data.rank, status }).eq("id", data.userId);
     if (error) throw new Error(error.message);
+    await logBossAction(supabase, {
+      action: "set_rank",
+      surface: "/boss/users",
+      targetUserId: data.userId,
+      before: prev ?? null,
+      after: { rank: data.rank, status },
+    });
     return { ok: true };
   });
 
@@ -76,8 +86,17 @@ export const setStatus = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
+    const { data: prev } = await supabase
+      .from("profiles").select("status").eq("id", data.userId).maybeSingle();
     const { error } = await supabase.from("profiles").update({ status: data.status }).eq("id", data.userId);
     if (error) throw new Error(error.message);
+    await logBossAction(supabase, {
+      action: "set_status",
+      surface: "/boss/users",
+      targetUserId: data.userId,
+      before: prev ?? null,
+      after: { status: data.status },
+    });
     return { ok: true };
   });
 
@@ -94,6 +113,14 @@ export const adjustCredits = createServerFn({ method: "POST" })
       _user_id: data.userId, _delta: data.delta, _reason: data.reason,
     });
     if (error) throw new Error(error.message);
+    await logBossAction(supabase, {
+      action: "adjust_credits",
+      surface: "/boss/users",
+      targetUserId: data.userId,
+      after: { credits: bal as number, delta: data.delta },
+      reason: data.reason,
+      metadata: { delta: data.delta },
+    });
     return { credits: bal as number };
   });
 
@@ -106,6 +133,8 @@ export const setBanned = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
+    const { data: prev } = await supabase
+      .from("profiles").select("banned,banned_reason").eq("id", data.userId).maybeSingle();
     const { error } = await supabase.rpc("boss_set_banned", {
       _user_id: data.userId, _banned: data.banned, _reason: data.reason,
     });
@@ -114,6 +143,14 @@ export const setBanned = createServerFn({ method: "POST" })
     if (data.banned) {
       try { await supabaseAdmin.auth.admin.signOut(data.userId); } catch { /* non-fatal */ }
     }
+    await logBossAction(supabase, {
+      action: "set_banned",
+      surface: "/boss/users",
+      targetUserId: data.userId,
+      before: prev ?? null,
+      after: { banned: data.banned, banned_reason: data.reason },
+      reason: data.reason,
+    });
     return { ok: true };
   });
 
@@ -123,6 +160,12 @@ export const forceSignOut = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { error } = await supabaseAdmin.auth.admin.signOut(data.userId);
     if (error) throw new Error(error.message);
+    const { supabase } = context as any;
+    await logBossAction(supabase, {
+      action: "force_sign_out",
+      surface: "/boss/users",
+      targetUserId: data.userId,
+    });
     return { ok: true };
   });
 
@@ -146,6 +189,7 @@ export const setUserSwearing = createServerFn({ method: "POST" })
       .from("profiles").select("feature_flags").eq("id", data.userId).maybeSingle();
     if (readErr) throw new Error(readErr.message);
     const flags = { ...(prof?.feature_flags ?? {}) } as Record<string, any>;
+    const prevFlags = { swearing: flags.swearing ?? null, swearing_intensity: flags.swearing_intensity ?? null };
     if (data.enabled === null) {
       delete flags.swearing;
     } else {
@@ -154,5 +198,12 @@ export const setUserSwearing = createServerFn({ method: "POST" })
     if (data.intensity) flags.swearing_intensity = data.intensity;
     const { error } = await supabase.from("profiles").update({ feature_flags: flags }).eq("id", data.userId);
     if (error) throw new Error(error.message);
+    await logBossAction(supabase, {
+      action: "set_user_swearing",
+      surface: "/boss/users",
+      targetUserId: data.userId,
+      before: prevFlags,
+      after: { swearing: flags.swearing ?? null, swearing_intensity: flags.swearing_intensity ?? null },
+    });
     return { ok: true, feature_flags: flags };
   });
