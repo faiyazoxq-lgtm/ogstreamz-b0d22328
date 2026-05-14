@@ -303,10 +303,17 @@ function ProfilePage() {
                 {isBoss ? "∞" : credits}
               </span>
             </div>
-            <div className="mt-4 h-2 w-full rounded-full bg-secondary/60 overflow-hidden border border-[oklch(0.72_0.22_245/0.3)]">
+            <div
+              className="mt-4 h-2 w-full rounded-full bg-secondary/60 overflow-hidden border"
+              style={{ borderColor: "var(--reserve-progress-track-border)" }}
+            >
               <div
-                className="h-full rounded-full bg-gradient-to-r from-[oklch(0.55_0.24_255)] via-[var(--neon-blue-bright)] to-[oklch(0.85_0.18_235)] shadow-[0_0_18px_oklch(0.72_0.22_245/0.9)] transition-all"
-                style={{ width: `${isBoss ? 100 : creditPct}%` }}
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${isBoss ? 100 : creditPct}%`,
+                  background: "var(--reserve-progress-gradient)",
+                  boxShadow: "var(--reserve-progress-glow)",
+                }}
               />
             </div>
             <p className="mt-3 text-sm text-muted-foreground">{isBoss ? "Unlimited reserve. No caps." : "Spend credits to unlock single VIP items."}</p>
@@ -317,28 +324,25 @@ function ProfilePage() {
         {isBoss && (
           <section className="mt-12">
             <div
-              className="rounded-2xl p-[1.5px] relative overflow-hidden shadow-[0_0_50px_-12px_oklch(0.72_0.22_245/0.55),0_0_120px_-40px_oklch(0.85_0.18_235/0.4)]"
+              className="rounded-2xl p-[1.5px] relative overflow-hidden"
               style={{
-                background:
-                  "linear-gradient(135deg, oklch(0.95 0.005 240) 0%, oklch(0.72 0.22 245) 22%, oklch(0.55 0.02 240) 48%, oklch(0.85 0.18 235) 72%, oklch(0.95 0.01 240) 100%)",
+                background: "var(--reserve-frame-gradient)",
+                boxShadow: "var(--reserve-frame-shadow)",
               }}
             >
-            <div className="rounded-[14px] bg-[oklch(0.13_0.02_250)] p-6 sm:p-8 relative overflow-hidden">
+            <div
+              className="rounded-[14px] p-6 sm:p-8 relative overflow-hidden"
+              style={{ background: "var(--reserve-card-bg)" }}
+            >
               <div
                 aria-hidden
                 className="pointer-events-none absolute inset-0 opacity-60"
-                style={{
-                  background:
-                    "radial-gradient(ellipse at top right, oklch(0.85 0.18 235 / 0.22), transparent 60%), radial-gradient(ellipse at bottom left, oklch(0.72 0.22 245 / 0.18), transparent 55%), linear-gradient(180deg, transparent 0%, oklch(0.72 0.22 245 / 0.05) 100%)",
-                }}
+                style={{ background: "var(--reserve-card-glow)" }}
               />
               <div
                 aria-hidden
                 className="pointer-events-none absolute inset-x-0 top-0 h-px"
-                style={{
-                  background:
-                    "linear-gradient(90deg, transparent, oklch(0.95 0.01 240 / 0.9), transparent)",
-                }}
+                style={{ background: "var(--reserve-card-topline)" }}
               />
               <div className="relative">
                 <div className="flex items-center justify-between gap-3">
@@ -350,11 +354,9 @@ function ProfilePage() {
                     className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.25em] font-black rounded-full px-2.5 py-1"
                     style={{
                       color: "var(--neon-blue-bright)",
-                      border: "1px solid oklch(0.72 0.22 245 / 0.55)",
-                      background:
-                        "linear-gradient(180deg, oklch(0.72 0.22 245 / 0.18), oklch(0.72 0.22 245 / 0.06))",
-                      boxShadow:
-                        "inset 0 1px 0 oklch(0.95 0.01 240 / 0.25), 0 0 18px -4px oklch(0.72 0.22 245 / 0.6)",
+                      border: "1px solid var(--reserve-pill-border)",
+                      background: "var(--reserve-pill-bg)",
+                      boxShadow: "var(--reserve-pill-shadow)",
                     }}
                   >
                     <BadgeCheck className="h-3 w-3" /> Active
@@ -381,11 +383,9 @@ function ProfilePage() {
                       key={label}
                       className="rounded-lg px-3 py-2.5 flex items-center gap-2"
                       style={{
-                        border: "1px solid oklch(0.72 0.22 245 / 0.28)",
-                        background:
-                          "linear-gradient(180deg, oklch(0.18 0.02 250 / 0.85), oklch(0.13 0.02 250 / 0.9))",
-                        boxShadow:
-                          "inset 0 1px 0 oklch(0.95 0.01 240 / 0.08), 0 0 24px -16px oklch(0.72 0.22 245 / 0.7)",
+                        border: "1px solid var(--reserve-tile-border)",
+                        background: "var(--reserve-tile-bg)",
+                        boxShadow: "var(--reserve-tile-shadow)",
                       }}
                     >
                       <Icon className="h-3.5 w-3.5" style={{ color: "var(--neon-blue-bright)" }} />
@@ -407,11 +407,9 @@ function ProfilePage() {
                     className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] uppercase tracking-[0.22em] font-bold transition-all hover:-translate-y-px"
                     style={{
                       color: "var(--neon-blue-bright)",
-                      border: "1px solid oklch(0.72 0.22 245 / 0.5)",
-                      background:
-                        "linear-gradient(180deg, oklch(0.2 0.02 250 / 0.85), oklch(0.13 0.02 250 / 0.95))",
-                      boxShadow:
-                        "inset 0 1px 0 oklch(0.95 0.01 240 / 0.18), 0 0 20px -8px oklch(0.72 0.22 245 / 0.7)",
+                      border: "1px solid var(--reserve-button-border)",
+                      background: "var(--reserve-button-bg)",
+                      boxShadow: "var(--reserve-button-shadow)",
                     }}
                   >
                     <Coins className="h-3.5 w-3.5" /> Adjust member credits
@@ -421,11 +419,9 @@ function ProfilePage() {
                     className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] uppercase tracking-[0.22em] font-bold transition-all hover:-translate-y-px"
                     style={{
                       color: "var(--neon-blue-bright)",
-                      border: "1px solid oklch(0.72 0.22 245 / 0.5)",
-                      background:
-                        "linear-gradient(180deg, oklch(0.2 0.02 250 / 0.85), oklch(0.13 0.02 250 / 0.95))",
-                      boxShadow:
-                        "inset 0 1px 0 oklch(0.95 0.01 240 / 0.18), 0 0 20px -8px oklch(0.72 0.22 245 / 0.7)",
+                      border: "1px solid var(--reserve-button-border)",
+                      background: "var(--reserve-button-bg)",
+                      boxShadow: "var(--reserve-button-shadow)",
                     }}
                   >
                     <Shield className="h-3.5 w-3.5" /> Boss console
