@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import ReactMarkdown from "react-markdown";
 import { Link } from "@tanstack/react-router";
-import { Send, Skull, Loader2, Compass, Flame } from "lucide-react";
+import { Send, Loader2, Compass, Flame } from "lucide-react";
 import { siteGuideChat } from "@/lib/site-guide.functions";
+import ogBotAvatar from "@/assets/og-streamz-wallpaper.png";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -84,12 +85,21 @@ export function SiteGuideSwearChat() {
       style={{ borderColor: `${accent}55`, boxShadow: `0 0 50px -25px ${accent}` }}
       aria-label="Site guide swear chat"
     >
-      <header className="flex items-center justify-between gap-3 px-4 py-3 border-b" style={{ borderColor: `${accent}33` }}>
-        <div className="flex items-center gap-2 min-w-0">
-          <Skull className="h-4 w-4 shrink-0" style={{ color: accent }} />
+      <header
+        className="flex items-center justify-between gap-3 px-4 py-3 border-b bg-gradient-to-r from-black/60 via-black/40 to-transparent"
+        style={{ borderColor: `${accent}33` }}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className="relative h-10 w-10 shrink-0 rounded-full overflow-hidden ring-2"
+            style={{ boxShadow: `0 0 18px -4px ${accent}`, ['--tw-ring-color' as any]: `${accent}88` }}
+          >
+            <img src={ogBotAvatar} alt="OG Bot" className="h-full w-full object-cover" />
+            <span className="absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-black animate-pulse" />
+          </div>
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-[0.3em] font-bold truncate" style={{ color: accent }}>
-              Guttermouth Guide
+              OG Bot
             </p>
             <p className="text-[11px] text-white/50 truncate">Foul-mouthed site map. Ask anything — get directions.</p>
           </div>
