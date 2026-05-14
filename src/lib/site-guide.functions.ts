@@ -105,6 +105,39 @@ ${SITE_MAP}`;
 
 const CHAOS_LAYER = `\n\nCHAOS MODE ENGAGED: double the swear density, throw in random ALL-CAPS bursts, mix British (bollocks, knobhead, bellend, gobshite, wanker) with American (fuck, shit, motherfucker), and open with a NAMED nickname for the user. Still produce the bullet-list site map answer — chaos is tone, not content.`;
 
+// A pool of cheeky, low-stakes "take the piss" probes the bot can drop in
+// when it wants to learn more about the user. Kept generic — never asks
+// for PII (no real name, address, DOB, etc.). The model picks ONE and
+// rewords it in its own voice.
+const PROBE_QUESTIONS = [
+  "what's the most embarrassing song on your playlist right now",
+  "be honest — tea or coffee, and how many a day",
+  "are you a morning gremlin or a 3am keyboard warrior",
+  "city, suburb, or middle-of-nowhere",
+  "what's the last thing you bought that you absolutely did NOT need",
+  "PC, console, or phone-only peasant",
+  "favourite swear word — go on, prove yourself",
+  "what football/sports team are you contractually miserable about",
+  "dream holiday spot or are you allergic to sunlight",
+  "pet situation — dog, cat, lizard, or just trauma",
+  "guilty-pleasure TV show you'd deny under oath",
+  "biggest hill you'd die on — pineapple on pizza, etc.",
+];
+
+function buildMemoryBlock(facts: string[]): string {
+  if (!facts.length) {
+    return `\n\nUSER MEMORY: (empty — you don't know this user yet. You may, occasionally and naturally, slip ONE cheeky personal question at the END of your reply to learn something about them. Never interrogate.)`;
+  }
+  const list = facts.slice(-25).map((f) => `- ${f}`).join("\n");
+  return `\n\nUSER MEMORY (things you've learned about this user across past chats — reference them naturally, take the piss where appropriate, never list them back verbatim):\n${list}`;
+}
+
+function buildProbeInstruction(shouldProbe: boolean): string {
+  if (!shouldProbe) return "";
+  const pick = PROBE_QUESTIONS[Math.floor(Math.random() * PROBE_QUESTIONS.length)];
+  return `\n\nPROBE TIME: After your normal answer (and after the GO HERE FIRST line), add a final italic line that asks the user, in your own foul-mouthed voice, this question: "${pick}". Keep it ONE short sentence, on its own line, prefixed with "_" and suffixed with "_" (markdown italics). Do NOT skip it.`;
+}
+
 export const siteGuideChat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { messages: Msg[]; chaos?: boolean }) => ({
@@ -114,12 +147,43 @@ export const siteGuideChat = createServerFn({ method: "POST" })
       .map((m) => ({ role: m.role, content: String(m.content).slice(0, 1500) })),
     chaos: !!d?.chaos,
   }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("AI gateway not configured");
     if (data.messages.length === 0) throw new Error("Say something");
 
-    const system = data.chaos ? `${SYS_BASE}${CHAOS_LAYER}` : SYS_BASE;
+    const { supabase, userId } = context as { supabase: any; userId: string };
+
+    // Load existing memory (best-effort — never block the chat on a memory miss).
+    let facts: string[] = [];
+    let messageCount = 0;
+    let lastProbeAt: string | null = null;
+    try {
+      const { data: mem } = await supabase
+        .from("og_bot_memory")
+        .select("facts, message_count, last_probe_at")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (mem) {
+        facts = Array.isArray(mem.facts) ? (mem.facts as string[]) : [];
+        messageCount = Number(mem.message_count) || 0;
+        lastProbeAt = mem.last_probe_at ?? null;
+      }
+    } catch (e) {
+      console.error("og_bot_memory read failed", e);
+    }
+
+    // Probe roughly every 3rd user turn, but not within 5 minutes of the
+    // previous probe so we don't badger the user.
+    const turnIndex = messageCount + 1;
+    const cooledDown =
+      !lastProbeAt || Date.now() - new Date(lastProbeAt).getTime() > 5 * 60 * 1000;
+    const shouldProbe = cooledDown && (facts.length < 3 || turnIndex % 3 === 0);
+
+    const system =
+      (data.chaos ? `${SYS_BASE}${CHAOS_LAYER}` : SYS_BASE) +
+      buildMemoryBlock(facts) +
+      buildProbeInstruction(shouldProbe);
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -145,5 +209,84 @@ export const siteGuideChat = createServerFn({ method: "POST" })
 
     const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
     const reply = json.choices?.[0]?.message?.content?.trim() || "(silence — even the gremlin's stumped)";
+
+    // Fire-and-forget: extract any new personal facts from the latest user
+    // message and merge into memory. Never blocks or fails the chat reply.
+    const lastUser = [...data.messages].reverse().find((m) => m.role === "user")?.content ?? "";
+    extractAndPersistFacts({
+      key,
+      supabase,
+      userId,
+      userMessage: lastUser,
+      existingFacts: facts,
+      newMessageCount: turnIndex,
+      probed: shouldProbe,
+    }).catch((e) => console.error("og_bot_memory write failed", e));
+
     return { reply };
   });
+
+// ---------------------------------------------------------------------------
+// Memory extraction — pulls a tiny array of durable, non-sensitive facts from
+// the user's latest message, merges with existing facts (deduped, capped),
+// and upserts the row. Uses a small/fast model to keep latency low.
+// ---------------------------------------------------------------------------
+async function extractAndPersistFacts(args: {
+  key: string;
+  supabase: any;
+  userId: string;
+  userMessage: string;
+  existingFacts: string[];
+  newMessageCount: number;
+  probed: boolean;
+}) {
+  const { key, supabase, userId, userMessage, existingFacts, newMessageCount, probed } = args;
+
+  let mergedFacts = existingFacts;
+
+  if (userMessage && userMessage.trim().length > 2) {
+    try {
+      const sys = `You are a memory extractor for a sarcastic site-guide chatbot. Read the user's latest message and pull out at most 3 durable, non-sensitive facts about THE USER worth remembering for future chats (preferences, habits, opinions, location at city level only, hobbies, gear, mood, jokes they made about themselves). Ignore one-off questions about the site, navigation, passwords, payments, or anything that isn't about who the user IS. Reply with ONLY a JSON array of short strings (max 80 chars each), or [] if nothing is worth saving. No prose, no markdown.`;
+      const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-lite",
+          messages: [
+            { role: "system", content: sys },
+            { role: "user", content: userMessage.slice(0, 1500) },
+          ],
+          temperature: 0.2,
+          max_tokens: 200,
+        }),
+      });
+      if (r.ok) {
+        const j = (await r.json()) as { choices?: Array<{ message?: { content?: string } }> };
+        const raw = j.choices?.[0]?.message?.content?.trim() ?? "[]";
+        const cleaned = raw.replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
+        const parsed = JSON.parse(cleaned);
+        if (Array.isArray(parsed)) {
+          const newFacts = parsed
+            .filter((x) => typeof x === "string")
+            .map((x) => x.trim())
+            .filter((x) => x.length > 0 && x.length <= 120);
+          // Dedupe case-insensitively, cap to last 60 facts.
+          const seen = new Set(existingFacts.map((f) => f.toLowerCase()));
+          const additions = newFacts.filter((f) => !seen.has(f.toLowerCase()));
+          mergedFacts = [...existingFacts, ...additions].slice(-60);
+        }
+      }
+    } catch (e) {
+      console.error("fact extraction failed", e);
+    }
+  }
+
+  const patch: Record<string, unknown> = {
+    user_id: userId,
+    facts: mergedFacts,
+    message_count: newMessageCount,
+  };
+  if (probed) patch.last_probe_at = new Date().toISOString();
+
+  await supabase.from("og_bot_memory").upsert(patch, { onConflict: "user_id" });
+}
