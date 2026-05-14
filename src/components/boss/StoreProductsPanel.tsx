@@ -159,7 +159,7 @@ export function StoreProductsPanel() {
           image_url: draft.image_url || null,
           price_cents: Number(draft.price_cents) || 0,
           currency: draft.currency || "usd",
-          duration_days: draft.duration_days === "" ? null : Number(draft.duration_days),
+          duration_days: unitToDays(draft.duration_amount, draft.duration_unit),
           asset_url: draft.asset_url || null,
           metadata: draft.metadata.trim() || "{}",
           active: draft.active,
