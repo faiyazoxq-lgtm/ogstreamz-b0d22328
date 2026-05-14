@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, Circle, Loader2, Send, Copy, ExternalLink, ShieldCheck, Users, Bell, Ticket } from "lucide-react";
+import { CheckCircle2, Circle, Loader2, Send, Copy, ExternalLink, ShieldCheck, Users, Bell, Ticket, RefreshCw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -83,6 +83,9 @@ function ConnectTelegramPage() {
   const [status, setStatus] = useState<Status>(null);
   const [busy, setBusy] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [checking, setChecking] = useState(false);
+  const [lastCheckAt, setLastCheckAt] = useState<number | null>(null);
+  const [openedTelegram, setOpenedTelegram] = useState(false);
   const pollRef = useRef<number | null>(null);
 
   // Unauthenticated users belong on /auth.
@@ -112,6 +115,24 @@ function ConnectTelegramPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
+
+  // Re-check whenever the tab regains focus — covers the common path of
+  // jumping to Telegram, pressing Start, then swiping back to the browser.
+  useEffect(() => {
+    if (!user) return;
+    const onVis = () => {
+      if (document.visibilityState === "visible" && !status?.chat_id) {
+        refresh();
+      }
+    };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", onVis);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("focus", onVis);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, status?.chat_id]);
 
   // Once we've issued a code, poll until chat_id appears (the user pressed
   // Start in Telegram and the webhook bound the chat).
@@ -166,6 +187,7 @@ function ConnectTelegramPage() {
       if (active) {
         const param = ogPassTag ? `${active}__${ogPassTag}` : active;
         const url = `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent(param)}`;
+        setOpenedTelegram(true);
         // Mobile browsers block window.open() after an awaited server call
         // (the click is no longer a "trusted" user gesture). Navigate the
         // current tab instead — Telegram's universal link opens the app and
@@ -178,6 +200,25 @@ function ConnectTelegramPage() {
       toast.error(e?.message ?? "Could not start Telegram link");
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleCheckNow = async () => {
+    setChecking(true);
+    try {
+      const s = await refresh();
+      setLastCheckAt(Date.now());
+      if (s?.chat_id) {
+        toast.success("Confirmed — Telegram chat bound to your profile");
+      } else if (s?.link_code) {
+        toast.error("Not bound yet — open the link and press Start in Telegram");
+      } else {
+        toast.error("No active link code — tap Connect Telegram first");
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Verification failed");
+    } finally {
+      setChecking(false);
     }
   };
 
@@ -333,10 +374,53 @@ function ConnectTelegramPage() {
                   <Button size="sm" variant="outline" onClick={handleCopy} className="h-8 px-2" aria-label="Copy link command">
                     <Copy className="h-3.5 w-3.5" />
                   </Button>
-                  <span className="text-[10px] uppercase tracking-widest text-white/50 inline-flex items-center gap-1">
-                    <Loader2 className="h-3 w-3 animate-spin" /> Waiting for Telegram…
-                  </span>
                 </div>
+
+                {/* Verification banner — shows the live result of polling */}
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className={`mt-3 flex items-start gap-2 rounded-xl border p-3 ${
+                    openedTelegram || lastCheckAt
+                      ? "border-amber-400/40 bg-amber-500/10 text-amber-100"
+                      : "border-sky-400/30 bg-sky-500/5 text-sky-100"
+                  }`}
+                >
+                  {openedTelegram || lastCheckAt ? (
+                    <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                  ) : (
+                    <Loader2 className="h-4 w-4 mt-0.5 shrink-0 animate-spin" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold leading-snug">
+                      {openedTelegram || lastCheckAt
+                        ? "Not confirmed yet — open Telegram and press Start, then check again"
+                        : "Waiting for you to press Start in Telegram…"}
+                    </p>
+                    <p className="mt-0.5 text-[11px] opacity-80 leading-snug">
+                      We auto-check every few seconds and whenever you return to this tab.
+                      {lastCheckAt
+                        ? ` Last checked ${new Date(lastCheckAt).toLocaleTimeString()}.`
+                        : ""}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleCheckNow}
+                    disabled={checking}
+                    className="h-8 px-2 shrink-0 border-current bg-transparent"
+                    aria-label="Check connection now"
+                  >
+                    {checking ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    )}
+                    <span className="ml-1.5 text-[11px] font-black uppercase tracking-wider">Check</span>
+                  </Button>
+                </div>
+
                 {ogPassTag && (
                   <p className="mt-2 text-[11px] text-white/55 leading-snug">
                     Tap or paste this link in Telegram — it opens @{BOT_USERNAME}
