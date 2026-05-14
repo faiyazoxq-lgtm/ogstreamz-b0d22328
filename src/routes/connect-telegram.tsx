@@ -89,6 +89,20 @@ function ConnectTelegramPage() {
   const pollRef = useRef<number | null>(null);
   const linkedToastRef = useRef(false);
 
+  const fireLinkedToast = (boundAtIso: string | null) => {
+    if (linkedToastRef.current) return;
+    linkedToastRef.current = true;
+    const boundDate = boundAtIso ? new Date(boundAtIso) : new Date();
+    const boundLabel = boundDate.toLocaleString();
+    try {
+      sessionStorage.setItem("tg_bound_at", boundDate.toISOString());
+    } catch { /* ignore */ }
+    toast.success("Telegram linked — group features unlocked", {
+      id: "tg-linked",
+      description: `Bound at ${boundLabel}`,
+    });
+  };
+
   // Unauthenticated users belong on /auth.
   useEffect(() => {
     if (!loading && !user) {
@@ -147,12 +161,7 @@ function ConnectTelegramPage() {
       const s = await refresh();
       if (s?.chat_id) {
         if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
-        if (!linkedToastRef.current) {
-          linkedToastRef.current = true;
-          toast.success("Telegram linked — group features unlocked", {
-            id: "tg-linked",
-          });
-        }
+        fireLinkedToast(s.linked_at ?? null);
         // Bounce them back to where they were trying to go (or home).
         let dest = "/";
         try {
@@ -215,12 +224,7 @@ function ConnectTelegramPage() {
       const s = await refresh();
       setLastCheckAt(Date.now());
       if (s?.chat_id) {
-        if (!linkedToastRef.current) {
-          linkedToastRef.current = true;
-          toast.success("Telegram linked — group features unlocked", {
-            id: "tg-linked",
-          });
-        }
+        fireLinkedToast(s.linked_at ?? null);
       } else if (s?.link_code) {
         toast.error("Not bound yet — open the link and press Start in Telegram");
       } else {
