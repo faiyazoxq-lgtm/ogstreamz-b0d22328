@@ -1,17 +1,18 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, RefreshCw, Send, MessageSquare, Paperclip, X, Check, AlertCircle } from "lucide-react";
+import { Loader2, RefreshCw, Send, MessageSquare, Paperclip, X, Check, AlertCircle, Ban } from "lucide-react";
 type AttachmentItem = {
   id: string;
   file: File;
   caption: string;
 };
 
-type UploadStatus = "pending" | "uploading" | "sent" | "error";
+type UploadStatus = "pending" | "reading" | "sending" | "sent" | "error" | "cancelled";
 
 type UploadProgress = {
   status: UploadStatus;
+  percent?: number; // 0-100, only meaningful for "reading"
   error?: string;
 };
 
@@ -27,18 +28,35 @@ const BOT_USERNAME = "Ogstreamzbot";
 const PAGE_SIZE = 50;
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024; // 10 MB
 
-function fileToBase64(file: File): Promise<string> {
+/**
+ * Read a File as base64, reporting progress and supporting cancellation
+ * via the supplied FileReader instance (caller can call reader.abort()).
+ */
+function fileToBase64(
+  file: File,
+  reader: FileReader,
+  onProgress?: (percent: number) => void,
+): Promise<string> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+    reader.onprogress = (ev) => {
+      if (ev.lengthComputable && onProgress) {
+        onProgress(Math.min(99, Math.round((ev.loaded / ev.total) * 100)));
+      }
+    };
     reader.onload = () => {
+      onProgress?.(100);
       const result = reader.result as string;
-      // strip "data:<mime>;base64,"
       const comma = result.indexOf(",");
       resolve(comma >= 0 ? result.slice(comma + 1) : result);
     };
     reader.onerror = () => reject(reader.error ?? new Error("Read failed"));
+    reader.onabort = () => reject(new Error("Cancelled"));
     reader.readAsDataURL(file);
   });
+}
+
+class CancelledError extends Error {
+  constructor() { super("Cancelled"); }
 }
 
 export function MyTelegramInbox() {
@@ -51,6 +69,8 @@ export function MyTelegramInbox() {
   const [progress, setProgress] = useState<Record<string, UploadProgress>>({});
   const [isDragging, setIsDragging] = useState(false);
   const dragDepthRef = useRef(0);
+  const cancelledRef = useRef(false);
+  const activeReaderRef = useRef<FileReader | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
@@ -79,13 +99,29 @@ export function MyTelegramInbox() {
         return sendMessage({ data: { text } });
       }
       // Send each file sequentially with its own caption; report per-file status.
+      cancelledRef.current = false;
       setProgress(
         Object.fromEntries(items.map((it) => [it.id, { status: "pending" as UploadStatus }])),
       );
       for (const item of items) {
-        setProgress((prev) => ({ ...prev, [item.id]: { status: "uploading" } }));
+        if (cancelledRef.current) {
+          setProgress((prev) => ({ ...prev, [item.id]: { status: "cancelled" } }));
+          continue;
+        }
+        setProgress((prev) => ({ ...prev, [item.id]: { status: "reading", percent: 0 } }));
         try {
-          const dataBase64 = await fileToBase64(item.file);
+          const reader = new FileReader();
+          activeReaderRef.current = reader;
+          const dataBase64 = await fileToBase64(item.file, reader, (percent) => {
+            setProgress((prev) =>
+              prev[item.id]?.status === "reading"
+                ? { ...prev, [item.id]: { status: "reading", percent } }
+                : prev,
+            );
+          });
+          activeReaderRef.current = null;
+          if (cancelledRef.current) throw new CancelledError();
+          setProgress((prev) => ({ ...prev, [item.id]: { status: "sending" } }));
           await sendAttachment({
             data: {
               filename: item.file.name,
@@ -94,12 +130,25 @@ export function MyTelegramInbox() {
               caption: item.caption.trim() || undefined,
             },
           });
+          if (cancelledRef.current) {
+            // The send already left the browser; mark cancelled but keep moving.
+            setProgress((prev) => ({ ...prev, [item.id]: { status: "cancelled" } }));
+            continue;
+          }
           setProgress((prev) => ({ ...prev, [item.id]: { status: "sent" } }));
         } catch (err) {
+          activeReaderRef.current = null;
+          if (err instanceof CancelledError || cancelledRef.current) {
+            setProgress((prev) => ({ ...prev, [item.id]: { status: "cancelled" } }));
+            continue;
+          }
           const msg = err instanceof Error ? err.message : "Failed";
           setProgress((prev) => ({ ...prev, [item.id]: { status: "error", error: msg } }));
           throw err;
         }
+      }
+      if (cancelledRef.current) {
+        throw new CancelledError();
       }
       // Send trailing text as a separate message (if provided alongside attachments).
       if (text) {
@@ -115,9 +164,19 @@ export function MyTelegramInbox() {
       toast.success("Sent to your Telegram");
       qc.invalidateQueries({ queryKey: ["my-tg-inbox"] });
     },
-    onError: (e: unknown) =>
-      toast.error(e instanceof Error ? e.message : "Failed to send"),
+    onError: (e: unknown) => {
+      if (e instanceof CancelledError) {
+        toast.message("Upload cancelled");
+      } else {
+        toast.error(e instanceof Error ? e.message : "Failed to send");
+      }
+    },
   });
+
+  const cancelUpload = () => {
+    cancelledRef.current = true;
+    try { activeReaderRef.current?.abort(); } catch { /* noop */ }
+  };
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
