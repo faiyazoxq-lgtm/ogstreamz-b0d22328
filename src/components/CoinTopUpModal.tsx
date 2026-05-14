@@ -28,6 +28,8 @@ export function CoinTopUpModal({
   onOpenChange: (v: boolean) => void;
 }) {
   const { user } = useAuth();
+  const { profile } = useAuth();
+  const isBoss = profile?.rank === "boss";
   const { openCheckout, closeCheckout, isOpen: checkoutOpen, checkoutElement } = useStripeCheckout();
   const [selected, setSelected] = useState<string | null>("enforcer_pack_50");
   const [launching, setLaunching] = useState(false);
@@ -35,6 +37,12 @@ export function CoinTopUpModal({
     eligible: false,
     checked: false,
   });
+
+  // Boss has an unlimited Credits Reserve — purchase UI is disabled entirely.
+  useEffect(() => {
+    if (open && isBoss) onOpenChange(false);
+  }, [open, isBoss, onOpenChange]);
+  if (isBoss) return null;
 
   // Check first-order eligibility whenever the modal opens for a signed-in user.
   // Server is the source of truth; this just drives the UI.
