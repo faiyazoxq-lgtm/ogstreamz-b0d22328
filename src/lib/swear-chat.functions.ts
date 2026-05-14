@@ -57,9 +57,9 @@ export const swearChat = createServerFn({ method: "POST" })
     const { data: vip, error: vipErr } = await supabase.rpc("has_active_vip", { _user: userId });
     if (vipErr) throw new Response("Unable to verify entitlement", { status: 500 });
     if (vip !== true) throw new Response("VIP / paid tier required", { status: 403 });
-    // Read the user's master Swearing toggle + Chaos Mode opt-in. Chaos
-    // Mode requires BOTH the master Swearing toggle ON *and* the dedicated
-    // chaos_mode flag set from the swearing settings screen.
+    // Read the user's master OG-MODE (NSFW) toggle. When ON it implies full
+    // chaos (the legacy chaos_mode sub-flag was merged into this single
+    // master toggle); when OFF the user is in family-friendly Safe Mode.
     const { data: prof } = await supabase
       .from("profiles")
       .select("feature_flags")
@@ -67,7 +67,7 @@ export const swearChat = createServerFn({ method: "POST" })
       .maybeSingle();
     const flags = (prof?.feature_flags ?? {}) as Record<string, unknown>;
     const swearingOn = flags.swearing !== false; // default ON for VIPs
-    const chaosOn = swearingOn && flags.chaos_mode === true;
+    const chaosOn = swearingOn;
     const systemPrompt = chaosOn ? `${SYS}\n\n${CHAOS_SYS}` : SYS;
     // Route through Perplexity Sonar — uncensored enough to actually hold the
     // GUTTERMOUTH persona. We still enforce profanity rules below as a backstop.
