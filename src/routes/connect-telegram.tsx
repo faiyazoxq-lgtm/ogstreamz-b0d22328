@@ -320,6 +320,16 @@ function ConnectTelegramPage() {
                   <code className="font-mono text-xs sm:text-sm bg-background/60 border border-border rounded px-2 py-1 select-all break-all">
                     {tgUrl}
                   </code>
+                  <Button
+                    asChild
+                    size="sm"
+                    className="h-8 px-3 bg-sky-500 hover:bg-sky-400 text-black font-black uppercase tracking-wider"
+                  >
+                    <a href={tgUrl ?? "#"} target="_blank" rel="noopener noreferrer" aria-label="Open link in Telegram">
+                      <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                      Open
+                    </a>
+                  </Button>
                   <Button size="sm" variant="outline" onClick={handleCopy} className="h-8 px-2" aria-label="Copy link command">
                     <Copy className="h-3.5 w-3.5" />
                   </Button>
