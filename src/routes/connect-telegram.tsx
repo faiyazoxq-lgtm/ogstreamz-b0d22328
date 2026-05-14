@@ -153,7 +153,13 @@ function ConnectTelegramPage() {
       }
       if (active) {
         const url = `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent(active)}`;
-        window.open(url, "_blank", "noopener,noreferrer");
+        // Mobile browsers block window.open() after an awaited server call
+        // (the click is no longer a "trusted" user gesture). Navigate the
+        // current tab instead — Telegram's universal link opens the app and
+        // the browser restores this tab when the user returns.
+        window.location.href = url;
+      } else {
+        toast.error("Could not issue link code — try again");
       }
     } catch (e: any) {
       toast.error(e?.message ?? "Could not start Telegram link");
