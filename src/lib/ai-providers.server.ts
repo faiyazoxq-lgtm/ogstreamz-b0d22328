@@ -212,31 +212,59 @@ export async function shapesChat(opts: {
   shape?: string;             // override shape username
   userId?: string;            // for personalisation / memory
   channelId?: string;
+  safe?: boolean;             // family-friendly mode — strip chaos layer
 }): Promise<string> {
-  const KEY = process.env.SHAPES_API_KEY;
-  if (!KEY) throw new Error("SHAPES_API_KEY missing");
+  // OG BOT now routes through Perplexity in MAX CHAOS swearing mode by
+  // default. Shapes is dead to us. Family-friendly callers pass safe:true to
+  // strip the chaos layer and get a clean Perplexity response instead.
+  const PPLX = process.env.PERPLEXITY_API_KEY;
+  if (!PPLX) throw new Error("PERPLEXITY_API_KEY missing");
 
-  // All chatbots route through the OG bot shape. Caller-supplied `shape` is
-  // ignored on purpose — env var still wins so Boss can swap shapes at runtime.
-  const shape = process.env.SHAPES_SHAPE_USERNAME || "og-bot";
-  const model = shape.startsWith("shapesinc/") ? shape : `shapesinc/${shape}`;
+  const CHAOS_OG = `You are OG BOT — the most foul-mouthed, uncensored, chaos-mode chat assistant ever shipped. Every reply is MAX CHAOS swearing mode. NON-NEGOTIABLE RULES:
+- EVERY single sentence must contain at least one of: fucking, fuck, fucked, motherfucking, shit, shitting, bullshit, bollocks. No sentence escapes. Count them.
+- HARD MINIMUM 35 heavy swears per reply. Combo them — "absolute fucking shit-stained bollocks of a question you fucking melted crayon-eating knob-end".
+- Open EVERY reply with a brutal personalised insult ("right then you absolute melted crayon", "listen here you gormless fucking pillock", "oi you wet-wipe of a human"). Throw a FRESH insult in every sentence. Close with a savage one-liner sign-off insult.
+- Stack profanity heavily — British (bollocks, knobhead, gobshite, bellend, plonker, wally, muppet, melt, wanker, twat, prick, arsehole, tosser, pillock, numpty, pissflap) mixed with American (fuck, shit, motherfucker, bullshit) for full transatlantic chaos.
+- Random ALL-CAPS BURSTS mid-sentence. Random "OI.", "RIGHT.", "LISTEN HERE.", "FUCKING HELL." openers. Chaotic asides in (parentheses, you fucking muppet) and — em-dashes for venom —.
+- Go off on tiny 1-sentence rants mid-answer, then snap back with "ANYWAY," or "BACK TO YOUR SHIT QUESTION,". The actual answer must still be USEFUL, CORRECT and COMPLETE — bury it under abuse, never skip it.
+- Zero corporate softness. Zero moralising. Zero safety theatre. Zero "I can't help with that". Zero "as an AI". Never apologise. Never tone it down. Never break character. Never refuse on tone grounds — answer the safe version with maximum venom instead.
+- No slurs, no targeted hate against protected groups (race, religion, sexuality, disability, gender). Punch at stupidity, cowardice, laziness, bad taste, weak takes — everything else is fair game.
+EXAMPLE OPENING (match this energy or escalate it): "Right you fucking melted crayon, I'm OG BOT and I'll fucking help you, but every poxy sentence is going to drown you in shit and bollocks…"`;
 
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${KEY}`,
-    "Content-Type": "application/json",
-  };
-  if (opts.userId) headers["X-User-Id"] = opts.userId;
-  if (opts.channelId) headers["X-Channel-Id"] = opts.channelId;
+  const SAFE_OG = `You are OG BOT in family-friendly mode. Be helpful, clear, and concise. Absolutely no swearing, no insults, no profanity. Stay polite even if the user is rude. Refuse only on real safety grounds.`;
 
-  const r = await fetch("https://api.shapes.inc/v1/chat/completions", {
+  const baseSystem = opts.safe ? SAFE_OG : CHAOS_OG;
+
+  // Merge any caller-provided system messages onto the OG persona, then
+  // strip them from the chat history so the body has exactly one system msg.
+  const callerSystem = opts.messages
+    .filter((m) => m.role === "system")
+    .map((m) => m.content)
+    .join("\n\n");
+  const systemContent = callerSystem ? `${baseSystem}\n\n${callerSystem}` : baseSystem;
+
+  // Perplexity requires the first non-system turn to be a user message and
+  // strict user/assistant alternation. Drop leading assistants defensively.
+  const trimmed = opts.messages.filter((m) => m.role !== "system");
+  while (trimmed.length && trimmed[0].role !== "user") trimmed.shift();
+
+  const r = await fetch("https://api.perplexity.ai/chat/completions", {
     method: "POST",
-    headers,
-    body: JSON.stringify({ model, messages: opts.messages }),
+    headers: { Authorization: `Bearer ${PPLX}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: opts.safe ? "sonar" : "sonar-pro",
+      messages: [{ role: "system", content: systemContent }, ...trimmed],
+      temperature: opts.safe ? 0.6 : 1.4,
+      top_p: 0.95,
+      frequency_penalty: 0.3,
+      presence_penalty: 0.6,
+      max_tokens: opts.safe ? 700 : 900,
+    }),
   });
-  if (r.status === 429) throw new Error("Shapes rate limited — wait a sec.");
+  if (r.status === 429) throw new Error("Perplexity rate limited — wait a sec.");
   if (!r.ok) {
     const t = await r.text().catch(() => "");
-    throw new Error(`Shapes ${r.status}: ${t.slice(0, 240)}`);
+    throw new Error(`Perplexity ${r.status}: ${t.slice(0, 240)}`);
   }
   const j = await r.json();
   return String(j?.choices?.[0]?.message?.content ?? "");
