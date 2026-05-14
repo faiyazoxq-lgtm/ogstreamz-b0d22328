@@ -394,19 +394,82 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                   <span className="font-bold">Step {step + 1} of {STEPS.length}</span>
                   <span className="text-foreground/80">{current.label}</span>
                 </div>
+                {/* Desktop: thin horizontal bar above icon row */}
                 <div
                   role="progressbar"
                   aria-valuemin={0}
                   aria-valuemax={100}
                   aria-valuenow={pct}
-                  className="h-1 w-full rounded-full bg-border overflow-hidden"
+                  className="hidden sm:block h-1 w-full rounded-full bg-border overflow-hidden"
                 >
                   <div
                     className="h-full bg-gradient-to-r from-[oklch(0.72_0.22_245)] to-amber-300 transition-[width] duration-300"
                     style={{ width: `${pct}%` }}
                   />
                 </div>
-                <ol className="mt-3 grid grid-cols-5 gap-1 sm:gap-1.5 min-w-0">
+
+                {/* Mobile: vertical progress bar with labelled steps stacked
+                    next to it. The bar fills as steps complete so the user
+                    sees a single clean track instead of a row of icons. */}
+                <div className="sm:hidden mt-1 flex gap-3">
+                  <div
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={pct}
+                    aria-label="Wizard progress"
+                    className="relative w-1.5 shrink-0 rounded-full bg-border overflow-hidden"
+                  >
+                    <div
+                      className="absolute inset-x-0 top-0 bg-gradient-to-b from-[oklch(0.72_0.22_245)] to-amber-300 transition-[height] duration-300"
+                      style={{ height: `${pct}%` }}
+                    />
+                  </div>
+                  <ol className="flex-1 min-w-0 space-y-1.5">
+                    {STEPS.map((s) => {
+                      const done = step > s.key;
+                      const active = step === s.key;
+                      return (
+                        <li key={s.key}>
+                          <button
+                            type="button"
+                            onClick={() => !loading && setStep(s.key)}
+                            aria-current={active ? "step" : undefined}
+                            aria-label={`Go to step ${s.key + 1}: ${s.label}`}
+                            className={[
+                              "w-full text-left flex items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-[12px] transition-colors",
+                              active
+                                ? "bg-amber-300/10 text-foreground"
+                                : done
+                                ? "text-foreground/90"
+                                : "text-muted-foreground hover:text-foreground/80",
+                            ].join(" ")}
+                          >
+                            <span className="flex items-center gap-2 min-w-0">
+                              <span
+                                className={[
+                                  "uppercase tracking-[0.18em] text-[10px] font-bold tabular-nums",
+                                  active ? "text-amber-300" : done ? "text-[oklch(0.72_0.22_245)]" : "text-muted-foreground/70",
+                                ].join(" ")}
+                              >
+                                {String(s.key + 1).padStart(2, "0")}
+                              </span>
+                              <span className={active ? "font-bold" : ""}>{s.label}</span>
+                            </span>
+                            {done ? (
+                              <Check className="h-3.5 w-3.5 text-[oklch(0.72_0.22_245)] shrink-0" />
+                            ) : active ? (
+                              <span className="h-1.5 w-1.5 rounded-full bg-amber-300 animate-pulse shrink-0" />
+                            ) : null}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </div>
+
+                {/* Desktop: original icon row */}
+                <ol className="mt-3 hidden sm:grid grid-cols-5 gap-1.5 min-w-0">
                   {STEPS.map((s) => {
                     const done = step > s.key;
                     const active = step === s.key;
@@ -418,11 +481,11 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                           onClick={() => !loading && setStep(s.key)}
                           aria-current={active ? "step" : undefined}
                           aria-label={`Go to step ${s.key + 1}: ${s.label}`}
-                          className="group flex w-full min-w-0 flex-col items-center gap-1 sm:gap-1.5 focus:outline-none"
+                          className="group flex w-full min-w-0 flex-col items-center gap-1.5 focus:outline-none"
                         >
                           <span
                             className={[
-                              "inline-flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full border text-[11px] font-bold transition-all shrink-0",
+                              "inline-flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-bold transition-all shrink-0",
                               active
                                 ? "border-amber-300/70 bg-amber-300/15 text-foreground shadow-[0_0_0_4px_oklch(0.78_0.18_85/0.10)]"
                                 : done
@@ -432,7 +495,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                           >
                             {done ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
                           </span>
-                          <span className={`hidden sm:block text-[9px] uppercase tracking-[0.22em] truncate w-full text-center ${active ? "text-foreground font-bold" : "text-muted-foreground"}`}>
+                          <span className={`text-[9px] uppercase tracking-[0.22em] truncate w-full text-center ${active ? "text-foreground font-bold" : "text-muted-foreground"}`}>
                             {s.label}
                           </span>
                         </button>
