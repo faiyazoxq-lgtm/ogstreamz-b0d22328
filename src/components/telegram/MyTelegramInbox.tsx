@@ -415,44 +415,66 @@ export function MyTelegramInbox() {
             {attachments.map((item) => {
               const p = progress[item.id];
               const status: UploadStatus = p?.status ?? "pending";
+              const isActive = status === "reading" || status === "sending";
+              const percent = status === "reading" ? p?.percent ?? 0 : status === "sending" ? 100 : 0;
               return (
                 <div
                   key={item.id}
                   className={`rounded-md border px-2 py-1.5 ${
                     status === "error"
                       ? "border-rose-500/40 bg-rose-950/20"
+                      : status === "cancelled"
+                      ? "border-amber-500/40 bg-amber-950/15"
                       : status === "sent"
                       ? "border-emerald-500/40 bg-emerald-950/15"
-                      : status === "uploading"
+                      : isActive
                       ? "border-sky-400/60 bg-sky-950/30"
                       : "border-sky-500/30 bg-sky-950/20"
                   }`}
                 >
                   <div className="flex items-center gap-2 text-xs text-white/85">
-                    {status === "uploading" ? (
+                    {isActive ? (
                       <Loader2 className="h-3.5 w-3.5 text-sky-300 shrink-0 animate-spin" />
                     ) : status === "sent" ? (
                       <Check className="h-3.5 w-3.5 text-emerald-300 shrink-0" />
                     ) : status === "error" ? (
                       <AlertCircle className="h-3.5 w-3.5 text-rose-300 shrink-0" />
+                    ) : status === "cancelled" ? (
+                      <Ban className="h-3.5 w-3.5 text-amber-300 shrink-0" />
                     ) : (
                       <Paperclip className="h-3.5 w-3.5 text-sky-300 shrink-0" />
                     )}
                     <span className="truncate flex-1" title={item.file.name}>
                       {item.file.name}
                     </span>
+                    {isActive && (
+                      <span className="text-[10px] uppercase tracking-[0.18em] text-sky-200/80 shrink-0">
+                        {status === "reading" ? `${percent}%` : "Sending…"}
+                      </span>
+                    )}
                     <span className="text-white/45 shrink-0">
                       {(item.file.size / 1024).toFixed(0)} KB
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => removeAttachment(item.id)}
-                      disabled={status === "uploading"}
-                      className="rounded p-0.5 text-white/55 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
-                      title="Remove"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
+                    {isActive ? (
+                      <button
+                        type="button"
+                        onClick={cancelUpload}
+                        className="rounded p-0.5 text-rose-200 hover:text-white hover:bg-rose-500/30"
+                        title="Cancel upload"
+                      >
+                        <Ban className="h-3.5 w-3.5" />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => removeAttachment(item.id)}
+                        disabled={send.isPending}
+                        className="rounded p-0.5 text-white/55 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Remove"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
                   <input
                     type="text"
@@ -463,15 +485,25 @@ export function MyTelegramInbox() {
                     maxLength={1024}
                     className="mt-1 w-full rounded border border-white/10 bg-black/40 px-2 py-1 text-[11px] text-white placeholder:text-white/30 focus:outline-none focus:border-sky-400/50 disabled:opacity-60"
                   />
-                  {status === "uploading" && (
-                    <div className="mt-1 h-0.5 w-full overflow-hidden rounded bg-white/10">
-                      <div className="h-full w-1/3 animate-[telegram-bar_1.2s_ease-in-out_infinite] bg-sky-400" />
+                  {isActive && (
+                    <div className="mt-1 h-1 w-full overflow-hidden rounded bg-white/10">
+                      {status === "reading" ? (
+                        <div
+                          className="h-full bg-sky-400 transition-[width] duration-150"
+                          style={{ width: `${percent}%` }}
+                        />
+                      ) : (
+                        <div className="h-full w-1/3 animate-[telegram-bar_1.2s_ease-in-out_infinite] bg-sky-400" />
+                      )}
                     </div>
                   )}
                   {status === "error" && p?.error && (
                     <div className="mt-1 text-[10px] text-rose-300/90 truncate" title={p.error}>
                       {p.error}
                     </div>
+                  )}
+                  {status === "cancelled" && (
+                    <div className="mt-1 text-[10px] text-amber-300/90">Cancelled</div>
                   )}
                 </div>
               );
