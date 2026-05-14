@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Crown, Coins, LogOut, Shield, Sparkles, Zap, Flame, Skull, Settings, Heart, Send, Pencil, Check, X } from "lucide-react";
+import { Crown, Coins, LogOut, Shield, Sparkles, Zap, Flame, Skull, Settings, Heart, Send, Pencil, Check, X, Infinity as InfinityIcon, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { FlameBackdrop } from "@/components/FlameBackdrop";
@@ -312,7 +312,82 @@ function ProfilePage() {
           </div>
         </section>
 
-        {/* Buy Credits — hidden for Boss (unlimited reserve) */}
+        {/* Boss-only Credits Reserve status card (replaces purchase UI) */}
+        {isBoss && (
+          <section className="mt-12">
+            <div className="rounded-2xl border border-[oklch(0.65_0.16_85/0.55)] bg-card p-6 sm:p-8 relative overflow-hidden shadow-[0_0_60px_-20px_oklch(0.7_0.18_85/0.5)]">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 opacity-30"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at top right, oklch(0.7_0.18_85/0.25), transparent 60%), radial-gradient(ellipse at bottom left, oklch(0.72_0.22_245/0.18), transparent 55%)",
+                }}
+              />
+              <div className="relative">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
+                    <Crown className="h-4 w-4" />
+                    Boss · Credits Reserve
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.25em] font-black rounded-full border border-emerald-400/50 bg-emerald-400/10 px-2.5 py-1 text-emerald-300">
+                    <BadgeCheck className="h-3 w-3" /> Active
+                  </span>
+                </div>
+
+                <div className="mt-5 flex items-end gap-4">
+                  <span className="digital-display inline-flex items-center px-5 py-3 text-5xl sm:text-6xl">
+                    <InfinityIcon className="h-10 w-10 sm:h-12 sm:w-12" />
+                  </span>
+                  <div className="pb-2">
+                    <p className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">Available</p>
+                    <p className="font-[Montserrat] font-black text-lg text-metallic">Unlimited</p>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { label: "Daily cap", value: "None", Icon: Zap },
+                    { label: "Monthly cap", value: "None", Icon: Flame },
+                    { label: "Spend limit", value: "Unrestricted", Icon: Shield },
+                  ].map(({ label, value, Icon }) => (
+                    <div
+                      key={label}
+                      className="rounded-lg border border-border/40 bg-background/40 px-3 py-2.5 flex items-center gap-2"
+                    >
+                      <Icon className="h-3.5 w-3.5" style={{ color: "var(--neon-blue-bright)" }} />
+                      <div className="min-w-0">
+                        <p className="text-[9px] uppercase tracking-[0.25em] text-muted-foreground">{label}</p>
+                        <p className="text-xs font-bold text-foreground">{value}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="mt-4 text-xs text-muted-foreground">
+                  Sovereign reserve. Every spend across the platform is covered automatically — no top-ups required.
+                </p>
+
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <Link
+                    to="/boss/users"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-background/40 px-3 py-1.5 text-[11px] uppercase tracking-[0.22em] font-bold hover:bg-background/70"
+                  >
+                    <Coins className="h-3.5 w-3.5" /> Adjust member credits
+                  </Link>
+                  <Link
+                    to="/boss"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-background/40 px-3 py-1.5 text-[11px] uppercase tracking-[0.22em] font-bold hover:bg-background/70"
+                  >
+                    <Shield className="h-3.5 w-3.5" /> Boss console
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Buy Credits — hidden for Boss (replaced by Reserve card above) */}
         {!isBoss && (
           <section className="mt-12">
             <header className="text-center mb-6">
