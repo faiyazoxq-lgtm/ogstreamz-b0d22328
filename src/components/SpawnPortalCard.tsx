@@ -625,17 +625,17 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
           </div>
 
           {/* Wizard navigation */}
-          <div className="mt-4 flex items-center justify-between gap-3 flex-wrap">
+          <div className="mt-4 flex items-center justify-between gap-3">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={() => setStep((s) => (Math.max(0, s - 1) as 0 | 1 | 2 | 3 | 4))}
               disabled={step === 0 || loading}
-              className="h-10"
+              className="h-10 text-[11px] uppercase tracking-[0.22em] font-bold disabled:opacity-30"
             >
               <ArrowLeft className="h-4 w-4 mr-1.5" /> Back
             </Button>
-            {step < 4 ? (
+            {step < 4 && (
               <Button
                 type="button"
                 onClick={() => {
@@ -645,11 +645,11 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
                   setStep((s) => (Math.min(4, s + 1) as 0 | 1 | 2 | 3 | 4));
                 }}
                 disabled={loading}
-                className="h-10 ml-auto"
+                className="h-10 px-5 text-[11px] uppercase tracking-[0.22em] font-bold bg-foreground/10 hover:bg-foreground/20 text-foreground border border-border"
               >
-                Next <ArrowRight className="h-4 w-4 ml-1.5" />
+                {step === 3 ? "Review" : "Next"} <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
-            ) : null}
+            )}
           </div>
 
           {step === 4 && (
