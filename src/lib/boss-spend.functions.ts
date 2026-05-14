@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireBoss } from "@/integrations/supabase/boss-middleware";
 import { z } from "zod";
 
 export type SpendEntry = {
@@ -10,7 +10,7 @@ export type SpendEntry = {
 };
 
 export const getBossSpendSummary = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireBoss])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     const sevenAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -27,7 +27,7 @@ export const getBossSpendSummary = createServerFn({ method: "GET" })
   });
 
 export const listBossSpendEntries = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireBoss])
   .inputValidator((data: unknown) =>
     z
       .object({
