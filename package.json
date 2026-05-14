@@ -11,13 +11,14 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "check:links": "node scripts/check-internal-links.mjs",
+    "check:hub-portals": "node scripts/check-hub-portals.mjs",
     "check:secrets": "node scripts/check-server-secrets.mjs",
     "check:secrets:bundle": "node scripts/check-server-secrets.mjs --bundle",
-    "prebuild": "npm run check:secrets",
+    "prebuild": "npm run check:secrets && npm run check:hub-portals",
     "postbuild": "npm run check:secrets:bundle",
     "test": "vitest run",
     "test:security": "vitest run tests/security",
-    "ci": "npm run check:links && npm run check:secrets && npm run lint && npm run test:security"
+    "ci": "npm run check:links && npm run check:hub-portals && npm run check:secrets && npm run lint && npm run test:security"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
