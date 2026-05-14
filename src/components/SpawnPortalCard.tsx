@@ -261,15 +261,33 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
   );
 
   return (
-    <section className="mt-10 rounded-2xl border border-transparent bg-transparent p-6 sm:p-8">
-      <header className="flex items-center gap-3 mb-1 flex-wrap">
-        <Sparkles className="h-5 w-5 text-[oklch(0.72_0.22_245)]" />
-        <h2 className="font-[Montserrat] font-black text-xl text-foreground">{copy.title}</h2>
-        <span className="ml-auto inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.3em] text-muted-foreground border border-border rounded-full px-2 py-1">
-          <Coins className="h-3 w-3" /> 1 🪙
-        </span>
+    <section
+      aria-labelledby={`spawn-${kind}-title`}
+      className="relative mt-10 rounded-2xl border border-border/70 bg-gradient-to-b from-background/80 via-background/60 to-background/30 p-5 sm:p-7 shadow-[0_30px_80px_-40px_oklch(0.72_0.22_245/0.5)] overflow-hidden"
+    >
+      {/* Decorative glow — purely visual */}
+      <div aria-hidden="true" className="pointer-events-none absolute -top-24 -right-24 h-56 w-56 rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245/0.18),transparent)]" />
+      <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -left-24 h-56 w-56 rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.78_0.18_85/0.12),transparent)]" />
+
+      <header className="relative mb-5 flex flex-wrap items-start gap-3">
+        <div className="h-10 w-10 shrink-0 rounded-xl border border-[oklch(0.72_0.22_245/0.45)] bg-[oklch(0.72_0.22_245/0.10)] inline-flex items-center justify-center">
+          <Sparkles className="h-5 w-5 text-[oklch(0.72_0.22_245)]" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] uppercase tracking-[0.32em] text-muted-foreground font-bold">
+            {kind} hub · portal wizard
+          </p>
+          <h2 id={`spawn-${kind}-title`} className="font-[Montserrat] font-black text-xl sm:text-2xl text-foreground leading-tight">
+            {copy.title}
+          </h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">{copy.subtitle}. Public on the home grid.</p>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.28em] text-foreground/80 border border-amber-300/40 bg-amber-300/10 rounded-full px-2.5 py-1 font-bold">
+            <Coins className="h-3 w-3 text-amber-300" /> 1 🪙
+          </span>
+        </div>
       </header>
-      <p className="text-xs text-muted-foreground mb-4">{copy.subtitle}. Public on the home grid.</p>
 
       {!user ? (
         <div className="relative rounded-xl border border-amber-300/40 bg-gradient-to-br from-amber-300/10 via-background/60 to-[oklch(0.72_0.22_245/0.12)] p-5 sm:p-6 overflow-hidden">
