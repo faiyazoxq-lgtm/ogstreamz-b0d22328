@@ -3,7 +3,7 @@ import { useEffect, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, ClipboardList, ArrowLeft, Search, ExternalLink, Eye, Crown } from "lucide-react";
+import { Music2, Smile, TrendingUp, Newspaper, Swords, Wrench, ClipboardList, ArrowLeft, Search, ExternalLink, Eye, Crown, Loader2, Sparkles, AlertTriangle, RotateCw } from "lucide-react";
 import { requireMember } from "@/lib/route-guards";
 
 type HubKey = "music" | "jokes" | "trade" | "news" | "forms" | "battles" | "tools";
@@ -247,21 +247,105 @@ function VipPortalsByHub() {
       </div>
 
       {error && (
-        <p className="text-sm text-red-400 mb-4">{error}</p>
+        <div
+          className="relative overflow-hidden rounded-2xl border border-[#7fb6ff]/30 bg-gradient-to-br from-[#0b1628]/90 via-black/70 to-[#1a2238]/80 p-6 mb-6 animate-fade-in"
+          style={{ boxShadow: "0 0 60px -20px rgba(127,182,255,0.35), inset 0 0 40px -20px rgba(192,200,220,0.25)" }}
+        >
+          <div className="pointer-events-none absolute -top-24 -right-24 h-56 w-56 rounded-full bg-[#7fb6ff]/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -left-24 h-56 w-56 rounded-full bg-[#c8d0e0]/15 blur-3xl" />
+          <div className="relative flex items-start gap-4">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#7fb6ff]/40 bg-[#7fb6ff]/10 text-[#a8c8ff]">
+              <AlertTriangle className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] tracking-[0.4em] uppercase font-semibold text-[#a8c8ff]">Signal lost</p>
+              <h3 className="mt-1 font-[Montserrat] font-black text-lg bg-gradient-to-r from-[#e6ecf5] via-[#c8d0e0] to-[#7fb6ff] bg-clip-text text-transparent">
+                Couldn't reach the {meta.label.toLowerCase()} hub
+              </h3>
+              <p className="mt-1 text-sm text-white/70 break-words">{error}</p>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider px-3 py-2 rounded-md border border-[#7fb6ff]/40 text-[#a8c8ff] hover:bg-[#7fb6ff]/10 transition"
+              >
+                <RotateCw className="h-3.5 w-3.5" /> Try again
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {!items && !error && (
-        <p className="text-sm text-white/50">Loading…</p>
+        <div className="animate-fade-in">
+          <div
+            className="flex items-center gap-3 rounded-2xl border border-[#7fb6ff]/25 bg-gradient-to-r from-[#0b1628]/80 via-black/60 to-[#1a2238]/70 px-5 py-3 mb-5"
+            style={{ boxShadow: "0 0 50px -25px rgba(127,182,255,0.4)" }}
+          >
+            <Loader2 className="h-4 w-4 animate-spin text-[#a8c8ff]" />
+            <p className="text-sm font-medium bg-gradient-to-r from-[#e6ecf5] to-[#7fb6ff] bg-clip-text text-transparent">
+              Tuning into {meta.hub}…
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <div
+                key={idx}
+                className="relative overflow-hidden rounded-2xl border border-white/5 bg-black/40 p-5 h-[140px]"
+                style={{ boxShadow: "0 0 50px -40px rgba(127,182,255,0.5)" }}
+              >
+                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.8s_infinite] bg-gradient-to-r from-transparent via-[#c8d0e0]/10 to-transparent" />
+                <div className="space-y-3">
+                  <div className="h-4 w-2/3 rounded bg-white/10" />
+                  <div className="h-3 w-full rounded bg-white/5" />
+                  <div className="h-3 w-4/5 rounded bg-white/5" />
+                  <div className="h-3 w-1/3 rounded bg-white/5 mt-6" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {items && filtered.length === 0 && (
-        <div className="rounded-2xl border border-white/10 bg-black/40 p-8 text-center">
-          <p className="text-white/70">
-            No {meta.label.toLowerCase()} portals yet{q ? " matching that search" : ""}.
-          </p>
-          <Link to="/portals" className="mt-3 inline-block text-sm underline" style={{ color: meta.accent }}>
-            Browse the full Share Hub →
-          </Link>
+        <div
+          className="relative overflow-hidden rounded-2xl border border-[#c8d0e0]/25 bg-gradient-to-br from-[#0b1628]/90 via-black/70 to-[#1a2238]/80 p-10 text-center animate-fade-in"
+          style={{ boxShadow: "0 0 80px -30px rgba(127,182,255,0.4), inset 0 0 60px -30px rgba(200,208,224,0.2)" }}
+        >
+          <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-72 w-72 rounded-full bg-[#7fb6ff]/15 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-32 left-1/2 -translate-x-1/2 h-72 w-72 rounded-full bg-[#c8d0e0]/10 blur-3xl" />
+          <div className="relative">
+            <span
+              className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-[#7fb6ff]/40 bg-[#7fb6ff]/10 text-[#a8c8ff] mb-4"
+              style={{ boxShadow: "0 0 40px -10px rgba(127,182,255,0.5)" }}
+            >
+              <Sparkles className="h-6 w-6" />
+            </span>
+            <h3 className="font-[Montserrat] font-black text-2xl bg-gradient-to-r from-[#e6ecf5] via-[#c8d0e0] to-[#7fb6ff] bg-clip-text text-transparent">
+              {q ? "No portals match that search" : `${meta.hub} is quiet… for now`}
+            </h3>
+            <p className="mt-2 text-sm text-white/60 max-w-md mx-auto">
+              {q
+                ? `Try a different keyword, or clear the filter to see every ${meta.label.toLowerCase()} portal.`
+                : `Nothing's been dropped here yet. Check back soon, or jump into the full Share Hub.`}
+            </p>
+            <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
+              {q && (
+                <button
+                  type="button"
+                  onClick={() => setQ("")}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider px-4 py-2 rounded-md border border-[#7fb6ff]/40 text-[#a8c8ff] hover:bg-[#7fb6ff]/10 transition"
+                >
+                  Clear search
+                </button>
+              )}
+              <Link
+                to="/portals"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider px-4 py-2 rounded-md bg-gradient-to-r from-[#7fb6ff]/20 to-[#c8d0e0]/20 border border-[#c8d0e0]/30 text-white hover:from-[#7fb6ff]/30 hover:to-[#c8d0e0]/30 transition"
+              >
+                Browse the full Share Hub <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+          </div>
         </div>
       )}
 
