@@ -43,6 +43,7 @@ export const Route = createFileRoute("/m/$slug")({
   validateSearch: (search: Record<string, unknown>) => ({
     unlocked: typeof search.unlocked === "string" ? search.unlocked : undefined,
     session_id: typeof search.session_id === "string" ? search.session_id : undefined,
+    job: typeof search.job === "string" ? search.job : undefined,
   }),
   loader: async ({ params }) => {
     const { data, error } = await supabase
@@ -138,7 +139,7 @@ const THEMES: Record<string, { bg: string; accent: string; secondary: string; fo
 
 function MusicPortalPage() {
   const { portal } = Route.useLoaderData();
-  const { unlocked: unlockedParam } = Route.useSearch();
+  const { unlocked: unlockedParam, job: jobParam } = Route.useSearch();
   const navigate = useNavigate();
   const theme = THEMES[portal.theme] ?? THEMES["studio-blue"];
   const { user, profile, isAdmin, refresh: refreshAuth } = useAuth();
@@ -324,6 +325,39 @@ function MusicPortalPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackJobId, trackStatus]);
+
+  // Hydrate from ?job=<id> when arriving from "My Generations" so the studio
+  // reopens with the same track context (audio versions, unlock state).
+  useEffect(() => {
+    if (!jobParam) return;
+    if (trackJobId === jobParam) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const j = await getJobFn({ data: { jobId: jobParam } });
+        if (cancelled) return;
+        setTrackJobId(jobParam);
+        if (j.audio_url_v1) setAudioV1(j.audio_url_v1);
+        if (j.audio_url_v2) setAudioV2(j.audio_url_v2);
+        setDownloadUnlocked(!!j.download_unlocked);
+        if (j.audio_url_v1 || j.status === "complete") {
+          setTrackStatus("ready");
+        } else if (j.status === "failed") {
+          setTrackStatus("failed");
+        } else {
+          setTrackStatus("generating");
+        }
+        // Smooth-scroll the player into view so the track is the focal point.
+        requestAnimationFrame(() => {
+          document.getElementById("studio-track-preview")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+      } catch (e: any) {
+        toast.error(e?.message ?? "Could not reopen this track");
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobParam]);
 
   const onUnlockDownload = async () => {
     if (!trackJobId || unlocking || downloadUnlocked) return;
@@ -578,7 +612,7 @@ function MusicPortalPage() {
           )}
 
           {(audioV1 || audioV2) && trackStatus !== "generating" && (
-            <div className="mt-6 space-y-3">
+            <div id="studio-track-preview" className="mt-6 space-y-3 scroll-mt-24">
               {[
                 { label: "Version A", url: audioV1 },
                 { label: "Version B", url: audioV2 },

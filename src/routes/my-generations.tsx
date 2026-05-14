@@ -1,7 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Music, Download, Lock, Loader2, Share2, Disc3 } from "lucide-react";
+import { ArrowLeft, Music, Download, Lock, Loader2, Share2, Disc3, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -199,6 +199,17 @@ function MyGenerationsPage() {
                           {j.download_unlocked && <> · ✓ unlocked</>}
                         </p>
                       </div>
+                      {j.portal && (
+                        <Link
+                          to="/m/$slug"
+                          params={{ slug: j.portal.slug }}
+                          search={{ job: j.id } as never}
+                          className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-border bg-background hover:bg-muted px-3 py-1.5 text-[10px] uppercase tracking-[0.22em] font-bold"
+                          title="Reopen this track in the MusicHUB studio"
+                        >
+                          <ExternalLink className="h-3 w-3" /> Open in Studio
+                        </Link>
+                      )}
                     </div>
 
                     {isReady && hasAudio && (
