@@ -107,7 +107,20 @@ export async function tgCall(
   return j.result;
 }
 
-export async function tgSendMessage(chatId: number | string, text: string) {
+export type TgInlineKeyboard = {
+  inline_keyboard: Array<
+    Array<
+      | { text: string; url: string }
+      | { text: string; callback_data: string }
+    >
+  >;
+};
+
+export async function tgSendMessage(
+  chatId: number | string,
+  text: string,
+  opts: { reply_markup?: TgInlineKeyboard } = {},
+) {
   return tgCall(
     "sendMessage",
     {
@@ -115,6 +128,7 @@ export async function tgSendMessage(chatId: number | string, text: string) {
       text,
       parse_mode: "HTML",
       disable_web_page_preview: true,
+      ...(opts.reply_markup ? { reply_markup: opts.reply_markup } : {}),
     },
     { tag: "tg.send" },
   );
@@ -129,6 +143,7 @@ export async function tgSendPhoto(
   chatId: number | string,
   photoUrl: string,
   caption: string,
+  opts: { reply_markup?: TgInlineKeyboard } = {},
 ) {
   try {
     return await tgCall(
@@ -138,6 +153,7 @@ export async function tgSendPhoto(
         photo: photoUrl,
         caption,
         parse_mode: "HTML",
+        ...(opts.reply_markup ? { reply_markup: opts.reply_markup } : {}),
       },
       { tag: "tg.sendPhoto" },
     );
@@ -145,7 +161,7 @@ export async function tgSendPhoto(
     logWarn("tg.sendPhoto.fallback_to_text", {
       reason: e instanceof Error ? e.message : String(e),
     });
-    return tgSendMessage(chatId, caption);
+    return tgSendMessage(chatId, caption, opts);
   }
 }
 
