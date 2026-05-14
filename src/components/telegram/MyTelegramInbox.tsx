@@ -1,7 +1,20 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, RefreshCw, Send, MessageSquare, Paperclip, X } from "lucide-react";
+import { Loader2, RefreshCw, Send, MessageSquare, Paperclip, X, Check, AlertCircle } from "lucide-react";
+type AttachmentItem = {
+  id: string;
+  file: File;
+  caption: string;
+};
+
+type UploadStatus = "pending" | "uploading" | "sent" | "error";
+
+type UploadProgress = {
+  status: UploadStatus;
+  error?: string;
+};
+
 import { toast } from "sonner";
 import {
   listMyTelegramMessages,
@@ -34,7 +47,8 @@ export function MyTelegramInbox() {
   const sendMessage = useServerFn(sendMyTelegramMessage);
   const sendAttachment = useServerFn(sendMyTelegramAttachment);
   const [draft, setDraft] = useState("");
-  const [attachments, setAttachments] = useState<File[]>([]);
+  const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
+  const [progress, setProgress] = useState<Record<string, UploadProgress>>({});
   const [isDragging, setIsDragging] = useState(false);
   const dragDepthRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -60,28 +74,43 @@ export function MyTelegramInbox() {
   });
 
   const send = useMutation({
-    mutationFn: async ({ text, files }: { text: string; files: File[] }) => {
-      if (files.length === 0) {
+    mutationFn: async ({ text, items }: { text: string; items: AttachmentItem[] }) => {
+      if (items.length === 0) {
         return sendMessage({ data: { text } });
       }
-      // Send each file sequentially; caption applied to the first only.
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const dataBase64 = await fileToBase64(file);
-        await sendAttachment({
-          data: {
-            filename: file.name,
-            mime: file.type || "application/octet-stream",
-            dataBase64,
-            caption: i === 0 && text ? text : undefined,
-          },
-        });
+      // Send each file sequentially with its own caption; report per-file status.
+      setProgress(
+        Object.fromEntries(items.map((it) => [it.id, { status: "pending" as UploadStatus }])),
+      );
+      for (const item of items) {
+        setProgress((prev) => ({ ...prev, [item.id]: { status: "uploading" } }));
+        try {
+          const dataBase64 = await fileToBase64(item.file);
+          await sendAttachment({
+            data: {
+              filename: item.file.name,
+              mime: item.file.type || "application/octet-stream",
+              dataBase64,
+              caption: item.caption.trim() || undefined,
+            },
+          });
+          setProgress((prev) => ({ ...prev, [item.id]: { status: "sent" } }));
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Failed";
+          setProgress((prev) => ({ ...prev, [item.id]: { status: "error", error: msg } }));
+          throw err;
+        }
+      }
+      // Send trailing text as a separate message (if provided alongside attachments).
+      if (text) {
+        await sendMessage({ data: { text } });
       }
       return { ok: true };
     },
     onSuccess: () => {
       setDraft("");
       setAttachments([]);
+      setProgress({});
       if (fileInputRef.current) fileInputRef.current.value = "";
       toast.success("Sent to your Telegram");
       qc.invalidateQueries({ queryKey: ["my-tg-inbox"] });
@@ -95,19 +124,23 @@ export function MyTelegramInbox() {
     const text = draft.trim();
     if (send.isPending) return;
     if (!text && attachments.length === 0) return;
-    send.mutate({ text, files: attachments });
+    send.mutate({ text, items: attachments });
   };
 
   const addFiles = (incoming: File[]) => {
     if (incoming.length === 0) return;
-    const accepted: File[] = [];
+    const accepted: AttachmentItem[] = [];
     let rejected = 0;
     for (const f of incoming) {
       if (f.size > MAX_ATTACHMENT_BYTES) {
         rejected++;
         continue;
       }
-      accepted.push(f);
+      accepted.push({
+        id: `${f.name}-${f.size}-${f.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
+        file: f,
+        caption: "",
+      });
     }
     if (rejected > 0) {
       toast.error(
@@ -125,8 +158,19 @@ export function MyTelegramInbox() {
     e.target.value = "";
   };
 
-  const removeAttachment = (idx: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== idx));
+  const removeAttachment = (id: string) => {
+    setAttachments((prev) => prev.filter((a) => a.id !== id));
+    setProgress((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
+  const updateCaption = (id: string, caption: string) => {
+    setAttachments((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, caption } : a)),
+    );
   };
 
   const onDragEnter = (e: React.DragEvent) => {
@@ -308,29 +352,71 @@ export function MyTelegramInbox() {
         className="border-t border-white/10 p-2 space-y-2"
       >
         {attachments.length > 0 && (
-          <div className="space-y-1">
-            {attachments.map((file, idx) => (
-              <div
-                key={`${file.name}-${idx}`}
-                className="flex items-center gap-2 rounded-md border border-sky-500/30 bg-sky-950/20 px-2 py-1.5 text-xs text-white/85"
-              >
-                <Paperclip className="h-3.5 w-3.5 text-sky-300 shrink-0" />
-                <span className="truncate flex-1" title={file.name}>
-                  {file.name}
-                </span>
-                <span className="text-white/45 shrink-0">
-                  {(file.size / 1024).toFixed(0)} KB
-                </span>
-                <button
-                  type="button"
-                  onClick={() => removeAttachment(idx)}
-                  className="rounded p-0.5 text-white/55 hover:text-white hover:bg-white/10"
-                  title="Remove"
+          <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+            {attachments.map((item) => {
+              const p = progress[item.id];
+              const status: UploadStatus = p?.status ?? "pending";
+              return (
+                <div
+                  key={item.id}
+                  className={`rounded-md border px-2 py-1.5 ${
+                    status === "error"
+                      ? "border-rose-500/40 bg-rose-950/20"
+                      : status === "sent"
+                      ? "border-emerald-500/40 bg-emerald-950/15"
+                      : status === "uploading"
+                      ? "border-sky-400/60 bg-sky-950/30"
+                      : "border-sky-500/30 bg-sky-950/20"
+                  }`}
                 >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
+                  <div className="flex items-center gap-2 text-xs text-white/85">
+                    {status === "uploading" ? (
+                      <Loader2 className="h-3.5 w-3.5 text-sky-300 shrink-0 animate-spin" />
+                    ) : status === "sent" ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-300 shrink-0" />
+                    ) : status === "error" ? (
+                      <AlertCircle className="h-3.5 w-3.5 text-rose-300 shrink-0" />
+                    ) : (
+                      <Paperclip className="h-3.5 w-3.5 text-sky-300 shrink-0" />
+                    )}
+                    <span className="truncate flex-1" title={item.file.name}>
+                      {item.file.name}
+                    </span>
+                    <span className="text-white/45 shrink-0">
+                      {(item.file.size / 1024).toFixed(0)} KB
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeAttachment(item.id)}
+                      disabled={status === "uploading"}
+                      className="rounded p-0.5 text-white/55 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                      title="Remove"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={item.caption}
+                    onChange={(e) => updateCaption(item.id, e.target.value)}
+                    placeholder="Caption for this file (optional)…"
+                    disabled={send.isPending}
+                    maxLength={1024}
+                    className="mt-1 w-full rounded border border-white/10 bg-black/40 px-2 py-1 text-[11px] text-white placeholder:text-white/30 focus:outline-none focus:border-sky-400/50 disabled:opacity-60"
+                  />
+                  {status === "uploading" && (
+                    <div className="mt-1 h-0.5 w-full overflow-hidden rounded bg-white/10">
+                      <div className="h-full w-1/3 animate-[telegram-bar_1.2s_ease-in-out_infinite] bg-sky-400" />
+                    </div>
+                  )}
+                  {status === "error" && p?.error && (
+                    <div className="mt-1 text-[10px] text-rose-300/90 truncate" title={p.error}>
+                      {p.error}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
         <div className="flex items-end gap-2">
@@ -356,7 +442,7 @@ export function MyTelegramInbox() {
             onChange={(e) => setDraft(e.target.value)}
             placeholder={
               attachments.length > 0
-                ? "Add a caption (optional)…"
+                ? "Optional message to send after the files…"
                 : "Send a message to your Telegram (HTML allowed) — drop files anywhere…"
             }
             disabled={send.isPending || q.isError}
