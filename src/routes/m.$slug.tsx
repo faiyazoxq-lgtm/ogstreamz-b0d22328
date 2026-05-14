@@ -139,7 +139,7 @@ const THEMES: Record<string, { bg: string; accent: string; secondary: string; fo
 
 function MusicPortalPage() {
   const { portal } = Route.useLoaderData();
-  const { unlocked: unlockedParam } = Route.useSearch();
+  const { unlocked: unlockedParam, job: jobParam } = Route.useSearch();
   const navigate = useNavigate();
   const theme = THEMES[portal.theme] ?? THEMES["studio-blue"];
   const { user, profile, isAdmin, refresh: refreshAuth } = useAuth();
