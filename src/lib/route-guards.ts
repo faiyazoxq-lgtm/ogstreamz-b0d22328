@@ -50,6 +50,23 @@ export async function requireMember({ location }: GuardCtx) {
 }
 
 /**
+ * Route guard: bounce Boss accounts away from purchase / top-up routes.
+ * Boss has an unlimited Credits Reserve and never needs to buy coins.
+ * Use AFTER `requireMember` so we already have a verified session.
+ */
+export async function redirectBossAway(_ctx: GuardCtx) {
+  if (typeof window === "undefined") return;
+  const { data } = await supabase.auth.getSession();
+  const uid = data.session?.user?.id;
+  if (!uid) return;
+  const { data: prof } = await supabase
+    .from("profiles").select("rank").eq("id", uid).maybeSingle();
+  if (prof?.rank === "boss") {
+    throw redirect({ to: "/profile" });
+  }
+}
+
+/**
  * Route guard: only OGSTREAMZ-approved users (stream_user / vip / boss / admin)
  * can open this route. Plain members are bounced to /profile to link their
  * stream account.

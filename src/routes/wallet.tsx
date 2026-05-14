@@ -5,11 +5,14 @@ import { Button } from "@/components/ui/button";
 import { MusicHubBalance } from "@/components/MusicHubBalance";
 import { CoinActivity } from "@/components/CoinActivity";
 import { CoinTopUpModal } from "@/components/CoinTopUpModal";
-import { requireMember } from "@/lib/route-guards";
+import { requireMember, redirectBossAway } from "@/lib/route-guards";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/wallet")({
-  beforeLoad: requireMember,
+  beforeLoad: async (ctx) => {
+    await requireMember(ctx);
+    await redirectBossAway(ctx);
+  },
   validateSearch: (search: Record<string, unknown>) => ({
     topup: search.topup === 1 || search.topup === "1" ? 1 : undefined,
     reason: typeof search.reason === "string" ? search.reason : undefined,

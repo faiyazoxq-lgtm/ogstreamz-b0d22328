@@ -52,7 +52,9 @@ export function QuickJumpDrawer({ user, isBoss = false, isVip = false }: { user:
   const portalItems = isBoss ? PORTAL_ITEMS : [];
   const effectiveTab = isBoss ? tab : "member";
   // VIP users don't need the "Get VIP" tile — they already have it.
-  const memberItems = isVip ? MEMBER_ITEMS.filter((i) => i.to !== "/vip") : MEMBER_ITEMS;
+  // Boss has an unlimited Credits Reserve — hide the "Top up" buy tile.
+  let memberItems = isVip ? MEMBER_ITEMS.filter((i) => i.to !== "/vip") : MEMBER_ITEMS;
+  if (isBoss) memberItems = memberItems.filter((i) => i.to !== "/store");
   const items = !user
     ? portalItems
     : effectiveTab === "portals"
