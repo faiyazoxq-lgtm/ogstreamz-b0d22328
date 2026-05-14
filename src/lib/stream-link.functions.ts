@@ -41,10 +41,30 @@ export type StreamConfigStatus =
   | { ok: true }
   | { ok: false; code: "missing" | "malformed" | "bad_protocol" | "bad_host" | "has_credentials" | "has_path"; message: string };
 
-function checkServerUrl(): StreamConfigStatus {
-  const raw = (process.env.STREAM_SERVER_URL || "").trim();
+/**
+ * Resolve the configured stream server URL.
+ * Boss can override the env-provided STREAM_SERVER_URL by writing a value
+ * into `app_settings` ('stream_server_url'). DB value wins; env is fallback.
+ */
+async function readRawServerUrl(): Promise<string> {
+  try {
+    const { data } = await supabaseAdmin
+      .from("app_settings" as never)
+      .select("value")
+      .eq("key", "stream_server_url")
+      .maybeSingle();
+    const dbVal = ((data as any)?.value ?? "").toString().trim();
+    if (dbVal) return dbVal;
+  } catch {
+    /* fall through to env */
+  }
+  return (process.env.STREAM_SERVER_URL || "").trim();
+}
+
+async function checkServerUrl(): Promise<StreamConfigStatus> {
+  const raw = await readRawServerUrl();
   if (!raw) {
-    return { ok: false, code: "missing", message: "Stream server URL is not configured. Boss needs to set the STREAM_SERVER_URL secret." };
+    return { ok: false, code: "missing", message: "Stream server URL is not configured. Boss needs to set it in the Stream Server URL panel." };
   }
   let v = raw;
   if (!/^https?:\/\//i.test(v)) v = "http://" + v;
@@ -72,29 +92,20 @@ function checkServerUrl(): StreamConfigStatus {
   return { ok: true };
 }
 
-function getServerUrl(): string {
-  const status = checkServerUrl();
+async function getServerUrl(): Promise<string> {
+  const status = await checkServerUrl();
   if (!status.ok) {
     const err: any = new Error(status.message);
     err.reason = "invalid_server";
     throw err;
   }
-  let v = (process.env.STREAM_SERVER_URL || "").trim();
+  let v = await readRawServerUrl();
   if (!/^https?:\/\//i.test(v)) v = "http://" + v;
   return v.replace(/\/+$/, "");
 }
 
-// Boot-time check: log clearly if the secret is missing/misconfigured so it
-// shows up in server logs the first time the module loads.
-{
-  const s = checkServerUrl();
-  if (!s.ok) {
-    console.error(`[stream-link] STREAM_SERVER_URL misconfigured (${s.code}): ${s.message}`);
-  }
-}
-
 export const getStreamConfigStatus = createServerFn({ method: "GET" }).handler(
-  async (): Promise<StreamConfigStatus> => checkServerUrl(),
+  async (): Promise<StreamConfigStatus> => await checkServerUrl(),
 );
 
 export type StreamReasonCode =
