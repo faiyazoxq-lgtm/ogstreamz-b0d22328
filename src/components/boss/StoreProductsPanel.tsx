@@ -94,6 +94,37 @@ export function StoreProductsPanel() {
   const [tab, setTab] = useState<KindV>("vip_pass");
   const [draft, setDraft] = useState<Draft | null>(null);
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const onPickImage = async (file: File) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Image is too large (max 8 MB)");
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5) || "jpg";
+      const key = `products/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("store-media")
+        .upload(key, file, { contentType: file.type, upsert: false });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("store-media").getPublicUrl(key);
+      set("image_url", pub.publicUrl);
+      toast.success("Image uploaded");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const refresh = async () => {
     setLoading(true);
@@ -375,7 +406,58 @@ function DraftEditor({
             />
           </FieldShell>
           <FieldShell label="Image URL" className="sm:col-span-2">
-            <Input value={draft.image_url} onChange={(e) => set("image_url", e.target.value)} placeholder="https://…" />
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2 items-stretch">
+                <Input
+                  value={draft.image_url}
+                  onChange={(e) => set("image_url", e.target.value)}
+                  placeholder="Upload below or paste https://…"
+                  className="flex-1"
+                />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) onPickImage(f);
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={uploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-emerald-700/50 text-emerald-200 hover:bg-emerald-900/40 shrink-0"
+                >
+                  {uploading
+                    ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" />Uploading…</>
+                    : <><Upload className="h-4 w-4 mr-1" />Upload from device</>}
+                </Button>
+                {draft.image_url && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => set("image_url", "")}
+                    className="border-rose-700/50 text-rose-200 hover:bg-rose-900/40 shrink-0"
+                    title="Clear image"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              {draft.image_url && (
+                <div className="flex items-center gap-3 rounded-md border border-emerald-900/40 bg-black/40 p-2">
+                  <img
+                    src={draft.image_url}
+                    alt="Product preview"
+                    className="h-16 w-16 rounded object-cover bg-black/40"
+                  />
+                  <span className="text-[11px] text-emerald-700 truncate">{draft.image_url}</span>
+                </div>
+              )}
+            </div>
           </FieldShell>
           <FieldShell label="Price (cents)">
             <Input type="number" min={0} value={draft.price_cents} onChange={(e) => set("price_cents", e.target.value)} />
