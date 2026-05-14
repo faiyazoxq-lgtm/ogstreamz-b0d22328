@@ -228,7 +228,7 @@ export const verifyAndLinkStream = createServerFn({ method: "POST" })
     const { supabase, userId } = context as any;
     let server: string;
     try {
-      server = getServerUrl();
+      server = await getServerUrl();
     } catch (e: any) {
       return {
         ok: false as const,
@@ -334,7 +334,7 @@ export const reverifyStream = createServerFn({ method: "POST" })
     }
     let server: string;
     try {
-      server = getServerUrl();
+      server = await getServerUrl();
     } catch (e: any) {
       return {
         ok: false as const,
@@ -375,7 +375,7 @@ export const getMyStreamM3uUrl = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context as any;
     try {
-      getServerUrl();
+      await getServerUrl();
     } catch (e: any) {
       await logStreamUrlAudit({ user_id: userId, action: "mint", success: false, reason: "invalid_server" });
       return { ok: false as const, reason: "invalid_server" as const, error: e?.message || REASON_MESSAGES.invalid_server };
@@ -457,7 +457,7 @@ export const verifyMyStreamAccess = createServerFn({ method: "POST" })
 
     let server: string;
     try {
-      server = getServerUrl();
+      server = await getServerUrl();
     } catch (e: any) {
       return { ok: false as const, error: e?.message || "Stream server not configured" };
     }
