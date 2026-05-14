@@ -121,6 +121,81 @@
   --eye-ice-glow-soft: oklch(0.78 0.2 240);
   --eye-ice-pupil: oklch(0.55 0.24 255);
   --eye-ice-pupil-ring: oklch(0.35 0.14 255);
+
+  /* ------------------------------------------------------------------
+   * Credits Reserve — metallic blue/silver palette.
+   * Single source of truth for the brushed-chrome accents used by the
+   * Boss "Credits Reserve" card (profile.tsx) and any other surface
+   * that wants to echo that look (progress bars, status pills, etc.).
+   * ------------------------------------------------------------------ */
+  --reserve-silver: oklch(0.95 0.01 240);
+  --reserve-silver-soft: oklch(0.95 0.005 240);
+  --reserve-silver-dim: oklch(0.55 0.02 240);
+  --reserve-blue: oklch(0.72 0.22 245);
+  --reserve-blue-bright: oklch(0.85 0.18 235);
+  --reserve-blue-deep: oklch(0.55 0.24 255);
+  --reserve-ink: oklch(0.13 0.02 250);
+  --reserve-ink-soft: oklch(0.18 0.02 250);
+  --reserve-ink-raise: oklch(0.2 0.02 250);
+
+  /* Composed accents — prefer these so component code stays terse. */
+  --reserve-frame-gradient: linear-gradient(
+    135deg,
+    var(--reserve-silver-soft) 0%,
+    var(--reserve-blue) 22%,
+    var(--reserve-silver-dim) 48%,
+    var(--reserve-blue-bright) 72%,
+    var(--reserve-silver) 100%
+  );
+  --reserve-frame-shadow:
+    0 0 50px -12px oklch(0.72 0.22 245 / 0.55),
+    0 0 120px -40px oklch(0.85 0.18 235 / 0.4);
+  --reserve-card-bg: var(--reserve-ink);
+  --reserve-card-glow:
+    radial-gradient(ellipse at top right, oklch(0.85 0.18 235 / 0.22), transparent 60%),
+    radial-gradient(ellipse at bottom left, oklch(0.72 0.22 245 / 0.18), transparent 55%),
+    linear-gradient(180deg, transparent 0%, oklch(0.72 0.22 245 / 0.05) 100%);
+  --reserve-card-topline: linear-gradient(
+    90deg,
+    transparent,
+    oklch(0.95 0.01 240 / 0.9),
+    transparent
+  );
+  --reserve-progress-gradient: linear-gradient(
+    90deg,
+    var(--reserve-blue-deep),
+    var(--reserve-blue-bright),
+    var(--reserve-silver)
+  );
+  --reserve-progress-track-border: oklch(0.72 0.22 245 / 0.3);
+  --reserve-progress-glow: 0 0 18px oklch(0.72 0.22 245 / 0.9);
+  --reserve-pill-border: oklch(0.72 0.22 245 / 0.55);
+  --reserve-pill-bg: linear-gradient(
+    180deg,
+    oklch(0.72 0.22 245 / 0.18),
+    oklch(0.72 0.22 245 / 0.06)
+  );
+  --reserve-pill-shadow:
+    inset 0 1px 0 oklch(0.95 0.01 240 / 0.25),
+    0 0 18px -4px oklch(0.72 0.22 245 / 0.6);
+  --reserve-tile-border: oklch(0.72 0.22 245 / 0.28);
+  --reserve-tile-bg: linear-gradient(
+    180deg,
+    oklch(0.18 0.02 250 / 0.85),
+    oklch(0.13 0.02 250 / 0.9)
+  );
+  --reserve-tile-shadow:
+    inset 0 1px 0 oklch(0.95 0.01 240 / 0.08),
+    0 0 24px -16px oklch(0.72 0.22 245 / 0.7);
+  --reserve-button-border: oklch(0.72 0.22 245 / 0.5);
+  --reserve-button-bg: linear-gradient(
+    180deg,
+    oklch(0.2 0.02 250 / 0.85),
+    oklch(0.13 0.02 250 / 0.95)
+  );
+  --reserve-button-shadow:
+    inset 0 1px 0 oklch(0.95 0.01 240 / 0.18),
+    0 0 20px -8px oklch(0.72 0.22 245 / 0.7);
 }
 
 .dark {
