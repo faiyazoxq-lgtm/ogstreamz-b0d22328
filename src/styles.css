@@ -1249,3 +1249,10 @@ html[data-mood="og"] {
     }
   }
 }
+
+@layer utilities {
+  @keyframes telegram-bar {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(300%); }
+  }
+}
