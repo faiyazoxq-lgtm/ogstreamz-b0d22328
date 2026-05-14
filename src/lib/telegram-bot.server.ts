@@ -121,6 +121,35 @@ export async function tgSendMessage(chatId: number | string, text: string) {
 }
 
 /**
+ * Send a photo by URL with an HTML caption. Used to deliver branded cards
+ * (welcome message, etc.) that pair the site wallpaper with copy.
+ * Falls back to a plain text message if Telegram rejects the photo.
+ */
+export async function tgSendPhoto(
+  chatId: number | string,
+  photoUrl: string,
+  caption: string,
+) {
+  try {
+    return await tgCall(
+      "sendPhoto",
+      {
+        chat_id: chatId,
+        photo: photoUrl,
+        caption,
+        parse_mode: "HTML",
+      },
+      { tag: "tg.sendPhoto" },
+    );
+  } catch (e) {
+    logWarn("tg.sendPhoto.fallback_to_text", {
+      reason: e instanceof Error ? e.message : String(e),
+    });
+    return tgSendMessage(chatId, caption);
+  }
+}
+
+/**
  * Multipart upload to the Telegram gateway. Used for sendPhoto / sendDocument
  * with raw file bytes. `fileField` is the Telegram form field name, e.g.
  * "photo" for sendPhoto or "document" for sendDocument. `fields` are extra

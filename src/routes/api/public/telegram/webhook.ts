@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { timingSafeEqual } from "crypto";
-import { tgSendMessage, deriveTelegramWebhookSecret } from "@/lib/telegram-bot.server";
+import { tgSendMessage, tgSendPhoto, deriveTelegramWebhookSecret } from "@/lib/telegram-bot.server";
 import { getBossChatId } from "@/lib/boss-chat.server";
 import { logInfo, logWarn, logError } from "@/lib/server-log.server";
 import {
@@ -189,10 +189,30 @@ async function handleCommand(
     await tgSendMessage(chatId, why);
     return;
   }
-  await tgSendMessage(
-    chatId,
-    "✅ Linked! You will now receive VIP pass updates, expiry reminders and live drops here."
-  );
+  // Branded welcome card — uses the site wallpaper + OG-Streamz theme.
+  const siteBase = (process.env.PUBLIC_SITE_URL || "https://ogstreamz.co.uk").replace(/\/$/, "");
+  const wallpaperUrl = `${siteBase}/brand/og-image.jpg`;
+  const welcomeCaption =
+    `🔥 <b>Welcome to OG-STREAMZ</b> 🔥\n` +
+    `<i>The Syndicate just opened the gate.</i>\n\n` +
+    `✅ <b>Telegram linked.</b> You'll now get:\n` +
+    `• 🎟 VIP pass updates &amp; expiry reminders\n` +
+    `• 📡 Live drops the moment they go hot\n` +
+    `• 💬 Direct line to the OG-Streamz team\n\n` +
+    `<b>Quick commands</b>\n` +
+    `<code>/me</code> · account &amp; credits\n` +
+    `<code>/msg TEXT</code> · message the team\n` +
+    `<code>/help</code> · see everything\n\n` +
+    `🌐 ${siteBase}`;
+  try {
+    await tgSendPhoto(chatId, wallpaperUrl, welcomeCaption);
+  } catch (e) {
+    logError("tg.webhook.welcome_failed", {
+      chatIdSuffix: String(chatId).slice(-8),
+      error: e instanceof Error ? e.message : String(e),
+    });
+    await tgSendMessage(chatId, welcomeCaption);
+  }
 
   // Boss-only audit notice: tie this Telegram identity to the member's OG Pass.
   try {
