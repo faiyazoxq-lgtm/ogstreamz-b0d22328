@@ -1,7 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { timingSafeEqual } from "crypto";
-import { tgSendMessage, tgSendPhoto, deriveTelegramWebhookSecret } from "@/lib/telegram-bot.server";
+import {
+  tgSendMessage,
+  tgSendPhoto,
+  tgCall,
+  deriveTelegramWebhookSecret,
+  type TgInlineKeyboard,
+} from "@/lib/telegram-bot.server";
 import { getBossChatId } from "@/lib/boss-chat.server";
 import { logInfo, logWarn, logError } from "@/lib/server-log.server";
 import {
@@ -297,15 +303,24 @@ async function sendBrandedWelcome(
     `<code>/msg TEXT</code> · message the team\n` +
     `<code>/help</code> · see everything\n\n` +
     `🌐 ${siteBase}`;
+  const reply_markup: TgInlineKeyboard = {
+    inline_keyboard: [
+      [
+        { text: "🎟 VIP Pass", url: `${siteBase}/account/passes` },
+        { text: "📡 Live Drops", url: `${siteBase}/` },
+      ],
+      [{ text: "❓ Help", callback_data: "wc:help" }],
+    ],
+  };
   try {
-    await tgSendPhoto(chatId, wallpaperUrl, caption);
+    await tgSendPhoto(chatId, wallpaperUrl, caption, { reply_markup });
   } catch (e) {
     logError("tg.webhook.welcome_failed", {
       chatIdSuffix: String(chatId).slice(-8),
       returning: opts.returning,
       error: e instanceof Error ? e.message : String(e),
     });
-    await tgSendMessage(chatId, caption);
+    await tgSendMessage(chatId, caption, { reply_markup });
   }
 }
 
