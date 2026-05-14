@@ -96,6 +96,7 @@ const GROUPS: RailGroup[] = [
       { to: "/boss/api-keys", label: "Agent Keys", Icon: KeyRound, desc: "Encrypted vault" },
       { to: "/boss/secrets-inventory", label: "Secrets Inventory", Icon: Lock, desc: "Platform secrets list" },
       { to: "/boss/function-audit", label: "Function Audit", Icon: ScrollText, desc: "Exposed DB functions" },
+      { to: "/boss/audit-log", label: "Audit Log", Icon: ScrollText, desc: "Boss action history" },
       { to: "/boss/function-grants", label: "Function Grants", Icon: ShieldOff, desc: "Revoke EXECUTE w/ restore log" },
       { to: "/boss/function-ideas", label: "Function Ideas", Icon: Lightbulb, desc: "Plug-in & feature backlog" },
       { to: "/boss/realtime-denials", label: "Realtime Denials", Icon: ShieldAlert, desc: "Audit denied subscriptions" },

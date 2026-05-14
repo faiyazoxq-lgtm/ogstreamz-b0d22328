@@ -87,6 +87,7 @@ import { Route as BossDenylistAuditRouteImport } from './routes/boss.denylist-au
 import { Route as BossControlCentreRouteImport } from './routes/boss.control-centre'
 import { Route as BossContactsRouteImport } from './routes/boss.contacts'
 import { Route as BossCivilityRouteImport } from './routes/boss.civility'
+import { Route as BossAuditLogRouteImport } from './routes/boss.audit-log'
 import { Route as BossApiKeysRouteImport } from './routes/boss.api-keys'
 import { Route as BossAnalyticsSetupRouteImport } from './routes/boss.analytics-setup'
 import { Route as BossAnalyticsRouteImport } from './routes/boss.analytics'
@@ -495,6 +496,11 @@ const BossCivilityRoute = BossCivilityRouteImport.update({
   path: '/civility',
   getParentRoute: () => BossRoute,
 } as any)
+const BossAuditLogRoute = BossAuditLogRouteImport.update({
+  id: '/audit-log',
+  path: '/audit-log',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossApiKeysRoute = BossApiKeysRouteImport.update({
   id: '/api-keys',
   path: '/api-keys',
@@ -630,6 +636,7 @@ export interface FileRoutesByFullPath {
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/analytics-setup': typeof BossAnalyticsSetupRoute
   '/boss/api-keys': typeof BossApiKeysRoute
+  '/boss/audit-log': typeof BossAuditLogRoute
   '/boss/civility': typeof BossCivilityRoute
   '/boss/contacts': typeof BossContactsRoute
   '/boss/control-centre': typeof BossControlCentreRoute
@@ -726,6 +733,7 @@ export interface FileRoutesByTo {
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/analytics-setup': typeof BossAnalyticsSetupRoute
   '/boss/api-keys': typeof BossApiKeysRoute
+  '/boss/audit-log': typeof BossAuditLogRoute
   '/boss/civility': typeof BossCivilityRoute
   '/boss/contacts': typeof BossContactsRoute
   '/boss/control-centre': typeof BossControlCentreRoute
@@ -824,6 +832,7 @@ export interface FileRoutesById {
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/analytics-setup': typeof BossAnalyticsSetupRoute
   '/boss/api-keys': typeof BossApiKeysRoute
+  '/boss/audit-log': typeof BossAuditLogRoute
   '/boss/civility': typeof BossCivilityRoute
   '/boss/contacts': typeof BossContactsRoute
   '/boss/control-centre': typeof BossControlCentreRoute
@@ -923,6 +932,7 @@ export interface FileRouteTypes {
     | '/boss/analytics'
     | '/boss/analytics-setup'
     | '/boss/api-keys'
+    | '/boss/audit-log'
     | '/boss/civility'
     | '/boss/contacts'
     | '/boss/control-centre'
@@ -1019,6 +1029,7 @@ export interface FileRouteTypes {
     | '/boss/analytics'
     | '/boss/analytics-setup'
     | '/boss/api-keys'
+    | '/boss/audit-log'
     | '/boss/civility'
     | '/boss/contacts'
     | '/boss/control-centre'
@@ -1116,6 +1127,7 @@ export interface FileRouteTypes {
     | '/boss/analytics'
     | '/boss/analytics-setup'
     | '/boss/api-keys'
+    | '/boss/audit-log'
     | '/boss/civility'
     | '/boss/contacts'
     | '/boss/control-centre'
@@ -1776,6 +1788,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossCivilityRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/audit-log': {
+      id: '/boss/audit-log'
+      path: '/audit-log'
+      fullPath: '/boss/audit-log'
+      preLoaderRoute: typeof BossAuditLogRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/api-keys': {
       id: '/boss/api-keys'
       path: '/api-keys'
@@ -1917,6 +1936,7 @@ interface BossRouteChildren {
   BossAnalyticsRoute: typeof BossAnalyticsRoute
   BossAnalyticsSetupRoute: typeof BossAnalyticsSetupRoute
   BossApiKeysRoute: typeof BossApiKeysRoute
+  BossAuditLogRoute: typeof BossAuditLogRoute
   BossCivilityRoute: typeof BossCivilityRoute
   BossContactsRoute: typeof BossContactsRoute
   BossControlCentreRoute: typeof BossControlCentreRoute
@@ -1954,6 +1974,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossAnalyticsRoute: BossAnalyticsRoute,
   BossAnalyticsSetupRoute: BossAnalyticsSetupRoute,
   BossApiKeysRoute: BossApiKeysRoute,
+  BossAuditLogRoute: BossAuditLogRoute,
   BossCivilityRoute: BossCivilityRoute,
   BossContactsRoute: BossContactsRoute,
   BossControlCentreRoute: BossControlCentreRoute,
