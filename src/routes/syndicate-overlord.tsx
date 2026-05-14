@@ -1433,11 +1433,26 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
           <Field label="Custom code" hint="Leave blank to auto-generate" icon={Ticket} className="lg:col-span-2">
             <Input
               value={codeCustom}
-              onChange={(e) => setCodeCustom(e.target.value.toUpperCase())}
+              onChange={(e) => setCodeCustom(e.target.value.toUpperCase().replace(/\s+/g, ""))}
               placeholder="AUTO-GENERATE"
-              className={FIELD_INPUT}
+              className={`${FIELD_INPUT} ${
+                codeStatus.state === "ok" ? "border-emerald-500" :
+                (codeStatus.state === "invalid" || codeStatus.state === "taken") ? "border-rose-500" : ""
+              }`}
               maxLength={32}
+              aria-invalid={codeStatus.state === "invalid" || codeStatus.state === "taken"}
             />
+            <p className={`mt-1 text-[10px] uppercase tracking-widest ${
+              codeStatus.state === "ok" ? "text-emerald-400" :
+              (codeStatus.state === "invalid" || codeStatus.state === "taken") ? "text-rose-400" :
+              "text-emerald-700"
+            }`}>
+              {codeStatus.state === "idle" && "3–32 chars · A–Z, 0–9, _ -"}
+              {codeStatus.state === "checking" && "Checking availability…"}
+              {codeStatus.state === "ok" && "✓ Code is available"}
+              {codeStatus.state === "invalid" && codeStatus.msg}
+              {codeStatus.state === "taken" && "Code already exists — choose another"}
+            </p>
           </Field>
           <Field label="Bonus credits" hint="Bundled on redeem" icon={Coins}>
             <Input
@@ -1451,9 +1466,14 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
           <div className="flex items-end">
             <Button
               onClick={async () => {
+                const customRaw = codeCustom.trim();
+                if (customRaw && (codeStatus.state === "invalid" || codeStatus.state === "taken")) {
+                  toast.error(codeStatus.state === "taken" ? "Code already exists" : (codeStatus as any).msg);
+                  return;
+                }
                 setCodeBusy(true);
                 try {
-                  const r = await createCode({ data: { code: codeCustom || undefined, credits: codeCredits } });
+                  const r = await createCode({ data: { code: customRaw || undefined, credits: codeCredits } });
                   toast.success(`Code created: ${r.code.code}`);
                   setCodeCustom("");
                   refreshCodes();
@@ -1463,7 +1483,11 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
                   toast.error(msg ?? "Failed");
                 } finally { setCodeBusy(false); }
               }}
-              disabled={codeBusy}
+              disabled={
+                codeBusy ||
+                codeStatus.state === "checking" ||
+                (!!codeCustom.trim() && (codeStatus.state === "invalid" || codeStatus.state === "taken"))
+              }
               className={`${PRIMARY_BTN} w-full bg-yellow-500 hover:bg-yellow-400 text-black`}
             >
               {codeBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="h-4 w-4 mr-2" />Generate code</>}
