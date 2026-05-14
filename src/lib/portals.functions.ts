@@ -447,12 +447,26 @@ Return STRICT JSON ONLY: { "items": ["...", "...", "...", "...", "..."] }`,
     // ───── Creative Director: Perplexity-generated Style Dictionary ─────
     let themeConfig: any = null;
     try {
+      const kindBrandHint: Record<typeof data.kind, string> = {
+        jokes: "JokesHUB — comedy stage / club / spotlight energy. Bold display fonts, contrasty palette.",
+        music: "MusicHUB — concert / studio energy. Type pair must support song-lyric layouts. Palette = stage lighting.",
+        trade: "TradeHUB — terminal / tape / chart energy. Mono or grotesk type. Cool, neutral palette.",
+        connect: "ConnectHUB — network / professional energy. Clean, trustworthy type. Restrained accent.",
+        tools: "ToolHUB — engineered / blueprint / utility energy. Mono or geometric sans. Calm, technical palette.",
+      };
       const directorPrompt = `You are 0G-PORTAL's Creative Director. Expand this short brief into a complete visual identity for a web page.
-Brief: name="${data.name}", niche="${data.niche}", vibe="${data.vibe || "n/a"}".
+Brief: name="${data.name}", niche="${data.niche}", vibe="${expandVibe(data.vibe)}", language="${data.language}".
+Hub directive: ${kindBrandHint[data.kind]}
 Examples of mapping:
 - "Nasheed" => glowing blue mosaic background, elegant Amiri/Cormorant serif, gold accents, vibe "Sacred Geometry".
 - "Drill" => deep purple/black gradient, Bebas Neue + Inter, neon magenta accents, vibe "Cyber-Street".
 - "Kids math" => playful pastel gradient, Fredoka + Nunito, candy accents, vibe "Saturday Cartoon".
+
+Hard rules:
+- The vibe directive is the law. Refuse to default to generic neon/cyber unless the vibe says so.
+- Pick a Google Font pair that natively supports the script of language="${data.language}" (e.g. Arabic → Amiri/Tajawal, CJK → Noto Sans SC/JP/KR, Cyrillic → PT Sans, Devanagari → Noto Sans Devanagari). For Latin-script languages, pick fonts whose mood matches the vibe.
+- Heading and body fonts must be visually distinct (display+text, not two grotesks).
+- Palette must hit WCAG AA contrast for text on bg1.
 
 Return STRICT JSON ONLY (no prose, no markdown), exactly this shape:
 {
