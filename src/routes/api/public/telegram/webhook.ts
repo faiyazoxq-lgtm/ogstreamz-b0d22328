@@ -269,6 +269,38 @@ function escapeHtml(s: string) {
 }
 
 /**
+ * Handle inline-button taps from the branded welcome card. Buttons use the
+ * "wc:" callback_data prefix so they're routed here. We acknowledge the tap
+ * with answerCallbackQuery (otherwise Telegram leaves the button spinning)
+ * and reply in-chat with the requested action.
+ */
+async function handleWelcomeCallback(cb: any): Promise<void> {
+  const data: string = cb?.data ?? "";
+  const chatId: number | undefined = cb?.message?.chat?.id;
+  const cbId: string | undefined = cb?.id;
+  if (!chatId || !cbId) return;
+
+  // Acknowledge first so the client stops the loading spinner immediately.
+  try {
+    await tgCall("answerCallbackQuery", { callback_query_id: cbId }, { tag: "tg.answerCb", silent: true });
+  } catch {
+    // Non-fatal — the in-chat reply is the real payload.
+  }
+
+  if (data === "wc:help") {
+    await tgSendMessage(
+      chatId,
+      "<b>OG-Streamz commands</b>\n" +
+        "<code>/me</code> — account &amp; credits\n" +
+        "<code>/msg TEXT</code> — message the team\n" +
+        "<code>/unlink</code> — disconnect this chat\n" +
+        "<code>/start</code> — re-show the welcome card\n\n" +
+        "Tap <b>VIP Pass</b> or <b>Live Drops</b> on the welcome card to jump back to the site.",
+    );
+  }
+}
+
+/**
  * Branded /start welcome card. Sent on:
  *  - successful /link CODE (returning=false, fresh link)
  *  - /start with no code from an already-linked chat (returning=true)
