@@ -79,7 +79,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         const [portals, battles, calculators] = await Promise.all([
           supabase.from("portals_public").select("slug, kind, updated_at").limit(2000),
           supabase.from("battles").select("slug, updated_at, public").eq("public", true).limit(1000),
-          supabase.from("calculators").select("slug, updated_at, published").eq("published", true).limit(1000),
+          supabase.from("calculators_public").select("slug, created_at").limit(1000),
         ]);
 
         // Use the most recent dynamic update as the lastmod for static pages so
@@ -87,7 +87,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         const allTimes = [
           ...((portals.data ?? []) as Array<{ updated_at: string | null }>).map((r) => r.updated_at),
           ...((battles.data ?? []) as Array<{ updated_at: string | null }>).map((r) => r.updated_at),
-          ...((calculators.data ?? []) as Array<{ updated_at: string | null }>).map((r) => r.updated_at),
+          ...((calculators.data ?? []) as Array<{ created_at: string | null }>).map((r) => r.created_at),
         ]
           .filter((v): v is string => !!v)
           .map((v) => new Date(v).getTime())
@@ -110,8 +110,8 @@ export const Route = createFileRoute("/sitemap.xml")({
         for (const row of (battles.data ?? []) as Array<{ slug: string; updated_at: string | null }>) {
           lines.push(urlNode(`${SITE_URL}/b/${row.slug}`, row.updated_at ?? undefined, "0.6", "daily"));
         }
-        for (const row of (calculators.data ?? []) as Array<{ slug: string; updated_at: string | null }>) {
-          lines.push(urlNode(`${SITE_URL}/t/${row.slug}`, row.updated_at ?? undefined, "0.6", "weekly"));
+        for (const row of (calculators.data ?? []) as Array<{ slug: string; created_at: string | null }>) {
+          lines.push(urlNode(`${SITE_URL}/t/${row.slug}`, row.created_at ?? undefined, "0.6", "weekly"));
         }
 
         const xml = `<?xml version="1.0" encoding="UTF-8"?>

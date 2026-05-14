@@ -57,7 +57,7 @@ function VipPortalsIndex() {
         const [portalsRes, battlesRes, toolsRes] = await Promise.all([
           sb.from("portals_public").select("kind").limit(2000),
           sb.from("battles").select("id", { count: "exact", head: true }),
-          sb.from("calculators").select("id", { count: "exact", head: true }).eq("published", true),
+          sb.from("calculators_public").select("id", { count: "exact", head: true }),
         ]);
         if (cancelled) return;
         const next: Partial<Record<HubKey, number>> = {};
