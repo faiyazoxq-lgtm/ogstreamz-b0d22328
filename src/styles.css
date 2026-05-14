@@ -822,6 +822,9 @@ html[data-mood="og"] {
     0% { background-position: -400px 0; }
     100% { background-position: 400px 0; }
   }
+  @keyframes shimmer {
+    100% { transform: translateX(100%); }
+  }
   .skeleton-shimmer {
     position: relative;
     overflow: hidden;
