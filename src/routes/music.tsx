@@ -13,6 +13,7 @@ import { MusicHubBalance } from "@/components/MusicHubBalance";
 import { FeaturedDropCard } from "@/components/FeaturedDropCard";
 import { NonVipFormGate } from "@/components/NonVipFormGate";
 import { PortalHeader, PortalStyleLine, mergeStyle } from "@/components/PortalHeader";
+import { OGBotDraftPanel } from "@/components/og-bot/OGBotDraftPanel";
 
 const MUSIC_STYLE = "Cinematic neon street-rap with gritty bass and OG energy.";
 
@@ -127,6 +128,24 @@ function MusicPromptBuilder() {
       {/* The writing area — main focus. Non-VIPs see OG-Bot draft mode. */}
       <NonVipFormGate label="Spawn Studio">
       <section className="rounded-3xl border border-transparent bg-transparent p-4 sm:p-6">
+        <div className="mb-5">
+          <OGBotDraftPanel
+            surface="music-studio"
+            kind="music"
+            contextHint="User is on /music spawning a track studio."
+            placeholder="Tell me the track — vibe, genre, language, mood."
+            fieldHints={[
+              { key: "name", description: "Track name, max 80 chars", max: 80 },
+              { key: "description", description: "Sound brief — genre, mood, references", max: 1000 },
+              { key: "language", description: "Lyrics language, e.g. English", max: 30 },
+            ]}
+            onApply={(f) => {
+              if (f.name) setName(f.name);
+              if (f.description) setDescription(f.description);
+              if (f.language) setLanguage(f.language);
+            }}
+          />
+        </div>
         <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Track Name</label>
         <Input
           value={name}
