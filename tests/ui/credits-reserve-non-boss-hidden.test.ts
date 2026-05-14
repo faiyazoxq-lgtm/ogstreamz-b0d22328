@@ -18,12 +18,13 @@ const ROOT = resolve(fileURLToPath(new URL("../../", import.meta.url)));
 const PROFILE_PATH = resolve(ROOT, "src/routes/profile.tsx");
 const PROFILE = readFileSync(PROFILE_PATH, "utf8");
 
-function reserveCardSlice(): { card: string; before: string } {
+function reserveCardSlice(): { card: string; opener: string } {
   const start = PROFILE.indexOf("Boss-only Credits Reserve status card");
   expect(start, "Reserve card marker not found").toBeGreaterThan(-1);
   const end = PROFILE.indexOf("Buy Credits — hidden for Boss", start);
   expect(end, "Reserve card end marker not found").toBeGreaterThan(start);
-  return { card: PROFILE.slice(start, end), before: PROFILE.slice(Math.max(0, start - 600), start) };
+  // The `{isBoss && (` opener sits on the line right after the marker comment.
+  return { card: PROFILE.slice(start, end), opener: PROFILE.slice(start, start + 200) };
 }
 
 function* walkSrc(dir: string): Generator<string> {
@@ -39,12 +40,12 @@ function* walkSrc(dir: string): Generator<string> {
 }
 
 describe("Credits Reserve is hidden for non-Boss users", () => {
-  const { card, before } = reserveCardSlice();
+  const { card, opener } = reserveCardSlice();
 
   it("the entire card is wrapped in {isBoss && (...)}", () => {
-    // The marker comment sits immediately inside the gated section; the
-    // opener `{isBoss && (` must appear in the surrounding context.
-    expect(before).toMatch(/\{isBoss && \(/);
+    // The marker comment sits immediately above the gated section; the
+    // opener `{isBoss && (` must follow it on the next line.
+    expect(opener).toMatch(/\{isBoss && \(/);
     // And the closing `{!isBoss && (` for the next section must follow,
     // proving the gate closes before any non-boss UI begins.
     expect(PROFILE.indexOf("{!isBoss && (", PROFILE.indexOf(card))).toBeGreaterThan(-1);
