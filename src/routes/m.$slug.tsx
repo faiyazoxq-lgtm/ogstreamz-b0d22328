@@ -43,6 +43,7 @@ export const Route = createFileRoute("/m/$slug")({
   validateSearch: (search: Record<string, unknown>) => ({
     unlocked: typeof search.unlocked === "string" ? search.unlocked : undefined,
     session_id: typeof search.session_id === "string" ? search.session_id : undefined,
+    job: typeof search.job === "string" ? search.job : undefined,
   }),
   loader: async ({ params }) => {
     const { data, error } = await supabase
