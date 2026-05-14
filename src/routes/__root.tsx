@@ -167,7 +167,7 @@ function RootComponent() {
             <TeleportOverlay />
             <EyeGlowTuner />
             <SystemGlitchOverlay />
-            <LiveThinkingFeed />
+            {/* LiveThinkingFeed removed — was a bottom-right Boss watermark popup */}
             <EnforcerConsole />
             <ReducedMotionToggle />
             <AlignmentQAOverlay />
