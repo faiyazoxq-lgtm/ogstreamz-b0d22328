@@ -29,6 +29,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SiteSearch } from "@/components/SiteSearch";
 import { MasterSwearToggle } from "@/components/MasterSwearToggle";
 import { AnimatedCredits } from "@/components/AnimatedCredits";
+import { TelegramNavButton } from "@/components/telegram/TelegramNavButton";
 import {
   Sheet,
   SheetContent,
@@ -286,6 +287,7 @@ export function NavBar() {
         <ul className="flex items-center flex-nowrap gap-1.5 sm:gap-2.5 shrink-0 ml-auto">
           <li className="hidden sm:block">
             <div className="flex items-center gap-2">
+              {user && <TelegramNavButton />}
               {user && isBoss && (
                 <Link
                   to="/admin"
@@ -317,6 +319,11 @@ export function NavBar() {
           {isBoss && (
             <li className="block">
               <MasterSwearToggle />
+            </li>
+          )}
+          {user && (
+            <li className="sm:hidden">
+              <TelegramNavButton />
             </li>
           )}
           <li className="sm:hidden">
