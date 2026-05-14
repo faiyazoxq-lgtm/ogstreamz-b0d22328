@@ -352,7 +352,13 @@ export function NavBar() {
             )}
             <NavDropdown label="Portals" icon={DoorOpen} items={navPortals.length ? navPortals : [{ to: "/portals", label: "Browse Portals", icon: Sparkles, desc: "No portals yet — open the directory" }]} softGold currentPath={pathname} pill />
             <span aria-hidden className="w-px h-4 bg-white/10" />
-            <NavDropdown label={isBoss ? "Manage Store" : "Store"} icon={Store} items={storeLinks} currentPath={pathname} pill />
+          <NavDropdown
+            label={isBoss ? "Manage Store" : "Store"}
+            icon={Store}
+            items={isBoss ? storeLinks.filter((l) => l.to !== "/store") : storeLinks}
+            currentPath={pathname}
+            pill
+          />
           </div>
           {isBoss && (
             <Link
