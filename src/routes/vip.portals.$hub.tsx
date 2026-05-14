@@ -95,12 +95,12 @@ function VipPortalsByHub() {
 
   const setQ = (next: string) =>
     navigate({
-      search: (prev) => ({ ...prev, q: next || undefined }),
+      search: (prev: { sort: SortKey; q: string }) => ({ ...prev, q: next }),
       replace: true,
     });
   const setSort = (next: SortKey) =>
     navigate({
-      search: (prev) => ({ ...prev, sort: next === "newest" ? undefined : next }),
+      search: (prev: { sort: SortKey; q: string }) => ({ ...prev, sort: next }),
       replace: true,
     });
 
