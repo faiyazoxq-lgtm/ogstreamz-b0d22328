@@ -108,6 +108,101 @@ export const getStreamConfigStatus = createServerFn({ method: "GET" }).handler(
   async (): Promise<StreamConfigStatus> => await checkServerUrl(),
 );
 
+// ──────────────────────────────────────────────────────────────────────
+// Boss-only: read / set / clear the configured stream server URL.
+// ──────────────────────────────────────────────────────────────────────
+
+import { shouldPromoteToBoss, normalizeEmail } from "@/lib/boss-policy";
+
+function isBossClaims(claims: any): boolean {
+  const userEmail = normalizeEmail(claims?.email as string | undefined);
+  const bossEmail = normalizeEmail(process.env.BOSS_EMAIL);
+  return shouldPromoteToBoss(userEmail, bossEmail);
+}
+
+function normalizeServerUrlInput(input: string): { url: string | null; error?: string } {
+  let v = (input ?? "").toString().trim();
+  if (!v) return { url: null };
+  if (!/^https?:\/\//i.test(v)) v = "http://" + v;
+  v = v.replace(/\/+$/, "");
+  let parsed: URL;
+  try {
+    parsed = new URL(v);
+  } catch {
+    return { url: null, error: "Not a valid URL." };
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return { url: null, error: "URL must use http or https." };
+  }
+  if (!parsed.hostname) return { url: null, error: "URL is missing a hostname." };
+  if (parsed.username || parsed.password) return { url: null, error: "URL must not contain credentials." };
+  if (parsed.pathname && parsed.pathname !== "/" && parsed.pathname !== "") {
+    return { url: null, error: "URL must not include a path." };
+  }
+  // Strip trailing slash for storage; store just origin.
+  return { url: `${parsed.protocol}//${parsed.host}` };
+}
+
+export const getBossStreamServerUrl = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    if (!isBossClaims((context as any).claims)) {
+      return { ok: false as const, error: "Boss only." };
+    }
+    const dbVal = await (async () => {
+      const { data } = await supabaseAdmin
+        .from("app_settings" as never)
+        .select("value, updated_at")
+        .eq("key", "stream_server_url")
+        .maybeSingle();
+      return data as { value: string | null; updated_at: string | null } | null;
+    })();
+    const envVal = (process.env.STREAM_SERVER_URL || "").trim();
+    const status = await checkServerUrl();
+    return {
+      ok: true as const,
+      dbValue: dbVal?.value ?? null,
+      dbUpdatedAt: dbVal?.updated_at ?? null,
+      envValue: envVal || null,
+      effective: dbVal?.value || envVal || null,
+      status,
+    };
+  });
+
+export const setBossStreamServerUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { url: string }) => ({ url: String(d?.url ?? "") }))
+  .handler(async ({ data, context }) => {
+    if (!isBossClaims((context as any).claims)) {
+      return { ok: false as const, error: "Boss only." };
+    }
+    const { url, error } = normalizeServerUrlInput(data.url);
+    if (!url) return { ok: false as const, error: error || "URL is required." };
+    const userId = (context as any).userId as string | undefined;
+    const { error: upErr } = await supabaseAdmin
+      .from("app_settings" as never)
+      .upsert(
+        { key: "stream_server_url", value: url, updated_by: userId ?? null } as never,
+        { onConflict: "key" } as never,
+      );
+    if (upErr) return { ok: false as const, error: upErr.message };
+    return { ok: true as const, value: url };
+  });
+
+export const clearBossStreamServerUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    if (!isBossClaims((context as any).claims)) {
+      return { ok: false as const, error: "Boss only." };
+    }
+    const { error } = await supabaseAdmin
+      .from("app_settings" as never)
+      .delete()
+      .eq("key", "stream_server_url");
+    if (error) return { ok: false as const, error: error.message };
+    return { ok: true as const };
+  });
+
 export type StreamReasonCode =
   | "invalid_username"
   | "invalid_password"
