@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, RefreshCw, Send, MessageSquare, Paperclip, X, Check, AlertCircle, Ban } from "lucide-react";
+import { Loader2, RefreshCw, Send, MessageSquare, Paperclip, X, Check, AlertCircle, Ban, RotateCw } from "lucide-react";
 type AttachmentItem = {
   id: string;
   file: File;
@@ -177,6 +177,82 @@ export function MyTelegramInbox() {
     cancelledRef.current = true;
     try { activeReaderRef.current?.abort(); } catch { /* noop */ }
   };
+
+  // Re-upload only the specified attachment ids (used for "Retry").
+  const retry = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const items = attachments.filter((a) => ids.includes(a.id));
+      if (items.length === 0) return { ok: true, retriedIds: [] as string[] };
+      cancelledRef.current = false;
+      setProgress((prev) => ({
+        ...prev,
+        ...Object.fromEntries(items.map((it) => [it.id, { status: "pending" as UploadStatus }])),
+      }));
+      const succeeded: string[] = [];
+      for (const item of items) {
+        if (cancelledRef.current) {
+          setProgress((prev) => ({ ...prev, [item.id]: { status: "cancelled" } }));
+          continue;
+        }
+        setProgress((prev) => ({ ...prev, [item.id]: { status: "reading", percent: 0 } }));
+        try {
+          const reader = new FileReader();
+          activeReaderRef.current = reader;
+          const dataBase64 = await fileToBase64(item.file, reader, (percent) => {
+            setProgress((prev) =>
+              prev[item.id]?.status === "reading"
+                ? { ...prev, [item.id]: { status: "reading", percent } }
+                : prev,
+            );
+          });
+          activeReaderRef.current = null;
+          if (cancelledRef.current) throw new CancelledError();
+          setProgress((prev) => ({ ...prev, [item.id]: { status: "sending" } }));
+          await sendAttachment({
+            data: {
+              filename: item.file.name,
+              mime: item.file.type || "application/octet-stream",
+              dataBase64,
+              caption: item.caption.trim() || undefined,
+            },
+          });
+          setProgress((prev) => ({ ...prev, [item.id]: { status: "sent" } }));
+          succeeded.push(item.id);
+        } catch (err) {
+          activeReaderRef.current = null;
+          if (err instanceof CancelledError || cancelledRef.current) {
+            setProgress((prev) => ({ ...prev, [item.id]: { status: "cancelled" } }));
+            continue;
+          }
+          const msg = err instanceof Error ? err.message : "Failed";
+          setProgress((prev) => ({ ...prev, [item.id]: { status: "error", error: msg } }));
+        }
+      }
+      return { ok: true, retriedIds: succeeded };
+    },
+    onSuccess: ({ retriedIds }) => {
+      if (retriedIds.length === 0) return;
+      // Drop the now-sent items from the composer; keep any remaining failures/queue.
+      setAttachments((prev) => prev.filter((a) => !retriedIds.includes(a.id)));
+      setProgress((prev) => {
+        const next = { ...prev };
+        for (const id of retriedIds) delete next[id];
+        return next;
+      });
+      toast.success(
+        retriedIds.length === 1 ? "Resent 1 file" : `Resent ${retriedIds.length} files`,
+      );
+      qc.invalidateQueries({ queryKey: ["my-tg-inbox"] });
+    },
+    onError: (e: unknown) => {
+      toast.error(e instanceof Error ? e.message : "Retry failed");
+    },
+  });
+
+  const failedIds = attachments
+    .filter((a) => progress[a.id]?.status === "error")
+    .map((a) => a.id);
+  const isBusy = send.isPending || retry.isPending;
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -464,11 +540,33 @@ export function MyTelegramInbox() {
                       >
                         <Ban className="h-3.5 w-3.5" />
                       </button>
+                    ) : status === "error" ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => retry.mutate([item.id])}
+                          disabled={isBusy}
+                          className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] uppercase tracking-[0.18em] text-sky-200 hover:text-white hover:bg-sky-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                          title="Retry this file"
+                        >
+                          <RotateCw className="h-3 w-3" />
+                          Retry
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeAttachment(item.id)}
+                          disabled={isBusy}
+                          className="rounded p-0.5 text-white/55 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                          title="Remove"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </>
                     ) : (
                       <button
                         type="button"
                         onClick={() => removeAttachment(item.id)}
-                        disabled={send.isPending}
+                        disabled={isBusy}
                         className="rounded p-0.5 text-white/55 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
                         title="Remove"
                       >
@@ -481,7 +579,7 @@ export function MyTelegramInbox() {
                     value={item.caption}
                     onChange={(e) => updateCaption(item.id, e.target.value)}
                     placeholder="Caption for this file (optional)…"
-                    disabled={send.isPending}
+                    disabled={isBusy}
                     maxLength={1024}
                     className="mt-1 w-full rounded border border-white/10 bg-black/40 px-2 py-1 text-[11px] text-white placeholder:text-white/30 focus:outline-none focus:border-sky-400/50 disabled:opacity-60"
                   />
@@ -508,6 +606,24 @@ export function MyTelegramInbox() {
                 </div>
               );
             })}
+            {failedIds.length > 1 && (
+              <div className="flex justify-end pt-1">
+                <button
+                  type="button"
+                  onClick={() => retry.mutate(failedIds)}
+                  disabled={isBusy}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-sky-400/40 bg-sky-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-sky-100 hover:bg-sky-500/25 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Retry all failed uploads"
+                >
+                  {retry.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <RotateCw className="h-3 w-3" />
+                  )}
+                  Retry {failedIds.length} failed
+                </button>
+              </div>
+            )}
           </div>
         )}
         <div className="flex items-end gap-2">
