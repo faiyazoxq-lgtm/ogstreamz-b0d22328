@@ -162,10 +162,34 @@ async function handleCommand(
   }
   const code = m[2];
   if (!code) {
-    await tgSendMessage(
-      chatId,
-      "Welcome to OG-Streamz. Get your link code at <b>/account/passes</b>, then send <code>/link CODE</code> here."
-    );
+    // /start with no code:
+    //  - already-linked chat → branded welcome card (site wallpaper + theme)
+    //  - unlinked chat       → onboarding text pointing them at /account/passes
+    const sb = getSupabase() as any;
+    const { data: link } = await sb
+      .from("telegram_user_links")
+      .select("user_id")
+      .eq("chat_id", chatId)
+      .maybeSingle();
+    if (link?.user_id) {
+      let displayName: string | null = null;
+      try {
+        const { data: prof } = await sb
+          .from("profiles")
+          .select("display_name,email")
+          .eq("id", link.user_id)
+          .maybeSingle();
+        displayName = (prof?.display_name as string) || (prof?.email as string) || null;
+      } catch {
+        // best-effort personalisation only
+      }
+      await sendBrandedWelcome(chatId, { returning: true, displayName });
+    } else {
+      await tgSendMessage(
+        chatId,
+        "Welcome to OG-Streamz. Get your link code at <b>/account/passes</b>, then send <code>/link CODE</code> here.",
+      );
+    }
     return;
   }
 
@@ -190,29 +214,7 @@ async function handleCommand(
     return;
   }
   // Branded welcome card — uses the site wallpaper + OG-Streamz theme.
-  const siteBase = (process.env.PUBLIC_SITE_URL || "https://ogstreamz.co.uk").replace(/\/$/, "");
-  const wallpaperUrl = `${siteBase}/brand/og-image.jpg`;
-  const welcomeCaption =
-    `🔥 <b>Welcome to OG-STREAMZ</b> 🔥\n` +
-    `<i>The Syndicate just opened the gate.</i>\n\n` +
-    `✅ <b>Telegram linked.</b> You'll now get:\n` +
-    `• 🎟 VIP pass updates &amp; expiry reminders\n` +
-    `• 📡 Live drops the moment they go hot\n` +
-    `• 💬 Direct line to the OG-Streamz team\n\n` +
-    `<b>Quick commands</b>\n` +
-    `<code>/me</code> · account &amp; credits\n` +
-    `<code>/msg TEXT</code> · message the team\n` +
-    `<code>/help</code> · see everything\n\n` +
-    `🌐 ${siteBase}`;
-  try {
-    await tgSendPhoto(chatId, wallpaperUrl, welcomeCaption);
-  } catch (e) {
-    logError("tg.webhook.welcome_failed", {
-      chatIdSuffix: String(chatId).slice(-8),
-      error: e instanceof Error ? e.message : String(e),
-    });
-    await tgSendMessage(chatId, welcomeCaption);
-  }
+  await sendBrandedWelcome(chatId, { returning: false, displayName: null });
 
   // Boss-only audit notice: tie this Telegram identity to the member's OG Pass.
   try {
@@ -258,6 +260,53 @@ function escapeHtml(s: string) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+/**
+ * Branded /start welcome card. Sent on:
+ *  - successful /link CODE (returning=false, fresh link)
+ *  - /start with no code from an already-linked chat (returning=true)
+ *
+ * Uses the site wallpaper at /brand/og-image.jpg as the photo, so the
+ * Telegram card carries the OG-STREAMZ theme. Falls back to a plain text
+ * message if Telegram rejects the photo (sendPhoto already does this).
+ */
+async function sendBrandedWelcome(
+  chatId: number,
+  opts: { returning: boolean; displayName: string | null },
+) {
+  const siteBase = (process.env.PUBLIC_SITE_URL || "https://ogstreamz.co.uk").replace(/\/$/, "");
+  const wallpaperUrl = `${siteBase}/brand/og-image.jpg`;
+  const greeting = opts.returning
+    ? `👑 <b>Welcome back${opts.displayName ? ", " + escapeHtml(opts.displayName) : ""}</b>`
+    : `🔥 <b>Welcome to OG-STREAMZ</b> 🔥`;
+  const sub = opts.returning
+    ? `<i>The Syndicate frequency is still locked in.</i>`
+    : `<i>The Syndicate just opened the gate.</i>`;
+  const linkLine = opts.returning
+    ? `✅ <b>Telegram already linked.</b> You're set to receive:`
+    : `✅ <b>Telegram linked.</b> You'll now get:`;
+  const caption =
+    `${greeting}\n${sub}\n\n` +
+    `${linkLine}\n` +
+    `• 🎟 VIP pass updates &amp; expiry reminders\n` +
+    `• 📡 Live drops the moment they go hot\n` +
+    `• 💬 Direct line to the OG-Streamz team\n\n` +
+    `<b>Quick commands</b>\n` +
+    `<code>/me</code> · account &amp; credits\n` +
+    `<code>/msg TEXT</code> · message the team\n` +
+    `<code>/help</code> · see everything\n\n` +
+    `🌐 ${siteBase}`;
+  try {
+    await tgSendPhoto(chatId, wallpaperUrl, caption);
+  } catch (e) {
+    logError("tg.webhook.welcome_failed", {
+      chatIdSuffix: String(chatId).slice(-8),
+      returning: opts.returning,
+      error: e instanceof Error ? e.message : String(e),
+    });
+    await tgSendMessage(chatId, caption);
+  }
 }
 
 /**
