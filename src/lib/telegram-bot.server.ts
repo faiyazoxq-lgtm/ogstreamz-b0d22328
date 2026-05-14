@@ -121,6 +121,53 @@ export async function tgSendMessage(chatId: number | string, text: string) {
 }
 
 /**
+ * Multipart upload to the Telegram gateway. Used for sendPhoto / sendDocument
+ * with raw file bytes. `fileField` is the Telegram form field name, e.g.
+ * "photo" for sendPhoto or "document" for sendDocument. `fields` are extra
+ * form fields like chat_id and caption.
+ */
+export async function tgSendMultipart(
+  method: "sendPhoto" | "sendDocument",
+  fileField: "photo" | "document",
+  file: { bytes: Uint8Array; filename: string; mime: string },
+  fields: Record<string, string | number>,
+) {
+  const LOVABLE = process.env.LOVABLE_API_KEY;
+  const TG = process.env.TELEGRAM_API_KEY;
+  if (!LOVABLE) throw new Error("LOVABLE_API_KEY missing");
+  if (!TG) throw new Error("TELEGRAM_API_KEY missing");
+
+  const form = new FormData();
+  for (const [k, v] of Object.entries(fields)) form.append(k, String(v));
+  const buf = file.bytes.buffer.slice(
+    file.bytes.byteOffset,
+    file.bytes.byteOffset + file.bytes.byteLength,
+  ) as ArrayBuffer;
+  const blob = new Blob([buf], { type: file.mime || "application/octet-stream" });
+  form.append(fileField, blob, file.filename || "upload");
+
+  const startedAt = Date.now();
+  const r = await fetch(`${TG_GATEWAY}/${method}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${LOVABLE}`,
+      "X-Connection-Api-Key": TG,
+    },
+    body: form,
+  });
+  const j: any = await r.json().catch(() => ({}));
+  const ms = Date.now() - startedAt;
+  const ctx = { method, ms, status: r.status };
+  if (!r.ok || j?.ok === false) {
+    const description = String(j?.description ?? `http ${r.status}`);
+    logError("tg.upload", { ...ctx, reason: "telegram_error", description });
+    throw new Error(`Telegram ${method} failed [${r.status}]: ${j?.description ?? JSON.stringify(j)}`);
+  }
+  logInfo("tg.upload", ctx);
+  return j.result;
+}
+
+/**
  * DM the boss chat that a Telegram delivery failed. Throttled per
  * `${method}:${status}:${shortDescription}` so a sustained outage produces
  * one alert per cooldown window instead of one per failed call. Uses

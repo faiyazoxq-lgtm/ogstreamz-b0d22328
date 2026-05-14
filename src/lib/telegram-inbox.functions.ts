@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { tgCall, tgSendMessage } from "@/lib/telegram-bot.server";
+import { tgCall, tgSendMessage, tgSendMultipart } from "@/lib/telegram-bot.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function assertAdmin(supabase: any, userId: string) {
@@ -261,5 +261,56 @@ export const sendMyTelegramMessage = createServerFn({ method: "POST" })
     await assertVip(supabase, userId);
     const chatId = await getMyChatId(userId);
     const result = await tgSendMessage(chatId, data.text);
+    return { ok: true, message_id: (result as any)?.message_id ?? null };
+  });
+
+/**
+ * Send a single image or file from the caller into their own bot DM.
+ * Image MIME types go via sendPhoto, everything else via sendDocument.
+ * VIP only. Hard cap at 10 MB to keep the Worker payload sane.
+ */
+export const sendMyTelegramAttachment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: {
+    filename: string;
+    mime: string;
+    dataBase64: string;
+    caption?: string;
+  }) =>
+    z
+      .object({
+        filename: z.string().min(1).max(255),
+        mime: z.string().min(1).max(127),
+        // ~10MB raw → ~13.4MB base64. Cap base64 length at 14MB chars.
+        dataBase64: z.string().min(1).max(14 * 1024 * 1024),
+        caption: z.string().max(1024).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    await assertVip(supabase, userId);
+    const chatId = await getMyChatId(userId);
+
+    const bytes = Uint8Array.from(Buffer.from(data.dataBase64, "base64"));
+    if (bytes.length === 0) throw new Error("Empty file");
+    if (bytes.length > 10 * 1024 * 1024) throw new Error("File too large (max 10 MB)");
+
+    const isImage = /^image\//i.test(data.mime);
+    const method = isImage ? "sendPhoto" : "sendDocument";
+    const fileField = isImage ? "photo" : "document";
+
+    const fields: Record<string, string | number> = { chat_id: chatId };
+    if (data.caption) {
+      fields.caption = data.caption;
+      fields.parse_mode = "HTML";
+    }
+
+    const result = await tgSendMultipart(
+      method,
+      fileField,
+      { bytes, filename: data.filename, mime: data.mime },
+      fields,
+    );
     return { ok: true, message_id: (result as any)?.message_id ?? null };
   });

@@ -1,22 +1,41 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, RefreshCw, Send, MessageSquare } from "lucide-react";
+import { Loader2, RefreshCw, Send, MessageSquare, Paperclip, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   listMyTelegramMessages,
   sendMyTelegramMessage,
+  sendMyTelegramAttachment,
   type TgMessage,
 } from "@/lib/telegram-inbox.functions";
 
 const BOT_USERNAME = "Ogstreamzbot";
 const PAGE_SIZE = 50;
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024; // 10 MB
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // strip "data:<mime>;base64,"
+      const comma = result.indexOf(",");
+      resolve(comma >= 0 ? result.slice(comma + 1) : result);
+    };
+    reader.onerror = () => reject(reader.error ?? new Error("Read failed"));
+    reader.readAsDataURL(file);
+  });
+}
 
 export function MyTelegramInbox() {
   const qc = useQueryClient();
   const fetchMessages = useServerFn(listMyTelegramMessages);
   const sendMessage = useServerFn(sendMyTelegramMessage);
+  const sendAttachment = useServerFn(sendMyTelegramAttachment);
   const [draft, setDraft] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
   const prevScrollHeightRef = useRef<number | null>(null);
@@ -39,9 +58,24 @@ export function MyTelegramInbox() {
   });
 
   const send = useMutation({
-    mutationFn: (text: string) => sendMessage({ data: { text } }),
+    mutationFn: async ({ text, file }: { text: string; file: File | null }) => {
+      if (file) {
+        const dataBase64 = await fileToBase64(file);
+        return sendAttachment({
+          data: {
+            filename: file.name,
+            mime: file.type || "application/octet-stream",
+            dataBase64,
+            caption: text || undefined,
+          },
+        });
+      }
+      return sendMessage({ data: { text } });
+    },
     onSuccess: () => {
       setDraft("");
+      setAttachment(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       toast.success("Sent to your Telegram");
       qc.invalidateQueries({ queryKey: ["my-tg-inbox"] });
     },
@@ -52,8 +86,20 @@ export function MyTelegramInbox() {
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
     const text = draft.trim();
-    if (!text || send.isPending) return;
-    send.mutate(text);
+    if (send.isPending) return;
+    if (!text && !attachment) return;
+    send.mutate({ text, file: attachment });
+  };
+
+  const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    if (!file) return;
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      toast.error("File too large (max 10 MB)");
+      e.target.value = "";
+      return;
+    }
+    setAttachment(file);
   };
 
   // Pages come newest-page-first (page0 = newest 50, page1 = older 50, ...).
@@ -188,35 +234,79 @@ export function MyTelegramInbox() {
 
       <form
         onSubmit={onSubmit}
-        className="border-t border-white/10 p-2 flex items-end gap-2"
+        className="border-t border-white/10 p-2 space-y-2"
       >
-        <textarea
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Send a message to your Telegram (HTML allowed)…"
-          disabled={send.isPending || q.isError}
-          rows={2}
-          className="flex-1 resize-none rounded-md border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/35 focus:outline-none focus:border-sky-400/50"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              onSubmit(e as unknown as FormEvent);
+        {attachment && (
+          <div className="flex items-center gap-2 rounded-md border border-sky-500/30 bg-sky-950/20 px-2 py-1.5 text-xs text-white/85">
+            <Paperclip className="h-3.5 w-3.5 text-sky-300 shrink-0" />
+            <span className="truncate flex-1" title={attachment.name}>
+              {attachment.name}
+            </span>
+            <span className="text-white/45 shrink-0">
+              {(attachment.size / 1024).toFixed(0)} KB
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setAttachment(null);
+                if (fileInputRef.current) fileInputRef.current.value = "";
+              }}
+              className="rounded p-0.5 text-white/55 hover:text-white hover:bg-white/10"
+              title="Remove"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+        <div className="flex items-end gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={onPickFile}
+            disabled={send.isPending || q.isError}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={send.isPending || q.isError}
+            className="inline-flex items-center justify-center rounded-md border border-white/10 bg-black/40 px-2 py-2 text-white/65 hover:text-white hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Attach image or file (max 10 MB)"
+          >
+            <Paperclip className="h-4 w-4" />
+          </button>
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder={
+              attachment
+                ? "Add a caption (optional)…"
+                : "Send a message to your Telegram (HTML allowed)…"
             }
-          }}
-        />
-        <button
-          type="submit"
-          disabled={!draft.trim() || send.isPending || q.isError}
-          className="inline-flex items-center gap-1.5 rounded-md bg-sky-500 hover:bg-sky-400 text-black disabled:opacity-40 disabled:cursor-not-allowed px-3 py-2 text-xs font-bold uppercase tracking-[0.2em]"
-          title="Send (⌘/Ctrl + Enter)"
-        >
-          {send.isPending ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Send className="h-3.5 w-3.5" />
-          )}
-          Send
-        </button>
+            disabled={send.isPending || q.isError}
+            rows={2}
+            className="flex-1 resize-none rounded-md border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/35 focus:outline-none focus:border-sky-400/50"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                onSubmit(e as unknown as FormEvent);
+              }
+            }}
+          />
+          <button
+            type="submit"
+            disabled={(!draft.trim() && !attachment) || send.isPending || q.isError}
+            className="inline-flex items-center gap-1.5 rounded-md bg-sky-500 hover:bg-sky-400 text-black disabled:opacity-40 disabled:cursor-not-allowed px-3 py-2 text-xs font-bold uppercase tracking-[0.2em]"
+            title="Send (⌘/Ctrl + Enter)"
+          >
+            {send.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Send className="h-3.5 w-3.5" />
+            )}
+            Send
+          </button>
+        </div>
       </form>
     </div>
   );
