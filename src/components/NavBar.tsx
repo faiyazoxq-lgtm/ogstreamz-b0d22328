@@ -329,7 +329,7 @@ export function NavBar() {
           <li className="sm:hidden">
             <MobileNavDrawer
               hubs={isBoss ? visibleHubs : []}
-              stores={storeLinks}
+              stores={isBoss ? storeLinks.filter((l) => l.to !== "/store") : storeLinks}
               admin={isBoss ? [{ to: "/boss", label: "Boss Portal", icon: Crown, desc: "Admin · Civility · Analytics · Lexicon" }] : []}
               user={user}
               profile={profile}
