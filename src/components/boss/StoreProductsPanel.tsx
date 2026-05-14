@@ -517,7 +517,7 @@ function DraftEditor({
                   className="border-emerald-700/50 text-emerald-200 hover:bg-emerald-900/40 shrink-0"
                 >
                   {uploading
-                    ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" />Uploading…</>
+                    ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" />Uploading {uploadPct}%</>
                     : <><Upload className="h-4 w-4 mr-1" />Upload from device</>}
                 </Button>
                 {draft.image_url && (
@@ -532,6 +532,22 @@ function DraftEditor({
                   </Button>
                 )}
               </div>
+              {uploading && (
+                <div className="space-y-1">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-emerald-950/60 border border-emerald-900/50">
+                    <div
+                      className="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 transition-[width] duration-150"
+                      style={{ width: `${uploadPct}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] uppercase tracking-widest text-emerald-400">
+                    Uploading {uploadPct}% — please wait before saving
+                  </p>
+                </div>
+              )}
+              <p className="text-[10px] text-emerald-700">
+                Tip: drag &amp; drop an image anywhere on this dialog to upload it.
+              </p>
               {draft.image_url && (
                 <div className="flex items-center gap-3 rounded-md border border-emerald-900/40 bg-black/40 p-2">
                   <img
