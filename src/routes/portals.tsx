@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 import { requireMember } from "@/lib/route-guards";
 import { useAuth } from "@/hooks/use-auth";
+import ogBotAvatar from "@/assets/og-streamz-wallpaper.png";
 
 type PortalRow = {
   id: string;
@@ -110,14 +111,26 @@ function OgBotEmpty({
     >
       <div className="flex items-start gap-4">
         <div
-          className="shrink-0 inline-flex items-center justify-center rounded-full h-12 w-12 sm:h-14 sm:w-14 ring-2"
+          className="relative shrink-0 overflow-hidden rounded-full h-12 w-12 sm:h-14 sm:w-14 ring-2"
           style={{
             background: `color-mix(in oklab, ${meta.accent} 15%, transparent)`,
-            color: meta.accent,
-            boxShadow: `inset 0 0 20px color-mix(in oklab, ${meta.accent} 30%, transparent)`,
+            boxShadow: `0 0 22px -6px ${meta.accent}, inset 0 0 20px color-mix(in oklab, ${meta.accent} 25%, transparent)`,
+            // @ts-ignore – CSS custom prop for ring colour
+            "--tw-ring-color": `color-mix(in oklab, ${meta.accent} 60%, transparent)` as any,
           }}
         >
-          <Bot className="h-6 w-6 sm:h-7 sm:w-7" />
+          <img
+            src={ogBotAvatar}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover scale-[1.15]"
+            style={{ objectPosition: "78% 48%" }}
+          />
+          <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-black/40 via-transparent to-white/10" />
+          <Bot
+            className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-black/80 p-0.5 ring-1 ring-white/20"
+            style={{ color: meta.accent }}
+          />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] font-bold" style={{ color: meta.accent }}>
