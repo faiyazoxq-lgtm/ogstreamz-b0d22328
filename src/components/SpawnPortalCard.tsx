@@ -359,66 +359,261 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Portal Name</label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={copy.namePh} className="mt-1 h-11 bg-background" disabled={loading} />
-            </div>
-            <div>
-              <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Language</label>
-              <Input value={language} onChange={(e) => setLanguage(e.target.value)} placeholder="English" className="mt-1 h-11 bg-background" disabled={loading} />
-            </div>
-            <div className="sm:col-span-2">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Niche / Theme</label>
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={autoDescribe}
-                    disabled={describing || loading}
-                    aria-label="Auto-generate a richer description from your keywords"
-                    title="Use your name + keywords to draft a richer description"
-                    className="h-7 px-2.5 text-[10px] uppercase tracking-[0.22em] font-bold border-[oklch(0.72_0.22_245/0.5)] hover:border-[oklch(0.72_0.22_245)] hover:bg-[oklch(0.72_0.22_245/0.08)]"
-                  >
-                    {describing
-                      ? <><Loader2 className="h-3 w-3 animate-spin mr-1.5" />Drafting…</>
-                      : <><Sparkles className="h-3 w-3 mr-1.5 text-[oklch(0.72_0.22_245)]" />Auto-describe</>}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={autoDescribe}
-                    disabled={describing || loading || (!niche.trim() && !name.trim() && !vibe.trim())}
-                    aria-label="Regenerate description from the same keywords"
-                    title="Draft a fresh description using your existing keywords"
-                    className="h-7 px-2.5 text-[10px] uppercase tracking-[0.22em] font-bold border-amber-300/50 hover:border-amber-300 hover:bg-amber-300/10"
-                  >
-                    {describing
-                      ? <Loader2 className="h-3 w-3 animate-spin" />
-                      : <><RotateCcw className="h-3 w-3 mr-1.5 text-amber-300" />Regenerate</>}
-                  </Button>
-                </div>
+          {/* Wizard stepper */}
+          {(() => {
+            const STEPS = [
+              { key: 0, label: "Name",     Icon: Type },
+              { key: 1, label: "Theme",    Icon: Tag },
+              { key: 2, label: "Vibe",     Icon: Palette },
+              { key: 3, label: "Language", Icon: Languages },
+              { key: 4, label: "Review",   Icon: Sparkles },
+            ] as const;
+            return (
+              <ol className="flex items-center gap-1.5 mb-5 overflow-x-auto" aria-label="Portal wizard progress">
+                {STEPS.map((s, i) => {
+                  const done = step > s.key;
+                  const active = step === s.key;
+                  const Icon = s.Icon;
+                  return (
+                    <li key={s.key} className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => !loading && setStep(s.key)}
+                        aria-current={active ? "step" : undefined}
+                        className={[
+                          "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] font-bold transition",
+                          active
+                            ? "border-amber-300/70 bg-amber-300/15 text-foreground"
+                            : done
+                            ? "border-[oklch(0.72_0.22_245/0.5)] bg-[oklch(0.72_0.22_245/0.08)] text-foreground"
+                            : "border-border text-muted-foreground hover:border-foreground/40",
+                        ].join(" ")}
+                      >
+                        <span className="inline-flex h-4 w-4 items-center justify-center">
+                          {done ? <Check className="h-3 w-3" /> : <Icon className="h-3 w-3" />}
+                        </span>
+                        <span className="hidden sm:inline">{s.label}</span>
+                        <span className="sm:hidden">{s.key + 1}</span>
+                      </button>
+                      {i < STEPS.length - 1 && (
+                        <span aria-hidden="true" className={`h-px w-4 ${done ? "bg-[oklch(0.72_0.22_245/0.6)]" : "bg-border"}`} />
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            );
+          })()}
+
+          {/* Step content */}
+          <div className="rounded-xl border border-border bg-background/40 p-4 sm:p-5 min-h-[180px]">
+            {step === 0 && (
+              <div>
+                <label htmlFor="wiz-name" className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                  Step 1 · Portal Name
+                </label>
+                <Input
+                  id="wiz-name"
+                  autoFocus
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={copy.namePh}
+                  className="mt-2 h-12 bg-background"
+                  disabled={loading}
+                  maxLength={NAME_MAX}
+                />
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Short, memorable, brandable. {nameTrim.length}/{NAME_MAX}
+                </p>
+                {fieldErrors.name && nameTrim.length > 0 && (
+                  <p className="mt-1 text-[11px] text-destructive">{fieldErrors.name}</p>
+                )}
               </div>
-              <textarea
-                value={niche}
-                onChange={(e) => setNiche(e.target.value)}
-                placeholder={copy.nichePh}
-                rows={2}
-                disabled={loading || describing}
-                className="mt-1 w-full bg-background border border-border rounded-md px-3 py-2 text-sm resize-y disabled:opacity-50"
-              />
-              <p className="mt-1 text-[10px] text-muted-foreground">
-                Tip: drop a few keywords then tap <span className="font-bold text-foreground">Auto-describe</span> for a richer prompt.
-              </p>
-            </div>
-            <div className="sm:col-span-2">
-              <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Mood / Visual Vibe</label>
-              <Input value={vibe} onChange={(e) => setVibe(e.target.value)} placeholder={copy.vibePh} className="mt-1 h-11 bg-background" disabled={loading} />
-            </div>
+            )}
+
+            {step === 1 && (
+              <div>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <label htmlFor="wiz-niche" className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                    Step 2 · Niche / Theme
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={autoDescribe}
+                      disabled={describing || loading}
+                      className="h-7 px-2.5 text-[10px] uppercase tracking-[0.22em] font-bold border-[oklch(0.72_0.22_245/0.5)] hover:border-[oklch(0.72_0.22_245)] hover:bg-[oklch(0.72_0.22_245/0.08)]"
+                    >
+                      {describing
+                        ? <><Loader2 className="h-3 w-3 animate-spin mr-1.5" />Drafting…</>
+                        : <><Sparkles className="h-3 w-3 mr-1.5 text-[oklch(0.72_0.22_245)]" />Auto-describe</>}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={autoDescribe}
+                      disabled={describing || loading || (!niche.trim() && !name.trim() && !vibe.trim())}
+                      className="h-7 px-2.5 text-[10px] uppercase tracking-[0.22em] font-bold border-amber-300/50 hover:border-amber-300 hover:bg-amber-300/10"
+                    >
+                      {describing
+                        ? <Loader2 className="h-3 w-3 animate-spin" />
+                        : <><RotateCcw className="h-3 w-3 mr-1.5 text-amber-300" />Regenerate</>}
+                    </Button>
+                  </div>
+                </div>
+                <textarea
+                  id="wiz-niche"
+                  autoFocus
+                  value={niche}
+                  onChange={(e) => setNiche(e.target.value)}
+                  placeholder={copy.nichePh}
+                  rows={4}
+                  disabled={loading || describing}
+                  className="mt-2 w-full bg-background border border-border rounded-md px-3 py-2 text-sm resize-y disabled:opacity-50"
+                  maxLength={NICHE_MAX}
+                />
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Drop a few keywords then tap <span className="font-bold text-foreground">Auto-describe</span> for a richer prompt. {nicheTrim.length}/{NICHE_MAX}
+                </p>
+                {fieldErrors.niche && nicheTrim.length > 0 && (
+                  <p className="mt-1 text-[11px] text-destructive">{fieldErrors.niche}</p>
+                )}
+              </div>
+            )}
+
+            {step === 2 && (
+              <div>
+                <label htmlFor="wiz-vibe" className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                  Step 3 · Mood / Visual Vibe <span className="text-foreground/60">(optional)</span>
+                </label>
+                <Input
+                  id="wiz-vibe"
+                  autoFocus
+                  value={vibe}
+                  onChange={(e) => setVibe(e.target.value)}
+                  placeholder={copy.vibePh}
+                  className="mt-2 h-12 bg-background"
+                  disabled={loading}
+                />
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Guides the wallpaper & accent palette. Leave blank to auto-derive from the theme.
+                </p>
+              </div>
+            )}
+
+            {step === 3 && (
+              <div>
+                <label htmlFor="wiz-lang" className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                  Step 4 · Language
+                </label>
+                <Input
+                  id="wiz-lang"
+                  autoFocus
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  placeholder="English"
+                  className="mt-2 h-12 bg-background"
+                  disabled={loading}
+                  maxLength={LANG_MAX}
+                />
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {["English", "Español", "Français", "Deutsch", "Português", "中文", "日本語"].map((l) => (
+                    <button
+                      key={l}
+                      type="button"
+                      onClick={() => setLanguage(l)}
+                      className={`text-[11px] px-2.5 py-1 rounded-full border ${
+                        language === l ? "border-amber-300/70 bg-amber-300/15 text-foreground" : "border-border text-muted-foreground hover:border-foreground/40"
+                      }`}
+                    >
+                      {l}
+                    </button>
+                  ))}
+                </div>
+                {fieldErrors.language && (
+                  <p className="mt-2 text-[11px] text-destructive">{fieldErrors.language}</p>
+                )}
+              </div>
+            )}
+
+            {step === 4 && (
+              <div className="space-y-3">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Step 5 · Review</p>
+                <div className="rounded-md border border-border bg-background/60 divide-y divide-border">
+                  <div className="flex items-start gap-3 px-3 py-2">
+                    <Type className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Name</div>
+                      <div className="text-foreground font-medium truncate">{nameTrim || "—"}</div>
+                    </div>
+                    <button type="button" onClick={() => setStep(0)} className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground hover:text-foreground">Edit</button>
+                  </div>
+                  <div className="flex items-start gap-3 px-3 py-2">
+                    <Tag className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Niche / theme</div>
+                      <div className="text-foreground font-medium line-clamp-3 break-words">{nicheTrim || "—"}</div>
+                    </div>
+                    <button type="button" onClick={() => setStep(1)} className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground hover:text-foreground">Edit</button>
+                  </div>
+                  <div className="flex items-start gap-3 px-3 py-2">
+                    <Palette className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Vibe</div>
+                      <div className="text-foreground font-medium line-clamp-2 break-words">{vibe.trim() || "Auto"}</div>
+                    </div>
+                    <button type="button" onClick={() => setStep(2)} className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground hover:text-foreground">Edit</button>
+                  </div>
+                  <div className="flex items-start gap-3 px-3 py-2">
+                    <Languages className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Language</div>
+                      <div className="text-foreground font-medium truncate">{langTrim || "—"}</div>
+                    </div>
+                    <button type="button" onClick={() => setStep(3)} className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground hover:text-foreground">Edit</button>
+                  </div>
+                </div>
+                {!isValid && (
+                  <p className="text-[11px] text-destructive">
+                    {fieldErrors.name || fieldErrors.niche || fieldErrors.language}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Wizard navigation */}
+          <div className="mt-4 flex items-center justify-between gap-3 flex-wrap">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setStep((s) => (Math.max(0, s - 1) as 0 | 1 | 2 | 3 | 4))}
+              disabled={step === 0 || loading}
+              className="h-10"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1.5" /> Back
+            </Button>
+            {step < 4 ? (
+              <Button
+                type="button"
+                onClick={() => {
+                  if (step === 0 && fieldErrors.name) { toast.error(fieldErrors.name); return; }
+                  if (step === 1 && fieldErrors.niche) { toast.error(fieldErrors.niche); return; }
+                  if (step === 3 && fieldErrors.language) { toast.error(fieldErrors.language); return; }
+                  setStep((s) => (Math.min(4, s + 1) as 0 | 1 | 2 | 3 | 4));
+                }}
+                disabled={loading}
+                className="h-10 ml-auto"
+              >
+                Next <ArrowRight className="h-4 w-4 ml-1.5" />
+              </Button>
+            ) : null}
+          </div>
+
+          {step === 4 && (
           <TooltipProvider delayDuration={150}>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -462,12 +657,13 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          )}
           {!hasCredits && (
             <p id="spawn-credits-hint" className="sr-only">
               You need {creditsNeeded} more 🪙 to spawn a portal.
             </p>
           )}
-          {!isValid && (
+          {step === 4 && !isValid && (
             <p className="mt-2 text-[11px] text-destructive">
               {fieldErrors.name || fieldErrors.niche || fieldErrors.language}
             </p>
