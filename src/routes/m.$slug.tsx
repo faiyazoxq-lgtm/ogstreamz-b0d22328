@@ -383,7 +383,7 @@ function MusicPortalPage() {
         navigate({
           to: "/m/$slug",
           params: { slug: portal.slug },
-          search: (prev) => ({ ...prev, job: undefined }),
+          search: (prev: Record<string, unknown>) => ({ ...prev, job: undefined }),
           replace: true,
         });
       }
