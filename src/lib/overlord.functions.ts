@@ -114,6 +114,85 @@ export const grantVipPass = createServerFn({ method: "POST" })
     return { id: id as string };
   });
 
+function makeVipCode(): string {
+  // 12-char URL-safe code, easy to type. Avoids ambiguous chars.
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = new Uint8Array(12);
+  crypto.getRandomValues(bytes);
+  let s = "";
+  for (let i = 0; i < 12; i++) s += alphabet[bytes[i] % alphabet.length];
+  return `VIP-${s.slice(0, 4)}-${s.slice(4, 8)}-${s.slice(8, 12)}`;
+}
+
+/**
+ * Boss-only: generate a one-time code that grants the redeemer a lifetime
+ * VIP pass (revocable from the dashboard). Optionally bundles credits.
+ */
+export const createLifetimeVipCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { code?: string; credits?: number; notes?: string; expiresAt?: string | null }) => ({
+    code: d.code ? String(d.code).trim().toUpperCase().slice(0, 32) : null,
+    credits: Math.max(1, Math.trunc(Number(d.credits ?? 1))),
+    notes: d.notes ? String(d.notes).slice(0, 240) : null,
+    expiresAt: d.expiresAt ?? null,
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as any;
+    if (!(await isBoss(supabase))) throw new Error("Boss only");
+    const code = data.code || makeVipCode();
+    if (!/^[A-Z0-9_-]{3,32}$/.test(code)) throw new Error("Code must be 3-32 chars A-Z 0-9 _ -");
+    const { data: row, error } = await supabase
+      .from("redeem_codes")
+      .insert({
+        code,
+        credits: data.credits,
+        grant_rank: "vip",
+        max_uses: 1,
+        expires_at: data.expiresAt,
+        lifetime_vip: true,
+        created_by: userId,
+      })
+      .select("id, code, credits, max_uses, uses, expires_at, created_at, notes:notes")
+      .single();
+    if (error) throw new Error(error.message);
+    // Stash the boss note locally — `notes` isn't a column on redeem_codes,
+    // so we annotate the returned object only (not persisted).
+    return { code: { ...row, boss_notes: data.notes } };
+  });
+
+export const listLifetimeVipCodes = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context as any;
+    if (!(await isBoss(supabase))) throw new Error("Boss only");
+    const { data, error } = await supabase
+      .from("redeem_codes")
+      .select("id, code, credits, max_uses, uses, expires_at, created_at")
+      .eq("lifetime_vip", true)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) throw new Error(error.message);
+    return { codes: data ?? [] };
+  });
+
+export const deleteLifetimeVipCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context as any;
+    if (!(await isBoss(supabase))) throw new Error("Boss only");
+    // Only allow deleting unredeemed codes; redeemed ones must be revoked
+    // via the issued vip_pass instead (preserves audit trail).
+    const { error } = await supabase
+      .from("redeem_codes")
+      .delete()
+      .eq("id", data.id)
+      .eq("lifetime_vip", true)
+      .eq("uses", 0);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const revokeVipPass = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { passId: string }) => ({ passId: String(d.passId) }))
