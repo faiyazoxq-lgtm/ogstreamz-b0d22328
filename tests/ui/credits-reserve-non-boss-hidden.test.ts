@@ -23,7 +23,7 @@ function reserveCardSlice(): { card: string; before: string } {
   expect(start, "Reserve card marker not found").toBeGreaterThan(-1);
   const end = PROFILE.indexOf("Buy Credits — hidden for Boss", start);
   expect(end, "Reserve card end marker not found").toBeGreaterThan(start);
-  return { card: PROFILE.slice(start, end), before: PROFILE.slice(Math.max(0, start - 200), start) };
+  return { card: PROFILE.slice(start, end), before: PROFILE.slice(Math.max(0, start - 600), start) };
 }
 
 function* walkSrc(dir: string): Generator<string> {
