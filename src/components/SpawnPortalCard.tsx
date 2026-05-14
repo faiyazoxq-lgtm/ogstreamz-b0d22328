@@ -445,7 +445,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
           })()}
 
           {/* Step content */}
-          <div className="rounded-xl border border-border bg-background/40 p-4 sm:p-5 min-h-[180px]">
+          <div className="rounded-xl border border-border/70 bg-background/60 backdrop-blur-sm p-5 sm:p-6 min-h-[200px]">
             {step === 0 && (
               <div>
                 <label htmlFor="wiz-name" className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
