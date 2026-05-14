@@ -40,21 +40,43 @@ type Draft = {
   price_cents: string;
   currency: string;
   duration_days: string;
+  duration_amount: string;
+  duration_unit: "n/a" | "days" | "months" | "years" | "lifetime";
   asset_url: string;
   metadata: string;
   active: boolean;
   sort_order: string;
 };
 
+function daysToUnit(d: number | null | undefined): { amount: string; unit: Draft["duration_unit"] } {
+  if (d == null) return { amount: "", unit: "n/a" };
+  if (d === 0) return { amount: "", unit: "lifetime" };
+  if (d % 365 === 0) return { amount: String(d / 365), unit: "years" };
+  if (d % 30 === 0) return { amount: String(d / 30), unit: "months" };
+  return { amount: String(d), unit: "days" };
+}
+
+function unitToDays(amount: string, unit: Draft["duration_unit"]): number | null {
+  if (unit === "n/a") return null;
+  if (unit === "lifetime") return 0;
+  const n = Number(amount);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  if (unit === "years") return Math.round(n * 365);
+  if (unit === "months") return Math.round(n * 30);
+  return Math.round(n);
+}
+
 function emptyDraft(kind: KindV): Draft {
   return {
     id: null, sku: "", kind, title: "", description: "",
     image_url: "", price_cents: "0", currency: "usd", duration_days: "",
+    duration_amount: "", duration_unit: "n/a",
     asset_url: "", metadata: "{}", active: true, sort_order: "0",
   };
 }
 
 function rowToDraft(r: StoreProductRow): Draft {
+  const du = daysToUnit(r.duration_days);
   return {
     id: r.id,
     sku: r.sku,
@@ -65,6 +87,8 @@ function rowToDraft(r: StoreProductRow): Draft {
     price_cents: String(r.price_cents),
     currency: r.currency,
     duration_days: r.duration_days == null ? "" : String(r.duration_days),
+    duration_amount: du.amount,
+    duration_unit: du.unit,
     asset_url: r.asset_url ?? "",
     metadata: JSON.stringify(r.metadata ?? {}, null, 2),
     active: r.active,
