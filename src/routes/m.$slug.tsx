@@ -36,6 +36,7 @@ type MusicPortal = {
   swear_chat_enabled?: boolean;
   jokes: string[] | null;
   music_hooks: string[] | null;
+  wallpaper_url?: string | null;
 };
 
 export const Route = createFileRoute("/m/$slug")({
@@ -46,7 +47,7 @@ export const Route = createFileRoute("/m/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals_public")
-      .select("id, slug, name, language, style, vibe, theme, kind, swear_chat_enabled, jokes, music_hooks")
+      .select("id, slug, name, language, style, vibe, theme, kind, swear_chat_enabled, jokes, music_hooks, wallpaper_url")
       .eq("slug", params.slug)
       .eq("kind", "music")
       .maybeSingle();
@@ -421,6 +422,18 @@ function MusicPortalPage() {
   return (
     <div style={{ background: theme.bg, color: "#fff", minHeight: "100vh" }} className="relative flex flex-col">
       <div className="absolute inset-0 pointer-events-none" style={{ background: theme.pattern }} />
+      {portal.wallpaper_url && (
+        <>
+          <div
+            className="absolute inset-0 pointer-events-none bg-cover bg-center"
+            style={{ backgroundImage: `url(${portal.wallpaper_url})`, opacity: 0.35 }}
+          />
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.75) 100%)" }}
+          />
+        </>
+      )}
       <div className="relative flex-1 px-5 sm:px-8 py-12 max-w-3xl mx-auto w-full">
         <div className="flex items-center justify-between mb-8">
           <Link to="/" className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.3em] opacity-60 hover:opacity-100">
