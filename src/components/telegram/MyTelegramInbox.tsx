@@ -352,29 +352,71 @@ export function MyTelegramInbox() {
         className="border-t border-white/10 p-2 space-y-2"
       >
         {attachments.length > 0 && (
-          <div className="space-y-1">
-            {attachments.map((file, idx) => (
-              <div
-                key={`${file.name}-${idx}`}
-                className="flex items-center gap-2 rounded-md border border-sky-500/30 bg-sky-950/20 px-2 py-1.5 text-xs text-white/85"
-              >
-                <Paperclip className="h-3.5 w-3.5 text-sky-300 shrink-0" />
-                <span className="truncate flex-1" title={file.name}>
-                  {file.name}
-                </span>
-                <span className="text-white/45 shrink-0">
-                  {(file.size / 1024).toFixed(0)} KB
-                </span>
-                <button
-                  type="button"
-                  onClick={() => removeAttachment(idx)}
-                  className="rounded p-0.5 text-white/55 hover:text-white hover:bg-white/10"
-                  title="Remove"
+          <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+            {attachments.map((item) => {
+              const p = progress[item.id];
+              const status: UploadStatus = p?.status ?? "pending";
+              return (
+                <div
+                  key={item.id}
+                  className={`rounded-md border px-2 py-1.5 ${
+                    status === "error"
+                      ? "border-rose-500/40 bg-rose-950/20"
+                      : status === "sent"
+                      ? "border-emerald-500/40 bg-emerald-950/15"
+                      : status === "uploading"
+                      ? "border-sky-400/60 bg-sky-950/30"
+                      : "border-sky-500/30 bg-sky-950/20"
+                  }`}
                 >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
+                  <div className="flex items-center gap-2 text-xs text-white/85">
+                    {status === "uploading" ? (
+                      <Loader2 className="h-3.5 w-3.5 text-sky-300 shrink-0 animate-spin" />
+                    ) : status === "sent" ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-300 shrink-0" />
+                    ) : status === "error" ? (
+                      <AlertCircle className="h-3.5 w-3.5 text-rose-300 shrink-0" />
+                    ) : (
+                      <Paperclip className="h-3.5 w-3.5 text-sky-300 shrink-0" />
+                    )}
+                    <span className="truncate flex-1" title={item.file.name}>
+                      {item.file.name}
+                    </span>
+                    <span className="text-white/45 shrink-0">
+                      {(item.file.size / 1024).toFixed(0)} KB
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeAttachment(item.id)}
+                      disabled={status === "uploading"}
+                      className="rounded p-0.5 text-white/55 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                      title="Remove"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={item.caption}
+                    onChange={(e) => updateCaption(item.id, e.target.value)}
+                    placeholder="Caption for this file (optional)…"
+                    disabled={send.isPending}
+                    maxLength={1024}
+                    className="mt-1 w-full rounded border border-white/10 bg-black/40 px-2 py-1 text-[11px] text-white placeholder:text-white/30 focus:outline-none focus:border-sky-400/50 disabled:opacity-60"
+                  />
+                  {status === "uploading" && (
+                    <div className="mt-1 h-0.5 w-full overflow-hidden rounded bg-white/10">
+                      <div className="h-full w-1/3 animate-[telegram-bar_1.2s_ease-in-out_infinite] bg-sky-400" />
+                    </div>
+                  )}
+                  {status === "error" && p?.error && (
+                    <div className="mt-1 text-[10px] text-rose-300/90 truncate" title={p.error}>
+                      {p.error}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
         <div className="flex items-end gap-2">
@@ -400,7 +442,7 @@ export function MyTelegramInbox() {
             onChange={(e) => setDraft(e.target.value)}
             placeholder={
               attachments.length > 0
-                ? "Add a caption (optional)…"
+                ? "Optional message to send after the files…"
                 : "Send a message to your Telegram (HTML allowed) — drop files anywhere…"
             }
             disabled={send.isPending || q.isError}
