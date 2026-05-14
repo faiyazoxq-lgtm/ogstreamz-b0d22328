@@ -272,19 +272,29 @@ function MusicPortalPage() {
     "Trap / 808 Heavy",
   ];
 
-  const onPickStyle = async (preset: string) => {
-    if (!user) return toast.error("Sign in to generate");
+  // Step 1 — picking a style only selects it; generation is gated behind
+  // the explicit "Generate" button so users can review/swap before spending
+  // a coin and triggering the Suno spawn.
+  const onPickStyle = (preset: string) => {
     if (trackStatus === "generating") return;
-    setSelectedStyle(preset);
+    setSelectedStyle((cur) => (cur === preset ? null : preset));
+  };
+
+  // Step 2 — explicit Generate. Spends 1 coin, spawns Suno (V5.5 fast,
+  // commercial-rights, 2 versions), then polling renders the 30s previews.
+  const onGenerateTrack = async () => {
+    if (!user) return toast.error("Sign in to generate");
+    if (!selectedStyle) return toast.error("Pick a style first");
+    if (trackStatus === "generating") return;
     setTrackStatus("generating");
     setAudioV1(null);
     setAudioV2(null);
     setDownloadUnlocked(false);
     setTrackJobId(null);
     try {
-      const r = await generateTrackFn({ data: { slug: portal.slug, style: preset } });
+      const r = await generateTrackFn({ data: { slug: portal.slug, style: selectedStyle } });
       setTrackJobId(r.jobId);
-      toast.success("Generating · 2 versions on the way (~60s)");
+      toast.success("Generating · full-length, commercial-rights · 2 versions (~60s)");
     } catch (e: any) {
       toast.error(e?.message ?? "Generation failed");
       setTrackStatus("failed");
@@ -707,7 +717,7 @@ function MusicPortalPage() {
             </h2>
           </div>
           <p className="text-xs opacity-70 mb-3">
-            Pick one style — we auto-blend it with this portal's description and Suno spits out 2 versions. Preview free for 30s, unlock the full track + downloads for 2 coins.
+            Pick a style, then hit <span className="font-bold">Generate</span>. Suno spins up a full-length track in 2 versions (commercial-rights · ~60s). Preview the first 30 seconds free, then unlock the full track + downloads for 2 coins.
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {STYLE_PRESETS.map((preset) => {
@@ -732,8 +742,21 @@ function MusicPortalPage() {
             })}
           </div>
           <p className="text-[10px] opacity-50 mt-2 uppercase tracking-[0.25em]">
-            1 coin to generate · 2 coins to unlock full track + downloads
+            1 coin to generate (full track · commercial rights) · 30-sec preview free · 2 coins to unlock full track + downloads
           </p>
+
+          <Button
+            onClick={onGenerateTrack}
+            disabled={!selectedStyle || trackStatus === "generating" || !user}
+            className="mt-4 w-full h-12 text-xs uppercase tracking-[0.3em] font-bold disabled:opacity-40"
+            style={{ background: theme.accent, color: "#000" }}
+          >
+            {trackStatus === "generating" ? (
+              <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating full track…</>
+            ) : (
+              <><Wand2 className="h-4 w-4 mr-2" />Generate{selectedStyle ? ` · ${selectedStyle}` : ""} (1 coin)</>
+            )}
+          </Button>
 
           {trackStatus === "generating" && (
             <div className="mt-6 flex items-center gap-3 p-4 rounded-md border" style={{ borderColor: `${theme.accent}30`, background: "rgba(0,0,0,0.4)" }}>
