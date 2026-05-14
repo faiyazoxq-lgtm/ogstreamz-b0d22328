@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Loader2, Wand2, Sparkles, ExternalLink, Coins, Check, AlertTriangle, RotateCcw, Lock, UserPlus, LogIn, Gift, Languages, Tag, Palette, Zap } from "lucide-react";
+import { Loader2, Wand2, Sparkles, ExternalLink, Coins, Check, AlertTriangle, RotateCcw, Lock, UserPlus, LogIn, Gift, Languages, Tag, Palette, Zap, ArrowLeft, ArrowRight, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -48,6 +48,8 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
   const [created, setCreated] = useState<{ slug: string; name: string } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [describing, setDescribing] = useState(false);
+  // Wizard step: 0=name, 1=niche, 2=vibe (optional), 3=language, 4=review
+  const [step, setStep] = useState<0 | 1 | 2 | 3 | 4>(0);
   // Stage progress: 0=idle, 1=queued, 2=generating, 3=publishing, 4=done
   const [stage, setStage] = useState<0 | 1 | 2 | 3 | 4>(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -150,6 +152,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
         description: "Portal is live · 1 🪙 spent",
       });
       setName(""); setNiche(""); setVibe("");
+      setStep(0);
       // Refresh wallet so the new credit balance shows everywhere immediately
       void refresh();
     } catch (e: any) {
