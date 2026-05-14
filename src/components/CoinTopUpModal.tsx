@@ -27,8 +27,7 @@ export function CoinTopUpModal({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
-  const { user } = useAuth();
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const isBoss = profile?.rank === "boss";
   const { openCheckout, closeCheckout, isOpen: checkoutOpen, checkoutElement } = useStripeCheckout();
   const [selected, setSelected] = useState<string | null>("enforcer_pack_50");
