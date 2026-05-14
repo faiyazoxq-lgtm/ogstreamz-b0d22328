@@ -115,9 +115,8 @@ function ToolPromptBuilder() {
   const [spawned, setSpawned] = useState<Array<{ id: string; slug: string; name: string; description: string | null; vip: boolean; config: any }>>([]);
   useEffect(() => {
     supabase
-      .from("calculators")
+      .from("calculators_public")
       .select("id, slug, name, description, vip, config")
-      .eq("published", true)
       .order("created_at", { ascending: false })
       .then(({ data }) => setSpawned((data ?? []) as any));
   }, []);

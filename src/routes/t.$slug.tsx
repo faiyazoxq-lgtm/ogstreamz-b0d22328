@@ -18,10 +18,9 @@ type ToolRow = { id: string; slug: string; name: string; description: string | n
 export const Route = createFileRoute("/t/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
-      .from("calculators")
+      .from("calculators_public")
       .select("id, slug, name, description, vip, config")
       .eq("slug", params.slug)
-      .eq("published", true)
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!data) throw notFound();
