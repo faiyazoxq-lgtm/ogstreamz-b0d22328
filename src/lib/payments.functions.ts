@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { rejectBoss } from "@/integrations/supabase/boss-middleware";
 import { validateReturnUrl } from "@/lib/return-url";
 
 /** Promo config for the one-time first-order discount. */
@@ -94,7 +95,7 @@ async function resolveOrCreateCustomer(
 }
 
 export const createCheckoutSession = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([rejectBoss])
   .inputValidator(
     (data: {
       priceId: string;
@@ -172,7 +173,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
  * Returns a one-time URL the client must open in a new tab.
  */
 export const createPortalSession = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([rejectBoss])
   .inputValidator((data: { returnUrl?: string; environment: StripeEnv }) => ({
     ...data,
     returnUrl: data.returnUrl ? validateReturnUrl(data.returnUrl) : undefined,
