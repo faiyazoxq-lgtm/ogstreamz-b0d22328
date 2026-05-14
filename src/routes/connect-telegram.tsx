@@ -171,9 +171,9 @@ function ConnectTelegramPage() {
   const handleCopy = async () => {
     if (!code) return;
     try {
-      const text = ogPassTag ? `/link ${code} ${ogPassTag}` : `/link ${code}`;
-      await navigator.clipboard.writeText(text);
-      toast.success(`Copied — paste it to @${BOT_USERNAME}`);
+      const url = `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent(code)}`;
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied — paste it in Telegram or your browser");
     } catch {
       toast.error("Copy failed");
     }
