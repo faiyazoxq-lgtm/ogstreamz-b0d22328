@@ -3835,6 +3835,39 @@ export type Database = {
       }
     }
     Views: {
+      calculators_public: {
+        Row: {
+          config: Json | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          name: string | null
+          published: boolean | null
+          slug: string | null
+          vip: boolean | null
+        }
+        Insert: {
+          config?: never
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          name?: string | null
+          published?: boolean | null
+          slug?: string | null
+          vip?: boolean | null
+        }
+        Update: {
+          config?: never
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          name?: string | null
+          published?: boolean | null
+          slug?: string | null
+          vip?: boolean | null
+        }
+        Relationships: []
+      }
       portals_public: {
         Row: {
           audio_snippet_url: string | null
