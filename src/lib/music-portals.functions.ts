@@ -182,7 +182,7 @@ export const generateSunoStack = createServerFn({ method: "POST" })
     if (!data.vibe) throw new Error("Describe a vibe first");
 
     const { data: portal } = await supabase
-      .from("portals")
+      .from("portals_public")
       .select("language, style, vibe, swear_chat_enabled")
       .eq("slug", data.slug)
       .maybeSingle();
