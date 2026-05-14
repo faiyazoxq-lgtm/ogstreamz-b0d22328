@@ -23,14 +23,25 @@ async function tgSend(path: string, body: any) {
  * Provider posts JSON when a track finishes. Shape varies; we extract
  * task_id + the first delivered clip's audio_url + lyric/prompt text.
  */
-function pickFirstClip(payload: any) {
+function pickClips(payload: any) {
   const candidates: any[] =
     (Array.isArray(payload?.data) && payload.data) ||
     (Array.isArray(payload?.data?.data) && payload.data.data) ||
     (Array.isArray(payload?.clips) && payload.clips) ||
     (Array.isArray(payload?.data?.clips) && payload.data.clips) ||
     [];
-  return candidates.find((c) => c?.audio_url || c?.audio || c?.source_audio_url) ?? candidates[0] ?? null;
+  const withAudio = candidates.filter(
+    (c) => c?.audio_url || c?.audio || c?.source_audio_url,
+  );
+  const ordered = withAudio.length ? withAudio : candidates;
+  return [ordered[0] ?? null, ordered[1] ?? null] as [any, any];
+}
+
+function clipAudio(c: any): string | null {
+  return c?.audio_url || c?.audio || c?.source_audio_url || null;
+}
+function clipImage(c: any): string | null {
+  return c?.image_url || c?.image_large_url || null;
 }
 
 function extractTaskId(payload: any): string | null {
@@ -93,14 +104,16 @@ export const Route = createFileRoute("/api/public/suno-webhook")({
           return new Response("Missing task_id", { status: 400 });
         }
 
-        const clip = pickFirstClip(payload);
-        const audioUrl: string | null =
-          clip?.audio_url || clip?.audio || clip?.source_audio_url || null;
+        const [clipA, clipB] = pickClips(payload);
+        const audioUrlV1 = clipAudio(clipA);
+        const audioUrlV2 = clipAudio(clipB);
+        const audioUrl = audioUrlV1; // back-compat
         const lyricText: string | null =
-          clip?.lyric || clip?.lyrics || clip?.prompt || null;
-        const imageUrl: string | null =
-          clip?.image_url || clip?.image_large_url || null;
-        const title: string | null = clip?.title || null;
+          clipA?.lyric || clipA?.lyrics || clipA?.prompt || null;
+        const imageUrlV1 = clipImage(clipA);
+        const imageUrlV2 = clipImage(clipB);
+        const imageUrl = imageUrlV1;
+        const title: string | null = clipA?.title || null;
 
         const status: string =
           payload?.status ||
@@ -113,8 +126,12 @@ export const Route = createFileRoute("/api/public/suno-webhook")({
           .update({
             status,
             audio_url: audioUrl,
+            audio_url_v1: audioUrlV1,
+            audio_url_v2: audioUrlV2,
             lyric_text: lyricText,
             image_url: imageUrl,
+            image_url_v1: imageUrlV1,
+            image_url_v2: imageUrlV2,
             title: title ?? undefined,
             raw: payload,
           })
