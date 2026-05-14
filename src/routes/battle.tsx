@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { requireBossHub } from "@/lib/route-guards";
+import { OGBotDraftPanel } from "@/components/og-bot/OGBotDraftPanel";
 
 export const Route = createFileRoute("/battle")({
   beforeLoad: requireBossHub,
@@ -253,6 +254,23 @@ function SpawnPanel({ onSpawned }: { onSpawned: () => void }) {
       <div className="flex items-center gap-2 syndicate-header text-sm" style={{ color: "var(--syndicate-glow)" }}>
         <Flame className="h-4 w-4 neon-icon" /> Spawn Brutal Portal · Chaotic Mode Forced
       </div>
+
+      <OGBotDraftPanel
+        surface="battle-spawn"
+        kind="battle"
+        contextHint="User is on /battle spawning a savage multiple-choice scenario. Every choice ends badly."
+        placeholder="Pitch the unwinnable scenario — setting, vibe, level of filth."
+        fieldHints={[
+          { key: "name", description: "Portal name (short, brutal)", max: 80 },
+          { key: "scenario", description: "The unwinnable scenario, 2-4 sentences, foul allowed", max: 1000 },
+          { key: "emoji", description: "A single emoji that captures the mood", max: 4 },
+        ]}
+        onApply={(f) => {
+          if (f.name) setName(f.name);
+          if (f.scenario) setScenario(f.scenario);
+          if (f.emoji) setEmoji(f.emoji);
+        }}
+      />
 
       <div>
         <div className="flex items-center justify-between mb-2">
