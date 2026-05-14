@@ -1,7 +1,20 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, RefreshCw, Send, MessageSquare, Paperclip, X } from "lucide-react";
+import { Loader2, RefreshCw, Send, MessageSquare, Paperclip, X, Check, AlertCircle } from "lucide-react";
+type AttachmentItem = {
+  id: string;
+  file: File;
+  caption: string;
+};
+
+type UploadStatus = "pending" | "uploading" | "sent" | "error";
+
+type UploadProgress = {
+  status: UploadStatus;
+  error?: string;
+};
+
 import { toast } from "sonner";
 import {
   listMyTelegramMessages,
@@ -34,7 +47,8 @@ export function MyTelegramInbox() {
   const sendMessage = useServerFn(sendMyTelegramMessage);
   const sendAttachment = useServerFn(sendMyTelegramAttachment);
   const [draft, setDraft] = useState("");
-  const [attachments, setAttachments] = useState<File[]>([]);
+  const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
+  const [progress, setProgress] = useState<Record<string, UploadProgress>>({});
   const [isDragging, setIsDragging] = useState(false);
   const dragDepthRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -60,28 +74,43 @@ export function MyTelegramInbox() {
   });
 
   const send = useMutation({
-    mutationFn: async ({ text, files }: { text: string; files: File[] }) => {
-      if (files.length === 0) {
+    mutationFn: async ({ text, items }: { text: string; items: AttachmentItem[] }) => {
+      if (items.length === 0) {
         return sendMessage({ data: { text } });
       }
-      // Send each file sequentially; caption applied to the first only.
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const dataBase64 = await fileToBase64(file);
-        await sendAttachment({
-          data: {
-            filename: file.name,
-            mime: file.type || "application/octet-stream",
-            dataBase64,
-            caption: i === 0 && text ? text : undefined,
-          },
-        });
+      // Send each file sequentially with its own caption; report per-file status.
+      setProgress(
+        Object.fromEntries(items.map((it) => [it.id, { status: "pending" as UploadStatus }])),
+      );
+      for (const item of items) {
+        setProgress((prev) => ({ ...prev, [item.id]: { status: "uploading" } }));
+        try {
+          const dataBase64 = await fileToBase64(item.file);
+          await sendAttachment({
+            data: {
+              filename: item.file.name,
+              mime: item.file.type || "application/octet-stream",
+              dataBase64,
+              caption: item.caption.trim() || undefined,
+            },
+          });
+          setProgress((prev) => ({ ...prev, [item.id]: { status: "sent" } }));
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Failed";
+          setProgress((prev) => ({ ...prev, [item.id]: { status: "error", error: msg } }));
+          throw err;
+        }
+      }
+      // Send trailing text as a separate message (if provided alongside attachments).
+      if (text) {
+        await sendMessage({ data: { text } });
       }
       return { ok: true };
     },
     onSuccess: () => {
       setDraft("");
       setAttachments([]);
+      setProgress({});
       if (fileInputRef.current) fileInputRef.current.value = "";
       toast.success("Sent to your Telegram");
       qc.invalidateQueries({ queryKey: ["my-tg-inbox"] });
@@ -95,19 +124,23 @@ export function MyTelegramInbox() {
     const text = draft.trim();
     if (send.isPending) return;
     if (!text && attachments.length === 0) return;
-    send.mutate({ text, files: attachments });
+    send.mutate({ text, items: attachments });
   };
 
   const addFiles = (incoming: File[]) => {
     if (incoming.length === 0) return;
-    const accepted: File[] = [];
+    const accepted: AttachmentItem[] = [];
     let rejected = 0;
     for (const f of incoming) {
       if (f.size > MAX_ATTACHMENT_BYTES) {
         rejected++;
         continue;
       }
-      accepted.push(f);
+      accepted.push({
+        id: `${f.name}-${f.size}-${f.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
+        file: f,
+        caption: "",
+      });
     }
     if (rejected > 0) {
       toast.error(
@@ -125,8 +158,19 @@ export function MyTelegramInbox() {
     e.target.value = "";
   };
 
-  const removeAttachment = (idx: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== idx));
+  const removeAttachment = (id: string) => {
+    setAttachments((prev) => prev.filter((a) => a.id !== id));
+    setProgress((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
+  const updateCaption = (id: string, caption: string) => {
+    setAttachments((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, caption } : a)),
+    );
   };
 
   const onDragEnter = (e: React.DragEvent) => {
