@@ -87,6 +87,7 @@ function ConnectTelegramPage() {
   const [lastCheckAt, setLastCheckAt] = useState<number | null>(null);
   const [openedTelegram, setOpenedTelegram] = useState(false);
   const pollRef = useRef<number | null>(null);
+  const linkedToastRef = useRef(false);
 
   // Unauthenticated users belong on /auth.
   useEffect(() => {
@@ -146,7 +147,12 @@ function ConnectTelegramPage() {
       const s = await refresh();
       if (s?.chat_id) {
         if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
-        toast.success("Telegram linked — group features unlocked");
+        if (!linkedToastRef.current) {
+          linkedToastRef.current = true;
+          toast.success("Telegram linked — group features unlocked", {
+            id: "tg-linked",
+          });
+        }
         // Bounce them back to where they were trying to go (or home).
         let dest = "/";
         try {
@@ -209,7 +215,12 @@ function ConnectTelegramPage() {
       const s = await refresh();
       setLastCheckAt(Date.now());
       if (s?.chat_id) {
-        toast.success("Confirmed — Telegram chat bound to your profile");
+        if (!linkedToastRef.current) {
+          linkedToastRef.current = true;
+          toast.success("Telegram linked — group features unlocked", {
+            id: "tg-linked",
+          });
+        }
       } else if (s?.link_code) {
         toast.error("Not bound yet — open the link and press Start in Telegram");
       } else {
