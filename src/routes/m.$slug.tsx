@@ -230,17 +230,30 @@ function MusicPortalPage() {
   const [formatting, setFormatting] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [submitted, setSubmitted] = useState<string | null>(null);
-  const [stackVibe, setStackVibe] = useState("");
+  const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [stack, setStack] = useState<SunoStack | null>(null);
   const [stackLoading, setStackLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const onBuildStack = async () => {
+  const STYLE_PRESETS = [
+    "Aggressive & Raw",
+    "Dark Cinematic",
+    "Anthemic & Euphoric",
+    "Chill Lo-Fi",
+    "Bouncy Club",
+    "Melodic & Emotional",
+    "Gritty Underground",
+    "Trap / 808 Heavy",
+  ];
+
+  const onPickStyle = async (preset: string) => {
     if (!user) return toast.error("Sign in to build a Suno stack");
-    if (!stackVibe.trim()) return toast.error("Describe your vibe first");
+    if (stackLoading) return;
+    setSelectedStyle(preset);
+    const autoVibe = `${portal.vibe ?? portal.style ?? "studio session"} — style: ${preset}`;
     setStackLoading(true);
     try {
-      const r = await stackFn({ data: { slug: portal.slug, vibe: stackVibe } });
+      const r = await stackFn({ data: { slug: portal.slug, vibe: autoVibe } });
       setStack(r);
       toast.success("Suno V5.5 stack ready");
     } catch (e: any) {
