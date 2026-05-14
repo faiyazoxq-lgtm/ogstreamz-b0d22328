@@ -41,10 +41,30 @@ export type StreamConfigStatus =
   | { ok: true }
   | { ok: false; code: "missing" | "malformed" | "bad_protocol" | "bad_host" | "has_credentials" | "has_path"; message: string };
 
-function checkServerUrl(): StreamConfigStatus {
-  const raw = (process.env.STREAM_SERVER_URL || "").trim();
+/**
+ * Resolve the configured stream server URL.
+ * Boss can override the env-provided STREAM_SERVER_URL by writing a value
+ * into `app_settings` ('stream_server_url'). DB value wins; env is fallback.
+ */
+async function readRawServerUrl(): Promise<string> {
+  try {
+    const { data } = await supabaseAdmin
+      .from("app_settings" as never)
+      .select("value")
+      .eq("key", "stream_server_url")
+      .maybeSingle();
+    const dbVal = ((data as any)?.value ?? "").toString().trim();
+    if (dbVal) return dbVal;
+  } catch {
+    /* fall through to env */
+  }
+  return (process.env.STREAM_SERVER_URL || "").trim();
+}
+
+async function checkServerUrl(): Promise<StreamConfigStatus> {
+  const raw = await readRawServerUrl();
   if (!raw) {
-    return { ok: false, code: "missing", message: "Stream server URL is not configured. Boss needs to set the STREAM_SERVER_URL secret." };
+    return { ok: false, code: "missing", message: "Stream server URL is not configured. Boss needs to set it in the Stream Server URL panel." };
   }
   let v = raw;
   if (!/^https?:\/\//i.test(v)) v = "http://" + v;
@@ -72,30 +92,116 @@ function checkServerUrl(): StreamConfigStatus {
   return { ok: true };
 }
 
-function getServerUrl(): string {
-  const status = checkServerUrl();
+async function getServerUrl(): Promise<string> {
+  const status = await checkServerUrl();
   if (!status.ok) {
     const err: any = new Error(status.message);
     err.reason = "invalid_server";
     throw err;
   }
-  let v = (process.env.STREAM_SERVER_URL || "").trim();
+  let v = await readRawServerUrl();
   if (!/^https?:\/\//i.test(v)) v = "http://" + v;
   return v.replace(/\/+$/, "");
 }
 
-// Boot-time check: log clearly if the secret is missing/misconfigured so it
-// shows up in server logs the first time the module loads.
-{
-  const s = checkServerUrl();
-  if (!s.ok) {
-    console.error(`[stream-link] STREAM_SERVER_URL misconfigured (${s.code}): ${s.message}`);
-  }
+export const getStreamConfigStatus = createServerFn({ method: "GET" }).handler(
+  async (): Promise<StreamConfigStatus> => await checkServerUrl(),
+);
+
+// ──────────────────────────────────────────────────────────────────────
+// Boss-only: read / set / clear the configured stream server URL.
+// ──────────────────────────────────────────────────────────────────────
+
+import { shouldPromoteToBoss, normalizeEmail } from "@/lib/boss-policy";
+
+function isBossClaims(claims: any): boolean {
+  const userEmail = normalizeEmail(claims?.email as string | undefined);
+  const bossEmail = normalizeEmail(process.env.BOSS_EMAIL);
+  return shouldPromoteToBoss(userEmail, bossEmail);
 }
 
-export const getStreamConfigStatus = createServerFn({ method: "GET" }).handler(
-  async (): Promise<StreamConfigStatus> => checkServerUrl(),
-);
+function normalizeServerUrlInput(input: string): { url: string | null; error?: string } {
+  let v = (input ?? "").toString().trim();
+  if (!v) return { url: null };
+  if (!/^https?:\/\//i.test(v)) v = "http://" + v;
+  v = v.replace(/\/+$/, "");
+  let parsed: URL;
+  try {
+    parsed = new URL(v);
+  } catch {
+    return { url: null, error: "Not a valid URL." };
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return { url: null, error: "URL must use http or https." };
+  }
+  if (!parsed.hostname) return { url: null, error: "URL is missing a hostname." };
+  if (parsed.username || parsed.password) return { url: null, error: "URL must not contain credentials." };
+  if (parsed.pathname && parsed.pathname !== "/" && parsed.pathname !== "") {
+    return { url: null, error: "URL must not include a path." };
+  }
+  // Strip trailing slash for storage; store just origin.
+  return { url: `${parsed.protocol}//${parsed.host}` };
+}
+
+export const getBossStreamServerUrl = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    if (!isBossClaims((context as any).claims)) {
+      return { ok: false as const, error: "Boss only." };
+    }
+    const dbVal = await (async () => {
+      const { data } = await supabaseAdmin
+        .from("app_settings" as never)
+        .select("value, updated_at")
+        .eq("key", "stream_server_url")
+        .maybeSingle();
+      return data as { value: string | null; updated_at: string | null } | null;
+    })();
+    const envVal = (process.env.STREAM_SERVER_URL || "").trim();
+    const status = await checkServerUrl();
+    return {
+      ok: true as const,
+      dbValue: dbVal?.value ?? null,
+      dbUpdatedAt: dbVal?.updated_at ?? null,
+      envValue: envVal || null,
+      effective: dbVal?.value || envVal || null,
+      status,
+    };
+  });
+
+export const setBossStreamServerUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { url: string }) => ({ url: String(d?.url ?? "") }))
+  .handler(async ({ data, context }) => {
+    if (!isBossClaims((context as any).claims)) {
+      return { ok: false as const, error: "Boss only." };
+    }
+    const { url, error } = normalizeServerUrlInput(data.url);
+    if (!url) return { ok: false as const, error: error || "URL is required." };
+    const userId = (context as any).userId as string | undefined;
+    const { error: upErr } = await supabaseAdmin
+      .from("app_settings" as never)
+      .upsert(
+        { key: "stream_server_url", value: url, updated_by: userId ?? null } as never,
+        { onConflict: "key" } as never,
+      );
+    if (upErr) return { ok: false as const, error: upErr.message };
+    return { ok: true as const, value: url };
+  });
+
+export const clearBossStreamServerUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    if (!isBossClaims((context as any).claims)) {
+      return { ok: false as const, error: "Boss only." };
+    }
+    const { error } = await supabaseAdmin
+      .from("app_settings" as never)
+      .delete()
+      .eq("key", "stream_server_url");
+    if (error) return { ok: false as const, error: error.message };
+    return { ok: true as const };
+  });
 
 export type StreamReasonCode =
   | "invalid_username"
@@ -217,7 +323,7 @@ export const verifyAndLinkStream = createServerFn({ method: "POST" })
     const { supabase, userId } = context as any;
     let server: string;
     try {
-      server = getServerUrl();
+      server = await getServerUrl();
     } catch (e: any) {
       return {
         ok: false as const,
@@ -323,7 +429,7 @@ export const reverifyStream = createServerFn({ method: "POST" })
     }
     let server: string;
     try {
-      server = getServerUrl();
+      server = await getServerUrl();
     } catch (e: any) {
       return {
         ok: false as const,
@@ -364,7 +470,7 @@ export const getMyStreamM3uUrl = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context as any;
     try {
-      getServerUrl();
+      await getServerUrl();
     } catch (e: any) {
       await logStreamUrlAudit({ user_id: userId, action: "mint", success: false, reason: "invalid_server" });
       return { ok: false as const, reason: "invalid_server" as const, error: e?.message || REASON_MESSAGES.invalid_server };
@@ -446,7 +552,7 @@ export const verifyMyStreamAccess = createServerFn({ method: "POST" })
 
     let server: string;
     try {
-      server = getServerUrl();
+      server = await getServerUrl();
     } catch (e: any) {
       return { ok: false as const, error: e?.message || "Stream server not configured" };
     }

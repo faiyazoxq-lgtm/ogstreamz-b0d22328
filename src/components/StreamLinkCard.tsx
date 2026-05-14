@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Tv, CheckCircle2, Loader2, AlertTriangle, Clock, CalendarClock, RefreshCw, CircleDashed, XCircle, Eye, EyeOff, Copy, Check } from "lucide-react";
 import { verifyAndLinkStream, reverifyStream, getStreamConfigStatus, getMyStreamM3uUrl, type StreamReasonCode, type RpcErrorCause, type StreamConfigStatus } from "@/lib/stream-link.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { BossStreamServerUrlCard } from "@/components/BossStreamServerUrlCard";
 
 export function StreamLinkCard() {
   const { profile, refresh } = useAuth();
@@ -583,6 +584,7 @@ export function StreamLinkCard() {
         </div>
       )}
 
+      <BossStreamServerUrlCard />
       {configBlocked && (
         <div role="alert" className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-3">
           <div className="flex items-start gap-2">

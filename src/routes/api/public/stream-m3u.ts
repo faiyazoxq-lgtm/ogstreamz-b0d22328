@@ -77,7 +77,18 @@ export const Route = createFileRoute("/api/public/stream-m3u")({
           return new Response("No credentials on file", { status: 404 });
         }
 
-        let server = (process.env.STREAM_SERVER_URL || "").trim();
+        let server = "";
+        try {
+          const { data: setting } = await supabaseAdmin
+            .from("app_settings" as never)
+            .select("value")
+            .eq("key", "stream_server_url")
+            .maybeSingle();
+          server = ((setting as any)?.value ?? "").toString().trim();
+        } catch {
+          /* fall through to env */
+        }
+        if (!server) server = (process.env.STREAM_SERVER_URL || "").trim();
         if (!server) {
           await audit(request, { user_id: row.user_id, action: "fetch", success: false, reason: "server_not_configured", token_hash });
           return new Response("Stream server not configured", { status: 500 });
