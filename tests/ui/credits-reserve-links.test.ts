@@ -36,7 +36,7 @@ describe("Credits Reserve card buttons", () => {
   });
 
   it("both target routes have matching route files", () => {
-    expect(() => readFileSync(resolve(ROOT, "src/routes/boss/users.tsx"), "utf8")).not.toThrow();
+    expect(() => readFileSync(resolve(ROOT, "src/routes/boss.users.tsx"), "utf8")).not.toThrow();
     expect(() => readFileSync(resolve(ROOT, "src/routes/boss.tsx"), "utf8")).not.toThrow();
   });
 });
