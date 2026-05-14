@@ -27,6 +27,7 @@ import { Route as ResellerRouteImport } from './routes/reseller'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PortalsRouteImport } from './routes/portals'
 import { Route as NoticeboardRouteImport } from './routes/noticeboard'
+import { Route as MyGenerationsRouteImport } from './routes/my-generations'
 import { Route as MusicRouteImport } from './routes/music'
 import { Route as LetterhubRouteImport } from './routes/letterhub'
 import { Route as JokesRouteImport } from './routes/jokes'
@@ -188,6 +189,11 @@ const PortalsRoute = PortalsRouteImport.update({
 const NoticeboardRoute = NoticeboardRouteImport.update({
   id: '/noticeboard',
   path: '/noticeboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyGenerationsRoute = MyGenerationsRouteImport.update({
+  id: '/my-generations',
+  path: '/my-generations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MusicRoute = MusicRouteImport.update({
@@ -575,6 +581,7 @@ export interface FileRoutesByFullPath {
   '/jokes': typeof JokesRouteWithChildren
   '/letterhub': typeof LetterhubRoute
   '/music': typeof MusicRoute
+  '/my-generations': typeof MyGenerationsRoute
   '/noticeboard': typeof NoticeboardRoute
   '/portals': typeof PortalsRoute
   '/profile': typeof ProfileRoute
@@ -666,6 +673,7 @@ export interface FileRoutesByTo {
   '/jokes': typeof JokesRouteWithChildren
   '/letterhub': typeof LetterhubRoute
   '/music': typeof MusicRoute
+  '/my-generations': typeof MyGenerationsRoute
   '/noticeboard': typeof NoticeboardRoute
   '/portals': typeof PortalsRoute
   '/profile': typeof ProfileRoute
@@ -759,6 +767,7 @@ export interface FileRoutesById {
   '/jokes': typeof JokesRouteWithChildren
   '/letterhub': typeof LetterhubRoute
   '/music': typeof MusicRoute
+  '/my-generations': typeof MyGenerationsRoute
   '/noticeboard': typeof NoticeboardRoute
   '/portals': typeof PortalsRoute
   '/profile': typeof ProfileRoute
@@ -853,6 +862,7 @@ export interface FileRouteTypes {
     | '/jokes'
     | '/letterhub'
     | '/music'
+    | '/my-generations'
     | '/noticeboard'
     | '/portals'
     | '/profile'
@@ -944,6 +954,7 @@ export interface FileRouteTypes {
     | '/jokes'
     | '/letterhub'
     | '/music'
+    | '/my-generations'
     | '/noticeboard'
     | '/portals'
     | '/profile'
@@ -1036,6 +1047,7 @@ export interface FileRouteTypes {
     | '/jokes'
     | '/letterhub'
     | '/music'
+    | '/my-generations'
     | '/noticeboard'
     | '/portals'
     | '/profile'
@@ -1129,6 +1141,7 @@ export interface RootRouteChildren {
   JokesRoute: typeof JokesRouteWithChildren
   LetterhubRoute: typeof LetterhubRoute
   MusicRoute: typeof MusicRoute
+  MyGenerationsRoute: typeof MyGenerationsRoute
   NoticeboardRoute: typeof NoticeboardRoute
   PortalsRoute: typeof PortalsRoute
   ProfileRoute: typeof ProfileRoute
@@ -1293,6 +1306,13 @@ declare module '@tanstack/react-router' {
       path: '/noticeboard'
       fullPath: '/noticeboard'
       preLoaderRoute: typeof NoticeboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-generations': {
+      id: '/my-generations'
+      path: '/my-generations'
+      fullPath: '/my-generations'
+      preLoaderRoute: typeof MyGenerationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/music': {
@@ -1927,6 +1947,7 @@ const rootRouteChildren: RootRouteChildren = {
   JokesRoute: JokesRouteWithChildren,
   LetterhubRoute: LetterhubRoute,
   MusicRoute: MusicRoute,
+  MyGenerationsRoute: MyGenerationsRoute,
   NoticeboardRoute: NoticeboardRoute,
   PortalsRoute: PortalsRoute,
   ProfileRoute: ProfileRoute,
