@@ -361,7 +361,16 @@ function MusicPortalPage() {
         }
         // Smooth-scroll the player into view so the track is the focal point.
         requestAnimationFrame(() => {
-          document.getElementById("studio-track-preview")?.scrollIntoView({ behavior: "smooth", block: "center" });
+          const el = document.getElementById("studio-track-preview");
+          if (!el) return;
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          // After the smooth scroll settles, persist the resting position so
+          // navigating away and back to this studio restores the same view.
+          window.setTimeout(() => {
+            try {
+              sessionStorage.setItem(`studio-scroll:${portal.slug}`, String(window.scrollY));
+            } catch {}
+          }, 700);
         });
       } catch (e: any) {
         if (cancelled) return;
@@ -391,6 +400,51 @@ function MusicPortalPage() {
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobParam]);
+
+  // Remember & restore the exact scroll position of the studio (player section)
+  // so returning here from another route — or via browser back — lands the user
+  // exactly where they left off, instead of resetting to the top.
+  useEffect(() => {
+    const key = `studio-scroll:${portal.slug}`;
+    // Restore on mount only when we're not hydrating from ?job= (that flow
+    // owns the scroll target via scrollIntoView above).
+    if (!jobParam) {
+      try {
+        const saved = sessionStorage.getItem(key);
+        if (saved) {
+          const y = Number(saved);
+          if (Number.isFinite(y) && y > 0) {
+            // Wait one frame so the page has its full height before scrolling.
+            requestAnimationFrame(() => {
+              window.scrollTo({ top: y, behavior: "auto" });
+            });
+          }
+        }
+      } catch {}
+    }
+
+    let raf = 0;
+    const save = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        try {
+          sessionStorage.setItem(key, String(window.scrollY));
+        } catch {}
+      });
+    };
+    window.addEventListener("scroll", save, { passive: true });
+    window.addEventListener("pagehide", save);
+    return () => {
+      window.removeEventListener("scroll", save);
+      window.removeEventListener("pagehide", save);
+      cancelAnimationFrame(raf);
+      // Persist final position on unmount (e.g. SPA navigation away).
+      try {
+        sessionStorage.setItem(key, String(window.scrollY));
+      } catch {}
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [portal.slug]);
 
   const onUnlockDownload = async () => {
     if (!trackJobId || unlocking || downloadUnlocked) return;
