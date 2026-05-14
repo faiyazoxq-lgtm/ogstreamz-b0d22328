@@ -25,6 +25,7 @@ import {
   grantVipPass, revokeVipPass, listVipPasses,
   grantByEmail, listPendingGrants, deletePendingGrant,
   createLifetimeVipCode, listLifetimeVipCodes, deleteLifetimeVipCode,
+  checkLifetimeVipCodeAvailable,
 } from "@/lib/overlord.functions";
 import { bossListResellers, bossCreateReseller, bossTopupReseller } from "@/lib/reseller.functions";
 import { PassShareCardPanel } from "@/components/overlord/PassShareCardPanel";
@@ -1222,6 +1223,7 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
   const createCode = useServerFn(createLifetimeVipCode);
   const listCodes = useServerFn(listLifetimeVipCodes);
   const deleteCode = useServerFn(deleteLifetimeVipCode);
+  const checkCode = useServerFn(checkLifetimeVipCodeAvailable);
   const [passes, setPasses] = useState<any[]>([]);
   const [userId, setUserId] = useState("");
   const [preset, setPreset] = useState<"30" | "90" | "180" | "365" | "custom">("30");
@@ -1233,6 +1235,13 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
   const [codeBusy, setCodeBusy] = useState(false);
   const [codeCustom, setCodeCustom] = useState("");
   const [codeCredits, setCodeCredits] = useState<number>(1);
+  const [codeStatus, setCodeStatus] = useState<
+    | { state: "idle" }
+    | { state: "checking" }
+    | { state: "ok" }
+    | { state: "invalid"; msg: string }
+    | { state: "taken" }
+  >({ state: "idle" });
 
   const refresh = async () => {
     try { const r = await list(); setPasses(r.passes ?? []); }
@@ -1251,6 +1260,39 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
     }
   };
   useEffect(() => { refresh(); refreshCodes(); /* eslint-disable-next-line */ }, []);
+
+  // Debounced live validation + uniqueness check for the custom code input.
+  useEffect(() => {
+    const raw = codeCustom.trim();
+    if (!raw) { setCodeStatus({ state: "idle" }); return; }
+    if (raw.length < 3 || raw.length > 32) {
+      setCodeStatus({ state: "invalid", msg: "Must be 3–32 characters" });
+      return;
+    }
+    if (!/^[A-Z0-9_-]+$/.test(raw)) {
+      setCodeStatus({ state: "invalid", msg: "Only A–Z, 0–9, _ and - allowed" });
+      return;
+    }
+    // Optimistic local duplicate check against already-loaded codes.
+    if (codes.some((c) => String(c.code).toUpperCase() === raw)) {
+      setCodeStatus({ state: "taken" });
+      return;
+    }
+    setCodeStatus({ state: "checking" });
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const r = await checkCode({ data: { code: raw } });
+        if (cancelled) return;
+        if (r.available) setCodeStatus({ state: "ok" });
+        else if (r.reason === "taken") setCodeStatus({ state: "taken" });
+        else setCodeStatus({ state: "invalid", msg: "Invalid format" });
+      } catch {
+        if (!cancelled) setCodeStatus({ state: "idle" });
+      }
+    }, 350);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [codeCustom, codes, checkCode]);
 
   const computeExpiry = (): string | null => {
     if (preset === "custom") {
@@ -1391,11 +1433,26 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
           <Field label="Custom code" hint="Leave blank to auto-generate" icon={Ticket} className="lg:col-span-2">
             <Input
               value={codeCustom}
-              onChange={(e) => setCodeCustom(e.target.value.toUpperCase())}
+              onChange={(e) => setCodeCustom(e.target.value.toUpperCase().replace(/\s+/g, ""))}
               placeholder="AUTO-GENERATE"
-              className={FIELD_INPUT}
+              className={`${FIELD_INPUT} ${
+                codeStatus.state === "ok" ? "border-emerald-500" :
+                (codeStatus.state === "invalid" || codeStatus.state === "taken") ? "border-rose-500" : ""
+              }`}
               maxLength={32}
+              aria-invalid={codeStatus.state === "invalid" || codeStatus.state === "taken"}
             />
+            <p className={`mt-1 text-[10px] uppercase tracking-widest ${
+              codeStatus.state === "ok" ? "text-emerald-400" :
+              (codeStatus.state === "invalid" || codeStatus.state === "taken") ? "text-rose-400" :
+              "text-emerald-700"
+            }`}>
+              {codeStatus.state === "idle" && "3–32 chars · A–Z, 0–9, _ -"}
+              {codeStatus.state === "checking" && "Checking availability…"}
+              {codeStatus.state === "ok" && "✓ Code is available"}
+              {codeStatus.state === "invalid" && codeStatus.msg}
+              {codeStatus.state === "taken" && "Code already exists — choose another"}
+            </p>
           </Field>
           <Field label="Bonus credits" hint="Bundled on redeem" icon={Coins}>
             <Input
@@ -1409,9 +1466,14 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
           <div className="flex items-end">
             <Button
               onClick={async () => {
+                const customRaw = codeCustom.trim();
+                if (customRaw && (codeStatus.state === "invalid" || codeStatus.state === "taken")) {
+                  toast.error(codeStatus.state === "taken" ? "Code already exists" : (codeStatus as any).msg);
+                  return;
+                }
                 setCodeBusy(true);
                 try {
-                  const r = await createCode({ data: { code: codeCustom || undefined, credits: codeCredits } });
+                  const r = await createCode({ data: { code: customRaw || undefined, credits: codeCredits } });
                   toast.success(`Code created: ${r.code.code}`);
                   setCodeCustom("");
                   refreshCodes();
@@ -1421,7 +1483,11 @@ function VipPassPanel({ rows }: { rows: Row[] }) {
                   toast.error(msg ?? "Failed");
                 } finally { setCodeBusy(false); }
               }}
-              disabled={codeBusy}
+              disabled={
+                codeBusy ||
+                codeStatus.state === "checking" ||
+                (!!codeCustom.trim() && (codeStatus.state === "invalid" || codeStatus.state === "taken"))
+              }
               className={`${PRIMARY_BTN} w-full bg-yellow-500 hover:bg-yellow-400 text-black`}
             >
               {codeBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="h-4 w-4 mr-2" />Generate code</>}

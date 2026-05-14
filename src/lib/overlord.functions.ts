@@ -191,6 +191,31 @@ export const deleteLifetimeVipCode = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Boss-only: check if a custom code is available (not already used by any
+ * redeem_codes row). Used by the UI for live uniqueness validation.
+ */
+export const checkLifetimeVipCodeAvailable = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { code: string }) => ({
+    code: String(d.code ?? "").trim().toUpperCase().slice(0, 32),
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context as any;
+    if (!(await isBoss(supabase))) throw new Error("Boss only");
+    const code = data.code;
+    if (!/^[A-Z0-9_-]{3,32}$/.test(code)) {
+      return { code, available: false, reason: "format" as const };
+    }
+    const { data: row, error } = await supabase
+      .from("redeem_codes")
+      .select("id")
+      .eq("code", code)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return { code, available: !row, reason: row ? ("taken" as const) : ("ok" as const) };
+  });
+
 export const revokeVipPass = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { passId: string }) => ({ passId: String(d.passId) }))
