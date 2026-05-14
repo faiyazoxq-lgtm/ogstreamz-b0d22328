@@ -704,3 +704,99 @@ function MusicHooksSection({
     </section>
   );
 }
+
+function PreviewPlayer({
+  label,
+  url,
+  unlocked,
+  accent,
+  onShare,
+}: {
+  label: string;
+  url: string;
+  unlocked: boolean;
+  accent: string;
+  onShare: () => void;
+}) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+
+  // Cap free preview at 30s
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    const onTime = () => {
+      if (!unlocked && el.currentTime >= 30) {
+        el.pause();
+        el.currentTime = 0;
+        setPlaying(false);
+        toast.info("30s preview · unlock for the full track");
+      }
+    };
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+    el.addEventListener("timeupdate", onTime);
+    el.addEventListener("play", onPlay);
+    el.addEventListener("pause", onPause);
+    return () => {
+      el.removeEventListener("timeupdate", onTime);
+      el.removeEventListener("play", onPlay);
+      el.removeEventListener("pause", onPause);
+    };
+  }, [unlocked]);
+
+  const toggle = () => {
+    const el = audioRef.current;
+    if (!el) return;
+    if (el.paused) el.play(); else el.pause();
+  };
+
+  const filename = `${label.replace(/\s+/g, "_").toLowerCase()}.mp3`;
+
+  return (
+    <div className="rounded-md border p-3 space-y-2" style={{ borderColor: `${accent}30`, background: "rgba(0,0,0,0.4)" }}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggle}
+            className="h-9 w-9 rounded-full inline-flex items-center justify-center"
+            style={{ background: accent, color: "#000" }}
+            aria-label={playing ? "Pause" : "Play"}
+          >
+            {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
+          </button>
+          <p className="text-[11px] uppercase tracking-[0.3em] font-bold" style={{ color: accent }}>
+            {label}
+            {!unlocked && <span className="ml-2 opacity-60">· 30s preview</span>}
+          </p>
+        </div>
+        {unlocked && (
+          <div className="flex items-center gap-1">
+            <a
+              href={url}
+              download={filename}
+              target="_blank"
+              rel="noreferrer"
+              className="h-8 w-8 inline-flex items-center justify-center rounded-md border"
+              style={{ borderColor: `${accent}66`, color: accent, background: `${accent}10` }}
+              aria-label="Download MP3"
+            >
+              <Download className="h-3.5 w-3.5" />
+            </a>
+            <button
+              type="button"
+              onClick={onShare}
+              className="h-8 w-8 inline-flex items-center justify-center rounded-md border"
+              style={{ borderColor: `${accent}66`, color: accent, background: `${accent}10` }}
+              aria-label="Share"
+            >
+              <Share2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+      </div>
+      <audio ref={audioRef} src={url} preload="metadata" controls className="w-full" />
+    </div>
+  );
+}
