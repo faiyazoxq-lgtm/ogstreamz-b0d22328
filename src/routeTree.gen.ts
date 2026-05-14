@@ -91,6 +91,7 @@ import { Route as BossAnalyticsRouteImport } from './routes/boss.analytics'
 import { Route as BossAlertsRouteImport } from './routes/boss.alerts'
 import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as AccountPassesRouteImport } from './routes/account.passes'
+import { Route as VipPortalsHubRouteImport } from './routes/vip.portals.$hub'
 import { Route as BossHubsNewRouteImport } from './routes/boss.hubs.new'
 import { Route as ApiPublicSunoWebhookRouteImport } from './routes/api/public/suno-webhook'
 import { Route as ApiPublicStreamM3uRouteImport } from './routes/api/public/stream-m3u'
@@ -512,6 +513,11 @@ const AccountPassesRoute = AccountPassesRouteImport.update({
   path: '/account/passes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VipPortalsHubRoute = VipPortalsHubRouteImport.update({
+  id: '/$hub',
+  path: '/$hub',
+  getParentRoute: () => VipPortalsRoute,
+} as any)
 const BossHubsNewRoute = BossHubsNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -649,12 +655,13 @@ export interface FileRoutesByFullPath {
   '/store/catalog': typeof StoreCatalogRoute
   '/t/$slug': typeof TSlugRoute
   '/td/$slug': typeof TdSlugRoute
-  '/vip/portals': typeof VipPortalsRoute
+  '/vip/portals': typeof VipPortalsRouteWithChildren
   '/boss/': typeof BossIndexRoute
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
   '/api/public/stream-m3u': typeof ApiPublicStreamM3uRoute
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/boss/hubs/new': typeof BossHubsNewRoute
+  '/vip/portals/$hub': typeof VipPortalsHubRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
   '/api/public/hooks/telegram-reminders': typeof ApiPublicHooksTelegramRemindersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -742,12 +749,13 @@ export interface FileRoutesByTo {
   '/store/catalog': typeof StoreCatalogRoute
   '/t/$slug': typeof TSlugRoute
   '/td/$slug': typeof TdSlugRoute
-  '/vip/portals': typeof VipPortalsRoute
+  '/vip/portals': typeof VipPortalsRouteWithChildren
   '/boss': typeof BossIndexRoute
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
   '/api/public/stream-m3u': typeof ApiPublicStreamM3uRoute
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/boss/hubs/new': typeof BossHubsNewRoute
+  '/vip/portals/$hub': typeof VipPortalsHubRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
   '/api/public/hooks/telegram-reminders': typeof ApiPublicHooksTelegramRemindersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -837,12 +845,13 @@ export interface FileRoutesById {
   '/store/catalog': typeof StoreCatalogRoute
   '/t/$slug': typeof TSlugRoute
   '/td/$slug': typeof TdSlugRoute
-  '/vip/portals': typeof VipPortalsRoute
+  '/vip/portals': typeof VipPortalsRouteWithChildren
   '/boss/': typeof BossIndexRoute
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
   '/api/public/stream-m3u': typeof ApiPublicStreamM3uRoute
   '/api/public/suno-webhook': typeof ApiPublicSunoWebhookRoute
   '/boss/hubs/new': typeof BossHubsNewRoute
+  '/vip/portals/$hub': typeof VipPortalsHubRoute
   '/api/public/hooks/syndicate-tick': typeof ApiPublicHooksSyndicateTickRoute
   '/api/public/hooks/telegram-reminders': typeof ApiPublicHooksTelegramRemindersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -939,6 +948,7 @@ export interface FileRouteTypes {
     | '/api/public/stream-m3u'
     | '/api/public/suno-webhook'
     | '/boss/hubs/new'
+    | '/vip/portals/$hub'
     | '/api/public/hooks/syndicate-tick'
     | '/api/public/hooks/telegram-reminders'
     | '/api/public/payments/webhook'
@@ -1032,6 +1042,7 @@ export interface FileRouteTypes {
     | '/api/public/stream-m3u'
     | '/api/public/suno-webhook'
     | '/boss/hubs/new'
+    | '/vip/portals/$hub'
     | '/api/public/hooks/syndicate-tick'
     | '/api/public/hooks/telegram-reminders'
     | '/api/public/payments/webhook'
@@ -1126,6 +1137,7 @@ export interface FileRouteTypes {
     | '/api/public/stream-m3u'
     | '/api/public/suno-webhook'
     | '/boss/hubs/new'
+    | '/vip/portals/$hub'
     | '/api/public/hooks/syndicate-tick'
     | '/api/public/hooks/telegram-reminders'
     | '/api/public/payments/webhook'
@@ -1768,6 +1780,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountPassesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vip/portals/$hub': {
+      id: '/vip/portals/$hub'
+      path: '/$hub'
+      fullPath: '/vip/portals/$hub'
+      preLoaderRoute: typeof VipPortalsHubRouteImport
+      parentRoute: typeof VipPortalsRoute
+    }
     '/boss/hubs/new': {
       id: '/boss/hubs/new'
       path: '/new'
@@ -1947,12 +1966,24 @@ const StoreRouteChildren: StoreRouteChildren = {
 
 const StoreRouteWithChildren = StoreRoute._addFileChildren(StoreRouteChildren)
 
+interface VipPortalsRouteChildren {
+  VipPortalsHubRoute: typeof VipPortalsHubRoute
+}
+
+const VipPortalsRouteChildren: VipPortalsRouteChildren = {
+  VipPortalsHubRoute: VipPortalsHubRoute,
+}
+
+const VipPortalsRouteWithChildren = VipPortalsRoute._addFileChildren(
+  VipPortalsRouteChildren,
+)
+
 interface VipRouteChildren {
-  VipPortalsRoute: typeof VipPortalsRoute
+  VipPortalsRoute: typeof VipPortalsRouteWithChildren
 }
 
 const VipRouteChildren: VipRouteChildren = {
-  VipPortalsRoute: VipPortalsRoute,
+  VipPortalsRoute: VipPortalsRouteWithChildren,
 }
 
 const VipRouteWithChildren = VipRoute._addFileChildren(VipRouteChildren)
