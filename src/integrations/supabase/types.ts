@@ -367,6 +367,51 @@ export type Database = {
         }
         Relationships: []
       }
+      boss_audit_log: {
+        Row: {
+          action: string
+          actor_id: string
+          after_value: Json | null
+          before_value: Json | null
+          created_at: string
+          id: string
+          ip: string | null
+          metadata: Json
+          reason: string | null
+          surface: string
+          target_user_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          after_value?: Json | null
+          before_value?: Json | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          metadata?: Json
+          reason?: string | null
+          surface?: string
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          after_value?: Json | null
+          before_value?: Json | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          metadata?: Json
+          reason?: string | null
+          surface?: string
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       boss_chat_messages: {
         Row: {
           content: string
@@ -4614,6 +4659,20 @@ export type Database = {
       }
       purge_portal_view_events: { Args: never; Returns: number }
       purge_stream_verification_requests: { Args: never; Returns: Json }
+      record_boss_action: {
+        Args: {
+          _action: string
+          _after?: Json
+          _before?: Json
+          _ip?: string
+          _metadata?: Json
+          _reason?: string
+          _surface?: string
+          _target_user_id?: string
+          _user_agent?: string
+        }
+        Returns: string
+      }
       redeem_code: { Args: { _code: string }; Returns: Json }
       refresh_news_scout: {
         Args: { _meta: Json; _slug: string }
