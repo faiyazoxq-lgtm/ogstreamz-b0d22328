@@ -7,6 +7,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { formatLyrics, requestStudioTrack, generatePortalTrack, getPortalTrackJob, unlockPortalTrackDownload } from "@/lib/music-portals.functions";
+import { spawnMusic } from "@/lib/suno.functions";
 import { listPortalTracks, getTrackOwnership } from "@/lib/tracks.functions";
 import { spawnMusic } from "@/lib/suno.functions";
 import { TrackPlayer } from "@/components/TrackPlayer";
@@ -137,6 +138,7 @@ function MusicPortalPage() {
   const generateTrackFn = useServerFn(generatePortalTrack);
   const getJobFn = useServerFn(getPortalTrackJob);
   const unlockFn = useServerFn(unlockPortalTrackDownload);
+  const spawnFn = useServerFn(spawnMusic);
 
   type T = { id: string; title: string; price_cents: number; preview_url: string | null };
   const [tracks, setTracks] = useState<T[]>([]);
@@ -361,7 +363,9 @@ function MusicPortalPage() {
     setGenerating(true);
     try {
       const styleTags =
-        stack?.timbre || `${portal.style ?? "studio"}, ${portal.vibe ?? "cinematic"}`;
+        selectedStyle
+          ? `${portal.style ?? "studio"}, ${selectedStyle}`
+          : `${portal.style ?? "studio"}, ${portal.vibe ?? "cinematic"}`;
       const r = await spawnFn({
         data: {
           prompt: lyrics,
