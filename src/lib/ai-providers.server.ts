@@ -5,7 +5,9 @@
 //                   fall back when something explodes.
 //   geminiChat    — direct Gemini call with primary→fallback key chain.
 //   perplexityChat — Perplexity Sonar (general text, marketing, jokes, tools).
-//   shapesChat     — Shapes API "swearing agent" (boss-chat, swear-chat, battles GM).
+//   shapesChat     — OG BOT chaos persona via Perplexity Sonar Pro
+//                    (boss-chat, swear-chat, battles GM). Pass safe:true for
+//                    family-friendly mode. Name kept for backward compat.
 //
 // Both are OpenAI-compatible chat-completion shapes.
 
