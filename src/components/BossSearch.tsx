@@ -111,7 +111,7 @@ export function BossSearch({ className = "" }: { className?: string }) {
           .select("id, content, keyword")
           .or(`content.ilike.${like},keyword.ilike.${like}`)
           .limit(6) : Promise.resolve({ data: [] as any[] }),
-        wantTools ? supabase.from("calculators")
+        wantTools ? supabase.from("calculators_public")
           .select("id, slug, name, description")
           .or(`name.ilike.${like},slug.ilike.${like},description.ilike.${like}`)
           .range(0, TOOL_PAGE_SIZE) : Promise.resolve({ data: [] as any[] }),
@@ -148,7 +148,7 @@ export function BossSearch({ className = "" }: { className?: string }) {
     const from = nextPage * TOOL_PAGE_SIZE;
     const to = from + TOOL_PAGE_SIZE; // request one extra to detect more
     const like = `%${term.replace(/[%_]/g, "")}%`;
-    const { data } = await supabase.from("calculators")
+    const { data } = await supabase.from("calculators_public")
       .select("id, slug, name, description")
       .or(`name.ilike.${like},slug.ilike.${like},description.ilike.${like}`)
       .range(from, to);

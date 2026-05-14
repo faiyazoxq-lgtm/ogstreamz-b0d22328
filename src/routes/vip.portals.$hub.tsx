@@ -139,7 +139,7 @@ function VipPortalsByHub() {
             }));
         } else {
           const { data, error } = await sb
-            .from("calculators")
+            .from("calculators_public")
             .select("id, slug, name, description, vip, created_at, published")
             .eq("published", true)
             .order("created_at", { ascending: false })
