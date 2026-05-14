@@ -107,7 +107,6 @@ async function perplexitySwear(
       ],
       temperature: chaos ? 1.4 : 1.1,
       top_p: 0.95,
-      frequency_penalty: 0.3,
       presence_penalty: 0.6,
       max_tokens: chaos ? 900 : 600,
     }),
