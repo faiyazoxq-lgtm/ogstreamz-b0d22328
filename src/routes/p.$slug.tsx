@@ -62,6 +62,7 @@ type Portal = {
   } | null;
   bg_video_url?: string | null;
   bg_video_aspect?: string | null;
+  wallpaper_url?: string | null;
   swear_chat_enabled?: boolean;
 };
 
@@ -69,7 +70,7 @@ export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("portals_public")
-      .select("id, slug, name, niche, language, vibe, theme, jokes, music_hooks, trade_briefs, connect_openers, tool_ideas, vip, price_cents, theme_config, scout_meta, telegram_config, kind, audio_snippet_url, bg_video_url, bg_video_aspect, swear_chat_enabled, use_credit_cost")
+      .select("id, slug, name, niche, language, vibe, theme, jokes, music_hooks, trade_briefs, connect_openers, tool_ideas, vip, price_cents, theme_config, scout_meta, telegram_config, kind, audio_snippet_url, bg_video_url, bg_video_aspect, wallpaper_url, swear_chat_enabled, use_credit_cost")
       .eq("slug", params.slug)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -873,6 +874,19 @@ function NewsHubView({ portal }: { portal: Portal }) {
           />
           <div className="absolute inset-0 z-0 pointer-events-none"
             style={{ background: `linear-gradient(180deg, ${bgGradient.includes('#14060a') ? 'rgba(20,6,10,0.55)' : bgGradient.includes('#02150f') ? 'rgba(2,21,15,0.55)' : 'rgba(0,0,0,0.55)'} 0%, rgba(0,0,0,0.75) 100%)` }} />
+        </>
+      )}
+      {/* Static AI wallpaper fallback (used when no cinematic bg video) */}
+      {!portal.bg_video_url && portal.wallpaper_url && (
+        <>
+          <div
+            className="absolute inset-0 z-0 pointer-events-none bg-cover bg-center"
+            style={{ backgroundImage: `url(${portal.wallpaper_url})`, opacity: 0.45 }}
+          />
+          <div
+            className="absolute inset-0 z-0 pointer-events-none"
+            style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.85) 100%)" }}
+          />
         </>
       )}
       {/* Grid scanlines */}
