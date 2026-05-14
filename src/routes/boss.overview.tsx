@@ -4,7 +4,7 @@ import {
   Crown, Users, Coins, Ticket, KeyRound, Handshake, Inbox, FileText, ArrowUpRight,
   Share2, ShieldCheck, BarChart3, Skull, Activity, RefreshCw, AlertTriangle, Tv,
   Tags, Music, CheckCircle2, Radio, Zap, Bell, CreditCard, Power, Snowflake, Undo2,
-  Rocket, Boxes, Grid3x3, Settings as SettingsIcon, Sparkles, Loader2, ShieldAlert, Gauge, Send, ShieldOff, ScanSearch, ListChecks,
+  Rocket, Boxes, Grid3x3, Settings as SettingsIcon, Sparkles, Loader2, ShieldAlert, Gauge, Send, ShieldOff, ScanSearch, ListChecks, Brain,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePaymentMode, setPaymentMode } from "@/hooks/use-payment-mode";
@@ -94,6 +94,7 @@ const TILES: Tile[] = [
   { to: "/boss/domain-denylist",     label: "Domain Denylist",   blurb: "Block specific domains from appearing anywhere on the site",   Icon: ShieldOff,    tint: "#ff5577" },
   { to: "/boss/denylist-audit",      label: "Denylist Audit",    blurb: "Scan stored fields, pages & redirects for blocked domains",    Icon: ScanSearch,   tint: "#00e08a" },
   { to: "/boss/todo",                label: "Boss To-Do",        blurb: "Prioritised job list to make the project perfect — work it top-down", Icon: ListChecks,   tint: "#ffd166" },
+  { to: "/boss/og-bot-memory",       label: "OG Bot Memory",     blurb: "View, edit, and clear the persistent facts OG Bot remembers about you", Icon: Brain,        tint: "#a78bfa" },
   { to: "/boss/settings",            label: "Settings",          blurb: "Signup bonus, feature flags & tunables",                      Icon: SettingsIcon, tint: "#94a3b8" },
 ];
 
@@ -103,7 +104,7 @@ const TILE_CATEGORIES: { id: string; label: string; tint: string; labels: string
   { id: "content",    label: "Content",       tint: "#a78bfa", labels: ["Hubs", "Portals"] },
   { id: "moderation", label: "Moderation",    tint: "#ff2e55", labels: ["Civility Controls", "Swear Lexicon"] },
   { id: "insights",   label: "Insights",      tint: "#00e08a", labels: ["Analytics", "Overlord Deck"] },
-  { id: "system",     label: "Command & System", tint: "#94a3b8", labels: ["Boss To-Do", "System Alerts", "Publish Check", "Agent Keys", "Telegram Setup", "Analytics Setup", "Domain Denylist", "Denylist Audit", "Settings"] },
+  { id: "system",     label: "Command & System", tint: "#94a3b8", labels: ["Boss To-Do", "OG Bot Memory", "System Alerts", "Publish Check", "Agent Keys", "Telegram Setup", "Analytics Setup", "Domain Denylist", "Denylist Audit", "Settings"] },
 ];
 
 function BossOverview() {
