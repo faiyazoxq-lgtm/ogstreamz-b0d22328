@@ -10,6 +10,7 @@ import {
   Coins,
   Loader2,
 } from "lucide-react";
+import { OGBotDraftPanel } from "@/components/og-bot/OGBotDraftPanel";
 
 /* ------------------------------------------------------------------ */
 /* Schema + types                                                     */
@@ -197,6 +198,35 @@ export function PortalBriefWizard({ initial, onSubmit, onCancel, submitting = fa
 
       {/* Step body */}
       <div className="min-h-[280px]">
+        <div className="mb-4">
+          <OGBotDraftPanel
+            surface="portal-brief"
+            kind={brief.characterStyle}
+            contextHint="User is filling the multi-step Portal Brief Wizard."
+            placeholder="Describe the portal you want — name, niche, vibe, languages."
+            fieldHints={[
+              { key: "name", description: "Portal name, 2-80 chars", max: 80 },
+              { key: "slug", description: "URL slug — lowercase a-z, 0-9, hyphens", max: 60 },
+              { key: "niche", description: "Niche / focus, 1 sentence", max: 120 },
+              { key: "primaryLanguage", description: "Primary language name e.g. English", max: 20 },
+              { key: "vibe", description: "Optional vibe/mood line", max: 160 },
+            ]}
+            onApply={(f) => {
+              if (f.name) update("name", f.name);
+              if (f.slug) update("slug", slugify(f.slug));
+              else if (f.name && !brief.slug) update("slug", slugify(f.name));
+              if (f.niche) update("niche", f.niche);
+              if (f.vibe) update("vibe", f.vibe);
+              if (f.primaryLanguage && (LANGUAGES as readonly string[]).includes(f.primaryLanguage)) {
+                const lang = f.primaryLanguage as PortalBrief["primaryLanguage"];
+                update("primaryLanguage", lang);
+                if (!brief.languages.includes(lang)) {
+                  update("languages", [...brief.languages, lang] as PortalBrief["languages"]);
+                }
+              }
+            }}
+          />
+        </div>
         {step === 0 && (
           <BasicsStep brief={brief} update={update} errors={errors} />
         )}
