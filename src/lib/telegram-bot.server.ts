@@ -139,7 +139,11 @@ export async function tgSendMultipart(
 
   const form = new FormData();
   for (const [k, v] of Object.entries(fields)) form.append(k, String(v));
-  const blob = new Blob([file.bytes], { type: file.mime || "application/octet-stream" });
+  const buf = file.bytes.buffer.slice(
+    file.bytes.byteOffset,
+    file.bytes.byteOffset + file.bytes.byteLength,
+  ) as ArrayBuffer;
+  const blob = new Blob([buf], { type: file.mime || "application/octet-stream" });
   form.append(fileField, blob, file.filename || "upload");
 
   const startedAt = Date.now();
