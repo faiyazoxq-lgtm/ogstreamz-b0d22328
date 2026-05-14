@@ -8,6 +8,7 @@ interface StripeEmbeddedCheckoutProps {
   customerEmail?: string;
   userId?: string;
   returnUrl?: string;
+  applyFirstOrderDiscount?: boolean;
 }
 
 export function StripeEmbeddedCheckout({
@@ -16,6 +17,7 @@ export function StripeEmbeddedCheckout({
   customerEmail,
   userId,
   returnUrl,
+  applyFirstOrderDiscount,
 }: StripeEmbeddedCheckoutProps) {
   const fetchClientSecret = async (): Promise<string> => {
     const secret = await createCheckoutSession({
@@ -26,6 +28,7 @@ export function StripeEmbeddedCheckout({
         userId,
         returnUrl: returnUrl || window.location.href,
         environment: getStripeEnvironment(),
+        applyFirstOrderDiscount,
       },
     });
     if (!secret) throw new Error("Failed to create checkout session");
