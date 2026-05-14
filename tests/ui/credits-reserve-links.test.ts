@@ -32,7 +32,10 @@ describe("Credits Reserve card buttons", () => {
   });
 
   it("only renders for Boss users (gated by isBoss)", () => {
-    expect(PROFILE).toMatch(/\{isBoss && \(\s*<section[^>]*>[\s\S]*?Boss-only Credits Reserve status card/);
+    // The card section is wrapped in `{isBoss && (` directly above the marker comment.
+    const idx = PROFILE.indexOf("Boss-only Credits Reserve status card");
+    const window = PROFILE.slice(Math.max(0, idx - 200), idx);
+    expect(window).toMatch(/\{isBoss && \(/);
   });
 
   it("both target routes have matching route files", () => {
