@@ -92,7 +92,9 @@ describe("CoinTopUpModal cannot open for Boss", () => {
     for (const m of openers) {
       // Look back ~400 chars for either a JSX `!isBoss && (` block or an
       // inline `if (... && !isBoss)` guard. Both patterns are used in the file.
-      const window = src.slice(Math.max(0, m.index! - 400), m.index!);
+      // Look back ~1200 chars — large enough to span the JSX block opened by
+      // a top-level `{insufficient && !isBoss && (` gate above the button.
+      const window = src.slice(Math.max(0, m.index! - 1200), m.index!);
       const guarded = /!isBoss/.test(window);
       expect(guarded, `setTopUpOpen(true) at index ${m.index} is not guarded by !isBoss`).toBe(true);
     }
