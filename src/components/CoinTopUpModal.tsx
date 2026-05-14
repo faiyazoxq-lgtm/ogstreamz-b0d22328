@@ -1,15 +1,18 @@
-import { useState } from "react";
-import { Coins, Zap, Flame, Check, X, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Coins, Zap, Flame, Check, X, Loader2, Sparkles, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { CREDIT_PACK_LIST, type CreditPack } from "@/lib/credit-packs";
+import { getFirstOrderEligibility } from "@/lib/payments.functions";
 
 /** Coin-only top-up packs (excludes the recurring VIP/Boss subscription). */
 const COIN_PACKS: CreditPack[] = CREDIT_PACK_LIST.filter(
   (p) => !p.recurring && (p.credits ?? 0) > 0,
 );
+
+const FIRST_ORDER_PCT = 30;
 
 function packIcon(priceId: string) {
   if (priceId === "starter_pack_10") return Zap;
@@ -28,6 +31,29 @@ export function CoinTopUpModal({
   const { openCheckout, closeCheckout, isOpen: checkoutOpen, checkoutElement } = useStripeCheckout();
   const [selected, setSelected] = useState<string | null>("enforcer_pack_50");
   const [launching, setLaunching] = useState(false);
+  const [firstOrder, setFirstOrder] = useState<{ eligible: boolean; checked: boolean }>({
+    eligible: false,
+    checked: false,
+  });
+
+  // Check first-order eligibility whenever the modal opens for a signed-in user.
+  // Server is the source of truth; this just drives the UI.
+  useEffect(() => {
+    if (!open || !user) {
+      setFirstOrder({ eligible: false, checked: false });
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await getFirstOrderEligibility();
+        if (!cancelled) setFirstOrder({ eligible: !!res.eligible, checked: true });
+      } catch {
+        if (!cancelled) setFirstOrder({ eligible: false, checked: true });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [open, user]);
 
   const startCheckout = () => {
     const pack = COIN_PACKS.find((p) => p.priceId === selected);
@@ -38,6 +64,7 @@ export function CoinTopUpModal({
       customerEmail: user.email ?? undefined,
       userId: user.id,
       returnUrl: `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
+      applyFirstOrderDiscount: firstOrder.eligible,
     });
     // Close the picker so the embedded checkout modal can take over
     onOpenChange(false);
@@ -57,12 +84,44 @@ export function CoinTopUpModal({
             </DialogDescription>
           </DialogHeader>
 
+          {firstOrder.eligible && (
+            <div className="mt-2 rounded-xl border border-gold/60 bg-gradient-to-br from-gold/15 via-gold/5 to-transparent p-3.5 shadow-[0_0_40px_-12px_oklch(0.82_0.16_88_/_0.55)]">
+              <div className="flex items-start gap-3">
+                <div className="shrink-0 rounded-full border border-gold/60 bg-gold/15 p-2">
+                  <Sparkles className="h-4 w-4 text-gold" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-[Montserrat] font-black text-foreground">
+                      FIRST-ORDER {FIRST_ORDER_PCT}% OFF
+                    </p>
+                    <span className="text-[10px] uppercase tracking-[0.22em] text-gold border border-gold/50 rounded px-1.5 py-[1px]">
+                      One-time only
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                    Welcome 🪙 — {FIRST_ORDER_PCT}% off ANY pack on your first purchase.
+                    No minimum, no maximum. Auto-applied at checkout.
+                  </p>
+                  <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-gold/90">
+                    <AlertTriangle className="h-3 w-3" />
+                    <span>Use it once and it's gone — pick wisely.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="mt-2 grid gap-2.5">
             {COIN_PACKS.map((p) => {
               const Icon = packIcon(p.priceId);
               const active = selected === p.priceId;
               const coins = p.credits ?? Math.round(p.amountCents / 100);
-              const perCoin = (p.amountCents / 100 / coins).toFixed(2);
+              const fullPrice = p.amountCents / 100;
+              const discountedPrice = firstOrder.eligible
+                ? +(fullPrice * (1 - FIRST_ORDER_PCT / 100)).toFixed(2)
+                : fullPrice;
+              const perCoin = (discountedPrice / coins).toFixed(2);
               return (
                 <button
                   key={p.priceId}
@@ -85,13 +144,29 @@ export function CoinTopUpModal({
                       <span className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
                         £{perCoin}/🪙
                       </span>
+                      {firstOrder.eligible && (
+                        <span className="text-[10px] uppercase tracking-[0.22em] text-gold border border-gold/50 rounded px-1.5 py-[1px]">
+                          −{FIRST_ORDER_PCT}%
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground">{coins} 🪙 added to your wallet</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-[Montserrat] font-black text-lg text-foreground">
-                      £{(p.amountCents / 100).toFixed(2)}
-                    </p>
+                    {firstOrder.eligible ? (
+                      <div className="flex items-baseline gap-1.5 justify-end">
+                        <p className="text-xs text-muted-foreground line-through">
+                          £{fullPrice.toFixed(2)}
+                        </p>
+                        <p className="font-[Montserrat] font-black text-lg text-gold">
+                          £{discountedPrice.toFixed(2)}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="font-[Montserrat] font-black text-lg text-foreground">
+                        £{fullPrice.toFixed(2)}
+                      </p>
+                    )}
                     <p className="text-[10px] uppercase tracking-[0.22em] text-gold">{coins} 🪙</p>
                   </div>
                   {active && (
