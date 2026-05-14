@@ -717,8 +717,78 @@ function MusicPortalPage() {
             </h2>
           </div>
           <p className="text-xs opacity-70 mb-3">
-            Pick a style, then hit <span className="font-bold">Generate</span>. Suno spins up a full-length track in 2 versions (commercial-rights · ~60s). Preview the first 30 seconds free, then unlock the full track + downloads for 2 coins.
+            Pick a style, then hit <span className="font-bold">Generate</span>. Suno spins up a full-length track in 2 versions (commercial-rights · ~60s).
           </p>
+
+          {/* Cost breakdown — what each coin actually buys */}
+          <div
+            className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4"
+            aria-label="Generation cost breakdown"
+          >
+            {[
+              {
+                cost: "1 coin",
+                title: "Generate",
+                desc: "Full-length track · 2 versions · commercial rights",
+                icon: <Wand2 className="h-3.5 w-3.5" />,
+              },
+              {
+                cost: "Free",
+                title: "30-sec preview",
+                desc: "Listen to both versions before you commit",
+                icon: <Play className="h-3.5 w-3.5" />,
+              },
+              {
+                cost: "2 coins",
+                title: "Unlock & download",
+                desc: "Full track playback + MP3 / WAV downloads",
+                icon: <Download className="h-3.5 w-3.5" />,
+              },
+            ].map((step) => (
+              <div
+                key={step.title}
+                className="rounded-lg border p-3 flex flex-col gap-1"
+                style={{ borderColor: `${theme.accent}40`, background: "rgba(0,0,0,0.35)" }}
+              >
+                <div className="flex items-center justify-between">
+                  <span
+                    className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.22em] font-bold"
+                    style={{ color: theme.accent }}
+                  >
+                    {step.icon}
+                    {step.title}
+                  </span>
+                  <span
+                    className="text-[10px] uppercase tracking-[0.2em] font-black rounded-full px-2 py-0.5 border"
+                    style={{ borderColor: `${theme.accent}70`, color: theme.accent }}
+                  >
+                    {step.cost}
+                  </span>
+                </div>
+                <p className="text-[11px] leading-snug opacity-75">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {trackStatus === "ready" && (
+            <div
+              className="mb-3 flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-[11px]"
+              style={{ borderColor: `${theme.accent}55`, background: `${theme.accent}10` }}
+            >
+              <span className="uppercase tracking-[0.22em] opacity-80" style={{ color: theme.accent }}>
+                Pick a different style below to regenerate — it will replace the current preview.
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedStyle(null)}
+                className="text-[10px] uppercase tracking-[0.22em] font-bold underline opacity-80 hover:opacity-100"
+                style={{ color: theme.accent }}
+              >
+                Clear
+              </button>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {STYLE_PRESETS.map((preset) => {
               const active = selectedStyle === preset;
@@ -741,9 +811,6 @@ function MusicPortalPage() {
               );
             })}
           </div>
-          <p className="text-[10px] opacity-50 mt-2 uppercase tracking-[0.25em]">
-            1 coin to generate (full track · commercial rights) · 30-sec preview free · 2 coins to unlock full track + downloads
-          </p>
 
           <Button
             onClick={onGenerateTrack}
@@ -753,6 +820,8 @@ function MusicPortalPage() {
           >
             {trackStatus === "generating" ? (
               <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating full track…</>
+            ) : trackStatus === "ready" ? (
+              <><Wand2 className="h-4 w-4 mr-2" />Regenerate{selectedStyle ? ` · ${selectedStyle}` : ""} (1 coin)</>
             ) : (
               <><Wand2 className="h-4 w-4 mr-2" />Generate{selectedStyle ? ` · ${selectedStyle}` : ""} (1 coin)</>
             )}
