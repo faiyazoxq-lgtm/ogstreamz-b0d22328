@@ -4,11 +4,12 @@ import { Bot, Loader2, Send, Sparkles, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ogBotDraft } from "@/lib/og-bot-draft.functions";
 
-export type OGBotDraftFields = {
-  name?: string;
-  niche?: string;
-  vibe?: string;
-  language?: string;
+export type OGBotDraftFields = Record<string, string>;
+
+export type OGBotFieldHint = {
+  key: string;
+  description: string;
+  max?: number;
 };
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -20,12 +21,20 @@ type Msg = { role: "user" | "assistant"; content: string };
  * a structured draft. The host applies it to its inputs via onApply.
  */
 export function OGBotDraftPanel(props: {
-  surface: "portal-create";
-  kind?: "jokes" | "music" | "trade" | "connect" | "tools";
+  /** Stable surface key — used for memory + audit grouping. */
+  surface: string;
+  /** Optional kind/sub-surface tag for context (e.g. "jokes", "battle"). */
+  kind?: string;
+  /** Field hints — tells the bot which keys it may emit. */
+  fieldHints?: OGBotFieldHint[];
+  /** Surface context handed to the model. */
+  contextHint?: string;
   /** Host hands the bot's draft fields back into its own form state. */
   onApply: (fields: OGBotDraftFields) => void;
-  /** Optional intro shown above the chat */
+  /** Optional intro shown above the chat. */
   intro?: string;
+  /** Placeholder for the user's textarea. */
+  placeholder?: string;
 }) {
   const draftFn = useServerFn(ogBotDraft);
   const [history, setHistory] = useState<Msg[]>([]);
@@ -50,6 +59,8 @@ export function OGBotDraftPanel(props: {
         data: {
           surface: props.surface,
           kind: props.kind,
+          intro: props.contextHint,
+          fieldHints: props.fieldHints,
           message: msg,
           history: next.slice(0, -1).slice(-10),
         },
@@ -57,12 +68,7 @@ export function OGBotDraftPanel(props: {
       setHistory((h) => [...h, { role: "assistant", content: r.reply }]);
       if (r.memoryAdded.length) setMemoryNote(r.memoryAdded);
       if (r.draft) {
-        props.onApply({
-          name: r.draft.name,
-          niche: r.draft.niche,
-          vibe: r.draft.vibe,
-          language: r.draft.language,
-        });
+        props.onApply(r.draft);
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Bot tripped over its own laces.";
@@ -150,7 +156,7 @@ export function OGBotDraftPanel(props: {
           rows={2}
           maxLength={1000}
           disabled={sending}
-          placeholder="Talk to OG Bot…"
+          placeholder={props.placeholder ?? "Talk to OG Bot…"}
           className="flex-1 resize-none rounded-lg border border-white/15 bg-background/70 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[oklch(0.72_0.22_245/0.6)]"
         />
         <Button
