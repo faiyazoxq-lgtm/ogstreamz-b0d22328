@@ -473,3 +473,50 @@ export const unlockPortalTrackDownload = createServerFn({ method: "POST" })
       balance: null as number | null,
     };
   });
+
+/**
+ * List the signed-in user's recent Suno generations along with portal
+ * metadata for re-opening previews and downloads.
+ */
+export const listMyGenerations = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    const { data: jobs, error } = await supabase
+      .from("suno_jobs")
+      .select("id, task_id, status, prompt, style_tags, title, audio_url, audio_url_v1, audio_url_v2, image_url, image_url_v1, image_url_v2, download_unlocked_at, portal_id, portal_slug, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+
+    const slugs = Array.from(new Set((jobs ?? []).map((j: any) => j.portal_slug).filter(Boolean)));
+    const portalMap: Record<string, { name: string; theme: string; slug: string }> = {};
+    if (slugs.length) {
+      const { data: portals } = await supabase
+        .from("portals_public")
+        .select("slug, name, theme")
+        .in("slug", slugs);
+      for (const p of portals ?? []) {
+        portalMap[p.slug as string] = { slug: p.slug, name: p.name, theme: p.theme };
+      }
+    }
+
+    return {
+      jobs: (jobs ?? []).map((j: any) => ({
+        id: j.id as string,
+        task_id: j.task_id as string,
+        status: j.status as string,
+        title: (j.title as string | null) ?? null,
+        style_tags: (j.style_tags as string | null) ?? null,
+        prompt: (j.prompt as string | null) ?? null,
+        audio_url_v1: (j.audio_url_v1 ?? j.audio_url) as string | null,
+        audio_url_v2: (j.audio_url_v2 as string | null) ?? null,
+        image_url: ((j.image_url_v1 ?? j.image_url) as string | null) ?? null,
+        download_unlocked: !!j.download_unlocked_at,
+        portal_slug: (j.portal_slug as string | null) ?? null,
+        portal: j.portal_slug ? (portalMap[j.portal_slug] ?? null) : null,
+        created_at: j.created_at as string,
+      })),
+    };
+  });
