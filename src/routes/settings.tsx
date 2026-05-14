@@ -111,10 +111,6 @@ function SettingsPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  // Local mirror of profile.feature_flags.chaos_mode so the toggle is
-  // instant; persisted to Supabase on change (not on Save).
-  const [chaosMode, setChaosMode] = useState(false);
-  const [chaosBusy, setChaosBusy] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
@@ -129,7 +125,6 @@ function SettingsPage() {
     setContact(card);
     setDisplay({ ...DEFAULT_DISPLAY, ...(card._display ?? {}) });
     setStreamEntries(readEntries((profile as any).stream_links));
-    setChaosMode(!!(profile as any).feature_flags?.chaos_mode);
   }, [profile]);
 
   if (loading || !user) {
@@ -137,28 +132,6 @@ function SettingsPage() {
   }
 
   const swearingOn = profile ? effectiveSwearing(profile as any) : false;
-
-  const toggleChaos = async (next: boolean) => {
-    if (!user || !profile || chaosBusy) return;
-    setChaosBusy(true);
-    const prev = chaosMode;
-    setChaosMode(next); // optimistic
-    try {
-      const merged = { ...((profile as any).feature_flags ?? {}), chaos_mode: next };
-      const { error } = await supabase
-        .from("profiles")
-        .update({ feature_flags: merged })
-        .eq("id", user.id);
-      if (error) throw new Error(error.message);
-      await refresh?.();
-      toast.success(next ? "Chaos Mode: ON 💀🔥" : "Chaos Mode: OFF");
-    } catch (e: any) {
-      setChaosMode(prev); // rollback
-      toast.error(e?.message ?? "Failed to toggle Chaos Mode");
-    } finally {
-      setChaosBusy(false);
-    }
-  };
 
   const onPickFile = () => fileRef.current?.click();
 
