@@ -87,7 +87,10 @@ function ConnectTelegramPage() {
   const [lastCheckAt, setLastCheckAt] = useState<number | null>(null);
   const [openedTelegram, setOpenedTelegram] = useState(false);
   const pollRef = useRef<number | null>(null);
-  const linkedToastRef = useRef(false);
+  const linkedToastRef = useRef(
+    typeof window !== "undefined" &&
+      !!window.localStorage?.getItem("tg_linked_v1"),
+  );
 
   const fireLinkedToast = (boundAtIso: string | null) => {
     if (linkedToastRef.current) return;
@@ -96,6 +99,9 @@ function ConnectTelegramPage() {
     const boundLabel = boundDate.toLocaleString();
     try {
       sessionStorage.setItem("tg_bound_at", boundDate.toISOString());
+    } catch { /* ignore */ }
+    try {
+      localStorage.setItem("tg_linked_v1", boundDate.toISOString());
     } catch { /* ignore */ }
     toast.success("Telegram linked — group features unlocked", {
       id: "tg-linked",
