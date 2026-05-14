@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  Loader2, RefreshCw, Plus, Save, Trash2, X, Crown, Tv, Package, Image as ImageIcon, ArrowUp, ArrowDown,
+  Loader2, RefreshCw, Plus, Save, Trash2, X, Crown, Tv, Package, Image as ImageIcon, ArrowUp, ArrowDown, Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import { coinChip } from "@/lib/coins";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Tabs, TabsList, TabsTrigger, TabsContent,
 } from "@/components/ui/tabs";
