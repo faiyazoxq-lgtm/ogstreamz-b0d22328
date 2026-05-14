@@ -493,7 +493,7 @@ function MusicPortalPage() {
         />
         {portal.swear_chat_enabled && (
           <p className="mt-2 text-[10px] uppercase tracking-[0.3em] text-center opacity-70" style={{ color: theme.accent }}>
-            Brutal swearing AI is ON · lyrics + Suno style stack will generate explicit
+            Unhinged mode ON · lyrics + production stack will spit raw, explicit, no-filter heat
           </p>
         )}
       </div>
