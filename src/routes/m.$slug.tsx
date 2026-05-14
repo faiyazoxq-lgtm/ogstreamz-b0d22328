@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { formatLyrics, requestStudioTrack, generatePortalTrack, getPortalTrackJob, unlockPortalTrackDownload } from "@/lib/music-portals.functions";
+import { streamFormatLyrics, requestStudioTrack, generatePortalTrack, getPortalTrackJob, unlockPortalTrackDownload } from "@/lib/music-portals.functions";
 import { spawnMusic } from "@/lib/suno.functions";
 import { listPortalTracks, getTrackOwnership } from "@/lib/tracks.functions";
 import { TrackPlayer } from "@/components/TrackPlayer";
@@ -144,7 +144,7 @@ function MusicPortalPage() {
   const theme = THEMES[portal.theme] ?? THEMES["studio-blue"];
   const { user, profile, isAdmin, refresh: refreshAuth } = useAuth();
   const isVip = isAdmin || profile?.status === "vip";
-  const formatFn = useServerFn(formatLyrics);
+  const formatFn = useServerFn(streamFormatLyrics);
   const requestFn = useServerFn(requestStudioTrack);
   const listTracksFn = useServerFn(listPortalTracks);
   const ownershipFn = useServerFn(getTrackOwnership);
@@ -534,9 +534,17 @@ function MusicPortalPage() {
     if (!user) return toast.error("Sign in to compose");
     if (!raw.trim()) return toast.error("Type your story first");
     setFormatting(true);
+    setLyrics("");
     try {
-      const r = await formatFn({ data: { slug: portal.slug, raw } });
-      setLyrics(r.lyrics);
+      const stream = await formatFn({ data: { slug: portal.slug, raw } });
+      let acc = "";
+      for await (const chunk of stream as AsyncIterable<{ delta: string }>) {
+        if (chunk?.delta) {
+          acc += chunk.delta;
+          setLyrics(acc);
+        }
+      }
+      if (!acc.trim()) throw new Error("No lyrics returned");
       toast.success("Lyrics formatted");
     } catch (e: any) {
       toast.error(e?.message ?? "Format failed");

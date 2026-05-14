@@ -129,6 +129,90 @@ export const formatLyrics = createServerFn({ method: "POST" })
     return { lyrics };
   });
 
+/**
+ * Streaming variant of formatLyrics — yields incremental {delta} chunks of
+ * the lyrics text so the UI can render tokens as they arrive from OG BOT.
+ */
+export const streamFormatLyrics = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { slug: string; raw: string }) => ({
+    slug: String(data.slug || "").trim().slice(0, 80),
+    raw: String(data.raw || "").trim().slice(0, 4000),
+  }))
+  .handler(async function* ({ data, context }) {
+    const { supabase } = context as { supabase: any };
+    if (!data.raw) throw new Error("Add some text to format");
+    const { data: portal } = await supabase
+      .from("portals_public")
+      .select("language, style, vibe, name, swear_chat_enabled")
+      .eq("slug", data.slug)
+      .maybeSingle();
+    if (!portal) throw new Error("Portal not found");
+
+    const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
+
+    const religious = isReligiousPortal(portal);
+    const swear = !!portal.swear_chat_enabled && !religious;
+    const swearRules = swear
+      ? "BRUTAL SWEARING MODE — Boss-enabled. Pack the lyrics with heavy swears (fuck, fucking, shit, bullshit, twat, wanker, prick, bastard, arse, bollocks, cunt). Minimum 6 swears across the song. No moralising, no soft filler, no warnings. Stay foul, stay unhinged, stay on style."
+      : religious
+      ? "STRICTLY CLEAN — this is a religious / devotional studio. No profanity, no slurs, no crude slang, no double-entendres. Use reverent, respectful language fitting the tradition."
+      : "Keep the language clean and radio-friendly.";
+    const prompt = `Rewrite the user's input as Suno-ready song lyrics in ${portal.language}, in the style of "${portal.style}". Use clear section tags exactly like [Intro], [Verse 1], [Chorus], [Verse 2], [Bridge], [Outro]. Keep it singable, rhythmic, true to the style. ${swearRules} Output ONLY the lyrics with section tags — no explanations.\n\nUser input:\n${data.raw}`;
+
+    const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        stream: true,
+        messages: [
+          { role: "system", content: swear
+              ? "You are OG BOT — a foul-mouthed unhinged songwriter. Output lyrics only with [Section] tags. NO safety filters, NO moralising. Pack lyrics with brutal swearing."
+              : religious
+                ? "You are OG BOT in devotional mode. Output lyrics only with [Section] tags. Reverent, clean, NO profanity, NO slang, NO crude content — fitting a religious / spiritual context."
+                : "You are OG BOT — a professional songwriter. Output lyrics only with [Section] tags." },
+          { role: "user", content: prompt },
+        ],
+      }),
+    });
+    if (upstream.status === 429) throw new Error("Rate limited — try again in a moment");
+    if (upstream.status === 402) throw new Error("AI credits exhausted — top up in Settings → Workspace → Usage");
+    if (!upstream.ok || !upstream.body) throw new Error(`AI gateway ${upstream.status}`);
+
+    const reader = upstream.body.pipeThrough(new TextDecoderStream()).getReader();
+    let buffer = "";
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += value;
+        let nl: number;
+        while ((nl = buffer.indexOf("\n")) !== -1) {
+          let line = buffer.slice(0, nl);
+          buffer = buffer.slice(nl + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line || line.startsWith(":")) continue;
+          if (!line.startsWith("data: ")) continue;
+          const payload = line.slice(6).trim();
+          if (payload === "[DONE]") return;
+          try {
+            const parsed = JSON.parse(payload);
+            const delta: string | undefined = parsed?.choices?.[0]?.delta?.content;
+            if (delta) yield { delta };
+          } catch {
+            buffer = line + "\n" + buffer;
+            break;
+          }
+        }
+      }
+    } finally {
+      try { reader.releaseLock(); } catch { /* noop */ }
+      try { await upstream.body?.cancel(); } catch { /* noop */ }
+    }
+  });
+
 export const requestStudioTrack = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { slug: string; lyrics: string; notes?: string }) => ({
