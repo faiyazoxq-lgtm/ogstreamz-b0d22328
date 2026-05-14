@@ -646,12 +646,14 @@ function AccountMenu({
               <span>Vault & Profile</span>
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild className="cursor-pointer focus:bg-secondary">
-            <Link to="/store" className="flex items-center gap-2">
-              <Coins className="h-4 w-4 text-gold" />
-              <span>Buy Credits</span>
-            </Link>
-          </DropdownMenuItem>
+          {!isBoss && (
+            <DropdownMenuItem asChild className="cursor-pointer focus:bg-secondary">
+              <Link to="/store" className="flex items-center gap-2">
+                <Coins className="h-4 w-4 text-gold" />
+                <span>Buy Credits</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem asChild className="cursor-pointer focus:bg-secondary">
             <Link to="/history" className="flex items-center gap-2">
               <History className="h-4 w-4 text-gold" />
