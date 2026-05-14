@@ -152,12 +152,10 @@ export const createLifetimeVipCode = createServerFn({ method: "POST" })
         lifetime_vip: true,
         created_by: userId,
       })
-      .select("id, code, credits, max_uses, uses, expires_at, created_at, notes:notes")
+      .select("id, code, credits, max_uses, uses, expires_at, created_at")
       .single();
     if (error) throw new Error(error.message);
-    // Stash the boss note locally — `notes` isn't a column on redeem_codes,
-    // so we annotate the returned object only (not persisted).
-    return { code: { ...row, boss_notes: data.notes } };
+    return { code: row };
   });
 
 export const listLifetimeVipCodes = createServerFn({ method: "GET" })
