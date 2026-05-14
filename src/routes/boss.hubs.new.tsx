@@ -16,6 +16,7 @@ import {
 } from "@/lib/hub-style";
 import { templateToSections, HubSectionsZ, type HubSection } from "@/lib/hub-sections";
 import { HubSectionsEditor } from "@/components/HubSectionsEditor";
+import { OGBotDraftPanel } from "@/components/og-bot/OGBotDraftPanel";
 
 const ICONS: Record<string, any> = {
   Sparkles, Music2, Smile, Wrench, TrendingUp, Rocket, Radio, Bot, Brain,
@@ -141,6 +142,22 @@ function NewHubPage() {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* FORM */}
         <div className="space-y-4 rounded-2xl border bg-card p-6">
+          <OGBotDraftPanel
+            surface="hub-create"
+            kind="hub"
+            contextHint="User is on /boss/hubs/new creating a custom hub card."
+            placeholder="Tell me what this hub is for and the vibe."
+            fieldHints={[
+              { key: "title", description: "Hub title, PascalCase + HUB suffix", max: 40 },
+              { key: "tagline", description: "Short punchy tagline", max: 60 },
+              { key: "description", description: "One-line summary", max: 200 },
+            ]}
+            onApply={(f) => {
+              if (f.title) { setTitle(f.title); if (!slugTouched) setSlug(suggestSlugFromTitle(f.title)); }
+              if (f.tagline) setTagline(f.tagline);
+              if (f.description) setDescription(f.description);
+            }}
+          />
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs uppercase tracking-wider text-muted-foreground">Title</label>
