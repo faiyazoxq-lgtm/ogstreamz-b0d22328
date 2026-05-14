@@ -4,7 +4,7 @@ import {
   Loader2, RefreshCw, Plus, Save, Trash2, X, Crown, Tv, Package, Image as ImageIcon, ArrowUp, ArrowDown, Upload,
 } from "lucide-react";
 import { toast } from "sonner";
-import { coinChip } from "@/lib/coins";
+import { coinChip, centsToCoins, formatGbp, COIN } from "@/lib/coins";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -97,12 +97,17 @@ function rowToDraft(r: StoreProductRow): Draft {
 }
 
 function fmtMoney(cents: number, currency: string) {
+  const cur = (currency || "gbp").toLowerCase();
+  // Coins are the default unit on this admin panel — display as "N 🪙 (£X)".
+  if (cur === "gbp" || cur === "coins") {
+    return `${centsToCoins(cents).toLocaleString()} ${COIN} (${formatGbp(cents)})`;
+  }
   try {
-    const base = new Intl.NumberFormat(undefined, { style: "currency", currency: (currency || "gbp").toUpperCase() })
+    const base = new Intl.NumberFormat(undefined, { style: "currency", currency: cur.toUpperCase() })
       .format((cents ?? 0) / 100);
-    return (currency || "gbp").toLowerCase() === "gbp" ? `${base} ${coinChip(cents)}` : base;
+    return base;
   } catch {
-    return `${(cents / 100).toFixed(2)} ${currency?.toUpperCase() ?? ""} ${coinChip(cents)}`;
+    return `${(cents / 100).toFixed(2)} ${cur.toUpperCase()} ${coinChip(cents)}`;
   }
 }
 
