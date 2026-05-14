@@ -377,7 +377,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
         </div>
       ) : (
         <>
-          {/* Wizard stepper */}
+          {/* Wizard stepper — numbered nodes + connector + progress bar */}
           {(() => {
             const STEPS = [
               { key: 0, label: "Name",     Icon: Type },
@@ -386,40 +386,61 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
               { key: 3, label: "Language", Icon: Languages },
               { key: 4, label: "Review",   Icon: Sparkles },
             ] as const;
+            const pct = Math.round((step / (STEPS.length - 1)) * 100);
+            const current = STEPS[step];
             return (
-              <ol className="flex items-center gap-1.5 mb-5 overflow-x-auto" aria-label="Portal wizard progress">
-                {STEPS.map((s, i) => {
-                  const done = step > s.key;
-                  const active = step === s.key;
-                  const Icon = s.Icon;
-                  return (
-                    <li key={s.key} className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => !loading && setStep(s.key)}
-                        aria-current={active ? "step" : undefined}
-                        className={[
-                          "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] font-bold transition",
-                          active
-                            ? "border-amber-300/70 bg-amber-300/15 text-foreground"
-                            : done
-                            ? "border-[oklch(0.72_0.22_245/0.5)] bg-[oklch(0.72_0.22_245/0.08)] text-foreground"
-                            : "border-border text-muted-foreground hover:border-foreground/40",
-                        ].join(" ")}
-                      >
-                        <span className="inline-flex h-4 w-4 items-center justify-center">
-                          {done ? <Check className="h-3 w-3" /> : <Icon className="h-3 w-3" />}
-                        </span>
-                        <span className="hidden sm:inline">{s.label}</span>
-                        <span className="sm:hidden">{s.key + 1}</span>
-                      </button>
-                      {i < STEPS.length - 1 && (
-                        <span aria-hidden="true" className={`h-px w-4 ${done ? "bg-[oklch(0.72_0.22_245/0.6)]" : "bg-border"}`} />
-                      )}
-                    </li>
-                  );
-                })}
-              </ol>
+              <div className="mb-5" aria-label="Portal wizard progress">
+                <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-2">
+                  <span className="font-bold">Step {step + 1} of {STEPS.length}</span>
+                  <span className="text-foreground/80">{current.label}</span>
+                </div>
+                <div
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={pct}
+                  className="h-1 w-full rounded-full bg-border overflow-hidden"
+                >
+                  <div
+                    className="h-full bg-gradient-to-r from-[oklch(0.72_0.22_245)] to-amber-300 transition-[width] duration-300"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <ol className="mt-3 grid grid-cols-5 gap-1.5">
+                  {STEPS.map((s) => {
+                    const done = step > s.key;
+                    const active = step === s.key;
+                    const Icon = s.Icon;
+                    return (
+                      <li key={s.key}>
+                        <button
+                          type="button"
+                          onClick={() => !loading && setStep(s.key)}
+                          aria-current={active ? "step" : undefined}
+                          aria-label={`Go to step ${s.key + 1}: ${s.label}`}
+                          className="group flex w-full flex-col items-center gap-1.5 focus:outline-none"
+                        >
+                          <span
+                            className={[
+                              "inline-flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-bold transition-all",
+                              active
+                                ? "border-amber-300/70 bg-amber-300/15 text-foreground shadow-[0_0_0_4px_oklch(0.78_0.18_85/0.10)]"
+                                : done
+                                ? "border-[oklch(0.72_0.22_245/0.55)] bg-[oklch(0.72_0.22_245/0.12)] text-foreground"
+                                : "border-border text-muted-foreground group-hover:border-foreground/40",
+                            ].join(" ")}
+                          >
+                            {done ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
+                          </span>
+                          <span className={`text-[9px] uppercase tracking-[0.22em] truncate w-full text-center ${active ? "text-foreground font-bold" : "text-muted-foreground"}`}>
+                            {s.label}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
             );
           })()}
 
