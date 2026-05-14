@@ -254,19 +254,7 @@ export function PassStatusRow({
           </span>
         );
       })()}
-      {showCoins && credits != null && (
-        <span
-          title={`Coin balance · ${credits.toLocaleString()} 🪙`}
-          className={[
-            "inline-flex items-center gap-1 rounded-full font-black uppercase tracking-[0.22em] tabular-nums",
-            chipMetalGold,
-            chipCls,
-          ].join(" ")}
-        >
-          <span aria-hidden className="text-[0.85em] leading-none">🪙</span>
-          <span className="tabular-nums">{credits.toLocaleString()}</span>
-        </span>
-      )}
+      {/* Coin balance chip removed */}
       {linkedSocials.length > 0 && (
         <span
           className={[
