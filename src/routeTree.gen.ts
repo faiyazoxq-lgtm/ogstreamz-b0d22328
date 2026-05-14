@@ -47,6 +47,7 @@ import { Route as AppealhubRouteImport } from './routes/appealhub'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BossIndexRouteImport } from './routes/boss.index'
+import { Route as VipPortalsRouteImport } from './routes/vip.portals'
 import { Route as TdSlugRouteImport } from './routes/td.$slug'
 import { Route as TSlugRouteImport } from './routes/t.$slug'
 import { Route as StoreCatalogRouteImport } from './routes/store.catalog'
@@ -290,6 +291,11 @@ const BossIndexRoute = BossIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => BossRoute,
+} as any)
+const VipPortalsRoute = VipPortalsRouteImport.update({
+  id: '/portals',
+  path: '/portals',
+  getParentRoute: () => VipRoute,
 } as any)
 const TdSlugRoute = TdSlugRouteImport.update({
   id: '/td/$slug',
@@ -597,7 +603,7 @@ export interface FileRoutesByFullPath {
   '/tools': typeof ToolsRoute
   '/trade': typeof TradeRoute
   '/vault-login': typeof VaultLoginRoute
-  '/vip': typeof VipRoute
+  '/vip': typeof VipRouteWithChildren
   '/wallet': typeof WalletRoute
   '/welcome': typeof WelcomeRoute
   '/account/passes': typeof AccountPassesRoute
@@ -643,6 +649,7 @@ export interface FileRoutesByFullPath {
   '/store/catalog': typeof StoreCatalogRoute
   '/t/$slug': typeof TSlugRoute
   '/td/$slug': typeof TdSlugRoute
+  '/vip/portals': typeof VipPortalsRoute
   '/boss/': typeof BossIndexRoute
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
   '/api/public/stream-m3u': typeof ApiPublicStreamM3uRoute
@@ -689,7 +696,7 @@ export interface FileRoutesByTo {
   '/tools': typeof ToolsRoute
   '/trade': typeof TradeRoute
   '/vault-login': typeof VaultLoginRoute
-  '/vip': typeof VipRoute
+  '/vip': typeof VipRouteWithChildren
   '/wallet': typeof WalletRoute
   '/welcome': typeof WelcomeRoute
   '/account/passes': typeof AccountPassesRoute
@@ -735,6 +742,7 @@ export interface FileRoutesByTo {
   '/store/catalog': typeof StoreCatalogRoute
   '/t/$slug': typeof TSlugRoute
   '/td/$slug': typeof TdSlugRoute
+  '/vip/portals': typeof VipPortalsRoute
   '/boss': typeof BossIndexRoute
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
   '/api/public/stream-m3u': typeof ApiPublicStreamM3uRoute
@@ -783,7 +791,7 @@ export interface FileRoutesById {
   '/tools': typeof ToolsRoute
   '/trade': typeof TradeRoute
   '/vault-login': typeof VaultLoginRoute
-  '/vip': typeof VipRoute
+  '/vip': typeof VipRouteWithChildren
   '/wallet': typeof WalletRoute
   '/welcome': typeof WelcomeRoute
   '/account/passes': typeof AccountPassesRoute
@@ -829,6 +837,7 @@ export interface FileRoutesById {
   '/store/catalog': typeof StoreCatalogRoute
   '/t/$slug': typeof TSlugRoute
   '/td/$slug': typeof TdSlugRoute
+  '/vip/portals': typeof VipPortalsRoute
   '/boss/': typeof BossIndexRoute
   '/api/public/0g-orchestrator': typeof ApiPublic0gOrchestratorRoute
   '/api/public/stream-m3u': typeof ApiPublicStreamM3uRoute
@@ -924,6 +933,7 @@ export interface FileRouteTypes {
     | '/store/catalog'
     | '/t/$slug'
     | '/td/$slug'
+    | '/vip/portals'
     | '/boss/'
     | '/api/public/0g-orchestrator'
     | '/api/public/stream-m3u'
@@ -1016,6 +1026,7 @@ export interface FileRouteTypes {
     | '/store/catalog'
     | '/t/$slug'
     | '/td/$slug'
+    | '/vip/portals'
     | '/boss'
     | '/api/public/0g-orchestrator'
     | '/api/public/stream-m3u'
@@ -1109,6 +1120,7 @@ export interface FileRouteTypes {
     | '/store/catalog'
     | '/t/$slug'
     | '/td/$slug'
+    | '/vip/portals'
     | '/boss/'
     | '/api/public/0g-orchestrator'
     | '/api/public/stream-m3u'
@@ -1157,7 +1169,7 @@ export interface RootRouteChildren {
   ToolsRoute: typeof ToolsRoute
   TradeRoute: typeof TradeRoute
   VaultLoginRoute: typeof VaultLoginRoute
-  VipRoute: typeof VipRoute
+  VipRoute: typeof VipRouteWithChildren
   WalletRoute: typeof WalletRoute
   WelcomeRoute: typeof WelcomeRoute
   AccountPassesRoute: typeof AccountPassesRoute
@@ -1447,6 +1459,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/boss/'
       preLoaderRoute: typeof BossIndexRouteImport
       parentRoute: typeof BossRoute
+    }
+    '/vip/portals': {
+      id: '/vip/portals'
+      path: '/portals'
+      fullPath: '/vip/portals'
+      preLoaderRoute: typeof VipPortalsRouteImport
+      parentRoute: typeof VipRoute
     }
     '/td/$slug': {
       id: '/td/$slug'
@@ -1928,6 +1947,16 @@ const StoreRouteChildren: StoreRouteChildren = {
 
 const StoreRouteWithChildren = StoreRoute._addFileChildren(StoreRouteChildren)
 
+interface VipRouteChildren {
+  VipPortalsRoute: typeof VipPortalsRoute
+}
+
+const VipRouteChildren: VipRouteChildren = {
+  VipPortalsRoute: VipPortalsRoute,
+}
+
+const VipRouteWithChildren = VipRoute._addFileChildren(VipRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
@@ -1963,7 +1992,7 @@ const rootRouteChildren: RootRouteChildren = {
   ToolsRoute: ToolsRoute,
   TradeRoute: TradeRoute,
   VaultLoginRoute: VaultLoginRoute,
-  VipRoute: VipRoute,
+  VipRoute: VipRouteWithChildren,
   WalletRoute: WalletRoute,
   WelcomeRoute: WelcomeRoute,
   AccountPassesRoute: AccountPassesRoute,
