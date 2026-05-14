@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
  */
 export function CreditWallet({ className }: { className?: string }) {
   const { user, profile, loading, hasStoredSession } = useAuth();
+  const isBoss = profile?.rank === "boss";
 
   // Don't flash the unauthed state while a stored session is being restored
   if (!user && (loading || hasStoredSession)) {
@@ -80,11 +81,13 @@ export function CreditWallet({ className }: { className?: string }) {
             Low balance
           </span>
         )}
-        <Button asChild size="sm" variant={low ? "default" : "outline"}>
-          <Link to="/store">
-            <Plus className="h-3.5 w-3.5 mr-1" /> Top up
-          </Link>
-        </Button>
+        {!isBoss && (
+          <Button asChild size="sm" variant={low ? "default" : "outline"}>
+            <Link to="/store">
+              <Plus className="h-3.5 w-3.5 mr-1" /> Top up
+            </Link>
+          </Button>
+        )}
       </div>
     </div>
   );
