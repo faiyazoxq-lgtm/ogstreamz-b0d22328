@@ -80,7 +80,22 @@ function ConnectTelegramPage() {
   const fetchStatus = useServerFn(getTelegramLinkStatus);
   const genCode = useServerFn(generateTelegramLinkCode);
 
-  const [status, setStatus] = useState<Status>(null);
+  const [status, setStatus] = useState<Status>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const stored = window.localStorage?.getItem("tg_linked_v1");
+      if (!stored) return null;
+      return {
+        chat_id: -1,
+        tg_username: null,
+        link_code: null,
+        code_expires_at: null,
+        linked_at: stored,
+      };
+    } catch {
+      return null;
+    }
+  });
   const [busy, setBusy] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
   const [checking, setChecking] = useState(false);
