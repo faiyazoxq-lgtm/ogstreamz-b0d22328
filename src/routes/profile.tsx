@@ -23,6 +23,7 @@ import { AvatarManagerCard } from "@/components/AvatarManagerCard";
 import { SocialConnectionsCard } from "@/components/SocialConnectionsCard";
 import { CoinActivity } from "@/components/CoinActivity";
 import { IdentityCardPreview } from "@/components/IdentityCardPreview";
+import { BossSpendPanel } from "@/components/BossSpendPanel";
 import { supabase } from "@/integrations/supabase/client";
 
 import { requireMember } from "@/lib/route-guards";
@@ -433,6 +434,7 @@ function ProfilePage() {
               </div>
             </div>
             </div>
+            <BossSpendPanel />
           </section>
         )}
 
