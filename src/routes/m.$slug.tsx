@@ -612,7 +612,7 @@ function MusicPortalPage() {
           )}
 
           {(audioV1 || audioV2) && trackStatus !== "generating" && (
-            <div className="mt-6 space-y-3">
+            <div id="studio-track-preview" className="mt-6 space-y-3 scroll-mt-24">
               {[
                 { label: "Version A", url: audioV1 },
                 { label: "Version B", url: audioV2 },
