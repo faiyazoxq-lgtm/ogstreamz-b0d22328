@@ -359,6 +359,9 @@ function DraftEditor({
 }) {
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => onChange({ ...draft, [k]: v });
   const [uploading, setUploading] = useState(false);
+  const [uploadPct, setUploadPct] = useState(0);
+  const [dragActive, setDragActive] = useState(false);
+  const dragDepth = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const onPickImage = async (file: File) => {
@@ -372,13 +375,31 @@ function DraftEditor({
       return;
     }
     setUploading(true);
+    setUploadPct(0);
     try {
       const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5) || "jpg";
       const key = `products/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const { error: upErr } = await supabase.storage
+      // Use a signed upload URL + XHR so we can report real progress.
+      const { data: signed, error: signErr } = await supabase.storage
         .from("store-media")
-        .upload(key, file, { contentType: file.type, upsert: false });
-      if (upErr) throw upErr;
+        .createSignedUploadUrl(key);
+      if (signErr || !signed) throw signErr ?? new Error("Could not start upload");
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", signed.signedUrl, true);
+        xhr.setRequestHeader("Content-Type", file.type);
+        xhr.setRequestHeader("x-upsert", "false");
+        xhr.upload.onprogress = (ev) => {
+          if (ev.lengthComputable) setUploadPct(Math.round((ev.loaded / ev.total) * 100));
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) { setUploadPct(100); resolve(); }
+          else reject(new Error(`Upload failed (${xhr.status})`));
+        };
+        xhr.onerror = () => reject(new Error("Network error during upload"));
+        xhr.onabort = () => reject(new Error("Upload aborted"));
+        xhr.send(file);
+      });
       const { data: pub } = supabase.storage.from("store-media").getPublicUrl(key);
       set("image_url", pub.publicUrl);
       toast.success("Image uploaded");
@@ -386,14 +407,54 @@ function DraftEditor({
       toast.error(e?.message ?? "Upload failed");
     } finally {
       setUploading(false);
+      setUploadPct(0);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  };
+
+  const onDragEnter = (e: React.DragEvent) => {
+    if (!Array.from(e.dataTransfer?.types ?? []).includes("Files")) return;
+    e.preventDefault();
+    dragDepth.current += 1;
+    setDragActive(true);
+  };
+  const onDragOver = (e: React.DragEvent) => {
+    if (!Array.from(e.dataTransfer?.types ?? []).includes("Files")) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  };
+  const onDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragDepth.current = Math.max(0, dragDepth.current - 1);
+    if (dragDepth.current === 0) setDragActive(false);
+  };
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragDepth.current = 0;
+    setDragActive(false);
+    if (uploading) return;
+    const f = e.dataTransfer?.files?.[0];
+    if (f) onPickImage(f);
   };
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-2xl rounded-2xl border-2 border-cyan-800/60 bg-black/95 backdrop-blur p-5 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div
+        className={`relative w-full max-w-2xl rounded-2xl border-2 ${dragActive ? "border-cyan-400 ring-2 ring-cyan-400/40" : "border-cyan-800/60"} bg-black/95 backdrop-blur p-5 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto transition-colors`}
+        onDragEnter={onDragEnter}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+      >
+        {dragActive && (
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-cyan-500/10 border-2 border-dashed border-cyan-300">
+            <div className="flex flex-col items-center gap-2 text-cyan-200">
+              <Upload className="h-10 w-10" />
+              <span className="text-sm font-black uppercase tracking-wider">Drop image to upload</span>
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-between mb-4">
           <h4 className="text-lg font-black uppercase tracking-wider text-cyan-200">
             {draft.id ? "Edit product" : "New product"}
@@ -456,7 +517,7 @@ function DraftEditor({
                   className="border-emerald-700/50 text-emerald-200 hover:bg-emerald-900/40 shrink-0"
                 >
                   {uploading
-                    ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" />Uploading…</>
+                    ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" />Uploading {uploadPct}%</>
                     : <><Upload className="h-4 w-4 mr-1" />Upload from device</>}
                 </Button>
                 {draft.image_url && (
@@ -471,6 +532,22 @@ function DraftEditor({
                   </Button>
                 )}
               </div>
+              {uploading && (
+                <div className="space-y-1">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-emerald-950/60 border border-emerald-900/50">
+                    <div
+                      className="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 transition-[width] duration-150"
+                      style={{ width: `${uploadPct}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] uppercase tracking-widest text-emerald-400">
+                    Uploading {uploadPct}% — please wait before saving
+                  </p>
+                </div>
+              )}
+              <p className="text-[10px] text-emerald-700">
+                Tip: drag &amp; drop an image anywhere on this dialog to upload it.
+              </p>
               {draft.image_url && (
                 <div className="flex items-center gap-3 rounded-md border border-emerald-900/40 bg-black/40 p-2">
                   <img
@@ -539,9 +616,14 @@ function DraftEditor({
           <Button onClick={onClose} variant="outline" className="border-emerald-800/50 text-emerald-200 uppercase tracking-wider text-xs font-black">
             Cancel
           </Button>
-          <Button onClick={onSave} disabled={busy} className="bg-emerald-600 hover:bg-emerald-500 text-black uppercase tracking-wider text-xs font-black">
-            {busy ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
-            Save
+          <Button
+            onClick={onSave}
+            disabled={busy || uploading}
+            title={uploading ? "Wait for the image upload to finish" : undefined}
+            className="bg-emerald-600 hover:bg-emerald-500 text-black uppercase tracking-wider text-xs font-black disabled:opacity-50"
+          >
+            {busy || uploading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
+            {uploading ? `Uploading ${uploadPct}%` : "Save"}
           </Button>
         </div>
       </div>
