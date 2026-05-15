@@ -77,10 +77,18 @@ export const LEXICON_CATEGORIES: Array<keyof Lexicon> = [
   "heavy", "mid", "soft", "refusal_patterns", "brutal_openers", "fillers_heavy", "fillers_mid",
 ];
 
-/** Load the lexicon from the swear_lexicon table, falling back per-category. */
-export async function loadLexicon(supabase: any): Promise<Lexicon> {
+/** Load the lexicon from the swear_lexicon table, falling back per-category.
+ *
+ * The `swear_lexicon` table is restricted to boss/admin via RLS. Chat
+ * enforcement runs as the authenticated end-user, so we always read it via
+ * the service-role admin client to bypass RLS for this trusted, read-only
+ * lookup. The `supabase` argument is kept for backward compatibility but
+ * unused.
+ */
+export async function loadLexicon(_supabase?: any): Promise<Lexicon> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("swear_lexicon")
       .select("category, items");
     if (error || !data) return DEFAULT_LEXICON;
