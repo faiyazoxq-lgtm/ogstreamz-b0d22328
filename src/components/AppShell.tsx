@@ -418,7 +418,7 @@ function MobileHeader({
     <header
       role="banner"
       aria-label="Site header"
-      className="md:hidden sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur px-3 py-2 flex items-center gap-2 min-h-14"
+      className="md:hidden sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur px-3 py-2 flex flex-nowrap items-center gap-2 h-14 min-h-14 max-h-14 overflow-hidden"
     >
       {/* Skip link — only visible when focused, lets keyboard users jump
           past the navbar straight to page content. */}
@@ -431,7 +431,7 @@ function MobileHeader({
       <Link
         to="/"
         aria-label="OG-PORTAL home"
-        className="brand-glow inline-flex items-center min-w-0 flex-1 min-h-11 px-1 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-gold/80 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-safe:transition-shadow"
+        className="brand-glow inline-flex items-center min-w-0 flex-1 h-11 max-h-11 px-1 rounded-lg overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-gold/80 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-safe:transition-shadow"
       >
         <OgWordmark suffix="-PORTAL" fit maxFontSize={26} minFontSize={16} className="text-white font-black tracking-[-0.02em]" />
       </Link>
@@ -440,13 +440,13 @@ function MobileHeader({
           to="/store"
           aria-label={`Coin balance: ${profile?.credits ?? 0}. Open the credit store.`}
           title="Open credit store"
-          className="inline-flex items-center gap-1 rounded-full border-2 border-amber-400/60 bg-amber-500/20 px-3 min-h-11 min-w-11 justify-center text-amber-100 outline-none focus-visible:ring-2 focus-visible:ring-amber-300/90 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-safe:transition-shadow"
+          className="inline-flex shrink-0 items-center gap-1 rounded-full border-2 border-amber-400/60 bg-amber-500/20 px-3 h-11 min-h-11 min-w-11 max-w-[7.5rem] justify-center text-amber-100 whitespace-nowrap overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-amber-300/90 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-safe:transition-shadow"
         >
           <span aria-hidden>🪙</span>
           <AnimatedCredits
             value={profile?.credits ?? 0}
             aria-hidden="true"
-            className="text-[12px] font-black tabular-nums"
+            className="text-[12px] font-black tabular-nums truncate"
           />
         </Link>
       )}
@@ -456,7 +456,7 @@ function MobileHeader({
           aria-haspopup="dialog"
           aria-expanded={open}
           aria-controls="mobile-nav-drawer"
-          className="inline-flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-border bg-secondary/40 text-foreground hover:bg-secondary outline-none focus-visible:ring-2 focus-visible:ring-gold/80 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-safe:transition-colors"
+          className="inline-flex shrink-0 h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-border bg-secondary/40 text-foreground hover:bg-secondary outline-none focus-visible:ring-2 focus-visible:ring-gold/80 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-safe:transition-colors"
         >
           <Menu className="h-5 w-5" aria-hidden />
         </SheetTrigger>
@@ -464,7 +464,7 @@ function MobileHeader({
           id="mobile-nav-drawer"
           side="right"
           aria-label="Navigation drawer"
-          className="w-[92vw] max-w-sm bg-card p-0 flex flex-col"
+          className="w-[92vw] max-w-sm bg-card p-0 flex flex-col h-[100dvh] max-h-[100dvh] overflow-hidden"
         >
           <SheetHeader className="px-4 pt-4 pb-3 border-b border-border space-y-3">
             <SheetTitle className="sr-only">Navigation menu</SheetTitle>
