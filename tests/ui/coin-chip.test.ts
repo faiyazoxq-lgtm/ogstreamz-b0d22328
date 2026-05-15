@@ -80,6 +80,12 @@ describe("CoinChip component contract (src/components/CoinChip.tsx)", () => {
   });
 
   it("provides an accessible title with both coin count and GBP value", () => {
-    expect(src).toMatch(/title=\{`\$\{coins\.toLocaleString\(\)\} coins \(\$\{gbp\}\)`\}/);
+    // Tooltip + aria-label both go through `coinsLocaleShort` (en-GB) and
+    // `gbpExact` (formatGbp at 2dp) so screen-readers and hover both see
+    // the precise decimal value.
+    expect(src).toMatch(/title=\{tooltip\}/);
+    expect(src).toMatch(/aria-label=\{`\$\{coinsLocaleShort\} coins, \$\{gbpExact\}`\}/);
+    expect(src).toMatch(/coins\.toLocaleString\(\s*["']en-GB["']\s*\)/);
+    expect(src).toMatch(/formatGbp\s*\(\s*coins\s*\*\s*100\s*,\s*\{\s*decimals:\s*2\s*\}\s*\)/);
   });
 });
