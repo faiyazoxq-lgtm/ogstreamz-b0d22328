@@ -31,6 +31,7 @@ import { WelcomeBroadcast } from "@/components/WelcomeBroadcast";
 import { NonVipHome } from "@/components/NonVipHome";
 import { BossOpsStrip } from "@/components/BossOpsStrip";
 import { BossTodoNotepad } from "@/components/BossTodoNotepad";
+import { LockupOverflowDebug } from "@/components/LockupOverflowDebug";
 
 const ICONS: Record<string, any> = {
   Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
@@ -134,6 +135,7 @@ function Index() {
         </p>
         <h1
           className="mt-3 sm:mt-5 text-[10rem] sm:text-[16rem] md:text-[20rem] leading-[0.9] flex justify-center items-center w-full overflow-visible"
+          data-lockup-root
           style={{
             // Reserve breathing room that scales with the glow radius so the
             // metallic halo never clips on phones, tablets, or desktops.
