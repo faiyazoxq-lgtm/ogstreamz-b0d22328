@@ -4126,31 +4126,19 @@ export type Database = {
         Returns: undefined
       }
       _lifetime_vip_expiry: { Args: never; Returns: string }
-      _profile_self_update_safe:
-        | {
-            Args: {
-              _banned: boolean
-              _credits: number
-              _id: string
-              _rank: Database["public"]["Enums"]["syndicate_rank"]
-              _status: Database["public"]["Enums"]["account_status"]
-              _subscription_plan: Database["public"]["Enums"]["subscription_plan"]
-            }
-            Returns: boolean
-          }
-        | {
-            Args: {
-              _banned: boolean
-              _credits: number
-              _feature_flags?: Json
-              _id: string
-              _rank: Database["public"]["Enums"]["syndicate_rank"]
-              _referred_by_reseller?: string
-              _status: Database["public"]["Enums"]["account_status"]
-              _subscription_plan: Database["public"]["Enums"]["subscription_plan"]
-            }
-            Returns: boolean
-          }
+      _profile_self_update_safe: {
+        Args: {
+          _banned: boolean
+          _credits: number
+          _feature_flags?: Json
+          _id: string
+          _rank: Database["public"]["Enums"]["syndicate_rank"]
+          _referred_by_reseller?: string
+          _status: Database["public"]["Enums"]["account_status"]
+          _subscription_plan: Database["public"]["Enums"]["subscription_plan"]
+        }
+        Returns: boolean
+      }
       _stream_link_secret: { Args: never; Returns: string }
       admin_adjust_credits: {
         Args: { _delta: number; _reason: string; _user_id: string }
