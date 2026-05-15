@@ -15,6 +15,7 @@
     "check:secrets": "node scripts/check-server-secrets.mjs",
     "check:secrets:bundle": "node scripts/check-server-secrets.mjs --bundle",
     "check:boss-rpc-acl": "node scripts/smoke-boss-rpc-acl.mjs",
+    "check:boss-rpc-as-boss": "node scripts/smoke-boss-rpc-as-boss.mjs",
     "prebuild": "npm run check:secrets && npm run check:hub-portals",
     "postbuild": "npm run check:secrets:bundle",
     "test": "vitest run",
