@@ -75,6 +75,7 @@ import { Route as BossPortalsRouteImport } from './routes/boss.portals'
 import { Route as BossPortalUsageRouteImport } from './routes/boss.portal-usage'
 import { Route as BossPortalCostsRouteImport } from './routes/boss.portal-costs'
 import { Route as BossOverviewRouteImport } from './routes/boss.overview'
+import { Route as BossOgPassesRouteImport } from './routes/boss.og-passes'
 import { Route as BossOgBotMemoryRouteImport } from './routes/boss.og-bot-memory'
 import { Route as BossLexiconRouteImport } from './routes/boss.lexicon'
 import { Route as BossHubsRouteImport } from './routes/boss.hubs'
@@ -436,6 +437,11 @@ const BossOverviewRoute = BossOverviewRouteImport.update({
   path: '/overview',
   getParentRoute: () => BossRoute,
 } as any)
+const BossOgPassesRoute = BossOgPassesRouteImport.update({
+  id: '/og-passes',
+  path: '/og-passes',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossOgBotMemoryRoute = BossOgBotMemoryRouteImport.update({
   id: '/og-bot-memory',
   path: '/og-bot-memory',
@@ -649,6 +655,7 @@ export interface FileRoutesByFullPath {
   '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/og-bot-memory': typeof BossOgBotMemoryRoute
+  '/boss/og-passes': typeof BossOgPassesRoute
   '/boss/overview': typeof BossOverviewRoute
   '/boss/portal-costs': typeof BossPortalCostsRoute
   '/boss/portal-usage': typeof BossPortalUsageRoute
@@ -746,6 +753,7 @@ export interface FileRoutesByTo {
   '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/og-bot-memory': typeof BossOgBotMemoryRoute
+  '/boss/og-passes': typeof BossOgPassesRoute
   '/boss/overview': typeof BossOverviewRoute
   '/boss/portal-costs': typeof BossPortalCostsRoute
   '/boss/portal-usage': typeof BossPortalUsageRoute
@@ -845,6 +853,7 @@ export interface FileRoutesById {
   '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/og-bot-memory': typeof BossOgBotMemoryRoute
+  '/boss/og-passes': typeof BossOgPassesRoute
   '/boss/overview': typeof BossOverviewRoute
   '/boss/portal-costs': typeof BossPortalCostsRoute
   '/boss/portal-usage': typeof BossPortalUsageRoute
@@ -945,6 +954,7 @@ export interface FileRouteTypes {
     | '/boss/hubs'
     | '/boss/lexicon'
     | '/boss/og-bot-memory'
+    | '/boss/og-passes'
     | '/boss/overview'
     | '/boss/portal-costs'
     | '/boss/portal-usage'
@@ -1042,6 +1052,7 @@ export interface FileRouteTypes {
     | '/boss/hubs'
     | '/boss/lexicon'
     | '/boss/og-bot-memory'
+    | '/boss/og-passes'
     | '/boss/overview'
     | '/boss/portal-costs'
     | '/boss/portal-usage'
@@ -1140,6 +1151,7 @@ export interface FileRouteTypes {
     | '/boss/hubs'
     | '/boss/lexicon'
     | '/boss/og-bot-memory'
+    | '/boss/og-passes'
     | '/boss/overview'
     | '/boss/portal-costs'
     | '/boss/portal-usage'
@@ -1704,6 +1716,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossOverviewRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/og-passes': {
+      id: '/boss/og-passes'
+      path: '/og-passes'
+      fullPath: '/boss/og-passes'
+      preLoaderRoute: typeof BossOgPassesRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/og-bot-memory': {
       id: '/boss/og-bot-memory'
       path: '/og-bot-memory'
@@ -1949,6 +1968,7 @@ interface BossRouteChildren {
   BossHubsRoute: typeof BossHubsRouteWithChildren
   BossLexiconRoute: typeof BossLexiconRoute
   BossOgBotMemoryRoute: typeof BossOgBotMemoryRoute
+  BossOgPassesRoute: typeof BossOgPassesRoute
   BossOverviewRoute: typeof BossOverviewRoute
   BossPortalCostsRoute: typeof BossPortalCostsRoute
   BossPortalUsageRoute: typeof BossPortalUsageRoute
@@ -1987,6 +2007,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossHubsRoute: BossHubsRouteWithChildren,
   BossLexiconRoute: BossLexiconRoute,
   BossOgBotMemoryRoute: BossOgBotMemoryRoute,
+  BossOgPassesRoute: BossOgPassesRoute,
   BossOverviewRoute: BossOverviewRoute,
   BossPortalCostsRoute: BossPortalCostsRoute,
   BossPortalUsageRoute: BossPortalUsageRoute,
