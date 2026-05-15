@@ -8,7 +8,6 @@ export const SIGNUP_BONUS_CREDITS = 2;
 import { useEffect, type ReactNode } from "react";
 import { useSignupBonus } from "@/hooks/use-signup-bonus";
 import { OgWordmark } from "@/components/OgWordmark";
-import { TVStaticLogo } from "@/components/TVStaticLogo";
 
 const PUBLIC_PATHS = ["/auth", "/forgot-password", "/reset-password"];
 
@@ -62,15 +61,7 @@ function PromoLanding() {
               aria-label="ogstreamz home"
               className="flex items-center gap-3 min-w-0 rounded-lg outline-none ring-offset-2 ring-offset-black focus-visible:ring-2 focus-visible:ring-[#7fd5ff]"
             >
-              <TVStaticLogo size={44} />
-              <div className="flex flex-col leading-none min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-[#7fd5ff]/80 truncate">
-                  ogstreamz
-                </span>
-                <span className="mt-1 text-sm font-black uppercase tracking-[0.2em] text-white truncate">
-                  Neon Platform
-                </span>
-              </div>
+              <OgWordmark suffix="-PORTAL" fit maxFontSize={120} />
             </Link>
             <Link
               to="/auth"
@@ -81,11 +72,7 @@ function PromoLanding() {
             </Link>
           </div>
 
-          <div className="mt-6 flex justify-center sm:justify-start">
-            <OgWordmark suffix="-PORTAL" fit maxFontSize={120} />
-          </div>
-
-          <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#00aaff]/40 bg-[#00aaff]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-[#7fd5ff]">
+          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#00aaff]/40 bg-[#00aaff]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-[#7fd5ff]">
             <Lock className="h-3 w-3" />
             Members only
           </div>
