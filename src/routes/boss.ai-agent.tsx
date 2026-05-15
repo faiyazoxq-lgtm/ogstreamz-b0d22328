@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { runAgentTask } from "@/lib/command-deck.functions";
-import { SyndicateProtocolSwitch } from "@/components/SyndicateProtocolSwitch";
+import { GlobalMoodPanel } from "@/components/boss/GlobalMoodPanel";
 
 export const Route = createFileRoute("/boss/ai-agent")({
   head: () => ({
@@ -119,15 +119,7 @@ function BossAiAgentPage() {
       </section>
 
       <section className="rounded-2xl border bg-card p-5" style={{ borderColor: `${HOT_PINK}33` }}>
-        <div className="flex items-center gap-2 mb-2">
-          <MessageSquare className="h-5 w-5" style={{ color: HOT_PINK }} />
-          <h2 className="font-[Montserrat] font-black text-lg text-white">Global Mood / Protocol</h2>
-          <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">OG vs Normal</span>
-        </div>
-        <p className="text-xs text-white/55 mb-3">
-          Switches every 0G Bot surface (floating widget, site guide, draft panels) between OG (sweary) and Normal tone.
-        </p>
-        <SyndicateProtocolSwitch compact />
+        <GlobalMoodPanel />
       </section>
     </main>
   );
