@@ -5,11 +5,29 @@ import { toast } from "sonner";
 import { ShieldAlert, ShieldCheck } from "lucide-react";
 
 /**
- * Syndicate Protocol — branded mood switch. Reads & writes the
- * shape-bridge row in hub_settings (acts as the global config).
- * Updates propagate live via the GlobalMoodProvider realtime channel.
+ * Syndicate Protocol — branded mood switch. Reads & writes a single
+ * row in hub_settings identified by `hubKey`. Defaults to the
+ * full-site `shape-bridge` config (the GlobalMoodProvider listener).
  */
-export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean }) {
+export type SyndicateProtocolSwitchProps = {
+  compact?: boolean;
+  hubKey?: string;
+  eyebrow?: string;
+  titleNormal?: string;
+  titleOg?: string;
+  description?: React.ReactNode;
+  ogBadge?: string;
+};
+
+export function SyndicateProtocolSwitch({
+  compact = false,
+  hubKey = "shape-bridge",
+  eyebrow = "Syndicate Protocol",
+  titleNormal = "Global Mood · NORMAL",
+  titleOg = "Global Mood · OG-MODE",
+  description,
+  ogBadge = "OG Brutal · all-or-nothing",
+}: SyndicateProtocolSwitchProps) {
   const [mode, setMode] = useState<"og" | "normal">("og");
   const [enabled, setEnabled] = useState(true);
   const [id, setId] = useState<string | null>(null);
@@ -21,7 +39,7 @@ export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean
       const { data } = await supabase
         .from("hub_settings")
         .select("id, enabled, tuning")
-        .eq("hub_key", "shape-bridge")
+        .eq("hub_key", hubKey)
         .maybeSingle();
       if (!alive || !data) return;
       setId(data.id);
@@ -30,7 +48,7 @@ export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean
       setMode(t.mode === "normal" ? "normal" : "og");
     })();
     return () => { alive = false; };
-  }, []);
+  }, [hubKey]);
 
   async function flip(next: "og" | "normal") {
     if (!id || saving || next === mode) return;
@@ -72,10 +90,10 @@ export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean
       <div className="flex items-center justify-between gap-4 mb-5">
         <div>
           <div className="text-[10px] uppercase tracking-[0.4em] mood-accent terminal-mono">
-            Syndicate Protocol
+            {eyebrow}
           </div>
           <div className="syndicate-header text-lg md:text-xl mt-1 text-white/95">
-            Global Mood · {isOg ? "OG-MODE" : "NORMAL"}
+            {isOg ? titleOg : titleNormal}
           </div>
         </div>
         <button
@@ -150,8 +168,12 @@ export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean
       </div>
 
       <p className="mt-4 text-xs text-white/55 terminal-mono leading-relaxed">
-        Flips <span className="mood-accent">system_instruction</span> for every Gemini 3 call across
-        the Syndicate — Boss Chat, Shape Bridge & all hub agents — instantly.
+        {description ?? (
+          <>
+            Flips <span className="mood-accent">system_instruction</span> for every Gemini 3 call across
+            the Syndicate — Boss Chat, Shape Bridge &amp; all hub agents — instantly.
+          </>
+        )}
       </p>
 
       {isOg && (
@@ -162,7 +184,7 @@ export function SyndicateProtocolSwitch({ compact = false }: { compact?: boolean
           }}>
           <ShieldAlert className="h-3.5 w-3.5" style={{ color: "var(--syndicate-glow)" }} />
           <span className="text-[10px] uppercase tracking-[0.3em] terminal-mono font-black text-white/90">
-            OG Brutal · all-or-nothing
+            {ogBadge}
           </span>
         </div>
       )}
