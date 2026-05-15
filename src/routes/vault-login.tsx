@@ -176,7 +176,9 @@ function VaultLoginPage() {
               </div>
             )}
 
-            {/* OAuth */}
+            {/* OAuth — hidden when already authenticated */}
+            {!user && (
+            <>
             <div className="mt-6 space-y-3">
               <Button
                 type="button"
@@ -261,6 +263,8 @@ function VaultLoginPage() {
                 Email me a magic key
               </Button>
             </form>
+            </>
+            )}
 
             <div className="mt-6 flex items-center justify-between text-[11px] text-cyan-200/60">
               <Link to="/auth" className="hover:text-cyan-100">Standard login</Link>
