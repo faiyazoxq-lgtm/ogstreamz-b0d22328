@@ -248,6 +248,7 @@ function BossResellerAuditPage() {
           rows.map((r) => (
             <div
               key={`${r.source}:${r.id}`}
+              title={r.reason ? `Reason: ${r.reason}` : undefined}
               className="grid grid-cols-[160px_100px_70px_1fr_1fr_1fr_80px] items-center gap-2 border-b border-border/60 px-3 py-2 text-xs last:border-b-0 hover:bg-secondary/30"
             >
               <div className="text-muted-foreground" title={r.created_at}>{fmtTime(r.created_at)}</div>
@@ -272,7 +273,7 @@ function BossResellerAuditPage() {
 
       {rows.length > 0 && (
         <p className="mt-3 text-[11px] text-muted-foreground">
-          Reason column is in the row tooltip on hover; expand the JSON via the boss SQL editor for more detail.
+          Hover any row to see the audit <code>reason</code>. Use the SQL editor for full JSON detail.
         </p>
       )}
     </div>

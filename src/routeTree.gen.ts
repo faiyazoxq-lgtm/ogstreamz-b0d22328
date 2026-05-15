@@ -67,6 +67,7 @@ import { Route as BossStreamQueueRouteImport } from './routes/boss.stream-queue'
 import { Route as BossSettingsRouteImport } from './routes/boss.settings'
 import { Route as BossSecurityEventsRouteImport } from './routes/boss.security-events'
 import { Route as BossSecretsInventoryRouteImport } from './routes/boss.secrets-inventory'
+import { Route as BossResellerAuditRouteImport } from './routes/boss.reseller-audit'
 import { Route as BossRealtimeDenialsRouteImport } from './routes/boss.realtime-denials'
 import { Route as BossPublishCheckRouteImport } from './routes/boss.publish-check'
 import { Route as BossPromotionsRouteImport } from './routes/boss.promotions'
@@ -399,6 +400,11 @@ const BossSecretsInventoryRoute = BossSecretsInventoryRouteImport.update({
   path: '/secrets-inventory',
   getParentRoute: () => BossRoute,
 } as any)
+const BossResellerAuditRoute = BossResellerAuditRouteImport.update({
+  id: '/reseller-audit',
+  path: '/reseller-audit',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossRealtimeDenialsRoute = BossRealtimeDenialsRouteImport.update({
   id: '/realtime-denials',
   path: '/realtime-denials',
@@ -679,6 +685,7 @@ export interface FileRoutesByFullPath {
   '/boss/promotions': typeof BossPromotionsRoute
   '/boss/publish-check': typeof BossPublishCheckRoute
   '/boss/realtime-denials': typeof BossRealtimeDenialsRoute
+  '/boss/reseller-audit': typeof BossResellerAuditRoute
   '/boss/secrets-inventory': typeof BossSecretsInventoryRoute
   '/boss/security-events': typeof BossSecurityEventsRoute
   '/boss/settings': typeof BossSettingsRoute
@@ -779,6 +786,7 @@ export interface FileRoutesByTo {
   '/boss/promotions': typeof BossPromotionsRoute
   '/boss/publish-check': typeof BossPublishCheckRoute
   '/boss/realtime-denials': typeof BossRealtimeDenialsRoute
+  '/boss/reseller-audit': typeof BossResellerAuditRoute
   '/boss/secrets-inventory': typeof BossSecretsInventoryRoute
   '/boss/security-events': typeof BossSecurityEventsRoute
   '/boss/settings': typeof BossSettingsRoute
@@ -881,6 +889,7 @@ export interface FileRoutesById {
   '/boss/promotions': typeof BossPromotionsRoute
   '/boss/publish-check': typeof BossPublishCheckRoute
   '/boss/realtime-denials': typeof BossRealtimeDenialsRoute
+  '/boss/reseller-audit': typeof BossResellerAuditRoute
   '/boss/secrets-inventory': typeof BossSecretsInventoryRoute
   '/boss/security-events': typeof BossSecurityEventsRoute
   '/boss/settings': typeof BossSettingsRoute
@@ -984,6 +993,7 @@ export interface FileRouteTypes {
     | '/boss/promotions'
     | '/boss/publish-check'
     | '/boss/realtime-denials'
+    | '/boss/reseller-audit'
     | '/boss/secrets-inventory'
     | '/boss/security-events'
     | '/boss/settings'
@@ -1084,6 +1094,7 @@ export interface FileRouteTypes {
     | '/boss/promotions'
     | '/boss/publish-check'
     | '/boss/realtime-denials'
+    | '/boss/reseller-audit'
     | '/boss/secrets-inventory'
     | '/boss/security-events'
     | '/boss/settings'
@@ -1185,6 +1196,7 @@ export interface FileRouteTypes {
     | '/boss/promotions'
     | '/boss/publish-check'
     | '/boss/realtime-denials'
+    | '/boss/reseller-audit'
     | '/boss/secrets-inventory'
     | '/boss/security-events'
     | '/boss/settings'
@@ -1685,6 +1697,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossSecretsInventoryRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/reseller-audit': {
+      id: '/boss/reseller-audit'
+      path: '/reseller-audit'
+      fullPath: '/boss/reseller-audit'
+      preLoaderRoute: typeof BossResellerAuditRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/realtime-denials': {
       id: '/boss/realtime-denials'
       path: '/realtime-denials'
@@ -2018,6 +2037,7 @@ interface BossRouteChildren {
   BossPromotionsRoute: typeof BossPromotionsRoute
   BossPublishCheckRoute: typeof BossPublishCheckRoute
   BossRealtimeDenialsRoute: typeof BossRealtimeDenialsRoute
+  BossResellerAuditRoute: typeof BossResellerAuditRoute
   BossSecretsInventoryRoute: typeof BossSecretsInventoryRoute
   BossSecurityEventsRoute: typeof BossSecurityEventsRoute
   BossSettingsRoute: typeof BossSettingsRoute
@@ -2058,6 +2078,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossPromotionsRoute: BossPromotionsRoute,
   BossPublishCheckRoute: BossPublishCheckRoute,
   BossRealtimeDenialsRoute: BossRealtimeDenialsRoute,
+  BossResellerAuditRoute: BossResellerAuditRoute,
   BossSecretsInventoryRoute: BossSecretsInventoryRoute,
   BossSecurityEventsRoute: BossSecurityEventsRoute,
   BossSettingsRoute: BossSettingsRoute,
