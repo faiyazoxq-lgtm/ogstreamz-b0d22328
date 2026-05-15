@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ShieldAlert, ShieldCheck } from "lucide-react";
+import { updateGlobalMoodToggle } from "@/lib/global-mood.functions";
 
 /**
  * Syndicate Protocol — branded mood switch. Reads & writes a single
@@ -36,6 +38,7 @@ export function SyndicateProtocolSwitch({
   const [enabled, setEnabled] = useState(true);
   const [id, setId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const saveToggle = useServerFn(updateGlobalMoodToggle);
 
   useEffect(() => {
     let alive = true;
@@ -59,29 +62,32 @@ export function SyndicateProtocolSwitch({
     setSaving(true);
     const prev = mode;
     setMode(next);
-    const { error } = await supabase
-      .from("hub_settings")
-      .update({ tuning: { mode: next, intensity: "chaotic" }, updated_at: new Date().toISOString() })
-      .eq("id", id);
-    setSaving(false);
-    if (error) {
+    try {
+      const res = await saveToggle({ data: { hubKey, mode: next } });
+      setMode(res.mode === "normal" ? "normal" : "og");
+      toast.success(`Syndicate Protocol → ${next === "og" ? "OG-MODE · ENFORCER" : "NORMAL · ANALYST"}`);
+    } catch (e: any) {
       setMode(prev);
-      toast.error(error.message);
-      return;
+      toast.error(e?.message ?? "Failed to save");
+    } finally {
+      setSaving(false);
     }
-    toast.success(`Syndicate Protocol → ${next === "og" ? "OG-MODE · ENFORCER" : "NORMAL · ANALYST"}`);
   }
 
   async function toggleOnline(v: boolean) {
     if (!id || saving) return;
     setSaving(true);
+    const prev = enabled;
     setEnabled(v);
-    const { error } = await supabase
-      .from("hub_settings")
-      .update({ enabled: v, updated_at: new Date().toISOString() })
-      .eq("id", id);
-    setSaving(false);
-    if (error) { setEnabled(!v); toast.error(error.message); }
+    try {
+      const res = await saveToggle({ data: { hubKey, enabled: v } });
+      setEnabled(res.enabled);
+    } catch (e: any) {
+      setEnabled(prev);
+      toast.error(e?.message ?? "Failed to save");
+    } finally {
+      setSaving(false);
+    }
   }
 
   const isOg = mode === "og";

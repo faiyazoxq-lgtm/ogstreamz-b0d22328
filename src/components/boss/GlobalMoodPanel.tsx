@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { SyndicateProtocolSwitch } from "@/components/SyndicateProtocolSwitch";
 import { getCivility, setCivilityDefault } from "@/lib/civility.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { updateGlobalMoodToggle } from "@/lib/global-mood.functions";
 
 /**
  * Unified Global Mood · Syndicate Protocol panel.
@@ -222,6 +223,7 @@ export default GlobalMoodPanel;
 function FriendsFamilyBadgeRow() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
+  const saveToggle = useServerFn(updateGlobalMoodToggle);
 
   useEffect(() => {
     let alive = true;
@@ -247,17 +249,16 @@ function FriendsFamilyBadgeRow() {
     setBusy(true);
     const prev = enabled;
     setEnabled(next);
-    const { error } = await supabase
-      .from("hub_settings")
-      .update({ enabled: next, updated_at: new Date().toISOString() })
-      .eq("hub_key", "ff-badge");
-    setBusy(false);
-    if (error) {
+    try {
+      const res = await saveToggle({ data: { hubKey: "ff-badge", enabled: next } });
+      setEnabled(res.enabled);
+      toast.success(res.enabled ? "Friends & Family badge ON site-wide" : "Friends & Family badge HIDDEN site-wide");
+    } catch (e: any) {
       setEnabled(prev);
-      toast.error(error.message);
-      return;
+      toast.error(e?.message ?? "Failed to save");
+    } finally {
+      setBusy(false);
     }
-    toast.success(next ? "Friends & Family badge ON site-wide" : "Friends & Family badge HIDDEN site-wide");
   };
 
   const isOn = enabled === true;
