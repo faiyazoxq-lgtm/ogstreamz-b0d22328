@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import ReactMarkdown from "react-markdown";
 import { Link } from "@tanstack/react-router";
-import { Send, Loader2, Compass, Flame } from "lucide-react";
-import { siteGuideChat } from "@/lib/site-guide.functions";
+import { Send, Loader2, Compass, Flame, Globe, Sparkles } from "lucide-react";
+import { siteGuideChatStream } from "@/lib/site-guide.functions";
 import ogBotAvatar from "@/assets/og-streamz-wallpaper.png";
 
-type Msg = { role: "user" | "assistant"; content: string };
+type Msg = { role: "user" | "assistant"; content: string; citations?: string[] };
 
 const SUGGESTIONS = [
   "My stream stopped working",
@@ -49,16 +49,17 @@ function MarkdownLink({ href, children, ...rest }: any) {
 }
 
 export function SiteGuideSwearChat() {
-  const send = useServerFn(siteGuideChat);
+  const send = useServerFn(siteGuideChatStream);
   const [draft, setDraft] = useState("");
   const [chaos, setChaos] = useState(true);
   const [sending, setSending] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([]);
+  const [thinking, setThinking] = useState<"searching" | "synthesizing" | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [msgs.length, sending]);
+  }, [msgs.length, sending, thinking]);
 
   const submit = async (text: string) => {
     const t = text.trim();
@@ -67,13 +68,43 @@ export function SiteGuideSwearChat() {
     setMsgs(next);
     setDraft("");
     setSending(true);
+    setThinking("searching");
     try {
-      const { reply } = await send({ data: { messages: next, chaos } });
-      setMsgs((m) => [...m, { role: "assistant", content: reply }]);
+      const stream = (await send({ data: { messages: next, chaos } })) as AsyncIterable<any>;
+      let assembled = "";
+      let cites: string[] = [];
+      let assistantPushed = false;
+      const pushOrUpdate = () => {
+        setMsgs((m) => {
+          const last = m[m.length - 1];
+          if (assistantPushed && last?.role === "assistant") {
+            return m.map((mm, i) => (i === m.length - 1 ? { ...mm, content: assembled, citations: cites } : mm));
+          }
+          assistantPushed = true;
+          return [...m, { role: "assistant", content: assembled, citations: cites }];
+        });
+      };
+      for await (const evt of stream) {
+        if (!evt || typeof evt !== "object") continue;
+        if (evt.type === "phase") {
+          if (evt.phase === "done") setThinking(null);
+          else setThinking(evt.phase);
+        } else if (evt.type === "delta" && typeof evt.text === "string") {
+          assembled += evt.text;
+          pushOrUpdate();
+        } else if (evt.type === "final") {
+          if (typeof evt.reply === "string" && evt.reply.length > assembled.length) assembled = evt.reply;
+          if (Array.isArray(evt.citations)) cites = evt.citations;
+          pushOrUpdate();
+        } else if (evt.type === "error") {
+          throw new Error(evt.message || "stream error");
+        }
+      }
     } catch (e: any) {
       setMsgs((m) => [...m, { role: "assistant", content: `🚨 ${e?.message ?? "shit broke"}` }]);
     } finally {
       setSending(false);
+      setThinking(null);
     }
   };
 
@@ -157,13 +188,47 @@ export function SiteGuideSwearChat() {
             {m.role === "assistant" ? (
               <div className="prose prose-sm prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-code:text-pink-300">
                 <ReactMarkdown components={{ a: MarkdownLink }}>{m.content}</ReactMarkdown>
+                {m.citations && m.citations.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-white/10 text-[10px] uppercase tracking-wider text-white/40">
+                    <span className="font-bold mr-2">Sources:</span>
+                    {m.citations.map((c, idx) => (
+                      <a
+                        key={idx}
+                        href={c}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mr-2 underline hover:text-white/70"
+                      >
+                        [{idx + 1}]
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
               m.content
             )}
           </div>
         ))}
-        {sending && (
+        {thinking && (
+          <div
+            className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg border w-fit"
+            style={{ borderColor: `${accent}55`, background: `${accent}12`, color: "#ffd1dc" }}
+          >
+            {thinking === "searching" ? (
+              <>
+                <Globe className="h-3.5 w-3.5 animate-pulse" />
+                <span className="font-mono uppercase tracking-wider text-[11px]">Searching the web…</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-3.5 w-3.5 animate-pulse" />
+                <span className="font-mono uppercase tracking-wider text-[11px]">Synthesizing response…</span>
+              </>
+            )}
+          </div>
+        )}
+        {sending && !thinking && (
           <div className="flex items-center gap-2 text-xs text-white/50">
             <Loader2 className="h-3 w-3 animate-spin" /> guttermouth is plotting a route…
           </div>
