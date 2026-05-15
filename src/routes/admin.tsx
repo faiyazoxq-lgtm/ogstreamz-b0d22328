@@ -2605,7 +2605,7 @@ function FleetCommanderPanel() {
               <div className="text-[10px] text-muted-foreground uppercase tracking-[0.2em]">{b.pair_name} · {b.bias}</div>
             </div>
             <div className="col-span-3 font-mono text-xs text-white truncate">{b.channel_chat_id}</div>
-            <div className="col-span-2 text-xs text-white"><span className="uppercase">{b.tier_required}</span> · {b.update_frequency}</div>
+            <div className="col-span-2 text-xs text-white"><span className="uppercase">{({metal:"Stream User", energy:"VIP", syndicate:"Real OG", stream_user:"Stream User", vip:"VIP", real_og:"Real OG", free:"Free"} as Record<string,string>)[b.tier_required] ?? b.tier_required}</span> · {b.update_frequency}</div>
             <div className="col-span-2 text-[11px] text-muted-foreground">
               {b.last_pinged_at ? new Date(b.last_pinged_at).toLocaleString() : "never"} <br />
               <span className="opacity-70">{b.ping_count} pings</span>
