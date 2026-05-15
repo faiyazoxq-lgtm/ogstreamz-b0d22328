@@ -84,3 +84,39 @@ export const listSecretsInventory = createServerFn({ method: "GET" })
   .handler(async (): Promise<{ sections: SecretsInventorySection[] }> => {
     return { sections: SECTIONS };
   });
+
+/**
+ * Scans the live runtime environment and returns secret names that are
+ * present in `process.env` but not yet catalogued in SECTIONS above.
+ *
+ * This is the "search the site for new uploaded api keys" path the boss
+ * page exposes via its Refresh button. Values are NEVER returned — only
+ * names — and the call is gated by `requireBoss`.
+ */
+export const discoverUncataloguedSecrets = createServerFn({ method: "GET" })
+  .middleware([requireBoss])
+  .handler(async (): Promise<{ unknown: string[]; checkedAt: string }> => {
+    const known = new Set<string>(
+      SECTIONS.flatMap((s) => s.entries.map((e) => e.name)),
+    );
+    // System / runtime noise we never want to surface as "uncatalogued".
+    const SYSTEM_PREFIXES = [
+      "PATH", "HOME", "PWD", "SHLVL", "USER", "LANG", "LC_",
+      "TZ", "NODE_", "npm_", "BUN_", "VITE_", "SUPABASE_",
+      "PG", "CF_", "WORKER_", "DENO_", "_", "OLDPWD", "TERM",
+    ];
+    const looksLikeSecret = (k: string) =>
+      /(_KEY|_SECRET|_TOKEN|_WEBHOOK|_PASSWORD|_API)$/i.test(k) ||
+      /^(STRIPE_|TELEGRAM_|GOOGLE_|OPENAI_|GEMINI_|LOVABLE_|PERPLEXITY_|FIRECRAWL_|SUNO_|SHAPES_|APOLLO_|INSTANTLY_)/i.test(k);
+
+    const env = (typeof process !== "undefined" && process?.env) || {};
+    const unknown: string[] = [];
+    for (const k of Object.keys(env)) {
+      if (!k || known.has(k)) continue;
+      if (SYSTEM_PREFIXES.some((p) => k.startsWith(p))) continue;
+      if (!looksLikeSecret(k)) continue;
+      unknown.push(k);
+    }
+    unknown.sort();
+    return { unknown, checkedAt: new Date().toISOString() };
+  });

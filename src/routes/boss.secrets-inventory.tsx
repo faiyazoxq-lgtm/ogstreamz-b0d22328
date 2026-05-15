@@ -1,11 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Lock, Webhook, KeyRound, Settings as SettingsIcon, ShieldAlert, ExternalLink, ShieldCheck, Loader2 } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, useMemo } from "react";
+import {
+  Lock, Webhook, KeyRound, Settings as SettingsIcon, ShieldAlert,
+  ExternalLink, ShieldCheck, Loader2, Eye, EyeOff, RefreshCw, Search,
+  Sparkles, Copy, Check,
+} from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { requireBoss } from "@/lib/route-guards";
 import {
   listSecretsInventory,
+  discoverUncataloguedSecrets,
   type SecretsInventorySection,
   type SecretsInventoryTag,
 } from "@/lib/secrets-inventory.functions";
@@ -35,16 +41,78 @@ const TAG_STYLES: Record<SecretsInventoryTag, string> = {
   config: "border-emerald-500/40 bg-emerald-500/10 text-emerald-200",
 };
 
+/**
+ * Vault-style mask: keeps the first 2 chars + the suffix marker
+ * (e.g. "ST••••••••••_KEY") so admins can spot a row at a glance
+ * without the full identifier rendering by default.
+ */
+function maskName(name: string): string {
+  if (!name) return "••••••••";
+  const m = name.match(/^([A-Z0-9]{1,3})(.+?)(_KEY|_SECRET|_TOKEN|_WEBHOOK_SECRET|_API_KEY|_PASSWORD)?$/i);
+  const head = m?.[1] ?? name.slice(0, 2);
+  const tail = m?.[3] ?? "";
+  return `${head}${"•".repeat(8)}${tail}`;
+}
+
 function SecretsInventoryPage() {
   const fetchInventory = useServerFn(listSecretsInventory);
-  const { data, isLoading, error } = useQuery({
+  const discoverFn = useServerFn(discoverUncataloguedSecrets);
+  const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["boss", "secrets-inventory"],
     queryFn: () => fetchInventory(),
     staleTime: 60_000,
   });
+  const discovery = useQuery({
+    queryKey: ["boss", "secrets-inventory", "discover"],
+    queryFn: () => discoverFn(),
+    staleTime: 60_000,
+  });
+
+  const [revealed, setRevealed] = useState<Set<string>>(new Set());
+  const [revealAll, setRevealAll] = useState(false);
+  const [filter, setFilter] = useState("");
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const toggle = (name: string) =>
+    setRevealed((prev) => {
+      const next = new Set(prev);
+      next.has(name) ? next.delete(name) : next.add(name);
+      return next;
+    });
+
+  const copyName = async (name: string) => {
+    try {
+      await navigator.clipboard.writeText(name);
+      setCopied(name);
+      setTimeout(() => setCopied((c) => (c === name ? null : c)), 1200);
+    } catch {
+      toast.error("Clipboard blocked");
+    }
+  };
+
+  const handleRefresh = async () => {
+    const [, d] = await Promise.all([refetch(), discovery.refetch()]);
+    const n = d.data?.unknown.length ?? 0;
+    toast.success(n ? `Found ${n} uncatalogued secret${n === 1 ? "" : "s"}` : "Inventory up to date");
+  };
 
   const sections: SecretsInventorySection[] = data?.sections ?? [];
   const total = sections.reduce((n, s) => n + s.entries.length, 0);
+
+  const filteredSections = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    if (!q) return sections;
+    return sections
+      .map((s) => ({
+        ...s,
+        entries: s.entries.filter(
+          (e) => e.name.toLowerCase().includes(q) || e.purpose.toLowerCase().includes(q),
+        ),
+      }))
+      .filter((s) => s.entries.length > 0);
+  }, [sections, filter]);
+
+  const unknown = discovery.data?.unknown ?? [];
 
   return (
     <section className="space-y-6">
@@ -56,13 +124,49 @@ function SecretsInventoryPage() {
           <div className="min-w-0 flex-1">
             <h1 className="syndicate-header text-2xl text-foreground">Secrets Inventory</h1>
             <p className="text-sm text-muted-foreground">
-              Read-only catalogue of every platform-managed runtime secret in use
-              {data ? ` (${total} total)` : ""}. Names and values never ship to the
-              browser bundle — they're delivered to this Boss-only page over an
-              authenticated server call.
+              Vault catalogue of every platform-managed runtime secret in use
+              {data ? ` (${total} total)` : ""}. Names are masked by default
+              and only revealed on explicit click — values never ship to the
+              browser at all.
             </p>
           </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setRevealAll((v) => !v)}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs hover:bg-secondary/40 transition"
+              title={revealAll ? "Hide all names" : "Reveal all names"}
+            >
+              {revealAll ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              {revealAll ? "Hide all" : "Reveal all"}
+            </button>
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={isFetching || discovery.isFetching}
+              className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1.5 text-xs text-emerald-200 hover:bg-emerald-500/15 transition disabled:opacity-60"
+              title="Re-scan runtime env for new keys"
+            >
+              {isFetching || discovery.isFetching ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5" />
+              )}
+              Refresh & scan
+            </button>
+          </div>
         </div>
+
+        <div className="mt-4 relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Filter by name or purpose…"
+            className="w-full rounded-md border border-border bg-card/60 pl-9 pr-3 py-2 text-xs outline-none focus:border-gold/40"
+          />
+        </div>
+
         <div className="mt-4 flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-200">
           <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0" />
           <span>
@@ -98,8 +202,46 @@ function SecretsInventoryPage() {
         </div>
       )}
 
+      {unknown.length > 0 && (
+        <div className="rounded-2xl border border-fuchsia-500/40 bg-fuchsia-500/5 p-4 sm:p-5">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-fuchsia-300" />
+            <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-fuchsia-200">
+              Newly detected · uncatalogued
+            </h2>
+            <span className="ml-auto text-[11px] text-muted-foreground">{unknown.length}</span>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            These keys exist in the live runtime environment but are not yet catalogued. Add them to{" "}
+            <code className="font-mono">src/lib/secrets-inventory.functions.ts</code> with a purpose.
+          </p>
+          <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+            {unknown.map((name) => (
+              <li
+                key={name}
+                className="flex items-center justify-between gap-2 rounded-lg border border-fuchsia-500/30 bg-card/60 px-3 py-2"
+              >
+                <code className="font-mono text-xs text-fuchsia-100 truncate">
+                  {revealAll || revealed.has(name) ? name : maskName(name)}
+                </code>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => toggle(name)}
+                    className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-secondary/40"
+                    title={revealed.has(name) ? "Hide" : "Reveal"}
+                  >
+                    {revealed.has(name) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-2">
-        {sections.map((s) => {
+        {filteredSections.map((s) => {
           const Icon = ICONS[s.iconKey];
           return (
             <div key={s.id} className="rounded-2xl border border-border bg-card p-4 sm:p-5">
@@ -115,32 +257,77 @@ function SecretsInventoryPage() {
               </div>
               <p className="mt-2 text-xs text-muted-foreground">{s.blurb}</p>
               <ul className="mt-3 space-y-2">
-                {s.entries.map((e) => (
-                  <li key={e.name} className="rounded-lg border border-border bg-secondary/30 p-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <code className="font-mono text-xs font-bold text-foreground">{e.name}</code>
-                      {(e.tags ?? []).map((t) => (
-                        <span
-                          key={t}
-                          className={`rounded-md border px-1.5 py-0.5 text-[10px] uppercase tracking-[0.15em] ${TAG_STYLES[t]}`}
+                {s.entries.map((e) => {
+                  const isOpen = revealAll || revealed.has(e.name);
+                  return (
+                    <li
+                      key={e.name}
+                      className="rounded-lg border border-border bg-secondary/30 p-3 transition hover:border-gold/30"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <code
+                          className={`font-mono text-xs font-bold ${
+                            isOpen ? "text-foreground" : "text-muted-foreground tracking-wider select-none"
+                          }`}
                         >
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground">{e.purpose}</p>
-                  </li>
-                ))}
+                          {isOpen ? e.name : maskName(e.name)}
+                        </code>
+                        {(e.tags ?? []).map((t) => (
+                          <span
+                            key={t}
+                            className={`rounded-md border px-1.5 py-0.5 text-[10px] uppercase tracking-[0.15em] ${TAG_STYLES[t]}`}
+                          >
+                            {t}
+                          </span>
+                        ))}
+                        <div className="ml-auto flex items-center gap-1">
+                          {isOpen && (
+                            <button
+                              type="button"
+                              onClick={() => copyName(e.name)}
+                              className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-secondary/40"
+                              title="Copy name"
+                            >
+                              {copied === e.name ? (
+                                <Check className="h-3.5 w-3.5 text-emerald-300" />
+                              ) : (
+                                <Copy className="h-3.5 w-3.5" />
+                              )}
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => toggle(e.name)}
+                            className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-[11px] hover:bg-secondary/40"
+                            title={isOpen ? "Hide name" : "Reveal name"}
+                          >
+                            {isOpen ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                            {isOpen ? "Hide" : "Reveal"}
+                          </button>
+                        </div>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">{e.purpose}</p>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           );
         })}
+        {filteredSections.length === 0 && !isLoading && (
+          <div className="rounded-xl border border-border bg-card/40 p-6 text-center text-xs text-muted-foreground lg:col-span-2">
+            No secrets match "{filter}".
+          </div>
+        )}
       </div>
 
       <footer className="rounded-xl border border-border bg-card/50 p-4 text-xs text-muted-foreground">
-        <p className="flex items-center gap-1.5">
+        <p className="flex flex-wrap items-center gap-1.5">
           <ExternalLink className="h-3.5 w-3.5" />
           When this list drifts from the actual store, update <code className="font-mono">src/lib/secrets-inventory.functions.ts</code>.
+          {discovery.data?.checkedAt && (
+            <span className="ml-auto">Last scan: {new Date(discovery.data.checkedAt).toLocaleTimeString()}</span>
+          )}
         </p>
       </footer>
     </section>
