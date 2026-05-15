@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireBoss } from "@/integrations/supabase/boss-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logBossAction } from "@/lib/boss-audit.functions";
+import { OG_TIERS, type OgTier } from "@/lib/og-tier";
 
 const RANKS = ["prospect", "enforcer", "stream_user", "vip", "boss"] as const;
 type Rank = typeof RANKS[number];
@@ -25,6 +26,7 @@ export type RosterRow = {
   member_tier: string | null;
   contact_card: Record<string, any> | null;
   avatar_url: string | null;
+  og_tier: OgTier | null;
 };
 
 export const listRoster = createServerFn({ method: "GET" })
@@ -39,7 +41,7 @@ export const listRoster = createServerFn({ method: "GET" })
     const { supabase } = context as any;
     let q = supabase
       .from("profiles")
-      .select("id,email,display_name,rank,status,credits,banned,banned_reason,stream_status,stream_verified_at,stream_expires_at,created_at,feature_flags,og_pass_no,member_tier,contact_card,avatar_url")
+      .select("id,email,display_name,rank,status,credits,banned,banned_reason,stream_status,stream_verified_at,stream_expires_at,created_at,feature_flags,og_pass_no,member_tier,contact_card,avatar_url,og_tier")
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .limit(data.limit + 1);
@@ -53,6 +55,31 @@ export const listRoster = createServerFn({ method: "GET" })
     const pageRows = hasMore ? all.slice(0, data.limit) : all;
     const nextCursor = hasMore ? pageRows[pageRows.length - 1]?.created_at ?? null : null;
     return { rows: pageRows, nextCursor, hasMore };
+  });
+
+export const setOgTier = createServerFn({ method: "POST" })
+  .middleware([requireBoss])
+  .inputValidator((d: { userId: string; tier: OgTier }) => {
+    if (!OG_TIERS.includes(d.tier)) throw new Error("Invalid tier");
+    return { userId: String(d.userId), tier: d.tier };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase } = context as any;
+    const { data: prev } = await supabase
+      .from("profiles").select("og_tier,rank,status").eq("id", data.userId).maybeSingle();
+    const { data: result, error } = await supabase.rpc("boss_set_og_tier", {
+      _user_id: data.userId,
+      _tier: data.tier,
+    });
+    if (error) throw new Error(error.message);
+    await logBossAction(supabase, {
+      action: "set_og_tier",
+      surface: "/boss/og-passes",
+      targetUserId: data.userId,
+      before: prev ?? null,
+      after: { og_tier: result ?? data.tier },
+    });
+    return { ok: true, tier: result ?? data.tier };
   });
 
 export const setRank = createServerFn({ method: "POST" })
