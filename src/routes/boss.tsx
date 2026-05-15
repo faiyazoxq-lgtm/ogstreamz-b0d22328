@@ -4,7 +4,7 @@ import {
   Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft,
   ShieldAlert, LogIn, Tv, Tags, Bell, Sparkles, Settings, Boxes, Grid3x3,
   Coins, Power, Rocket, KeyRound, Wallet, SlidersHorizontal, Lock, ScrollText,
-  ShieldOff, Lightbulb, Megaphone, Phone, LayoutGrid,
+  ShieldOff, Lightbulb, Megaphone, Phone, LayoutGrid, Brain,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { BossSearch } from "@/components/BossSearch";
@@ -85,6 +85,7 @@ const GROUPS: RailGroup[] = [
     items: [
       { to: "/boss/civility", label: "Civility", Icon: ShieldCheck, desc: "Default site tone" },
       { to: "/boss/lexicon", label: "Lexicon", Icon: Skull, desc: "Word lists" },
+      { to: "/boss/ai-agent", label: "0G Bot · AI Agent", Icon: Brain, desc: "All bot settings in one place" },
     ],
   },
   {
