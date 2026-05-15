@@ -17,7 +17,17 @@ type Props = {
  * "🪙 —" fallback so the UI never shows a misleading 0 / £0.00.
  */
 export function CoinChip({ credits, className = "", size = "xs" }: Props) {
-  const text = size === "sm" ? "text-[11px]" : "text-[10px]";
+  // Compact-by-default sizing: shrink one step on the smallest viewports
+  // (<360px) and tighten letter-spacing/padding so the chip never blows
+  // out a tight toolbar or drawer row. Larger breakpoints restore the
+  // original sizing.
+  const text =
+    size === "sm"
+      ? "text-[10px] sm:text-[11px]"
+      : "text-[9px] sm:text-[10px]";
+  const tracking = "tracking-[0.12em] sm:tracking-[0.18em]";
+  const pad = "px-1 py-[1px] sm:px-1.5 sm:py-0.5";
+  const gap = "gap-0.5 sm:gap-1";
   const hasValue =
     credits !== null && credits !== undefined && Number.isFinite(Number(credits));
 
@@ -26,7 +36,7 @@ export function CoinChip({ credits, className = "", size = "xs" }: Props) {
       <span
         title="Coin balance unavailable"
         aria-label="Coin balance unavailable"
-        className={`inline-flex shrink-0 whitespace-nowrap items-center gap-1 ${text} uppercase tracking-[0.18em] px-1.5 py-0.5 rounded font-black bg-white/5 text-white/45 border border-white/10 ${className}`}
+        className={`inline-flex shrink-0 whitespace-nowrap items-center ${gap} ${text} uppercase ${tracking} ${pad} rounded font-black bg-white/5 text-white/45 border border-white/10 ${className}`}
       >
         🪙 —
         <span className="text-white/35 font-bold normal-case tracking-normal">
@@ -50,7 +60,7 @@ export function CoinChip({ credits, className = "", size = "xs" }: Props) {
     <span
       title={tooltip}
       aria-label={`${coinsLocaleShort} coins, ${gbpExact}`}
-      className={`inline-flex shrink-0 whitespace-nowrap items-center gap-1 ${text} uppercase tracking-[0.18em] px-1.5 py-0.5 rounded font-black bg-amber-500/15 text-amber-200 border border-amber-400/40 ${className}`}
+      className={`inline-flex shrink-0 whitespace-nowrap items-center ${gap} ${text} uppercase ${tracking} ${pad} rounded font-black bg-amber-500/15 text-amber-200 border border-amber-400/40 ${className}`}
     >
       🪙 {coinsLocaleShort}
       <span className="text-amber-100/70 font-bold normal-case tracking-normal">
