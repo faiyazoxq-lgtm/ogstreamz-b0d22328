@@ -44,8 +44,8 @@ export function OgWordmark({
   ].join(" ");
   return (
     <span
-      className={`inline-flex items-center align-middle leading-none px-[0.15em] ${className}`}
-      style={{ ["--og-glow" as any]: glowScale, ...style }}
+      className={`inline-flex items-center align-middle leading-none px-[0.15em] overflow-hidden ${className}`}
+      style={{ ["--og-glow" as any]: glowScale, maxHeight: height, ...style }}
     >
       <img
         src={ogPortalLogo}
@@ -56,9 +56,11 @@ export function OgWordmark({
         width={992}
         height={1058}
         sizes="(max-width: 640px) 5em, 8em"
-        className="block w-auto select-none pointer-events-none rounded-md [image-rendering:auto] [-webkit-backface-visibility:hidden] [transform:translateZ(0)]"
+        className="block w-auto max-w-full select-none pointer-events-none rounded-md object-contain [image-rendering:auto] [-webkit-backface-visibility:hidden] [transform:translateZ(0)]"
         style={{
           height,
+          maxHeight: "100%",
+          objectFit: "contain",
           filter: glow,
         }}
       />
