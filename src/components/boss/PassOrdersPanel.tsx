@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/select";
 import { listPassOrders, decidePassOrder, type PassOrderRow } from "@/lib/overlord.functions";
 import { coinChip } from "@/lib/coins";
+import { CoinChip } from "@/components/CoinChip";
+import { useCreditsMap } from "@/hooks/use-credits-map";
 
 type StatusFilter = "pending_approval" | "issued" | "denied" | "all";
 
@@ -54,6 +56,8 @@ export function PassOrdersPanel() {
     note: string;
     failed: { id: string; error: string }[];
   } | null>(null);
+
+  const creditsMap = useCreditsMap(rows.map((r) => r.user_id));
 
   const refresh = async () => {
     setLoading(true);
