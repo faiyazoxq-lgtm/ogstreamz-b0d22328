@@ -2441,7 +2441,7 @@ function FleetCommanderPanel() {
   const [pair, setPair] = useState("Gold");
   const [label, setLabel] = useState("0G · Gold Desk");
   const [chatId, setChatId] = useState("@og_gold_desk");
-  const [tier, setTier] = useState<Plan>("stream_user" as unknown as Plan);
+  const [tier, setTier] = useState<Plan>("stream_user");
   const [freq, setFreq] = useState("15min");
   const [bias, setBias] = useState("neutral");
   const [msg, setMsg] = useState("");
