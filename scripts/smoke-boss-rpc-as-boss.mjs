@@ -92,14 +92,33 @@ if (!userId) {
   process.exit(2);
 }
 
-// Elevate: upsert profile rank=boss, insert admin role. The handle_new_user
-// trigger normally creates the profile row; upsert just to be safe.
-execFileSync("psql", ["-c",
-  `INSERT INTO public.profiles (id, email, rank) VALUES ('${userId}', '${email}', 'boss')
-     ON CONFLICT (id) DO UPDATE SET rank='boss';
-   INSERT INTO public.user_roles (user_id, role) VALUES ('${userId}', 'admin')
-     ON CONFLICT DO NOTHING;`
-]);
+// Elevate via service-role REST (bypasses RLS). The handle_new_user trigger
+// usually creates a profile row already; we PATCH the rank either way and
+// insert the admin role for belt-and-suspenders coverage.
+async function srFetch(path, init = {}) {
+  return fetch(`${URL}/rest/v1/${path}`, {
+    ...init,
+    headers: {
+      apikey: SR,
+      Authorization: `Bearer ${SR}`,
+      "Content-Type": "application/json",
+      Prefer: "return=minimal,resolution=merge-duplicates",
+      ...(init.headers || {}),
+    },
+  });
+}
+await srFetch(`profiles?on_conflict=id`, {
+  method: "POST",
+  body: JSON.stringify([{ id: userId, email, rank: "boss" }]),
+});
+await srFetch(`profiles?id=eq.${userId}`, {
+  method: "PATCH",
+  body: JSON.stringify({ rank: "boss" }),
+});
+await srFetch(`user_roles?on_conflict=user_id,role`, {
+  method: "POST",
+  body: JSON.stringify([{ user_id: userId, role: "admin" }]),
+});
 console.log(`Provisioned boss user ${email} (${userId})\n`);
 
 const jwt = await fetch(`${URL}/auth/v1/token?grant_type=password`, {
@@ -140,10 +159,8 @@ for (const fn of fns) {
 }
 
 // --- cleanup ------------------------------------------------------------
-execFileSync("psql", ["-c",
-  `DELETE FROM public.user_roles WHERE user_id='${userId}';
-   DELETE FROM public.profiles WHERE id='${userId}';`
-]);
+await srFetch(`user_roles?user_id=eq.${userId}`, { method: "DELETE" }).catch(() => {});
+await srFetch(`profiles?id=eq.${userId}`, { method: "DELETE" }).catch(() => {});
 await fetch(`${URL}/auth/v1/admin/users/${userId}`, {
   method: "DELETE",
   headers: { apikey: SR, Authorization: `Bearer ${SR}` },
