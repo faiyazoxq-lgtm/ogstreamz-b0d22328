@@ -265,7 +265,7 @@ export function NavBar() {
         // background, blur, border colour, or shadow. The animated
         // properties above are paint-only — combined with `contain: layout`
         // they cannot trigger layout shift on the page below.
-        ["--brand-h" as any]: "clamp(2.75rem, 1.5rem + 14vw, 16rem)",
+        ["--brand-h" as any]: "clamp(4rem, 2rem + 22vw, 28rem)",
         contain: "layout paint style",
         willChange: "background-color, box-shadow",
       }}
