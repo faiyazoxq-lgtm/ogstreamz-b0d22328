@@ -83,7 +83,7 @@ export function MemberDetailDrawer({ row, open, onOpenChange, actions }: Props) 
                   <Stat label="Status" value={row.status} />
                   <Stat
                     label="Coins"
-                    value={`${(row.credits ?? 0).toLocaleString()} 🪙 (${(Number(row.credits ?? 0) * 0.99).toLocaleString("en-GB", { style: "currency", currency: "GBP" })})`}
+                    value={`${(row.credits ?? 0).toLocaleString("en-GB")} 🪙 (${formatGbp((row.credits ?? 0) * 100)})`}
                     icon={<Coins className="h-3 w-3 text-gold" />}
                   />
                   <Stat label="Tier" value={row.member_tier ?? "—"} />
