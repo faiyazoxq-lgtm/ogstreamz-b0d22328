@@ -259,10 +259,25 @@ export function NavBar() {
           ? "bg-background/95 sm:bg-background/85 backdrop-blur-none sm:backdrop-blur-xl border-border shadow-[0_8px_28px_-18px_rgba(0,0,0,0.85)]"
           : "bg-background/80 sm:bg-background/35 backdrop-blur-none sm:backdrop-blur-md border-transparent"
       }`}
+      style={{
+        // Lock the header's height to the brand mark budget so the sticky
+        // bar can't reflow / jump when the scroll-state class swaps the
+        // background, blur, border colour, or shadow. The animated
+        // properties above are paint-only — combined with `contain: layout`
+        // they cannot trigger layout shift on the page below.
+        ["--brand-h" as any]: "clamp(2.75rem, 1.5rem + 14vw, 16rem)",
+        contain: "layout paint style",
+        willChange: "background-color, box-shadow",
+      }}
     >
       <nav
         className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap min-w-0 px-2 sm:px-8 py-2.5 sm:py-3 gap-2 sm:gap-4"
-        style={{ minHeight: "clamp(3.5rem, 2.5vw + 2.75rem, 5.5rem)" }}
+        style={{
+          // Reserve full brand-h up front so the row never grows after the
+          // <img> finishes decoding (no late CLS, no jump on first scroll).
+          minHeight: "calc(var(--brand-h) + 1rem)",
+          height: "calc(var(--brand-h) + 1rem)",
+        }}
       >
         <Link
           to="/"
@@ -282,15 +297,15 @@ export function NavBar() {
               });
             }
           }}
-          className="brand-glow group min-w-0 flex-1 sm:flex-initial h-full -ml-1 sm:ml-0 pl-1.5 pr-3 sm:pl-2 sm:pr-4 py-1 min-h-12 sm:min-h-0 rounded-2xl outline-none transition-all border border-transparent hover:border-gold/30 bg-transparent hover:bg-transparent focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:shadow-[0_0_24px_-4px_var(--gold)] touch-manipulation flex items-center overflow-hidden"
+          className="brand-glow group min-w-0 flex-1 sm:flex-initial h-full -ml-1 sm:ml-0 pl-1.5 pr-3 sm:pl-2 sm:pr-4 py-1 min-h-12 sm:min-h-0 rounded-2xl outline-none transition-[border-color,box-shadow,background-color] duration-200 border border-transparent hover:border-gold/30 bg-transparent hover:bg-transparent focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:shadow-[0_0_24px_-4px_var(--gold)] touch-manipulation flex items-center overflow-hidden"
           style={{
             gap: "clamp(0.4rem, 0.9vw + 0.2rem, 0.9rem)",
-            // Single source of truth for both lockup elements: caps the brand
-            // mark image AND the OG-PORTAL wordmark to the same vertical
-            // budget so they always share the same lane and never push the
-            // navbar height past this ceiling.
-            ["--brand-h" as any]: "clamp(2.75rem, 1.5rem + 14vw, 16rem)",
+            // Inherit --brand-h from <header> so a single source of truth
+            // controls the lockup height, the nav row height, and each
+            // logo's max-height — no chance of one resizing without the
+            // others.
             maxHeight: "var(--brand-h)",
+            height: "var(--brand-h)",
           }}
         >
           <img
