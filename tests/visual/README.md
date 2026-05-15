@@ -16,10 +16,10 @@ vertical clipping, and sticky-header layout shift across phone widths
 - **Overflow assertion** — checks the brand link sits fully inside the
   header row at every mobile width.
 
-`src/components/NavBar.tsx` is intentionally NOT covered. It is not
-imported anywhere in the app (`rg "NavBar" src/` returns only its own
-definition). If it is ever wired in as the real header, add a spec
-for it here.
+An older `src/components/NavBar.tsx` used to live in the tree but was
+never imported anywhere. It has been deleted — `AppShell.tsx` is the
+single source of truth for the site header/sidebar. If a new top-level
+navbar component is introduced later, add its spec here.
 
 ## Running locally
 
