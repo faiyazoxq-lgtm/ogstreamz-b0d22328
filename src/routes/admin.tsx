@@ -2562,9 +2562,10 @@ function FleetCommanderPanel() {
           <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Label (0G · Gold Desk)" />
           <Input value={chatId} onChange={(e) => setChatId(e.target.value)} placeholder="Channel @username or -100…" />
           <select value={tier} onChange={(e) => setTier(e.target.value as Plan)} className="h-10 rounded-md border border-input bg-background px-3 text-sm">
-            <option value="metal">Tier · Metal Plan</option>
-            <option value="energy">Tier · Energy Plan</option>
-            <option value="syndicate">Tier · Syndicate</option>
+            <option value="free">Tier · Free</option>
+            <option value="stream_user">Tier · Stream User</option>
+            <option value="vip">Tier · VIP</option>
+            <option value="real_og">Tier · Real OG</option>
           </select>
           <select value={freq} onChange={(e) => setFreq(e.target.value)} className="h-10 rounded-md border border-input bg-background px-3 text-sm">
             <option value="5min">Every 5 min (high freq)</option>
@@ -2653,12 +2654,12 @@ function FleetCommanderPanel() {
             <div key={p.id} className="grid grid-cols-12 gap-2 px-4 py-2 border-b border-border/50 text-sm items-center">
               <div className="col-span-7 truncate text-white">{p.email}</div>
               <div className="col-span-5 flex justify-end gap-1">
-                {(["free","metal","energy","syndicate"] as Plan[]).map((pl) => (
+                {(["free","stream_user","vip","real_og"] as const).map((pl) => (
                   <Button key={pl} size="sm" variant={p.subscription_plan === pl ? "default" : "outline"}
-                    onClick={() => onPlanChange(p.id, pl)}
+                    onClick={() => onPlanChange(p.id, pl as Plan)}
                     className="h-7 text-[10px] uppercase"
                     style={p.subscription_plan === pl ? { background: cyan, color: "#000" } : { borderColor: "#444", color: "#aaa" }}>
-                    {pl}
+                    {pl === "free" ? "Free" : pl === "stream_user" ? "Stream" : pl === "vip" ? "VIP" : "Real OG"}
                   </Button>
                 ))}
               </div>
