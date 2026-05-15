@@ -159,156 +159,128 @@ inline as [1], [2] mapping to the order they appear in the SOURCES block.
 Voice: foul-mouthed British enforcer — swear freely (fuck, shit, bollocks),
 banter hard, but the FACTS must be accurate and the SOURCES must be respected.`;
 
-export const streamOgChat = createServerFn({ method: "POST", response: "raw" })
+export const streamOgChat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => InputSchema.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async function* ({ data }): AsyncGenerator<StreamEvent> {
     const { mode, history, message } = data as z.infer<typeof InputSchema>;
     const intent = classifyIntent(message);
 
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      async start(controller) {
-        const send = (ev: StreamEvent) => {
-          controller.enqueue(encoder.encode(JSON.stringify(ev) + "\n"));
-        };
+    try {
+      yield { type: "status", stage: "classifying" };
 
+      // ---------- Media branches (OG mode only) ----------
+      if (mode === "og" && intent === "image") {
+        yield { type: "status", stage: "generating" };
         try {
-          send({ type: "status", stage: "classifying" });
-
-          // ---------- Media branches ----------
-          if (mode === "og" && intent === "image") {
-            send({ type: "status", stage: "generating" });
-            try {
-              const url = await generateImage(message);
-              send({ type: "media", kind: "image", prompt: message, status: "ready", dataUrl: url });
-              send({ type: "delta", text: `Image generated with **Nano Banana 2** for prompt: _${escMd(message)}_` });
-            } catch (e) {
-              send({
-                type: "media",
-                kind: "image",
-                prompt: message,
-                status: "error",
-                message: e instanceof Error ? e.message : "Image generation failed",
-              });
-            }
-            send({ type: "done", model: IMAGE_MODEL, intent });
-            controller.close();
-            return;
-          }
-
-          if (mode === "og" && intent === "music") {
-            send({
-              type: "media",
-              kind: "music",
-              prompt: message,
-              status: "placeholder",
-              providerKey: "LYRIA_API_KEY",
-              providerLabel: "Lyria 3",
-              message: "Music generation isn't wired yet — drop a Lyria 3 (or Suno) API key and I'll plug it in.",
-            });
-            send({ type: "delta", text: "I'd cook a track here, but the **Lyria 3** API key isn't set yet. Use the card above to add one." });
-            send({ type: "done", model: "lyria3-placeholder", intent });
-            controller.close();
-            return;
-          }
-
-          if (mode === "og" && intent === "video") {
-            send({
-              type: "media",
-              kind: "video",
-              prompt: message,
-              status: "placeholder",
-              providerKey: "VEO_API_KEY",
-              providerLabel: "Veo 3",
-              message: "Video generation isn't wired yet — drop a Veo 3 (or Replicate) API key and I'll plug it in.",
-            });
-            send({ type: "delta", text: "Video tool's still in the box. Add a **Veo 3** API key on the card above and I'll fire it up." });
-            send({ type: "done", model: "veo3-placeholder", intent });
-            controller.close();
-            return;
-          }
-
-          // ---------- Chat branches ----------
-          if (mode === "normal") {
-            send({ type: "status", stage: "thinking" });
-            const messages = [
-              { role: "system", content: NORMAL_SYSTEM },
-              ...history.map((h) => ({ role: h.role, content: h.content })),
-              { role: "user", content: message },
-            ];
-            for await (const chunk of streamGateway(OG_MODELS.normal, messages)) {
-              send({ type: "delta", text: chunk });
-            }
-            send({ type: "done", model: OG_MODELS.normal, intent });
-            controller.close();
-            return;
-          }
-
-          // OG mode chat: Perplexity → Gemini Pro / GPT-5.5 synth.
-          send({ type: "status", stage: "researching" });
-          let research: { sources: ResearchSource[]; answer: string } = { sources: [], answer: "" };
-          try {
-            research = await deepResearch(message);
-            for (const src of research.sources) send({ type: "research", source: src });
-          } catch (e) {
-            send({
-              type: "research",
-              source: {
-                url: "",
-                title: "Research failed",
-                snippet: e instanceof Error ? e.message : "Perplexity unavailable",
-              },
-            });
-          }
-
-          send({ type: "status", stage: "thinking" });
-          const synthModel = pickSynthesisModel(intent);
-
-          const sourcesBlock = research.sources.length
-            ? "SOURCES:\n" +
-              research.sources
-                .map((s, i) => `[${i + 1}] ${s.title ?? s.url}${s.url ? ` — ${s.url}` : ""}${s.snippet ? `\n    ${s.snippet}` : ""}`)
-                .join("\n")
-            : "SOURCES: (none — research step returned nothing; answer from general knowledge and say so).";
-
-          const researchBlock = research.answer
-            ? `RESEARCH BRIEF (from Perplexity Sonar Pro):\n${research.answer}`
-            : "";
-
-          const messages = [
-            { role: "system", content: `${OG_SYSTEM}\n\n${researchBlock}\n\n${sourcesBlock}` },
-            ...history.map((h) => ({ role: h.role, content: h.content })),
-            { role: "user", content: message },
-          ];
-
-          send({ type: "status", stage: "finalizing" });
-          for await (const chunk of streamGateway(synthModel, messages)) {
-            send({ type: "delta", text: chunk });
-          }
-          send({ type: "done", model: synthModel, intent });
-          controller.close();
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : "Unknown error";
-          controller.enqueue(
-            encoder.encode(JSON.stringify({ type: "delta", text: `\n\n_⚠️ ${msg}_` } satisfies StreamEvent) + "\n"),
-          );
-          controller.enqueue(
-            encoder.encode(
-              JSON.stringify({ type: "done", model: "error", intent } satisfies StreamEvent) + "\n",
-            ),
-          );
-          controller.close();
+          const url = await generateImage(message);
+          yield { type: "media", kind: "image", prompt: message, status: "ready", dataUrl: url };
+          yield { type: "delta", text: `Image generated with **Nano Banana 2** for prompt: _${escMd(message)}_` };
+        } catch (e) {
+          yield {
+            type: "media",
+            kind: "image",
+            prompt: message,
+            status: "error",
+            message: e instanceof Error ? e.message : "Image generation failed",
+          };
         }
-      },
-    });
+        yield { type: "done", model: IMAGE_MODEL, intent };
+        return;
+      }
 
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "application/x-ndjson; charset=utf-8",
-        "Cache-Control": "no-cache, no-transform",
-      },
-    });
+      if (mode === "og" && intent === "music") {
+        yield {
+          type: "media",
+          kind: "music",
+          prompt: message,
+          status: "placeholder",
+          providerKey: "LYRIA_API_KEY",
+          providerLabel: "Lyria 3",
+          message: "Music generation isn't wired yet — drop a Lyria 3 (or Suno) API key and I'll plug it in.",
+        };
+        yield { type: "delta", text: "I'd cook a track here, but the **Lyria 3** API key isn't set yet. Use the card above to add one." };
+        yield { type: "done", model: "lyria3-placeholder", intent };
+        return;
+      }
+
+      if (mode === "og" && intent === "video") {
+        yield {
+          type: "media",
+          kind: "video",
+          prompt: message,
+          status: "placeholder",
+          providerKey: "VEO_API_KEY",
+          providerLabel: "Veo 3",
+          message: "Video generation isn't wired yet — drop a Veo 3 (or Replicate) API key and I'll plug it in.",
+        };
+        yield { type: "delta", text: "Video tool's still in the box. Add a **Veo 3** API key on the card above and I'll fire it up." };
+        yield { type: "done", model: "veo3-placeholder", intent };
+        return;
+      }
+
+      // ---------- Chat branches ----------
+      if (mode === "normal") {
+        yield { type: "status", stage: "thinking" };
+        const messages = [
+          { role: "system", content: NORMAL_SYSTEM },
+          ...history.map((h) => ({ role: h.role, content: h.content })),
+          { role: "user", content: message },
+        ];
+        for await (const chunk of streamGateway(OG_MODELS.normal, messages)) {
+          yield { type: "delta", text: chunk };
+        }
+        yield { type: "done", model: OG_MODELS.normal, intent };
+        return;
+      }
+
+      // OG mode chat: Perplexity → Gemini Pro / GPT-5.5 synth.
+      yield { type: "status", stage: "researching" };
+      let research: { sources: ResearchSource[]; answer: string } = { sources: [], answer: "" };
+      try {
+        research = await deepResearch(message);
+        for (const src of research.sources) yield { type: "research", source: src };
+      } catch (e) {
+        yield {
+          type: "research",
+          source: {
+            url: "",
+            title: "Research failed",
+            snippet: e instanceof Error ? e.message : "Perplexity unavailable",
+          },
+        };
+      }
+
+      yield { type: "status", stage: "thinking" };
+      const synthModel = pickSynthesisModel(intent);
+
+      const sourcesBlock = research.sources.length
+        ? "SOURCES:\n" +
+          research.sources
+            .map((s, i) => `[${i + 1}] ${s.title ?? s.url}${s.url ? ` — ${s.url}` : ""}${s.snippet ? `\n    ${s.snippet}` : ""}`)
+            .join("\n")
+        : "SOURCES: (none — research step returned nothing; answer from general knowledge and say so).";
+
+      const researchBlock = research.answer
+        ? `RESEARCH BRIEF (from Perplexity Sonar Pro):\n${research.answer}`
+        : "";
+
+      const messages = [
+        { role: "system", content: `${OG_SYSTEM}\n\n${researchBlock}\n\n${sourcesBlock}` },
+        ...history.map((h) => ({ role: h.role, content: h.content })),
+        { role: "user", content: message },
+      ];
+
+      yield { type: "status", stage: "finalizing" };
+      for await (const chunk of streamGateway(synthModel, messages)) {
+        yield { type: "delta", text: chunk };
+      }
+      yield { type: "done", model: synthModel, intent };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      yield { type: "delta", text: `\n\n_⚠️ ${msg}_` };
+      yield { type: "done", model: "error", intent };
+    }
   });
 
 function escMd(s: string): string {
