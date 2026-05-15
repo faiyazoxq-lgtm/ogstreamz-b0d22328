@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Brain, ShieldAlert, ShieldCheck, Skull, Loader2, Link2 } from "lucide-react";
+import { Brain, ShieldAlert, ShieldCheck, Skull, Loader2, Link2, Heart, EyeOff } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { SyndicateProtocolSwitch } from "@/components/SyndicateProtocolSwitch";
 import { getCivility, setCivilityDefault } from "@/lib/civility.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Unified Global Mood · Syndicate Protocol panel.
@@ -90,6 +91,7 @@ export function GlobalMoodPanel({ heading = true }: { heading?: boolean }) {
       </div>
 
       <CivilityDefaultRow />
+      <FriendsFamilyBadgeRow />
     </div>
   );
 }
