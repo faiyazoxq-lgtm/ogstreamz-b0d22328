@@ -1,5 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { CoinChip } from "@/components/CoinChip";
+import { formatGbp } from "@/lib/coins";
 import { BossOgPassCard } from "@/components/boss/BossOgPassCard";
 import { PassStatusRow } from "@/components/PassStatusRow";
 import { socialToUrl, socialDisplay } from "@/lib/social-handles";
