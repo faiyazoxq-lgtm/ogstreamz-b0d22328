@@ -93,6 +93,7 @@ import { Route as BossApiKeysRouteImport } from './routes/boss.api-keys'
 import { Route as BossAnalyticsSetupRouteImport } from './routes/boss.analytics-setup'
 import { Route as BossAnalyticsRouteImport } from './routes/boss.analytics'
 import { Route as BossAlertsRouteImport } from './routes/boss.alerts'
+import { Route as BossAiAgentRouteImport } from './routes/boss.ai-agent'
 import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as AccountPassesRouteImport } from './routes/account.passes'
 import { Route as VipPortalsHubRouteImport } from './routes/vip.portals.$hub'
@@ -527,6 +528,11 @@ const BossAlertsRoute = BossAlertsRouteImport.update({
   path: '/alerts',
   getParentRoute: () => BossRoute,
 } as any)
+const BossAiAgentRoute = BossAiAgentRouteImport.update({
+  id: '/ai-agent',
+  path: '/ai-agent',
+  getParentRoute: () => BossRoute,
+} as any)
 const BSlugRoute = BSlugRouteImport.update({
   id: '/b/$slug',
   path: '/b/$slug',
@@ -638,6 +644,7 @@ export interface FileRoutesByFullPath {
   '/welcome': typeof WelcomeRoute
   '/account/passes': typeof AccountPassesRoute
   '/b/$slug': typeof BSlugRoute
+  '/boss/ai-agent': typeof BossAiAgentRoute
   '/boss/alerts': typeof BossAlertsRoute
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/analytics-setup': typeof BossAnalyticsSetupRoute
@@ -736,6 +743,7 @@ export interface FileRoutesByTo {
   '/welcome': typeof WelcomeRoute
   '/account/passes': typeof AccountPassesRoute
   '/b/$slug': typeof BSlugRoute
+  '/boss/ai-agent': typeof BossAiAgentRoute
   '/boss/alerts': typeof BossAlertsRoute
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/analytics-setup': typeof BossAnalyticsSetupRoute
@@ -836,6 +844,7 @@ export interface FileRoutesById {
   '/welcome': typeof WelcomeRoute
   '/account/passes': typeof AccountPassesRoute
   '/b/$slug': typeof BSlugRoute
+  '/boss/ai-agent': typeof BossAiAgentRoute
   '/boss/alerts': typeof BossAlertsRoute
   '/boss/analytics': typeof BossAnalyticsRoute
   '/boss/analytics-setup': typeof BossAnalyticsSetupRoute
@@ -937,6 +946,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/account/passes'
     | '/b/$slug'
+    | '/boss/ai-agent'
     | '/boss/alerts'
     | '/boss/analytics'
     | '/boss/analytics-setup'
@@ -1035,6 +1045,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/account/passes'
     | '/b/$slug'
+    | '/boss/ai-agent'
     | '/boss/alerts'
     | '/boss/analytics'
     | '/boss/analytics-setup'
@@ -1134,6 +1145,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/account/passes'
     | '/b/$slug'
+    | '/boss/ai-agent'
     | '/boss/alerts'
     | '/boss/analytics'
     | '/boss/analytics-setup'
@@ -1842,6 +1854,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossAlertsRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/ai-agent': {
+      id: '/boss/ai-agent'
+      path: '/ai-agent'
+      fullPath: '/boss/ai-agent'
+      preLoaderRoute: typeof BossAiAgentRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/b/$slug': {
       id: '/b/$slug'
       path: '/b/$slug'
@@ -1951,6 +1970,7 @@ const BossHubsRouteWithChildren = BossHubsRoute._addFileChildren(
 )
 
 interface BossRouteChildren {
+  BossAiAgentRoute: typeof BossAiAgentRoute
   BossAlertsRoute: typeof BossAlertsRoute
   BossAnalyticsRoute: typeof BossAnalyticsRoute
   BossAnalyticsSetupRoute: typeof BossAnalyticsSetupRoute
@@ -1990,6 +2010,7 @@ interface BossRouteChildren {
 }
 
 const BossRouteChildren: BossRouteChildren = {
+  BossAiAgentRoute: BossAiAgentRoute,
   BossAlertsRoute: BossAlertsRoute,
   BossAnalyticsRoute: BossAnalyticsRoute,
   BossAnalyticsSetupRoute: BossAnalyticsSetupRoute,
@@ -2132,13 +2153,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -355,7 +355,7 @@ function AdminPage() {
       <SectionHeader id="command" icon={<Terminal className="h-4 w-4" />} label="Command Deck · Superuser" tint="#ff00aa" />
       <div className="space-y-6">
         <OpsSnapshotPanel />
-        <AgentConsolePanel />
+        <AgentConsoleMovedNotice />
         <MaintenancePanel />
       </div>
 
@@ -928,6 +928,29 @@ function AgentConsolePanel() {
           {out}
         </pre>
       )}
+    </section>
+  );
+}
+
+function AgentConsoleMovedNotice() {
+  return (
+    <section className="rounded-2xl border bg-card p-6" style={{ borderColor: `${HOT_PINK}55` }}>
+      <div className="flex items-center gap-2 mb-2">
+        <Brain className="h-5 w-5" style={{ color: HOT_PINK }} />
+        <h2 className="font-[Montserrat] font-black text-xl text-white">AI Agent Console</h2>
+        <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Moved</span>
+      </div>
+      <p className="text-sm text-muted-foreground mb-4">
+        Every 0G Bot setting — persona, model, memory, civility, lexicon, agent keys — now lives in the
+        boss-only AI Agent page.
+      </p>
+      <Link
+        to="/boss/ai-agent"
+        className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold"
+        style={{ background: HOT_PINK, color: "#000" }}
+      >
+        <Cpu className="h-4 w-4" /> Open 0G Bot · AI Agent
+      </Link>
     </section>
   );
 }
