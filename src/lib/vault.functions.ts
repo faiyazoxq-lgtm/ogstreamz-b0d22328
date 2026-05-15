@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireStrictAuth } from "@/lib/strict-auth";
 import { requireBoss } from "@/integrations/supabase/boss-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { assertVaultRevealAllowed } from "@/lib/vault-reauth-gate";
 
 export type VaultRevealResult =
   | {
@@ -21,11 +22,9 @@ export const revealVaultCredential = createServerFn({ method: "POST" })
   .handler(async ({ context }): Promise<VaultRevealResult> => {
     const { supabase, userId } = context as { supabase: any; userId: string };
 
-    // Server-side vault re-auth gate. The client `VaultGuard` is UX only;
-    // the real enforcement lives here. A user may reveal a vault credential
-    // ONLY if they have proven vault portal access (successful
-    // vaultPortalLogin sets `stream_verified_at`) within the last 12 hours,
-    // OR they hold an elevated rank/role (vip / boss / admin).
+    // Server-side vault re-auth gate. The client `VaultGuard`
+    // (sessionStorage `vault:unlocked` flag) is UX only — never trusted
+    // here. See `src/lib/vault-reauth-gate.ts` for the rule + tests.
     const [{ data: prof }, { data: roleRow }] = await Promise.all([
       supabaseAdmin
         .from("profiles")
@@ -40,23 +39,10 @@ export const revealVaultCredential = createServerFn({ method: "POST" })
         .maybeSingle(),
     ]);
 
-    const rank = (prof?.rank ?? null) as string | null;
-    const elevated = rank === "vip" || rank === "boss" || !!roleRow;
-
-    const verifiedAt = prof?.stream_verified_at
-      ? new Date(prof.stream_verified_at as string).getTime()
-      : 0;
-    const VAULT_REAUTH_WINDOW_MS = 12 * 60 * 60 * 1000;
-    const reauthFresh =
-      Number.isFinite(verifiedAt) &&
-      verifiedAt > 0 &&
-      Date.now() - verifiedAt < VAULT_REAUTH_WINDOW_MS;
-
-    const streamUserOk = rank === "stream_user" && reauthFresh;
-
-    if (!elevated && !streamUserOk) {
-      throw new Error("Vault re-auth required");
-    }
+    assertVaultRevealAllowed({
+      profile: prof as { rank: string | null; stream_verified_at: string | null } | null,
+      hasAdminRole: !!roleRow,
+    });
 
     const { data, error } = await supabase.rpc("reveal_vault_credential");
     if (error) throw new Error(error.message);
