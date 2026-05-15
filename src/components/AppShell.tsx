@@ -709,7 +709,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       />
       <div className="flex-1 min-w-0 flex flex-col">
         <MobileHeader isBoss={isBoss} isVip={!!isVip} hubs={visibleHubs} portals={portals} />
-        <main className="flex-1 min-w-0 pb-16 md:pb-0">{children}</main>
+        <main id="main" tabIndex={-1} className="flex-1 min-w-0 pb-16 md:pb-0 outline-none">{children}</main>
       </div>
       <MobileTabBar isVip={!!isVip || isBoss} isBoss={isBoss} />
     </div>
