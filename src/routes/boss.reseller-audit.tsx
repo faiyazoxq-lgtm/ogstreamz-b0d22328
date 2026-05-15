@@ -295,13 +295,13 @@ function BossResellerAuditPage() {
 
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <div className="grid grid-cols-[160px_100px_70px_1fr_1fr_1fr_80px] items-center gap-2 border-b border-border bg-secondary/40 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
-          <div>When</div>
-          <div>Action</div>
-          <div>Source</div>
+          <SortHeader label="When" col="created_at" sortBy={sortBy} sortDir={sortDir} onSort={onSort} />
+          <SortHeader label="Action" col="action" sortBy={sortBy} sortDir={sortDir} onSort={onSort} />
+          <SortHeader label="Source" col="source" sortBy={sortBy} sortDir={sortDir} onSort={onSort} />
           <div>Actor</div>
           <div>Target user</div>
           <div>Reseller</div>
-          <div className="text-right">Delta</div>
+          <SortHeader label="Delta" col="delta" sortBy={sortBy} sortDir={sortDir} onSort={onSort} align="right" />
         </div>
         {rows.length === 0 && !loading ? (
           <p className="p-6 text-sm text-muted-foreground">No entries match the current filters.</p>
