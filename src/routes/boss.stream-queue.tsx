@@ -3,6 +3,8 @@ import { useEffect, useState, useCallback } from "react";
 import { Tv, CheckCircle2, XCircle, Loader2, RefreshCw, Clock, AlertTriangle, ShieldCheck, Lock, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { CoinChip } from "@/components/CoinChip";
+import { useCreditsMap } from "@/hooks/use-credits-map";
 
 export const Route = createFileRoute("/boss/stream-queue")({
   component: StreamQueuePage,
@@ -47,6 +49,8 @@ function StreamQueuePage() {
   }, [tab]);
 
   useEffect(() => { load(); }, [load]);
+
+  const creditsMap = useCreditsMap(rows.map((r) => r.user_id));
 
   const decide = async (id: string, approve: boolean) => {
     setBusyId(id);
@@ -107,7 +111,10 @@ function StreamQueuePage() {
               <li key={r.id} className="rounded-xl border border-border bg-card p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="text-sm font-semibold text-foreground truncate">{r.email || r.user_id}</div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold text-foreground truncate">{r.email || r.user_id}</span>
+                      <CoinChip credits={creditsMap[r.user_id] ?? 0} />
+                    </div>
                     <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
                       Current rank: <span className="text-foreground">{r.rank ?? "—"}</span> · Submitted {fmt(r.created_at)}
                     </div>
