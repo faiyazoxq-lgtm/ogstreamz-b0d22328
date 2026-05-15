@@ -188,6 +188,22 @@ export function SiteGuideSwearChat() {
             {m.role === "assistant" ? (
               <div className="prose prose-sm prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-code:text-pink-300">
                 <ReactMarkdown components={{ a: MarkdownLink }}>{m.content}</ReactMarkdown>
+                {m.citations && m.citations.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-white/10 text-[10px] uppercase tracking-wider text-white/40">
+                    <span className="font-bold mr-2">Sources:</span>
+                    {m.citations.map((c, idx) => (
+                      <a
+                        key={idx}
+                        href={c}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mr-2 underline hover:text-white/70"
+                      >
+                        [{idx + 1}]
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
               m.content
