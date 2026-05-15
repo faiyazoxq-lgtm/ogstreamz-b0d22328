@@ -1,12 +1,14 @@
 import { createFileRoute, notFound, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2, Lock } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { HubSectionsRenderer } from "@/components/HubSectionsRenderer";
 import { HubSectionsZ, type HubSection } from "@/lib/hub-sections";
 import { useAuth } from "@/hooks/use-auth";
+import { requireMember } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/hub/$slug")({
+  beforeLoad: requireMember,
   component: HubPage,
   notFoundComponent: () => (
     <div className="max-w-xl mx-auto px-6 py-24 text-center">
@@ -33,7 +35,7 @@ function HubPage() {
   const { user, loading: authLoading } = useAuth();
   const [hub, setHub] = useState<any | null>(null);
   const [sections, setSections] = useState<HubSection[]>([]);
-  const [state, setState] = useState<"loading" | "ok" | "missing" | "auth">("loading");
+  const [state, setState] = useState<"loading" | "ok" | "missing">("loading");
 
   useEffect(() => {
     let alive = true;
@@ -46,9 +48,7 @@ function HubPage() {
       .then(({ data }) => {
         if (!alive) return;
         if (!data) {
-          // Could be hidden by RLS, or could just not exist. If user isn't
-          // signed in, prompt them; otherwise treat as not-found.
-          setState(user ? "missing" : "auth");
+          setState("missing");
           return;
         }
         setHub(data);
@@ -63,19 +63,6 @@ function HubPage() {
     return (
       <div className="max-w-xl mx-auto px-6 py-24 text-center text-muted-foreground text-sm">
         <Loader2 className="h-5 w-5 animate-spin inline mr-2" /> Loading hub…
-      </div>
-    );
-  }
-
-  if (state === "auth") {
-    return (
-      <div className="max-w-xl mx-auto px-6 py-24 text-center">
-        <Lock className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
-        <h1 className="text-2xl font-black mb-3">Members only</h1>
-        <p className="text-muted-foreground text-sm mb-6">Sign in to view this hub.</p>
-        <Link to="/auth" className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm">
-          Sign in
-        </Link>
       </div>
     );
   }
