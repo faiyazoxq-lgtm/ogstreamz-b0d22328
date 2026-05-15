@@ -45,48 +45,54 @@ export function GlobalMoodPanel({ heading = true }: { heading?: boolean }) {
       <div className="grid gap-4 md:grid-cols-2">
         <SyndicateProtocolSwitch
           hubKey="shape-bridge"
-          eyebrow="Full Site · Syndicate Protocol"
+          eyebrow="Full Site · Visual Mood"
           titleNormal="Global Mood · NORMAL"
           titleOg="Global Mood · OG-MODE"
           descriptionNormal={
             <>
-              <span className="mood-accent">NORMAL</span> — every site-wide Gemini 3 surface
-              (Boss Chat, Shape Bridge, hub agents, jokes, news, lexicon) speaks in the clean
-              Elite Analyst voice. PG, brand-safe, no swearing. The OG Bot toggle is separate
-              and unaffected.
+              <span className="mood-accent">NORMAL</span> — site-wide visual mood flips to the
+              clean Analyst palette. Sets <code>data-mood="normal"</code> on the root, switches
+              accent colors in the Enforcer Console, Live Thinking Feed, System Glitch overlay
+              and <code>/console</code>. Cosmetic only — does not change any Gemini prompt or
+              the OG Bot voice.
             </>
           }
           descriptionOg={
             <>
-              <span className="mood-accent">OG-MODE</span> — full swearing &amp; chaos across
-              every site-wide Gemini 3 surface: Boss Chat, Shape Bridge, hub agents, jokes,
-              news, lexicon. Descriptions stay accurate, the voice goes feral. Does NOT touch
-              the OG Bot persona — that has its own switch.
+              <span className="mood-accent">OG-MODE</span> — site-wide visual mood goes red.
+              Sets <code>data-mood="og"</code> on the root, lights up the Enforcer Console,
+              Live Thinking Feed, System Glitch overlay and <code>/console</code> in the
+              hostile palette. Visual only — Gemini prompts and the OG Bot voice are
+              controlled separately.
             </>
           }
-          ogBadge="Full Site · OG Brutal"
+          ogBadge="Full Site · Visual OG"
         />
         <SyndicateProtocolSwitch
           hubKey="og-bot"
-          eyebrow="OG Bot · Telegram Enforcer"
+          eyebrow="OG Bot · Draft Assistant"
           titleNormal="Global Mood · NORMAL"
           titleOg="Global Mood · OG-MODE"
           descriptionNormal={
             <>
-              <span className="mood-accent">NORMAL</span> — OG Bot replies on Telegram and the
-              draft assistant stay polite, brand-safe and helpful. No swearing, no threats.
-              Does not change anything outside the OG Bot.
+              <span className="mood-accent">NORMAL</span> — OG Bot, the in-app draft sidekick
+              that powers the Portal Brief Wizard, Spawn Portal card and every hub draft
+              surface (jokes, music, battle, fleet, connect, formhub, letterhub, appealhub,
+              tools, boss hub editor), speaks in the short, punchy, brand-safe voice. No
+              swearing. Also dampens the site-guide chaos modulation. Off-switch on this
+              card forces NORMAL regardless of the mode toggle.
             </>
           }
           descriptionOg={
             <>
-              <span className="mood-accent">OG-MODE</span> — OG Bot turns into the foul-mouthed
-              enforcer: unfiltered swearing, banter, threats and chaos in every Telegram reply
-              and draft. Scoped to the OG Bot only — the rest of the site keeps whatever the
-              full-site switch says.
+              <span className="mood-accent">OG-MODE</span> — OG Bot becomes the foul-mouthed
+              British enforcer in every in-app draft (Portal Brief Wizard, Spawn Portal,
+              all hub draft helpers) and amplifies the site-guide chaos modulation. Persistent
+              memory and tool-calling are unchanged. Scoped to OG Bot — does not touch the
+              site-wide visual mood.
             </>
           }
-          ogBadge="OG Bot · Foul Mouth"
+          ogBadge="OG Bot · Foul-Mouthed Drafts"
         />
       </div>
 
