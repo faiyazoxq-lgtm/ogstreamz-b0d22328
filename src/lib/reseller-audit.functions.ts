@@ -26,6 +26,11 @@ const FilterSchema = z.object({
   limit: z.number().int().min(1).max(500).optional().default(100),
   // Cursor: ISO timestamp. Returns rows strictly older than this value.
   before: z.string().trim().max(40).optional().default(""),
+  // Sorting. `source` is computed client-side (post-merge). Cursor pagination
+  // only applies when sortBy=created_at + sortDir=desc; other sorts return a
+  // single page.
+  sortBy: z.enum(["created_at", "action", "delta", "source"]).optional().default("created_at"),
+  sortDir: z.enum(["asc", "desc"]).optional().default("desc"),
 });
 
 function applyFilters(q: any, f: z.infer<typeof FilterSchema>) {
@@ -42,11 +47,18 @@ export const listResellerAudit = createServerFn({ method: "POST" })
   .middleware([requireBoss])
   .inputValidator((d) => FilterSchema.parse(d))
   .handler(async ({ data }) => {
+    const isDefaultSort = data.sortBy === "created_at" && data.sortDir === "desc";
+    // Cursor pagination only meaningful for the default sort.
+    const cursor = isDefaultSort ? data.before : "";
     // Cursor narrows the upper bound. Combine with explicit `to` if both set.
-    const upperBound = data.before
-      ? (data.to ? (data.before < data.to ? data.before : data.to) : data.before)
+    const upperBound = cursor
+      ? (data.to ? (cursor < data.to ? cursor : data.to) : cursor)
       : data.to;
     const filters = { ...data, to: upperBound };
+    // DB-level order: only apply when not sorting by `source` (assigned
+    // post-merge). For `source`, fetch by created_at desc and re-sort below.
+    const orderCol = data.sortBy === "source" ? "created_at" : data.sortBy;
+    const ascending = data.sortDir === "asc";
     // For cursor pagination we want STRICTLY less-than, so swap `to` to a `lt`
     // by fetching one extra row and trimming. Simpler: query with lte and
     // dedupe rows whose created_at equals the cursor.
@@ -56,7 +68,7 @@ export const listResellerAudit = createServerFn({ method: "POST" })
         .select("id,action,actor_user_id,target_user_id,reseller_id,delta,reason,created_at"),
       filters,
     )
-      .order("created_at", { ascending: false })
+      .order(orderCol, { ascending, nullsFirst: false })
       .limit(data.limit + 1);
 
     const queries: Promise<any>[] = [liveQ];
@@ -67,7 +79,7 @@ export const listResellerAudit = createServerFn({ method: "POST" })
           .select("id,action,actor_user_id,target_user_id,reseller_id,delta,reason,created_at"),
         filters,
       )
-        .order("created_at", { ascending: false })
+        .order(orderCol, { ascending, nullsFirst: false })
         .limit(data.limit + 1);
       queries.push(archQ);
     }
@@ -79,20 +91,30 @@ export const listResellerAudit = createServerFn({ method: "POST" })
     const live: ResellerAuditRow[] = (liveRes.data ?? []).map((r: any) => ({ ...r, source: "live" as const }));
     const archive: ResellerAuditRow[] = (archRes?.data ?? []).map((r: any) => ({ ...r, source: "archive" as const }));
 
-    // If a cursor was supplied, drop rows at exactly that timestamp (we used lte
-    // upstream because applyFilters uses .lte, so we must turn it into strict).
-    const cursor = data.before;
+    // If a cursor was supplied (default sort only), drop rows at exactly that
+    // timestamp (applyFilters uses .lte, so we must turn it into strict).
     const filtered = cursor
       ? [...live, ...archive].filter((r) => r.created_at < cursor)
       : [...live, ...archive];
 
-    const sorted = filtered
-      .sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0))
-      .slice(0, data.limit + 1);
+    const dir = ascending ? 1 : -1;
+    const sorted = filtered.sort((a, b) => {
+      const key = data.sortBy;
+      let av: any; let bv: any;
+      if (key === "delta") { av = a.delta ?? 0; bv = b.delta ?? 0; }
+      else if (key === "action") { av = a.action ?? ""; bv = b.action ?? ""; }
+      else if (key === "source") { av = a.source; bv = b.source; }
+      else { av = a.created_at; bv = b.created_at; }
+      if (av < bv) return -1 * dir;
+      if (av > bv) return 1 * dir;
+      if (a.created_at < b.created_at) return 1;
+      if (a.created_at > b.created_at) return -1;
+      return 0;
+    }).slice(0, data.limit + 1);
 
     const hasMore = sorted.length > data.limit;
     const merged = sorted.slice(0, data.limit);
-    const nextCursor = hasMore && merged.length > 0
+    const nextCursor = isDefaultSort && hasMore && merged.length > 0
       ? merged[merged.length - 1].created_at
       : null;
 
@@ -100,6 +122,6 @@ export const listResellerAudit = createServerFn({ method: "POST" })
       rows: merged,
       counts: { live: live.length, archive: archive.length, returned: merged.length },
       nextCursor,
-      hasMore,
+      hasMore: isDefaultSort ? hasMore : false,
     };
   });

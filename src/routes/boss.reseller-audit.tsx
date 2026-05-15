@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ScrollText, RefreshCw, Filter, ChevronLeft, ChevronRight } from "lucide-react";
+import { ScrollText, RefreshCw, Filter, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { listResellerAudit, type ResellerAuditRow } from "@/lib/reseller-audit.functions";
 import { requireBoss } from "@/lib/route-guards";
 
@@ -17,6 +17,9 @@ export const Route = createFileRoute("/boss/reseller-audit")({
 });
 
 const ACTIONS = ["", "create", "topup"] as const;
+
+type SortBy = "created_at" | "action" | "source" | "delta";
+type SortDir = "asc" | "desc";
 
 function fmtTime(iso: string): string {
   try { return new Date(iso).toLocaleString(); } catch { return iso; }
@@ -47,6 +50,33 @@ function SourceBadge({ source }: { source: "live" | "archive" }) {
   );
 }
 
+function SortHeader({
+  label, col, sortBy, sortDir, onSort, align,
+}: {
+  label: string;
+  col: SortBy;
+  sortBy: SortBy;
+  sortDir: SortDir;
+  onSort: (c: SortBy) => void;
+  align?: "right";
+}) {
+  const active = sortBy === col;
+  const Icon = active ? (sortDir === "desc" ? ArrowDown : ArrowUp) : ArrowUpDown;
+  return (
+    <button
+      type="button"
+      onClick={() => onSort(col)}
+      className={`inline-flex items-center gap-1 hover:text-foreground transition-colors ${
+        active ? "text-foreground" : ""
+      } ${align === "right" ? "justify-end w-full" : ""}`}
+      title={`Sort by ${label}${active ? ` (${sortDir})` : ""}`}
+    >
+      <span>{label}</span>
+      <Icon className="h-3 w-3" />
+    </button>
+  );
+}
+
 function BossResellerAuditPage() {
   const list = useServerFn(listResellerAudit);
   const [rows, setRows] = useState<ResellerAuditRow[]>([]);
@@ -71,7 +101,11 @@ function BossResellerAuditPage() {
   // When true, the next fetch is initiated by a filter change → reset paging.
   const filtersDirty = useRef(false);
 
-  const fetchPage = useCallback(async (cursor: string | null) => {
+  // Sorting (server-side via filter args). Default: created_at desc.
+  const [sortBy, setSortBy] = useState<SortBy>("created_at");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+  const fetchPage = useCallback(async (cursor: string | null, sb: SortBy = sortBy, sd: SortDir = sortDir) => {
     setLoading(true); setErr(null);
     try {
       // datetime-local has no timezone — treat as local and convert to ISO
@@ -88,6 +122,8 @@ function BossResellerAuditPage() {
           includeArchive,
           limit,
           before: cursor ?? "",
+          sortBy: sb,
+          sortDir: sd,
         },
       });
       setRows(res.rows);
@@ -99,13 +135,32 @@ function BossResellerAuditPage() {
     } finally {
       setLoading(false);
     }
-  }, [list, action, resellerId, actorUserId, targetUserId, from, to, includeArchive, limit]);
+  }, [list, action, resellerId, actorUserId, targetUserId, from, to, includeArchive, limit, sortBy, sortDir]);
 
   // Apply filters / refresh: reset to page 1.
   const applyFilters = useCallback(async () => {
     setCursorStack([]);
     await fetchPage(null);
   }, [fetchPage]);
+
+  // Click a column header: cycle desc → asc → (back to default created_at desc).
+  const onSort = useCallback(async (col: SortBy) => {
+    let nextBy: SortBy = col;
+    let nextDir: SortDir = "desc";
+    if (sortBy === col) {
+      if (sortDir === "desc") {
+        nextDir = "asc";
+      } else {
+        // Reset to default
+        nextBy = "created_at";
+        nextDir = "desc";
+      }
+    }
+    setSortBy(nextBy);
+    setSortDir(nextDir);
+    setCursorStack([]);
+    await fetchPage(null, nextBy, nextDir);
+  }, [sortBy, sortDir, fetchPage]);
 
   const goNext = useCallback(async () => {
     if (!nextCursor || loading) return;
@@ -132,6 +187,7 @@ function BossResellerAuditPage() {
   function clearFilters() {
     setAction(""); setResellerId(""); setActorUserId(""); setTargetUserId("");
     setFrom(""); setTo(""); setIncludeArchive(true); setLimit(100);
+    setSortBy("created_at"); setSortDir("desc");
   }
 
   return (
@@ -266,13 +322,13 @@ function BossResellerAuditPage() {
 
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <div className="grid grid-cols-[160px_100px_70px_1fr_1fr_1fr_80px] items-center gap-2 border-b border-border bg-secondary/40 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
-          <div>When</div>
-          <div>Action</div>
-          <div>Source</div>
+          <SortHeader label="When" col="created_at" sortBy={sortBy} sortDir={sortDir} onSort={onSort} />
+          <SortHeader label="Action" col="action" sortBy={sortBy} sortDir={sortDir} onSort={onSort} />
+          <SortHeader label="Source" col="source" sortBy={sortBy} sortDir={sortDir} onSort={onSort} />
           <div>Actor</div>
           <div>Target user</div>
           <div>Reseller</div>
-          <div className="text-right">Delta</div>
+          <SortHeader label="Delta" col="delta" sortBy={sortBy} sortDir={sortDir} onSort={onSort} align="right" />
         </div>
         {rows.length === 0 && !loading ? (
           <p className="p-6 text-sm text-muted-foreground">No entries match the current filters.</p>
