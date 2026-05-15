@@ -5,7 +5,33 @@ import { runDeepSearch } from "./orchestrator.functions";
 
 const TG_GATEWAY = "https://connector-gateway.lovable.dev/telegram";
 
-export type Plan = "free" | "metal" | "energy" | "syndicate";
+/**
+ * Public Plan values are the unified OG Pass tiers.
+ * Internally we map back to the legacy `subscription_plan` enum
+ * (free / metal / energy / syndicate) when writing to that column,
+ * because the enum is preserved for one release for safety.
+ */
+export type Plan = "free" | "stream_user" | "vip" | "real_og";
+
+const LEGACY_PLAN_MAP: Record<Plan, "free" | "metal" | "energy" | "syndicate"> = {
+  free: "free",
+  stream_user: "metal",
+  vip: "energy",
+  real_og: "syndicate",
+};
+
+function toLegacyPlan(p: Plan): "free" | "metal" | "energy" | "syndicate" {
+  return LEGACY_PLAN_MAP[p] ?? "free";
+}
+
+function fromLegacyPlan(p: string | null | undefined): Plan {
+  switch ((p ?? "").toLowerCase()) {
+    case "metal": case "stream_user": return "stream_user";
+    case "energy": case "vip": return "vip";
+    case "syndicate": case "real_og": return "real_og";
+    default: return "free";
+  }
+}
 
 async function isAdmin(supabase: any, userId: string): Promise<boolean> {
   const { data } = await supabase
@@ -94,7 +120,7 @@ export const upsertBot = createServerFn({ method: "POST" })
     pair_name: String(d.pair_name || "").trim().slice(0, 60),
     pair_label: String(d.pair_label || "").trim().slice(0, 80),
     channel_chat_id: String(d.channel_chat_id || "").trim().slice(0, 80),
-    tier_required: (["metal","energy","syndicate"].includes(d.tier_required) ? d.tier_required : "metal") as Plan,
+    tier_required: (["free","stream_user","vip","real_og"].includes(d.tier_required) ? d.tier_required : "stream_user") as Plan,
     update_frequency: String(d.update_frequency || "15min").slice(0, 32),
     asset_class: d.asset_class ? String(d.asset_class).slice(0, 32) : undefined,
     bias: d.bias ? String(d.bias).slice(0, 16) : "neutral",
@@ -232,7 +258,7 @@ export const setSubscriberPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { user_id: string; plan: Plan; telegram_user_id?: number; telegram_username?: string }) => ({
     user_id: String(d.user_id || ""),
-    plan: (["free","metal","energy","syndicate"].includes(d.plan) ? d.plan : "free") as Plan,
+    plan: (["free","stream_user","vip","real_og"].includes(d.plan) ? d.plan : "free") as Plan,
     telegram_user_id: d.telegram_user_id ? Number(d.telegram_user_id) : undefined,
     telegram_username: d.telegram_username ? String(d.telegram_username).slice(0, 64) : undefined,
   }))
@@ -241,14 +267,19 @@ export const setSubscriberPlan = createServerFn({ method: "POST" })
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
     const admin = adminClient();
 
-    await admin.from("profiles").update({ subscription_plan: data.plan }).eq("id", data.user_id);
+    const legacyPlan = toLegacyPlan(data.plan);
+    await admin.from("profiles").update({ subscription_plan: legacyPlan }).eq("id", data.user_id);
     await admin.from("syndicate_subscribers").upsert({
       user_id: data.user_id,
-      plan: data.plan,
+      plan: legacyPlan,
       status: data.plan === "free" ? "canceled" : "active",
       telegram_user_id: data.telegram_user_id ?? null,
       telegram_username: data.telegram_username ?? null,
     }, { onConflict: "user_id" });
+    // Mirror onto the canonical og_tier so the rest of the site sees the change immediately.
+    try {
+      await admin.rpc("boss_set_og_tier", { _user_id: data.user_id, _tier: data.plan });
+    } catch { /* trigger will reconcile */ }
 
     // If plan downgraded to free, kick from all pair channels
     if (data.plan === "free" && data.telegram_user_id) {
