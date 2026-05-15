@@ -132,7 +132,16 @@ function Index() {
         <p className="text-xs sm:text-sm tracking-[0.4em] uppercase font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
           Street · Static · Stream
         </p>
-        <h1 className="mt-3 sm:mt-5 text-[10rem] sm:text-[16rem] md:text-[20rem] leading-[0.9] flex justify-center items-center w-full overflow-visible">
+        <h1
+          className="mt-3 sm:mt-5 text-[10rem] sm:text-[16rem] md:text-[20rem] leading-[0.9] flex justify-center items-center w-full overflow-visible"
+          style={{
+            // Reserve breathing room that scales with the glow radius so the
+            // metallic halo never clips on phones, tablets, or desktops.
+            paddingBlock: "clamp(1.25rem, 0.75rem + 5vw, 5.5rem)",
+            paddingInline: "clamp(0.75rem, 0.25rem + 4vw, 4.5rem)",
+            marginInline: "calc(-1 * clamp(0.75rem, 0.25rem + 4vw, 4.5rem))",
+          }}
+        >
           <OgWordmark
             suffix="-PORTAL"
             className={`og-portal-shimmer block mx-auto ${isVipMember || isBoss ? "animate-glitch" : ""}`}
