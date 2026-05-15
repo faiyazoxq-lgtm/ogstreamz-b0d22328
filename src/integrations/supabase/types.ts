@@ -2294,6 +2294,7 @@ export type Database = {
           feature_flags: Json
           free_clicks_used: number
           id: string
+          is_friends_family: boolean
           member_tier: string | null
           og_pass_no: number
           og_tier: Database["public"]["Enums"]["og_tier"]
@@ -2325,6 +2326,7 @@ export type Database = {
           feature_flags?: Json
           free_clicks_used?: number
           id: string
+          is_friends_family?: boolean
           member_tier?: string | null
           og_pass_no?: number
           og_tier?: Database["public"]["Enums"]["og_tier"]
@@ -2356,6 +2358,7 @@ export type Database = {
           feature_flags?: Json
           free_clicks_used?: number
           id?: string
+          is_friends_family?: boolean
           member_tier?: string | null
           og_pass_no?: number
           og_tier?: Database["public"]["Enums"]["og_tier"]
