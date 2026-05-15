@@ -179,7 +179,7 @@ export function TopUpRequestsPanel() {
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <Heart className="h-3.5 w-3.5 text-rose-400 shrink-0" />
-                  <span className="text-sm font-mono truncate">{f.email}</span>
+                  <span className="text-sm font-mono truncate min-w-0">{f.email}</span>
                   <CoinChip credits={f.credits} />
                 </div>
                 <Button

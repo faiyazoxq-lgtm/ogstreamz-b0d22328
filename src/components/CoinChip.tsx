@@ -26,7 +26,7 @@ export function CoinChip({ credits, className = "", size = "xs" }: Props) {
       <span
         title="Coin balance unavailable"
         aria-label="Coin balance unavailable"
-        className={`inline-flex items-center gap-1 ${text} uppercase tracking-[0.18em] px-1.5 py-0.5 rounded font-black bg-white/5 text-white/45 border border-white/10 ${className}`}
+        className={`inline-flex shrink-0 whitespace-nowrap items-center gap-1 ${text} uppercase tracking-[0.18em] px-1.5 py-0.5 rounded font-black bg-white/5 text-white/45 border border-white/10 ${className}`}
       >
         🪙 —
         <span className="text-white/35 font-bold normal-case tracking-normal">
@@ -43,7 +43,7 @@ export function CoinChip({ credits, className = "", size = "xs" }: Props) {
   return (
     <span
       title={`${coins.toLocaleString()} coins (${gbp})`}
-      className={`inline-flex items-center gap-1 ${text} uppercase tracking-[0.18em] px-1.5 py-0.5 rounded font-black bg-amber-500/15 text-amber-200 border border-amber-400/40 ${className}`}
+      className={`inline-flex shrink-0 whitespace-nowrap items-center gap-1 ${text} uppercase tracking-[0.18em] px-1.5 py-0.5 rounded font-black bg-amber-500/15 text-amber-200 border border-amber-400/40 ${className}`}
     >
       🪙 {coins.toLocaleString()}
       <span className="text-amber-100/70 font-bold normal-case tracking-normal">
