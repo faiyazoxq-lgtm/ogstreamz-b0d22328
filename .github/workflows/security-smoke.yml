@@ -1,0 +1,36 @@
+name: Security smoke (boss_* RPC ACL)
+
+# Runs ONLY the boss_* / admin_* RPC ACL lockdown smoke test on every PR.
+# Scope is intentionally narrow: this workflow must fail iff a boss RPC is
+# reachable by anon or authenticated non-boss users. Other checks (lint,
+# unit tests, link checker) live elsewhere so a flake there can't block PRs.
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  boss-rpc-acl:
+    name: boss_* RPC lockdown
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install psql client
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Run boss_* RPC ACL smoke test
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PGHOST: ${{ secrets.PGHOST }}
+          PGPORT: ${{ secrets.PGPORT }}
+          PGUSER: ${{ secrets.PGUSER }}
+          PGPASSWORD: ${{ secrets.PGPASSWORD }}
+          PGDATABASE: ${{ secrets.PGDATABASE }}
+        run: node scripts/smoke-boss-rpc-acl.mjs
