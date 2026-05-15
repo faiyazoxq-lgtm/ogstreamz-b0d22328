@@ -34,6 +34,8 @@ function fmt(d: string | null | undefined) {
 function StreamQueuePage() {
   const { profile, isAdmin } = useAuth();
   const isBoss = profile?.rank === "boss" || isAdmin;
+  const listStreamReqsFn = useServerFn(bossListStreamRequests);
+  const decideStreamReqFn = useServerFn(bossDecideStreamRequest);
   const [tab, setTab] = useState<"pending" | "approved" | "rejected">("pending");
   const [rows, setRows] = useState<Req[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,13 +45,13 @@ function StreamQueuePage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { rows: r } = await bossListStreamRequests({ data: { status: tab } });
+      const { rows: r } = await listStreamReqsFn({ data: { status: tab } });
       setRows(r as Req[]);
     } catch {
       setRows([]);
     }
     setLoading(false);
-  }, [tab]);
+  }, [tab, listStreamReqsFn]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -58,7 +60,7 @@ function StreamQueuePage() {
   const decide = async (id: string, approve: boolean) => {
     setBusyId(id);
     try {
-      await bossDecideStreamRequest({ data: { id, approve, note: noteFor[id] ?? undefined } });
+      await decideStreamReqFn({ data: { id, approve, note: noteFor[id] ?? undefined } });
     } catch (e: any) {
       setBusyId(null);
       alert(e?.message ?? "Failed");
