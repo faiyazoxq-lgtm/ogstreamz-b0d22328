@@ -235,3 +235,28 @@ export const setUserSwearing = createServerFn({ method: "POST" })
     });
     return { ok: true, feature_flags: flags };
   });
+
+export const setFriendsFamily = createServerFn({ method: "POST" })
+  .middleware([requireBoss])
+  .inputValidator((d: { userId: string; enabled: boolean }) => ({
+    userId: String(d.userId),
+    enabled: !!d.enabled,
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context as any;
+    const { data: prev } = await supabase
+      .from("profiles").select("is_friends_family").eq("id", data.userId).maybeSingle();
+    const { error } = await supabase
+      .from("profiles")
+      .update({ is_friends_family: data.enabled })
+      .eq("id", data.userId);
+    if (error) throw new Error(error.message);
+    await logBossAction(supabase, {
+      action: "set_friends_family",
+      surface: "/boss/og-passes",
+      targetUserId: data.userId,
+      before: prev ?? null,
+      after: { is_friends_family: data.enabled },
+    });
+    return { ok: true, is_friends_family: data.enabled };
+  });
