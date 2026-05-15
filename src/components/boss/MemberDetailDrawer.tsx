@@ -1,4 +1,5 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { CoinChip } from "@/components/CoinChip";
 import { BossOgPassCard } from "@/components/boss/BossOgPassCard";
 import { PassStatusRow } from "@/components/PassStatusRow";
 import { socialToUrl, socialDisplay } from "@/lib/social-handles";
@@ -40,8 +41,9 @@ export function MemberDetailDrawer({ row, open, onOpenChange, actions }: Props) 
         {row && (
           <>
             <SheetHeader className="space-y-1 text-left">
-              <SheetTitle className="text-white">
-                {row.display_name?.trim() || row.email}
+              <SheetTitle className="text-white flex items-center gap-2 flex-wrap">
+                <span>{row.display_name?.trim() || row.email}</span>
+                <CoinChip credits={row.credits} />
               </SheetTitle>
               <SheetDescription className="text-white/60">
                 Full member profile, contact, and pass status.
@@ -78,7 +80,11 @@ export function MemberDetailDrawer({ row, open, onOpenChange, actions }: Props) 
                 <div className="grid grid-cols-2 gap-2 mt-2 text-[11px]">
                   <Stat label="Rank" value={row.rank} />
                   <Stat label="Status" value={row.status} />
-                  <Stat label="Coins" value={`${row.credits ?? 0} 🪙`} icon={<Coins className="h-3 w-3 text-gold" />} />
+                  <Stat
+                    label="Coins"
+                    value={`${(row.credits ?? 0).toLocaleString()} 🪙 (${(Number(row.credits ?? 0) * 0.99).toLocaleString("en-GB", { style: "currency", currency: "GBP" })})`}
+                    icon={<Coins className="h-3 w-3 text-gold" />}
+                  />
                   <Stat label="Tier" value={row.member_tier ?? "—"} />
                   <Stat
                     label="Stream"

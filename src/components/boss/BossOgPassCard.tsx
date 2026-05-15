@@ -1,4 +1,5 @@
 import { Mail, Calendar, ShieldAlert } from "lucide-react";
+import { CoinChip } from "@/components/CoinChip";
 import { PassStatusRow } from "@/components/PassStatusRow";
 
 type Props = {
@@ -92,24 +93,7 @@ export function BossOgPassCard({ row, actions, onSelect }: Props) {
             <h3 className="text-base font-bold text-white truncate" title={row.display_name || row.email}>
               {row.display_name?.trim() || row.email}
             </h3>
-            {(() => {
-              const coins = Number(row.credits ?? 0);
-              const gbp = (coins * 0.99).toLocaleString("en-GB", {
-                style: "currency",
-                currency: "GBP",
-              });
-              return (
-                <span
-                  className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.18em] px-1.5 py-0.5 rounded font-black bg-amber-500/15 text-amber-200 border border-amber-400/40"
-                  title={`${coins.toLocaleString()} coins (~${gbp})`}
-                >
-                  🪙 {coins.toLocaleString()}
-                  <span className="text-amber-100/70 font-bold normal-case tracking-normal">
-                    ({gbp})
-                  </span>
-                </span>
-              );
-            })()}
+            <CoinChip credits={row.credits} />
             <span className="text-[10px] uppercase tracking-[0.22em] text-white/55 font-bold">
               {rankLabel}
             </span>

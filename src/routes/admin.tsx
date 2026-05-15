@@ -24,6 +24,7 @@ import { generateBrandBible, updateTelegramLinks, deployToTelegram } from "@/lib
 import { runAgentTask, getOpsSnapshot, runMaintenance } from "@/lib/command-deck.functions";
 import { TopUpRequestsPanel } from "@/components/TopUpRequestsPanel";
 import { getNerdStats } from "@/lib/nerd-stats.functions";
+import { CoinChip } from "@/components/CoinChip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -357,7 +358,10 @@ function UsersDirectoryPanel({ rows, busy, onUpdate }: { rows: Row[]; busy: stri
       <div className="max-h-[55vh] overflow-y-auto pr-1 space-y-2">
         {filtered.slice(0, 60).map((r) => (
           <div key={r.id} className="rounded-lg border border-white/10 bg-black/30 p-2 text-xs">
-            <div className="truncate font-mono text-[11px]" title={r.email}>{r.email}</div>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="truncate font-mono text-[11px]" title={r.email}>{r.email}</span>
+              <CoinChip credits={r.credits} />
+            </div>
             <div className="mt-1 flex items-center justify-between gap-2">
               <span
                 className="px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider"
@@ -668,9 +672,13 @@ function NerdStatsPanel() {
                 <div className="px-3 py-1.5 text-[9px] uppercase tracking-[0.3em] text-muted-foreground bg-background/40">Top wallets</div>
                 {data.users.topSpenders.map((u: any, i: number) => (
                   <div key={i} className="grid grid-cols-12 gap-2 px-3 py-1.5 text-xs items-center border-t border-border">
-                    <div className="col-span-9 truncate text-white">{u.email}</div>
+                    <div className="col-span-7 truncate text-white flex items-center gap-2 min-w-0">
+                      <span className="truncate">{u.email}</span>
+                    </div>
                     <div className="col-span-1 text-[10px] uppercase tracking-wider text-muted-foreground">{u.status}</div>
-                    <div className="col-span-2 text-right font-mono text-yellow-300">{u.credits}</div>
+                    <div className="col-span-4 text-right">
+                      <CoinChip credits={u.credits} />
+                    </div>
                   </div>
                 ))}
               </div>

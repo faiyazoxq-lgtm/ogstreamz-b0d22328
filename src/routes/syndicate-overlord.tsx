@@ -36,6 +36,7 @@ import { BossAnnouncementButton } from "@/components/boss/BossAnnouncementButton
 import { PassOrdersPanel } from "@/components/boss/PassOrdersPanel";
 import { StoreProductsPanel } from "@/components/boss/StoreProductsPanel";
 import { UserEmailPicker } from "@/components/UserEmailPicker";
+import { CoinChip } from "@/components/CoinChip";
 
 const RANKS = ["prospect", "enforcer", "vip", "boss"] as const;
 type Rank = typeof RANKS[number];
@@ -619,6 +620,7 @@ function UserRow({ row, onChange, selected, onToggleSelect }: { row: Row; onChan
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-base sm:text-lg font-bold text-emerald-100 truncate">{row.email}</h3>
+            <CoinChip credits={row.credits} />
             <button onClick={copyEmail} className="text-emerald-700 hover:text-cyan-300 flex-shrink-0" title="Copy email">
               <Copy className="h-3.5 w-3.5" />
             </button>
