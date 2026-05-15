@@ -11,38 +11,43 @@
  * Exit 1 = at least one RPC leaked to anon/authenticated, or service_role
  *         was unexpectedly EXECUTE-denied.
  */
-import { Client } from "pg";
+import { execFileSync } from "node:child_process";
 
 const URL = process.env.SUPABASE_URL;
 const SR = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const PUB = process.env.SUPABASE_PUBLISHABLE_KEY;
-const DB = process.env.SUPABASE_DB_URL || (process.env.PGHOST
-  ? `postgres://${process.env.PGUSER}:${encodeURIComponent(process.env.PGPASSWORD)}@${process.env.PGHOST}:${process.env.PGPORT || 5432}/${process.env.PGDATABASE}`
-  : null);
-
-if (!URL || !SR || !PUB || !DB) {
-  console.error("missing env (SUPABASE_URL/SUPABASE_PUBLISHABLE_KEY/SUPABASE_SERVICE_ROLE_KEY/PG*)");
+if (!URL || !SR || !PUB) {
+  console.error("missing env (SUPABASE_URL/SUPABASE_PUBLISHABLE_KEY/SUPABASE_SERVICE_ROLE_KEY)");
   process.exit(2);
 }
 
-// 1. Discover every boss_/admin_ RPC + its arg names/types
-const pg = new Client({ connectionString: DB });
-await pg.connect();
-const { rows: fns } = await pg.query(`
+// 1. Discover every boss_/admin_ RPC + its arg names/types via psql.
+// We get one row per fn as: name|args_sig|arg_name1,arg_name2|arg_type1,arg_type2
+const sql = `
   SELECT
-    p.proname AS name,
-    pg_get_function_identity_arguments(p.oid) AS args_sig,
-    p.proargnames AS arg_names,
-    p.proargtypes::regtype[] AS arg_types,
-    p.pronargdefaults AS n_defaults,
-    p.pronargs AS n_args
+    p.proname || '|' ||
+    pg_get_function_identity_arguments(p.oid) || '|' ||
+    COALESCE(array_to_string(p.proargnames, ','), '') || '|' ||
+    COALESCE(array_to_string(ARRAY(
+      SELECT format_type(t, NULL)
+      FROM unnest(p.proargtypes::oid[]) AS t
+    ), ','), '')
   FROM pg_proc p
   JOIN pg_namespace n ON n.oid = p.pronamespace
   WHERE n.nspname = 'public'
     AND (p.proname LIKE 'boss\\_%' OR p.proname LIKE 'admin\\_%')
-  ORDER BY p.proname, args_sig;
-`);
-await pg.end();
+  ORDER BY p.proname, pg_get_function_identity_arguments(p.oid);
+`;
+const raw = execFileSync("psql", ["-At", "-c", sql], { encoding: "utf8" });
+const fns = raw.trim().split("\n").filter(Boolean).map((line) => {
+  const [name, args_sig, names, types] = line.split("|");
+  return {
+    name,
+    args_sig,
+    arg_names: names ? names.split(",") : [],
+    arg_types: types ? types.split(",") : [],
+  };
+});
 
 console.log(`Discovered ${fns.length} boss_/admin_ RPCs in public schema.\n`);
 
