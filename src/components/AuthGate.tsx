@@ -59,7 +59,11 @@ function PromoLanding() {
 
         <div className="relative">
           <div className="sticky top-0 z-30 -mx-6 sm:-mx-10 px-6 sm:px-10 py-3 flex flex-wrap items-center justify-between gap-4 bg-black/70 backdrop-blur-md border-b border-white/10 rounded-t-3xl">
-            <div className="flex items-center gap-3 min-w-0">
+            <Link
+              to="/"
+              aria-label="ogstreamz home"
+              className="flex items-center gap-3 min-w-0 rounded-lg outline-none ring-offset-2 ring-offset-black focus-visible:ring-2 focus-visible:ring-[#7fd5ff]"
+            >
               <TVStaticLogo size={44} />
               <div className="flex flex-col leading-none min-w-0">
                 <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-[#7fd5ff]/80 truncate">
@@ -69,15 +73,14 @@ function PromoLanding() {
                   Neon Platform
                 </span>
               </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setSignInOpen(true)}
+            </Link>
+            <Link
+              to="/auth"
               className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.2em] text-white/90 backdrop-blur transition hover:bg-white/15"
             >
               <LogIn className="h-3.5 w-3.5" />
               Sign in
-            </button>
+            </Link>
           </div>
 
           <div className="mt-6 flex justify-center sm:justify-start">
