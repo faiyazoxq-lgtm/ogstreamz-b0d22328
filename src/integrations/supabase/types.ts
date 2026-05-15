@@ -2296,6 +2296,7 @@ export type Database = {
           id: string
           member_tier: string | null
           og_pass_no: number
+          og_tier: Database["public"]["Enums"]["og_tier"]
           rank: Database["public"]["Enums"]["syndicate_rank"]
           referral_code: string | null
           referred_by_reseller: string | null
@@ -2326,6 +2327,7 @@ export type Database = {
           id: string
           member_tier?: string | null
           og_pass_no?: number
+          og_tier?: Database["public"]["Enums"]["og_tier"]
           rank?: Database["public"]["Enums"]["syndicate_rank"]
           referral_code?: string | null
           referred_by_reseller?: string | null
@@ -2356,6 +2358,7 @@ export type Database = {
           id?: string
           member_tier?: string | null
           og_pass_no?: number
+          og_tier?: Database["public"]["Enums"]["og_tier"]
           rank?: Database["public"]["Enums"]["syndicate_rank"]
           referral_code?: string | null
           referred_by_reseller?: string | null
@@ -4391,6 +4394,13 @@ export type Database = {
         Args: { _banned: boolean; _reason?: string; _user_id: string }
         Returns: undefined
       }
+      boss_set_og_tier: {
+        Args: {
+          _tier: Database["public"]["Enums"]["og_tier"]
+          _user_id: string
+        }
+        Returns: Database["public"]["Enums"]["og_tier"]
+      }
       boss_set_portal_published: {
         Args: { _portal_id: string; _published: boolean }
         Returns: boolean
@@ -4514,6 +4524,10 @@ export type Database = {
       claim_vip_referral: {
         Args: { p_code: string; p_user_id?: string }
         Returns: Json
+      }
+      derive_og_tier: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["og_tier"]
       }
       downgrade_expired_stream_users: { Args: never; Returns: number }
       enqueue_stream_verification: {
@@ -4746,6 +4760,7 @@ export type Database = {
         Args: { _amount: number; _reason: string }
         Returns: number
       }
+      sync_og_tier_for_user: { Args: { _user_id: string }; Returns: undefined }
       text_contains_denylisted_domain: {
         Args: { _text: string }
         Returns: boolean
@@ -4757,6 +4772,7 @@ export type Database = {
       allowance_period: "day" | "week" | "month"
       app_role: "admin" | "user" | "reseller"
       billing_mode: "free" | "pay_per_use" | "subscription" | "allowance"
+      og_tier: "free" | "stream_user" | "vip" | "real_og" | "boss"
       subscription_plan: "free" | "metal" | "energy" | "syndicate"
       syndicate_rank: "prospect" | "enforcer" | "vip" | "boss" | "stream_user"
       system_alert_category: "fallback" | "api_error" | "security"
@@ -4893,6 +4909,7 @@ export const Constants = {
       allowance_period: ["day", "week", "month"],
       app_role: ["admin", "user", "reseller"],
       billing_mode: ["free", "pay_per_use", "subscription", "allowance"],
+      og_tier: ["free", "stream_user", "vip", "real_og", "boss"],
       subscription_plan: ["free", "metal", "energy", "syndicate"],
       syndicate_rank: ["prospect", "enforcer", "vip", "boss", "stream_user"],
       system_alert_category: ["fallback", "api_error", "security"],
