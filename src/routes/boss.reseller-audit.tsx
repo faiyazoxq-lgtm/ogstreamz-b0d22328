@@ -331,7 +331,6 @@ function BossResellerAuditPage() {
       )}
       {/* keep ref in module to avoid unused-import warning */}
       {filtersDirty.current ? null : null}
-      )}
     </div>
   );
 }
