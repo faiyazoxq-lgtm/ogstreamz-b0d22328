@@ -128,17 +128,17 @@ function Index() {
         </div>
       )}
 
-      <section className="relative max-w-7xl mx-auto px-5 sm:px-8 pt-12 sm:pt-20 pb-16 text-center">
+      <section className="relative max-w-7xl mx-auto px-3 sm:px-6 pt-6 sm:pt-12 md:pt-16 pb-10 sm:pb-16 text-center">
         <p className="text-xs sm:text-sm tracking-[0.4em] uppercase font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
           Street · Static · Stream
         </p>
-        <h1 className="mt-6 text-[12rem] sm:text-[18rem] md:text-[22rem] leading-[0.95] flex justify-center items-center">
+        <h1 className="mt-3 sm:mt-5 text-[10rem] xs:text-[12rem] sm:text-[18rem] md:text-[22rem] leading-[0.9] flex justify-center items-center overflow-hidden">
           <OgWordmark
             suffix="-PORTAL"
             className={`mx-auto ${isVipMember || isBoss ? "animate-glitch" : ""}`}
           />
         </h1>
-        <p className="mt-6 max-w-xl mx-auto text-muted-foreground text-base sm:text-lg">
+        <p className="mt-4 sm:mt-6 max-w-xl mx-auto text-muted-foreground text-base sm:text-lg">
           One frequency.{" "}
           <span className="font-bold text-foreground tabular-nums">{portalsLabel}</span>{" "}
           live. Pick your channel.
