@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ScrollText, Loader2, Save, ShieldAlert, Filter, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+import { ScrollText, Loader2, Save, ShieldAlert, Filter, CheckCircle2, AlertTriangle, XCircle, ShieldCheck } from "lucide-react";
 import { requireBoss } from "@/lib/route-guards";
 import { useServerFn } from "@tanstack/react-start";
 import { bossListExposedFunctions, bossUpsertFunctionAudit } from "@/lib/boss-function-grants.functions";
+import { verifyBossLockdown } from "@/lib/boss-lockdown-verify.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/boss/function-audit")({
@@ -46,6 +47,9 @@ function FunctionAuditPage() {
   const [search, setSearch] = useState("");
   const listExposed = useServerFn(bossListExposedFunctions);
   const upsertAudit = useServerFn(bossUpsertFunctionAudit);
+  const runLockdownAudit = useServerFn(verifyBossLockdown);
+  const [lockdown, setLockdown] = useState<null | Awaited<ReturnType<typeof verifyBossLockdown>>>(null);
+  const [verifying, setVerifying] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["boss-exposed-functions"],
@@ -122,6 +126,45 @@ function FunctionAuditPage() {
             <Stat label="Justified" value={counts.justified} tone="emerald" />
             <Stat label="Should revoke" value={counts.revoke} tone="rose" />
           </div>
+        )}
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            disabled={verifying}
+            onClick={async () => {
+              setVerifying(true);
+              try {
+                const res = await runLockdownAudit();
+                setLockdown(res);
+                if (res.ok) toast.success(`Lockdown OK — ${res.scanned} boss/admin fns checked`);
+                else toast.error(`Lockdown breach: ${res.offenders.length} offender(s)`);
+              } catch (e) {
+                toast.error((e as Error).message);
+              } finally {
+                setVerifying(false);
+              }
+            }}
+            className="inline-flex items-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-emerald-200 hover:bg-emerald-500/20 disabled:opacity-60"
+          >
+            {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+            Verify boss lockdown
+          </button>
+          {lockdown && (
+            <span className={`text-xs ${lockdown.ok ? "text-emerald-300" : "text-rose-300"}`}>
+              {lockdown.ok
+                ? `OK — ${lockdown.scanned} boss_*/admin_* fns, none callable by anon/auth`
+                : `${lockdown.offenders.length} offender(s) callable by anon/authenticated`}
+            </span>
+          )}
+        </div>
+        {lockdown && lockdown.offenders.length > 0 && (
+          <ul className="mt-2 space-y-1 rounded-md border border-rose-500/40 bg-rose-500/5 p-3 text-xs text-rose-200">
+            {lockdown.offenders.map((o) => (
+              <li key={`${o.name}(${o.args})`} className="font-mono">
+                {o.name}({o.args}) — {o.anon_execute && "anon "}{o.auth_execute && "authenticated"}
+              </li>
+            ))}
+          </ul>
         )}
       </header>
 
