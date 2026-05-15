@@ -502,6 +502,60 @@
   }
   .animate-glitch { animation: glitch 6s infinite; }
 
+  /* Cinematic electric-gold shimmer for the OG PORTAL hero lockup.
+     Pulses the warm halo and sweeps a faint highlight across the artwork
+     without disturbing layout. Pairs with .animate-glitch when both are set. */
+  @keyframes og-portal-shimmer {
+    0%, 100% {
+      filter:
+        drop-shadow(0 1px 0 rgba(0,0,0,0.55))
+        drop-shadow(0 0 6px rgba(0,0,0,0.45))
+        drop-shadow(0 0 14px oklch(0.78 0.16 78 / 0.55))
+        drop-shadow(0 0 28px oklch(0.74 0.18 72 / 0.35));
+    }
+    50% {
+      filter:
+        drop-shadow(0 1px 0 rgba(0,0,0,0.55))
+        drop-shadow(0 0 10px rgba(0,0,0,0.45))
+        drop-shadow(0 0 28px oklch(0.86 0.20 82 / 0.85))
+        drop-shadow(0 0 60px oklch(0.80 0.22 70 / 0.55));
+    }
+  }
+  @keyframes og-portal-sheen {
+    0%   { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
+    20%  { opacity: 0.55; }
+    60%  { opacity: 0.55; }
+    100% { transform: translateX(220%) skewX(-18deg); opacity: 0; }
+  }
+  .og-portal-shimmer {
+    position: relative;
+    isolation: isolate;
+  }
+  .og-portal-shimmer > img {
+    animation: og-portal-shimmer 4.8s ease-in-out infinite;
+  }
+  .og-portal-shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background: linear-gradient(
+      100deg,
+      transparent 35%,
+      oklch(0.92 0.16 88 / 0.55) 50%,
+      transparent 65%
+    );
+    mix-blend-mode: screen;
+    filter: blur(2px);
+    animation: og-portal-sheen 5.2s ease-in-out infinite;
+    border-radius: 0.375rem;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .og-portal-shimmer > img,
+    .og-portal-shimmer::after { animation: none !important; }
+  }
+
   /* Crispy electric-ice wordmark — matches the TrackingEye palette.
      Uses JetBrains Mono for technical sharpness, a tight white→blue
      gradient fill, and an interactive per-letter lift via .text-eye-ice > span:hover. */
