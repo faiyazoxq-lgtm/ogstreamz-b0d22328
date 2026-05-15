@@ -293,7 +293,38 @@ function AdminPage() {
       <HubControlsPanel />
 
       <SectionHeader id="mood" icon={<Brain className="h-4 w-4" />} label="Global Mood · Syndicate Protocol" tint="#ff2e55" />
-      <SyndicateProtocolSwitch />
+      <div className="grid gap-4 md:grid-cols-2">
+        <SyndicateProtocolSwitch
+          hubKey="shape-bridge"
+          eyebrow="Full Site · Syndicate Protocol"
+          titleNormal="Global Mood · NORMAL"
+          titleOg="Global Mood · OG-MODE"
+          description={
+            <>
+              Site-wide flip. <span className="mood-accent">OG-MODE</span> unleashes full
+              swearing &amp; chaos across every Gemini 3 surface — Boss Chat, Shape Bridge,
+              all hub agents, jokes, news, lexicon. <span className="mood-accent">NORMAL</span> keeps
+              the Elite Analyst voice clean and PG.
+            </>
+          }
+          ogBadge="Full Site · OG Brutal"
+        />
+        <SyndicateProtocolSwitch
+          hubKey="og-bot"
+          eyebrow="OG Bot · Telegram Enforcer"
+          titleNormal="Global Mood · NORMAL"
+          titleOg="Global Mood · OG-MODE"
+          description={
+            <>
+              Controls only the <span className="mood-accent">OG Bot</span> persona on Telegram.
+              <span className="mood-accent"> OG-MODE</span> = unfiltered swearing, threats and chaos.
+              <span className="mood-accent"> NORMAL</span> = polite, brand-safe replies. Independent
+              from the full-site switch.
+            </>
+          }
+          ogBadge="OG Bot · Foul Mouth"
+        />
+      </div>
       <details className="mt-3 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-xs text-white/55">
         <summary className="cursor-pointer">Legacy bridge controls</summary>
         <div className="pt-3"><ShapeBridgePanel /></div>
