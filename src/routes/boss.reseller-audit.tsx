@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { ScrollText, RefreshCw, Filter, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { listResellerAudit, type ResellerAuditRow } from "@/lib/reseller-audit.functions";
 import { requireBoss } from "@/lib/route-guards";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/boss/reseller-audit")({
   beforeLoad: requireBoss,
@@ -105,6 +106,10 @@ function BossResellerAuditPage() {
   const [sortBy, setSortBy] = useState<SortBy>("created_at");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
+  // Row detail drawer
+  const [selected, setSelected] = useState<ResellerAuditRow | null>(null);
+  const [copied, setCopied] = useState(false);
+
   const fetchPage = useCallback(async (cursor: string | null, sb: SortBy = sortBy, sd: SortDir = sortDir) => {
     setLoading(true); setErr(null);
     try {
@@ -188,6 +193,20 @@ function BossResellerAuditPage() {
     setAction(""); setResellerId(""); setActorUserId(""); setTargetUserId("");
     setFrom(""); setTo(""); setIncludeArchive(true); setLimit(100);
     setSortBy("created_at"); setSortDir("desc");
+  }
+
+  const selectedJson = useMemo(
+    () => (selected ? JSON.stringify(selected, null, 2) : ""),
+    [selected],
+  );
+
+  async function copyJson() {
+    if (!selectedJson) return;
+    try {
+      await navigator.clipboard.writeText(selectedJson);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch { /* noop */ }
   }
 
   return (
@@ -334,10 +353,12 @@ function BossResellerAuditPage() {
           <p className="p-6 text-sm text-muted-foreground">No entries match the current filters.</p>
         ) : (
           rows.map((r) => (
-            <div
+            <button
+              type="button"
               key={`${r.source}:${r.id}`}
+              onClick={() => setSelected(r)}
               title={r.reason ? `Reason: ${r.reason}` : undefined}
-              className="grid grid-cols-[160px_100px_70px_1fr_1fr_1fr_80px] items-center gap-2 border-b border-border/60 px-3 py-2 text-xs last:border-b-0 hover:bg-secondary/30"
+              className="grid w-full grid-cols-[160px_100px_70px_1fr_1fr_1fr_80px] items-center gap-2 border-b border-border/60 px-3 py-2 text-xs text-left last:border-b-0 hover:bg-secondary/30 cursor-pointer"
             >
               <div className="text-muted-foreground" title={r.created_at}>{fmtTime(r.created_at)}</div>
               <div><ActionBadge action={r.action} /></div>
@@ -354,7 +375,7 @@ function BossResellerAuditPage() {
               <div className="text-right tabular-nums">
                 {r.delta == null ? "—" : (r.delta > 0 ? `+${r.delta}` : `${r.delta}`)}
               </div>
-            </div>
+            </button>
           ))
         )}
       </div>
@@ -387,6 +408,81 @@ function BossResellerAuditPage() {
       )}
       {/* keep ref in module to avoid unused-import warning */}
       {filtersDirty.current ? null : null}
+
+      <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+          {selected && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="inline-flex items-center gap-2">
+                  <ActionBadge action={selected.action} />
+                  <SourceBadge source={selected.source} />
+                  <span>Audit entry</span>
+                </SheetTitle>
+                <SheetDescription>
+                  {fmtTime(selected.created_at)} · <span className="font-mono text-[11px]">{selected.id}</span>
+                </SheetDescription>
+              </SheetHeader>
+
+              <dl className="mt-5 space-y-3 text-xs">
+                <Field label="Action" mono={false} value={selected.action} />
+                <Field label="When" mono={false} value={`${fmtTime(selected.created_at)}  (${selected.created_at})`} />
+                <Field label="Source" mono={false} value={selected.source} />
+                <Field label="Audit row id" value={selected.id} />
+                <Field label="Actor user id" value={selected.actor_user_id ?? "—"} />
+                <Field label="Target user id" value={selected.target_user_id ?? "—"} />
+                <Field label="Reseller id" value={selected.reseller_id ?? "—"} />
+                <Field
+                  label="Delta"
+                  mono={false}
+                  value={selected.delta == null
+                    ? "—"
+                    : (selected.delta > 0 ? `+${selected.delta}` : `${selected.delta}`)}
+                />
+                <div>
+                  <dt className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold mb-1">Reason</dt>
+                  <dd className="rounded-md border border-border bg-background p-3 text-xs whitespace-pre-wrap break-words min-h-[3rem]">
+                    {selected.reason && selected.reason.trim().length > 0
+                      ? selected.reason
+                      : <span className="text-muted-foreground italic">No reason provided.</span>}
+                  </dd>
+                </div>
+              </dl>
+
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
+                    Raw payload (JSON)
+                  </p>
+                  <button
+                    type="button"
+                    onClick={copyJson}
+                    className="rounded-md border border-border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] hover:bg-secondary"
+                  >
+                    {copied ? "Copied" : "Copy"}
+                  </button>
+                </div>
+                <pre className="max-h-80 overflow-auto rounded-md border border-border bg-background p-3 text-[11px] font-mono leading-relaxed">
+{selectedJson}
+                </pre>
+                <p className="mt-2 text-[10px] text-muted-foreground">
+                  This audit table stores no extra JSON payload column. For richer context, cross-reference{" "}
+                  <code>actor_user_id</code> and <code>target_user_id</code> in the SQL editor.
+                </p>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+}
+
+function Field({ label, value, mono = true }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="grid grid-cols-[110px_1fr] items-start gap-2">
+      <dt className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold pt-0.5">{label}</dt>
+      <dd className={`break-all ${mono ? "font-mono text-[11px]" : "text-xs"}`}>{value}</dd>
     </div>
   );
 }
