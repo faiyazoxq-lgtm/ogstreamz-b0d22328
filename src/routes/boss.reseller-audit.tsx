@@ -50,6 +50,33 @@ function SourceBadge({ source }: { source: "live" | "archive" }) {
   );
 }
 
+function SortHeader({
+  label, col, sortBy, sortDir, onSort, align,
+}: {
+  label: string;
+  col: SortBy;
+  sortBy: SortBy;
+  sortDir: SortDir;
+  onSort: (c: SortBy) => void;
+  align?: "right";
+}) {
+  const active = sortBy === col;
+  const Icon = active ? (sortDir === "desc" ? ArrowDown : ArrowUp) : ArrowUpDown;
+  return (
+    <button
+      type="button"
+      onClick={() => onSort(col)}
+      className={`inline-flex items-center gap-1 hover:text-foreground transition-colors ${
+        active ? "text-foreground" : ""
+      } ${align === "right" ? "justify-end w-full" : ""}`}
+      title={`Sort by ${label}${active ? ` (${sortDir})` : ""}`}
+    >
+      <span>{label}</span>
+      <Icon className="h-3 w-3" />
+    </button>
+  );
+}
+
 function BossResellerAuditPage() {
   const list = useServerFn(listResellerAudit);
   const [rows, setRows] = useState<ResellerAuditRow[]>([]);
