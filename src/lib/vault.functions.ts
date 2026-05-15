@@ -19,7 +19,45 @@ export type VaultRevealResult =
 export const revealVaultCredential = createServerFn({ method: "POST" })
   .middleware([requireStrictAuth])
   .handler(async ({ context }): Promise<VaultRevealResult> => {
-    const { supabase } = context as { supabase: any };
+    const { supabase, userId } = context as { supabase: any; userId: string };
+
+    // Server-side vault re-auth gate. The client `VaultGuard` is UX only;
+    // the real enforcement lives here. A user may reveal a vault credential
+    // ONLY if they have proven vault portal access (successful
+    // vaultPortalLogin sets `stream_verified_at`) within the last 12 hours,
+    // OR they hold an elevated rank/role (vip / boss / admin).
+    const [{ data: prof }, { data: roleRow }] = await Promise.all([
+      supabaseAdmin
+        .from("profiles")
+        .select("rank, stream_verified_at")
+        .eq("id", userId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .in("role", ["admin"])
+        .maybeSingle(),
+    ]);
+
+    const rank = (prof?.rank ?? null) as string | null;
+    const elevated = rank === "vip" || rank === "boss" || !!roleRow;
+
+    const verifiedAt = prof?.stream_verified_at
+      ? new Date(prof.stream_verified_at as string).getTime()
+      : 0;
+    const VAULT_REAUTH_WINDOW_MS = 12 * 60 * 60 * 1000;
+    const reauthFresh =
+      Number.isFinite(verifiedAt) &&
+      verifiedAt > 0 &&
+      Date.now() - verifiedAt < VAULT_REAUTH_WINDOW_MS;
+
+    const streamUserOk = rank === "stream_user" && reauthFresh;
+
+    if (!elevated && !streamUserOk) {
+      throw new Error("Vault re-auth required");
+    }
+
     const { data, error } = await supabase.rpc("reveal_vault_credential");
     if (error) throw new Error(error.message);
     return data as VaultRevealResult;
