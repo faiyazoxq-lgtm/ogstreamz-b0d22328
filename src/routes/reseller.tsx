@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Loader2, Ticket, Sparkles, Users, Wallet, TrendingUp, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CoinChip } from "@/components/CoinChip";
 import { useAuth } from "@/hooks/use-auth";
 import {
   getResellerWallet,
@@ -107,8 +108,11 @@ function ResellerPage() {
           {(data.downline as any[]).length === 0 && <p className="py-6 text-center text-muted-foreground text-sm">Share your link to grow your tree.</p>}
           {(data.downline as any[]).map((d) => (
             <div key={d.id} className="flex justify-between py-1.5 border-b border-border/60 text-sm">
-              <span className="text-foreground">{d.email}</span>
-              <span className="text-muted-foreground text-xs uppercase tracking-widest">{d.rank} · {d.credits}c</span>
+              <span className="text-foreground inline-flex items-center gap-2">
+                {d.email}
+                <CoinChip credits={d.credits} />
+              </span>
+              <span className="text-muted-foreground text-xs uppercase tracking-widest">{d.rank}</span>
             </div>
           ))}
         </section>

@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { Check, X, Coins, Heart, UserPlus, Trash2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CoinChip } from "@/components/CoinChip";
+import { useCreditsMap } from "@/hooks/use-credits-map";
 import {
   bossListTopupRequests,
   bossApproveTopup,
@@ -45,6 +47,8 @@ export function TopUpRequestsPanel() {
   const [grants, setGrants] = useState<Record<string, number>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [newEmail, setNewEmail] = useState("");
+
+  const reqCredits = useCreditsMap(requests.map((r) => r.user_id));
 
   const refresh = async () => {
     try {
@@ -176,9 +180,7 @@ export function TopUpRequestsPanel() {
                 <div className="flex items-center gap-2 min-w-0">
                   <Heart className="h-3.5 w-3.5 text-rose-400 shrink-0" />
                   <span className="text-sm font-mono truncate">{f.email}</span>
-                  <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                    · {f.credits} cr
-                  </span>
+                  <CoinChip credits={f.credits} />
                 </div>
                 <Button
                   variant="ghost"
@@ -227,7 +229,10 @@ export function TopUpRequestsPanel() {
           >
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div className="min-w-0">
-                <div className="text-sm font-mono text-white truncate">{req.email ?? req.user_id}</div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-mono text-white truncate">{req.email ?? req.user_id}</span>
+                  <CoinChip credits={reqCredits[req.user_id] ?? 0} />
+                </div>
                 <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-0.5">
                   {new Date(req.created_at).toLocaleString()} · status:{" "}
                   <span
