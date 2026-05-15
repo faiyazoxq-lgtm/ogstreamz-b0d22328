@@ -125,12 +125,10 @@ function PortalsManager() {
   async function togglePublished(p: Portal) {
     const next = !p.published;
     setRows((rs) => rs.map((r) => (r.id === p.id ? { ...r, published: next } : r)));
-    const { error } = await supabase.rpc("boss_set_portal_published", {
-      _portal_id: p.id,
-      _published: next,
-    });
-    if (error) {
-      toast.error(error.message);
+    try {
+      await setPortalPublishedFn({ data: { portal_id: p.id, published: next } });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed");
       load();
       return;
     }
