@@ -1,0 +1,1 @@
+INSERT INTO hub_settings (hub_key, display_name, enabled, tuning) VALUES ('ff-badge', 'Friends & Family Badge', true, '{"label":"F&F","show":true}'::jsonb) ON CONFLICT (hub_key) DO NOTHING;

@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Brain, ShieldAlert, ShieldCheck, Skull, Loader2, Link2 } from "lucide-react";
+import { Brain, ShieldAlert, ShieldCheck, Skull, Loader2, Link2, Heart, EyeOff } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { SyndicateProtocolSwitch } from "@/components/SyndicateProtocolSwitch";
 import { getCivility, setCivilityDefault } from "@/lib/civility.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Unified Global Mood · Syndicate Protocol panel.
@@ -90,6 +91,7 @@ export function GlobalMoodPanel({ heading = true }: { heading?: boolean }) {
       </div>
 
       <CivilityDefaultRow />
+      <FriendsFamilyBadgeRow />
     </div>
   );
 }
@@ -210,3 +212,105 @@ function CivilityDefaultRow() {
 }
 
 export default GlobalMoodPanel;
+
+function FriendsFamilyBadgeRow() {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data, error } = await supabase
+        .from("hub_settings")
+        .select("enabled")
+        .eq("hub_key", "ff-badge")
+        .maybeSingle();
+      if (!alive) return;
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      setEnabled(!!data?.enabled);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const flip = async (next: boolean) => {
+    setBusy(true);
+    const prev = enabled;
+    setEnabled(next);
+    const { error } = await supabase
+      .from("hub_settings")
+      .update({ enabled: next, updated_at: new Date().toISOString() })
+      .eq("hub_key", "ff-badge");
+    setBusy(false);
+    if (error) {
+      setEnabled(prev);
+      toast.error(error.message);
+      return;
+    }
+    toast.success(next ? "Friends & Family badge ON site-wide" : "Friends & Family badge HIDDEN site-wide");
+  };
+
+  const isOn = enabled === true;
+
+  return (
+    <div
+      className="rounded-3xl border p-4 md:p-5 glass-obsidian"
+      style={{ borderColor: isOn ? "rgba(255,85,119,0.5)" : "rgba(255,255,255,0.15)" }}
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        <span
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg ring-1"
+          style={{
+            background: isOn ? "rgba(255,85,119,0.14)" : "rgba(255,255,255,0.06)",
+            borderColor: isOn ? "rgba(255,85,119,0.5)" : "rgba(255,255,255,0.2)",
+          }}
+        >
+          {isOn ? (
+            <Heart className="h-4 w-4" style={{ color: "#ffb3c4" }} />
+          ) : (
+            <EyeOff className="h-4 w-4 text-white/55" />
+          )}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] uppercase tracking-[0.4em] mood-accent terminal-mono">
+            Friends &amp; Family Badge
+          </div>
+          <div className="syndicate-header text-sm md:text-base text-white/95">
+            F&amp;F badge is{" "}
+            {enabled === null ? "…" : isOn ? "VISIBLE site-wide" : "HIDDEN site-wide"}
+          </div>
+          <p className="text-[11px] text-white/55 mt-0.5">
+            Master switch for the pink F&amp;F chip on every OG Pass card.
+            Per-user F&amp;F status is unchanged — only the badge is hidden.
+          </p>
+        </div>
+        <button
+          type="button"
+          disabled={busy || enabled === null}
+          onClick={() => flip(!isOn)}
+          className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] transition disabled:opacity-60"
+          style={{
+            borderColor: isOn ? "rgba(255,85,119,0.6)" : "rgba(255,255,255,0.25)",
+            background: isOn ? "rgba(255,85,119,0.14)" : "rgba(255,255,255,0.04)",
+            color: isOn ? "#ffb3c4" : "rgba(255,255,255,0.6)",
+          }}
+          aria-pressed={isOn}
+          title="Show or hide the Friends & Family badge across the whole site"
+        >
+          {busy ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : isOn ? (
+            <Heart className="h-3.5 w-3.5" />
+          ) : (
+            <EyeOff className="h-3.5 w-3.5" />
+          )}
+          {isOn ? "Badge · ON" : "Badge · OFF"}
+        </button>
+      </div>
+    </div>
+  );
+}
