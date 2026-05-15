@@ -1,8 +1,8 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users,
-  Tv, Tags, Bell, Sparkles, Settings, Boxes, Grid3x3,
+  Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft,
+  ShieldAlert, Tv, Tags, Bell, Sparkles, Settings, Boxes, Grid3x3,
   Coins, Power, Rocket, KeyRound, Wallet, SlidersHorizontal, Lock, ScrollText,
   ShieldOff, Lightbulb, Megaphone, Phone, LayoutGrid, Brain,
 } from "lucide-react";
