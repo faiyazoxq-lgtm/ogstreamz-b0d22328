@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { SyndicateProtocolSwitch } from "@/components/SyndicateProtocolSwitch";
+import { GlobalMoodPanel } from "@/components/boss/GlobalMoodPanel";
 import { CivilityPanel } from "@/components/boss/CivilityPanel";
 import { useServerFn } from "@tanstack/react-start";
 import { requireBoss } from "@/lib/route-guards";
@@ -293,61 +294,16 @@ function AdminPage() {
       <HubControlsPanel />
 
       <SectionHeader id="mood" icon={<Brain className="h-4 w-4" />} label="Global Mood · Syndicate Protocol" tint="#ff2e55" />
-      <div className="grid gap-4 md:grid-cols-2">
-        <SyndicateProtocolSwitch
-          hubKey="shape-bridge"
-          eyebrow="Full Site · Syndicate Protocol"
-          titleNormal="Global Mood · NORMAL"
-          titleOg="Global Mood · OG-MODE"
-          descriptionNormal={
-            <>
-              <span className="mood-accent">NORMAL</span> — every site-wide Gemini 3 surface
-              (Boss Chat, Shape Bridge, hub agents, jokes, news, lexicon) speaks in the clean
-              Elite Analyst voice. PG, brand-safe, no swearing. The OG Bot toggle is separate
-              and unaffected.
-            </>
-          }
-          descriptionOg={
-            <>
-              <span className="mood-accent">OG-MODE</span> — full swearing &amp; chaos across
-              every site-wide Gemini 3 surface: Boss Chat, Shape Bridge, hub agents, jokes,
-              news, lexicon. Descriptions stay accurate, the voice goes feral. Does NOT touch
-              the OG Bot persona — that has its own switch.
-            </>
-          }
-          ogBadge="Full Site · OG Brutal"
-        />
-        <SyndicateProtocolSwitch
-          hubKey="og-bot"
-          eyebrow="OG Bot · Telegram Enforcer"
-          titleNormal="Global Mood · NORMAL"
-          titleOg="Global Mood · OG-MODE"
-          descriptionNormal={
-            <>
-              <span className="mood-accent">NORMAL</span> — OG Bot replies on Telegram and the
-              draft assistant stay polite, brand-safe and helpful. No swearing, no threats.
-              Does not change anything outside the OG Bot.
-            </>
-          }
-          descriptionOg={
-            <>
-              <span className="mood-accent">OG-MODE</span> — OG Bot turns into the foul-mouthed
-              enforcer: unfiltered swearing, banter, threats and chaos in every Telegram reply
-              and draft. Scoped to the OG Bot only — the rest of the site keeps whatever the
-              full-site switch says.
-            </>
-          }
-          ogBadge="OG Bot · Foul Mouth"
-        />
-      </div>
+      <GlobalMoodPanel heading={false} />
       <details className="mt-3 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-xs text-white/55">
         <summary className="cursor-pointer">Legacy bridge controls</summary>
         <div className="pt-3"><ShapeBridgePanel /></div>
       </details>
 
-      <div className="mt-6">
-        <CivilityPanel />
-      </div>
+      <details className="mt-6 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-xs text-white/55">
+        <summary className="cursor-pointer">Per-item civility overrides (deep)</summary>
+        <div className="pt-3"><CivilityPanel /></div>
+      </details>
 
       <SectionHeader id="homehubs" icon={<Rocket className="h-4 w-4" />} label="Homepage · Custom Hubs" tint="#ff00aa" />
       <CustomHubBuilderPanel />
