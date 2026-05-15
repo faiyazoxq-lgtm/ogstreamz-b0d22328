@@ -30,21 +30,22 @@ export function OgWordmark({
   const height = fit
     ? `${maxFontSize}px`
     : "clamp(1.35em, 1.2em + 0.6vw, 1.7em)";
-  // Metallic, darker halo: deep black contrast ring with a tight burnished
-  // gold accent. Reads as polished metal under a warm spotlight rather than
-  // a soft glow — keeps brand gold but dials saturation down for cinema.
+  // Metallic, darker halo. Blur radii are driven by --og-glow so the same
+  // lockup reads consistently from 360px phones up to 1920px desktops
+  // without the halo overpowering small screens or going faint on big ones.
+  const glowScale = "clamp(0.55, 0.45 + 0.35vw, 1.15)";
   const glow = [
     "drop-shadow(0 1px 0 rgba(0,0,0,0.85))",
-    "drop-shadow(0 0 4px rgba(0,0,0,0.85))",
-    "drop-shadow(0 0 10px rgba(0,0,0,0.7))",
-    "drop-shadow(0 0 18px oklch(0.55 0.14 72 / 0.65))",
-    "drop-shadow(0 0 34px oklch(0.42 0.10 70 / 0.55))",
-    "drop-shadow(0 0 70px oklch(0.30 0.06 60 / 0.45))",
+    "drop-shadow(0 0 calc(4px * var(--og-glow)) rgba(0,0,0,0.85))",
+    "drop-shadow(0 0 calc(10px * var(--og-glow)) rgba(0,0,0,0.7))",
+    "drop-shadow(0 0 calc(18px * var(--og-glow)) oklch(0.55 0.14 72 / 0.65))",
+    "drop-shadow(0 0 calc(34px * var(--og-glow)) oklch(0.42 0.10 70 / 0.55))",
+    "drop-shadow(0 0 calc(70px * var(--og-glow)) oklch(0.30 0.06 60 / 0.45))",
   ].join(" ");
   return (
     <span
       className={`inline-flex items-center align-middle leading-none px-[0.15em] ${className}`}
-      style={style}
+      style={{ ["--og-glow" as any]: glowScale, ...style }}
     >
       <img
         src={ogPortalLogo}
