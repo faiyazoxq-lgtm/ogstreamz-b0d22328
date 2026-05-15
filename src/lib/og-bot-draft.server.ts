@@ -15,9 +15,12 @@
 //    spend, boss-gate, dedupe, and audit trail).
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { pickDraftModel } from "./og-model-router.server";
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-3-flash-preview";
+// MODEL is now resolved per-request via the OG model router so the OG-mode
+// draft engine gets routed to gemini-3.1-pro-preview (or gpt-5.5 for code-y
+// briefs) while Normal mode stays on the fast flash model.
 
 export type Surface = string;
 
@@ -290,6 +293,8 @@ export async function runOGBotDraft(opts: {
     memoryAdded: [],
   };
 
+  const model = pickDraftModel(ogMode, ogEnabled, opts.message);
+
   // Tool-calling loop, capped at 4 hops to bound cost / latency.
   for (let hop = 0; hop < 4; hop++) {
     const res = await fetch(GATEWAY_URL, {
@@ -299,7 +304,7 @@ export async function runOGBotDraft(opts: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: MODEL,
+        model,
         messages,
         tools: TOOLS,
       }),

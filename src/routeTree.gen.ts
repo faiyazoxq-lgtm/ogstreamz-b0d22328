@@ -26,6 +26,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ResellerRouteImport } from './routes/reseller'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PortalsRouteImport } from './routes/portals'
+import { Route as OgBotRouteImport } from './routes/og-bot'
 import { Route as NoticeboardRouteImport } from './routes/noticeboard'
 import { Route as MyGenerationsRouteImport } from './routes/my-generations'
 import { Route as MusicRouteImport } from './routes/music'
@@ -191,6 +192,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const PortalsRoute = PortalsRouteImport.update({
   id: '/portals',
   path: '/portals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OgBotRoute = OgBotRouteImport.update({
+  id: '/og-bot',
+  path: '/og-bot',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NoticeboardRoute = NoticeboardRouteImport.update({
@@ -625,6 +631,7 @@ export interface FileRoutesByFullPath {
   '/music': typeof MusicRoute
   '/my-generations': typeof MyGenerationsRoute
   '/noticeboard': typeof NoticeboardRoute
+  '/og-bot': typeof OgBotRoute
   '/portals': typeof PortalsRoute
   '/profile': typeof ProfileRoute
   '/reseller': typeof ResellerRoute
@@ -724,6 +731,7 @@ export interface FileRoutesByTo {
   '/music': typeof MusicRoute
   '/my-generations': typeof MyGenerationsRoute
   '/noticeboard': typeof NoticeboardRoute
+  '/og-bot': typeof OgBotRoute
   '/portals': typeof PortalsRoute
   '/profile': typeof ProfileRoute
   '/reseller': typeof ResellerRoute
@@ -825,6 +833,7 @@ export interface FileRoutesById {
   '/music': typeof MusicRoute
   '/my-generations': typeof MyGenerationsRoute
   '/noticeboard': typeof NoticeboardRoute
+  '/og-bot': typeof OgBotRoute
   '/portals': typeof PortalsRoute
   '/profile': typeof ProfileRoute
   '/reseller': typeof ResellerRoute
@@ -927,6 +936,7 @@ export interface FileRouteTypes {
     | '/music'
     | '/my-generations'
     | '/noticeboard'
+    | '/og-bot'
     | '/portals'
     | '/profile'
     | '/reseller'
@@ -1026,6 +1036,7 @@ export interface FileRouteTypes {
     | '/music'
     | '/my-generations'
     | '/noticeboard'
+    | '/og-bot'
     | '/portals'
     | '/profile'
     | '/reseller'
@@ -1126,6 +1137,7 @@ export interface FileRouteTypes {
     | '/music'
     | '/my-generations'
     | '/noticeboard'
+    | '/og-bot'
     | '/portals'
     | '/profile'
     | '/reseller'
@@ -1227,6 +1239,7 @@ export interface RootRouteChildren {
   MusicRoute: typeof MusicRoute
   MyGenerationsRoute: typeof MyGenerationsRoute
   NoticeboardRoute: typeof NoticeboardRoute
+  OgBotRoute: typeof OgBotRoute
   PortalsRoute: typeof PortalsRoute
   ProfileRoute: typeof ProfileRoute
   ResellerRoute: typeof ResellerRoute
@@ -1383,6 +1396,13 @@ declare module '@tanstack/react-router' {
       path: '/portals'
       fullPath: '/portals'
       preLoaderRoute: typeof PortalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/og-bot': {
+      id: '/og-bot'
+      path: '/og-bot'
+      fullPath: '/og-bot'
+      preLoaderRoute: typeof OgBotRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/noticeboard': {
@@ -2114,6 +2134,7 @@ const rootRouteChildren: RootRouteChildren = {
   MusicRoute: MusicRoute,
   MyGenerationsRoute: MyGenerationsRoute,
   NoticeboardRoute: NoticeboardRoute,
+  OgBotRoute: OgBotRoute,
   PortalsRoute: PortalsRoute,
   ProfileRoute: ProfileRoute,
   ResellerRoute: ResellerRoute,
