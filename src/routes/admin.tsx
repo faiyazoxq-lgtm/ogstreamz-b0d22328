@@ -332,9 +332,6 @@ function AdminPage() {
       <SectionHeader id="homehubs" icon={<Rocket className="h-4 w-4" />} label="Homepage · Custom Hubs" tint="#ff00aa" />
       <CustomHubBuilderPanel />
 
-      <SectionHeader id="topups" icon={<Megaphone className="h-4 w-4" />} label="Friends & Family · Free Top-Ups" tint="#ff5577" />
-      <TopUpRequestsPanel />
-
       <SectionHeader id="command" icon={<Terminal className="h-4 w-4" />} label="Command Deck · Superuser" tint="#ff00aa" />
       <div className="space-y-6">
         <OpsSnapshotPanel />
