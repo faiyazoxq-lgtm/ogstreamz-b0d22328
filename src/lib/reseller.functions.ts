@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireStrictAuth } from "@/lib/strict-auth";
+import { requireBoss } from "@/integrations/supabase/boss-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function isBossCtx(supabase: any) {
@@ -24,7 +25,7 @@ export const bossListResellers = createServerFn({ method: "GET" })
   });
 
 export const bossCreateReseller = createServerFn({ method: "POST" })
-  .middleware([requireStrictAuth])
+  .middleware([requireBoss])
   .inputValidator((d: { userId: string; displayName: string; initialCredits: number; markupCents: number }) => ({
     userId: String(d.userId),
     displayName: String(d.displayName ?? "").slice(0, 80),
@@ -44,7 +45,7 @@ export const bossCreateReseller = createServerFn({ method: "POST" })
   });
 
 export const bossTopupReseller = createServerFn({ method: "POST" })
-  .middleware([requireStrictAuth])
+  .middleware([requireBoss])
   .inputValidator((d: { userId: string; delta: number; reason?: string }) => ({
     userId: String(d.userId),
     delta: Math.trunc(Number(d.delta)),
