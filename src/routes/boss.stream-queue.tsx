@@ -113,7 +113,7 @@ function StreamQueuePage() {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-semibold text-foreground truncate">{r.email || r.user_id}</span>
-                      <CoinChip credits={creditsMap[r.user_id] ?? 0} />
+                      <CoinChip credits={creditsMap[r.user_id]} />
                     </div>
                     <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
                       Current rank: <span className="text-foreground">{r.rank ?? "—"}</span> · Submitted {fmt(r.created_at)}
