@@ -1,15 +1,14 @@
+# Memory: index.md
+Updated: today
+
 # Project Memory
 
 ## Core
-VIP = VIP pass holders = Real OG = OGs = Real OGs. All synonymous — treat as one tier.
-Real OGs are addressed with street OG respect: never sworn at, never patronised, always made to feel like an OG. Free/non-VIP users may get the rougher house tone, but OGs never do.
-Anon must never read `public.portals` directly — use the `public.portals_public` view.
-Anon must never read `public.calculators` directly — use the `public.calculators_public` view (strips VIP-only config keys).
+All credentials/secrets MUST be stored in Supabase (encrypted at rest via pgp_sym_encrypt or service-role-only tables). Never persist credentials in localStorage, sessionStorage, cookies, or plain client-readable DB columns. Browser may only hold short-lived Supabase auth session tokens.
+Data minimization: store the smallest possible set of user fields; encrypt anything sensitive so it can be decrypted server-side later for sorting/analytics.
+Gold/metal accents must use `--og-gold-*` and `--og-metal-ink` tokens — never hardcode oklch gold values.
 
 ## Memories
-- [VIP tone & terminology](mem://preferences/vip-tone) — Synonyms for VIP and required respectful tone
-- [Security monitoring](mem://features/security-monitoring) — Auth event logging, new-device detection, role/rank/ban triggers, Boss `/boss/security-events` feed
-- [Portals column ACL](mem://features/portals-column-acl) — Anon-safe view `portals_public`, sanitized telegram_config, where to add new public columns
-- [Calculators column ACL](mem://features/calculators-column-acl) — Anon-safe view `calculators_public`, VIP fields stripped, server-side getToolVipContent for VIP reads
-- [Hub titles as categories](mem://features/hub-titles-as-categories) — Non-boss users see hub names inside portals as plain category names (Music, Jokes, Tools…), not branded "HUB" titles
-- [Vault re-auth](mem://features/vault-reauth) — Server-side gate on `revealVaultCredential`; VaultGuard sessionStorage flag is UX only
+
+- [Portals column ACL](mem://features/portals-column-acl.md) — Which `public.portals` columns are readable by anon vs authenticated and how to extend safely
+- [OG gold halo tokens](mem://design/og-gold-tokens.md) — Shared CSS variables for the OG PORTAL electric-gold and metallic halo palette
