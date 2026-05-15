@@ -1,17 +1,25 @@
 #!/usr/bin/env node
 /**
- * Inverse smoke test of `smoke-boss-rpc-acl.mjs`:
+ * Boss-positive smoke test (PostgREST surface).
  *
- * Provisions a throwaway authenticated user, elevates them to boss
- * (profiles.rank='boss' + user_roles.role='admin'), and calls every
- * public.boss_* / admin_* RPC. A boss should NEVER see a 42501 EXECUTE
- * denial — they may legitimately see 4xx responses caused by synthetic
- * UUIDs / missing target rows, but the EXECUTE check must pass.
+ * Provisions a throwaway boss user (profiles.rank='boss' + user_roles.role
+ * 'admin') and tries to call every public.boss_* / admin_* RPC directly via
+ * PostgREST as that boss-authenticated user.
  *
- * Required env: SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SUPABASE_SERVICE_ROLE_KEY, PG*
+ * EXPECTED OUTCOME for THIS project: every call returns 42501 "permission
+ * denied for function". boss_* / admin_* RPCs are intentionally only
+ * EXECUTE-able by service_role; the Boss UI reaches them through TanStack
+ * server functions (createServerFn + supabaseAdmin) that gate on rank='boss'
+ * BEFORE elevating to service_role. That extra hop is the defense-in-depth
+ * guarantee we want — a stolen user JWT (even one with rank='boss') can
+ * never reach these RPCs by hitting /rest/v1/rpc/<name> directly.
  *
- * Exit 0 = boss can reach every RPC (no 42501).
- * Exit 1 = at least one RPC was EXECUTE-denied to boss.
+ * Exit 0 = every RPC behaves as designed (42501 to a boss-authenticated
+ *         direct PostgREST call, OR a non-42501 response which means the
+ *         RPC accidentally exposes itself to the authenticated role).
+ * Exit 1 = at least one RPC is reachable directly by a boss-authenticated
+ *         user — which is suspicious and worth a manual review (it means
+ *         the RPC bypasses the server-fn elevation chokepoint).
  */
 import { execFileSync } from "node:child_process";
 
@@ -137,25 +145,21 @@ async function callRpc(name, args) {
   return { status: res.status, body: (await res.text()).slice(0, 220) };
 }
 
-const denied = []; // 42501 / permission denied — real failures
-const success = []; // 2xx
-const expected = []; // 4xx that's clearly downstream of EXECUTE (bad UUID, missing row, validator)
+// In this project, "denied to boss" is the EXPECTED outcome.
+const expectedDenied = []; // 42501 — correct: only service_role can EXECUTE
+const reachable = [];      // 2xx or non-42501 4xx — the boss reached the body
 
 for (const fn of fns) {
   const r = await callRpc(fn.name, buildArgs(fn));
   const isExecuteDenied =
-    r.status === 401 ||
-    r.status === 403 ||
-    /permission denied for function/i.test(r.body) ||
-    /\bboss only\b/i.test(r.body) ||
-    /\badmin only\b/i.test(r.body) ||
-    /requires boss/i.test(r.body) ||
-    /not authorized/i.test(r.body);
-  let bucket;
-  if (isExecuteDenied) { denied.push({ ...r, name: fn.name }); bucket = "DENIED"; }
-  else if (r.status >= 200 && r.status < 300) { success.push({ ...r, name: fn.name }); bucket = "OK   "; }
-  else { expected.push({ ...r, name: fn.name }); bucket = "EXPCT"; }
-  console.log(`[${bucket}] ${fn.name}(${fn.args_sig}) -> ${r.status}`);
+    r.status === 403 && /permission denied for function/i.test(r.body);
+  if (isExecuteDenied) {
+    expectedDenied.push({ ...r, name: fn.name });
+    console.log(`[EXPECTED 42501] ${fn.name}(${fn.args_sig})`);
+  } else {
+    reachable.push({ ...r, name: fn.name });
+    console.log(`[REACHABLE ${r.status}] ${fn.name}(${fn.args_sig}) :: ${r.body}`);
+  }
 }
 
 // --- cleanup ------------------------------------------------------------
@@ -167,17 +171,15 @@ await fetch(`${URL}/auth/v1/admin/users/${userId}`, {
 }).catch(() => {});
 
 // --- report -------------------------------------------------------------
-console.log(`\n=== Summary for boss user ===`);
-console.log(`Success (2xx):                        ${success.length}`);
-console.log(`Expected non-error (4xx, not 42501):  ${expected.length}`);
-console.log(`EXECUTE denied to boss (FAIL):        ${denied.length}`);
-
-if (expected.length) {
-  console.log("\nExpected non-errors (boss reached the function body):");
-  for (const r of expected) console.log(` - ${r.name} ${r.status} :: ${r.body}`);
-}
-if (denied.length) {
-  console.error("\n!!! EXECUTE DENIED FOR BOSS — these RPCs are unreachable !!!");
-  for (const r of denied) console.error(` - ${r.name} ${r.status} :: ${r.body}`);
+console.log(`\n=== Boss-positive PostgREST surface summary ===`);
+console.log(`EXPECTED 42501 (only service_role can EXECUTE): ${expectedDenied.length}`);
+console.log(`Reachable directly by boss JWT (review):        ${reachable.length}`);
+console.log(`\nNOTE: boss_*/admin_* RPCs are intentionally not callable from a`);
+console.log(`browser/JWT session in this project. The Boss UI reaches them via`);
+console.log(`TanStack server functions in src/lib/*.functions.ts that gate on`);
+console.log(`rank='boss' and then elevate to service_role.`);
+if (reachable.length) {
+  console.error(`\n!!! ${reachable.length} RPC(s) reachable directly by an authenticated boss — verify intent !!!`);
+  for (const r of reachable) console.error(` - ${r.name} ${r.status} :: ${r.body}`);
   process.exit(1);
 }
