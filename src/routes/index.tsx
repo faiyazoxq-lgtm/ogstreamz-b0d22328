@@ -132,8 +132,11 @@ function Index() {
         <p className="text-xs sm:text-sm tracking-[0.4em] uppercase font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
           Street · Static · Stream
         </p>
-        <h1 className="mt-6 text-[7rem] sm:text-[12rem] md:text-[15rem] leading-[0.95] flex justify-center">
-          <OgWordmark suffix="-PORTAL" className={isVipMember || isBoss ? "animate-glitch" : undefined} />
+        <h1 className="mt-6 text-[12rem] sm:text-[18rem] md:text-[22rem] leading-[0.95] flex justify-center items-center">
+          <OgWordmark
+            suffix="-PORTAL"
+            className={`mx-auto ${isVipMember || isBoss ? "animate-glitch" : ""}`}
+          />
         </h1>
         <p className="mt-6 max-w-xl mx-auto text-muted-foreground text-base sm:text-lg">
           One frequency.{" "}
