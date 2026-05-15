@@ -332,11 +332,58 @@ function AuthPage() {
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 h-[500px] w-[700px] rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245_/_0.35),transparent)] animate-pulse-gold" />
       </div>
 
-      <div className="relative w-full max-w-md">
-        <Link to="/" className="flex items-center justify-center gap-3 mb-6 sm:mb-8">
+      <div className="relative w-full max-w-6xl grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-6 lg:gap-10 items-start">
+        {/* LEFT: welcome message + bonus + auth card */}
+        <div className="w-full max-w-md mx-auto lg:mx-0 lg:ml-auto">
+        <Link to="/" className="flex items-center justify-center lg:justify-start gap-3 mb-6 sm:mb-8">
           <img src={logo} alt="0G-PORTAL" className="h-10 w-10 rounded-md ring-1 ring-[oklch(0.72_0.22_245/0.5)]" />
           <OgWordmark suffix="-PORTAL" className="text-2xl text-metallic" />
         </Link>
+
+        {!user && (
+          <div className="mb-6 space-y-4 text-center lg:text-left">
+            <div className="space-y-2">
+              <span className="inline-block text-[10px] uppercase tracking-[0.5em] text-sky-300/80 font-bold">
+                ◈ Vault 0G ◈
+              </span>
+              <h1
+                className="text-4xl sm:text-5xl uppercase text-white drop-shadow-[0_0_18px_rgba(56,189,248,0.55)]"
+                style={{ fontFamily: "'Black Ops One', 'Cinzel', system-ui, sans-serif", letterSpacing: "0.08em" }}
+              >
+                Welcome
+              </h1>
+              <p
+                className="text-sm sm:text-base text-sky-100/90"
+                style={{ fontFamily: "'Cinzel', serif", letterSpacing: "0.12em" }}
+              >
+                Join or continue your story
+              </p>
+            </div>
+            <div
+              role="status"
+              aria-label={`New accounts start with ${signupBonus} free coins`}
+              className="flex items-center gap-3 rounded-xl border border-amber-300/40 bg-gradient-to-r from-amber-300/15 via-amber-300/5 to-transparent px-4 py-3 mx-auto lg:mx-0 max-w-sm lg:max-w-none"
+            >
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-amber-300/50 bg-amber-300/15 shadow-[0_0_24px_-6px_rgba(252,211,77,0.7)]">
+                <Coins className="h-5 w-5 text-amber-200" aria-hidden="true" />
+              </span>
+              <div className="min-w-0 text-left">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-2xl font-black text-amber-200 tabular-nums leading-none">
+                    +{signupBonus}
+                  </span>
+                  <span className="text-base leading-none" aria-hidden="true">🪙</span>
+                  <span className="text-[10px] uppercase tracking-[0.22em] font-bold text-amber-200/85">
+                    sign-up bonus
+                  </span>
+                </div>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Lands in your wallet on first sign-in. No card required.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {user && signedInDest ? (
           <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-[0_0_60px_-10px_oklch(0.72_0.22_245/0.4)] space-y-5 text-center">
@@ -393,37 +440,7 @@ function AuthPage() {
             </p>
           </div>
         ) : (
-        <div
-          className="relative overflow-hidden rounded-2xl border-2 border-[oklch(0.72_0.22_245/0.55)] p-5 sm:p-8 space-y-6 shadow-[0_0_80px_-10px_oklch(0.72_0.22_245/0.55),inset_0_0_0_1px_rgba(255,255,255,0.04)]"
-          style={{
-            backgroundImage: `linear-gradient(180deg, rgba(5,7,15,0.86) 0%, rgba(5,7,15,0.92) 55%, rgba(5,7,15,0.96) 100%), url(${vaultWallpaper})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center top",
-            backgroundRepeat: "no-repeat",
-          }}
-        >
-          {/* Riveted vault frame accents */}
-          <div aria-hidden className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/5" />
-          <div aria-hidden className="pointer-events-none absolute inset-2 rounded-xl border border-white/5" />
-
-          <header className="relative text-center space-y-2">
-            <span className="inline-block text-[10px] uppercase tracking-[0.5em] text-sky-300/80 font-bold">
-              ◈ Vault 0G ◈
-            </span>
-            <h1
-              className="text-4xl sm:text-5xl uppercase text-white drop-shadow-[0_0_18px_rgba(56,189,248,0.55)]"
-              style={{ fontFamily: "'Black Ops One', 'Cinzel', system-ui, sans-serif", letterSpacing: "0.08em" }}
-            >
-              Welcome
-            </h1>
-            <p
-              className="text-sm sm:text-base text-sky-100/90"
-              style={{ fontFamily: "'Cinzel', serif", letterSpacing: "0.12em" }}
-            >
-              Join or continue your story
-            </p>
-            <div className="mx-auto h-px w-24 bg-gradient-to-r from-transparent via-sky-400/60 to-transparent" />
-          </header>
+        <div className="relative overflow-hidden rounded-2xl border border-[oklch(0.72_0.22_245/0.45)] bg-card/95 backdrop-blur-md p-5 sm:p-7 space-y-6 shadow-[0_0_60px_-10px_oklch(0.72_0.22_245/0.5)]">
 
           {magicLinkNotice?.kind === "failed" && (
             <div
@@ -552,29 +569,6 @@ function AuthPage() {
               </div>
             </TabsContent>
             <TabsContent value="signup" className="space-y-4 mt-0">
-              <div
-                role="status"
-                aria-label={`New accounts start with ${signupBonus} free coins`}
-                className="flex items-center gap-3 rounded-xl border border-amber-300/40 bg-gradient-to-r from-amber-300/15 via-amber-300/5 to-transparent px-4 py-3"
-              >
-                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-amber-300/50 bg-amber-300/15 shadow-[0_0_24px_-6px_rgba(252,211,77,0.7)]">
-                  <Coins className="h-5 w-5 text-amber-200" aria-hidden="true" />
-                </span>
-                <div className="min-w-0">
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-2xl font-black text-amber-200 tabular-nums leading-none">
-                      +{signupBonus}
-                    </span>
-                    <span className="text-base leading-none" aria-hidden="true">🪙</span>
-                    <span className="text-[10px] uppercase tracking-[0.22em] font-bold text-amber-200/85">
-                      free coins
-                    </span>
-                  </div>
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    Land in your wallet on first sign-in. No card required.
-                  </p>
-                </div>
-              </div>
               <ContentModePicker value={contentMode} onChange={setContentMode} />
               <div className="rounded-xl border border-amber-300/30 bg-amber-300/5 px-4 py-3">
                 <Label htmlFor="vipref" className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] font-bold text-amber-200/90">
@@ -644,6 +638,23 @@ function AuthPage() {
           </Button>
         </div>
         )}
+        </div>
+        {/* RIGHT: vault wallpaper panel — desktop only */}
+        <aside
+          aria-hidden
+          className="hidden lg:block sticky top-24 h-[640px] max-h-[80vh] rounded-2xl overflow-hidden border border-[oklch(0.72_0.22_245/0.45)] shadow-[0_0_80px_-10px_oklch(0.72_0.22_245/0.55)]"
+        >
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url(${vaultWallpaper})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-background/60" />
+          <div className="absolute inset-2 rounded-xl border border-white/5 pointer-events-none" />
+        </aside>
       </div>
     </main>
   );
