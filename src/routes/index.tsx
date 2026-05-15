@@ -141,9 +141,18 @@ function Index() {
             // available gutter on the viewport — preventing horizontal
             // overflow on ultra-wide screens while keeping the lockup
             // perfectly centered (symmetrical padding + margin on both sides).
+            // RTL-safe: paddingInline/marginInline are logical properties that
+            // resolve symmetrically on both sides regardless of writing
+            // direction, and the cap uses (100vw - 100%)/2 which is equal on
+            // each side. textAlign:center + justify-content keep the lockup
+            // glyphs centered in both LTR and RTL contexts; unicode-bidi
+            // isolates the lockup from any surrounding RTL text flow so
+            // punctuation in the wordmark never reorders.
             paddingBlock: "clamp(1rem, 0.5rem + 4vw, 4.5rem)",
             paddingInline: "min(clamp(0.5rem, 0.25rem + 2.5vw, 3rem), calc((100vw - 100%) / 2))",
             marginInline: "calc(-1 * min(clamp(0.5rem, 0.25rem + 2.5vw, 3rem), calc((100vw - 100%) / 2)))",
+            textAlign: "center",
+            unicodeBidi: "isolate",
           }}
         >
           <OgWordmark
