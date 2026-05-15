@@ -20,6 +20,8 @@
     "postbuild": "npm run check:secrets:bundle",
     "test": "vitest run",
     "test:security": "vitest run tests/security",
+    "test:visual": "playwright test --config tests/visual/playwright.config.ts",
+    "test:visual:update": "playwright test --config tests/visual/playwright.config.ts --update-snapshots",
     "ci": "npm run check:links && npm run check:hub-portals && npm run check:secrets && npm run lint && npm run test:security"
   },
   "dependencies": {
