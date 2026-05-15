@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { getRemember, setRemember, markTabSession, clearTabSession } from "@/lib/remember-session";
 import logo from "@/assets/logo.jpg";
 import { useSignupBonus } from "@/hooks/use-signup-bonus";
+import vaultWallpaper from "@/assets/vault-wallpaper.jpg";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -392,10 +393,36 @@ function AuthPage() {
             </p>
           </div>
         ) : (
-        <div className="rounded-2xl border border-border bg-card p-5 sm:p-8 shadow-[0_0_60px_-10px_oklch(0.72_0.22_245/0.4)] space-y-6">
-          <header className="text-center space-y-1">
-            <h1 className="text-2xl font-bold text-metallic">Join the Syndicate</h1>
-            <p className="text-sm text-muted-foreground">Tune in. The frequency is private.</p>
+        <div
+          className="relative overflow-hidden rounded-2xl border-2 border-[oklch(0.72_0.22_245/0.55)] p-5 sm:p-8 space-y-6 shadow-[0_0_80px_-10px_oklch(0.72_0.22_245/0.55),inset_0_0_0_1px_rgba(255,255,255,0.04)]"
+          style={{
+            backgroundImage: `linear-gradient(180deg, rgba(5,7,15,0.86) 0%, rgba(5,7,15,0.92) 55%, rgba(5,7,15,0.96) 100%), url(${vaultWallpaper})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center top",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          {/* Riveted vault frame accents */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/5" />
+          <div aria-hidden className="pointer-events-none absolute inset-2 rounded-xl border border-white/5" />
+
+          <header className="relative text-center space-y-2">
+            <span className="inline-block text-[10px] uppercase tracking-[0.5em] text-sky-300/80 font-bold">
+              ◈ Vault 0G ◈
+            </span>
+            <h1
+              className="text-4xl sm:text-5xl uppercase text-white drop-shadow-[0_0_18px_rgba(56,189,248,0.55)]"
+              style={{ fontFamily: "'Black Ops One', 'Cinzel', system-ui, sans-serif", letterSpacing: "0.08em" }}
+            >
+              Welcome
+            </h1>
+            <p
+              className="text-sm sm:text-base text-sky-100/90"
+              style={{ fontFamily: "'Cinzel', serif", letterSpacing: "0.12em" }}
+            >
+              Join or continue your story
+            </p>
+            <div className="mx-auto h-px w-24 bg-gradient-to-r from-transparent via-sky-400/60 to-transparent" />
           </header>
 
           {magicLinkNotice?.kind === "failed" && (
