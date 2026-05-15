@@ -8,6 +8,7 @@ export const SIGNUP_BONUS_CREDITS = 2;
 import { useEffect, type ReactNode } from "react";
 import { useSignupBonus } from "@/hooks/use-signup-bonus";
 import { OgWordmark } from "@/components/OgWordmark";
+import { TVStaticLogo } from "@/components/TVStaticLogo";
 
 const PUBLIC_PATHS = ["/auth", "/forgot-password", "/reset-password"];
 
@@ -54,16 +55,38 @@ function PromoLanding() {
         <div className="pointer-events-none absolute -bottom-32 -left-24 h-72 w-72 rounded-full bg-fuchsia-500/20 blur-3xl" />
 
         <div className="relative">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#00aaff]/40 bg-[#00aaff]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-[#7fd5ff]">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <TVStaticLogo size={56} />
+              <div className="flex flex-col leading-none">
+                <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-[#7fd5ff]/80">
+                  ogstreamz
+                </span>
+                <span className="mt-1 text-base font-black uppercase tracking-[0.2em] text-white">
+                  Neon Platform
+                </span>
+              </div>
+            </div>
+            <Link
+              to="/auth"
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.2em] text-white/90 backdrop-blur transition hover:bg-white/15"
+            >
+              <LogIn className="h-3.5 w-3.5" />
+              Sign in
+            </Link>
+          </div>
+
+          <div className="mt-6 flex justify-center sm:justify-start">
+            <OgWordmark suffix="-PORTAL" fit maxFontSize={120} />
+          </div>
+
+          <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#00aaff]/40 bg-[#00aaff]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-[#7fd5ff]">
             <Lock className="h-3 w-3" />
             Members only
           </div>
 
-          <h1 className="mt-5 text-3xl sm:text-5xl font-black uppercase tracking-tight text-white leading-[1.05]">
+          <h1 className="mt-4 text-3xl sm:text-5xl font-black uppercase tracking-tight text-white leading-[1.05]">
             Sign up to unlock
-            <span className="block mt-1">
-              <OgWordmark suffix="-PORTAL" />
-            </span>
           </h1>
 
           <p className="mt-4 max-w-2xl text-sm sm:text-base text-white/75 leading-relaxed">
