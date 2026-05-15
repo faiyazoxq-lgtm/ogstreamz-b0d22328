@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Search, Pencil, Trash2, ArrowUpRight, Loader2, Eye, ArrowUpDown, ImageIcon, Power, PowerOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { bossSetPortalPublished } from "@/lib/boss-admin-misc.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CostTierControl } from "@/components/CostTierControl";
@@ -45,6 +47,7 @@ export const Route = createFileRoute("/boss/portals")({
 });
 
 function PortalsManager() {
+  const setPortalPublishedFn = useServerFn(bossSetPortalPublished);
   const [rows, setRows] = useState<Portal[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -123,12 +126,10 @@ function PortalsManager() {
   async function togglePublished(p: Portal) {
     const next = !p.published;
     setRows((rs) => rs.map((r) => (r.id === p.id ? { ...r, published: next } : r)));
-    const { error } = await supabase.rpc("boss_set_portal_published", {
-      _portal_id: p.id,
-      _published: next,
-    });
-    if (error) {
-      toast.error(error.message);
+    try {
+      await setPortalPublishedFn({ data: { portal_id: p.id, published: next } });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed");
       load();
       return;
     }

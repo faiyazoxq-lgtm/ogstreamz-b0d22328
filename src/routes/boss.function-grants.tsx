@@ -2,8 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { ShieldOff, Loader2, Undo2, Filter, AlertTriangle, ScrollText } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { requireBoss } from "@/lib/route-guards";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  bossListExposedFunctions,
+  bossListFunctionGrantLog,
+  bossRevokeFunctionExecute,
+  bossRestoreFunctionExecute,
+} from "@/lib/boss-function-grants.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/boss/function-grants")({
@@ -46,33 +52,30 @@ function FunctionGrantsPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "anon" | "auth" | "public">("auth");
+  const listExposed = useServerFn(bossListExposedFunctions);
+  const listLog = useServerFn(bossListFunctionGrantLog);
+  const revokeFn = useServerFn(bossRevokeFunctionExecute);
+  const restoreFn = useServerFn(bossRestoreFunctionExecute);
 
   const exposed = useQuery({
     queryKey: ["boss-exposed-functions"],
     queryFn: async (): Promise<Exposed[]> => {
-      const { data, error } = await supabase.rpc("boss_list_exposed_functions");
-      if (error) throw error;
-      return (data ?? []) as Exposed[];
+      const { rows } = await listExposed();
+      return rows as Exposed[];
     },
   });
 
   const log = useQuery({
     queryKey: ["boss-grant-log"],
     queryFn: async (): Promise<LogRow[]> => {
-      const { data, error } = await supabase.rpc("boss_list_function_grant_log");
-      if (error) throw error;
-      return (data ?? []) as LogRow[];
+      const { rows } = await listLog();
+      return rows as LogRow[];
     },
   });
 
   const revoke = useMutation({
     mutationFn: async (input: { signature: string; role_name: string; reason: string }) => {
-      const { error } = await supabase.rpc("boss_revoke_function_execute", {
-        _signature: input.signature,
-        _role_name: input.role_name,
-        _reason: input.reason,
-      });
-      if (error) throw error;
+      await revokeFn({ data: { signature: input.signature, role_name: input.role_name as any, reason: input.reason } });
     },
     onSuccess: () => {
       toast.success("EXECUTE revoked. Logged for restore.");
@@ -84,8 +87,7 @@ function FunctionGrantsPage() {
 
   const restore = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.rpc("boss_restore_function_execute", { _log_id: id });
-      if (error) throw error;
+      await restoreFn({ data: { log_id: id } });
     },
     onSuccess: () => {
       toast.success("EXECUTE restored");

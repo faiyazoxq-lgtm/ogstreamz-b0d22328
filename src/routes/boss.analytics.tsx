@@ -2,6 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { BarChart3, ArrowLeft, RefreshCw, Eye, Users, Globe, Trash2, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { bossPurgeViewEvents } from "@/lib/boss-admin-misc.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +55,7 @@ function hostnameOf(ref: string | null): string {
 }
 
 function AnalyticsPage() {
+  const bossPurgeViewEventsFn = useServerFn(bossPurgeViewEvents);
   const { user, profile, isAdmin, loading: authLoading } = useAuth();
   const isBoss = profile?.rank === "boss" || isAdmin;
   const navigate = useNavigate();
@@ -100,10 +103,15 @@ function AnalyticsPage() {
   const purgeNow = async () => {
     if (!confirm(`Purge all view events older than ${retentionDays} days now?`)) return;
     setPurging(true);
-    const { data, error } = await supabase.rpc("boss_purge_view_events");
-    setPurging(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success(`Purged ${data ?? 0} event${data === 1 ? "" : "s"}`);
+    try {
+      const { purged } = await bossPurgeViewEventsFn({});
+      setPurging(false);
+      toast.success(`Purged ${purged} event${purged === 1 ? "" : "s"}`);
+    } catch (e: any) {
+      setPurging(false);
+      toast.error(e?.message ?? "Purge failed");
+      return;
+    }
     load();
   };
 

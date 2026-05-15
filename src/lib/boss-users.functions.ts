@@ -68,7 +68,7 @@ export const setOgTier = createServerFn({ method: "POST" })
     const { supabase } = context as any;
     const { data: prev } = await supabase
       .from("profiles").select("og_tier,rank,status").eq("id", data.userId).maybeSingle();
-    const { data: result, error } = await supabase.rpc("boss_set_og_tier", {
+    const { data: result, error } = await supabaseAdmin.rpc("boss_set_og_tier", {
       _user_id: data.userId,
       _tier: data.tier,
     });
@@ -163,7 +163,7 @@ export const setBanned = createServerFn({ method: "POST" })
     const { supabase } = context as any;
     const { data: prev } = await supabase
       .from("profiles").select("banned,banned_reason").eq("id", data.userId).maybeSingle();
-    const { error } = await supabase.rpc("boss_set_banned", {
+    const { error } = await (supabaseAdmin as any).rpc("boss_set_banned", {
       _user_id: data.userId, _banned: data.banned, _reason: data.reason,
     });
     if (error) throw new Error(error.message);

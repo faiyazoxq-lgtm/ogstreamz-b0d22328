@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireBoss } from "@/integrations/supabase/boss-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type VipPassRevealResult =
   | {
@@ -40,8 +41,7 @@ export type VipPassPoolRow = {
 export const listVipPassPool = createServerFn({ method: "GET" })
   .middleware([requireBoss])
   .handler(async ({ context }): Promise<VipPassPoolRow[]> => {
-    const { supabase } = context as { supabase: any };
-    const { data, error } = await supabase.rpc("boss_list_vip_pass_pool");
+    const { data, error } = await supabaseAdmin.rpc("boss_list_vip_pass_pool");
     if (error) throw new Error(error.message);
     return (data ?? []) as VipPassPoolRow[];
   });
@@ -66,13 +66,12 @@ export const upsertVipPassPool = createServerFn({ method: "POST" })
     sort_order: Math.max(0, Math.trunc(Number(d.sort_order ?? 0))),
   }))
   .handler(async ({ data, context }) => {
-    const { supabase } = context as { supabase: any };
     const hasCode = !!data.code;
     const hasCred = !!data.username && !!data.password;
     if (!hasCode && !hasCred) {
       throw new Error("Provide a code OR a username and password");
     }
-    const { data: id, error } = await supabase.rpc("boss_upsert_vip_pass_pool", {
+    const { data: id, error } = await (supabaseAdmin as any).rpc("boss_upsert_vip_pass_pool", {
       _id: data.id,
       _label: data.label,
       _code: data.code,
@@ -89,8 +88,7 @@ export const deleteVipPassPool = createServerFn({ method: "POST" })
   .middleware([requireBoss])
   .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
   .handler(async ({ data, context }) => {
-    const { supabase } = context as { supabase: any };
-    const { error } = await supabase.rpc("boss_delete_vip_pass_pool", { _id: data.id });
+    const { error } = await supabaseAdmin.rpc("boss_delete_vip_pass_pool", { _id: data.id });
     if (error) throw new Error(error.message);
     return { ok: true };
   });

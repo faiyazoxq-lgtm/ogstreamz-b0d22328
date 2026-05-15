@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const RANKS = ["prospect", "enforcer", "vip", "boss"] as const;
 type Rank = typeof RANKS[number];
@@ -107,7 +108,7 @@ export const grantVipPass = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
     if (!(await isBoss(supabase))) throw new Error("Boss only");
-    const { data: id, error } = await supabase.rpc("boss_grant_vip_pass", {
+    const { data: id, error } = await (supabaseAdmin as any).rpc("boss_grant_vip_pass", {
       _user_id: data.userId, _expires_at: data.expiresAt, _source: data.source, _notes: data.notes,
     });
     if (error) throw new Error(error.message);
@@ -222,7 +223,7 @@ export const revokeVipPass = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
     if (!(await isBoss(supabase))) throw new Error("Boss only");
-    const { error } = await supabase.rpc("boss_revoke_vip_pass", { _pass_id: data.passId });
+    const { error } = await supabaseAdmin.rpc("boss_revoke_vip_pass", { _pass_id: data.passId });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -257,7 +258,7 @@ export const grantByEmail = createServerFn({ method: "POST" })
     const { supabase } = context as any;
     if (!(await isBoss(supabase))) throw new Error("Boss only");
     if (data.credits === 0 && !data.grantRank) throw new Error("Set credits or a rank");
-    const { data: result, error } = await supabase.rpc("boss_grant_by_email", {
+    const { data: result, error } = await (supabaseAdmin as any).rpc("boss_grant_by_email", {
       _email: data.email,
       _credits: data.credits,
       _grant_rank: data.grantRank,
@@ -359,7 +360,7 @@ export const decidePassOrder = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
     if (!(await isBoss(supabase))) throw new Error("Boss only");
-    const { data: result, error } = await supabase.rpc("boss_decide_pass_order", {
+    const { data: result, error } = await (supabaseAdmin as any).rpc("boss_decide_pass_order", {
       _order_id: data.orderId,
       _approve: data.approve,
       _note: data.note,

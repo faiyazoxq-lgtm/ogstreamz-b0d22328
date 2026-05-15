@@ -33,7 +33,7 @@ export const bossCreateReseller = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
-    const { data: id, error } = await supabase.rpc("boss_create_reseller", {
+    const { data: id, error } = await supabaseAdmin.rpc("boss_create_reseller", {
       _user_id: data.userId,
       _display_name: data.displayName,
       _initial_credits: data.initialCredits,
@@ -52,7 +52,7 @@ export const bossTopupReseller = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
-    const { data: bal, error } = await supabase.rpc("boss_topup_reseller", {
+    const { data: bal, error } = await supabaseAdmin.rpc("boss_topup_reseller", {
       _user_id: data.userId, _delta: data.delta, _reason: data.reason,
     });
     if (error) throw new Error(error.message);

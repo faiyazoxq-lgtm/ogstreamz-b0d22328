@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { Tv, CheckCircle2, XCircle, Loader2, RefreshCw, Clock, AlertTriangle, ShieldCheck, Lock, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { bossListStreamRequests, bossDecideStreamRequest } from "@/lib/boss-admin-misc.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { CoinChip } from "@/components/CoinChip";
 import { useCreditsMap } from "@/hooks/use-credits-map";
@@ -40,11 +42,12 @@ function StreamQueuePage() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase.rpc("boss_list_stream_requests", { _status: tab });
-    if (error) {
-      setRows([]); setLoading(false); return;
+    try {
+      const { rows: r } = await listStreamReqsFn({ data: { status: tab } });
+      setRows(r as Req[]);
+    } catch {
+      setRows([]);
     }
-    setRows((data ?? []) as Req[]);
     setLoading(false);
   }, [tab]);
 
@@ -54,11 +57,14 @@ function StreamQueuePage() {
 
   const decide = async (id: string, approve: boolean) => {
     setBusyId(id);
-    const { error } = await supabase.rpc("boss_decide_stream_request", {
-      _id: id, _approve: approve, _note: noteFor[id] ?? null,
-    });
+    try {
+      await decideStreamReqFn({ data: { id, approve, note: noteFor[id] ?? undefined } });
+    } catch (e: any) {
+      setBusyId(null);
+      alert(e?.message ?? "Failed");
+      return;
+    }
     setBusyId(null);
-    if (error) { alert(error.message); return; }
     await load();
   };
 
