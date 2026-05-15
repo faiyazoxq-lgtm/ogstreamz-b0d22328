@@ -135,7 +135,7 @@ function Index() {
         <h1 className="mt-3 sm:mt-5 text-[10rem] sm:text-[16rem] md:text-[20rem] leading-[0.9] flex justify-center items-center w-full overflow-hidden">
           <OgWordmark
             suffix="-PORTAL"
-            className={`block mx-auto ${isVipMember || isBoss ? "animate-glitch" : ""}`}
+            className={`og-portal-shimmer block mx-auto ${isVipMember || isBoss ? "animate-glitch" : ""}`}
           />
         </h1>
         <p className="mt-4 sm:mt-6 mx-auto max-w-xl text-center text-muted-foreground text-base sm:text-lg">
