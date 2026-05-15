@@ -60,5 +60,48 @@ export function parseApiError(err: unknown): { code: ApiErrorCode; message: stri
   if (/unauthorized/i.test(raw)) {
     return { code: "UNAUTHENTICATED", message: DEFAULT_MESSAGE.UNAUTHENTICATED };
   }
+  // Postgres / PostgREST permission errors that may slip through if a server
+  // fn forwards the raw error. Map them to FORBIDDEN without echoing detail.
+  if (/permission denied|42501|forbidden/i.test(raw)) {
+    return { code: "FORBIDDEN", message: DEFAULT_MESSAGE.FORBIDDEN };
+  }
   return { code: "INTERNAL", message: DEFAULT_MESSAGE.INTERNAL };
+}
+
+/**
+ * True when the parsed error means the caller is not allowed to perform the
+ * action (either unauthenticated or authenticated-but-forbidden). Use this
+ * to decide whether to render the shared <AccessDenied /> surface.
+ */
+export function isAccessDenied(err: unknown): boolean {
+  const { code } = parseApiError(err);
+  return code === "FORBIDDEN" || code === "UNAUTHENTICATED";
+}
+
+/**
+ * Log a denied RPC call for diagnostics WITHOUT leaking server-side detail to
+ * the user. The RPC name + parsed code go to the console; the raw error is
+ * intentionally not surfaced. Returns the parsed `{ code, message }` so the
+ * caller can render <AccessDenied message={...} /> with a safe string.
+ *
+ * Usage:
+ *   try { await someBossFn({ data }); }
+ *   catch (err) {
+ *     const { code, message } = reportRpcDenied("boss_set_flag", err);
+ *     if (code === "FORBIDDEN" || code === "UNAUTHENTICATED") setDenied(true);
+ *     else toast.error(message);
+ *   }
+ */
+export function reportRpcDenied(
+  rpcName: string,
+  err: unknown,
+): { code: ApiErrorCode; message: string } {
+  const parsed = parseApiError(err);
+  if (parsed.code === "FORBIDDEN" || parsed.code === "UNAUTHENTICATED") {
+    // Console-only — never bubbled to the UI. Helps diagnose which RPC the
+    // current session was rejected from without exposing internals to users.
+    // eslint-disable-next-line no-console
+    console.warn(`[rpc-denied] ${rpcName} → ${parsed.code}`);
+  }
+  return parsed;
 }
