@@ -299,12 +299,20 @@ function AdminPage() {
           eyebrow="Full Site · Syndicate Protocol"
           titleNormal="Global Mood · NORMAL"
           titleOg="Global Mood · OG-MODE"
-          description={
+          descriptionNormal={
             <>
-              Site-wide flip. <span className="mood-accent">OG-MODE</span> unleashes full
-              swearing &amp; chaos across every Gemini 3 surface — Boss Chat, Shape Bridge,
-              all hub agents, jokes, news, lexicon. <span className="mood-accent">NORMAL</span> keeps
-              the Elite Analyst voice clean and PG.
+              <span className="mood-accent">NORMAL</span> — every site-wide Gemini 3 surface
+              (Boss Chat, Shape Bridge, hub agents, jokes, news, lexicon) speaks in the clean
+              Elite Analyst voice. PG, brand-safe, no swearing. The OG Bot toggle is separate
+              and unaffected.
+            </>
+          }
+          descriptionOg={
+            <>
+              <span className="mood-accent">OG-MODE</span> — full swearing &amp; chaos across
+              every site-wide Gemini 3 surface: Boss Chat, Shape Bridge, hub agents, jokes,
+              news, lexicon. Descriptions stay accurate, the voice goes feral. Does NOT touch
+              the OG Bot persona — that has its own switch.
             </>
           }
           ogBadge="Full Site · OG Brutal"
@@ -314,12 +322,19 @@ function AdminPage() {
           eyebrow="OG Bot · Telegram Enforcer"
           titleNormal="Global Mood · NORMAL"
           titleOg="Global Mood · OG-MODE"
-          description={
+          descriptionNormal={
             <>
-              Controls only the <span className="mood-accent">OG Bot</span> persona on Telegram.
-              <span className="mood-accent"> OG-MODE</span> = unfiltered swearing, threats and chaos.
-              <span className="mood-accent"> NORMAL</span> = polite, brand-safe replies. Independent
-              from the full-site switch.
+              <span className="mood-accent">NORMAL</span> — OG Bot replies on Telegram and the
+              draft assistant stay polite, brand-safe and helpful. No swearing, no threats.
+              Does not change anything outside the OG Bot.
+            </>
+          }
+          descriptionOg={
+            <>
+              <span className="mood-accent">OG-MODE</span> — OG Bot turns into the foul-mouthed
+              enforcer: unfiltered swearing, banter, threats and chaos in every Telegram reply
+              and draft. Scoped to the OG Bot only — the rest of the site keeps whatever the
+              full-site switch says.
             </>
           }
           ogBadge="OG Bot · Foul Mouth"
