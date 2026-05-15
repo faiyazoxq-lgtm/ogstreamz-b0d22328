@@ -330,6 +330,10 @@ function AdminPage() {
         <div className="pt-3"><ShapeBridgePanel /></div>
       </details>
 
+      <div className="mt-6">
+        <CivilityPanel />
+      </div>
+
       <SectionHeader id="homehubs" icon={<Rocket className="h-4 w-4" />} label="Homepage · Custom Hubs" tint="#ff00aa" />
       <CustomHubBuilderPanel />
 
