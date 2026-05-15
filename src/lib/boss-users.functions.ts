@@ -137,7 +137,7 @@ export const adjustCredits = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
-    const { data: bal, error } = await supabase.rpc("admin_adjust_credits", {
+    const { data: bal, error } = await supabaseAdmin.rpc("admin_adjust_credits", {
       _user_id: data.userId, _delta: data.delta, _reason: data.reason,
     });
     if (error) throw new Error(error.message);
