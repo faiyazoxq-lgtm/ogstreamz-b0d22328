@@ -489,22 +489,21 @@ function AuthPage() {
           {/* PRIMARY: Social sign-in — visual priority */}
           <section
             aria-label="One-tap sign in"
-            className="relative rounded-xl border border-[oklch(0.72_0.22_245/0.35)] bg-[oklch(0.72_0.22_245/0.06)] p-4 sm:p-5 space-y-3"
+            className="relative rounded-xl border border-amber-300/40 bg-amber-300/[0.04] p-4 sm:p-5 space-y-3 shadow-[0_0_50px_-15px_oklch(0.78_0.18_85/0.55)]"
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] uppercase tracking-[0.3em] text-white/80 font-bold">
-                One-tap sign in
+              <span className="text-[10px] uppercase tracking-[0.3em] text-amber-200/90 font-bold">
+                Recommended · One-tap sign in
               </span>
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300">
-                ⚡ Fastest
+              <span className="inline-flex items-center gap-1 rounded-full border border-amber-300/60 bg-amber-300/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-amber-200">
+                ⚡ Fastest · 5s
               </span>
             </div>
             <Button
               type="button"
-              variant="outline"
               disabled={loading}
               onClick={google}
-              className="w-full h-14 text-base font-semibold bg-white text-gray-900 hover:bg-gray-50 border-white/80 shadow-lg shadow-[oklch(0.72_0.22_245/0.25)]"
+              className="w-full h-14 text-base font-bold uppercase tracking-[0.18em] bg-gradient-to-r from-amber-300 via-amber-200 to-amber-400 text-black hover:brightness-110 border border-amber-200/80 shadow-[0_10px_40px_-10px_oklch(0.78_0.18_85/0.85)] ring-1 ring-amber-200/60"
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5 mr-3" aria-hidden>
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -514,17 +513,21 @@ function AuthPage() {
               </svg>
               Continue with Google
             </Button>
+            <p className="text-[11px] text-amber-100/80 text-center">
+              No password to remember · works on every device · your{" "}
+              <span className="font-semibold text-amber-200">+{signupBonus} coins</span> land instantly.
+            </p>
             <Button
               type="button"
               variant="outline"
               disabled={loading}
               onClick={apple}
-              className="w-full h-14 text-base font-semibold bg-black text-white hover:bg-black/85 border-white/25"
+              className="w-full h-12 text-sm font-semibold bg-black/80 text-white hover:bg-black/90 border-white/20"
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5 mr-3" aria-hidden fill="currentColor">
                 <path d="M16.365 1.43c0 1.14-.46 2.23-1.21 3.03-.81.86-2.13 1.52-3.21 1.43-.13-1.1.42-2.25 1.16-3.04.83-.88 2.24-1.54 3.26-1.42zM20.5 17.31c-.55 1.27-.81 1.83-1.52 2.95-.99 1.56-2.39 3.5-4.12 3.51-1.54.02-1.94-1-4.03-.99-2.09.01-2.53 1.01-4.07.99-1.73-.02-3.05-1.78-4.05-3.34C.01 16.18-.31 11.13 1.5 8.43c1.28-1.92 3.31-3.04 5.21-3.04 1.94 0 3.16 1.06 4.77 1.06 1.56 0 2.51-1.06 4.76-1.06 1.7 0 3.5.93 4.78 2.53-4.21 2.31-3.52 8.32.48 9.39z"/>
               </svg>
-              Continue with Apple
+              Or continue with Apple
             </Button>
           </section>
 
