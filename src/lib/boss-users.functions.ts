@@ -27,6 +27,7 @@ export type RosterRow = {
   contact_card: Record<string, any> | null;
   avatar_url: string | null;
   og_tier: OgTier | null;
+  is_friends_family?: boolean | null;
 };
 
 export const listRoster = createServerFn({ method: "GET" })
@@ -41,7 +42,7 @@ export const listRoster = createServerFn({ method: "GET" })
     const { supabase } = context as any;
     let q = supabase
       .from("profiles")
-      .select("id,email,display_name,rank,status,credits,banned,banned_reason,stream_status,stream_verified_at,stream_expires_at,created_at,feature_flags,og_pass_no,member_tier,contact_card,avatar_url,og_tier")
+      .select("id,email,display_name,rank,status,credits,banned,banned_reason,stream_status,stream_verified_at,stream_expires_at,created_at,feature_flags,og_pass_no,member_tier,contact_card,avatar_url,og_tier,is_friends_family")
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .limit(data.limit + 1);
