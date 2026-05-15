@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { SyndicateProtocolSwitch } from "@/components/SyndicateProtocolSwitch";
+import { CivilityPanel } from "@/components/boss/CivilityPanel";
 import { useServerFn } from "@tanstack/react-start";
 import { requireBoss } from "@/lib/route-guards";
 import { scoutUrl } from "@/lib/firecrawl.functions";
@@ -328,6 +329,10 @@ function AdminPage() {
         <summary className="cursor-pointer">Legacy bridge controls</summary>
         <div className="pt-3"><ShapeBridgePanel /></div>
       </details>
+
+      <div className="mt-6">
+        <CivilityPanel />
+      </div>
 
       <SectionHeader id="homehubs" icon={<Rocket className="h-4 w-4" />} label="Homepage · Custom Hubs" tint="#ff00aa" />
       <CustomHubBuilderPanel />
