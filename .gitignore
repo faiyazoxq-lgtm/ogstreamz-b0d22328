@@ -30,3 +30,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright visual regression
+playwright-report/
+test-results/
