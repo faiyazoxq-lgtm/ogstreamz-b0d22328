@@ -22,7 +22,6 @@ import { generatePortalCinema } from "@/lib/cinema.functions";
 import { listBots, upsertBot, deleteBot, broadcastGlobalAlert, runSyndicateTickNow, getFleetStats, setSubscriberPlan, type Plan } from "@/lib/syndicate.functions";
 import { generateBrandBible, updateTelegramLinks, deployToTelegram } from "@/lib/telegram.functions";
 import { runAgentTask, getOpsSnapshot, runMaintenance } from "@/lib/command-deck.functions";
-import { TopUpRequestsPanel } from "@/components/TopUpRequestsPanel";
 import { getNerdStats } from "@/lib/nerd-stats.functions";
 import { CoinChip } from "@/components/CoinChip";
 import {
