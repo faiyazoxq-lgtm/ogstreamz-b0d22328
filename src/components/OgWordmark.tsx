@@ -35,12 +35,12 @@ export function OgWordmark({
   // without the halo overpowering small screens or going faint on big ones.
   const glowScale = "clamp(0.55, 0.45 + 0.35vw, 1.15)";
   const glow = [
-    "drop-shadow(0 1px 0 rgba(0,0,0,0.85))",
-    "drop-shadow(0 0 calc(4px * var(--og-glow)) rgba(0,0,0,0.85))",
-    "drop-shadow(0 0 calc(10px * var(--og-glow)) rgba(0,0,0,0.7))",
-    "drop-shadow(0 0 calc(18px * var(--og-glow)) oklch(0.55 0.14 72 / 0.65))",
-    "drop-shadow(0 0 calc(34px * var(--og-glow)) oklch(0.42 0.10 70 / 0.55))",
-    "drop-shadow(0 0 calc(70px * var(--og-glow)) oklch(0.30 0.06 60 / 0.45))",
+    "drop-shadow(0 1px 0 var(--og-metal-ink))",
+    "drop-shadow(0 0 calc(4px * var(--og-glow)) var(--og-metal-ink))",
+    "drop-shadow(0 0 calc(10px * var(--og-glow)) color-mix(in oklab, var(--og-metal-ink) 82%, transparent))",
+    "drop-shadow(0 0 calc(18px * var(--og-glow)) color-mix(in oklab, var(--og-gold-warm) 65%, transparent))",
+    "drop-shadow(0 0 calc(34px * var(--og-glow)) color-mix(in oklab, var(--og-gold-deep) 55%, transparent))",
+    "drop-shadow(0 0 calc(70px * var(--og-glow)) color-mix(in oklab, var(--og-gold-shadow) 45%, transparent))",
   ].join(" ");
   return (
     <span
