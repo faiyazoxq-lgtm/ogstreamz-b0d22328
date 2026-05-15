@@ -67,19 +67,19 @@ function AuthPage() {
   const consumeRedirect = (): string => {
     try {
       const t = sessionStorage.getItem("post_auth_redirect");
+      sessionStorage.removeItem("post_auth_redirect");
       if (t && t.startsWith("/") && !t.startsWith("/auth")) {
-        sessionStorage.removeItem("post_auth_redirect");
         return t;
       }
     } catch { /* ignore */ }
-    return "/profile";
+    return "/";
   };
   const peekRedirect = (): string => {
     try {
       const t = sessionStorage.getItem("post_auth_redirect");
       if (t && t.startsWith("/") && !t.startsWith("/auth")) return t;
     } catch { /* ignore */ }
-    return "/profile";
+    return "/";
   };
 
   // Capture ?p=TOKEN from QR / quick links and persist across signup confirm
