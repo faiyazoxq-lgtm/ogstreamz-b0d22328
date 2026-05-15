@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { enforceSwearRules, loadLexicon } from "./swear-enforcer.server";
 
 const PERPLEXITY_URL = "https://api.perplexity.ai/chat/completions";
@@ -42,7 +42,7 @@ const CHAOS_SYS = `CHAOS MODE: ENGAGED. The user has personally flipped the Swea
 type Msg = { role: "user" | "assistant"; content: string };
 
 export const swearChat = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { messages: Msg[]; portal_slug?: string }) => ({
     messages: (Array.isArray(d.messages) ? d.messages : [])
       .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
@@ -121,7 +121,7 @@ async function perplexitySwear(
 }
 
 export const setSwearChat = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { table: "portals" | "battles" | "custom_hubs"; id: string; enabled: boolean }) => ({
     table: (["portals", "battles", "custom_hubs"] as const).includes(d.table) ? d.table : "portals",
     id: String(d.id || "").slice(0, 64),

@@ -15,7 +15,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { requireBoss } from "@/integrations/supabase/boss-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {

@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
 
@@ -36,7 +36,7 @@ export type ToolConfig = {
 };
 
 export const spawnTool = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { name: string; audience: ToolAudience; logic: string; vibe: string; vip?: boolean }) => ({
     name: String(data.name || "").trim().slice(0, 80),
     audience: (["kids", "students", "pro"].includes(data.audience) ? data.audience : "students") as ToolAudience,
@@ -181,7 +181,7 @@ No markdown. No commentary.`;
  * the public loader would leak paid content to every visitor.
  */
 export const getToolVipContent = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator(z.object({ slug: z.string().min(1).max(120) }).parse)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };

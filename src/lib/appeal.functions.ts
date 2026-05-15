@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 
 export type AppealInput = {
   jurisdiction: string;
@@ -81,7 +81,7 @@ async function callGateway(messages: any[], temperature = 0.4) {
 }
 
 export const clarifyAppeal = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: Partial<AppealInput>) => sanitizeInput(data))
   .handler(async ({ data }) => {
     if (!data.penaltyType || !data.facts) {
@@ -114,7 +114,7 @@ export const clarifyAppeal = createServerFn({ method: "POST" })
   });
 
 export const generateAppeal = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: Partial<AppealInput>) => sanitizeInput(data))
   .handler(async ({ data, context }) => {
     if (!data.penaltyType || !data.facts || !data.fullName) {

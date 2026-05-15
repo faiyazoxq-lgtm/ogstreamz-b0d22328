@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { createClient } from "@supabase/supabase-js";
 
 async function isAdmin(supabase: any, userId: string): Promise<boolean> {
@@ -90,7 +90,7 @@ async function veoGenerate(prompt: string, aspect: "16:9" | "9:16", apiKey: stri
 }
 
 export const generatePortalCinema = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { slug: string; aspect?: "16:9" | "9:16"; prompt?: string }) => ({
     slug: String(data.slug || "").trim().slice(0, 80),
     aspect: (data.aspect === "9:16" ? "9:16" : "16:9") as "16:9" | "9:16",

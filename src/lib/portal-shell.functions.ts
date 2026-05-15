@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
@@ -174,7 +174,7 @@ export const getPortalHeader = createServerFn({ method: "POST" })
 const OutputZ = z.record(z.string(), z.unknown());
 
 export const recordPortalCreation = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator(
     z.object({
       portalKey: PortalKeyZ,
@@ -199,7 +199,7 @@ export const recordPortalCreation = createServerFn({ method: "POST" })
   });
 
 export const listPortalCreations = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator(
     z.object({
       portalKey: PortalKeyZ,
@@ -219,7 +219,7 @@ export const listPortalCreations = createServerFn({ method: "POST" })
   });
 
 export const deletePortalCreation = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator(z.object({ id: z.string().uuid() }).parse)
   .handler(async ({ data, context }) => {
     const { supabase } = context;

@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 
 export const getMyStreamCredentials = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
     const { data, error } = await (supabase as any).rpc("get_my_stream_credentials");

@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 
 type Kind = "jokes" | "music" | "trade" | "connect" | "tools";
 
@@ -12,7 +12,7 @@ const KIND_BRIEF: Record<Kind, string> = {
 };
 
 export const describePortal = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { kind: Kind; name?: string; niche?: string; vibe?: string; language?: string }) => ({
     kind: (["jokes", "music", "trade", "connect", "tools"].includes(data.kind) ? data.kind : "jokes") as Kind,
     name: String(data.name ?? "").trim().slice(0, 80),

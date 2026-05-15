@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { runPortalMarketingInternal } from "@/lib/marketing.functions";
 import { assertVipAccess } from "@/lib/vip-guard";
@@ -9,7 +9,7 @@ function slugify(s: string): string {
 }
 
 export const spawnMusicPortal = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: {
     name: string;
     description: string;

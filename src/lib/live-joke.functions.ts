@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { enforceSwearRules, loadLexicon } from "./swear-enforcer.server";
 import { assertVipAccess } from "@/lib/vip-guard";
 import { effectiveSwearing } from "@/lib/swearing";
@@ -38,7 +38,7 @@ async function fetchRedditTrends(): Promise<{ headlines: string[]; sourceUrl: st
 }
 
 export const generateLiveJoke = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { styles: string[]; custom: string }) => ({
     styles: Array.isArray(data.styles) ? data.styles.slice(0, 10).map(String) : [],
     custom: typeof data.custom === "string" ? data.custom.slice(0, 200) : "",

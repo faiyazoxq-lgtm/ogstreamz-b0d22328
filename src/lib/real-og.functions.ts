@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
 import { validateReturnUrl } from "@/lib/return-url";
 
@@ -8,7 +8,7 @@ import { validateReturnUrl } from "@/lib/return-url";
  * Uses inline price_data so no Stripe price lookup is needed.
  */
 export const createRealOgCheckout = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { returnUrl: string; environment: StripeEnv; customerEmail?: string }) => ({
     returnUrl: validateReturnUrl(d.returnUrl),
     environment: d.environment,

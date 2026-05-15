@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 
 const TG_GATEWAY = "https://connector-gateway.lovable.dev/telegram";
 
@@ -35,7 +35,7 @@ function makeCode(): string {
 }
 
 export const getMyPurchases = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase } = context as { supabase: any };
     const { data, error } = await (supabase as any).rpc("get_user_purchases_summary");
@@ -44,7 +44,7 @@ export const getMyPurchases = createServerFn({ method: "POST" })
   });
 
 export const getTelegramLinkStatus = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     const { data } = await supabase
@@ -56,7 +56,7 @@ export const getTelegramLinkStatus = createServerFn({ method: "POST" })
   });
 
 export const generateTelegramLinkCode = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     const code = makeCode();
@@ -78,7 +78,7 @@ export const generateTelegramLinkCode = createServerFn({ method: "POST" })
   });
 
 export const unlinkTelegram = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     const { error } = await supabase
@@ -96,7 +96,7 @@ export const unlinkTelegram = createServerFn({ method: "POST" })
  * (chat_id present in telegram_user_links).
  */
 export const importTelegramAvatar = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
 
@@ -162,7 +162,7 @@ export const importTelegramAvatar = createServerFn({ method: "POST" })
 
 /** Set or clear the member's profile avatar URL. */
 export const setProfileAvatar = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { avatar_url: string | null }) => ({
     avatar_url: d?.avatar_url == null ? null : String(d.avatar_url).trim().slice(0, 2000) || null,
   }))
@@ -177,7 +177,7 @@ export const setProfileAvatar = createServerFn({ method: "POST" })
   });
 
 export const updateTelegramPrefs = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { notify_purchases?: boolean; notify_reminders?: boolean; notify_live?: boolean }) => ({
     notify_purchases: typeof d.notify_purchases === "boolean" ? d.notify_purchases : undefined,
     notify_reminders: typeof d.notify_reminders === "boolean" ? d.notify_reminders : undefined,

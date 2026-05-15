@@ -1,21 +1,21 @@
 import { createMiddleware } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "./auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 
 /**
  * Server-fn middleware that requires the caller to be Boss (rank='boss')
- * OR carry the 'admin' role. Composes on top of `requireSupabaseAuth`, so
+ * OR carry the 'admin' role. Composes on top of `requireStrictAuth`, so
  * any handler using it gets `{ supabase, userId, claims }` in context after
  * the boss check passes.
  *
  * Failure modes:
- *  - 401 if the bearer token is missing/invalid (from requireSupabaseAuth)
+ *  - 401 if the bearer token is missing/invalid (from requireStrictAuth)
  *  - 403 if the caller is authenticated but not boss/admin
  *
  * Use this on every credential / admin-only server function so direct API
  * calls cannot bypass UI route guards.
  */
 export const requireBoss = createMiddleware({ type: "function" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .server(async ({ next, context }) => {
     const { supabase, userId } = context as {
       supabase: any;
@@ -47,7 +47,7 @@ export const requireBoss = createMiddleware({ type: "function" })
  * or coin-spend flows — direct API calls from a Boss session must 403 even
  * when the UI hides the buttons.
  *
- * Composes on top of `requireSupabaseAuth`. Failure modes:
+ * Composes on top of `requireStrictAuth`. Failure modes:
  *  - 401 if the bearer token is missing/invalid
  *  - 403 if the caller is rank=boss
  *
@@ -55,7 +55,7 @@ export const requireBoss = createMiddleware({ type: "function" })
  * test purchases). Only `is_boss` truthiness blocks the call.
  */
 export const rejectBoss = createMiddleware({ type: "function" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .server(async ({ next, context }) => {
     const { supabase, userId } = context as {
       supabase: any;

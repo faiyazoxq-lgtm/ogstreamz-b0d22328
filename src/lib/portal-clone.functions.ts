@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 
 /**
  * VIP perk: when a VIP buys a HUB portal, mint a personalised clone of that
@@ -50,7 +50,7 @@ const PREFIX_BY_KIND: Record<string, string> = {
 };
 
 export const cloneHubPortalForMe = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { portalId: string }) => ({
     portalId: String(d.portalId || "").trim(),
   }))

@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { requireBoss } from "@/integrations/supabase/boss-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -18,7 +18,7 @@ export type VipPassRevealResult =
   | { available: false; reason: string; pool_size: number };
 
 export const revealVipPass = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }): Promise<VipPassRevealResult> => {
     const { supabase } = context as { supabase: any };
     const { data, error } = await supabase.rpc("reveal_vip_pass");

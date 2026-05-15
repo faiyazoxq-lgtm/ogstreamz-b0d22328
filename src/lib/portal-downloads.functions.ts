@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 
 export type DownloadPeek = {
   cost: number;
@@ -15,7 +15,7 @@ export type DownloadClaim =
   | { ok: false; error: "insufficient" | "unauthorized" | "unknown"; message: string };
 
 export const peekPortalDownload = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { portalId: string; cost?: number }) => ({
     portalId: String(d.portalId || ""),
     cost: Math.max(1, Math.min(50, Math.floor(Number(d.cost) || 2))),
@@ -31,7 +31,7 @@ export const peekPortalDownload = createServerFn({ method: "POST" })
   });
 
 export const claimPortalDownload = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { portalId: string; cost?: number }) => ({
     portalId: String(d.portalId || ""),
     cost: Math.max(1, Math.min(50, Math.floor(Number(d.cost) || 2))),

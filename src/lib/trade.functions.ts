@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { runDeepSearch, runPeerReview } from "./orchestrator.functions";
 import { tgSendMessage } from "./syndicate.functions";
 import { effectiveSwearing } from "@/lib/swearing";
@@ -21,7 +21,7 @@ function pplxKey(): string {
 
 // ────────── SPAWN TRADE PORTAL ──────────
 export const spawnTradePortal = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { name: string; assetClass: "Crypto"|"Forex"|"Stocks"; risk: "Degen"|"Balanced"|"Safe"; vibe: string; vip?: boolean }) => ({
     name: String(d.name||"").trim().slice(0,80),
     assetClass: (["Crypto","Forex","Stocks"] as const).includes(d.assetClass) ? d.assetClass : "Crypto",
@@ -117,7 +117,7 @@ Return STRICT JSON only:
 
 // ────────── RUN MARKET SCAN ──────────
 export const runTradeScan = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { slug: string }) => ({ slug: String(d.slug||"").trim().slice(0,80) }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
@@ -324,7 +324,7 @@ export const getTrc20Fees = createServerFn({ method: "POST" })
 
 // ────────── WHALE ALERTS (VIP) ──────────
 export const getWhaleAlerts = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     const { data: prof } = await supabase.from("profiles").select("status").eq("id", userId).maybeSingle();
@@ -354,7 +354,7 @@ export const getWhaleAlerts = createServerFn({ method: "POST" })
 
 // ────────── EMIT SIGNAL TO SYNDICATE (Telegram) ──────────
 export const emitTradeSignal = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { slug: string; channel_chat_id?: string }) => ({
     slug: String(d.slug || "").trim().slice(0, 80),
     channel_chat_id: d.channel_chat_id ? String(d.channel_chat_id).trim().slice(0, 80) : undefined,

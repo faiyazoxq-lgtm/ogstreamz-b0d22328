@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 
 export type BroadcastAudience = "all" | "members" | "ogs";
 
@@ -19,7 +19,7 @@ const SEVERITIES = ["info", "success", "warning", "alert"] as const;
 const AUDIENCES = ["all", "members", "ogs"] as const;
 
 export const sendVipNotification = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: {
     title: string;
     body: string;
@@ -60,7 +60,7 @@ export const sendVipNotification = createServerFn({ method: "POST" })
   });
 
 export const listVipNotifications = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }): Promise<VipNotification[]> => {
     const { supabase } = context as { supabase: any };
     const { data, error } = await supabase
@@ -73,7 +73,7 @@ export const listVipNotifications = createServerFn({ method: "GET" })
   });
 
 export const deleteVipNotification = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as { supabase: any };
@@ -83,7 +83,7 @@ export const deleteVipNotification = createServerFn({ method: "POST" })
   });
 
 export const listInboxNotifications = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }): Promise<Array<VipNotification & { read: boolean }>> => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     const { data: notifs, error } = await supabase
@@ -111,7 +111,7 @@ export const listInboxNotifications = createServerFn({ method: "GET" })
  * Lovable AI Gateway with structured tool calling.
  */
 export const composeBroadcast = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { idea: string; audience?: string; severity?: string }) => ({
     idea: String(d.idea ?? "").trim().slice(0, 500),
     audience: (AUDIENCES as readonly string[]).includes(String(d.audience))
@@ -199,7 +199,7 @@ export const composeBroadcast = createServerFn({ method: "POST" })
   });
 
 export const markNotificationRead = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
@@ -211,7 +211,7 @@ export const markNotificationRead = createServerFn({ method: "POST" })
   });
 
 export const markAllNotificationsRead = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     const { data: notifs } = await supabase

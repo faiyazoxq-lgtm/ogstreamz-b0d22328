@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { getRequestHost, getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
 import { randomBytes, createHash } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -144,7 +144,7 @@ function normalizeServerUrlInput(input: string): { url: string | null; error?: s
 }
 
 export const getBossStreamServerUrl = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     if (!isBossClaims((context as any).claims)) {
       return { ok: false as const, error: "Boss only." };
@@ -170,7 +170,7 @@ export const getBossStreamServerUrl = createServerFn({ method: "GET" })
   });
 
 export const setBossStreamServerUrl = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { url: string }) => ({ url: String(d?.url ?? "") }))
   .handler(async ({ data, context }) => {
     if (!isBossClaims((context as any).claims)) {
@@ -190,7 +190,7 @@ export const setBossStreamServerUrl = createServerFn({ method: "POST" })
   });
 
 export const clearBossStreamServerUrl = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     if (!isBossClaims((context as any).claims)) {
       return { ok: false as const, error: "Boss only." };
@@ -305,7 +305,7 @@ async function probeXtream(
 }
 
 export const verifyAndLinkStream = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { username: string; password: string }) => {
     const username = String(d.username ?? "").trim();
     const password = String(d.password ?? "");
@@ -409,7 +409,7 @@ export const verifyAndLinkStream = createServerFn({ method: "POST" })
   });
 
 export const reverifyStream = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { userId?: string } | undefined) => ({ userId: d?.userId ? String(d.userId) : "" }))
   .handler(async ({ context }) => {
     const { supabase, userId } = context as any;
@@ -466,7 +466,7 @@ export const reverifyStream = createServerFn({ method: "POST" })
  * client code — they only ever see their own filled-in URL after auth.
  */
 export const getMyStreamM3uUrl = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as any;
     try {
@@ -546,7 +546,7 @@ export const getMyStreamM3uUrl = createServerFn({ method: "GET" })
  * or the upstream URL — they stay server-side.
  */
 export const verifyMyStreamAccess = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as any;
 

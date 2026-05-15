@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { createClient } from "@supabase/supabase-js";
 import {
   createNotepadSheet,
@@ -97,7 +97,7 @@ async function fetchTodoRow(id: string): Promise<SheetRow | null> {
 
 /** Status pill data — connected? sheet URL? last pull time? */
 export const gsheetsStatus = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     await assertBoss(context.userId);
     const s = await loadSettings();
@@ -140,7 +140,7 @@ export const gsheetsStatus = createServerFn({ method: "GET" })
 
 /** First-time setup: create a fresh "Boss Notepad" spreadsheet. */
 export const gsheetsConnect = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     await assertBoss(context.userId);
     const existing = await loadSettings();
@@ -168,7 +168,7 @@ export const gsheetsConnect = createServerFn({ method: "POST" })
  * "Done" items are excluded — the sheet mirrors the live notepad view.
  */
 export const gsheetsPush = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     await assertBoss(context.userId);
     const s = await loadSettings();
@@ -203,7 +203,7 @@ export const gsheetsPush = createServerFn({ method: "POST" })
  * rewrite the entire range for every keystroke.
  */
 export const gsheetsUpsertOne = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
   .handler(async ({ data, context }) => {
     await assertBoss(context.userId);
@@ -238,7 +238,7 @@ export const gsheetsUpsertOne = createServerFn({ method: "POST" })
 
 /** Incremental delete — clear a single row by id (no full rewrite). */
 export const gsheetsRemoveOne = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
   .handler(async ({ data, context }) => {
     await assertBoss(context.userId);
@@ -265,7 +265,7 @@ export const gsheetsRemoveOne = createServerFn({ method: "POST" })
  * deletes — the user uses the in-app trash icon).
  */
 export const gsheetsPull = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     await assertBoss(context.userId);
     const s = await loadSettings();
@@ -336,7 +336,7 @@ export const gsheetsPull = createServerFn({ method: "POST" })
 
 /** Manual disconnect — forgets the sheet ID (does not delete the spreadsheet). */
 export const gsheetsDisconnect = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     await assertBoss(context.userId);
     const admin = adminClient();

@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { requireBoss } from "@/integrations/supabase/boss-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -17,7 +17,7 @@ export type VaultRevealResult =
   | { available: false; reason: string; rotates_in: number };
 
 export const revealVaultCredential = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }): Promise<VaultRevealResult> => {
     const { supabase } = context as { supabase: any };
     const { data, error } = await supabase.rpc("reveal_vault_credential");

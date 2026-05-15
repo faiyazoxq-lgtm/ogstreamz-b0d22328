@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
 import { REAL_OG_BUNDLES } from "@/lib/real-og-bundles";
 import { validateReturnUrl } from "@/lib/return-url";
@@ -11,7 +11,7 @@ import { validateReturnUrl } from "@/lib/return-url";
  * issue the OG pass AND grant coins atomically.
  */
 export const createRealOgBundleCheckout = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { sku: string; returnUrl: string; environment: StripeEnv; customerEmail?: string }) => ({
     sku: String(d.sku || ""),
     returnUrl: validateReturnUrl(d.returnUrl),

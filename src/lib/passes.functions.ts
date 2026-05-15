@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 
 async function isBoss(supabase: any) {
   const uid = (await supabase.auth.getUser()).data.user?.id;
@@ -17,7 +17,7 @@ function makeToken() {
 }
 
 export const bossCreatePass = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: {
     label?: string; redeemCode?: string | null; credits?: number;
     vipDays?: number | null; maxUses?: number; expiresAt?: string | null;
@@ -46,7 +46,7 @@ export const bossCreatePass = createServerFn({ method: "POST" })
   });
 
 export const bossListPasses = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase } = context as any;
     if (!(await isBoss(supabase))) throw new Error("Boss only");
@@ -60,7 +60,7 @@ export const bossListPasses = createServerFn({ method: "GET" })
   });
 
 export const bossDeletePass = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
@@ -71,7 +71,7 @@ export const bossDeletePass = createServerFn({ method: "POST" })
   });
 
 export const claimSignupPass = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { token: string }) => ({ token: String(d.token).trim().toUpperCase().slice(0, 32) }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;

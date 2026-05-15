@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { recordSystemAlert } from "./system-alerts.server";
 import { generateMusicBriefFallback } from "./perplexity-fallback.server";
@@ -16,7 +16,7 @@ const SpawnInput = z.object({
 });
 
 export const spawnMusic = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d) => SpawnInput.parse(d))
   .handler(async ({ data, context }) => {
     const apiKey = process.env.SUNO_API_KEY;
@@ -173,7 +173,7 @@ export const spawnMusic = createServerFn({ method: "POST" })
   });
 
 export const listMyRecentJobs = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
     const { data, error } = await supabase

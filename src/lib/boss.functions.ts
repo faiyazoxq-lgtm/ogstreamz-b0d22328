@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { shouldPromoteToBoss, normalizeEmail } from "./boss-policy";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 
 function adminClient() {
   return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
@@ -38,10 +38,10 @@ export const promoteBossIfNeeded = createServerFn({ method: "POST" })
 /**
  * Returns whether the currently authenticated user matches the BOSS_EMAIL
  * secret. The secret value itself is never returned — only a boolean.
- * Requires a valid Supabase bearer token (via requireSupabaseAuth).
+ * Requires a valid Supabase bearer token (via requireStrictAuth).
  */
 export const checkIsBoss = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const userEmail = normalizeEmail(context.claims?.email as string | undefined);
     const bossEmail = normalizeEmail(process.env.BOSS_EMAIL);

@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /**
@@ -231,7 +231,7 @@ export async function runPortalMarketingInternal(portalId: string): Promise<{ ok
  * must be authenticated and have admin role to trigger the marketing pipeline.
  */
 export const runPortalMarketing = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { portalId: string }) => ({ portalId: String(d.portalId || "").slice(0, 64) }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };

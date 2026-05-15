@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 
 // Public site guide — no auth required so the welcome screen can use it for
 // anonymous visitors. Calls the Lovable AI Gateway (LOVABLE_API_KEY) with a
@@ -139,7 +139,7 @@ function buildProbeInstruction(shouldProbe: boolean): string {
 }
 
 export const siteGuideChat = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { messages: Msg[]; chaos?: boolean }) => ({
     messages: (Array.isArray(d?.messages) ? d.messages : [])
       .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
@@ -371,7 +371,7 @@ function parseSseDeltas(chunk: string, leftover: string): { deltas: string[]; re
 }
 
 export const siteGuideChatStream = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { messages: Msg[]; chaos?: boolean }) => ({
     messages: (Array.isArray(d?.messages) ? d.messages : [])
       .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")

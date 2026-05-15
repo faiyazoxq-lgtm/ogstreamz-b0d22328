@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { createClient } from "@supabase/supabase-js";
 import { runDeepSearch, runPeerReview, type DeepSearchSource, type PeerReview } from "./orchestrator.functions";
 
@@ -304,7 +304,7 @@ async function buildScoutMeta(input: { pair: string; bias: NewsBias; context: st
 
 // ───── Admin: spawn a News Intelligence portal ─────
 export const spawnNewsPortal = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { name: string; pair: string; bias: NewsBias; context: string; vip?: boolean }) => ({
     name: String(data.name || "").trim().slice(0, 80),
     pair: String(data.pair || "").trim().slice(0, 40),
@@ -369,7 +369,7 @@ function _checkRefreshRate(userId: string) {
 }
 
 export const refreshNewsScout = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { slug: string }) => ({ slug: String(data.slug || "").trim().slice(0, 80) }))
   .handler(async ({ data, context }) => {
     const { userId } = context as { userId: string };

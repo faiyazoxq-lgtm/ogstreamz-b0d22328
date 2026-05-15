@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function isAdmin(supabase: any, userId: string): Promise<boolean> {
@@ -37,7 +37,7 @@ function isReligiousPortal(p: { name?: string | null; style?: string | null; vib
 }
 
 export const spawnMusicPortal = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { slug: string; language: string; style: string; vibe: string }) => ({
     slug: String(data.slug || "").trim().slice(0, 60),
     language: String(data.language || "English").trim().slice(0, 40),
@@ -78,7 +78,7 @@ export const spawnMusicPortal = createServerFn({ method: "POST" })
   });
 
 export const formatLyrics = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { slug: string; raw: string }) => ({
     slug: String(data.slug || "").trim().slice(0, 80),
     raw: String(data.raw || "").trim().slice(0, 4000),
@@ -134,7 +134,7 @@ export const formatLyrics = createServerFn({ method: "POST" })
  * the lyrics text so the UI can render tokens as they arrive from OG BOT.
  */
 export const streamFormatLyrics = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { slug: string; raw: string }) => ({
     slug: String(data.slug || "").trim().slice(0, 80),
     raw: String(data.raw || "").trim().slice(0, 4000),
@@ -214,7 +214,7 @@ export const streamFormatLyrics = createServerFn({ method: "POST" })
   });
 
 export const requestStudioTrack = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { slug: string; lyrics: string; notes?: string }) => ({
     slug: String(data.slug || "").trim().slice(0, 80),
     lyrics: String(data.lyrics || "").trim().slice(0, 6000),
@@ -257,7 +257,7 @@ export type SunoStack = {
 };
 
 export const generateSunoStack = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { slug: string; vibe: string }) => ({
     slug: String(data.slug || "").trim().slice(0, 80),
     vibe: String(data.vibe || "").trim().slice(0, 400),
@@ -396,7 +396,7 @@ Return JSON: {"timbre":"...","moodKey":"...","vocal":"...","structure":"[Intro],
 }
 
 export const generatePortalTrack = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { slug: string; style: string }) => ({
     slug: String(d.slug || "").trim().slice(0, 80),
     style: String(d.style || "").trim().slice(0, 80),
@@ -476,7 +476,7 @@ export const generatePortalTrack = createServerFn({ method: "POST" })
   });
 
 export const getPortalTrackJob = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { jobId: string }) => ({ jobId: String(d.jobId).slice(0, 64) }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as { supabase: any };
@@ -499,7 +499,7 @@ export const getPortalTrackJob = createServerFn({ method: "POST" })
   });
 
 export const unlockPortalTrackDownload = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { jobId: string }) => ({ jobId: String(d.jobId).slice(0, 64) }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
@@ -563,7 +563,7 @@ export const unlockPortalTrackDownload = createServerFn({ method: "POST" })
  * metadata for re-opening previews and downloads.
  */
 export const listMyGenerations = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     const { data: jobs, error } = await supabase

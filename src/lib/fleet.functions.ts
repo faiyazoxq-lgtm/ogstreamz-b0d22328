@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { createClient } from "@supabase/supabase-js";
 
 const TG_API = "https://api.telegram.org";
@@ -38,7 +38,7 @@ function projectBaseUrl(): string {
 }
 
 export const listFleet = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
@@ -64,7 +64,7 @@ export const listFleet = createServerFn({ method: "GET" })
   });
 
 export const spawnFleetBot = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { pair_name: string; telegram_bot_token: string; channel_chat_id?: string; pair_label?: string; bias?: string; asset_class?: string }) => ({
     pair_name: String(d.pair_name || "").trim().slice(0, 60),
     telegram_bot_token: String(d.telegram_bot_token || "").trim(),
@@ -121,7 +121,7 @@ export const spawnFleetBot = createServerFn({ method: "POST" })
   });
 
 export const deleteFleetBot = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { id: string }) => ({ id: String(d.id || "") }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
@@ -137,7 +137,7 @@ export const deleteFleetBot = createServerFn({ method: "POST" })
   });
 
 export const setBotTier = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { id: string; tier: "FREE" | "PAID" }) => ({
     id: String(d.id || ""),
     tier: d.tier === "PAID" ? "PAID" : "FREE",
@@ -152,7 +152,7 @@ export const setBotTier = createServerFn({ method: "POST" })
   });
 
 export const setBotActive = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { id: string; active: boolean }) => ({ id: String(d.id || ""), active: !!d.active }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
@@ -164,7 +164,7 @@ export const setBotActive = createServerFn({ method: "POST" })
   });
 
 export const setGlobalFrequency = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { frequency: "aggressive" | "passive" }) => ({
     frequency: d.frequency === "passive" ? "passive" : "aggressive",
   }))
@@ -183,7 +183,7 @@ export const setGlobalFrequency = createServerFn({ method: "POST" })
 /** Master Bot broadcast — fans a single command to every active bot in the fleet,
  *  posted into each pair's own channel using that pair-bot's own token. */
 export const broadcastFleetCommand = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { message: string }) => ({ message: String(d.message || "").trim().slice(0, 2000) }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };

@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { shouldPromoteToBoss, normalizeEmail } from "./boss-policy";
 
 export type AuditHit = {
@@ -84,7 +84,7 @@ const PAGE_PATHS = [
 ];
 
 export const runDenylistAudit = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }): Promise<AuditReport> => {
     const userEmail = normalizeEmail(context.claims?.email as string | undefined);
     const bossEmail = normalizeEmail(process.env.BOSS_EMAIL);
