@@ -137,9 +137,13 @@ function Index() {
           style={{
             // Reserve breathing room that scales with the glow radius so the
             // metallic halo never clips on phones, tablets, or desktops.
-            paddingBlock: "clamp(1.25rem, 0.75rem + 5vw, 5.5rem)",
-            paddingInline: "clamp(0.75rem, 0.25rem + 4vw, 4.5rem)",
-            marginInline: "calc(-1 * clamp(0.75rem, 0.25rem + 4vw, 4.5rem))",
+            // Negative margin is capped via min() so it can never exceed the
+            // available gutter on the viewport — preventing horizontal
+            // overflow on ultra-wide screens while keeping the lockup
+            // perfectly centered (symmetrical padding + margin on both sides).
+            paddingBlock: "clamp(1rem, 0.5rem + 4vw, 4.5rem)",
+            paddingInline: "min(clamp(0.5rem, 0.25rem + 2.5vw, 3rem), calc((100vw - 100%) / 2))",
+            marginInline: "calc(-1 * min(clamp(0.5rem, 0.25rem + 2.5vw, 3rem), calc((100vw - 100%) / 2)))",
           }}
         >
           <OgWordmark
