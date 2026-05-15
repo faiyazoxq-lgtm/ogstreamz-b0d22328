@@ -265,13 +265,16 @@ export function NavBar() {
         // background, blur, border colour, or shadow. The animated
         // properties above are paint-only — combined with `contain: layout`
         // they cannot trigger layout shift on the page below.
-        ["--brand-h" as any]: "clamp(4rem, 2rem + 22vw, 28rem)",
+        // Mobile-first ramp: stays compact (≈3–3.7rem tall) on 320–420px
+        // phones so the lockup, Sign-in pill, and burger fit on one row,
+        // then accelerates on tablets/desktops up to a 28rem ceiling.
+        ["--brand-h" as any]: "clamp(3rem, 0.5rem + 12vw, 28rem)",
         contain: "layout paint style",
         willChange: "background-color, box-shadow",
       }}
     >
       <nav
-        className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap min-w-0 px-2 sm:px-8 py-2.5 sm:py-3 gap-2 sm:gap-4"
+        className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap min-w-0 px-1.5 sm:px-8 py-1.5 sm:py-3 gap-1.5 sm:gap-4"
         style={{
           // Reserve full brand-h up front so the row never grows after the
           // <img> finishes decoding (no late CLS, no jump on first scroll).
@@ -297,9 +300,9 @@ export function NavBar() {
               });
             }
           }}
-          className="brand-glow group min-w-0 flex-1 sm:flex-initial h-full -ml-1 sm:ml-0 pl-1.5 pr-3 sm:pl-2 sm:pr-4 py-1 min-h-12 sm:min-h-0 rounded-2xl outline-none transition-[border-color,box-shadow,background-color] duration-200 border border-transparent hover:border-gold/30 bg-transparent hover:bg-transparent focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:shadow-[0_0_24px_-4px_var(--gold)] touch-manipulation flex items-center overflow-hidden"
+          className="brand-glow group min-w-0 flex-1 sm:flex-initial h-full ml-0 pl-1 pr-1.5 sm:pl-2 sm:pr-4 py-0.5 sm:py-1 min-h-12 sm:min-h-0 rounded-2xl outline-none transition-[border-color,box-shadow,background-color] duration-200 border border-transparent hover:border-gold/30 bg-transparent hover:bg-transparent focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:shadow-[0_0_24px_-4px_var(--gold)] touch-manipulation flex items-center overflow-hidden"
           style={{
-            gap: "clamp(0.4rem, 0.9vw + 0.2rem, 0.9rem)",
+            gap: "clamp(0.25rem, 0.6vw + 0.1rem, 0.9rem)",
             // Inherit --brand-h from <header> so a single source of truth
             // controls the lockup height, the nav row height, and each
             // logo's max-height — no chance of one resizing without the
@@ -318,7 +321,9 @@ export function NavBar() {
               height: "var(--brand-h)",
               maxHeight: "var(--brand-h)",
               width: "auto",
-              maxWidth: "min(45vw, 28rem)",
+              // Tighter cap on small phones so the wordmark next to it
+              // still has room to render at a legible size.
+              maxWidth: "min(38vw, 28rem)",
               aspectRatio: "16 / 9",
               objectFit: "contain",
             }}
@@ -327,7 +332,7 @@ export function NavBar() {
             suffix="-PORTAL"
             fit
             maxFontSize={416}
-            minFontSize={44}
+            minFontSize={28}
             className="brand-glow__mark inline-flex items-center self-center min-w-0 flex-shrink whitespace-nowrap text-white font-black bg-transparent leading-[0.9] transition-[color,text-shadow,filter,letter-spacing] duration-300 ease-out tracking-[-0.005em] sm:tracking-[-0.018em] md:tracking-[-0.028em] lg:tracking-[-0.034em] xl:tracking-[-0.04em] drop-shadow-[0_0_18px_oklch(0.72_0.22_245/0.55)]"
             style={{
               // Auto-fit handles the font-size; keep typographic refinements.
