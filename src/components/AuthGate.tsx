@@ -55,14 +55,14 @@ function PromoLanding() {
         <div className="pointer-events-none absolute -bottom-32 -left-24 h-72 w-72 rounded-full bg-fuchsia-500/20 blur-3xl" />
 
         <div className="relative">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <TVStaticLogo size={56} />
-              <div className="flex flex-col leading-none">
-                <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-[#7fd5ff]/80">
+          <div className="sticky top-0 z-30 -mx-6 sm:-mx-10 px-6 sm:px-10 py-3 flex flex-wrap items-center justify-between gap-4 bg-black/70 backdrop-blur-md border-b border-white/10 rounded-t-3xl">
+            <div className="flex items-center gap-3 min-w-0">
+              <TVStaticLogo size={44} />
+              <div className="flex flex-col leading-none min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-[#7fd5ff]/80 truncate">
                   ogstreamz
                 </span>
-                <span className="mt-1 text-base font-black uppercase tracking-[0.2em] text-white">
+                <span className="mt-1 text-sm font-black uppercase tracking-[0.2em] text-white truncate">
                   Neon Platform
                 </span>
               </div>
