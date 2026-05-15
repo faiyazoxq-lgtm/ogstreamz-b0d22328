@@ -7,6 +7,7 @@ import { SyndicateProtocolSwitch } from "@/components/SyndicateProtocolSwitch";
 import { getCivility, setCivilityDefault } from "@/lib/civility.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { updateGlobalMoodToggle } from "@/lib/global-mood.functions";
+import { ChaosModeIndicator } from "@/components/boss/ChaosModeIndicator";
 
 /**
  * Unified Global Mood · Syndicate Protocol panel.
@@ -42,6 +43,11 @@ export function GlobalMoodPanel({ heading = true }: { heading?: boolean }) {
           </div>
         </header>
       )}
+
+      <div className="flex flex-wrap items-center gap-3">
+        <ChaosModeIndicator hubKey="shape-bridge" label="Full Site" />
+        <ChaosModeIndicator hubKey="og-bot" label="OG Bot" />
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <SyndicateProtocolSwitch
