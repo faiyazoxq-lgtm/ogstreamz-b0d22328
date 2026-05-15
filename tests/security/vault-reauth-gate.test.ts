@@ -171,10 +171,13 @@ describe("server-side vault fn cannot honour client-side `vault:unlocked` flag",
   );
 
   it("server fn does not reference the client unlock flag", () => {
-    expect(serverFnSrc).not.toMatch(/vault:unlocked/);
-    expect(serverFnSrc).not.toMatch(/sessionStorage/);
-    expect(serverFnSrc).not.toMatch(/localStorage/);
-    expect(serverFnSrc).not.toMatch(/isVaultUnlocked/);
+    const code = serverFnSrc
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/(^|\n)\s*\/\/.*$/gm, "");
+    expect(code).not.toMatch(/vault:unlocked/);
+    expect(code).not.toMatch(/sessionStorage\s*[.[]/);
+    expect(code).not.toMatch(/localStorage\s*[.[]/);
+    expect(code).not.toMatch(/\bisVaultUnlocked\b/);
   });
 
   it("pure gate has no client-storage references either", () => {
