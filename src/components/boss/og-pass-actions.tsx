@@ -33,6 +33,7 @@ export type ActionKey =
   | "audit.user-log" | "audit.security-events" | "audit.sessions"
   | "profile.display-name" | "profile.avatar" | "profile.og-pass-no";
 
+
 export type ActionCtx = {
   row: RosterRow;
   /** Wrap the call so the page can show busy/toast state. */
