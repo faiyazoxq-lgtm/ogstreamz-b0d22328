@@ -83,11 +83,9 @@ export type HandlerRegistry = {
   revokeVipForUser: (userId: string) => Promise<unknown>;
 };
 
-const RANKS = ["prospect", "enforcer", "stream_user", "vip", "boss"];
-const RANK_LABEL: Record<string, string> = {
-  prospect: "Visitor", enforcer: "Member", stream_user: "Stream User",
-  vip: "VIP / Real OG", boss: "Boss",
-};
+import { OG_TIERS, OG_TIER_LABEL } from "@/lib/og-tier";
+const RANKS = OG_TIERS as readonly string[];
+const RANK_LABEL = OG_TIER_LABEL as Record<string, string>;
 
 export function buildCatalog(reg: HandlerRegistry): Category[] {
   const promptCoinDelta = ({ row, run }: ActionCtx, sign: 1 | -1) => {
@@ -112,12 +110,12 @@ export function buildCatalog(reg: HandlerRegistry): Category[] {
           label: "Rank & status",
           actions: [
             {
-              key: "access.rank.set", label: "Change rank", icon: Crown,
-              hint: "Visitor → Member → Stream → VIP → Boss",
+              key: "access.rank.set", label: "Change OG tier", icon: Crown,
+              hint: "Free → Stream User → VIP → Real OG → Boss",
               bulkEligible: true,
-              bulkPrompt: { label: "Rank (prospect / enforcer / stream_user / vip / boss)", type: "text", placeholder: "vip" },
+              bulkPrompt: { label: "Tier (free / stream_user / vip / real_og / boss)", type: "text", placeholder: "vip" },
               handler: ({ row, run }) => {
-                const v = window.prompt(`Set rank for ${row.email}:\n${RANKS.join(", ")}`, row.rank);
+                const v = window.prompt(`Set OG tier for ${row.email}:\n${RANKS.join(", ")}`, row.og_tier ?? row.rank);
                 if (!v || !RANKS.includes(v)) return;
                 run(() => reg.setRank(row.id, v));
               },
