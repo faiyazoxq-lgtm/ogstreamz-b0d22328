@@ -132,18 +132,18 @@ function Index() {
         <p className="text-xs sm:text-sm tracking-[0.4em] uppercase font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
           Street · Static · Stream
         </p>
-        <h1 className="mt-3 sm:mt-5 text-[10rem] xs:text-[12rem] sm:text-[18rem] md:text-[22rem] leading-[0.9] flex justify-center items-center overflow-hidden">
+        <h1 className="mt-3 sm:mt-5 text-[10rem] sm:text-[16rem] md:text-[20rem] leading-[0.9] flex justify-center items-center w-full overflow-hidden">
           <OgWordmark
             suffix="-PORTAL"
-            className={`mx-auto ${isVipMember || isBoss ? "animate-glitch" : ""}`}
+            className={`block mx-auto ${isVipMember || isBoss ? "animate-glitch" : ""}`}
           />
         </h1>
-        <p className="mt-4 sm:mt-6 max-w-xl mx-auto text-muted-foreground text-base sm:text-lg">
+        <p className="mt-4 sm:mt-6 mx-auto max-w-xl text-center text-muted-foreground text-base sm:text-lg">
           One frequency.{" "}
           <span className="font-bold text-foreground tabular-nums">{portalsLabel}</span>{" "}
           live. Pick your channel.
         </p>
-        <p className="mt-2 max-w-xl mx-auto text-[12px] sm:text-sm text-muted-foreground/80">
+        <p className="mt-2 mx-auto max-w-xl text-center text-[12px] sm:text-sm text-muted-foreground/80">
           <Sparkles className="inline h-3.5 w-3.5 -mt-0.5 mr-1" style={{ color: "var(--neon-blue-bright)" }} />
           More portals spawning every week — built &amp; voted in by the growing 0G syndicate.
         </p>
