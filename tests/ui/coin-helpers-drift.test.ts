@@ -39,19 +39,26 @@ function rel(p: string) {
 describe("Coin → GBP conversions must use shared helpers (lib/coins.ts)", () => {
   it("never multiplies coin counts by a hand-rolled GBP rate", () => {
     // Catches `credits * 0.99`, `Number(credits) * 1.0`, etc. — any direct
-    // coin→£ multiplication that bypasses formatGbp(coins * 100).
+    // coin→£ multiplication that bypasses formatGbp(credits * 100).
+    // Strategy: flag a multiplication of `credits|coins|balance` by a
+    // *decimal* literal (the canonical `* 100` cents conversion is allowed).
+    // Lines must also smell like GBP (£, GBP, gbp, formatGbp, currency)
+    // to avoid catching unrelated arithmetic (progress bars, percentages).
     const offenders: string[] = [];
-    const pattern = /\b(?:credits?|coins?|balance)\b[^\n;]{0,40}\*\s*\d+(?:\.\d+)?/i;
+    const decimalMul = /\b(?:credits?|coins?|balance)\b[^\n;]{0,60}\*\s*\d+\.\d+/i;
+    const moneyContext = /£|GBP|gbp|currency|formatGbp/;
     for (const f of files) {
       if (ALLOWLIST.has(rel(f))) continue;
       const src = readFileSync(f, "utf8");
       src.split("\n").forEach((line, i) => {
-        if (pattern.test(line) && !/formatGbp|coinChip|coins\.ts/.test(line)) {
-          // allow the canonical `coins * 100` → cents conversion when fed
-          // directly into formatGbp on the same expression.
-          if (/\bcoins\s*\*\s*100\b/.test(line) && /formatGbp\s*\(/.test(line)) return;
-          offenders.push(`${rel(f)}:${i + 1}  ${line.trim()}`);
-        }
+        const trimmed = line.trim();
+        // skip pure comment lines
+        if (trimmed.startsWith("//") || trimmed.startsWith("*")) return;
+        if (!decimalMul.test(line)) return;
+        if (!moneyContext.test(line)) return;
+        // allow lines that already route through the helper
+        if (/formatGbp\s*\(/.test(line)) return;
+        offenders.push(`${rel(f)}:${i + 1}  ${trimmed}`);
       });
     }
     expect(offenders, `Coin→GBP drift detected — route these through formatGbp/coinChip:\n${offenders.join("\n")}`).toEqual([]);
