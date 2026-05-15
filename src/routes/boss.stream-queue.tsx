@@ -43,7 +43,7 @@ function StreamQueuePage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { rows: r } = await listStreamReqsFn({ data: { status: tab } });
+      const { rows: r } = await bossListStreamRequests({ data: { status: tab } });
       setRows(r as Req[]);
     } catch {
       setRows([]);
@@ -58,7 +58,7 @@ function StreamQueuePage() {
   const decide = async (id: string, approve: boolean) => {
     setBusyId(id);
     try {
-      await decideStreamReqFn({ data: { id, approve, note: noteFor[id] ?? undefined } });
+      await bossDecideStreamRequest({ data: { id, approve, note: noteFor[id] ?? undefined } });
     } catch (e: any) {
       setBusyId(null);
       alert(e?.message ?? "Failed");
