@@ -259,8 +259,27 @@ export async function runOGBotDraft(opts: {
     `Field hints — only emit keys from this list:\n${hintsBlock}`,
   ].filter(Boolean).join("\n");
 
+  // Read the OG-Bot mood toggle from hub_settings. This is independent
+  // of the full-site shape-bridge mood — chaos here only affects OG Bot.
+  let ogMode: "og" | "normal" = "og";
+  let ogEnabled = true;
+  try {
+    const { data: cfg } = await opts.supabase
+      .from("hub_settings")
+      .select("enabled, tuning")
+      .eq("hub_key", "og-bot")
+      .maybeSingle();
+    if (cfg) {
+      ogEnabled = !!cfg.enabled;
+      const t = (cfg.tuning ?? {}) as { mode?: string };
+      ogMode = t.mode === "normal" ? "normal" : "og";
+    }
+  } catch {
+    // fall back to defaults on any read error
+  }
+
   const messages: Array<Record<string, unknown>> = [
-    { role: "system", content: `${SYSTEM_PROMPT}\n\n${surfaceCtx}` },
+    { role: "system", content: `${buildSystemPrompt(ogMode, ogEnabled)}\n\n${surfaceCtx}` },
     ...opts.history.slice(-8).map((m) => ({ role: m.role, content: m.content })),
     { role: "user", content: opts.message },
   ];
