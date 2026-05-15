@@ -63,8 +63,8 @@ describe("CoinChip component contract (src/components/CoinChip.tsx)", () => {
     expect(src).toMatch(/n\/a/i);
   });
 
-  it("uses tabular currency formatting via toLocaleString for the coin count", () => {
-    expect(src).toMatch(/coins\.toLocaleString\(\)/);
+  it("formats the coin count via en-GB toLocaleString (matches pricing pages)", () => {
+    expect(src).toMatch(/toLocaleString\(\s*["']en-GB["']\s*\)/);
   });
 
   it("is mobile-safe: shrink-0 + whitespace-nowrap on both branches", () => {
