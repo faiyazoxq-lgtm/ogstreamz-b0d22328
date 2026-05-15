@@ -602,10 +602,10 @@ function AccountMenu({
       <Link
         to="/auth"
         className="inline-flex items-center gap-1.5 btn-glass-blue px-4 sm:px-5 py-1.5 rounded-full text-[11px] sm:text-xs uppercase tracking-[0.2em] font-bold text-white transition-transform hover:brightness-110 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-        aria-label="Join"
+        aria-label="Sign in"
       >
         <LogIn className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">Join</span>
+        <span className="hidden sm:inline">Sign in</span>
       </Link>
     );
   }

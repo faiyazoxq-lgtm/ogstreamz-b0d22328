@@ -7,7 +7,6 @@ import { LogIn, Gift, ShieldCheck, Sparkles, Music2, Smile, Wrench, Zap, Lock, A
 export const SIGNUP_BONUS_CREDITS = 2;
 import { useEffect, type ReactNode } from "react";
 import { useSignupBonus } from "@/hooks/use-signup-bonus";
-import { OgWordmark } from "@/components/OgWordmark";
 
 const PUBLIC_PATHS = ["/auth", "/forgot-password", "/reset-password"];
 
@@ -55,24 +54,14 @@ function PromoLanding() {
         <div className="pointer-events-none absolute -bottom-32 -left-24 h-72 w-72 rounded-full bg-fuchsia-500/20 blur-3xl" />
 
         <div className="relative">
-          <div className="sticky top-0 z-30 -mx-6 sm:-mx-10 px-6 sm:px-10 py-3 flex flex-wrap items-center justify-between gap-4 bg-black/70 backdrop-blur-md border-b border-white/10 rounded-t-3xl">
-            <Link
-              to="/"
-              aria-label="ogstreamz home"
-              className="flex items-center gap-3 min-w-0 rounded-lg outline-none ring-offset-2 ring-offset-black focus-visible:ring-2 focus-visible:ring-[#7fd5ff]"
-            >
-              <OgWordmark suffix="-PORTAL" fit maxFontSize={120} />
-            </Link>
-            <Link
-              to="/auth"
-              className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.2em] text-white/90 backdrop-blur transition hover:bg-white/15"
-            >
-              <LogIn className="h-3.5 w-3.5" />
-              Sign in
-            </Link>
-          </div>
+          <h2
+            className="text-center font-black uppercase tracking-[0.18em] leading-[0.95] bg-gradient-to-b from-white via-[#bfe6ff] to-[#3aa0ff] bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(0,170,255,0.55)]"
+            style={{ fontSize: "clamp(2.25rem, 7vw, 4.5rem)" }}
+          >
+            OG STREAMZ
+          </h2>
 
-          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#00aaff]/40 bg-[#00aaff]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-[#7fd5ff]">
+          <div className="mt-5 mx-auto inline-flex items-center gap-2 rounded-full border border-[#00aaff]/40 bg-[#00aaff]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-[#7fd5ff]">
             <Lock className="h-3 w-3" />
             Members only
           </div>
