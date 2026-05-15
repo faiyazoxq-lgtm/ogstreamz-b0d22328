@@ -367,6 +367,24 @@ export type Database = {
         }
         Relationships: []
       }
+      boss_action_favourites: {
+        Row: {
+          action_keys: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_keys?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_keys?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       boss_audit_log: {
         Row: {
           action: string
