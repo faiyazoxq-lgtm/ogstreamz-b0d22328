@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Loader2, Send, Sparkles, Zap, ExternalLink, KeyRound, Music, Video, Image as ImageIcon } from "lucide-react";
+import { Loader2, Send, Sparkles, Shield, ExternalLink, KeyRound, Music, Video, Image as ImageIcon } from "lucide-react";
 
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -16,12 +16,12 @@ export const Route = createFileRoute("/og-bot")({
   head: () => ({
     meta: [
       { title: "OG Bot · Research & Creative Powerhouse" },
-      { name: "description", content: "Chat with OG Bot — Normal mode for fast Gemini chat, OG Mode for Perplexity-grounded research, image, music and video generation." },
+      { name: "description", content: "Chat with OG Bot — Safe Mode for fast clean Gemini chat, OG Mode for Perplexity-grounded research with full chaos personality, image, music and video generation." },
     ],
   }),
 });
 
-type Mode = "normal" | "og";
+type Mode = "normal" | "og"; // wire stays "normal" | "og"; UI label is Safe / OG
 type Source = { url: string; title?: string; snippet?: string };
 type Media = NonNullable<Extract<StreamEvent, { type: "media" }>>;
 
@@ -145,8 +145,8 @@ function OgBotPage() {
           </h1>
           <p className="text-xs text-muted-foreground">
             {mode === "og"
-              ? "OG Mode · Perplexity Sonar Pro → Gemini 3.1 Pro / GPT-5.5 · image · music · video"
-              : "Normal Mode · Gemini 3 Flash · fast general assistance"}
+              ? "OG Mode · Perplexity Sonar Pro → Gemini 3.1 Pro / GPT-5.5 · chaos personality · image · music · video"
+              : "Safe Mode · Gemini 3 Flash · fast, clean, brand-safe assistance"}
           </p>
         </div>
         <ModeToggle mode={mode} onChange={setMode} disabled={busy} />
@@ -155,8 +155,8 @@ function OgBotPage() {
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto rounded-lg border bg-card/30 p-4">
         {messages.length === 0 && (
           <div className="py-12 text-center text-sm text-muted-foreground">
-            Ask anything. In <strong>OG Mode</strong> I research first with Perplexity, then synthesize with Gemini Pro / GPT-5.5.
-            Say "make an image of…", "make a song…", or "make a video…" to trigger media tools.
+            Ask anything. In <strong>Safe Mode</strong> you get clean Gemini Flash. In <strong>OG Mode</strong> I research with Perplexity then synthesize with Gemini Pro / GPT-5.5 — full chaos voice on.
+            Say "make an image of…", "make a song…", or "make a video…" to trigger media tools (OG Mode only).
           </div>
         )}
 
@@ -184,7 +184,7 @@ function OgBotPage() {
               void send();
             }
           }}
-          placeholder={mode === "og" ? "Ask anything — I'll research and synthesize…" : "Quick question for Normal mode…"}
+          placeholder={mode === "og" ? "Ask anything — I'll research, synthesize, and let rip…" : "Quick clean question for Safe Mode…"}
           rows={2}
           className="resize-none"
           disabled={busy}
@@ -206,7 +206,7 @@ function ModeToggle({ mode, onChange, disabled }: { mode: Mode; onChange: (m: Mo
         onClick={() => onChange("normal")}
         className={`flex items-center gap-1 rounded-full px-3 py-1.5 transition ${mode === "normal" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
       >
-        <Zap className="h-3 w-3" /> Normal
+        <Shield className="h-3 w-3" /> Safe Mode
       </button>
       <button
         type="button"
@@ -222,11 +222,11 @@ function ModeToggle({ mode, onChange, disabled }: { mode: Mode; onChange: (m: Mo
 
 function ResearchStatusBar({ stage, sources }: { stage: string; sources: Source[] }) {
   const label =
-    stage === "researching" ? "Deep Researching with Perplexity Sonar Pro…" :
-    stage === "thinking" ? "Synthesizing with Gemini / GPT-5.5…" :
-    stage === "finalizing" ? "Finalizing answer…" :
-    stage === "generating" ? "Generating media…" :
-    stage === "classifying" ? "Routing intent…" :
+    stage === "researching" ? "OG Mode: Consulting Perplexity Sonar Pro…" :
+    stage === "thinking" ? "Gemini / GPT-5.5: Synthesizing research…" :
+    stage === "finalizing" ? "Gemini: Finalizing Synthesis…" :
+    stage === "generating" ? "Creative Engine: Generating media…" :
+    stage === "classifying" ? "Router: Detecting intent…" :
     `${stage}…`;
 
   return (
@@ -263,7 +263,7 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
         {!isUser && msg.mode && (
           <div className="flex items-center gap-2">
             <Badge variant={msg.mode === "og" ? "default" : "secondary"} className="text-[10px]">
-              {msg.mode === "og" ? "OG MODE" : "NORMAL"}
+              {msg.mode === "og" ? "OG MODE" : "SAFE MODE"}
             </Badge>
             {msg.model && <span className="text-[10px] text-muted-foreground font-mono">{msg.model}</span>}
           </div>
@@ -309,6 +309,28 @@ function MediaCard({ media }: { media: Media }) {
         <img src={media.dataUrl} alt={media.prompt} className="w-full" />
         <div className="border-t p-2 text-[11px] text-muted-foreground flex items-center gap-1">
           <ImageIcon className="h-3 w-3" /> Nano Banana 2 · {media.prompt.slice(0, 80)}
+        </div>
+      </Card>
+    );
+  }
+
+  if (media.kind === "music" && media.status === "ready" && media.dataUrl) {
+    return (
+      <Card className="overflow-hidden p-3 space-y-2">
+        <div className="text-[11px] text-muted-foreground flex items-center gap-1">
+          <Music className="h-3 w-3" /> Lyria 3 · {media.prompt.slice(0, 80)}
+        </div>
+        <audio src={media.dataUrl} controls className="w-full" preload="metadata" />
+      </Card>
+    );
+  }
+
+  if (media.kind === "video" && media.status === "ready" && media.dataUrl) {
+    return (
+      <Card className="overflow-hidden p-0">
+        <video src={media.dataUrl} controls playsInline className="w-full" preload="metadata" />
+        <div className="border-t p-2 text-[11px] text-muted-foreground flex items-center gap-1">
+          <Video className="h-3 w-3" /> Veo · {media.prompt.slice(0, 80)}
         </div>
       </Card>
     );
