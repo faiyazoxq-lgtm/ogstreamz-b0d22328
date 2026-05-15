@@ -543,6 +543,7 @@
   .og-portal-shimmer {
     position: relative;
     isolation: isolate;
+    transition: --og-glow 400ms ease-out, transform 400ms ease-out;
   }
   .og-portal-shimmer > img {
     animation: og-portal-shimmer 4.8s ease-in-out infinite;
@@ -567,6 +568,34 @@
   @media (prefers-reduced-motion: reduce) {
     .og-portal-shimmer > img,
     .og-portal-shimmer::after { animation: none !important; }
+  }
+
+  /* Cinematic hover/focus: bump halo strength and brighten the sheen
+     without re-triggering motion. Static under reduced-motion (no sweep). */
+  .og-portal-shimmer:hover,
+  .og-portal-shimmer:focus-visible,
+  .og-portal-shimmer:focus-within {
+    --og-glow: 1.45;
+    outline: none;
+  }
+  .og-portal-shimmer:hover::after,
+  .og-portal-shimmer:focus-visible::after,
+  .og-portal-shimmer:focus-within::after {
+    background: linear-gradient(
+      100deg,
+      transparent 30%,
+      color-mix(in oklab, var(--og-gold-bright) 80%, transparent) 50%,
+      transparent 70%
+    );
+    animation-duration: 2.6s;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .og-portal-shimmer:hover,
+    .og-portal-shimmer:focus-visible,
+    .og-portal-shimmer:focus-within { --og-glow: 1.25; }
+    .og-portal-shimmer:hover::after,
+    .og-portal-shimmer:focus-visible::after,
+    .og-portal-shimmer:focus-within::after { animation: none !important; }
   }
 
   /* Crispy electric-ice wordmark — matches the TrackingEye palette.
