@@ -30,13 +30,16 @@ export function OgWordmark({
   const height = fit
     ? `${maxFontSize}px`
     : "clamp(1.35em, 1.2em + 0.6vw, 1.7em)";
-  // Stacked filter: warm gold halo for brand contrast + dark contrast ring
-  // so the lockup pops on light, dark, and busy photographic backgrounds.
+  // Metallic, darker halo: deep black contrast ring with a tight burnished
+  // gold accent. Reads as polished metal under a warm spotlight rather than
+  // a soft glow — keeps brand gold but dials saturation down for cinema.
   const glow = [
-    "drop-shadow(0 1px 0 rgba(0,0,0,0.55))",
-    "drop-shadow(0 0 6px rgba(0,0,0,0.45))",
-    "drop-shadow(0 0 14px oklch(0.78 0.16 78 / 0.55))",
-    "drop-shadow(0 0 28px oklch(0.74 0.18 72 / 0.35))",
+    "drop-shadow(0 1px 0 rgba(0,0,0,0.85))",
+    "drop-shadow(0 0 4px rgba(0,0,0,0.85))",
+    "drop-shadow(0 0 10px rgba(0,0,0,0.7))",
+    "drop-shadow(0 0 18px oklch(0.55 0.14 72 / 0.65))",
+    "drop-shadow(0 0 34px oklch(0.42 0.10 70 / 0.55))",
+    "drop-shadow(0 0 70px oklch(0.30 0.06 60 / 0.45))",
   ].join(" ");
   return (
     <span
