@@ -638,6 +638,23 @@ function AuthPage() {
           </Button>
         </div>
         )}
+        </div>
+        {/* RIGHT: vault wallpaper panel — desktop only */}
+        <aside
+          aria-hidden
+          className="hidden lg:block sticky top-24 h-[640px] max-h-[80vh] rounded-2xl overflow-hidden border border-[oklch(0.72_0.22_245/0.45)] shadow-[0_0_80px_-10px_oklch(0.72_0.22_245/0.55)]"
+        >
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url(${vaultWallpaper})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-background/60" />
+          <div className="absolute inset-2 rounded-xl border border-white/5 pointer-events-none" />
+        </aside>
       </div>
     </main>
   );
