@@ -355,7 +355,7 @@ function AdminPage() {
       <SectionHeader id="command" icon={<Terminal className="h-4 w-4" />} label="Command Deck · Superuser" tint="#ff00aa" />
       <div className="space-y-6">
         <OpsSnapshotPanel />
-        <AgentConsolePanel />
+        <AgentConsoleMovedNotice />
         <MaintenancePanel />
       </div>
 
