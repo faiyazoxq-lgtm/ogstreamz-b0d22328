@@ -668,9 +668,12 @@ function AuthPage() {
               backgroundImage: `url(${vaultWallpaper})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
+              filter: "blur(6px) saturate(0.85)",
+              transform: "scale(1.06)",
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-background/60" />
+          <div className="absolute inset-0 bg-background/55" />
+          <div className="absolute inset-0 bg-gradient-to-l from-background/30 via-background/45 to-background/80" />
           <div className="absolute inset-2 rounded-xl border border-white/5 pointer-events-none" />
         </aside>
       </div>
