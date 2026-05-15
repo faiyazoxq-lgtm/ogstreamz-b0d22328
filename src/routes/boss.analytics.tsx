@@ -55,6 +55,7 @@ function hostnameOf(ref: string | null): string {
 }
 
 function AnalyticsPage() {
+  const bossPurgeViewEventsFn = useServerFn(bossPurgeViewEvents);
   const { user, profile, isAdmin, loading: authLoading } = useAuth();
   const isBoss = profile?.rank === "boss" || isAdmin;
   const navigate = useNavigate();
