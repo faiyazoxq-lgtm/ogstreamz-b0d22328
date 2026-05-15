@@ -42,11 +42,12 @@ function StreamQueuePage() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase.rpc("boss_list_stream_requests", { _status: tab });
-    if (error) {
-      setRows([]); setLoading(false); return;
+    try {
+      const { rows: r } = await listStreamReqsFn({ data: { status: tab } });
+      setRows(r as Req[]);
+    } catch {
+      setRows([]);
     }
-    setRows((data ?? []) as Req[]);
     setLoading(false);
   }, [tab]);
 
@@ -56,11 +57,14 @@ function StreamQueuePage() {
 
   const decide = async (id: string, approve: boolean) => {
     setBusyId(id);
-    const { error } = await supabase.rpc("boss_decide_stream_request", {
-      _id: id, _approve: approve, _note: noteFor[id] ?? null,
-    });
+    try {
+      await decideStreamReqFn({ data: { id, approve, note: noteFor[id] ?? undefined } });
+    } catch (e: any) {
+      setBusyId(null);
+      alert(e?.message ?? "Failed");
+      return;
+    }
     setBusyId(null);
-    if (error) { alert(error.message); return; }
     await load();
   };
 

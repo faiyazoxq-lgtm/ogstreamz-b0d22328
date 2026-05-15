@@ -47,6 +47,7 @@ export const Route = createFileRoute("/boss/portals")({
 });
 
 function PortalsManager() {
+  const setPortalPublishedFn = useServerFn(bossSetPortalPublished);
   const [rows, setRows] = useState<Portal[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
