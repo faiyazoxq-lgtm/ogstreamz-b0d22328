@@ -152,7 +152,11 @@ const reachable = [];      // 2xx or non-42501 4xx — the boss reached the body
 for (const fn of fns) {
   const r = await callRpc(fn.name, buildArgs(fn));
   const isExecuteDenied =
-    r.status === 403 && /permission denied for function/i.test(r.body);
+    (r.status === 403 && /permission denied for function/i.test(r.body)) ||
+    // PostgREST refuses to dispatch (overload ambiguity / no matching sig)
+    // BEFORE EXECUTE is checked. Same response goes to every identity, so
+    // no privilege boundary is crossed — count as "expected not reachable".
+    /PGRST20[23]/i.test(r.body);
   if (isExecuteDenied) {
     expectedDenied.push({ ...r, name: fn.name });
     console.log(`[EXPECTED 42501] ${fn.name}(${fn.args_sig})`);
