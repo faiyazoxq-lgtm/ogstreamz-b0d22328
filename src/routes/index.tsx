@@ -182,6 +182,7 @@ function Index() {
           </Link>
         </div>
       </section>
+      <LockupOverflowDebug />
 
       {/* Promo cards — only shown to VIP/Boss to keep the welcome page calm
           for everyone else. Non-VIP users get a single subtle "Become VIP"
