@@ -8,7 +8,6 @@ export const SIGNUP_BONUS_CREDITS = 2;
 import { useEffect, type ReactNode } from "react";
 import { useSignupBonus } from "@/hooks/use-signup-bonus";
 import { OgWordmark } from "@/components/OgWordmark";
-import { TVStaticLogo } from "@/components/TVStaticLogo";
 
 const PUBLIC_PATHS = ["/auth", "/forgot-password", "/reset-password"];
 
