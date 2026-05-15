@@ -55,3 +55,22 @@ export const bossRestoreFunctionExecute = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const bossUpsertFunctionAudit = createServerFn({ method: "POST" })
+  .middleware([requireBoss])
+  .inputValidator((d: unknown) =>
+    z.object({
+      signature: z.string().min(3).max(500),
+      justification: z.string().max(4000),
+      status: z.enum(["needs_review", "justified", "revoke"]),
+    }).parse(d)
+  )
+  .handler(async ({ data }) => {
+    const { error } = await (supabaseAdmin as any).rpc("boss_upsert_function_audit", {
+      _signature: data.signature,
+      _justification: data.justification,
+      _status: data.status,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
