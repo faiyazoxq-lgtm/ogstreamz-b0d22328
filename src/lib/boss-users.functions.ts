@@ -163,7 +163,7 @@ export const setBanned = createServerFn({ method: "POST" })
     const { supabase } = context as any;
     const { data: prev } = await supabase
       .from("profiles").select("banned,banned_reason").eq("id", data.userId).maybeSingle();
-    const { error } = await supabaseAdmin.rpc("boss_set_banned", {
+    const { error } = await (supabaseAdmin as any).rpc("boss_set_banned", {
       _user_id: data.userId, _banned: data.banned, _reason: data.reason,
     });
     if (error) throw new Error(error.message);
