@@ -100,10 +100,15 @@ function AnalyticsPage() {
   const purgeNow = async () => {
     if (!confirm(`Purge all view events older than ${retentionDays} days now?`)) return;
     setPurging(true);
-    const { data, error } = await supabase.rpc("boss_purge_view_events");
-    setPurging(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success(`Purged ${data ?? 0} event${data === 1 ? "" : "s"}`);
+    try {
+      const { purged } = await bossPurgeViewEventsFn({});
+      setPurging(false);
+      toast.success(`Purged ${purged} event${purged === 1 ? "" : "s"}`);
+    } catch (e: any) {
+      setPurging(false);
+      toast.error(e?.message ?? "Purge failed");
+      return;
+    }
     load();
   };
 
