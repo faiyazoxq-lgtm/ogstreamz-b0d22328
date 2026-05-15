@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "../hooks/use-auth";
-import { UserPlus, LogIn, Gift, ShieldCheck, Sparkles, Music2, Smile, Wrench, Zap, Lock, ArrowRight, Coins } from "lucide-react";
+import { LogIn, Gift, ShieldCheck, Sparkles, Music2, Smile, Wrench, Zap, Lock, ArrowRight, Coins } from "lucide-react";
 
 // Fallback used while the live value loads or if the request fails.
 // Live value comes from public.app_settings (key: signup_bonus_credits).
@@ -9,8 +9,6 @@ import { useEffect, type ReactNode } from "react";
 import { useSignupBonus } from "@/hooks/use-signup-bonus";
 import { OgWordmark } from "@/components/OgWordmark";
 import { TVStaticLogo } from "@/components/TVStaticLogo";
-import { useState } from "react";
-import { SignInModal } from "@/components/SignInModal";
 
 const PUBLIC_PATHS = ["/auth", "/forgot-password", "/reset-password"];
 
@@ -50,7 +48,6 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
 function PromoLanding() {
   const bonus = useSignupBonus();
-  const [signInOpen, setSignInOpen] = useState(false);
   return (
     <main className="relative mx-auto w-full max-w-5xl px-5 py-10 sm:py-14">
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#001a33] via-[#000914] to-black p-6 sm:p-10 shadow-[0_30px_120px_-20px_rgba(0,170,255,0.45)]">
@@ -120,24 +117,15 @@ function PromoLanding() {
             </div>
           </div>
 
-          <div className="mt-7 flex flex-col sm:flex-row gap-3">
+          <div className="mt-7">
             <Link
               to="/auth"
-              search={{ mode: "signup" } as never}
-              className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00aaff] to-[#0077cc] px-6 py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-white shadow-[0_10px_40px_-10px_rgba(0,170,255,0.8)] transition hover:scale-[1.02]"
-            >
-              <UserPlus className="h-4 w-4" />
-              Create free account
-              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-            </Link>
-            <button
-              type="button"
-              onClick={() => setSignInOpen(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-white/90 backdrop-blur transition hover:bg-white/10"
+              className="group inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00aaff] to-[#0077cc] px-6 py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-white shadow-[0_10px_40px_-10px_rgba(0,170,255,0.8)] transition hover:scale-[1.02]"
             >
               <LogIn className="h-4 w-4" />
-              Members sign in
-            </button>
+              Sign in
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+            </Link>
           </div>
 
           <ul className="mt-7 grid gap-2.5 sm:grid-cols-3">
@@ -188,7 +176,6 @@ function PromoLanding() {
           </div>
         </div>
       </div>
-      <SignInModal open={signInOpen} onOpenChange={setSignInOpen} />
     </main>
   );
 }
