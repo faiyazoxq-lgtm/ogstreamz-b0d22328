@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireBoss, rejectBoss } from "@/integrations/supabase/boss-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export const requestTopup = createServerFn({ method: "POST" })
   .middleware([rejectBoss])
@@ -55,7 +56,7 @@ export const bossApproveTopup = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
-    const { data: result, error } = await supabase.rpc("boss_approve_topup", {
+    const { data: result, error } = await supabaseAdmin.rpc("boss_approve_topup", {
       _id: data.id,
       _credits: data.credits,
       _note: data.note,
@@ -72,7 +73,7 @@ export const bossDenyTopup = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
-    const { error } = await supabase.rpc("boss_deny_topup", { _id: data.id, _note: data.note });
+    const { error } = await supabaseAdmin.rpc("boss_deny_topup", { _id: data.id, _note: data.note });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
