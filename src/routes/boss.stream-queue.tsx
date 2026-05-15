@@ -43,6 +43,11 @@ function StreamQueuePage() {
   const [noteFor, setNoteFor] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
+    if (!isBoss) {
+      setRows([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const { rows: r } = await listStreamReqsFn({ data: { status: tab } });
@@ -51,7 +56,7 @@ function StreamQueuePage() {
       setRows([]);
     }
     setLoading(false);
-  }, [tab, listStreamReqsFn]);
+  }, [tab, listStreamReqsFn, isBoss]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -72,9 +77,15 @@ function StreamQueuePage() {
 
   if (!isBoss) {
     return (
-      <div className="rounded-2xl border border-border bg-card p-8 text-center">
-        <ShieldCheck className="h-8 w-8 mx-auto text-muted-foreground" />
-        <p className="mt-3 text-sm text-muted-foreground">Boss access required.</p>
+      <div className="rounded-2xl border border-destructive/40 bg-card p-8 text-center max-w-md mx-auto">
+        <Lock className="h-8 w-8 mx-auto text-destructive" />
+        <h2 className="mt-3 font-[Montserrat] font-black text-lg text-metallic">Restricted Area</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          The Stream Verification Queue is boss-only. Stream requests are not loaded for your account.
+        </p>
+        <p className="mt-1 text-[11px] uppercase tracking-wider text-muted-foreground/70">
+          <ShieldCheck className="inline h-3 w-3 mr-1" /> Boss credentials required
+        </p>
       </div>
     );
   }
