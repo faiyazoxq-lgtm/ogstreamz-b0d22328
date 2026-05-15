@@ -2,6 +2,7 @@ import { Mail, Calendar, ShieldAlert, Heart } from "lucide-react";
 import { CoinChip } from "@/components/CoinChip";
 import { PassStatusRow } from "@/components/PassStatusRow";
 import { OG_TIER_LABEL, OG_TIER_TONE, rankToOgTier, type OgTier } from "@/lib/og-tier";
+import { useFFBadgeEnabled } from "@/hooks/use-ff-badge-enabled";
 
 type Props = {
   /** Roster row from listRoster — must include og_pass_no, contact_card, etc. */
@@ -27,6 +28,7 @@ export function BossOgPassCard({ row, actions, onSelect }: Props) {
   const tierLabel = OG_TIER_LABEL[tier];
   const tierTone = OG_TIER_TONE[tier];
   const joined = row.created_at ? new Date(row.created_at).toLocaleDateString() : null;
+  const ffBadgeEnabled = useFFBadgeEnabled();
 
   // Build the profile shape PassStatusRow expects.
   const passProfile = {
@@ -101,7 +103,7 @@ export function BossOgPassCard({ row, actions, onSelect }: Props) {
                 <ShieldAlert className="h-3 w-3" /> Banned
               </span>
             )}
-            {row.is_friends_family && (
+            {row.is_friends_family && ffBadgeEnabled && (
               <span
                 className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded font-bold border"
                 style={{
