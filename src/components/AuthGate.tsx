@@ -9,6 +9,8 @@ import { useEffect, type ReactNode } from "react";
 import { useSignupBonus } from "@/hooks/use-signup-bonus";
 import { OgWordmark } from "@/components/OgWordmark";
 import { TVStaticLogo } from "@/components/TVStaticLogo";
+import { useState } from "react";
+import { SignInModal } from "@/components/SignInModal";
 
 const PUBLIC_PATHS = ["/auth", "/forgot-password", "/reset-password"];
 
@@ -48,6 +50,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
 function PromoLanding() {
   const bonus = useSignupBonus();
+  const [signInOpen, setSignInOpen] = useState(false);
   return (
     <main className="relative mx-auto w-full max-w-5xl px-5 py-10 sm:py-14">
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#001a33] via-[#000914] to-black p-6 sm:p-10 shadow-[0_30px_120px_-20px_rgba(0,170,255,0.45)]">
@@ -67,13 +70,14 @@ function PromoLanding() {
                 </span>
               </div>
             </div>
-            <Link
-              to="/auth"
+            <button
+              type="button"
+              onClick={() => setSignInOpen(true)}
               className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.2em] text-white/90 backdrop-blur transition hover:bg-white/15"
             >
               <LogIn className="h-3.5 w-3.5" />
               Sign in
-            </Link>
+            </button>
           </div>
 
           <div className="mt-6 flex justify-center sm:justify-start">
@@ -123,13 +127,14 @@ function PromoLanding() {
               Create free account
               <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
             </Link>
-            <Link
-              to="/auth"
+            <button
+              type="button"
+              onClick={() => setSignInOpen(true)}
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-white/90 backdrop-blur transition hover:bg-white/10"
             >
               <LogIn className="h-4 w-4" />
               Members sign in
-            </Link>
+            </button>
           </div>
 
           <ul className="mt-7 grid gap-2.5 sm:grid-cols-3">
@@ -180,6 +185,7 @@ function PromoLanding() {
           </div>
         </div>
       </div>
+      <SignInModal open={signInOpen} onOpenChange={setSignInOpen} />
     </main>
   );
 }
