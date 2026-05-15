@@ -2626,6 +2626,39 @@ export type Database = {
         }
         Relationships: []
       }
+      reseller_admin_audit: {
+        Row: {
+          action: string
+          actor_user_id: string
+          created_at: string
+          delta: number | null
+          id: string
+          reason: string | null
+          reseller_id: string | null
+          target_user_id: string
+        }
+        Insert: {
+          action: string
+          actor_user_id: string
+          created_at?: string
+          delta?: number | null
+          id?: string
+          reason?: string | null
+          reseller_id?: string | null
+          target_user_id: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string
+          created_at?: string
+          delta?: number | null
+          id?: string
+          reason?: string | null
+          reseller_id?: string | null
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       reseller_credit_ledger: {
         Row: {
           created_at: string

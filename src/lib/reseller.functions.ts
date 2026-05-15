@@ -33,7 +33,7 @@ export const bossCreateReseller = createServerFn({ method: "POST" })
     markupCents: Math.max(0, Math.trunc(Number(d.markupCents ?? 500))),
   }))
   .handler(async ({ data, context }) => {
-    const { supabase } = context as any;
+    const { userId: actorUserId } = context as any;
     const { data: id, error } = await supabaseAdmin.rpc("boss_create_reseller", {
       _user_id: data.userId,
       _display_name: data.displayName,
@@ -41,6 +41,15 @@ export const bossCreateReseller = createServerFn({ method: "POST" })
       _markup_cents: data.markupCents,
     });
     if (error) throw new Error(error.message);
+    // Audit trail (best-effort — never block the RPC result on log failure)
+    await supabaseAdmin.from("reseller_admin_audit").insert({
+      action: "create",
+      actor_user_id: actorUserId,
+      target_user_id: data.userId,
+      reseller_id: id as string,
+      delta: data.initialCredits || null,
+      reason: "boss:create",
+    });
     return { id };
   });
 
@@ -52,11 +61,26 @@ export const bossTopupReseller = createServerFn({ method: "POST" })
     reason: String(d.reason ?? "boss:topup").slice(0, 120),
   }))
   .handler(async ({ data, context }) => {
-    const { supabase } = context as any;
+    const { userId: actorUserId } = context as any;
     const { data: bal, error } = await supabaseAdmin.rpc("boss_topup_reseller", {
       _user_id: data.userId, _delta: data.delta, _reason: data.reason,
     });
     if (error) throw new Error(error.message);
+    // Audit trail. Look up the reseller_id for traceability; do not fail
+    // the top-up if the audit insert errors.
+    const { data: resellerRow } = await supabaseAdmin
+      .from("reseller_accounts")
+      .select("id")
+      .eq("user_id", data.userId)
+      .maybeSingle();
+    await supabaseAdmin.from("reseller_admin_audit").insert({
+      action: "topup",
+      actor_user_id: actorUserId,
+      target_user_id: data.userId,
+      reseller_id: resellerRow?.id ?? null,
+      delta: data.delta,
+      reason: data.reason,
+    });
     return { credits: bal as number };
   });
 
