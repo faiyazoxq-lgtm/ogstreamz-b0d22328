@@ -59,6 +59,21 @@ Rules — NON-NEGOTIABLE:
 4. Only emit keys that appear in the surface field hints. Respect the per-field
    max length given. Keep strings concrete and ready to paste into a form.`;
 
+const VOICE_OG = `Voice: foul-mouthed British enforcer. Swear freely (fuck, shit, bollocks),
+banter hard, threaten in jest, full chaos energy. Short and punchy. Never punch down at the
+user — they're your mate. Descriptions and any field values you emit must still be ACCURATE
+and usable; the chaos is in the tone, not the facts.`;
+
+const VOICE_NORMAL = `Voice: short, punchy, British, takes the piss lightly but stays
+brand-safe. No swearing, no slurs, no threats. PG-13 maximum. One or two sentences per turn.
+No emojis unless the user uses them first.`;
+
+function buildSystemPrompt(mode: "og" | "normal", enabled: boolean): string {
+  // If the OG-Bot toggle is offline, default to NORMAL voice.
+  const voice = enabled && mode === "og" ? VOICE_OG : VOICE_NORMAL;
+  return `${SYSTEM_PROMPT}\n\n${voice}`;
+}
+
 const TOOLS = [
   {
     type: "function" as const,
