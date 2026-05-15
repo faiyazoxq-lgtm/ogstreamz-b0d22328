@@ -292,7 +292,7 @@ export function NavBar() {
             loading="eager"
             className="block shrink-0 rounded-md object-cover drop-shadow-[0_0_18px_oklch(0.72_0.22_245/0.55)]"
             style={{
-              height: "clamp(2.75rem, 1.5rem + 5vw, 6.5rem)",
+              height: "clamp(11rem, 6rem + 20vw, 26rem)",
               width: "auto",
               aspectRatio: "16 / 9",
             }}
@@ -300,8 +300,8 @@ export function NavBar() {
           <OgWordmark
             suffix="-PORTAL"
             fit
-            maxFontSize={104}
-            minFontSize={22}
+            maxFontSize={416}
+            minFontSize={88}
             className="brand-glow__mark inline-flex items-center self-center min-w-0 flex-shrink whitespace-nowrap text-white font-black bg-transparent leading-[0.9] transition-[color,text-shadow,filter,letter-spacing] duration-300 ease-out tracking-[-0.005em] sm:tracking-[-0.018em] md:tracking-[-0.028em] lg:tracking-[-0.034em] xl:tracking-[-0.04em] drop-shadow-[0_0_18px_oklch(0.72_0.22_245/0.55)]"
             style={{
               // Auto-fit handles the font-size; keep typographic refinements.
