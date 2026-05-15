@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Tv, CheckCircle2, XCircle, Loader2, RefreshCw, Clock, AlertTriangle, ShieldCheck, Lock, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import { bossListStreamRequests, bossDecideStreamRequest } from "@/lib/boss-admin-misc.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { CoinChip } from "@/components/CoinChip";
@@ -64,15 +65,31 @@ function StreamQueuePage() {
 
   const decide = async (id: string, approve: boolean) => {
     setBusyId(id);
+    const note = noteFor[id] ?? undefined;
+    // Snapshot for rollback + optimistic removal from current tab
+    const snapshot = rows;
+    const target = rows.find((r) => r.id === id);
+    const label = target?.email || target?.username || "request";
+    setRows((prev) => prev.filter((r) => r.id !== id));
+    const verb = approve ? "Approving" : "Rejecting";
+    const toastId = toast.loading(`${verb} ${label}…`);
     try {
-      await decideStreamReqFn({ data: { id, approve, note: noteFor[id] ?? undefined } });
-    } catch (e: any) {
+      await decideStreamReqFn({ data: { id, approve, note } });
+      toast.success(approve ? `Approved & promoted ${label}` : `Rejected ${label}`, {
+        id: toastId,
+        description: note ? `Note: ${note}` : undefined,
+      });
       setBusyId(null);
-      alert(e?.message ?? "Failed");
-      return;
+      await load();
+    } catch (e: any) {
+      // Roll back optimistic removal
+      setRows(snapshot);
+      setBusyId(null);
+      toast.error(approve ? "Approve failed" : "Reject failed", {
+        id: toastId,
+        description: e?.message ?? "Please try again.",
+      });
     }
-    setBusyId(null);
-    await load();
   };
 
   if (!isBoss) {
