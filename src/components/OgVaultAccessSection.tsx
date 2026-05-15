@@ -14,7 +14,7 @@ type VaultLink = {
 };
 
 const vipLinks: ReadonlyArray<VaultLink> = [
-  { to: "/profile",          title: "Member Vault",      desc: "Your profile, credits & passes", Icon: ShieldCheck },
+  { to: "/boss/api-keys",    title: "Member Vault",      desc: "Your profile, credits & passes", Icon: ShieldCheck },
   { to: "/vip",              title: "VIP Lounge",        desc: "Premium-only frequencies",        Icon: Crown },
   { to: "/account/passes",   title: "Real OG Passes",    desc: "Manage active passes",            Icon: KeyRound },
   { to: "/wallet",           title: "Coin Wallet",       desc: "Balance, top-ups & history",      Icon: Coins },
