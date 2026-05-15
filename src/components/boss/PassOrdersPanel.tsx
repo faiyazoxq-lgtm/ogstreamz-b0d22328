@@ -328,7 +328,7 @@ export function PassOrdersPanel() {
                       {o.display_name || o.email || o.user_id}
                     </div>
                     <div className="mt-1">
-                      <CoinChip credits={creditsMap[o.user_id] ?? 0} />
+                      <CoinChip credits={creditsMap[o.user_id]} />
                     </div>
                     {o.email && o.display_name ? (
                       <div className="text-xs text-emerald-400/70 truncate">{o.email}</div>
