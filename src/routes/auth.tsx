@@ -327,7 +327,7 @@ function AuthPage() {
   };
 
   return (
-    <main className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 sm:px-5 py-8 sm:py-12">
+    <main className="relative min-h-[calc(100vh-4rem)] flex items-start lg:items-center justify-center px-4 sm:px-5 py-8 sm:py-12">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 h-[500px] w-[700px] rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245_/_0.35),transparent)] animate-pulse-gold" />
       </div>
@@ -341,13 +341,13 @@ function AuthPage() {
         </Link>
 
         {!user && (
-          <div className="mb-6 space-y-4 text-center lg:text-left">
+          <div className="mb-8 space-y-5 text-center lg:text-left">
             <div className="space-y-2">
               <span className="inline-block text-[10px] uppercase tracking-[0.5em] text-sky-300/80 font-bold">
                 ◈ Vault 0G ◈
               </span>
               <h1
-                className="text-4xl sm:text-5xl uppercase text-white drop-shadow-[0_0_18px_rgba(56,189,248,0.55)]"
+                className="text-3xl sm:text-5xl uppercase text-white drop-shadow-[0_0_18px_rgba(56,189,248,0.55)] break-words"
                 style={{ fontFamily: "'Black Ops One', 'Cinzel', system-ui, sans-serif", letterSpacing: "0.08em" }}
               >
                 Welcome
@@ -362,7 +362,7 @@ function AuthPage() {
             <div
               role="status"
               aria-label={`New accounts start with ${signupBonus} free coins`}
-              className="flex items-center gap-3 rounded-xl border border-amber-300/40 bg-gradient-to-r from-amber-300/15 via-amber-300/5 to-transparent px-4 py-3 mx-auto lg:mx-0 max-w-sm lg:max-w-none"
+              className="flex items-center gap-3 rounded-xl border border-amber-300/40 bg-gradient-to-r from-amber-300/15 via-amber-300/5 to-transparent px-4 py-3 w-full"
             >
               <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-amber-300/50 bg-amber-300/15 shadow-[0_0_24px_-6px_rgba(252,211,77,0.7)]">
                 <Coins className="h-5 w-5 text-amber-200" aria-hidden="true" />
@@ -384,7 +384,7 @@ function AuthPage() {
             </div>
             <ul
               aria-label="What your sign-up bonus includes"
-              className="mx-auto lg:mx-0 max-w-sm lg:max-w-none grid gap-1.5 text-left"
+              className="grid gap-1.5 text-left w-full"
             >
               {[
                 `${signupBonus} free coins in your wallet`,
