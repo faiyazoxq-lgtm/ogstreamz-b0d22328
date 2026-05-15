@@ -26,7 +26,7 @@ const bossLinks: ReadonlyArray<VaultLink> = [
   { to: "/boss",             title: "Boss Command Deck", desc: "Full control surface",            Icon: Crown },
   { to: "/admin",            title: "Member Roster",     desc: "Manage members & credits",        Icon: Users },
   { to: "/boss/analytics",   title: "Royalty Ledger",    desc: "Portal payouts & spend",          Icon: BarChart3 },
-  { to: "/boss/vault",       title: "Vault Credentials", desc: "Stream creds & API keys",         Icon: Vault },
+  { to: "/boss/api-keys",    title: "Vault Credentials", desc: "Stream creds & API keys",         Icon: Vault },
   { to: "/boss/civility",    title: "Civility & Lexicon",desc: "Swear chat & moderation",         Icon: MessageSquareWarning },
   { to: "/connect-telegram", title: "Telegram Inbox",    desc: "Member DMs & alerts",             Icon: Inbox },
 ];

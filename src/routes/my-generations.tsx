@@ -17,7 +17,7 @@ export const Route = createFileRoute("/my-generations")({
   beforeLoad: async () => {
     const { data } = await supabase.auth.getUser();
     if (!data.user) {
-      throw redirect({ to: "/login", search: { redirect: "/my-generations" } as any });
+      throw redirect({ to: "/auth", search: { redirect: "/my-generations" } as any });
     }
   },
   head: () => ({
