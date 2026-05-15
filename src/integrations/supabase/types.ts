@@ -2659,6 +2659,42 @@ export type Database = {
         }
         Relationships: []
       }
+      reseller_admin_audit_archive: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          archived_at: string
+          created_at: string
+          delta: number | null
+          id: string
+          reason: string | null
+          reseller_id: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          archived_at?: string
+          created_at: string
+          delta?: number | null
+          id: string
+          reason?: string | null
+          reseller_id?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          archived_at?: string
+          created_at?: string
+          delta?: number | null
+          id?: string
+          reason?: string | null
+          reseller_id?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       reseller_credit_ledger: {
         Row: {
           created_at: string
@@ -4207,6 +4243,10 @@ export type Database = {
           _signal: string
         }
         Returns: Json
+      }
+      archive_reseller_admin_audit: {
+        Args: { _retention_days?: number }
+        Returns: number
       }
       boss_approve_topup: {
         Args: { _credits: number; _id: string; _note: string }
