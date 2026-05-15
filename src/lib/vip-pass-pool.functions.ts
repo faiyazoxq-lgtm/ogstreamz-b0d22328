@@ -71,7 +71,7 @@ export const upsertVipPassPool = createServerFn({ method: "POST" })
     if (!hasCode && !hasCred) {
       throw new Error("Provide a code OR a username and password");
     }
-    const { data: id, error } = await supabaseAdmin.rpc("boss_upsert_vip_pass_pool", {
+    const { data: id, error } = await (supabaseAdmin as any).rpc("boss_upsert_vip_pass_pool", {
       _id: data.id,
       _label: data.label,
       _code: data.code,
