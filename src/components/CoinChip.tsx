@@ -40,12 +40,19 @@ export function CoinChip({ credits, className = "", size = "xs" }: Props) {
   // 1 🪙 = £1 → cents = coins * 100. Shared helper keeps rounding (whole
   // pounds when integer, 2dp otherwise) consistent with the rest of the site.
   const gbp = formatGbp(coins * 100);
+  // en-GB locale matches what every pricing page / top-up modal renders.
+  const coinsLocaleShort = coins.toLocaleString("en-GB");
+  // Force 2dp on the tooltip GBP so users see the exact decimal value
+  // even when the chip itself shows whole pounds.
+  const gbpExact = formatGbp(coins * 100, { decimals: 2 });
+  const tooltip = `${coinsLocaleShort} 🪙  ·  ${gbpExact}`;
   return (
     <span
-      title={`${coins.toLocaleString()} coins (${gbp})`}
+      title={tooltip}
+      aria-label={`${coinsLocaleShort} coins, ${gbpExact}`}
       className={`inline-flex shrink-0 whitespace-nowrap items-center gap-1 ${text} uppercase tracking-[0.18em] px-1.5 py-0.5 rounded font-black bg-amber-500/15 text-amber-200 border border-amber-400/40 ${className}`}
     >
-      🪙 {coins.toLocaleString()}
+      🪙 {coinsLocaleShort}
       <span className="text-amber-100/70 font-bold normal-case tracking-normal">
         ({gbp})
       </span>
