@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { z } from "zod";
 import { tagOgStreamzUser } from "@/lib/stream-tag.server";
 
@@ -9,7 +9,7 @@ const InputSchema = z.object({
 });
 
 export const vaultPortalLogin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data, context }) => {
     const domain = process.env.VAULT_PORTAL_DOMAIN;

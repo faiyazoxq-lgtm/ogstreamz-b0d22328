@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { runOGBotDraft } from "./og-bot-draft.server";
 
 const Schema = z.object({
@@ -30,7 +30,7 @@ const Schema = z.object({
 });
 
 export const ogBotDraft = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((input: unknown) => Schema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;

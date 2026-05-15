@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { createClient } from "@supabase/supabase-js";
 import { runDeepSearch } from "./orchestrator.functions";
 
@@ -91,7 +91,7 @@ export const VIP_BROADCAST_CHAT_ID = "@og_portal";
 
 // ───── Admin: Bot config CRUD ─────
 export const listBots = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
@@ -104,7 +104,7 @@ export const listBots = createServerFn({ method: "GET" })
   });
 
 export const upsertBot = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: {
     id?: string;
     pair_name: string;
@@ -151,7 +151,7 @@ export const upsertBot = createServerFn({ method: "POST" })
   });
 
 export const deleteBot = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { id: string }) => ({ id: String(d.id || "") }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
@@ -179,7 +179,7 @@ function escapeHtml(s: string) {
 }
 
 export const broadcastGlobalAlert = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { message: string }) => ({ message: String(d.message || "").trim().slice(0, 2000) }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
@@ -246,7 +246,7 @@ export async function runSyndicateTickInternal(): Promise<{ posted: number; skip
 }
 
 export const runSyndicateTickNow = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
@@ -255,7 +255,7 @@ export const runSyndicateTickNow = createServerFn({ method: "POST" })
 
 // ───── Subscriber management ─────
 export const setSubscriberPlan = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { user_id: string; plan: Plan; telegram_user_id?: number; telegram_username?: string }) => ({
     user_id: String(d.user_id || ""),
     plan: (["free","stream_user","vip","real_og"].includes(d.plan) ? d.plan : "free") as Plan,
@@ -295,7 +295,7 @@ export const setSubscriberPlan = createServerFn({ method: "POST" })
   });
 
 export const getFleetStats = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     const empty = {

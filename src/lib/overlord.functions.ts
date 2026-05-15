@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const RANKS = ["prospect", "enforcer", "vip", "boss"] as const;
@@ -12,7 +12,7 @@ async function isBoss(supabase: any) {
 }
 
 export const adjustCredits = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { userId: string; delta: number; reason?: string }) => ({
     userId: String(d.userId),
     delta: Math.trunc(Number(d.delta)),
@@ -29,7 +29,7 @@ export const adjustCredits = createServerFn({ method: "POST" })
   });
 
 export const setRank = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { userId: string; rank: Rank }) => {
     if (!RANKS.includes(d.rank)) throw new Error("Invalid rank");
     return { userId: String(d.userId), rank: d.rank };
@@ -44,7 +44,7 @@ export const setRank = createServerFn({ method: "POST" })
   });
 
 export const setFeatureFlags = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { userId: string; flags: { jokes: boolean; music: boolean; tools: boolean; swearing?: boolean } }) => ({
     userId: String(d.userId),
     flags: {
@@ -63,7 +63,7 @@ export const setFeatureFlags = createServerFn({ method: "POST" })
   });
 
 export const createRedeemCode = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { code: string; credits: number; grantRank?: Rank | null; maxUses?: number; expiresAt?: string | null }) => ({
     code: String(d.code).trim().toUpperCase().slice(0, 32),
     credits: Math.max(1, Math.trunc(Number(d.credits))),
@@ -88,7 +88,7 @@ export const createRedeemCode = createServerFn({ method: "POST" })
   });
 
 export const redeemCode = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { code: string }) => ({ code: String(d.code).trim().toUpperCase().slice(0, 32) }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
@@ -98,7 +98,7 @@ export const redeemCode = createServerFn({ method: "POST" })
   });
 
 export const grantVipPass = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { userId: string; expiresAt: string; source?: string; notes?: string }) => ({
     userId: String(d.userId),
     expiresAt: String(d.expiresAt),
@@ -130,7 +130,7 @@ function makeVipCode(): string {
  * VIP pass (revocable from the dashboard). Optionally bundles credits.
  */
 export const createLifetimeVipCode = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { code?: string; credits?: number; notes?: string; expiresAt?: string | null }) => ({
     code: d.code ? String(d.code).trim().toUpperCase().slice(0, 32) : null,
     credits: Math.max(1, Math.trunc(Number(d.credits ?? 1))),
@@ -160,7 +160,7 @@ export const createLifetimeVipCode = createServerFn({ method: "POST" })
   });
 
 export const listLifetimeVipCodes = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase } = context as any;
     if (!(await isBoss(supabase))) throw new Error("Boss only");
@@ -175,7 +175,7 @@ export const listLifetimeVipCodes = createServerFn({ method: "GET" })
   });
 
 export const deleteLifetimeVipCode = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
@@ -197,7 +197,7 @@ export const deleteLifetimeVipCode = createServerFn({ method: "POST" })
  * redeem_codes row). Used by the UI for live uniqueness validation.
  */
 export const checkLifetimeVipCodeAvailable = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { code: string }) => ({
     code: String(d.code ?? "").trim().toUpperCase().slice(0, 32),
   }))
@@ -218,7 +218,7 @@ export const checkLifetimeVipCodeAvailable = createServerFn({ method: "POST" })
   });
 
 export const revokeVipPass = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { passId: string }) => ({ passId: String(d.passId) }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
@@ -229,7 +229,7 @@ export const revokeVipPass = createServerFn({ method: "POST" })
   });
 
 export const listVipPasses = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase } = context as any;
     if (!(await isBoss(supabase))) throw new Error("Boss only");
@@ -243,7 +243,7 @@ export const listVipPasses = createServerFn({ method: "GET" })
   });
 
 export const grantByEmail = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { email: string; credits: number; grantRank?: Rank | null; notes?: string }) => {
     const email = String(d.email ?? "").trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Invalid email");
@@ -269,7 +269,7 @@ export const grantByEmail = createServerFn({ method: "POST" })
   });
 
 export const listPendingGrants = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase } = context as any;
     if (!(await isBoss(supabase))) throw new Error("Boss only");
@@ -283,7 +283,7 @@ export const listPendingGrants = createServerFn({ method: "GET" })
   });
 
 export const deletePendingGrant = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;
@@ -316,7 +316,7 @@ export type PassOrderRow = {
 };
 
 export const listPassOrders = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { status?: string } | undefined) => ({
     status: d?.status && ["pending_approval", "issued", "denied", "all"].includes(d.status)
       ? d.status
@@ -351,7 +351,7 @@ export const listPassOrders = createServerFn({ method: "GET" })
   });
 
 export const decidePassOrder = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { orderId: string; approve: boolean; note?: string }) => ({
     orderId: String(d.orderId),
     approve: !!d.approve,

@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { runTradeScan } from "./trade.functions";
 import {
@@ -134,7 +134,7 @@ async function dispatchVHubBot(args: { intel: any }): Promise<string | null> {
 const SpawnInput = z.object({ slug: z.string().min(1).max(120) });
 
 export const bundleAndBroadcastSignal = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d) => SpawnInput.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context as { userId: string };
@@ -208,7 +208,7 @@ export const bundleAndBroadcastSignal = createServerFn({ method: "POST" })
 const PollInput = z.object({ bundleId: z.string().uuid() });
 
 export const pollVeoBundle = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d) => PollInput.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context as { userId: string };
@@ -291,7 +291,7 @@ export const pollVeoBundle = createServerFn({ method: "POST" })
 
 // ────────── LIST BUNDLES (for admin dashboard) ──────────
 export const listMyBundles = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { userId } = context as { userId: string };
     const { data } = await supabaseAdmin

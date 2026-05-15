@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { shouldPromoteToBoss, normalizeEmail } from "./boss-policy";
 
 export type CheckStatus = "pass" | "warn" | "fail";
@@ -21,7 +21,7 @@ function adminClient() {
 
 /** Boss-only: full pre-publish validation. */
 export const runPublishChecks = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }): Promise<{ checks: CheckResult[]; score: { pass: number; warn: number; fail: number; total: number } }> => {
     // Boss gate
     const userEmail = normalizeEmail(context.claims?.email as string | undefined);

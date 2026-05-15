@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { rejectBoss } from "@/integrations/supabase/boss-middleware";
 import { validateReturnUrl } from "@/lib/return-url";
 import { notifyBossOfStreamRequest } from "@/lib/stream-credential-bot.server";

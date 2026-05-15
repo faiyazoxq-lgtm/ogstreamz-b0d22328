@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
 import { ApiError } from "@/lib/api-error";
 import { validateReturnUrl } from "@/lib/return-url";
@@ -36,7 +36,7 @@ Keep it under 600 characters. Output ONLY the prompt — no explanation.`;
 }
 
 export const createTrack = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { portal_slug: string; title: string; preview_path: string; full_path: string; price_cents?: number }) => ({
     portal_slug: String(d.portal_slug || "").trim().slice(0, 80),
     title: String(d.title || "").trim().slice(0, 120),
@@ -110,7 +110,7 @@ export const listPortalTracks = createServerFn({ method: "POST" })
   });
 
 export const getTrackOwnership = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { trackIds: string[] }) => ({ trackIds: (d.trackIds ?? []).slice(0, 100).filter((x) => typeof x === "string") }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
@@ -121,7 +121,7 @@ export const getTrackOwnership = createServerFn({ method: "POST" })
   });
 
 export const getTrackDownloadUrl = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { trackId: string }) => ({ trackId: String(d.trackId || "").trim().slice(0, 64) }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
@@ -158,7 +158,7 @@ export const getTrackDownloadUrl = createServerFn({ method: "POST" })
   });
 
 export const createTrackUnlockCheckout = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { trackId: string; returnUrl: string; environment: StripeEnv; customerEmail?: string }) => ({
     trackId: String(d.trackId || "").trim().slice(0, 64),
     returnUrl: validateReturnUrl(d.returnUrl),
@@ -219,7 +219,7 @@ export const createTrackUnlockCheckout = createServerFn({ method: "POST" })
  * so the player can render an inline paywall with title + price.
  */
 export const getTrackStreamUrl = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { trackId: string }) => ({
     trackId: String(d.trackId || "").trim().slice(0, 64),
   }))

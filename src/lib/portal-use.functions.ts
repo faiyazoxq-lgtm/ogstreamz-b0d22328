@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /**
@@ -12,7 +12,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
  *   { ok: false, error: string, cost, balance: null } - other error
  */
 export const chargePortalUse = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { slug: string }) => ({
     slug: String(data.slug || "").trim().slice(0, 80),
   }))

@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 
 const KINDS = ["vip_pass", "streams_pass", "digital", "nft"] as const;
 type Kind = typeof KINDS[number];
@@ -42,7 +42,7 @@ function sanitizeMetadata(input: unknown): Json {
 }
 
 export const listStoreProducts = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase } = context as any;
     if (!(await isBoss(supabase))) throw new Error("Boss only");
@@ -73,7 +73,7 @@ type UpsertInput = {
 };
 
 export const upsertStoreProduct = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: UpsertInput) => {
     const sku = String(d.sku ?? "").trim().toLowerCase().replace(/[^a-z0-9_\-]/g, "_").slice(0, 64);
     const title = String(d.title ?? "").trim().slice(0, 160);
@@ -137,7 +137,7 @@ export const upsertStoreProduct = createServerFn({ method: "POST" })
   });
 
 export const setStoreProductActive = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { id: string; active: boolean }) => ({
     id: String(d.id),
     active: !!d.active,
@@ -154,7 +154,7 @@ export const setStoreProductActive = createServerFn({ method: "POST" })
   });
 
 export const setStoreProductSort = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { id: string; sort_order: number }) => ({
     id: String(d.id),
     sort_order: Math.trunc(Number(d.sort_order)) || 0,
@@ -171,7 +171,7 @@ export const setStoreProductSort = createServerFn({ method: "POST" })
   });
 
 export const deleteStoreProduct = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
   .handler(async ({ data, context }) => {
     const { supabase } = context as any;

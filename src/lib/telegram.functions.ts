@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 
 const TG_GATEWAY = "https://connector-gateway.lovable.dev/telegram";
 
@@ -45,7 +45,7 @@ export type BrandBible = {
 };
 
 export const generateBrandBible = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { slug: string }) => ({ slug: String(data.slug || "").trim().slice(0, 80) }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
@@ -105,7 +105,7 @@ Return STRICT JSON ONLY (no markdown):
   });
 
 export const updateTelegramLinks = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { slug: string; groupLink?: string; vipLink?: string; botUsername?: string }) => ({
     slug: String(data.slug || "").trim().slice(0, 80),
     groupLink: String(data.groupLink || "").trim().slice(0, 240),
@@ -136,7 +136,7 @@ export const updateTelegramLinks = createServerFn({ method: "POST" })
   });
 
 export const deployToTelegram = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { slug: string }) => ({ slug: String(data.slug || "").trim().slice(0, 80) }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };

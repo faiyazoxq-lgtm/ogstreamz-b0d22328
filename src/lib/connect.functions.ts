@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { z } from "zod";
 
 async function isAdmin(supabase: any, userId: string): Promise<boolean> {
@@ -131,7 +131,7 @@ Return JSON only: {"subject":"...","body":"..."}`;
 
 // ---------- CREATE CAMPAIGN (Scout + Enrich + Draft) ----------
 export const createConnectCampaign = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d) =>
     z
       .object({
@@ -198,7 +198,7 @@ export const createConnectCampaign = createServerFn({ method: "POST" })
 
 // ---------- LAUNCH: Push to Instantly ----------
 export const launchConnectCampaign = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d) => z.object({ campaignId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase } = await requireAdmin(context);
@@ -322,7 +322,7 @@ export const launchConnectCampaign = createServerFn({ method: "POST" })
 
 // ---------- LIVE STATS from Instantly ----------
 export const getCampaignStats = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d) => z.object({ campaignId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase } = await requireAdmin(context);
@@ -350,7 +350,7 @@ export const getCampaignStats = createServerFn({ method: "POST" })
 
 // ---------- LIST campaigns + leads ----------
 export const listConnectCampaigns = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     await requireAdmin(context);
     const { supabase } = context as { supabase: any };
@@ -363,7 +363,7 @@ export const listConnectCampaigns = createServerFn({ method: "GET" })
   });
 
 export const listCampaignLeads = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d) => z.object({ campaignId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
@@ -378,7 +378,7 @@ export const listCampaignLeads = createServerFn({ method: "POST" })
 
 // ---------- SENDING DOMAINS CRUD ----------
 export const listSendingDomains = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     await requireAdmin(context);
     const { supabase } = context as { supabase: any };
@@ -395,7 +395,7 @@ export const listSendingDomains = createServerFn({ method: "GET" })
   });
 
 export const upsertSendingDomain = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d) =>
     z
       .object({
@@ -419,7 +419,7 @@ export const upsertSendingDomain = createServerFn({ method: "POST" })
   });
 
 export const deleteSendingDomain = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await requireAdmin(context);

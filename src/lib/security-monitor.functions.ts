@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { requireBoss } from "@/integrations/supabase/boss-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -34,7 +34,7 @@ function isUnusualHour(): boolean {
  * a Boss alert via `system_alerts`.
  */
 export const logSecurityEvent = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d) => LogSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context as { userId: string };

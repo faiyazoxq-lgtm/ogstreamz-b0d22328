@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { tgCall, tgSendMessage, tgSendMultipart } from "@/lib/telegram-bot.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -55,7 +55,7 @@ export type TgMessage = {
 
 /** List the most recent chat per chat_id, newest first. Admin-only. */
 export const listTelegramChats = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     await assertAdmin(supabase, userId);
@@ -95,7 +95,7 @@ export const listTelegramChats = createServerFn({ method: "POST" })
 
 /** List messages for one chat, oldest first. Admin-only. */
 export const listTelegramMessages = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((input: { chatId: number; limit?: number }) =>
     z
       .object({
@@ -124,7 +124,7 @@ export const listTelegramMessages = createServerFn({ method: "POST" })
 
 /** Send a reply from the bot into a chat. Admin-only. */
 export const sendTelegramReply = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((input: { chatId: number; text: string }) =>
     z
       .object({
@@ -163,7 +163,7 @@ export type TgBotStatus = {
 
 /** Get bot identity, webhook status, and chat reach. Admin-only. */
 export const getTelegramBotStatus = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }): Promise<TgBotStatus> => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     await assertAdmin(supabase, userId);
@@ -215,7 +215,7 @@ export const getTelegramBotStatus = createServerFn({ method: "POST" })
 
 /** Messages from the caller's own Telegram DM with the bot. VIP only. */
 export const listMyTelegramMessages = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((input: { limit?: number; before?: string }) =>
     z
       .object({
@@ -252,7 +252,7 @@ export const listMyTelegramMessages = createServerFn({ method: "POST" })
 
 /** Send a message from the bot into the caller's own DM. VIP only. */
 export const sendMyTelegramMessage = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((input: { text: string }) =>
     z.object({ text: z.string().min(1).max(4096) }).parse(input),
   )
@@ -270,7 +270,7 @@ export const sendMyTelegramMessage = createServerFn({ method: "POST" })
  * VIP only. Hard cap at 10 MB to keep the Worker payload sane.
  */
 export const sendMyTelegramAttachment = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((input: {
     filename: string;
     mime: string;

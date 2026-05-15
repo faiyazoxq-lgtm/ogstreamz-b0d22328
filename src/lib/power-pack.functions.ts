@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { runDeepSearch } from "./orchestrator.functions";
 import { spawnMusic } from "./suno.functions";
@@ -111,7 +111,7 @@ async function tgBroadcastIntro(chatId: string, pack: any) {
  * the videoPrompt is stored and can be produced in a follow-up step.
  */
 export const runPowerPack = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d) => Cmd.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context as { userId: string };
@@ -238,7 +238,7 @@ export const runPowerPack = createServerFn({ method: "POST" })
   });
 
 export const listMyPowerPacks = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase } = context as { supabase: any };
     const { data, error } = await supabase

@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 
 export type LetterInput = {
   issue: string;          // category, e.g. "Complaint"
@@ -90,7 +90,7 @@ async function callGateway(messages: any[], temperature = 0.4) {
 }
 
 export const clarifyLetter = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: Partial<LetterInput>) => sanitize(data))
   .handler(async ({ data }) => {
     if (!data.issue || !data.context) {
@@ -123,7 +123,7 @@ export const clarifyLetter = createServerFn({ method: "POST" })
   });
 
 export const generateLetter = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: Partial<LetterInput>) => sanitize(data))
   .handler(async ({ data, context }) => {
     if (!data.issue || !data.context || !data.senderName) {
@@ -165,7 +165,7 @@ export const generateLetter = createServerFn({ method: "POST" })
   });
 
 export const suggestLetterAnswer = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((raw: { question: string; inputs: Partial<LetterInput> }) => ({
     question: clip(raw?.question, 400),
     inputs: sanitize(raw?.inputs || {}),
@@ -214,7 +214,7 @@ const titleFor = (d: LetterInput) =>
   clip(d.subject || `${d.issue}${d.subIssue ? " — " + d.subIssue : ""}` || "Untitled letter", 140);
 
 export const saveLetterHistory = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((raw: { id?: string; inputs: Partial<LetterInput>; questions?: string[]; answers?: Record<string, string>; letter: string; title?: string }) => ({
     id: raw?.id ? String(raw.id).slice(0, 64) : undefined,
     inputs: sanitize(raw?.inputs || {}),
@@ -262,7 +262,7 @@ export const saveLetterHistory = createServerFn({ method: "POST" })
   });
 
 export const listLetterHistory = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     const { data, error } = await supabase
@@ -283,7 +283,7 @@ export const listLetterHistory = createServerFn({ method: "GET" })
   });
 
 export const getLetterHistory = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((raw: { id: string }) => ({ id: String(raw?.id || "").slice(0, 64) }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
@@ -300,7 +300,7 @@ export const getLetterHistory = createServerFn({ method: "POST" })
   });
 
 export const deleteLetterHistory = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((raw: { id: string }) => ({ id: String(raw?.id || "").slice(0, 64) }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };

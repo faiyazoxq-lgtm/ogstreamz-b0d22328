@@ -1,10 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 
 const CUSTOM_TRACK_COST = 50;
 
 export const requestCustomTrack = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { vibe: string; notes: string }) => ({
     vibe: String(data.vibe || "").trim().slice(0, 120),
     notes: String(data.notes || "").trim().slice(0, 600),
@@ -34,7 +34,7 @@ export const requestCustomTrack = createServerFn({ method: "POST" })
   });
 
 export const listMyTrackRequests = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase } = context as { supabase: any };
     const { data } = await supabase
@@ -45,7 +45,7 @@ export const listMyTrackRequests = createServerFn({ method: "GET" })
   });
 
 export const adminListTrackRequests = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     const { data: roleRow } = await supabase.from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle();
@@ -58,7 +58,7 @@ export const adminListTrackRequests = createServerFn({ method: "GET" })
   });
 
 export const adminUpdateTrackRequest = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { id: string; status: string; deliverable_url?: string }) => ({
     id: String(data.id),
     status: String(data.status).slice(0, 32),

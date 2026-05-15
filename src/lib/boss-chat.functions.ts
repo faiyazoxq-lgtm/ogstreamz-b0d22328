@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { enforceSwearRules, loadLexicon, type SwearMode } from "./swear-enforcer.server";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { perplexityChat, shapesChat } from "./ai-providers.server";
 import { effectiveSwearing, effectiveIntensity } from "./swearing";
@@ -32,7 +32,7 @@ function buildSwearingSystem(intensity: SwearIntensity) {
 type Msg = { role: "user" | "assistant"; content: string };
 
 export const bossChat = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { messages: Msg[]; targetUserId?: string | null; safeMode?: boolean }) => ({
     messages: Array.isArray(d.messages)
       ? d.messages

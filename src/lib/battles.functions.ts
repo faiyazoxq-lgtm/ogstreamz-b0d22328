@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type BattleLanguage = "clean" | "mild" | "medium" | "chaotic";
@@ -53,7 +53,7 @@ async function fetchPerplexityResearch(scenario: string, themes: string[]): Prom
 }
 
 export const spawnBattle = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: {
     name: string;
     scenario: string;
@@ -120,7 +120,7 @@ const LANG_RULES: Record<BattleLanguage, string> = {
 };
 
 export const playBattleRound = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { slug: string; session_id: string; round?: number; previous?: { situation: string; pickedText: string; outcome: string } | null }) => ({
     slug: String(d.slug || "").trim().slice(0, 80),
     session_id: String(d.session_id || "").trim().slice(0, 80) || crypto.randomUUID(),
@@ -254,7 +254,7 @@ OUTPUT RULES:
  * 4. Returns the suno_jobs row id so the client can poll for the audio_url
  */
 export const spawnBattleSong = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { slug: string; extra?: string }) => ({
     slug: String(d.slug || "").trim().slice(0, 80),
     extra: String(d.extra || "").trim().slice(0, 500),

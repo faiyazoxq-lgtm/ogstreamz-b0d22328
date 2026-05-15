@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { rejectBoss } from "@/integrations/supabase/boss-middleware";
 import { validateReturnUrl } from "@/lib/return-url";
 
@@ -32,7 +32,7 @@ async function isFirstTimeBuyer(supabase: any, userId: string): Promise<boolean>
 }
 
 export const getFirstOrderEligibility = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     const eligible = await isFirstTimeBuyer(supabase, userId);

@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
 import { validateReturnUrl } from "@/lib/return-url";
@@ -273,7 +273,7 @@ function looksLikeLanguage(s: string, lang: string): boolean {
 }
 
 export const spawnPortal = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { name: string; niche: string; language: string; vibe: string; vip?: boolean; useScout?: boolean; kind?: string }) => ({
     name: String(data.name || "").trim().slice(0, 80),
     niche: String(data.niche || "").trim().slice(0, 400),
@@ -590,7 +590,7 @@ Use HIGH CONTRAST hex colors. Heading & body MUST be real Google Fonts. Match mo
 
 // ───── VIP unlock: Stripe embedded checkout ─────
 export const createPortalUnlockCheckout = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { portalId: string; environment: StripeEnv; customerEmail?: string; returnUrl: string }) => {
     if (!/^[a-zA-Z0-9-]{36}$/.test(data.portalId)) throw new Error("Invalid portalId");
     if (data.environment !== "sandbox" && data.environment !== "live") throw new Error("Invalid environment");
@@ -627,7 +627,7 @@ export const createPortalUnlockCheckout = createServerFn({ method: "POST" })
   });
 
 export const getPortalUnlockStatus = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { portalId: string }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
@@ -641,7 +641,7 @@ export const getPortalUnlockStatus = createServerFn({ method: "POST" })
   });
 
 export const getMorePortalJokes = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { slug: string; count?: number }) => ({
     slug: String(data.slug || "").trim().slice(0, 80),
     count: Math.min(Math.max(Number(data.count ?? 5), 1), 10),
@@ -694,7 +694,7 @@ export const getMorePortalJokes = createServerFn({ method: "POST" })
   });
 
 export const bossDeletePortal = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { slug: string }) => ({
     slug: String(data?.slug || "").trim().slice(0, 200),
   }))

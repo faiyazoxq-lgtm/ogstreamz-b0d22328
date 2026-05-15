@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { DEFAULT_LEXICON, LEXICON_CATEGORIES, type Lexicon } from "./swear-enforcer.server";
 
 async function ensureBoss(supabase: any, userId: string) {
@@ -11,7 +11,7 @@ async function ensureBoss(supabase: any, userId: string) {
 }
 
 export const getLexicon = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as any;
     await ensureBoss(supabase, userId);
@@ -31,7 +31,7 @@ export const getLexicon = createServerFn({ method: "GET" })
   });
 
 export const setLexiconCategory = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { category: string; items: string[] }) => {
     if (!LEXICON_CATEGORIES.includes(d.category as keyof Lexicon)) {
       throw new Error("Invalid category");
@@ -65,7 +65,7 @@ export const setLexiconCategory = createServerFn({ method: "POST" })
   });
 
 export const resetLexiconCategory = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { category: string }) => {
     if (!LEXICON_CATEGORIES.includes(d.category as keyof Lexicon)) {
       throw new Error("Invalid category");

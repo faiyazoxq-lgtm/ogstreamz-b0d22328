@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function isBossCtx(supabase: any) {
@@ -11,7 +11,7 @@ async function isBossCtx(supabase: any) {
 
 // ---------- Boss ----------
 export const bossListResellers = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase } = context as any;
     if (!(await isBossCtx(supabase))) throw new Error("Boss only");
@@ -24,7 +24,7 @@ export const bossListResellers = createServerFn({ method: "GET" })
   });
 
 export const bossCreateReseller = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { userId: string; displayName: string; initialCredits: number; markupCents: number }) => ({
     userId: String(d.userId),
     displayName: String(d.displayName ?? "").slice(0, 80),
@@ -44,7 +44,7 @@ export const bossCreateReseller = createServerFn({ method: "POST" })
   });
 
 export const bossTopupReseller = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { userId: string; delta: number; reason?: string }) => ({
     userId: String(d.userId),
     delta: Math.trunc(Number(d.delta)),
@@ -61,7 +61,7 @@ export const bossTopupReseller = createServerFn({ method: "POST" })
 
 // ---------- Reseller ----------
 export const getResellerWallet = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as any;
     const { data: wallet } = await supabase
@@ -99,7 +99,7 @@ export const getResellerWallet = createServerFn({ method: "GET" })
   });
 
 export const mintResellerCode = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { code: string; credits: number; maxUses: number; priceCents: number }) => ({
     code: String(d.code).trim().toUpperCase().slice(0, 32),
     credits: Math.max(1, Math.trunc(Number(d.credits))),
@@ -117,7 +117,7 @@ export const mintResellerCode = createServerFn({ method: "POST" })
   });
 
 export const updateResellerMarkup = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { markupCents: number }) => ({ markupCents: Math.max(0, Math.trunc(Number(d.markupCents))) }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as any;

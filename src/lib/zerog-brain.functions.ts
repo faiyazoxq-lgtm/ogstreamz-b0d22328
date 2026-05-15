@@ -5,7 +5,7 @@
 //   • produceSong   — MusicHUB "Multi-Platinum Producer"
 //   • vetToolCode   — ToolHUB "Architect" JS sanity-check
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 
 // Reused by all three endpoints below. Throws a 402-ish error string when the
 // caller is not a VIP / paid-tier user. Free / prospect users should not be
@@ -60,7 +60,7 @@ export type QuantBriefing = {
 };
 
 export const quantAnalyze = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { ticker: string; news?: string[]; tradingView?: any }) => ({
     ticker: String(d.ticker || "GOLD").trim().slice(0, 40),
     news: Array.isArray(d.news) ? d.news.slice(0, 25).map((s) => String(s).slice(0, 400)) : [],
@@ -114,7 +114,7 @@ export type ProducerOutput = {
 };
 
 export const produceSong = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { lyrics: string; vibe?: string; language?: string }) => ({
     lyrics: String(d.lyrics || "").trim().slice(0, 4000),
     vibe: String(d.vibe || "").trim().slice(0, 400),
@@ -159,7 +159,7 @@ export type ArchitectReview = {
 };
 
 export const vetToolCode = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { description: string; code: string }) => ({
     description: String(d.description || "").slice(0, 600),
     code: String(d.code || "").slice(0, 12000),

@@ -2,7 +2,7 @@
 // Internal helpers are plain async functions (callable from any server fn).
 // Public `deepSearch` and `peerReview` are exposed as server functions for direct UI calls.
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 
 // Gate paid Perplexity calls behind VIP / paid tier so free users cannot drain credits.
 async function assertVipOrPaid(supabase: any, userId: string) {
@@ -193,7 +193,7 @@ Return STRICT JSON only, no markdown:
 // ───── Public server functions ─────
 
 export const deepSearch = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { query: string; recency?: "hour" | "day" | "week" | "month"; minSources?: number }) => ({
     query: String(d.query || "").trim().slice(0, 1000),
     recency: (d.recency === "day" || d.recency === "week" || d.recency === "month" ? d.recency : "hour") as "hour" | "day" | "week" | "month",
@@ -206,7 +206,7 @@ export const deepSearch = createServerFn({ method: "POST" })
   });
 
 export const peerReview = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { topic: string; analysis: string; query: string }) => ({
     topic: String(d.topic || "").trim().slice(0, 200),
     analysis: String(d.analysis || "").trim().slice(0, 4000),

@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 
 export const spendCredits = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: { amount: number; reason: string }) => ({
     amount: Math.max(1, Math.min(500, Math.floor(Number(data.amount) || 1))),
     reason: String(data.reason || "spend").slice(0, 80),

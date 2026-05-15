@@ -11,7 +11,7 @@
 // OG mode    → classify intent, dispatch to media tool OR research-then-synth chain.
 
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { z } from "zod";
 import {
   classifyIntent,
@@ -162,7 +162,7 @@ bollocks, bastard), banter hard, take the piss, but FACTS must be accurate and S
 must be respected. Authority + chaos. Never break character in OG Mode.`;
 
 export const streamOgChat = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((input) => InputSchema.parse(input))
   .handler(async function* ({ data }): AsyncGenerator<StreamEvent> {
     const { mode, history, message } = data as z.infer<typeof InputSchema>;

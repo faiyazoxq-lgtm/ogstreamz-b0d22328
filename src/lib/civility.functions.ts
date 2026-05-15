@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 
 type Tbl = "portals" | "battles" | "custom_hubs";
 const TABLES: Tbl[] = ["portals", "battles", "custom_hubs"];
@@ -13,7 +13,7 @@ async function ensureBoss(supabase: any, userId: string) {
 }
 
 export const getCivility = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase } = context as { supabase: any };
     const { data, error } = await supabase
@@ -28,7 +28,7 @@ export const getCivility = createServerFn({ method: "GET" })
   });
 
 export const setCivilityDefault = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((d: { enabled: boolean; applyToAll?: boolean }) => ({
     enabled: !!d.enabled,
     applyToAll: !!d.applyToAll,
@@ -62,7 +62,7 @@ type Item = {
 };
 
 export const listSwearItems = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     await ensureBoss(supabase, userId);

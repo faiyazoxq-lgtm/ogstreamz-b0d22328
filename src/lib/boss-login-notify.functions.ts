@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { normalizeEmail, shouldPromoteToBoss } from "./boss-policy";
 import { tgSendMessage } from "./telegram-bot.server";
 import { getBossChatId } from "./boss-chat.server";
@@ -85,7 +85,7 @@ function escapeHtml(s: string) {
  * non-boss caller so it's safe to invoke on every sign-in.
  */
 export const notifyBossLoginIfNeeded = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data: unknown) => {
     const d = (data ?? {}) as { userAgent?: string; timezone?: string };
     return {

@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStrictAuth } from "@/lib/strict-auth";
 import { z } from "zod";
 
 const inputSchema = z.object({
@@ -23,7 +23,7 @@ function isPrivateHost(host: string): boolean {
 }
 
 export const checkUrlReachable = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStrictAuth])
   .inputValidator((data) => inputSchema.parse(data))
   .handler(async ({ data }) => {
     let normalized = data.url.trim();
