@@ -31,7 +31,8 @@ export type ActionKey =
   | "mod.warn" | "mod.mute" | "mod.swearing" | "mod.civility"
   | "comms.email" | "comms.notify" | "comms.announce"
   | "audit.user-log" | "audit.security-events" | "audit.sessions"
-  | "profile.display-name" | "profile.avatar" | "profile.og-pass-no";
+  | "profile.display-name" | "profile.avatar" | "profile.og-pass-no"
+  | "profile.friends-family";
 
 
 export type ActionCtx = {
@@ -82,6 +83,7 @@ export type HandlerRegistry = {
   setSwearing: (userId: string, enabled: boolean | null, intensity?: "mild" | "medium" | "chaotic") => Promise<unknown>;
   grantVip: (userId: string, days: number) => Promise<unknown>;
   revokeVipForUser: (userId: string) => Promise<unknown>;
+  setFriendsFamily: (userId: string, enabled: boolean) => Promise<unknown>;
 };
 
 import { OG_TIERS, OG_TIER_LABEL } from "@/lib/og-tier";
