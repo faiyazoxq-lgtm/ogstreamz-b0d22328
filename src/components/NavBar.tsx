@@ -11,6 +11,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { OgWordmark } from "@/components/OgWordmark";
+import brandLogo from "@/assets/logo.jpg";
 import {
   Tooltip,
   TooltipContent,
@@ -284,10 +285,22 @@ export function NavBar() {
           className="brand-glow group min-w-0 flex-1 sm:flex-initial h-full -ml-1 sm:ml-0 pl-1.5 pr-3 sm:pl-2 sm:pr-4 py-1 min-h-12 sm:min-h-0 rounded-2xl outline-none transition-all border border-transparent hover:border-gold/30 bg-transparent hover:bg-transparent focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:shadow-[0_0_24px_-4px_var(--gold)] touch-manipulation flex items-center"
           style={{ gap: "clamp(0.4rem, 0.9vw + 0.2rem, 0.9rem)" }}
         >
+          <img
+            src={brandLogo}
+            alt="OG-STREAMZ"
+            decoding="async"
+            loading="eager"
+            className="block shrink-0 rounded-md object-cover drop-shadow-[0_0_18px_oklch(0.72_0.22_245/0.55)]"
+            style={{
+              height: "clamp(2.75rem, 1.5rem + 5vw, 6.5rem)",
+              width: "auto",
+              aspectRatio: "16 / 9",
+            }}
+          />
           <OgWordmark
             suffix="-PORTAL"
             fit
-            maxFontSize={72}
+            maxFontSize={104}
             minFontSize={22}
             className="brand-glow__mark inline-flex items-center self-center min-w-0 flex-shrink whitespace-nowrap text-white font-black bg-transparent leading-[0.9] transition-[color,text-shadow,filter,letter-spacing] duration-300 ease-out tracking-[-0.005em] sm:tracking-[-0.018em] md:tracking-[-0.028em] lg:tracking-[-0.034em] xl:tracking-[-0.04em] drop-shadow-[0_0_18px_oklch(0.72_0.22_245/0.55)]"
             style={{
