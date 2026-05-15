@@ -42,15 +42,26 @@ export const bossCreateReseller = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     // Audit trail (best-effort — never block the RPC result on log failure)
-    await supabaseAdmin.from("reseller_admin_audit").insert({
-      action: "create",
-      actor_user_id: actorUserId,
-      target_user_id: data.userId,
-      reseller_id: id as string,
-      delta: data.initialCredits || null,
-      reason: "boss:create",
-    });
-    return { id };
+    const { data: auditRow, error: auditError } = await supabaseAdmin
+      .from("reseller_admin_audit")
+      .insert({
+        action: "create",
+        actor_user_id: actorUserId,
+        target_user_id: data.userId,
+        reseller_id: id as string,
+        delta: data.initialCredits || null,
+        reason: "boss:create",
+      })
+      .select("id")
+      .single();
+    return {
+      id,
+      audit: {
+        id: auditRow?.id ?? null,
+        status: auditError ? ("failed" as const) : ("logged" as const),
+        error: auditError?.message ?? null,
+      },
+    };
   });
 
 export const bossTopupReseller = createServerFn({ method: "POST" })
@@ -73,15 +84,26 @@ export const bossTopupReseller = createServerFn({ method: "POST" })
       .select("id")
       .eq("user_id", data.userId)
       .maybeSingle();
-    await supabaseAdmin.from("reseller_admin_audit").insert({
-      action: "topup",
-      actor_user_id: actorUserId,
-      target_user_id: data.userId,
-      reseller_id: resellerRow?.id ?? null,
-      delta: data.delta,
-      reason: data.reason,
-    });
-    return { credits: bal as number };
+    const { data: auditRow, error: auditError } = await supabaseAdmin
+      .from("reseller_admin_audit")
+      .insert({
+        action: "topup",
+        actor_user_id: actorUserId,
+        target_user_id: data.userId,
+        reseller_id: resellerRow?.id ?? null,
+        delta: data.delta,
+        reason: data.reason,
+      })
+      .select("id")
+      .single();
+    return {
+      credits: bal as number,
+      audit: {
+        id: auditRow?.id ?? null,
+        status: auditError ? ("failed" as const) : ("logged" as const),
+        error: auditError?.message ?? null,
+      },
+    };
   });
 
 // ---------- Reseller ----------
