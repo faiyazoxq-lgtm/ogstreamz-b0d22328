@@ -1,8 +1,8 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft,
-  ShieldAlert, LogIn, Tv, Tags, Bell, Sparkles, Settings, Boxes, Grid3x3,
+  Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users,
+  Tv, Tags, Bell, Sparkles, Settings, Boxes, Grid3x3,
   Coins, Power, Rocket, KeyRound, Wallet, SlidersHorizontal, Lock, ScrollText,
   ShieldOff, Lightbulb, Megaphone, Phone, LayoutGrid, Brain,
 } from "lucide-react";
@@ -12,6 +12,7 @@ import { requireBoss } from "@/lib/route-guards";
 import { supabase } from "@/integrations/supabase/client";
 import { PowerStatusBar } from "@/components/boss/PowerStatusBar";
 import { BossCommandRail, type RailItem, type RailGroup } from "@/components/boss/BossCommandRail";
+import { AccessDenied } from "@/components/AccessDenied";
 
 export const Route = createFileRoute("/boss")({
   beforeLoad: requireBoss,
@@ -136,28 +137,15 @@ function BossLayout() {
 
   if (!user || !isBoss) {
     return (
-      <main className="mx-auto max-w-lg px-5 py-20">
-        <div role="alert" aria-live="polite" className="rounded-2xl border border-destructive/40 bg-destructive/10 p-6 text-center">
-          <div className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full border border-destructive/50 bg-destructive/15">
-            <ShieldAlert className="h-6 w-6 text-destructive" />
-          </div>
-          <h1 className="syndicate-header text-xl text-foreground">403 — Access denied</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {user
+      <main className="px-5 py-20">
+        <AccessDenied
+          message={
+            user
               ? "Your account doesn't have Boss clearance. Ask an existing Boss to grant you access."
-              : "You need to sign in with a Boss-tier account to view this area."}
-          </p>
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-            <Link to="/" className="inline-flex items-center gap-1.5 rounded-md border border-border bg-secondary px-3 py-2 text-xs font-bold text-foreground hover:bg-secondary/80">
-              <ChevronLeft className="h-4 w-4" /> Back to site
-            </Link>
-            {!user && (
-              <Link to="/auth" className="inline-flex items-center gap-1.5 rounded-md border border-gold/40 bg-gold/10 px-3 py-2 text-xs font-bold text-gold hover:bg-gold/15">
-                <LogIn className="h-4 w-4" /> Sign in
-              </Link>
-            )}
-          </div>
-        </div>
+              : "You need to sign in with a Boss-tier account to view this area."
+          }
+          showSignIn={!user}
+        />
       </main>
     );
   }
