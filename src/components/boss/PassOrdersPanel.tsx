@@ -327,6 +327,9 @@ export function PassOrdersPanel() {
                     <div className="text-sm text-emerald-100 font-bold truncate">
                       {o.display_name || o.email || o.user_id}
                     </div>
+                    <div className="mt-1">
+                      <CoinChip credits={creditsMap[o.user_id] ?? 0} />
+                    </div>
                     {o.email && o.display_name ? (
                       <div className="text-xs text-emerald-400/70 truncate">{o.email}</div>
                     ) : null}
