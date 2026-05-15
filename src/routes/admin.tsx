@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { SyndicateProtocolSwitch } from "@/components/SyndicateProtocolSwitch";
+import { CivilityPanel } from "@/components/boss/CivilityPanel";
 import { useServerFn } from "@tanstack/react-start";
 import { requireBoss } from "@/lib/route-guards";
 import { scoutUrl } from "@/lib/firecrawl.functions";
