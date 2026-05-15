@@ -2441,7 +2441,7 @@ function FleetCommanderPanel() {
   const [pair, setPair] = useState("Gold");
   const [label, setLabel] = useState("0G · Gold Desk");
   const [chatId, setChatId] = useState("@og_gold_desk");
-  const [tier, setTier] = useState<Plan>("metal");
+  const [tier, setTier] = useState<Plan>("stream_user");
   const [freq, setFreq] = useState("15min");
   const [bias, setBias] = useState("neutral");
   const [msg, setMsg] = useState("");
@@ -2562,9 +2562,10 @@ function FleetCommanderPanel() {
           <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Label (0G · Gold Desk)" />
           <Input value={chatId} onChange={(e) => setChatId(e.target.value)} placeholder="Channel @username or -100…" />
           <select value={tier} onChange={(e) => setTier(e.target.value as Plan)} className="h-10 rounded-md border border-input bg-background px-3 text-sm">
-            <option value="metal">Tier · Metal Plan</option>
-            <option value="energy">Tier · Energy Plan</option>
-            <option value="syndicate">Tier · Syndicate</option>
+            <option value="free">Tier · Free</option>
+            <option value="stream_user">Tier · Stream User</option>
+            <option value="vip">Tier · VIP</option>
+            <option value="real_og">Tier · Real OG</option>
           </select>
           <select value={freq} onChange={(e) => setFreq(e.target.value)} className="h-10 rounded-md border border-input bg-background px-3 text-sm">
             <option value="5min">Every 5 min (high freq)</option>
@@ -2604,7 +2605,7 @@ function FleetCommanderPanel() {
               <div className="text-[10px] text-muted-foreground uppercase tracking-[0.2em]">{b.pair_name} · {b.bias}</div>
             </div>
             <div className="col-span-3 font-mono text-xs text-white truncate">{b.channel_chat_id}</div>
-            <div className="col-span-2 text-xs text-white"><span className="uppercase">{b.tier_required}</span> · {b.update_frequency}</div>
+            <div className="col-span-2 text-xs text-white"><span className="uppercase">{({metal:"Stream User", energy:"VIP", syndicate:"Real OG", stream_user:"Stream User", vip:"VIP", real_og:"Real OG", free:"Free"} as Record<string,string>)[b.tier_required] ?? b.tier_required}</span> · {b.update_frequency}</div>
             <div className="col-span-2 text-[11px] text-muted-foreground">
               {b.last_pinged_at ? new Date(b.last_pinged_at).toLocaleString() : "never"} <br />
               <span className="opacity-70">{b.ping_count} pings</span>
@@ -2653,14 +2654,19 @@ function FleetCommanderPanel() {
             <div key={p.id} className="grid grid-cols-12 gap-2 px-4 py-2 border-b border-border/50 text-sm items-center">
               <div className="col-span-7 truncate text-white">{p.email}</div>
               <div className="col-span-5 flex justify-end gap-1">
-                {(["free","metal","energy","syndicate"] as Plan[]).map((pl) => (
-                  <Button key={pl} size="sm" variant={p.subscription_plan === pl ? "default" : "outline"}
-                    onClick={() => onPlanChange(p.id, pl)}
-                    className="h-7 text-[10px] uppercase"
-                    style={p.subscription_plan === pl ? { background: cyan, color: "#000" } : { borderColor: "#444", color: "#aaa" }}>
-                    {pl}
-                  </Button>
-                ))}
+                {(["free","stream_user","vip","real_og"] as const).map((pl) => {
+                  const legacyMap: Record<string,string> = { free:"free", stream_user:"metal", vip:"energy", real_og:"syndicate" };
+                  const isActive = p.subscription_plan === pl || p.subscription_plan === legacyMap[pl];
+                  const label = pl === "free" ? "Free" : pl === "stream_user" ? "Stream" : pl === "vip" ? "VIP" : "Real OG";
+                  return (
+                    <Button key={pl} size="sm" variant={isActive ? "default" : "outline"}
+                      onClick={() => onPlanChange(p.id, pl as Plan)}
+                      className="h-7 text-[10px] uppercase"
+                      style={isActive ? { background: cyan, color: "#000" } : { borderColor: "#444", color: "#aaa" }}>
+                      {label}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
           ))}

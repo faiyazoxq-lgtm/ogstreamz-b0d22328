@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Search, RefreshCw, Star, ChevronDown, Settings2, CheckSquare, Square, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { listRoster, setRank, setStatus, adjustCredits, setBanned, forceSignOut, setUserSwearing, type RosterRow } from "@/lib/boss-users.functions";
+import { listRoster, setOgTier, setStatus, adjustCredits, setBanned, forceSignOut, setUserSwearing, type RosterRow } from "@/lib/boss-users.functions";
 import { reverifyStream } from "@/lib/stream-link.functions";
 import { grantVipPass, revokeVipPass, listVipPasses } from "@/lib/overlord.functions";
 import { getOgPassFavourites, setOgPassFavourites } from "@/lib/og-pass-favourites.functions";
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/boss/og-passes")({
 function BossOgPasses() {
   const list = useServerFn(listRoster);
   const reg: HandlerRegistry = {
-    setRank: (uid, rank) => useServerFnInline(setRank)({ data: { userId: uid, rank: rank as any } }),
+    setRank: (uid, tier) => useServerFnInline(setOgTier)({ data: { userId: uid, tier: tier as any } }),
     setStatus: (uid, status) => useServerFnInline(setStatus)({ data: { userId: uid, status } }),
     adjustCredits: (uid, delta, reason) => useServerFnInline(adjustCredits)({ data: { userId: uid, delta, reason } }),
     setBanned: (uid, banned, reason) => useServerFnInline(setBanned)({ data: { userId: uid, banned, reason } }),

@@ -1,6 +1,7 @@
 import { Mail, Calendar, ShieldAlert } from "lucide-react";
 import { CoinChip } from "@/components/CoinChip";
 import { PassStatusRow } from "@/components/PassStatusRow";
+import { OG_TIER_LABEL, OG_TIER_TONE, rankToOgTier, type OgTier } from "@/lib/og-tier";
 
 type Props = {
   /** Roster row from listRoster — must include og_pass_no, contact_card, etc. */
@@ -11,13 +12,6 @@ type Props = {
   onSelect?: (row: any) => void;
 };
 
-const RANK_LABEL: Record<string, string> = {
-  prospect: "Visitor",
-  enforcer: "Member",
-  stream_user: "Stream User",
-  vip: "VIP / Real OG",
-  boss: "Boss",
-};
 
 /**
  * Boss-facing OG Pass profile card.
@@ -29,7 +23,9 @@ const RANK_LABEL: Record<string, string> = {
  */
 export function BossOgPassCard({ row, actions, onSelect }: Props) {
   const initials = (row.display_name || row.email || "?").trim().slice(0, 2).toUpperCase();
-  const rankLabel = RANK_LABEL[row.rank] ?? row.rank;
+  const tier: OgTier = (row.og_tier as OgTier) ?? rankToOgTier(row.rank);
+  const tierLabel = OG_TIER_LABEL[tier];
+  const tierTone = OG_TIER_TONE[tier];
   const joined = row.created_at ? new Date(row.created_at).toLocaleDateString() : null;
 
   // Build the profile shape PassStatusRow expects.
@@ -94,8 +90,11 @@ export function BossOgPassCard({ row, actions, onSelect }: Props) {
               {row.display_name?.trim() || row.email}
             </h3>
             <CoinChip credits={row.credits} />
-            <span className="text-[10px] uppercase tracking-[0.22em] text-white/55 font-bold">
-              {rankLabel}
+            <span
+              className={`inline-flex items-center text-[10px] uppercase tracking-[0.22em] px-1.5 py-0.5 rounded border font-bold ${tierTone}`}
+              title={`OG Pass tier · ${tierLabel}`}
+            >
+              {tierLabel}
             </span>
             {row.banned && (
               <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded font-bold bg-destructive/15 text-destructive border border-destructive/40">
