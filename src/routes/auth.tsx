@@ -382,6 +382,24 @@ function AuthPage() {
                 </p>
               </div>
             </div>
+            <ul
+              aria-label="What your sign-up bonus includes"
+              className="mx-auto lg:mx-0 max-w-sm lg:max-w-none grid gap-1.5 text-left"
+            >
+              {[
+                `${signupBonus} free coins in your wallet`,
+                "Spend on any portal — music, jokes, tools",
+                "No card, no trial, no auto-charge",
+              ].map((item) => (
+                <li
+                  key={item}
+                  className="flex items-start gap-2 text-[12px] text-sky-100/85"
+                >
+                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-300" aria-hidden="true" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 
