@@ -12,3 +12,4 @@ Anon must never read `public.calculators` directly — use the `public.calculato
 - [Portals column ACL](mem://features/portals-column-acl) — Anon-safe view `portals_public`, sanitized telegram_config, where to add new public columns
 - [Calculators column ACL](mem://features/calculators-column-acl) — Anon-safe view `calculators_public`, VIP fields stripped, server-side getToolVipContent for VIP reads
 - [Hub titles as categories](mem://features/hub-titles-as-categories) — Non-boss users see hub names inside portals as plain category names (Music, Jokes, Tools…), not branded "HUB" titles
+- [Vault re-auth](mem://features/vault-reauth) — Server-side gate on `revealVaultCredential`; VaultGuard sessionStorage flag is UX only
