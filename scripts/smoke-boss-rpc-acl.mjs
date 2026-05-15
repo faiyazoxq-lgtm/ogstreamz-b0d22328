@@ -21,17 +21,11 @@ if (!URL || !SR || !PUB) {
   process.exit(2);
 }
 
-// 1. Discover every boss_/admin_ RPC + its arg names/types via psql.
-// We get one row per fn as: name|args_sig|arg_name1,arg_name2|arg_type1,arg_type2
+// 1. Discover every boss_/admin_ RPC. We get one row per fn as: name|args_sig
+// where args_sig is what `pg_get_function_identity_arguments` returns — IN
+// params only, so OUT/RETURNS-TABLE columns don't pollute our synthetic call.
 const sql = `
-  SELECT
-    p.proname || '|' ||
-    pg_get_function_identity_arguments(p.oid) || '|' ||
-    COALESCE(array_to_string(p.proargnames, ','), '') || '|' ||
-    COALESCE(array_to_string(ARRAY(
-      SELECT format_type(t, NULL)
-      FROM unnest(p.proargtypes::oid[]) AS t
-    ), ','), '')
+  SELECT p.proname || '|' || pg_get_function_identity_arguments(p.oid)
   FROM pg_proc p
   JOIN pg_namespace n ON n.oid = p.pronamespace
   WHERE n.nspname = 'public'
@@ -39,14 +33,28 @@ const sql = `
   ORDER BY p.proname, pg_get_function_identity_arguments(p.oid);
 `;
 const raw = execFileSync("psql", ["-At", "-c", sql], { encoding: "utf8" });
+function parseArgsSig(sig) {
+  // Split on commas not inside parens (e.g. numeric(10,2)). Each chunk is
+  // "_name <type>" with optional "DEFAULT ..." suffix we can ignore.
+  if (!sig) return [];
+  const parts = [];
+  let depth = 0, buf = "";
+  for (const ch of sig) {
+    if (ch === "(") depth++;
+    if (ch === ")") depth--;
+    if (ch === "," && depth === 0) { parts.push(buf.trim()); buf = ""; continue; }
+    buf += ch;
+  }
+  if (buf.trim()) parts.push(buf.trim());
+  return parts.map((p) => {
+    const noDefault = p.replace(/\s+DEFAULT\s+.*$/i, "").trim();
+    const m = noDefault.match(/^(\S+)\s+(.+)$/);
+    return m ? { name: m[1], type: m[2] } : null;
+  }).filter(Boolean);
+}
 const fns = raw.trim().split("\n").filter(Boolean).map((line) => {
-  const [name, args_sig, names, types] = line.split("|");
-  return {
-    name,
-    args_sig,
-    arg_names: names ? names.split(",") : [],
-    arg_types: types ? types.split(",") : [],
-  };
+  const [name, args_sig = ""] = line.split("|");
+  return { name, args_sig, args: parseArgsSig(args_sig) };
 });
 
 console.log(`Discovered ${fns.length} boss_/admin_ RPCs in public schema.\n`);
@@ -69,11 +77,8 @@ function dummyForType(t, name) {
 }
 function buildArgs(fn) {
   const obj = {};
-  if (!fn.arg_names) return obj;
-  for (let i = 0; i < fn.arg_names.length; i++) {
-    const n = fn.arg_names[i];
-    if (!n) continue;
-    obj[n.startsWith("_") ? n : `_${n}`] = dummyForType(fn.arg_types[i], n);
+  for (const { name, type } of fn.args) {
+    obj[name] = dummyForType(type, name);
   }
   return obj;
 }
@@ -111,7 +116,13 @@ async function callRpc(name, args, identity) {
   return { status: res.status, body: (await res.text()).slice(0, 220) };
 }
 const isExecuteDenied = (r) =>
-  r.status === 401 || r.status === 403 || /permission denied for function/i.test(r.body);
+  r.status === 401 ||
+  r.status === 403 ||
+  /permission denied for function/i.test(r.body) ||
+  // PostgREST refuses to dispatch (overload ambiguity / no matching signature)
+  // before EXECUTE is even checked. Same response goes to every identity, so
+  // there's no privilege boundary being crossed.
+  /PGRST20[23]/i.test(r.body);
 
 const failures = [];
 for (const fn of fns) {
