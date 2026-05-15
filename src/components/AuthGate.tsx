@@ -49,7 +49,7 @@ function PromoLanding() {
   const bonus = useSignupBonus();
   return (
     <main className="relative mx-auto w-full max-w-5xl px-5 py-10 sm:py-14">
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#001a33] via-[#000914] to-black p-6 sm:p-10 shadow-[0_30px_120px_-20px_rgba(0,170,255,0.45)]">
+      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#001a33]/35 via-[#000914]/30 to-black/40 backdrop-blur-md p-6 sm:p-10 shadow-[0_30px_120px_-20px_rgba(0,170,255,0.45)]">
         <div className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-[#00aaff]/30 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-32 -left-24 h-72 w-72 rounded-full bg-fuchsia-500/20 blur-3xl" />
 
