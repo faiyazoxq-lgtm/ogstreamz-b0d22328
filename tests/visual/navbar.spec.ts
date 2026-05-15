@@ -12,9 +12,10 @@ import { test, expect, type Page } from "@playwright/test";
  * page content below don't poison the diff. A regression here means the
  * navbar/sidebar overflowed, clipped, or shifted height.
  *
- * NOTE: We deliberately do NOT cover `src/components/NavBar.tsx` — it is
- * not imported anywhere in the app (verified via `rg "NavBar" src/`).
- * If/when it is wired in as the real header, add a spec for it here.
+ * NOTE: An older `src/components/NavBar.tsx` used to live in the tree but
+ * was never imported. It has been deleted — `AppShell.tsx` is the only
+ * site chrome. If a new top-level navbar component is introduced later,
+ * add its spec here.
  */
 
 const MOBILE_WIDTHS = [320, 360, 375, 390, 414, 420] as const;
