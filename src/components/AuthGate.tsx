@@ -21,10 +21,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
     pathname.startsWith("/api/");
 
   // Remember the destination so the auth page can return us here after sign-in.
-  // Skip the homepage (default landing) and auth pages.
+  // Skip auth/public pages — we want to return the user to whatever route
+  // they were on (including "/") when they clicked Sign in.
   useEffect(() => {
     if (user || isPublic) return;
-    if (pathname === "/" || pathname === "") return;
+    if (!pathname) return;
     try {
       const qs = typeof window !== "undefined" ? window.location.search : "";
       const target = pathname + (qs || "");
