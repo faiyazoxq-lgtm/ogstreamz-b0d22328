@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Search, RefreshCw, Star, ChevronDown, Settings2, CheckSquare, Square, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { listRoster, setOgTier, setStatus, adjustCredits, setBanned, forceSignOut, setUserSwearing, type RosterRow } from "@/lib/boss-users.functions";
+import { listRoster, setOgTier, setStatus, adjustCredits, setBanned, forceSignOut, setUserSwearing, setFriendsFamily, type RosterRow } from "@/lib/boss-users.functions";
 import { reverifyStream } from "@/lib/stream-link.functions";
 import { grantVipPass, revokeVipPass, listVipPasses } from "@/lib/overlord.functions";
 import { getOgPassFavourites, setOgPassFavourites } from "@/lib/og-pass-favourites.functions";
@@ -40,6 +40,7 @@ function BossOgPasses() {
       if (!active) throw new Error("No active VIP pass");
       return useServerFnInline(revokeVipPass)({ data: { passId: active.id } });
     },
+    setFriendsFamily: (uid, enabled) => useServerFnInline(setFriendsFamily)({ data: { userId: uid, enabled } }),
   };
 
   const getFavs = useServerFn(getOgPassFavourites);

@@ -27,6 +27,7 @@ export type RosterRow = {
   contact_card: Record<string, any> | null;
   avatar_url: string | null;
   og_tier: OgTier | null;
+  is_friends_family?: boolean | null;
 };
 
 export const listRoster = createServerFn({ method: "GET" })
@@ -41,7 +42,7 @@ export const listRoster = createServerFn({ method: "GET" })
     const { supabase } = context as any;
     let q = supabase
       .from("profiles")
-      .select("id,email,display_name,rank,status,credits,banned,banned_reason,stream_status,stream_verified_at,stream_expires_at,created_at,feature_flags,og_pass_no,member_tier,contact_card,avatar_url,og_tier")
+      .select("id,email,display_name,rank,status,credits,banned,banned_reason,stream_status,stream_verified_at,stream_expires_at,created_at,feature_flags,og_pass_no,member_tier,contact_card,avatar_url,og_tier,is_friends_family")
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .limit(data.limit + 1);
@@ -233,4 +234,29 @@ export const setUserSwearing = createServerFn({ method: "POST" })
       after: { swearing: flags.swearing ?? null, swearing_intensity: flags.swearing_intensity ?? null },
     });
     return { ok: true, feature_flags: flags };
+  });
+
+export const setFriendsFamily = createServerFn({ method: "POST" })
+  .middleware([requireBoss])
+  .inputValidator((d: { userId: string; enabled: boolean }) => ({
+    userId: String(d.userId),
+    enabled: !!d.enabled,
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context as any;
+    const { data: prev } = await supabase
+      .from("profiles").select("is_friends_family").eq("id", data.userId).maybeSingle();
+    const { error } = await supabase
+      .from("profiles")
+      .update({ is_friends_family: data.enabled })
+      .eq("id", data.userId);
+    if (error) throw new Error(error.message);
+    await logBossAction(supabase, {
+      action: "set_friends_family",
+      surface: "/boss/og-passes",
+      targetUserId: data.userId,
+      before: prev ?? null,
+      after: { is_friends_family: data.enabled },
+    });
+    return { ok: true, is_friends_family: data.enabled };
   });

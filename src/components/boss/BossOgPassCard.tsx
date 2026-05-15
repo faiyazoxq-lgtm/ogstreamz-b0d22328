@@ -1,4 +1,4 @@
-import { Mail, Calendar, ShieldAlert } from "lucide-react";
+import { Mail, Calendar, ShieldAlert, Heart } from "lucide-react";
 import { CoinChip } from "@/components/CoinChip";
 import { PassStatusRow } from "@/components/PassStatusRow";
 import { OG_TIER_LABEL, OG_TIER_TONE, rankToOgTier, type OgTier } from "@/lib/og-tier";
@@ -99,6 +99,19 @@ export function BossOgPassCard({ row, actions, onSelect }: Props) {
             {row.banned && (
               <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded font-bold bg-destructive/15 text-destructive border border-destructive/40">
                 <ShieldAlert className="h-3 w-3" /> Banned
+              </span>
+            )}
+            {row.is_friends_family && (
+              <span
+                className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded font-bold border"
+                style={{
+                  background: "color-mix(in srgb, #ff5577 14%, transparent)",
+                  borderColor: "color-mix(in srgb, #ff5577 50%, transparent)",
+                  color: "#ffb3c4",
+                }}
+                title="Friends & Family"
+              >
+                <Heart className="h-3 w-3" /> F&amp;F
               </span>
             )}
           </div>

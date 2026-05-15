@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import {
   Coins, Crown, ShieldOff, ShieldCheck, LogOut, Tv, Flame, Mail,
   Users as UsersIcon, History, IdCard, ExternalLink, Star, Megaphone,
-  ScrollText, Bell, KeyRound, BadgeCheck, BadgeX, RotateCw, EyeOff,
+  ScrollText, Bell, KeyRound, BadgeCheck, BadgeX, RotateCw, EyeOff, Heart,
   type LucideIcon,
 } from "lucide-react";
 import type { RosterRow } from "@/lib/boss-users.functions";
@@ -31,7 +31,9 @@ export type ActionKey =
   | "mod.warn" | "mod.mute" | "mod.swearing" | "mod.civility"
   | "comms.email" | "comms.notify" | "comms.announce"
   | "audit.user-log" | "audit.security-events" | "audit.sessions"
-  | "profile.display-name" | "profile.avatar" | "profile.og-pass-no";
+  | "profile.display-name" | "profile.avatar" | "profile.og-pass-no"
+  | "profile.friends-family";
+
 
 export type ActionCtx = {
   row: RosterRow;
@@ -81,6 +83,7 @@ export type HandlerRegistry = {
   setSwearing: (userId: string, enabled: boolean | null, intensity?: "mild" | "medium" | "chaotic") => Promise<unknown>;
   grantVip: (userId: string, days: number) => Promise<unknown>;
   revokeVipForUser: (userId: string) => Promise<unknown>;
+  setFriendsFamily: (userId: string, enabled: boolean) => Promise<unknown>;
 };
 
 import { OG_TIERS, OG_TIER_LABEL } from "@/lib/og-tier";
@@ -386,6 +389,16 @@ export function buildCatalog(reg: HandlerRegistry): Category[] {
               key: "profile.og-pass-no", label: "OG Pass # (info)", icon: IdCard,
               handler: ({ row }) => {
                 window.alert(`OG Pass: ${row.og_pass_no ?? "(not assigned)"}`);
+              },
+            },
+            {
+              key: "profile.friends-family", label: "Friends & Family badge", icon: Heart,
+              hint: "Toggle the F&F status badge on this pass",
+              bulkEligible: true,
+              handler: ({ row, run }) => {
+                const next = !row.is_friends_family;
+                if (!window.confirm(`${next ? "Mark" : "Remove"} ${row.email} as Friends & Family?`)) return;
+                run(() => reg.setFriendsFamily(row.id, next));
               },
             },
           ],
