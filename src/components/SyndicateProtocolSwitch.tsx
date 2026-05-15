@@ -16,6 +16,8 @@ export type SyndicateProtocolSwitchProps = {
   titleNormal?: string;
   titleOg?: string;
   description?: React.ReactNode;
+  descriptionNormal?: React.ReactNode;
+  descriptionOg?: React.ReactNode;
   ogBadge?: string;
 };
 
@@ -26,6 +28,8 @@ export function SyndicateProtocolSwitch({
   titleNormal = "Global Mood · NORMAL",
   titleOg = "Global Mood · OG-MODE",
   description,
+  descriptionNormal,
+  descriptionOg,
   ogBadge = "OG Brutal · all-or-nothing",
 }: SyndicateProtocolSwitchProps) {
   const [mode, setMode] = useState<"og" | "normal">("og");
@@ -168,7 +172,7 @@ export function SyndicateProtocolSwitch({
       </div>
 
       <p className="mt-4 text-xs text-white/55 terminal-mono leading-relaxed">
-        {description ?? (
+        {(isOg ? descriptionOg : descriptionNormal) ?? description ?? (
           <>
             Flips <span className="mood-accent">system_instruction</span> for every Gemini 3 call across
             the Syndicate — Boss Chat, Shape Bridge &amp; all hub agents — instantly.
