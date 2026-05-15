@@ -15,7 +15,6 @@ export const Route = createFileRoute("/boss/civility")({
 });
 
 function CivilityPage() {
-function CivilityPage() {
   const { user, profile, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
   const isBoss = profile?.rank === "boss" || isAdmin;
