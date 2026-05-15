@@ -231,7 +231,7 @@ export function TopUpRequestsPanel() {
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm font-mono text-white truncate">{req.email ?? req.user_id}</span>
-                  <CoinChip credits={reqCredits[req.user_id] ?? 0} />
+                  <CoinChip credits={reqCredits[req.user_id]} />
                 </div>
                 <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-0.5">
                   {new Date(req.created_at).toLocaleString()} · status:{" "}
