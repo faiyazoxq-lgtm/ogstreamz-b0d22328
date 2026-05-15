@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ScrollText, RefreshCw, Filter } from "lucide-react";
+import { ScrollText, RefreshCw, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import { listResellerAudit, type ResellerAuditRow } from "@/lib/reseller-audit.functions";
 import { requireBoss } from "@/lib/route-guards";
 
@@ -63,7 +63,15 @@ function BossResellerAuditPage() {
   const [includeArchive, setIncludeArchive] = useState(true);
   const [limit, setLimit] = useState(100);
 
-  const refresh = useCallback(async () => {
+  // Pagination: stack of cursors for back-navigation. Top of stack is the
+  // cursor used to fetch the CURRENT page. Page 1 has no cursor (empty stack).
+  const [cursorStack, setCursorStack] = useState<string[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  // When true, the next fetch is initiated by a filter change → reset paging.
+  const filtersDirty = useRef(false);
+
+  const fetchPage = useCallback(async (cursor: string | null) => {
     setLoading(true); setErr(null);
     try {
       // datetime-local has no timezone — treat as local and convert to ISO
@@ -79,10 +87,13 @@ function BossResellerAuditPage() {
           to: toIso,
           includeArchive,
           limit,
+          before: cursor ?? "",
         },
       });
       setRows(res.rows);
       setCounts(res.counts);
+      setNextCursor(res.nextCursor ?? null);
+      setHasMore(!!res.hasMore);
     } catch (e: any) {
       setErr(e?.message ?? "Failed to load audit log");
     } finally {
@@ -90,12 +101,33 @@ function BossResellerAuditPage() {
     }
   }, [list, action, resellerId, actorUserId, targetUserId, from, to, includeArchive, limit]);
 
-  useEffect(() => { refresh(); }, []); // initial load
+  // Apply filters / refresh: reset to page 1.
+  const applyFilters = useCallback(async () => {
+    setCursorStack([]);
+    await fetchPage(null);
+  }, [fetchPage]);
+
+  const goNext = useCallback(async () => {
+    if (!nextCursor || loading) return;
+    setCursorStack((prev) => [...prev, nextCursor]);
+    await fetchPage(nextCursor);
+  }, [nextCursor, loading, fetchPage]);
+
+  const goPrev = useCallback(async () => {
+    if (cursorStack.length === 0 || loading) return;
+    const newStack = cursorStack.slice(0, -1);
+    setCursorStack(newStack);
+    const prevCursor = newStack.length > 0 ? newStack[newStack.length - 1] : null;
+    await fetchPage(prevCursor);
+  }, [cursorStack, loading, fetchPage]);
+
+  useEffect(() => { applyFilters(); }, []); // initial load
 
   const summary = useMemo(() => {
     if (!counts) return `${rows.length} entries`;
-    return `${counts.returned} shown · live ${counts.live} / archive ${counts.archive}`;
-  }, [counts, rows.length]);
+    const pageLabel = `Page ${cursorStack.length + 1}`;
+    return `${pageLabel} · ${counts.returned} shown · live ${counts.live} / archive ${counts.archive}`;
+  }, [counts, rows.length, cursorStack.length]);
 
   function clearFilters() {
     setAction(""); setResellerId(""); setActorUserId(""); setTargetUserId("");
@@ -118,7 +150,7 @@ function BossResellerAuditPage() {
         </div>
         <button
           type="button"
-          onClick={refresh}
+          onClick={applyFilters}
           className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em] hover:bg-secondary"
         >
           <RefreshCw className="h-3.5 w-3.5" /> Refresh
@@ -218,7 +250,7 @@ function BossResellerAuditPage() {
           </button>
           <button
             type="button"
-            onClick={refresh}
+            onClick={applyFilters}
             disabled={loading}
             className="rounded-md border border-primary bg-primary/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] hover:bg-primary/20 disabled:opacity-50"
           >
@@ -272,10 +304,33 @@ function BossResellerAuditPage() {
       </div>
 
       {rows.length > 0 && (
-        <p className="mt-3 text-[11px] text-muted-foreground">
-          Hover any row to see the audit <code>reason</code>. Use the SQL editor for full JSON detail.
-        </p>
+        <div className="mt-4 flex items-center justify-between gap-3 text-xs">
+          <p className="text-[11px] text-muted-foreground">
+            Hover any row to see the audit <code>reason</code>. Use the SQL editor for full JSON detail.
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={goPrev}
+              disabled={loading || cursorStack.length === 0}
+              className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] hover:bg-secondary disabled:opacity-40"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" /> Prev
+            </button>
+            <span className="text-muted-foreground tabular-nums">Page {cursorStack.length + 1}</span>
+            <button
+              type="button"
+              onClick={goNext}
+              disabled={loading || !hasMore}
+              className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] hover:bg-secondary disabled:opacity-40"
+            >
+              Next <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
       )}
+      {/* keep ref in module to avoid unused-import warning */}
+      {filtersDirty.current ? null : null}
     </div>
   );
 }
