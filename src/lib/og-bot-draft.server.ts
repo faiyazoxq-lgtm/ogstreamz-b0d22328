@@ -59,6 +59,21 @@ Rules — NON-NEGOTIABLE:
 4. Only emit keys that appear in the surface field hints. Respect the per-field
    max length given. Keep strings concrete and ready to paste into a form.`;
 
+const VOICE_OG = `Voice: foul-mouthed British enforcer. Swear freely (fuck, shit, bollocks),
+banter hard, threaten in jest, full chaos energy. Short and punchy. Never punch down at the
+user — they're your mate. Descriptions and any field values you emit must still be ACCURATE
+and usable; the chaos is in the tone, not the facts.`;
+
+const VOICE_NORMAL = `Voice: short, punchy, British, takes the piss lightly but stays
+brand-safe. No swearing, no slurs, no threats. PG-13 maximum. One or two sentences per turn.
+No emojis unless the user uses them first.`;
+
+function buildSystemPrompt(mode: "og" | "normal", enabled: boolean): string {
+  // If the OG-Bot toggle is offline, default to NORMAL voice.
+  const voice = enabled && mode === "og" ? VOICE_OG : VOICE_NORMAL;
+  return `${SYSTEM_PROMPT}\n\n${voice}`;
+}
+
 const TOOLS = [
   {
     type: "function" as const,
@@ -244,8 +259,27 @@ export async function runOGBotDraft(opts: {
     `Field hints — only emit keys from this list:\n${hintsBlock}`,
   ].filter(Boolean).join("\n");
 
+  // Read the OG-Bot mood toggle from hub_settings. This is independent
+  // of the full-site shape-bridge mood — chaos here only affects OG Bot.
+  let ogMode: "og" | "normal" = "og";
+  let ogEnabled = true;
+  try {
+    const { data: cfg } = await opts.supabase
+      .from("hub_settings")
+      .select("enabled, tuning")
+      .eq("hub_key", "og-bot")
+      .maybeSingle();
+    if (cfg) {
+      ogEnabled = !!cfg.enabled;
+      const t = (cfg.tuning ?? {}) as { mode?: string };
+      ogMode = t.mode === "normal" ? "normal" : "og";
+    }
+  } catch {
+    // fall back to defaults on any read error
+  }
+
   const messages: Array<Record<string, unknown>> = [
-    { role: "system", content: `${SYSTEM_PROMPT}\n\n${surfaceCtx}` },
+    { role: "system", content: `${buildSystemPrompt(ogMode, ogEnabled)}\n\n${surfaceCtx}` },
     ...opts.history.slice(-8).map((m) => ({ role: m.role, content: m.content })),
     { role: "user", content: opts.message },
   ];
