@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { ScrollText, Loader2, Save, ShieldAlert, Filter, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { requireBoss } from "@/lib/route-guards";
+import { useServerFn } from "@tanstack/react-start";
+import { bossListExposedFunctions, bossUpsertFunctionAudit } from "@/lib/boss-function-grants.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/boss/function-audit")({
@@ -43,24 +44,20 @@ function FunctionAuditPage() {
   const qc = useQueryClient();
   const [filter, setFilter] = useState<"all" | "anon" | Status>("all");
   const [search, setSearch] = useState("");
+  const listExposed = useServerFn(bossListExposedFunctions);
+  const upsertAudit = useServerFn(bossUpsertFunctionAudit);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["boss-exposed-functions"],
     queryFn: async (): Promise<Row[]> => {
-      const { data, error } = await supabase.rpc("boss_list_exposed_functions");
-      if (error) throw error;
-      return (data ?? []) as Row[];
+      const { rows } = await listExposed();
+      return rows as Row[];
     },
   });
 
   const upsert = useMutation({
     mutationFn: async (input: { signature: string; justification: string; status: Status }) => {
-      const { error } = await supabase.rpc("boss_upsert_function_audit", {
-        _signature: input.signature,
-        _justification: input.justification,
-        _status: input.status,
-      });
-      if (error) throw error;
+      await upsertAudit({ data: input });
     },
     onSuccess: () => {
       toast.success("Audit note saved");
