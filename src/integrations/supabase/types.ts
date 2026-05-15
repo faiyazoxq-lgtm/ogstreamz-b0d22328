@@ -4378,6 +4378,17 @@ export type Database = {
           username: string
         }[]
       }
+      boss_lockdown_audit: {
+        Args: never
+        Returns: {
+          anon_execute: boolean
+          args: string
+          auth_execute: boolean
+          name: string
+          schema: string
+          service_role_execute: boolean
+        }[]
+      }
       boss_purge_view_events: { Args: never; Returns: number }
       boss_record_stream_credentials: {
         Args: { _order_id: string; _password: string; _username: string }
