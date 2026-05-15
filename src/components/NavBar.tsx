@@ -254,7 +254,7 @@ export function NavBar() {
   return (
     <header
       data-scrolled={scrolled ? "true" : "false"}
-      className={`sticky top-0 z-50 transition-[background-color,backdrop-filter,border-color,box-shadow] duration-300 ease-out border-b ${
+      className={`sticky top-0 z-50 overflow-hidden transition-[background-color,backdrop-filter,border-color,box-shadow] duration-300 ease-out border-b ${
         scrolled
           ? "bg-background/95 sm:bg-background/85 backdrop-blur-none sm:backdrop-blur-xl border-border shadow-[0_8px_28px_-18px_rgba(0,0,0,0.85)]"
           : "bg-background/80 sm:bg-background/35 backdrop-blur-none sm:backdrop-blur-md border-transparent"
@@ -262,24 +262,24 @@ export function NavBar() {
       style={{
         // Lock the header's height to the brand mark budget so the sticky
         // bar can't reflow / jump when the scroll-state class swaps the
-        // background, blur, border colour, or shadow. The animated
-        // properties above are paint-only — combined with `contain: layout`
-        // they cannot trigger layout shift on the page below.
-        // Mobile-first ramp: stays compact (≈3–3.7rem tall) on 320–420px
-        // phones so the lockup, Sign-in pill, and burger fit on one row,
-        // then accelerates on tablets/desktops up to a 28rem ceiling.
-        ["--brand-h" as any]: "clamp(3rem, 0.5rem + 12vw, 28rem)",
+        // background, blur, border colour, or shadow.
+        // Safe ramp: hard floor of 2.75rem (44px tap target) on the
+        // smallest phones, slow growth through tablets, capped at 14rem on
+        // desktop so the 4× lockup can never overflow the viewport or
+        // crush page content below it.
+        ["--brand-h" as any]: "clamp(2.75rem, 1.5rem + 8vw, 14rem)",
         contain: "layout paint style",
         willChange: "background-color, box-shadow",
       }}
     >
       <nav
-        className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap min-w-0 px-1.5 sm:px-8 py-1.5 sm:py-3 gap-1.5 sm:gap-4"
+        className="max-w-7xl mx-auto flex items-center justify-between flex-nowrap min-w-0 overflow-hidden px-2 sm:px-8 py-1.5 sm:py-3 gap-2 sm:gap-4"
         style={{
           // Reserve full brand-h up front so the row never grows after the
           // <img> finishes decoding (no late CLS, no jump on first scroll).
-          minHeight: "calc(var(--brand-h) + 1rem)",
-          height: "calc(var(--brand-h) + 1rem)",
+          minHeight: "calc(var(--brand-h) + 0.75rem)",
+          height: "calc(var(--brand-h) + 0.75rem)",
+          maxHeight: "calc(var(--brand-h) + 0.75rem)",
         }}
       >
         <Link
@@ -321,9 +321,11 @@ export function NavBar() {
               height: "var(--brand-h)",
               maxHeight: "var(--brand-h)",
               width: "auto",
+              minHeight: "2.5rem",
               // Tighter cap on small phones so the wordmark next to it
-              // still has room to render at a legible size.
-              maxWidth: "min(38vw, 28rem)",
+              // still has room to render at a legible size, and a hard
+              // viewport-relative ceiling so it can never clip out.
+              maxWidth: "min(32vw, 14rem)",
               aspectRatio: "16 / 9",
               objectFit: "contain",
             }}
@@ -331,8 +333,8 @@ export function NavBar() {
           <OgWordmark
             suffix="-PORTAL"
             fit
-            maxFontSize={416}
-            minFontSize={28}
+            maxFontSize={224}
+            minFontSize={20}
             className="brand-glow__mark inline-flex items-center self-center min-w-0 flex-shrink whitespace-nowrap text-white font-black bg-transparent leading-[0.9] transition-[color,text-shadow,filter,letter-spacing] duration-300 ease-out tracking-[-0.005em] sm:tracking-[-0.018em] md:tracking-[-0.028em] lg:tracking-[-0.034em] xl:tracking-[-0.04em] drop-shadow-[0_0_18px_oklch(0.72_0.22_245/0.55)]"
             style={{
               // Auto-fit handles the font-size; keep typographic refinements.
