@@ -132,7 +132,7 @@ function Index() {
         <p className="text-xs sm:text-sm tracking-[0.4em] uppercase font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
           Street · Static · Stream
         </p>
-        <h1 className="mt-3 sm:mt-5 text-[10rem] sm:text-[16rem] md:text-[20rem] leading-[0.9] flex justify-center items-center w-full overflow-hidden">
+        <h1 className="mt-3 sm:mt-5 text-[10rem] sm:text-[16rem] md:text-[20rem] leading-[0.9] flex justify-center items-center w-full overflow-visible">
           <OgWordmark
             suffix="-PORTAL"
             className={`og-portal-shimmer block mx-auto ${isVipMember || isBoss ? "animate-glitch" : ""}`}
