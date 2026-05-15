@@ -2654,14 +2654,19 @@ function FleetCommanderPanel() {
             <div key={p.id} className="grid grid-cols-12 gap-2 px-4 py-2 border-b border-border/50 text-sm items-center">
               <div className="col-span-7 truncate text-white">{p.email}</div>
               <div className="col-span-5 flex justify-end gap-1">
-                {(["free","stream_user","vip","real_og"] as const).map((pl) => (
-                  <Button key={pl} size="sm" variant={p.subscription_plan === pl ? "default" : "outline"}
-                    onClick={() => onPlanChange(p.id, pl as Plan)}
-                    className="h-7 text-[10px] uppercase"
-                    style={p.subscription_plan === pl ? { background: cyan, color: "#000" } : { borderColor: "#444", color: "#aaa" }}>
-                    {pl === "free" ? "Free" : pl === "stream_user" ? "Stream" : pl === "vip" ? "VIP" : "Real OG"}
-                  </Button>
-                ))}
+                {(["free","stream_user","vip","real_og"] as const).map((pl) => {
+                  const legacyMap: Record<string,string> = { free:"free", stream_user:"metal", vip:"energy", real_og:"syndicate" };
+                  const isActive = p.subscription_plan === pl || p.subscription_plan === legacyMap[pl];
+                  const label = pl === "free" ? "Free" : pl === "stream_user" ? "Stream" : pl === "vip" ? "VIP" : "Real OG";
+                  return (
+                    <Button key={pl} size="sm" variant={isActive ? "default" : "outline"}
+                      onClick={() => onPlanChange(p.id, pl as Plan)}
+                      className="h-7 text-[10px] uppercase"
+                      style={isActive ? { background: cyan, color: "#000" } : { borderColor: "#444", color: "#aaa" }}>
+                      {label}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
           ))}
