@@ -35,6 +35,23 @@ async function waitForReady(page: Page) {
   );
 }
 
+/**
+ * Returns whether the top-most element at the given viewport coordinate
+ * is the toggle (or one of its children). Used to verify probe points on
+ * the toggle aren't covered by the BottomDock, an overlay, or a banner.
+ */
+async function isToggleHitAt(page: Page, x: number, y: number) {
+  return page.evaluate(
+    ({ x, y }) => {
+      const el = document.elementFromPoint(x, y) as HTMLElement | null;
+      if (!el) return { tag: null as string | null, isToggleOrChild: false };
+      const toggle = el.closest('button[aria-label^="Motion:"]') as HTMLElement | null;
+      return { tag: el.tagName.toLowerCase(), isToggleOrChild: !!toggle };
+    },
+    { x, y },
+  );
+}
+
 test.describe("ReducedMotionToggle vs BottomDock", () => {
   for (const size of MOBILE_SIZES) {
     test(`does not overlap bottom nav @ ${size.name} (${size.width}x${size.height})`, async ({
@@ -88,4 +105,56 @@ test.describe("ReducedMotionToggle vs BottomDock", () => {
     expect(distanceFromBottom).toBeGreaterThanOrEqual(0);
     expect(distanceFromBottom).toBeLessThanOrEqual(32);
   });
+});
+
+test.describe("ReducedMotionToggle is tappable", () => {
+  for (const size of MOBILE_SIZES) {
+    test(`every probe point hits the toggle @ ${size.name} (${size.width}x${size.height})`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: size.width, height: size.height });
+      await page.goto("/");
+      await waitForReady(page);
+
+      const toggle = page.getByRole("button", { name: /^Motion:/ }).first();
+      const box = await toggle.boundingBox();
+      expect(box, "toggle box").toBeTruthy();
+
+      // The toggle must keep enough surface to actually be tapped. We don't
+      // enforce the full 44px HIG target (it's a small pill), but it must
+      // not be SHRUNK or CLIPPED below ~28px by an overlapping element.
+      expect(box!.width, `toggle width @ ${size.name}`).toBeGreaterThanOrEqual(28);
+      expect(box!.height, `toggle height @ ${size.name}`).toBeGreaterThanOrEqual(28);
+
+      // Hit-test 5 probe points spanning the toggle's bounding box. Every
+      // point must resolve to the toggle (or one of its children) — if any
+      // probe lands on a different element, something is overlapping it.
+      const probes = [
+        { dx: 0.5, dy: 0.5, label: "center" },
+        { dx: 0.15, dy: 0.5, label: "left-mid" },
+        { dx: 0.85, dy: 0.5, label: "right-mid" },
+        { dx: 0.5, dy: 0.15, label: "top-mid" },
+        { dx: 0.5, dy: 0.85, label: "bottom-mid" },
+      ];
+
+      for (const p of probes) {
+        const x = box!.x + box!.width * p.dx;
+        const y = box!.y + box!.height * p.dy;
+        const hit = await isToggleHitAt(page, x, y);
+        expect(
+          hit.isToggleOrChild,
+          `probe ${p.label} (${x.toFixed(1)}, ${y.toFixed(1)}) @ ${size.name} hit <${hit.tag}> instead of the toggle`,
+        ).toBe(true);
+      }
+
+      // Final proof: a real click cycles the toggle's label
+      // (auto → on → off → auto). If anything intercepts the tap, the
+      // aria-label won't change.
+      const before = await toggle.getAttribute("aria-label");
+      await toggle.click();
+      await page.waitForTimeout(120);
+      const after = await toggle.getAttribute("aria-label");
+      expect(after, `aria-label changes on tap @ ${size.name}`).not.toBe(before);
+    });
+  }
 });
