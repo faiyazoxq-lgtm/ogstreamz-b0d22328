@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Search, Pencil, Trash2, ArrowUpRight, Loader2, Eye, ArrowUpDown, ImageIcon, Power, PowerOff } from "lucide-react";
+import { Search, Pencil, Trash2, ArrowUpRight, Loader2, Eye, ArrowUpDown, ImageIcon, Power, PowerOff, ChevronDown, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { bossSetPortalPublished } from "@/lib/boss-admin-misc.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { CostTierControl } from "@/components/CostTierControl";
 import { summarizeCosts, TIER_RANK } from "@/lib/cost-registry";
 
@@ -17,6 +18,21 @@ type Portal = {
   created_at: string; created_by: string | null;
   paid_services: Record<string, boolean>;
   published: boolean;
+  // Optional / advanced fields editable by boss
+  style: string | null;
+  use_credit_cost: number;
+  swear_chat_enabled: boolean;
+  seo_title: string | null;
+  seo_description: string | null;
+  seo_image_url: string | null;
+  wallpaper_url: string | null;
+  wallpaper_prompt: string | null;
+  bg_video_url: string | null;
+  bg_video_aspect: string;
+  bg_video_prompt: string | null;
+  audio_url: string | null;
+  audio_snippet_url: string | null;
+  lyric_text: string | null;
 };
 
 const KIND_PATH: Record<string, (s: string) => string> = {
@@ -42,6 +58,8 @@ function hubLabel(kind: string) {
   return HUB_LABELS[kind] ?? kind.charAt(0).toUpperCase() + kind.slice(1) + "HUB";
 }
 
+const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
+
 export const Route = createFileRoute("/boss/portals")({
   component: PortalsManager,
 });
@@ -55,13 +73,19 @@ function PortalsManager() {
   const [costSort, setCostSort] = useState<"none" | "asc" | "desc">("none");
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState<Partial<Portal>>({});
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [genId, setGenId] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
     const { data, error } = await supabase
       .from("portals")
-      .select("id,slug,name,kind,niche,vibe,language,theme,vip,view_count,created_at,created_by,paid_services,published")
+      .select(
+        "id,slug,name,kind,niche,vibe,language,theme,vip,view_count,created_at,created_by,paid_services,published," +
+        "style,use_credit_cost,swear_chat_enabled,seo_title,seo_description,seo_image_url," +
+        "wallpaper_url,wallpaper_prompt,bg_video_url,bg_video_aspect,bg_video_prompt,audio_url,audio_snippet_url,lyric_text"
+      )
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) toast.error(error.message);
@@ -102,12 +126,63 @@ function PortalsManager() {
   }
 
   async function save(id: string) {
-    const { error } = await supabase.from("portals").update({
-      name: draft.name, niche: draft.niche, vibe: draft.vibe,
-      language: draft.language, theme: draft.theme, vip: draft.vip,
-    }).eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success("Saved"); setEditing(null); setDraft({}); load();
+    const nextSlug = (draft.slug ?? "").trim().toLowerCase();
+    if (!nextSlug || !SLUG_RE.test(nextSlug)) {
+      return toast.error("Slug must be lowercase letters, numbers and hyphens (2–64 chars).");
+    }
+    if (!(draft.name ?? "").trim()) return toast.error("Name is required.");
+    if (!(draft.niche ?? "").trim()) return toast.error("Niche is required.");
+    const credit = Math.max(0, Math.floor(Number(draft.use_credit_cost ?? 0) || 0));
+
+    setSaving(true);
+    const patch = {
+      slug: nextSlug,
+      name: (draft.name ?? "").trim(),
+      niche: (draft.niche ?? "").trim(),
+      vibe: (draft.vibe ?? "")?.toString().trim() || null,
+      language: (draft.language ?? "English").trim(),
+      theme: (draft.theme ?? "street").trim(),
+      vip: !!draft.vip,
+      style: (draft.style ?? "")?.toString().trim() || null,
+      use_credit_cost: credit,
+      swear_chat_enabled: !!draft.swear_chat_enabled,
+      seo_title: (draft.seo_title ?? "")?.toString().trim() || null,
+      seo_description: (draft.seo_description ?? "")?.toString().trim() || null,
+      seo_image_url: (draft.seo_image_url ?? "")?.toString().trim() || null,
+      wallpaper_url: (draft.wallpaper_url ?? "")?.toString().trim() || null,
+      wallpaper_prompt: (draft.wallpaper_prompt ?? "")?.toString().trim() || null,
+      bg_video_url: (draft.bg_video_url ?? "")?.toString().trim() || null,
+      bg_video_aspect: (draft.bg_video_aspect ?? "16:9").trim() || "16:9",
+      bg_video_prompt: (draft.bg_video_prompt ?? "")?.toString().trim() || null,
+      audio_url: (draft.audio_url ?? "")?.toString().trim() || null,
+      audio_snippet_url: (draft.audio_snippet_url ?? "")?.toString().trim() || null,
+      lyric_text: (draft.lyric_text ?? "")?.toString() || null,
+    };
+    const { error } = await supabase.from("portals").update(patch).eq("id", id);
+    setSaving(false);
+    if (error) {
+      if (/duplicate key|unique/i.test(error.message)) {
+        return toast.error(`Slug "${nextSlug}" is already taken.`);
+      }
+      return toast.error(error.message);
+    }
+    toast.success("Saved");
+    setEditing(null);
+    setDraft({});
+    setShowAdvanced(false);
+    load();
+  }
+
+  function startEdit(p: Portal) {
+    setEditing(p.id);
+    setDraft({ ...p });
+    setShowAdvanced(false);
+  }
+
+  function cancelEdit() {
+    setEditing(null);
+    setDraft({});
+    setShowAdvanced(false);
   }
 
   async function remove(p: Portal) {
@@ -218,23 +293,156 @@ function PortalsManager() {
             return (
               <div key={p.id} className="rounded-xl border bg-card p-4">
                 {isEdit ? (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input value={draft.name ?? ""} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Name" />
-                      <Input value={draft.language ?? ""} onChange={(e) => setDraft({ ...draft, language: e.target.value })} placeholder="Language" />
-                    </div>
-                    <Input value={draft.niche ?? ""} onChange={(e) => setDraft({ ...draft, niche: e.target.value })} placeholder="Niche" />
-                    <Input value={draft.vibe ?? ""} onChange={(e) => setDraft({ ...draft, vibe: e.target.value })} placeholder="Vibe" />
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input value={draft.theme ?? ""} onChange={(e) => setDraft({ ...draft, theme: e.target.value })} placeholder="Theme" />
-                      <label className="flex items-center gap-2 text-sm px-2">
-                        <input type="checkbox" checked={!!draft.vip} onChange={(e) => setDraft({ ...draft, vip: e.target.checked })} />
-                        VIP only
+                  <div className="space-y-3">
+                    {/* Basic identity */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <label className="space-y-1">
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Name</span>
+                        <Input value={draft.name ?? ""} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Portal name" />
+                      </label>
+                      <label className="space-y-1">
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Slug (URL)</span>
+                        <Input
+                          value={draft.slug ?? ""}
+                          onChange={(e) => setDraft({ ...draft, slug: e.target.value.toLowerCase() })}
+                          placeholder="lower-case-slug"
+                        />
                       </label>
                     </div>
+                    <label className="block space-y-1">
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Niche / description</span>
+                      <Textarea
+                        value={draft.niche ?? ""}
+                        onChange={(e) => setDraft({ ...draft, niche: e.target.value })}
+                        placeholder="What this portal is about"
+                        rows={2}
+                      />
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <label className="space-y-1">
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Vibe</span>
+                        <Input value={draft.vibe ?? ""} onChange={(e) => setDraft({ ...draft, vibe: e.target.value })} placeholder="e.g. dark, comedic" />
+                      </label>
+                      <label className="space-y-1">
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Language</span>
+                        <Input value={draft.language ?? ""} onChange={(e) => setDraft({ ...draft, language: e.target.value })} placeholder="English" />
+                      </label>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
+                      <label className="space-y-1">
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Theme</span>
+                        <Input value={draft.theme ?? ""} onChange={(e) => setDraft({ ...draft, theme: e.target.value })} placeholder="street" />
+                      </label>
+                      <label className="space-y-1">
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Use cost (credits)</span>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={String(draft.use_credit_cost ?? 0)}
+                          onChange={(e) => setDraft({ ...draft, use_credit_cost: Math.max(0, Number(e.target.value) || 0) })}
+                        />
+                      </label>
+                      <div className="flex flex-col gap-1 text-sm">
+                        <label className="flex items-center gap-2 px-2 py-1.5 rounded border bg-background">
+                          <input type="checkbox" checked={!!draft.vip} onChange={(e) => setDraft({ ...draft, vip: e.target.checked })} />
+                          VIP only
+                        </label>
+                        <label className="flex items-center gap-2 px-2 py-1.5 rounded border bg-background">
+                          <input type="checkbox" checked={!!draft.swear_chat_enabled} onChange={(e) => setDraft({ ...draft, swear_chat_enabled: e.target.checked })} />
+                          Swear chat
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Advanced section */}
+                    <button
+                      type="button"
+                      onClick={() => setShowAdvanced((v) => !v)}
+                      className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                    >
+                      {showAdvanced ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                      Advanced (media, SEO, style)
+                    </button>
+
+                    {showAdvanced && (
+                      <div className="space-y-2 rounded-lg border border-dashed border-border/60 bg-background/40 p-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <label className="space-y-1">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Style hint</span>
+                            <Input value={draft.style ?? ""} onChange={(e) => setDraft({ ...draft, style: e.target.value })} placeholder="e.g. neon-noir" />
+                          </label>
+                          <label className="space-y-1">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">BG video aspect</span>
+                            <Input value={draft.bg_video_aspect ?? "16:9"} onChange={(e) => setDraft({ ...draft, bg_video_aspect: e.target.value })} placeholder="16:9" />
+                          </label>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <label className="space-y-1">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Wallpaper URL</span>
+                            <Input value={draft.wallpaper_url ?? ""} onChange={(e) => setDraft({ ...draft, wallpaper_url: e.target.value })} placeholder="https://…" />
+                          </label>
+                          <label className="space-y-1">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Wallpaper prompt</span>
+                            <Input value={draft.wallpaper_prompt ?? ""} onChange={(e) => setDraft({ ...draft, wallpaper_prompt: e.target.value })} placeholder="Image generation prompt" />
+                          </label>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <label className="space-y-1">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">BG video URL</span>
+                            <Input value={draft.bg_video_url ?? ""} onChange={(e) => setDraft({ ...draft, bg_video_url: e.target.value })} placeholder="https://…" />
+                          </label>
+                          <label className="space-y-1">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">BG video prompt</span>
+                            <Input value={draft.bg_video_prompt ?? ""} onChange={(e) => setDraft({ ...draft, bg_video_prompt: e.target.value })} placeholder="Video generation prompt" />
+                          </label>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <label className="space-y-1">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Audio URL</span>
+                            <Input value={draft.audio_url ?? ""} onChange={(e) => setDraft({ ...draft, audio_url: e.target.value })} placeholder="https://…" />
+                          </label>
+                          <label className="space-y-1">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Audio snippet URL</span>
+                            <Input value={draft.audio_snippet_url ?? ""} onChange={(e) => setDraft({ ...draft, audio_snippet_url: e.target.value })} placeholder="https://…" />
+                          </label>
+                        </div>
+                        <label className="block space-y-1">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Lyric / hero text</span>
+                          <Textarea
+                            value={draft.lyric_text ?? ""}
+                            onChange={(e) => setDraft({ ...draft, lyric_text: e.target.value })}
+                            rows={3}
+                            placeholder="Optional lyric or hero copy"
+                          />
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <label className="space-y-1">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">SEO title</span>
+                            <Input value={draft.seo_title ?? ""} onChange={(e) => setDraft({ ...draft, seo_title: e.target.value })} placeholder="≤60 chars" maxLength={70} />
+                          </label>
+                          <label className="space-y-1">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">SEO image URL</span>
+                            <Input value={draft.seo_image_url ?? ""} onChange={(e) => setDraft({ ...draft, seo_image_url: e.target.value })} placeholder="https://…" />
+                          </label>
+                        </div>
+                        <label className="block space-y-1">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">SEO description</span>
+                          <Textarea
+                            value={draft.seo_description ?? ""}
+                            onChange={(e) => setDraft({ ...draft, seo_description: e.target.value })}
+                            rows={2}
+                            placeholder="≤160 chars"
+                            maxLength={200}
+                          />
+                        </label>
+                      </div>
+                    )}
+
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => { setEditing(null); setDraft({}); }}>Cancel</Button>
-                      <Button size="sm" onClick={() => save(p.id)}>Save</Button>
+                      <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={saving}>Cancel</Button>
+                      <Button size="sm" onClick={() => save(p.id)} disabled={saving}>
+                        {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save"}
+                      </Button>
                     </div>
                   </div>
                 ) : (
@@ -276,7 +484,7 @@ function PortalsManager() {
                       >
                         {genId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => { setEditing(p.id); setDraft(p); }} title="Edit">
+                      <Button variant="ghost" size="icon" onClick={() => startEdit(p)} title="Edit">
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <a href={viewPath(p)} target="_blank" rel="noopener noreferrer">
