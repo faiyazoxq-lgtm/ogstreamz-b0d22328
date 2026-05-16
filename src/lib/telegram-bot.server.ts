@@ -1,5 +1,6 @@
 import { logInfo, logWarn, logError } from "./server-log.server";
 import { getBossChatId } from "./boss-chat.server";
+import { createHash } from "crypto";
 
 const TG_GATEWAY = "https://connector-gateway.lovable.dev/telegram";
 
@@ -277,6 +278,5 @@ async function alertBossDeliveryFailure(args: {
 export function deriveTelegramWebhookSecret(apiKey: string): string {
   // Stable secret derived from the Lovable connection key, matches the
   // one we register with Telegram via setWebhook.
-  const { createHash } = require("crypto") as typeof import("crypto");
   return createHash("sha256").update(`telegram-webhook:${apiKey}`).digest("base64url");
 }
