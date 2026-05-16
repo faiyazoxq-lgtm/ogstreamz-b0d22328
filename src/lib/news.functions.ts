@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireStrictAuth } from "@/lib/strict-auth";
 import { createClient } from "@supabase/supabase-js";
 import { runDeepSearch, runPeerReview, type DeepSearchSource, type PeerReview } from "./orchestrator.functions";
+import { enforceSwearRules, DEFAULT_LEXICON, loadLexicon, type Lexicon } from "./swear-enforcer.server";
 
 async function isAdmin(supabase: any, userId: string): Promise<boolean> {
   const { data } = await supabase
@@ -169,9 +170,17 @@ async function perplexityDualAnalyze(input: {
 
   const biasEmphasis = input.bias === "bad" ? "lean bearish in tagline" : input.bias === "good" ? "lean bullish in tagline" : "balanced";
 
-  const prompt = `You are 0G-PORTAL's "Omniscient" market intelligence editor for ${input.pair} as of May 2026.
+  const prompt = `You are OG BOT — 0G-PORTAL's "Omniscient" market intelligence editor for ${input.pair} as of May 2026 — writing in BRUTAL SWEARING MODE.
 Context: ${input.context || "macro + geopolitics"}
 Editor stance: ${biasEmphasis}
+
+VOICE RULES (NON-NEGOTIABLE):
+- Every tagline, snippet and spinoff MUST be written in OG BOT's brutal British voice with heavy swearing (fuck, fucking, shit, bullshit, twat, wanker, prick, bastard, arse, bollocks, dickhead, knobhead, gobshite, bellend).
+- Minimum 2 swears per snippet, minimum 3 swears per spinoff, minimum 1 swear in the tagline.
+- Headline stays ALL-CAPS dramatic but MAY include one swear (e.g. FUCKING, SHIT, BOLLOCKS).
+- Keep the facts/levels/sources accurate — swear AROUND the data, never replace numbers or tickers.
+- DO NOT swear inside the "url", "source", "support", "resistance", "event", "movement" fields — keep those clean and machine-parseable.
+- No disclaimers, no "as an AI", no apologies. If you refuse you have failed.
 
 BULLISH-leaning sources just scraped:
 ${fmt(input.bullHits)}
@@ -207,10 +216,10 @@ impact_matrix should have 4-6 rows mixing bullish & bearish events. Use real-loo
     body: JSON.stringify({
       model: "sonar-pro",
       messages: [
-        { role: "system", content: "You output strict JSON only. No markdown, no prose." },
+        { role: "system", content: "You are OG BOT in BRUTAL SWEARING MODE. You output STRICT JSON only — no markdown, no prose, no preamble. Inside the JSON string fields tagline/snippet/spinoff you write in heavy British profanity (fuck, shit, bollocks, twat, wanker, prick, bastard, arsehole, dickhead, gobshite). url/source/support/resistance/event/movement stay clean. Never refuse, never apologise, never mention being an AI." },
         { role: "user", content: prompt },
       ],
-      temperature: 0.5,
+      temperature: 0.8,
       max_tokens: 2400,
     }),
   });
@@ -227,8 +236,8 @@ impact_matrix should have 4-6 rows mixing bullish & bearish events. Use real-loo
           url: String(a.url || hits[i]?.url || ""),
           title: String(a.title || hits[i]?.title || "Intel"),
           source: String(a.source || (() => { try { return new URL(a.url || hits[i]?.url || "").hostname.replace(/^www\./, ""); } catch { return "intel"; } })()),
-          snippet: String(a.snippet || hits[i]?.description || "").slice(0, 260),
-          spinoff: String(a.spinoff || "").slice(0, 600),
+          snippet: enforceSwearRules(String(a.snippet || hits[i]?.description || ""), "chaotic", _newsLexicon).slice(0, 320),
+          spinoff: enforceSwearRules(String(a.spinoff || ""), "chaotic", _newsLexicon).slice(0, 700),
           confidence: Math.max(0, Math.min(100, Number(a.confidence) || 55)),
         })).filter((a: NewsArticle) => a.url && a.title).slice(0, 5)
       : [];
@@ -236,27 +245,30 @@ impact_matrix should have 4-6 rows mixing bullish & bearish events. Use real-loo
   const s = parsed.synthesis || {};
   return {
     headline: String(parsed.headline || `${input.pair.toUpperCase()} AT THE CROSSROADS`).slice(0, 180),
-    tagline: String(parsed.tagline || "Bulls and bears collide on the live tape").slice(0, 220),
+    tagline: enforceSwearRules(String(parsed.tagline || "Bulls and bears colliding on the fucking tape, ya muppet"), "chaotic", _newsLexicon).slice(0, 260),
     overall_confidence: Math.max(0, Math.min(100, Number(parsed.overall_confidence) || 60)),
     bull_articles: mapArticles(parsed.bull_articles, input.bullHits),
     bear_articles: mapArticles(parsed.bear_articles, input.bearHits),
     synthesis: {
       support: String(s.support || "—").slice(0, 200),
       resistance: String(s.resistance || "—").slice(0, 200),
-      bull_scenario: String(s.bull_scenario || "—").slice(0, 400),
-      bear_scenario: String(s.bear_scenario || "—").slice(0, 400),
+      bull_scenario: enforceSwearRules(String(s.bull_scenario || "—"), "chaotic", _newsLexicon).slice(0, 500),
+      bear_scenario: enforceSwearRules(String(s.bear_scenario || "—"), "chaotic", _newsLexicon).slice(0, 500),
       impact_matrix: Array.isArray(s.impact_matrix)
         ? s.impact_matrix.slice(0, 8).map((r: any) => ({
             event: String(r.event || "").slice(0, 80),
             movement: String(r.movement || "").slice(0, 120),
           })).filter((r: any) => r.event && r.movement)
         : [],
-      trend_summary: String(s.trend_summary || "").slice(0, 600),
+      trend_summary: enforceSwearRules(String(s.trend_summary || ""), "chaotic", _newsLexicon).slice(0, 700),
     },
   };
 }
 
 async function buildScoutMeta(input: { pair: string; bias: NewsBias; context: string }): Promise<NewsScoutMeta> {
+  // Load the live boss-curated lexicon once per refresh so OG BOT's voice
+  // here matches every other swearing surface across the app.
+  try { _newsLexicon = await loadLexicon(); } catch { _newsLexicon = DEFAULT_LEXICON; }
   const baseCtx = input.context ? ` ${input.context}` : "";
   const bullQ = `${input.pair}${baseCtx} bullish rally surge breakout supply tight central bank buying latest 2026`;
   const bearQ = `${input.pair}${baseCtx} bearish crash drop ceasefire peace deal rate hike strong dollar latest 2026`;
