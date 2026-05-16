@@ -188,6 +188,10 @@ export const Route = createFileRoute("/portals")({
 function PortalsHub() {
   const { user, isAdmin, profile } = useAuth();
   const isBoss = isAdmin || profile?.rank === "boss";
+  // VIPs already know MusicHUB inside-out — suppress the OG BoT empty-state
+  // nudge for the `music` kind so it stops cluttering their Portals page.
+  const isVip =
+    isBoss || profile?.rank === "vip" || profile?.status === "vip";
   const [items, setItems] = useState<Item[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Filter / scope / search query are persisted in the URL via validateSearch
@@ -594,7 +598,10 @@ function PortalsHub() {
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            {(filter === "all" ? HUB_ORDER : [filter as Item["kind"]]).slice(0, 4).map((k) => (
+            {(filter === "all" ? HUB_ORDER : [filter as Item["kind"]])
+              .filter((k) => !(isVip && k === "music"))
+              .slice(0, 4)
+              .map((k) => (
               <OgBotEmpty
                 key={k}
                 kind={k}
@@ -790,7 +797,7 @@ function PortalsHub() {
             );
           })}
                 </div>
-                {missingSide && (
+                {missingSide && !(isVip && hubKind === "music") && (
                   <div className="mt-4">
                     <OgBotEmpty kind={hubKind} side={missingSide} compact />
                   </div>
