@@ -12,6 +12,9 @@ import { OgPassBadge } from "@/components/OgPassBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { effectiveSwearing } from "@/lib/swearing";
+import { useServerFn } from "@tanstack/react-start";
+import { uploadProfileAvatar } from "@/lib/account-passes.functions";
+import { fileToBase64 } from "@/lib/file-to-base64";
 import {
   STREAM_PLATFORMS,
   entryKey,
@@ -101,6 +104,7 @@ function SettingsPage() {
   const { user, profile, loading, refresh } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
+  const uploadAvatar = useServerFn(uploadProfileAvatar);
 
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
@@ -145,21 +149,9 @@ function SettingsPage() {
     setUploading(true);
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const path = `${user.id}/avatar-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, {
-        cacheControl: "3600",
-        upsert: true,
-        contentType: file.type,
-      });
-      if (upErr) throw upErr;
-      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-      const url = data.publicUrl;
-      const { error: updErr } = await supabase
-        .from("profiles")
-        .update({ avatar_url: url })
-        .eq("id", user.id);
-      if (updErr) throw updErr;
-      setAvatarUrl(url);
+      const base64 = await fileToBase64(file);
+      const res = await uploadAvatar({ data: { base64, mime: file.type, ext } });
+      setAvatarUrl(res.avatar_url);
       await refresh?.();
       toast.success("Profile picture updated");
     } catch (err: any) {

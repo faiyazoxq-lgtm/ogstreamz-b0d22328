@@ -176,6 +176,41 @@ export const setProfileAvatar = createServerFn({ method: "POST" })
     return { ok: true, avatar_url: data.avatar_url };
   });
 
+/**
+ * Upload a user-supplied profile picture (sent as base64) into the public
+ * `avatars` bucket and update profiles.avatar_url. Runs server-side using
+ * the authenticated supabase client so storage RLS applies as the user.
+ */
+export const uploadProfileAvatar = createServerFn({ method: "POST" })
+  .middleware([requireStrictAuth])
+  .inputValidator((d: { base64: string; mime: string; ext?: string }) => {
+    const b64 = String(d?.base64 ?? "");
+    const mime = String(d?.mime ?? "").toLowerCase();
+    if (!b64) throw new Error("No image data");
+    if (!mime.startsWith("image/")) throw new Error("File must be an image");
+    // ~5MB cap on base64 payload (~6.7M chars).
+    if (b64.length > 7_000_000) throw new Error("Image must be 5 MB or smaller");
+    const ext = String(d?.ext ?? mime.split("/")[1] ?? "jpg").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5) || "jpg";
+    return { base64: b64, mime, ext };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    const bin = Uint8Array.from(atob(data.base64), (c) => c.charCodeAt(0));
+    const objectKey = `${userId}/upload-${Date.now()}.${data.ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("avatars")
+      .upload(objectKey, bin, { contentType: data.mime, upsert: true });
+    if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
+    const { data: pub } = supabase.storage.from("avatars").getPublicUrl(objectKey);
+    const publicUrl = `${pub.publicUrl}?v=${Date.now()}`;
+    const { error: updErr } = await supabase
+      .from("profiles")
+      .update({ avatar_url: publicUrl })
+      .eq("id", userId);
+    if (updErr) throw new Error(updErr.message);
+    return { avatar_url: publicUrl };
+  });
+
 export const updateTelegramPrefs = createServerFn({ method: "POST" })
   .middleware([requireStrictAuth])
   .inputValidator((d: { notify_purchases?: boolean; notify_reminders?: boolean; notify_live?: boolean }) => ({
