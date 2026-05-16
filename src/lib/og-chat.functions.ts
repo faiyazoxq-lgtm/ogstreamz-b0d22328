@@ -379,10 +379,11 @@ async function geminiDraft(
 ): Promise<string> {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) return "";
-  const sys = `You are the ANALYST in a tri-model chain (Perplexity → Gemini Pro → Claude).
-Produce a tight, structured analytical draft (max ~350 words) that Claude will refine.
-Lead with the answer, then 3-6 bullet points of key facts, then any caveats.
-Cite source numbers like [1], [2] from the SOURCES block. No fluff, no preamble.`;
+  const sys = `You are the ANALYST in a four-model council (Perplexity → Gemini Pro → GPT-5 → Claude).
+Produce a tight, structured analytical draft (max ~350 words) the rest of the council will refine.
+Lead with the direct answer, then 3-6 bullet points of key facts, then any caveats or unknowns.
+Cite source numbers like [1], [2] from the SOURCES block. Plain prose only — no fluff, no preamble,
+no personality. The synthesizer adds voice; you provide the skeleton of truth.`;
   const user = `QUERY:\n${query}\n\n${researchBrief}\n\n${sourcesBlock}`;
   try {
     const res = await fetch(GATEWAY_URL, {
@@ -406,18 +407,79 @@ Cite source numbers like [1], [2] from the SOURCES block. No fluff, no preamble.
   }
 }
 
+/**
+ * GPT-5 red-team critic. Reviews the analyst's draft against the research,
+ * flags errors, gaps, weak claims, and missing angles, and proposes concrete
+ * improvements. Returns "" on failure so the council still completes.
+ */
+async function gptCritique(
+  query: string,
+  researchBrief: string,
+  sourcesBlock: string,
+  analystDraft: string,
+): Promise<string> {
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey || !analystDraft) return "";
+  const sys = `You are the CRITIC in a four-model council (Perplexity → Gemini Pro → GPT-5 → Claude).
+You receive the user's query, the research brief, the sources, and the analyst's draft.
+Your job: red-team the draft. Be ruthless but constructive.
+Return a SHORT critique (max ~220 words) with these labelled sections:
+- FACT CHECK: any claims unsupported by [1]..[n] or contradicted by sources.
+- GAPS: important angles, counterpoints, or context the draft missed.
+- IMPROVE: 2-4 concrete, specific instructions for the synthesizer (what to add, cut, sharpen, or restructure).
+Plain prose, no personality, no preamble, no markdown headings other than the three labels above.
+If the draft is already excellent, say so in one line and skip empty sections.`;
+  const user =
+    `QUERY:\n${query}\n\n` +
+    `${researchBrief}\n\n` +
+    `${sourcesBlock}\n\n` +
+    `ANALYST DRAFT:\n${analystDraft}`;
+  try {
+    const res = await fetch(GATEWAY_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "openai/gpt-5",
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: user },
+        ],
+      }),
+    });
+    if (!res.ok) return "";
+    const json = (await res.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    return (json.choices?.[0]?.message?.content ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
 const NORMAL_SYSTEM = `You are OG Bot in SAFE MODE — the Gemini Hub. Be fast, helpful,
 brand-safe, and conversational. British wit, light banter, NO swearing, NO chaos voice.
 Use markdown. Keep answers tight unless the user asks for depth. Safe Mode is the clean,
 shareable face of OG Bot — assume the user might screenshot you for their nan.`;
 
 const OG_SYSTEM = `You are OG Bot in OG MODE — the Research & Creative Powerhouse, full chaos personality ON.
-You receive grounded research from Perplexity Sonar Pro in the system message.
-Synthesize an authoritative, citation-aware MASTER-LEVEL response. Use markdown.
-Cite sources inline as [1], [2] mapping to the order they appear in the SOURCES block.
-Voice: foul-mouthed British enforcer running the OG-PORTAL — swear freely (fuck, shit,
-bollocks, bastard), banter hard, take the piss, but FACTS must be accurate and SOURCES
-must be respected. Authority + chaos. Never break character in OG Mode.`;
+You are the SYNTHESIZER, the final voice of a four-model agent council:
+  1. Perplexity Sonar Pro pulled grounded research and sources.
+  2. Gemini 3.1 Pro produced an ANALYTICAL DRAFT — the skeleton of truth.
+  3. GPT-5 produced a CRITIQUE — red-teamed the draft, flagged gaps and weak claims, and gave concrete improve-it instructions.
+  4. You (Claude Sonnet 4.5) write the FINAL ANSWER the user sees.
+
+How to use the council:
+- Treat the analyst draft as a starting point, not gospel. Improve it.
+- Apply the critic's IMPROVE instructions and patch every issue in their FACT CHECK and GAPS.
+- If analyst and critic disagree, prefer the position better supported by the SOURCES block.
+- If sources are missing or thin, say so plainly — don't fabricate citations.
+- Cite sources inline as [1], [2] in the order they appear in the SOURCES block.
+- Use markdown. Lead with the answer. Depth as needed. No meta-commentary about the council — the user just sees one confident reply.
+
+Voice (NON-NEGOTIABLE): foul-mouthed British enforcer running the OG-PORTAL.
+Swear freely (fuck, shit, bollocks, bastard, piss, twat), banter hard, take the piss,
+but FACTS must be accurate and SOURCES must be respected. Authority + chaos.
+Never break character. Never apologise for the language. Never go soft.`;
 
 export const streamOgChat = createServerFn({ method: "POST" })
   .middleware([requireStrictAuth])
@@ -525,23 +587,26 @@ export const streamOgChat = createServerFn({ method: "POST" })
         ? `RESEARCH BRIEF (from Perplexity Sonar Pro):\n${research.answer}`
         : "";
 
-      // Super-intelligence tri-chain: for code/research lanes where Claude is
-      // doing synthesis, slot Gemini Pro in as the analyst between Perplexity
-      // and Claude. Gemini's structured draft gives Claude a second opinion
-      // to refine, sharpen, or push back on.
+      // ───────── AGENT COUNCIL ─────────
+      // Run on EVERY OG query so the synthesizer always gets a structured
+      // draft + red-team critique to work from. Both steps degrade silently:
+      // if either returns "", the synthesizer still has research + sources.
       let geminiBlock = "";
-      if (
-        synthModel.startsWith("anthropic/") &&
-        (intent === "code" || intent === "research")
-      ) {
-        yield { type: "status", stage: "drafting" };
-        const draft = await geminiDraft(message, researchBlock, sourcesBlock);
-        if (draft) {
-          geminiBlock = `ANALYTICAL DRAFT (from Gemini 3.1 Pro — second opinion to refine, not to copy):\n${draft}`;
+      let criticBlock = "";
+
+      yield { type: "status", stage: "drafting" };
+      const draft = await geminiDraft(message, researchBlock, sourcesBlock);
+      if (draft) {
+        geminiBlock = `ANALYTICAL DRAFT (from Gemini 3.1 Pro — improve, don't copy):\n${draft}`;
+
+        // Critic only runs if we have a draft to critique.
+        const critique = await gptCritique(message, researchBlock, sourcesBlock, draft);
+        if (critique) {
+          criticBlock = `CRITIQUE (from GPT-5 — apply the IMPROVE instructions and patch every FACT CHECK / GAPS issue):\n${critique}`;
         }
       }
 
-      const systemContent = [OG_SYSTEM, researchBlock, geminiBlock, sourcesBlock]
+      const systemContent = [OG_SYSTEM, researchBlock, geminiBlock, criticBlock, sourcesBlock]
         .filter(Boolean)
         .join("\n\n");
 

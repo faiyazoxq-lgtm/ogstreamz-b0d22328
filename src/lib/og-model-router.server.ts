@@ -62,11 +62,11 @@ export function pickDraftModel(mode: OgMode, enabled: boolean, query?: string): 
 
 /** Pick the synthesis model for the streaming chat surface in OG mode. */
 export function pickSynthesisModel(intent: Intent): string {
-  // Claude takes the hard reasoning lanes when ANTHROPIC_API_KEY is wired —
-  // super-intelligence mode: Perplexity research → Claude synth.
-  if (process.env.ANTHROPIC_API_KEY && (intent === "code" || intent === "research")) {
-    return MODEL_OG_CLAUDE;
-  }
+  // Super-intelligence mode: when ANTHROPIC_API_KEY is wired, Claude is the
+  // synthesizer for ALL non-media OG intents. The council (Perplexity →
+  // Gemini Pro analyst → GPT-5 critic → Claude) runs on every query so the
+  // best possible answer is always assembled, not just on code/research.
+  if (process.env.ANTHROPIC_API_KEY) return MODEL_OG_CLAUDE;
   if (intent === "code") return MODEL_OG_REASONING;
   return MODEL_OG_GENERAL;
 }
