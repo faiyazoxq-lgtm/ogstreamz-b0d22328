@@ -177,7 +177,7 @@ function RootComponent() {
             <SystemGlitchOverlay />
             {/* LiveThinkingFeed removed — was a bottom-right Boss watermark popup */}
             <EnforcerConsole />
-            <ReducedMotionToggle />
+            <HomeOnlyMotionToggle />
             <AlignmentQAOverlay />
             <PupilCalibrator />
             <OgBotFloatingWidget />
@@ -204,6 +204,12 @@ function HubsStripSlot() {
   const showStrip = HUB_ROUTES.has(pathname) || pathname.startsWith("/hub/");
   if (!showStrip) return null;
   return <HubsStrip className="pt-4 pb-2" />;
+}
+
+function HomeOnlyMotionToggle() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (pathname !== "/") return null;
+  return <ReducedMotionToggle />;
 }
 
 function TeleportOverlay() {
