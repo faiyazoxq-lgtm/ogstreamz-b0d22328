@@ -379,10 +379,11 @@ async function geminiDraft(
 ): Promise<string> {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) return "";
-  const sys = `You are the ANALYST in a tri-model chain (Perplexity → Gemini Pro → Claude).
-Produce a tight, structured analytical draft (max ~350 words) that Claude will refine.
-Lead with the answer, then 3-6 bullet points of key facts, then any caveats.
-Cite source numbers like [1], [2] from the SOURCES block. No fluff, no preamble.`;
+  const sys = `You are the ANALYST in a four-model council (Perplexity → Gemini Pro → GPT-5 → Claude).
+Produce a tight, structured analytical draft (max ~350 words) the rest of the council will refine.
+Lead with the direct answer, then 3-6 bullet points of key facts, then any caveats or unknowns.
+Cite source numbers like [1], [2] from the SOURCES block. Plain prose only — no fluff, no preamble,
+no personality. The synthesizer adds voice; you provide the skeleton of truth.`;
   const user = `QUERY:\n${query}\n\n${researchBrief}\n\n${sourcesBlock}`;
   try {
     const res = await fetch(GATEWAY_URL, {
@@ -390,6 +391,55 @@ Cite source numbers like [1], [2] from the SOURCES block. No fluff, no preamble.
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "google/gemini-3.1-pro-preview",
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: user },
+        ],
+      }),
+    });
+    if (!res.ok) return "";
+    const json = (await res.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    return (json.choices?.[0]?.message?.content ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * GPT-5 red-team critic. Reviews the analyst's draft against the research,
+ * flags errors, gaps, weak claims, and missing angles, and proposes concrete
+ * improvements. Returns "" on failure so the council still completes.
+ */
+async function gptCritique(
+  query: string,
+  researchBrief: string,
+  sourcesBlock: string,
+  analystDraft: string,
+): Promise<string> {
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey || !analystDraft) return "";
+  const sys = `You are the CRITIC in a four-model council (Perplexity → Gemini Pro → GPT-5 → Claude).
+You receive the user's query, the research brief, the sources, and the analyst's draft.
+Your job: red-team the draft. Be ruthless but constructive.
+Return a SHORT critique (max ~220 words) with these labelled sections:
+- FACT CHECK: any claims unsupported by [1]..[n] or contradicted by sources.
+- GAPS: important angles, counterpoints, or context the draft missed.
+- IMPROVE: 2-4 concrete, specific instructions for the synthesizer (what to add, cut, sharpen, or restructure).
+Plain prose, no personality, no preamble, no markdown headings other than the three labels above.
+If the draft is already excellent, say so in one line and skip empty sections.`;
+  const user =
+    `QUERY:\n${query}\n\n` +
+    `${researchBrief}\n\n` +
+    `${sourcesBlock}\n\n` +
+    `ANALYST DRAFT:\n${analystDraft}`;
+  try {
+    const res = await fetch(GATEWAY_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "openai/gpt-5",
         messages: [
           { role: "system", content: sys },
           { role: "user", content: user },
