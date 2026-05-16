@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "../hooks/use-auth";
 import { LogIn, Gift, ShieldCheck, Sparkles, Music2, Smile, Wrench, Zap, Lock, ArrowRight, Coins } from "lucide-react";
 
@@ -8,11 +8,23 @@ export const SIGNUP_BONUS_CREDITS = 2;
 import { useEffect, type ReactNode } from "react";
 import { useSignupBonus } from "@/hooks/use-signup-bonus";
 
-const PUBLIC_PATHS = ["/auth", "/forgot-password", "/reset-password"];
+// Routes a non-signed-in visitor is allowed to see. Everything else
+// bounces to /welcome so the marketing/landing screen is the single
+// entry point for unauthenticated traffic.
+const PUBLIC_PATHS = [
+  "/welcome",
+  "/auth",
+  "/forgot-password",
+  "/reset-password",
+  "/sitemap",
+  "/sitemap.xml",
+  "/robots.txt",
+];
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const { user, loading, hasStoredSession } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
 
   const isPublic =
     PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/")) ||
@@ -39,18 +51,24 @@ export function AuthGate({ children }: { children: ReactNode }) {
     } catch { /* ignore */ }
   }, [user, isPublic, pathname]);
 
+  // Once we've confirmed the visitor isn't signed in (and isn't mid-restore),
+  // send them to the public /welcome screen instead of rendering protected
+  // content inline. The post_auth_redirect above will return them here
+  // after sign-in.
+  useEffect(() => {
+    if (user || isPublic) return;
+    if (loading || hasStoredSession) return;
+    navigate({ to: "/welcome", replace: true });
+  }, [user, isPublic, loading, hasStoredSession, navigate]);
+
   if (isPublic || user) return <>{children}</>;
 
-  // Avoid the unauthenticated flash while session restores
-  if (loading || hasStoredSession) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-xs uppercase tracking-[0.3em] text-white/40">Loading…</div>
-      </div>
-    );
-  }
-
-  return <PromoLanding />;
+  // Loading state covers both "session restoring" and "redirect in flight".
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="text-xs uppercase tracking-[0.3em] text-white/40">Loading…</div>
+    </div>
+  );
 }
 
 function PromoLanding() {
