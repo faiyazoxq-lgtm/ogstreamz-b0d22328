@@ -706,6 +706,16 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
             }
             return Response.json({ ok: true });
           }
+          if (cbData.startsWith("portal:") || cbData === "portals:list") {
+            try {
+              await handlePortalCallback(update.callback_query);
+            } catch (e) {
+              logError("tg.webhook.portal_callback_failed", {
+                error: e instanceof Error ? e.message : String(e),
+              });
+            }
+            return Response.json({ ok: true });
+          }
           try {
             await handleCredsCallback(update.callback_query);
           } catch (e) {
