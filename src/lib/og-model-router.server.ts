@@ -16,6 +16,7 @@ export type Intent = "chat" | "code" | "research" | "image" | "music" | "video";
 const MODEL_NORMAL = "google/gemini-3-flash-preview";
 const MODEL_OG_GENERAL = "google/gemini-3.1-pro-preview";
 const MODEL_OG_REASONING = "openai/gpt-5.5";
+const MODEL_OG_CLAUDE = "anthropic/claude-sonnet-4-5";
 
 /** Lightweight regex-based intent classifier. Cheap, deterministic, no extra LLM hop. */
 export function classifyIntent(query: string): Intent {
@@ -61,6 +62,11 @@ export function pickDraftModel(mode: OgMode, enabled: boolean, query?: string): 
 
 /** Pick the synthesis model for the streaming chat surface in OG mode. */
 export function pickSynthesisModel(intent: Intent): string {
+  // Claude takes the hard reasoning lanes when ANTHROPIC_API_KEY is wired —
+  // super-intelligence mode: Perplexity research → Claude synth.
+  if (process.env.ANTHROPIC_API_KEY && (intent === "code" || intent === "research")) {
+    return MODEL_OG_CLAUDE;
+  }
   if (intent === "code") return MODEL_OG_REASONING;
   return MODEL_OG_GENERAL;
 }
@@ -69,4 +75,5 @@ export const OG_MODELS = {
   normal: MODEL_NORMAL,
   ogGeneral: MODEL_OG_GENERAL,
   ogReasoning: MODEL_OG_REASONING,
+  ogClaude: MODEL_OG_CLAUDE,
 } as const;

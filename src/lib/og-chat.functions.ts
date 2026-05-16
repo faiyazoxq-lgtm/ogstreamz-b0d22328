@@ -91,6 +91,11 @@ async function* streamGateway(
   model: string,
   messages: Array<{ role: string; content: string }>,
 ): AsyncGenerator<string> {
+  // Super-intelligence path: anthropic/* models stream directly from Anthropic.
+  if (model.startsWith("anthropic/")) {
+    yield* streamClaude(model.replace(/^anthropic\//, ""), messages);
+    return;
+  }
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -111,6 +116,73 @@ async function* streamGateway(
   }
 
   yield* sseDeltas(res.body);
+}
+
+/** Stream from Anthropic's Messages API. Yields text deltas. */
+async function* streamClaude(
+  model: string,
+  messages: Array<{ role: string; content: string }>,
+): AsyncGenerator<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
+
+  const system = messages.filter((m) => m.role === "system").map((m) => m.content).join("\n\n");
+  const convo = messages
+    .filter((m) => m.role === "user" || m.role === "assistant")
+    .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 4096,
+      stream: true,
+      system: system || undefined,
+      messages: convo,
+    }),
+  });
+
+  if (res.status === 429) throw new Error("Claude rate limit — slow down for a sec.");
+  if (!res.ok || !res.body) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`Claude ${res.status}: ${t.slice(0, 240)}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    let nl: number;
+    while ((nl = buf.indexOf("\n")) !== -1) {
+      let line = buf.slice(0, nl);
+      buf = buf.slice(nl + 1);
+      if (line.endsWith("\r")) line = line.slice(0, -1);
+      if (!line.startsWith("data: ")) continue;
+      const payload = line.slice(6).trim();
+      if (!payload || payload === "[DONE]") continue;
+      try {
+        const ev = JSON.parse(payload) as {
+          type?: string;
+          delta?: { type?: string; text?: string };
+        };
+        if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta" && ev.delta.text) {
+          yield ev.delta.text;
+        }
+      } catch {
+        // partial, push back
+        buf = "data: " + payload + "\n" + buf;
+        break;
+      }
+    }
+  }
 }
 
 /** Single-shot image generation via Nano Banana 2. Returns a data URL. */
