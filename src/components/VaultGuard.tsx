@@ -30,6 +30,13 @@ export function VaultGuard({ children, redirectTo = "/vault-login", fallback }: 
   const [unlocked, setUnlocked] = useState(false);
   const redirectedRef = useRef(false);
 
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      "VaultGuard is UX only and provides no security. Real enforcement is in revealVaultCredential."
+    );
+  }
+
   useEffect(() => {
     const evaluate = () => {
       const ok = isVaultUnlocked();
