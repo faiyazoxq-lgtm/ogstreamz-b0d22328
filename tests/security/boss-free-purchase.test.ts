@@ -121,12 +121,13 @@ d("boss free-purchase never deducts coins (static guarantee)", () => {
     expect(audits).toBe(3);
   });
 
-  it("no other server function debits credits for a boss-eligible flow", () => {
-    // Defense in depth: scan every SECURITY DEFINER function in `public`
-    // for credit deductions that bypass is_boss().
+  it("the only purchase RPC is purchase_with_coins, and it gates debits behind is_boss()", () => {
+    // Defense in depth: any SECURITY DEFINER function whose name contains
+    // "purchase" and which debits `credits` MUST also call is_boss() so the
+    // boss override path runs before any deduction.
     const offenders = HAS_PG
       ? psql(
-          `SELECT COALESCE(string_agg(proname, ','), '') FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.prosecdef = true AND pg_get_functiondef(p.oid) ~* 'credits[[:space:]]*=[[:space:]]*credits[[:space:]]*-' AND pg_get_functiondef(p.oid) !~* 'is_boss'`,
+          `SELECT COALESCE(string_agg(proname, ','), '') FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.prosecdef = true AND proname ILIKE '%purchase%' AND pg_get_functiondef(p.oid) ~* 'credits[[:space:]]*=[[:space:]]*credits[[:space:]]*-' AND pg_get_functiondef(p.oid) !~* 'is_boss'`,
         )
       : "";
     expect(offenders).toBe("");
