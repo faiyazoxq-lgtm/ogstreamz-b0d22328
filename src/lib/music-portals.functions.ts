@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireStrictAuth } from "@/lib/strict-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { enhanceLyricsWithSwearing } from "./lyrics-enhance.server";
 
 async function isAdmin(supabase: any, userId: string): Promise<boolean> {
   const { data } = await supabase
@@ -135,9 +136,14 @@ export const formatLyrics = createServerFn({ method: "POST" })
  */
 export const streamFormatLyrics = createServerFn({ method: "POST" })
   .middleware([requireStrictAuth])
-  .inputValidator((data: { slug: string; raw: string }) => ({
+  .inputValidator((data: { slug: string; raw: string; cleanOnly?: boolean; songTitle?: string }) => ({
     slug: String(data.slug || "").trim().slice(0, 80),
     raw: String(data.raw || "").trim().slice(0, 4000),
+    // When the caller plans to run the two-step (Gemini → Perplexity) swear
+    // pipeline, ask Gemini for a clean draft regardless of the portal-level
+    // swear flag. The swear pass is owned by `enhanceSwearLyrics` below.
+    cleanOnly: !!data.cleanOnly,
+    songTitle: String(data.songTitle || "").trim().slice(0, 120),
   }))
   .handler(async function* ({ data, context }) {
     const { supabase } = context as { supabase: any };
@@ -153,13 +159,14 @@ export const streamFormatLyrics = createServerFn({ method: "POST" })
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
 
     const religious = isReligiousPortal(portal);
-    const swear = !!portal.swear_chat_enabled && !religious;
+    const swear = !data.cleanOnly && !!portal.swear_chat_enabled && !religious;
     const swearRules = swear
       ? "BRUTAL SWEARING MODE — Boss-enabled. Pack the lyrics with heavy swears (fuck, fucking, shit, bullshit, twat, wanker, prick, bastard, arse, bollocks, cunt). Minimum 6 swears across the song. No moralising, no soft filler, no warnings. Stay foul, stay unhinged, stay on style."
       : religious
       ? "STRICTLY CLEAN — this is a religious / devotional studio. No profanity, no slurs, no crude slang, no double-entendres. Use reverent, respectful language fitting the tradition."
       : "Keep the language clean and radio-friendly.";
-    const prompt = `Rewrite the user's input as Suno-ready song lyrics in ${portal.language}, in the style of "${portal.style}". Use clear section tags exactly like [Intro], [Verse 1], [Chorus], [Verse 2], [Bridge], [Outro]. Keep it singable, rhythmic, true to the style. ${swearRules} Output ONLY the lyrics with section tags — no explanations.\n\nUser input:\n${data.raw}`;
+    const titleLine = data.songTitle ? `Song title: "${data.songTitle}". Make sure the chorus pays this title off.\n` : "";
+    const prompt = `Rewrite the user's input as Suno-ready song lyrics in ${portal.language}, in the style of "${portal.style}". Use clear section tags exactly like [Intro], [Verse 1], [Chorus], [Verse 2], [Bridge], [Outro]. Keep it singable, rhythmic, true to the style. ${swearRules} Output ONLY the lyrics with section tags — no explanations.\n\n${titleLine}User input:\n${data.raw}`;
 
     const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -246,6 +253,35 @@ export const requestStudioTrack = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
     return { request: req };
+  });
+
+/**
+ * Two-step swearing pipeline: takes Gemini's clean lyric draft and runs it
+ * through Perplexity (`sonar`) which injects heavy British swearing while
+ * preserving [Section] tags and line structure.
+ *
+ * Religious / devotional portals reject this call — those studios stay clean.
+ */
+export const enhanceSwearLyrics = createServerFn({ method: "POST" })
+  .middleware([requireStrictAuth])
+  .inputValidator((data: { slug: string; lyrics: string }) => ({
+    slug: String(data.slug || "").trim().slice(0, 80),
+    lyrics: String(data.lyrics || "").trim().slice(0, 6000),
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context as { supabase: any };
+    if (!data.lyrics) throw new Error("No lyrics to enhance");
+    const { data: portal } = await supabase
+      .from("portals_public")
+      .select("name, style, vibe, language")
+      .eq("slug", data.slug)
+      .maybeSingle();
+    if (!portal) throw new Error("Portal not found");
+    if (isReligiousPortal(portal)) {
+      throw new Error("This portal is devotional — swearing is permanently disabled here");
+    }
+    const lyrics = await enhanceLyricsWithSwearing(data.lyrics);
+    return { lyrics };
   });
 
 export type SunoStack = {
