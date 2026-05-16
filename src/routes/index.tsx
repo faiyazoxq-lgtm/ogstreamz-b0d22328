@@ -436,15 +436,6 @@ function Index() {
       <WelcomeAuthPrompt />
       <QuickJumpDrawer user={!!user} isBoss={isBoss} isVip={isVipMember} />
 
-      <button
-        type="button"
-        onClick={() => setVaultOpen(true)}
-        className="fixed bottom-3 left-3 z-50 inline-flex items-center gap-1.5 rounded-md border border-[oklch(0.72_0.22_245/0.4)] bg-black/60 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.3em] text-white/70 backdrop-blur-md hover:text-white hover:border-[oklch(0.72_0.22_245/0.8)] hover:shadow-[0_0_18px_-4px_oklch(0.72_0.22_245/0.8)]"
-        aria-label="Open vault login"
-      >
-        <Flame className="h-3 w-3" style={{ color: "var(--neon-blue-bright)" }} />
-        vault log in
-      </button>
       <VaultLoginModal open={vaultOpen} onClose={() => setVaultOpen(false)} />
       </>
       )}
