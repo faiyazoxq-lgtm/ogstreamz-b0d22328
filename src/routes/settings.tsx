@@ -37,7 +37,17 @@ export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
       { title: "OG-Pass · 0G-PORTAL" },
-      { name: "description", content: "Edit your profile picture, bio and contact card." },
+      { name: "description", content: "Manage your OG-Pass: avatar, bio, stream links and contact card across the 0G-PORTAL network." },
+      { property: "og:title", content: "OG-Pass · 0G-PORTAL" },
+      { property: "og:description", content: "Your OG-Pass is your identity on 0G-PORTAL — set your avatar, bio, stream links and contact card." },
+      { property: "og:type", content: "profile" },
+      { property: "og:url", content: "https://ogstreamz.co.uk/settings" },
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "OG-Pass · 0G-PORTAL" },
+      { name: "twitter:description", content: "Your OG-Pass is your identity on 0G-PORTAL — set your avatar, bio, stream links and contact card." },
+    ],
+    links: [
+      { rel: "canonical", href: "https://ogstreamz.co.uk/settings" },
     ],
   }),
   component: SettingsPage,
