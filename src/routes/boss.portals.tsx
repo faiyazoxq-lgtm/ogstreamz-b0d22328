@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CostTierControl } from "@/components/CostTierControl";
 import { summarizeCosts, TIER_RANK } from "@/lib/cost-registry";
 import { PortalDraftPreview } from "@/components/PortalDraftPreview";
+import { OGBotDraftPanel } from "@/components/og-bot/OGBotDraftPanel";
 
 type Portal = {
   id: string; slug: string; name: string; kind: string;
@@ -447,6 +448,42 @@ function PortalsManager() {
                     </div>
 
                     <PortalDraftPreview draft={{ ...draft, kind: draft.kind ?? p.kind }} />
+
+                    {(draft.kind ?? p.kind) === "music" && (
+                      <OGBotDraftPanel
+                        surface={`boss-music-portal:${p.id}`}
+                        kind="music"
+                        contextHint="Boss editing a MusicHUB portal. Output stays on-brand with the existing 0G-Studio style examples (Nasheed → spiritual-blue, Drill → street-neon, Lo-Fi → lofi-haze, Synth → cyber, Folk → warm-folk, default → studio-blue)."
+                        placeholder="Describe the vibe — genre, audience, mood. I'll fill the form."
+                        intro="Tell me the vibe — I'll draft the name, niche, style, theme, and wallpaper prompt."
+                        fieldHints={[
+                          { key: "name", description: "Portal display name (Title Case)", max: 60 },
+                          { key: "niche", description: "1-line description of what this music portal is about", max: 180 },
+                          { key: "style", description: "Music style hint (e.g. \"northern grime\", \"sufi nasheed\", \"trap drill\")", max: 80 },
+                          { key: "vibe", description: "Mood / vibe tag (e.g. \"gritty, nocturnal\", \"reverent, devotional\")", max: 120 },
+                          { key: "theme", description: "Theme key: one of spiritual-blue, street-neon, lofi-haze, cyber, warm-folk, studio-blue", max: 40 },
+                          { key: "language", description: "Primary language (default English)", max: 40 },
+                          { key: "wallpaper_prompt", description: "Image prompt for the cinematic background wallpaper", max: 400 },
+                          { key: "seo_title", description: "SEO title, <60 chars", max: 60 },
+                          { key: "seo_description", description: "SEO meta description, <160 chars", max: 160 },
+                        ]}
+                        onApply={(f) => {
+                          setDraft((d) => ({
+                            ...d,
+                            name: f.name || d.name,
+                            niche: f.niche || d.niche,
+                            style: f.style || d.style,
+                            vibe: f.vibe || d.vibe,
+                            theme: f.theme || d.theme,
+                            language: f.language || d.language,
+                            wallpaper_prompt: f.wallpaper_prompt || d.wallpaper_prompt,
+                            seo_title: f.seo_title || d.seo_title,
+                            seo_description: f.seo_description || d.seo_description,
+                          }));
+                          toast.success("OG-Bot draft applied — review and Save");
+                        }}
+                      />
+                    )}
                   </div>
                 ) : (
                   <div className="flex items-start gap-3">
