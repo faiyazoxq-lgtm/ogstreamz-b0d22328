@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bot, Wand2, Loader2, ArrowRight, RotateCcw, Flame, Sparkles, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -41,6 +41,16 @@ export function OgBotComposer(props: {
   const [finalLyrics, setFinalLyrics] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [enhancing, setEnhancing] = useState(false);
+
+  // When the host injects a fresh hook (MusicHooksSection.onUseHook), seed
+  // the brief and jump to the brief step so the wizard picks it up live.
+  useEffect(() => {
+    if (props.prefillBrief && props.prefillBrief.trim()) {
+      setBrief(props.prefillBrief);
+      setStep((s) => (s === "askName" ? s : "askBrief"));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.prefillBrief]);
 
   const accent = props.accent;
   const bubble = `inline-block rounded-2xl px-3.5 py-2.5 leading-snug max-w-[85%]`;
