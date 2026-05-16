@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Coins, Loader2, Check, AlertTriangle, Plus } from "lucide-react";
+import { Coins, Loader2, Check, AlertTriangle, Plus, Crown } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -72,9 +72,14 @@ export function CoinCheckout({ kind, ref, cost, itemTitle, successLabel, onSucce
 
   return (
     <div className="rounded-2xl border border-gold/40 bg-gradient-to-br from-gold/10 via-card to-card p-6 space-y-4">
+      {isBoss && (
+        <div className="flex items-center justify-center gap-2 rounded-full border border-gold/60 bg-gold/15 px-3 py-1.5 text-[10px] uppercase tracking-[0.35em] font-bold text-gold">
+          <Crown className="h-3.5 w-3.5" /> Boss: FREE
+        </div>
+      )}
       <div className="text-center">
         <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-          {isBoss ? "Boss override" : "Pay with coins"}
+          {isBoss ? "No payment required" : "Pay with coins"}
         </p>
         <p className="mt-2 font-[Montserrat] font-black text-4xl text-metallic">
           {isBoss ? <>FREE</> : <>{cost} <span className="text-2xl">🪙</span></>}
@@ -120,7 +125,7 @@ export function CoinCheckout({ kind, ref, cost, itemTitle, successLabel, onSucce
               <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Spending coins…
             </>
           ) : isBoss ? (
-            <>Confirm — Boss override (free)</>
+            <><Crown className="h-4 w-4 mr-2" /> Confirm — Boss: FREE</>
           ) : (
             <>Confirm — Spend {cost} 🪙</>
           )}
@@ -128,7 +133,7 @@ export function CoinCheckout({ kind, ref, cost, itemTitle, successLabel, onSucce
       )}
 
       <p className="text-center text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-        {isBoss ? "Boss accounts skip payment" : "1 🪙 = £1 · No card needed"}
+        {isBoss ? "Boss accounts never pay" : "1 🪙 = £1 · No card needed"}
       </p>
     </div>
   );
