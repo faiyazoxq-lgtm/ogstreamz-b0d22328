@@ -19,11 +19,20 @@ import { getBossChatId } from "./boss-chat.server";
  * Returns a structured report instead of throwing on individual failures
  * so the UI can render a per-check status.
  */
-type CheckResult =
-  | { ok: true; detail?: Record<string, unknown> }
-  | { ok: false; error: string; detail?: Record<string, unknown> };
+type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [k: string]: JsonValue };
+type JsonObject = { [k: string]: JsonValue };
 
-function fail(error: unknown, detail?: Record<string, unknown>): CheckResult {
+type CheckResult =
+  | { ok: true; error?: null; detail?: JsonObject }
+  | { ok: false; error: string; detail?: JsonObject };
+
+function fail(error: unknown, detail?: JsonObject): CheckResult {
   return {
     ok: false,
     error: error instanceof Error ? error.message : String(error),
