@@ -4,6 +4,10 @@ import { createClient } from "@supabase/supabase-js";
 import { runDeepSearch, runPeerReview, type DeepSearchSource, type PeerReview } from "./orchestrator.functions";
 import { enforceSwearRules, DEFAULT_LEXICON, loadLexicon, type Lexicon } from "./swear-enforcer.server";
 
+// Lazy-loaded swearing lexicon (boss-curated, falls back to DEFAULT_LEXICON).
+// Populated at the top of buildScoutMeta() before any enforcement runs.
+let _newsLexicon: Lexicon = DEFAULT_LEXICON;
+
 async function isAdmin(supabase: any, userId: string): Promise<boolean> {
   const { data } = await supabase
     .from("user_roles")
