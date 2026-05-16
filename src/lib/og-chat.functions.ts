@@ -672,7 +672,7 @@ export const streamOgChat = createServerFn({ method: "POST" })
           ...history.map((h) => ({ role: h.role, content: h.content })),
           { role: "user", content: message },
         ];
-        for await (const chunk of streamGateway(OG_MODELS.normal, messages)) {
+        for await (const chunk of bufferedDeltas(streamGateway(OG_MODELS.normal, messages))) {
           yield { type: "delta", text: chunk };
         }
         yield { type: "done", model: OG_MODELS.normal, intent };
@@ -740,7 +740,7 @@ export const streamOgChat = createServerFn({ method: "POST" })
       ];
 
       yield { type: "status", stage: "finalizing" };
-      for await (const chunk of streamGateway(synthModel, messages)) {
+      for await (const chunk of bufferedDeltas(streamGateway(synthModel, messages))) {
         yield { type: "delta", text: chunk };
       }
       yield { type: "done", model: synthModel, intent };
