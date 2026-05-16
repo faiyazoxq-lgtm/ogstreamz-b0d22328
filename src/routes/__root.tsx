@@ -179,6 +179,7 @@ function RootComponent() {
             {/* LiveThinkingFeed removed — was a bottom-right Boss watermark popup */}
             <EnforcerConsole />
             <HomeOnlyMotionToggle />
+            <ReducedMotionRootSync />
             <AlignmentQAOverlay />
             <PupilCalibrator />
             <OgBotFloatingWidget />
