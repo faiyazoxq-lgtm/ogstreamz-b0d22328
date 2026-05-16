@@ -385,26 +385,57 @@ Lead with the direct answer, then 3-6 bullet points of key facts, then any cavea
 Cite source numbers like [1], [2] from the SOURCES block. Plain prose only — no fluff, no preamble,
 no personality. The synthesizer adds voice; you provide the skeleton of truth.`;
   const user = `QUERY:\n${query}\n\n${researchBrief}\n\n${sourcesBlock}`;
-  try {
-    const res = await fetch(GATEWAY_URL, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-3.1-pro-preview",
-        messages: [
-          { role: "system", content: sys },
-          { role: "user", content: user },
-        ],
-      }),
-    });
-    if (!res.ok) return "";
-    const json = (await res.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
-    };
-    return (json.choices?.[0]?.message?.content ?? "").trim();
-  } catch {
-    return "";
+
+  // Try Gemini Pro twice on transient failures (network / 5xx / 429), then
+  // fall back to Gemini Flash for one last attempt. If all three fail we
+  // return "" so the council still completes (Claude synthesizes from
+  // research alone). 4xx auth errors are not retried.
+  const attempts: Array<{ model: string; label: string }> = [
+    { model: "google/gemini-3.1-pro-preview", label: "primary" },
+    { model: "google/gemini-3.1-pro-preview", label: "retry" },
+    { model: "google/gemini-3-flash-preview", label: "flash-fallback" },
+  ];
+
+  for (let i = 0; i < attempts.length; i++) {
+    const { model, label } = attempts[i];
+    try {
+      const res = await fetch(GATEWAY_URL, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: sys },
+            { role: "user", content: user },
+          ],
+        }),
+      });
+
+      if (res.ok) {
+        const json = (await res.json()) as {
+          choices?: Array<{ message?: { content?: string } }>;
+        };
+        const text = (json.choices?.[0]?.message?.content ?? "").trim();
+        if (text) return text;
+        // Empty content → treat as transient and continue to next attempt.
+      } else if (res.status >= 400 && res.status < 500 && res.status !== 429) {
+        // Auth / validation failures won't recover from a retry — bail.
+        console.warn(`[geminiDraft] ${label} non-retryable ${res.status}`);
+        return "";
+      } else {
+        console.warn(`[geminiDraft] ${label} retryable ${res.status}`);
+      }
+    } catch (e) {
+      console.warn(
+        `[geminiDraft] ${label} threw: ${e instanceof Error ? e.message : "unknown"}`,
+      );
+    }
+
+    // Small backoff before next attempt (skip after the last one).
+    if (i < attempts.length - 1) await new Promise((r) => setTimeout(r, 250 * (i + 1)));
   }
+
+  return "";
 }
 
 /**
