@@ -1372,6 +1372,7 @@ function _NewsScoutSpawnerImpl() {
   const [last, setLast] = useState<{ slug: string; name: string } | null>(null);
   const [cineBusy, setCineBusy] = useState<null | "16:9" | "9:16">(null);
   const [cineUrl, setCineUrl] = useState<string | null>(null);
+  const [quickBusy, setQuickBusy] = useState<string | null>(null);
 
   const onCinema = async (aspect: "16:9" | "9:16") => {
     if (!last) return;
@@ -1398,6 +1399,25 @@ function _NewsScoutSpawnerImpl() {
     } catch (e: any) {
       toast.error(e?.message ?? "Spawn failed");
     } finally { setLoading(false); }
+  };
+
+  const quickSpawn = async (pairName: string, sym: string, defaultCtx: string) => {
+    setQuickBusy(sym);
+    try {
+      const r = await spawn({ data: {
+        name: `${sym} · Bias Engine`,
+        pair: pairName,
+        bias,
+        context: defaultCtx,
+        vip: false,
+      }});
+      setLast(r.portal);
+      const url = `${window.location.origin}/p/${r.portal.slug}`;
+      navigator.clipboard.writeText(url).catch(() => {});
+      toast.success(`${sym} portal live · link copied`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Spawn failed");
+    } finally { setQuickBusy(null); }
   };
 
   const url = last && typeof window !== "undefined" ? `${window.location.origin}/p/${last.slug}` : "";
@@ -1465,6 +1485,44 @@ function _NewsScoutSpawnerImpl() {
           </div>
         </div>
       )}
+      <div className="mt-6 pt-5 border-t border-border/60">
+        <div className="flex items-center gap-2 mb-1">
+          <TrendingUp className="h-4 w-4" style={{ color: "var(--neon-blue-bright)" }} />
+          <h3 className="font-[Montserrat] font-black text-sm text-white tracking-wide">Bias Engine · One-Click Spawn</h3>
+        </div>
+        <p className="text-xs text-muted-foreground mb-4">
+          Pick a pair to instantly spawn an intel portal using the bias selected above. Firecrawl + Perplexity assemble it in seconds.
+        </p>
+        <div className="grid gap-4">
+          {SIGNAL_GROUPS.map((group) => (
+            <div key={group.label}>
+              <div className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground mb-2">{group.label}</div>
+              <div className="grid sm:grid-cols-3 gap-2">
+                {group.pairs.map((p) => {
+                  const defaultCtx = bias === "good" ? p.goodCtx : p.badCtx;
+                  return (
+                    <button
+                      key={p.sym}
+                      onClick={() => quickSpawn(p.pair, p.sym, defaultCtx)}
+                      disabled={!!quickBusy}
+                      className="rounded-xl border bg-black/30 p-3 text-left transition-all disabled:opacity-40 hover:scale-[1.02]"
+                      style={{ borderColor: `${accent}55`, boxShadow: `0 0 14px ${accent}22` }}
+                    >
+                      <div className="flex items-baseline justify-between">
+                        <span className="font-[Montserrat] font-black text-white text-sm">{p.pair}</span>
+                        <span className="text-[10px] font-mono text-muted-foreground">{p.sym}</span>
+                      </div>
+                      <div className="mt-2 text-[10px] uppercase tracking-widest font-bold" style={{ color: accent }}>
+                        {quickBusy === p.sym ? <Loader2 className="h-3 w-3 animate-spin" /> : "Spawn ▶"}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
