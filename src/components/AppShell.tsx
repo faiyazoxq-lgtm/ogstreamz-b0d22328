@@ -199,8 +199,8 @@ function DesktopSidebar({
             <OgWordmark
               suffix="-PORTAL"
               fit
-              maxFontSize={28}
-              minFontSize={16}
+              maxFontSize={36}
+              minFontSize={20}
               className="text-white font-black tracking-[-0.02em] drop-shadow-[0_0_14px_oklch(0.72_0.22_245/0.5)]"
             />
           </Link>
@@ -208,7 +208,7 @@ function DesktopSidebar({
           <Link
             to="/"
             aria-label="Home"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-600/20 ring-1 ring-cyan-300/30 text-cyan-100 font-black"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-600/20 ring-1 ring-cyan-300/30 text-cyan-100 font-black text-lg"
           >
             0G
           </Link>
