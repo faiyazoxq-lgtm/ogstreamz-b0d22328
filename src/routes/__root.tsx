@@ -21,6 +21,7 @@ import { SystemGlitchOverlay } from "../components/SystemGlitchOverlay";
 import { EnforcerConsole } from "../components/EnforcerConsole";
 import { SpotlightEyes } from "../components/SpotlightEyes";
 import { ReducedMotionToggle } from "../components/ReducedMotionToggle";
+import { useReducedMotionRootSync } from "../hooks/use-reduced-motion";
 import { AuthGate } from "../components/AuthGate";
 import { VipPromoBanner } from "../components/VipPromoBanner";
 import { VipReferralPromoBanner } from "../components/VipReferralPromoBanner";
@@ -210,6 +211,16 @@ function HomeOnlyMotionToggle() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   if (pathname !== "/") return null;
   return <ReducedMotionToggle />;
+}
+
+/**
+ * Mounted once at the root. Keeps a `reduce-motion` class on <html> in sync
+ * with the user's resolved motion preference, so global CSS can kill
+ * animations app-wide even when the toggle UI isn't visible.
+ */
+function ReducedMotionRootSync() {
+  useReducedMotionRootSync();
+  return null;
 }
 
 function TeleportOverlay() {
