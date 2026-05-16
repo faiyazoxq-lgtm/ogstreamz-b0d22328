@@ -80,7 +80,7 @@ function escapeHtml(s: string) {
 
 /**
  * Auto-fires after the boss signs in: verifies the caller is the configured
- * BOSS_EMAIL, then DMs the boss's Telegram chat (BOSS_TELEGRAM_API_KEY_TEST) with
+ * BOSS_EMAIL, then DMs the boss's Telegram chat (BOSS_TELEGRAM_CHAT_ID_TEST) with
  * device type + IP country of the new session. No-ops silently for any
  * non-boss caller so it's safe to invoke on every sign-in.
  */

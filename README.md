@@ -14,8 +14,8 @@ Telegram connector and is exposed as `TELEGRAM_API_KEY`.
 
 | Secret | Purpose |
 | --- | --- |
-| `BOSS_TELEGRAM_API_KEY` | Production boss chat ID. Used when `NODE_ENV === "production"` (or `TELEGRAM_ENV=prod`). |
-| `BOSS_TELEGRAM_API_KEY_TEST` | Test/dev boss chat ID. Used in preview/dev (or `TELEGRAM_ENV=test`). |
+| `BOSS_TELEGRAM_CHAT_ID` | Production boss chat ID. Used when `NODE_ENV === "production"` (or `TELEGRAM_ENV=prod`). |
+| `BOSS_TELEGRAM_CHAT_ID_TEST` | Test/dev boss chat ID. Used in preview/dev (or `TELEGRAM_ENV=test`). |
 
 Optional override: set `TELEGRAM_ENV` to `prod` / `production` / `live` or
 `test` / `dev` / `staging` to force one regardless of `NODE_ENV`. If the
@@ -35,7 +35,7 @@ Call sites:
   `/msg` / `/contact` / `/boss` relays.
 
 If you add new code that needs to message or identify the boss chat, import
-the helper instead of reading `process.env.BOSS_TELEGRAM_API_KEY*` directly:
+the helper instead of reading `process.env.BOSS_TELEGRAM_CHAT_ID*` directly:
 
 ```ts
 import { getBossChatId } from "@/lib/boss-chat.server";

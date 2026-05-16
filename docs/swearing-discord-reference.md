@@ -52,12 +52,12 @@ client.on("messageCreate", async (message) => {
   message.reply(reply);
 });
 
-client.login(process.env.BOSS_TELEGRAM_API_KEY); // or DISCORD_BOT_TOKEN if/when added
+client.login(process.env.BOSS_TELEGRAM_CHAT_ID); // or DISCORD_BOT_TOKEN if/when added
 ```
 
 ## If wiring this up later
 
-- `PERPLEXITY_API_KEY` and the bot token (`BOSS_TELEGRAM_API_KEY` for
+- `PERPLEXITY_API_KEY` and the bot token (`BOSS_TELEGRAM_CHAT_ID` for
   Telegram, or a future `DISCORD_BOT_TOKEN`) MUST live in Supabase secrets,
   never hard-coded. Read them via `process.env` server-side only.
 - Both are already provisioned in Lovable Cloud secrets — no inline

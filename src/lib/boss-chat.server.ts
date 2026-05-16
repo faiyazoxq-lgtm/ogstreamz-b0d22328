@@ -1,8 +1,8 @@
 /**
  * Returns the boss Telegram chat ID for the current environment.
  *
- *   - Production build (`NODE_ENV === 'production'`)  → BOSS_TELEGRAM_API_KEY
- *   - Anything else (dev / preview)                   → BOSS_TELEGRAM_API_KEY_TEST
+ *   - Production build (`NODE_ENV === 'production'`)  → BOSS_TELEGRAM_CHAT_ID
+ *   - Anything else (dev / preview)                   → BOSS_TELEGRAM_CHAT_ID_TEST
  *
  * Override the auto-detection by setting `TELEGRAM_ENV`:
  *   - `TELEGRAM_ENV=prod` (or `production` / `live`) → force production chat
@@ -13,8 +13,8 @@
  * dropping every message.
  */
 export function getBossChatId(): string | undefined {
-  const prodKey = process.env.BOSS_TELEGRAM_API_KEY;
-  const testKey = process.env.BOSS_TELEGRAM_API_KEY_TEST;
+  const prodKey = process.env.BOSS_TELEGRAM_CHAT_ID;
+  const testKey = process.env.BOSS_TELEGRAM_CHAT_ID_TEST;
 
   const override = (process.env.TELEGRAM_ENV || "").toLowerCase();
   if (override === "prod" || override === "production" || override === "live") {
@@ -33,7 +33,7 @@ export function requireBossChatId(): string {
   const id = getBossChatId();
   if (!id) {
     throw new Error(
-      "Boss Telegram chat ID missing — set BOSS_TELEGRAM_API_KEY (prod) or BOSS_TELEGRAM_API_KEY_TEST (test).",
+      "Boss Telegram chat ID missing — set BOSS_TELEGRAM_CHAT_ID (prod) or BOSS_TELEGRAM_CHAT_ID_TEST (test).",
     );
   }
   return id;
