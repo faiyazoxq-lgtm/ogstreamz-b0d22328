@@ -118,7 +118,26 @@ async function* streamGateway(
   yield* sseDeltas(res.body);
 }
 
-/** Stream from Anthropic's Messages API. Yields text deltas. */
+/**
+ * Stream from Anthropic's Messages API. Yields text deltas.
+ *
+ * Hardened SSE parser:
+ *  - Spec-correct event framing: accumulates lines until a blank line, then
+ *    dispatches one event with the joined `data:` buffer (multi-line `data:`
+ *    fields concat with "\n", per WHATWG EventSource spec).
+ *  - Handles CRLF, LF, and bare-CR line terminators.
+ *  - Tolerates `data:value` with no space after the colon.
+ *  - Surfaces Anthropic `event: error` frames as thrown errors instead of
+ *    silently dropping them.
+ *  - Drops malformed JSON on a complete event boundary instead of looping or
+ *    re-buffering (the old impl could re-prefix bad payloads forever).
+ *  - Bounded buffer (1 MiB) to defend against a wedged upstream that never
+ *    emits a frame terminator.
+ *  - Flushes the final pending event when the stream ends without a trailing
+ *    blank line.
+ *  - Always releases the reader lock and aborts the upstream fetch if the
+ *    caller cancels (generator `return()` / `throw()`).
+ */
 async function* streamClaude(
   model: string,
   messages: Array<{ role: string; content: string }>,
@@ -131,12 +150,15 @@ async function* streamClaude(
     .filter((m) => m.role === "user" || m.role === "assistant")
     .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
 
+  const controller = new AbortController();
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
+    signal: controller.signal,
     headers: {
       "x-api-key": apiKey,
       "anthropic-version": "2023-06-01",
       "content-type": "application/json",
+      accept: "text/event-stream",
     },
     body: JSON.stringify({
       model,
@@ -154,32 +176,156 @@ async function* streamClaude(
   }
 
   const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buf = "";
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += decoder.decode(value, { stream: true });
-    let nl: number;
-    while ((nl = buf.indexOf("\n")) !== -1) {
-      let line = buf.slice(0, nl);
-      buf = buf.slice(nl + 1);
-      if (line.endsWith("\r")) line = line.slice(0, -1);
-      if (!line.startsWith("data: ")) continue;
-      const payload = line.slice(6).trim();
-      if (!payload || payload === "[DONE]") continue;
-      try {
-        const ev = JSON.parse(payload) as {
-          type?: string;
-          delta?: { type?: string; text?: string };
-        };
-        if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta" && ev.delta.text) {
-          yield ev.delta.text;
+  const decoder = new TextDecoder("utf-8");
+
+  // Line buffer (raw bytes → text). One "line" = up to the next \n / \r / \r\n.
+  let raw = "";
+  // Current event being assembled (resets on blank-line dispatch).
+  let eventName = "";
+  let dataLines: string[] = [];
+
+  const MAX_BUF = 1 << 20; // 1 MiB hard cap — abort runaway upstreams.
+
+  // Dispatch a complete event. Returns the text delta to yield, "" otherwise.
+  // Throws on `event: error` so the caller surfaces it instead of dropping.
+  const dispatch = (): string => {
+    if (dataLines.length === 0) return "";
+    const payload = dataLines.join("\n");
+    // Reset BEFORE parse so a throw / continue can't leak state into the
+    // next event.
+    dataLines = [];
+    const name = eventName;
+    eventName = "";
+
+    if (payload === "[DONE]") return "";
+
+    let ev: unknown;
+    try {
+      ev = JSON.parse(payload);
+    } catch {
+      // Complete frame, malformed JSON — drop and keep going. The old impl
+      // re-buffered this and risked infinite loops on persistently bad data.
+      return "";
+    }
+
+    const obj = ev as {
+      type?: string;
+      delta?: { type?: string; text?: string };
+      error?: { type?: string; message?: string };
+      message?: string;
+    };
+
+    // Anthropic surfaces mid-stream failures as `event: error` with
+    // `{type:"error", error:{type, message}}`. Don't swallow them.
+    if (name === "error" || obj.type === "error") {
+      const msg = obj.error?.message ?? obj.message ?? "Claude stream error";
+      throw new Error(`Claude: ${msg}`);
+    }
+
+    if (
+      obj.type === "content_block_delta" &&
+      obj.delta?.type === "text_delta" &&
+      typeof obj.delta.text === "string" &&
+      obj.delta.text.length > 0
+    ) {
+      return obj.delta.text;
+    }
+    return "";
+  };
+
+  // Process one fully-terminated line. Empty line → dispatch event.
+  const handleLine = (line: string): string => {
+    if (line.length === 0) return dispatch();
+    // SSE comment lines start with ":" — ignore.
+    if (line.startsWith(":")) return "";
+
+    const colon = line.indexOf(":");
+    let field: string;
+    let value: string;
+    if (colon === -1) {
+      field = line;
+      value = "";
+    } else {
+      field = line.slice(0, colon);
+      value = line.slice(colon + 1);
+      // Per spec, a single leading space after the colon is stripped.
+      if (value.startsWith(" ")) value = value.slice(1);
+    }
+
+    if (field === "data") {
+      dataLines.push(value);
+    } else if (field === "event") {
+      eventName = value;
+    }
+    // `id`, `retry`, and unknown fields are intentionally ignored.
+    return "";
+  };
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      raw += decoder.decode(value, { stream: true });
+
+      if (raw.length > MAX_BUF) {
+        throw new Error("Claude stream buffer overflow — no event terminator");
+      }
+
+      // Walk raw, splitting on \r\n, \n, or bare \r. Stop when we'd consume
+      // a trailing \r that might be the first half of \r\n in the next chunk.
+      let i = 0;
+      let lineStart = 0;
+      while (i < raw.length) {
+        const c = raw.charCodeAt(i);
+        if (c === 10 /* \n */) {
+          const line = raw.slice(lineStart, i);
+          i += 1;
+          lineStart = i;
+          const out = handleLine(line);
+          if (out) yield out;
+        } else if (c === 13 /* \r */) {
+          if (i + 1 >= raw.length) {
+            // Could be the leading half of \r\n — defer to next chunk.
+            break;
+          }
+          const line = raw.slice(lineStart, i);
+          i += raw.charCodeAt(i + 1) === 10 ? 2 : 1;
+          lineStart = i;
+          const out = handleLine(line);
+          if (out) yield out;
+        } else {
+          i += 1;
         }
+      }
+      raw = raw.slice(lineStart);
+    }
+
+    // Stream ended. Flush decoder, then any trailing line, then any pending
+    // event that wasn't terminated by a blank line.
+    raw += decoder.decode();
+    if (raw.length > 0) {
+      // Strip a single trailing CR if present.
+      const tail = raw.endsWith("\r") ? raw.slice(0, -1) : raw;
+      const out = handleLine(tail);
+      if (out) yield out;
+    }
+    if (dataLines.length > 0) {
+      const out = dispatch();
+      if (out) yield out;
+    }
+  } finally {
+    // Release lock + abort upstream if caller bailed early (generator
+    // return/throw) or we exited on overflow.
+    try {
+      reader.releaseLock();
+    } catch {
+      /* already released */
+    }
+    if (!res.bodyUsed) {
+      try {
+        controller.abort();
       } catch {
-        // partial, push back
-        buf = "data: " + payload + "\n" + buf;
-        break;
+        /* noop */
       }
     }
   }
