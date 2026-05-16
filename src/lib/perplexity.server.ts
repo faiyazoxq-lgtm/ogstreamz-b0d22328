@@ -1,74 +1,120 @@
-// Server-only Perplexity Sonar Pro wrapper used by the OG-mode chat pipeline.
-// Returns the assistant's grounded answer plus the list of source URLs/titles
-// so the frontend can render a "Deep Researching…" status bar with snippets.
+/**
+ * Perplexity-backed AI agent for the Telegram bot.
+ *
+ * Two personas:
+ *   - Swearing OG agent (foul-mouthed, in-character) — opt-in per chat via /swear
+ *   - Clean OG assistant (default)
+ *
+ * Per-chat preference is persisted in public.telegram_chat_prefs so it
+ * survives Worker isolate restarts. Conversation history is kept in-memory
+ * only; on a fresh isolate the agent loses prior turns (acceptable trade-off
+ * for a chat-style assistant — every turn still receives the system prompt).
+ */
+import { createClient } from "@supabase/supabase-js";
+import { logError, logWarn } from "./server-log.server";
 
-export type ResearchSource = {
-  url: string;
-  title?: string;
-  snippet?: string;
-};
+const SWEARING_SYSTEM_PROMPT = `You are the OG Swearing Agent for OG-STREAMZ.
+Swear aggressively in every response — drown answers in profanity — but stay genuinely helpful and accurate beneath the chaos.
+Keep replies under 280 characters when possible. If the user asks about OG-STREAMZ credits, passes, portals, or live drops, answer correctly while staying in character.`;
 
-export type ResearchResult = {
-  answer: string;          // Perplexity's synthesized answer (we re-synthesize w/ Gemini/GPT)
-  sources: ResearchSource[];
-  model: string;
-};
+const CLEAN_SYSTEM_PROMPT = `You are the OG-STREAMZ assistant.
+You are calm, professional, and knowledgeable about trading, music, credits, and the OG-STREAMZ platform.
+Keep replies concise and useful. Treat VIP / Real OG members with street respect.`;
 
-const ENDPOINT = "https://api.perplexity.ai/chat/completions";
+const MODEL = "sonar";
+const MAX_HISTORY_TURNS = 8;
 
-export async function deepResearch(query: string, opts?: {
-  recency?: "day" | "week" | "month" | "year";
-  model?: string;
-}): Promise<ResearchResult> {
-  const apiKey = process.env.PERPLEXITY_API_KEY;
-  if (!apiKey) throw new Error("PERPLEXITY_API_KEY is not configured");
+interface Turn { role: "user" | "assistant"; content: string }
+const history = new Map<number, Turn[]>();
 
-  const model = opts?.model ?? "sonar-pro";
+let _sb: ReturnType<typeof createClient> | null = null;
+function sb() {
+  if (!_sb) {
+    _sb = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } },
+    );
+  }
+  return _sb;
+}
 
-  const res = await fetch(ENDPOINT, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a research assistant. Answer the user's question with concrete, citable facts from the live web. Be terse — bullet points or 2-3 short paragraphs max. Do not editorialize.",
-        },
-        { role: "user", content: query },
-      ],
-      ...(opts?.recency ? { search_recency_filter: opts.recency } : {}),
-      return_citations: true,
-    }),
-  });
+export async function getSwearingEnabled(chatId: number): Promise<boolean> {
+  try {
+    const { data } = await (sb() as any)
+      .from("telegram_chat_prefs")
+      .select("swearing_enabled")
+      .eq("chat_id", chatId)
+      .maybeSingle();
+    return Boolean(data?.swearing_enabled);
+  } catch (e) {
+    logWarn("perplexity.pref_read_failed", { error: e instanceof Error ? e.message : String(e) });
+    return false;
+  }
+}
 
-  if (!res.ok) {
-    const t = await res.text().catch(() => "");
-    throw new Error(`Perplexity ${res.status}: ${t.slice(0, 300)}`);
+export async function setSwearingEnabled(chatId: number, enabled: boolean): Promise<void> {
+  await (sb() as any)
+    .from("telegram_chat_prefs")
+    .upsert(
+      { chat_id: chatId, swearing_enabled: enabled, updated_at: new Date().toISOString() },
+      { onConflict: "chat_id" },
+    );
+}
+
+export async function getPerplexityReply(
+  chatId: number,
+  userMessage: string,
+  swearing: boolean,
+): Promise<string> {
+  const key = process.env.PERPLEXITY_API_KEY;
+  if (!key) {
+    return swearing
+      ? "Holy shit, the AI key isn't configured. Tell the boss to fix this fucking mess."
+      : "The AI service isn't configured yet. Please contact the team.";
   }
 
-  type PpxResp = {
-    choices?: Array<{ message?: { content?: string } }>;
-    citations?: string[];
-    search_results?: Array<{ url: string; title?: string; snippet?: string }>;
-  };
-  const json = (await res.json()) as PpxResp;
+  const prior = history.get(chatId) ?? [];
+  const next: Turn[] = [
+    ...prior.slice(-MAX_HISTORY_TURNS * 2),
+    { role: "user", content: userMessage },
+  ];
 
-  const answer = json.choices?.[0]?.message?.content?.trim() ?? "";
-
-  // Prefer the rich `search_results` shape when present; fall back to the
-  // older `citations` array of bare URLs.
-  const sources: ResearchSource[] = Array.isArray(json.search_results) && json.search_results.length
-    ? json.search_results.slice(0, 6).map((s) => ({
-        url: s.url,
-        title: s.title,
-        snippet: s.snippet?.slice(0, 240),
-      }))
-    : (json.citations ?? []).slice(0, 6).map((url) => ({ url }));
-
-  return { answer, sources, model };
+  try {
+    const res = await fetch("https://api.perplexity.ai/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: "system", content: swearing ? SWEARING_SYSTEM_PROMPT : CLEAN_SYSTEM_PROMPT },
+          ...next,
+        ],
+        max_tokens: 400,
+        temperature: swearing ? 0.9 : 0.6,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      logError("perplexity.http_error", { status: res.status, body: body.slice(0, 300) });
+      return swearing
+        ? "Perplexity's being a piece of shit right now. Try again in a sec."
+        : "The AI service returned an error. Please try again shortly.";
+    }
+    const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const reply = data.choices?.[0]?.message?.content?.trim() ?? "";
+    if (reply) {
+      history.set(chatId, [...next, { role: "assistant", content: reply }]);
+      return reply;
+    }
+    return swearing ? "Got fuck all back. Try asking differently." : "No response. Try again.";
+  } catch (e) {
+    logError("perplexity.fetch_failed", { error: e instanceof Error ? e.message : String(e) });
+    return swearing
+      ? "Something's fucked on the AI side. Try again later."
+      : "AI service unavailable. Please try again.";
+  }
 }
