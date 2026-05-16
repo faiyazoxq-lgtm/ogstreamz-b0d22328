@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CostTierControl } from "@/components/CostTierControl";
 import { summarizeCosts, TIER_RANK } from "@/lib/cost-registry";
+import { PortalDraftPreview } from "@/components/PortalDraftPreview";
 
 type Portal = {
   id: string; slug: string; name: string; kind: string;
@@ -444,6 +445,8 @@ function PortalsManager() {
                         {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save"}
                       </Button>
                     </div>
+
+                    <PortalDraftPreview draft={{ ...draft, kind: draft.kind ?? p.kind }} />
                   </div>
                 ) : (
                   <div className="flex items-start gap-3">
