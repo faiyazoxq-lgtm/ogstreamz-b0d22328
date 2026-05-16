@@ -1,75 +1,94 @@
-# Unified OG Pass Tier System
+## What you already have (no work needed)
 
-Today the codebase carries TWO parallel tier systems:
-- `profiles.rank` (OG Pass): `prospect | enforcer | stream_user | vip | boss`
-- `profiles.subscription_plan` + `syndicate_bots.tier_required` (Plans): `free | metal | energy | syndicate`
+I checked the codebase carefully — the bulk of what you described is already shipped:
 
-This plan collapses both into ONE canonical tier set defined by your rules:
-
-| Canonical key | Display label | Definition |
+| Requirement | Status | Where |
 |---|---|---|
-| `free` | Free | Signed in, nothing else |
-| `stream_user` | Stream User | Connected to OGSTREAMZ M3U |
-| `vip` | VIP | Bought a VIP pass OR manually promoted |
-| `real_og` | Real OG | VIP **and** M3U-connected (auto-derived) |
-| `boss` | Boss | Admin / staff — manual only |
+| Music portals auto-generate a unique background wallpaper | Done | `generatePortalWallpaper` in `src/lib/portals.functions.ts` (Nano Banana 2, on portal create) |
+| Same template structure for every music portal | Done | `src/routes/m.$slug.tsx` — single themed template, wallpaper layered behind |
+| Format raw description into Suno-ready lyrics (with `[Verse]` / `[Chorus]` tags) | Done | `streamFormatLyrics` in `src/lib/music-portals.functions.ts` (Gemini 3 Flash, streams tokens) |
+| Suno generates **2 versions** | Done | `generatePortalTrack` → webhook fills `audio_url_v1` and `audio_url_v2` |
+| **30-second preview** before unlock | Done | `PreviewPlayer` clamps to 30 s while `download_unlocked = false` |
+| Unlock full song with **2 coins** | Done | `unlockPortalTrackDownload` charges exactly 2 coins (matches your slider answer) |
+| Boss-override (no payment) | Done last turn |
 
-`real_og` is computed (vip + active stream link), not directly assignable. The other four are storable.
+So this plan only covers the **net-new** behaviour: AI-assisted portal creation, a guided "OG-Bot asks" wizard, and per-generation swearing via Perplexity.
 
-## What changes
+---
 
-### 1. Database (single migration)
-- New enum `public.og_tier` = `('free','stream_user','vip','real_og','boss')`.
-- Add `profiles.og_tier og_tier NOT NULL DEFAULT 'free'`.
-- Backfill from existing data:
-  - `rank='boss'` → `boss`
-  - `rank='vip'` OR `subscription_plan IN ('energy','syndicate')` → `vip`
-  - `rank='stream_user'` OR active row in `stream_links` → `stream_user`
-  - everyone else → `free`
-  - then promote `(og_tier='vip' AND has active stream_link)` → `real_og`
-- Add trigger on `profiles` + `stream_links` to keep `real_og` derivation in sync (vip ↔ real_og when stream link toggles).
-- Replace `syndicate_bots.tier_required` enum/text values: `metal→stream_user`, `energy→vip`, `syndicate→real_og`, `free→free`.
-- Keep legacy `rank` and `subscription_plan` columns for one release as read-only mirrors (so nothing breaks mid-deploy), but stop writing to them from app code.
-- RLS: only `boss` may set `boss`/`vip` directly; `stream_user` is set by the m3u-connect server fn; `real_og` is trigger-only.
+## 1. Boss: "Generate music portal from a description"
 
-### 2. Shared TypeScript catalog
-New `src/lib/og-tier.ts` exporting:
-```ts
-export const OG_TIERS = ['free','stream_user','vip','real_og','boss'] as const;
-export type OgTier = typeof OG_TIERS[number];
-export const OG_TIER_LABEL: Record<OgTier,string> = {
-  free: 'Free', stream_user: 'Stream User', vip: 'VIP',
-  real_og: 'Real OG', boss: 'Boss',
-};
-export const OG_TIER_RANK: Record<OgTier,number> = { free:0, stream_user:1, vip:2, real_og:3, boss:4 };
-export function meetsTier(user: OgTier, required: OgTier) { return OG_TIER_RANK[user] >= OG_TIER_RANK[required]; }
+Today the boss types every field manually in `src/routes/boss.portals.tsx`. Add a one-shot AI helper for `kind = "music"` only.
+
+- New server fn `generateMusicPortalDraft(description: string)` in `src/lib/music-portals.functions.ts`:
+  - Calls Lovable AI Gateway with `google/gemini-3-flash-preview`, structured output (`response_format: json_object`).
+  - Returns: `{ name, niche, style, vibe, theme, music_hooks[5], seo_title, seo_description, wallpaper_prompt }`.
+  - Uses the existing portal style examples from `portals.functions.ts` as few-shot context so output stays on-brand.
+- In `boss.portals.tsx` and `boss.hubs.new.tsx`, add an "AI draft from vibe" panel above the form (music kind only):
+  - Textarea + "Generate draft" button → fills the form fields client-side, leaving the boss free to edit before save.
+  - Wallpaper still auto-generates on save (no change needed there).
+
+## 2. Fan-side OG-Bot conversational wizard
+
+Replace the current single textarea on `m.$slug.tsx` ("Compose Your Vision") with a 3-step guided flow. Bot turns appear as styled chat bubbles, user inputs appear inline.
+
+```text
+OG-Bot:  "What's the song called?"
+User:    [ song title input ]            -> "Next"
+
+OG-Bot:  "Tell me what this song is about. Story, mood, lines you want in there."
+User:    [ description textarea ]
+         Swearing?  ( ) Clean  ( ) Heavy swears
+                                            -> "Format my lyrics"
+
+OG-Bot:  "Here's your draft —"             (streams Suno-ready lyrics)
+         [ Use these / Edit / Regenerate ]
 ```
-Every gate, badge, dropdown, and label across the site reads from this file — no more hard-coded tier strings.
 
-### 3. UI surfaces to update
-- `BossOgPassCard`, `MemberDetailDrawer`, `og-pass-actions.tsx` rank dropdowns → use OG_TIERS.
-- `admin.tsx` Register Pair Channel + Plan picker (the screenshot you sent) → OG_TIERS.
-- `boss.og-passes.tsx` filter chips → OG_TIERS.
-- `vip.tsx`, `store.tsx`, `welcome.tsx`, `profile.tsx`, `settings.tsx`, `syndicate.tsx`, `syndicate-overlord.tsx` plan/tier copy → OG_TIER_LABEL.
-- Coin store products that grant a plan → grant `vip` (or `real_og` if bundled with M3U).
-- `vip-guard.ts`, `route-guards.ts`, `stream-tag.server.ts` → use `meetsTier`.
-- `SyndicateProtocolSwitch`, `EnforcerConsole`, `BottomDock`, `NavBar`, `AppShell` badge/visibility logic → read `og_tier`.
+State machine: `idle → askingName → askingBrief → formatting → reviewing → ready-to-generate`. After "Use these", flow drops the user into the existing Suno style picker / Generate button untouched.
 
-### 4. Server functions
-- `syndicate.functions.ts` `setSubscriberPlan` → `setOgTier(userId, tier)` with boss-only RLS check; emits audit log.
-- `stream-link.functions.ts` connect/disconnect → no longer manually flips rank; relies on the trigger to recompute `stream_user`/`real_og`.
-- `boss-users.functions.ts` `setRank` becomes `setOgTier` (same shape).
+The title captured in step 1 is passed to `spawnMusic` as `title` so Suno labels the track correctly.
 
-### 5. Cleanup (follow-up release, not in this PR)
-After one deploy of dual-write/read, drop `profiles.rank`, `profiles.subscription_plan`, and the `syndicate_plan` enum.
+## 3. Swearing per generation (Gemini + Perplexity)
 
-## Out of scope
-- No visual redesign of cards or pages — labels and dropdown options only.
-- Coin/GBP formatting stays as-is.
-- Telegram bot side does not need changes; it already reads `tier_required` as a string.
+Currently swearing is portal-wide (`portal.swear_chat_enabled`). Your request is per-song, decided during the description phase.
 
-## Risk / rollback
-- One migration, fully reversible (it only adds a column + trigger; legacy columns untouched until follow-up).
-- If anything regresses, we can map UI back to `rank`/`subscription_plan` by flipping `og-tier.ts` to read the legacy columns.
+- Extend `streamFormatLyrics` to accept an optional `swear: "clean" | "heavy"` override:
+  - `clean` → always clean, even if portal has swear mode on (still blocked for religious portals).
+  - `heavy` → Gemini writes the lyrics **clean first** (your instruction: "use gemini 3 then edited with swearing"), then a follow-up server step calls Perplexity (`sonar` model) with the clean draft and a swear-injection prompt that returns the same structure with brutal swears woven into lines (not stuffed at random).
+  - Religious portals override `heavy` back to clean.
+- New server fn `enhanceWithPerplexitySwears(lyrics: string)` in a new `src/lib/lyrics-enhance.server.ts`. Uses `PERPLEXITY_API_KEY` (already in secrets). Returns `{ lyrics }`.
+- The UI streams Gemini tokens as normal, then shows "Adding heat…" while Perplexity rewrites, then swaps in the swearing version. Both versions stay in component state so the user can flip between clean and swearing before generating.
 
-Approve and I'll ship the migration + code changes in one pass.
+## 4. Small UX & copy tweaks
+
+- Cost breakdown card on `m.$slug.tsx` already says "1 coin Generate / Free 30-sec preview / 2 coins Unlock". Keeps as-is.
+- Add a clear "Boss can also enable swearing per-portal" hint in the wizard footer so non-religious portals don't confuse boss-level toggle with the per-song toggle.
+
+---
+
+## Technical details (for me, not the user)
+
+- **No DB migration required.** Existing columns cover everything: `tracks.title` already nullable, `portals.swear_chat_enabled` already controls portal-wide default, `suno_jobs` already has `audio_url_v1/v2` and `download_unlocked_at`.
+- All AI calls stay server-side: Gemini via Lovable AI Gateway, Perplexity via `process.env.PERPLEXITY_API_KEY`. No new secrets.
+- Lovable AI Gateway model: `google/gemini-3-flash-preview` (matches your "use gemini 3" instruction).
+- Perplexity model: `sonar` (cheapest, fast — we don't need grounding for swear injection).
+- All new server fns use `requireStrictAuth` middleware. The portal-draft generator additionally checks `is_boss` so only boss can call it.
+- Religious portal detection reuses the existing `isReligiousPortal()` helper so devotional MusicHubs are never poisoned with swears regardless of toggle.
+- Wizard component lives in `src/components/OgBotComposer.tsx` so `m.$slug.tsx` stays readable.
+
+## Files touched
+
+- `src/lib/music-portals.functions.ts` — extend `streamFormatLyrics(swear?)`, add `generateMusicPortalDraft`
+- `src/lib/lyrics-enhance.server.ts` (new) — Perplexity swear-injection helper
+- `src/components/OgBotComposer.tsx` (new) — 3-step wizard
+- `src/components/BossPortalAiDraft.tsx` (new) — boss "generate from description" panel
+- `src/routes/m.$slug.tsx` — swap textarea for `<OgBotComposer />`
+- `src/routes/boss.portals.tsx` — mount `<BossPortalAiDraft />` on music kind
+- `src/routes/boss.hubs.new.tsx` — same panel for the new-hub flow
+
+## Out of scope (ask if you want any of these)
+
+- Voice cloning / custom singer per portal
+- Saving multiple lyric drafts per song
+- Auto-publishing the generated song to the portal catalog (currently the boss promotes a `suno_job` to a `tracks` row separately)
