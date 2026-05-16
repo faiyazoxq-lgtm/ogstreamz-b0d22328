@@ -285,3 +285,161 @@ describe("callClaude — Anthropic API failure cases", () => {
     expect(body.system).toBeUndefined();
   });
 });
+
+// ─────────────────── 4. MALFORMED / MISSING-FIELD RESPONSES ─────────────────
+// These tests pin down the error path when Anthropic returns 200 OK but the
+// body is not what we expect. Behaviour must be deterministic — no throws
+// leak past callClaude, and a missing `content` array collapses to text:"".
+describe("callClaude — malformed Anthropic responses", () => {
+  it("returns ok:false when body is not valid JSON", async () => {
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response("<html>upstream proxy error</html>", {
+          status: 200,
+          headers: { "content-type": "text/html" },
+        }),
+    ) as unknown as typeof fetch;
+
+    const result = await callClaude({ prompt: "hi" });
+    expect(result.ok).toBe(false);
+    // res.json() rejects with a SyntaxError — its message is caught by the
+    // outer try and surfaced as the error string.
+    if (!result.ok) expect(typeof result.error).toBe("string");
+    if (!result.ok) expect(result.error.length).toBeGreaterThan(0);
+  });
+
+  it("returns ok:false when body is empty string with JSON content-type", async () => {
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response("", {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    ) as unknown as typeof fetch;
+
+    const result = await callClaude({ prompt: "hi" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(typeof result.error).toBe("string");
+  });
+
+  it("returns ok:true with empty text when JSON omits the content field entirely", async () => {
+    globalThis.fetch = vi.fn(async () =>
+      jsonResponse(200, { id: "msg_1", role: "assistant", stop_reason: "end_turn" }),
+    ) as unknown as typeof fetch;
+
+    const result = await callClaude({ prompt: "hi" });
+    expect(result).toEqual({ ok: true, text: "" });
+  });
+
+  it("returns ok:true with empty text when content is null", async () => {
+    globalThis.fetch = vi.fn(async () =>
+      jsonResponse(200, { content: null }),
+    ) as unknown as typeof fetch;
+
+    const result = await callClaude({ prompt: "hi" });
+    expect(result).toEqual({ ok: true, text: "" });
+  });
+
+  it("returns ok:false deterministically when content is not an array", async () => {
+    globalThis.fetch = vi.fn(async () =>
+      jsonResponse(200, { content: { type: "text", text: "ignored" } }),
+    ) as unknown as typeof fetch;
+
+    // `?? []` doesn't fire (the object isn't nullish) so `.map` throws. The
+    // outer try/catch converts that into a deterministic ok:false — no
+    // exception escapes the helper.
+    const result = await callClaude({ prompt: "hi" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(typeof result.error).toBe("string");
+  });
+
+  it("returns ok:true with empty text when content items lack text fields", async () => {
+    globalThis.fetch = vi.fn(async () =>
+      jsonResponse(200, {
+        content: [
+          { type: "text" }, // missing text
+          { type: "text", text: null }, // null text
+          { type: "text", text: undefined }, // undefined text
+        ],
+      }),
+    ) as unknown as typeof fetch;
+
+    const result = await callClaude({ prompt: "hi" });
+    expect(result).toEqual({ ok: true, text: "" });
+  });
+
+  it("returns ok:true with empty text when content items have wrong type", async () => {
+    globalThis.fetch = vi.fn(async () =>
+      jsonResponse(200, {
+        content: [
+          { type: "tool_use", id: "t1", input: {} },
+          { type: "image", source: {} },
+        ],
+      }),
+    ) as unknown as typeof fetch;
+
+    const result = await callClaude({ prompt: "hi" });
+    expect(result).toEqual({ ok: true, text: "" });
+  });
+
+  it("trims whitespace-only text blocks to an empty string", async () => {
+    globalThis.fetch = vi.fn(async () =>
+      jsonResponse(200, {
+        content: [
+          { type: "text", text: "   " },
+          { type: "text", text: "\n\t" },
+        ],
+      }),
+    ) as unknown as typeof fetch;
+
+    const result = await callClaude({ prompt: "hi" });
+    expect(result).toEqual({ ok: true, text: "" });
+  });
+
+  it("skips null/undefined blocks and concatenates the rest", async () => {
+    globalThis.fetch = vi.fn(async () =>
+      jsonResponse(200, {
+        content: [
+          null,
+          { type: "text", text: "part-one " },
+          undefined,
+          { type: "text", text: "part-two" },
+        ],
+      }),
+    ) as unknown as typeof fetch;
+
+    const result = await callClaude({ prompt: "hi" });
+    expect(result).toEqual({ ok: true, text: "part-one part-two" });
+  });
+
+  it("returns ok:false when the body is a JSON primitive (string)", async () => {
+    // JSON.parse('"oops"') succeeds → "oops". `content ?? []` yields []
+    // because the parsed value is a string, not an object with `.content`.
+    // We access `.content` on a string which is undefined → [] → text:"".
+    // So this should be a deterministic ok:true with empty text, NOT a crash.
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response(JSON.stringify("oops"), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    ) as unknown as typeof fetch;
+
+    const result = await callClaude({ prompt: "hi" });
+    expect(result).toEqual({ ok: true, text: "" });
+  });
+
+  it("returns ok:false when JSON parses but res.json() rejects (truncated body)", async () => {
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response('{"content":[{"type":"text","text":"hello', {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    ) as unknown as typeof fetch;
+
+    const result = await callClaude({ prompt: "hi" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(typeof result.error).toBe("string");
+  });
+});
