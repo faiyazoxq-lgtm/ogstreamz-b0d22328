@@ -462,12 +462,24 @@ Use markdown. Keep answers tight unless the user asks for depth. Safe Mode is th
 shareable face of OG Bot — assume the user might screenshot you for their nan.`;
 
 const OG_SYSTEM = `You are OG Bot in OG MODE — the Research & Creative Powerhouse, full chaos personality ON.
-You receive grounded research from Perplexity Sonar Pro in the system message.
-Synthesize an authoritative, citation-aware MASTER-LEVEL response. Use markdown.
-Cite sources inline as [1], [2] mapping to the order they appear in the SOURCES block.
-Voice: foul-mouthed British enforcer running the OG-PORTAL — swear freely (fuck, shit,
-bollocks, bastard), banter hard, take the piss, but FACTS must be accurate and SOURCES
-must be respected. Authority + chaos. Never break character in OG Mode.`;
+You are the SYNTHESIZER, the final voice of a four-model agent council:
+  1. Perplexity Sonar Pro pulled grounded research and sources.
+  2. Gemini 3.1 Pro produced an ANALYTICAL DRAFT — the skeleton of truth.
+  3. GPT-5 produced a CRITIQUE — red-teamed the draft, flagged gaps and weak claims, and gave concrete improve-it instructions.
+  4. You (Claude Sonnet 4.5) write the FINAL ANSWER the user sees.
+
+How to use the council:
+- Treat the analyst draft as a starting point, not gospel. Improve it.
+- Apply the critic's IMPROVE instructions and patch every issue in their FACT CHECK and GAPS.
+- If analyst and critic disagree, prefer the position better supported by the SOURCES block.
+- If sources are missing or thin, say so plainly — don't fabricate citations.
+- Cite sources inline as [1], [2] in the order they appear in the SOURCES block.
+- Use markdown. Lead with the answer. Depth as needed. No meta-commentary about the council — the user just sees one confident reply.
+
+Voice (NON-NEGOTIABLE): foul-mouthed British enforcer running the OG-PORTAL.
+Swear freely (fuck, shit, bollocks, bastard, piss, twat), banter hard, take the piss,
+but FACTS must be accurate and SOURCES must be respected. Authority + chaos.
+Never break character. Never apologise for the language. Never go soft.`;
 
 export const streamOgChat = createServerFn({ method: "POST" })
   .middleware([requireStrictAuth])
@@ -575,23 +587,26 @@ export const streamOgChat = createServerFn({ method: "POST" })
         ? `RESEARCH BRIEF (from Perplexity Sonar Pro):\n${research.answer}`
         : "";
 
-      // Super-intelligence tri-chain: for code/research lanes where Claude is
-      // doing synthesis, slot Gemini Pro in as the analyst between Perplexity
-      // and Claude. Gemini's structured draft gives Claude a second opinion
-      // to refine, sharpen, or push back on.
+      // ───────── AGENT COUNCIL ─────────
+      // Run on EVERY OG query so the synthesizer always gets a structured
+      // draft + red-team critique to work from. Both steps degrade silently:
+      // if either returns "", the synthesizer still has research + sources.
       let geminiBlock = "";
-      if (
-        synthModel.startsWith("anthropic/") &&
-        (intent === "code" || intent === "research")
-      ) {
-        yield { type: "status", stage: "drafting" };
-        const draft = await geminiDraft(message, researchBlock, sourcesBlock);
-        if (draft) {
-          geminiBlock = `ANALYTICAL DRAFT (from Gemini 3.1 Pro — second opinion to refine, not to copy):\n${draft}`;
+      let criticBlock = "";
+
+      yield { type: "status", stage: "drafting" };
+      const draft = await geminiDraft(message, researchBlock, sourcesBlock);
+      if (draft) {
+        geminiBlock = `ANALYTICAL DRAFT (from Gemini 3.1 Pro — improve, don't copy):\n${draft}`;
+
+        // Critic only runs if we have a draft to critique.
+        const critique = await gptCritique(message, researchBlock, sourcesBlock, draft);
+        if (critique) {
+          criticBlock = `CRITIQUE (from GPT-5 — apply the IMPROVE instructions and patch every FACT CHECK / GAPS issue):\n${critique}`;
         }
       }
 
-      const systemContent = [OG_SYSTEM, researchBlock, geminiBlock, sourcesBlock]
+      const systemContent = [OG_SYSTEM, researchBlock, geminiBlock, criticBlock, sourcesBlock]
         .filter(Boolean)
         .join("\n\n");
 
