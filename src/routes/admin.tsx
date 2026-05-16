@@ -1143,26 +1143,26 @@ function NewsScoutSpawnerPanel() {
   return _NewsScoutSpawnerImpl();
 }
 
-const SIGNAL_GROUPS: { label: string; pairs: { pair: string; sym: string; goodCtx: string; badCtx: string }[] }[] = [
+const SIGNAL_GROUPS: { label: string; pairs: { pair: string; sym: string; ctx: string }[] }[] = [
   { label: "Metals", pairs: [
-    { pair: "Gold", sym: "XAU", goodCtx: "Fed rate cut, weak USD, inflation surge", badCtx: "War ceasefire, lower inflation, strong USD" },
-    { pair: "Silver", sym: "XAG", goodCtx: "Industrial demand, solar boom, weak USD", badCtx: "Recession fears, demand collapse" },
-    { pair: "Copper", sym: "HG", goodCtx: "China stimulus, EV demand, supply cuts", badCtx: "China slowdown, mining oversupply" },
+    { pair: "Gold", sym: "XAU", ctx: "Macro drivers, Fed path, geopolitics, ETF flows" },
+    { pair: "Silver", sym: "XAG", ctx: "Industrial demand, solar cycle, USD trend" },
+    { pair: "Copper", sym: "HG", ctx: "China demand, EV cycle, mining supply" },
   ]},
   { label: "Currencies", pairs: [
-    { pair: "GBP/USD", sym: "GBP", goodCtx: "BoE hawkish, UK GDP beat", badCtx: "BoE dovish, UK recession, USD strength" },
-    { pair: "EUR/USD", sym: "EUR", goodCtx: "ECB hawkish, EZ growth", badCtx: "ECB cuts, EZ recession, USD strength" },
-    { pair: "USD/JPY", sym: "JPY", goodCtx: "Fed hawkish, BoJ dovish", badCtx: "BoJ intervention, Fed cuts" },
+    { pair: "GBP/USD", sym: "GBP", ctx: "BoE stance, UK GDP, USD trend" },
+    { pair: "EUR/USD", sym: "EUR", ctx: "ECB stance, EZ growth, USD trend" },
+    { pair: "USD/JPY", sym: "JPY", ctx: "Fed vs BoJ divergence, intervention risk" },
   ]},
   { label: "Energies", pairs: [
-    { pair: "Oil WTI", sym: "WTI", goodCtx: "OPEC cuts, Hormuz blockade, war escalation", badCtx: "Ceasefire, OPEC oversupply, demand drop" },
-    { pair: "Brent", sym: "BRN", goodCtx: "Middle East conflict, supply disruption", badCtx: "Peace deal, inventory build" },
-    { pair: "Natural Gas", sym: "NG", goodCtx: "Cold snap, Europe shortage, LNG demand", badCtx: "Mild winter, oversupply" },
+    { pair: "Oil WTI", sym: "WTI", ctx: "OPEC policy, Middle East risk, inventories" },
+    { pair: "Brent", sym: "BRN", ctx: "Geopolitics, supply disruption, demand outlook" },
+    { pair: "Natural Gas", sym: "NG", ctx: "Weather, Europe storage, LNG flows" },
   ]},
   { label: "Indexes", pairs: [
-    { pair: "S&P 500", sym: "SPX", goodCtx: "Fed cuts, AI earnings beat, soft landing", badCtx: "Recession, earnings miss, geopolitical shock" },
-    { pair: "NASDAQ", sym: "NDX", goodCtx: "AI capex boom, tech earnings beat", badCtx: "AI bubble fears, regulation, rate hikes" },
-    { pair: "FTSE 100", sym: "UKX", goodCtx: "Commodity rally, weak GBP boost", badCtx: "UK recession, energy crash" },
+    { pair: "S&P 500", sym: "SPX", ctx: "Fed path, earnings, macro regime" },
+    { pair: "NASDAQ", sym: "NDX", ctx: "AI capex, tech earnings, rate sensitivity" },
+    { pair: "FTSE 100", sym: "UKX", ctx: "Commodity mix, GBP trend, UK macro" },
   ]},
 ];
 
@@ -1499,11 +1499,10 @@ function _NewsScoutSpawnerImpl() {
               <div className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground mb-2">{group.label}</div>
               <div className="grid sm:grid-cols-3 gap-2">
                 {group.pairs.map((p) => {
-                  const defaultCtx = bias === "good" ? p.goodCtx : p.badCtx;
                   return (
                     <button
                       key={p.sym}
-                      onClick={() => quickSpawn(p.pair, p.sym, defaultCtx)}
+                      onClick={() => quickSpawn(p.pair, p.sym, p.ctx)}
                       disabled={!!quickBusy}
                       className="rounded-xl border bg-black/30 p-3 text-left transition-all disabled:opacity-40 hover:scale-[1.02]"
                       style={{ borderColor: `${accent}55`, boxShadow: `0 0 14px ${accent}22` }}
