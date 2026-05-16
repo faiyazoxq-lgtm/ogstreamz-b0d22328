@@ -14,6 +14,7 @@ import { CreditWallet } from "@/components/CreditWallet";
 import { NonVipFormGate } from "@/components/NonVipFormGate";
 import { PortalHeader, PortalStyleLine, mergeStyle } from "@/components/PortalHeader";
 import { OGBotDraftPanel } from "@/components/og-bot/OGBotDraftPanel";
+import { ToolWizard, type WizardResult } from "@/components/ToolWizard";
 
 const TOOLS_STYLE = "Concise, decisive, OG-tone explanation with one actionable next step.";
 
@@ -68,6 +69,30 @@ function ToolPromptBuilder() {
   const [busy, setBusy] = useState(false);
 
   const available = useMemo(() => PROMPTS.filter((p) => !used.includes(p.label)), [used]);
+
+  const applyWizard = (r: WizardResult) => {
+    setName(r.name);
+    setDescription(r.logic);
+    setVibe(r.vibe);
+    setAudience(r.audience);
+  };
+
+  const spawnFromWizard = async (r: WizardResult) => {
+    if (!user) { toast.error("Sign in to spawn a tool"); navigate({ to: "/auth" }); return; }
+    if (!isAdmin) { toast.error("Admin only — ask the boss to spawn this"); return; }
+    setBusy(true);
+    try {
+      const res = await spawnFn({
+        data: { name: r.name, audience: r.audience, logic: mergeStyle(TOOLS_STYLE, r.logic), vibe: r.vibe, vip },
+      });
+      toast.success("⚡ Tool spawned");
+      navigate({ to: "/t/$slug", params: { slug: res.slug } });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Spawn failed");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const tap = (p: Prompt) => {
     setDescription((d) => {
@@ -132,6 +157,9 @@ function ToolPromptBuilder() {
       />
 
       <NonVipFormGate label="Spawn Tool">
+      <div className="mb-6">
+        <ToolWizard onApply={applyWizard} onSpawn={spawnFromWizard} canSpawn={isVip && isAdmin} />
+      </div>
       <section className="rounded-3xl border border-transparent bg-transparent p-4 sm:p-6">
         <div className="mb-5">
           <OGBotDraftPanel
