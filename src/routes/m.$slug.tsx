@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { streamFormatLyrics, requestStudioTrack, generatePortalTrack, getPortalTrackJob, unlockPortalTrackDownload } from "@/lib/music-portals.functions";
+import { requestStudioTrack, generatePortalTrack, getPortalTrackJob, unlockPortalTrackDownload } from "@/lib/music-portals.functions";
 import { spawnMusic } from "@/lib/suno.functions";
 import { listPortalTracks, getTrackOwnership } from "@/lib/tracks.functions";
 import { TrackPlayer } from "@/components/TrackPlayer";
