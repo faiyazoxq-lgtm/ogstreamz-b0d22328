@@ -269,7 +269,6 @@ function AdminPage() {
       <div className="space-y-6">
         <ScoutPanel />
         <LeadTrackingPanel />
-        <SignalCommandPanel />
         <NewsScoutSpawnerPanel />
       </div>
 
@@ -1167,87 +1166,6 @@ const SIGNAL_GROUPS: { label: string; pairs: { pair: string; sym: string; goodCt
   ]},
 ];
 
-function SignalCommandPanel() {
-  const spawn = useServerFn(spawnNewsPortal);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [last, setLast] = useState<{ slug: string; bias: "good" | "bad" } | null>(null);
-
-  const fire = async (pair: string, sym: string, bias: "good" | "bad", ctx: string) => {
-    const key = `${sym}-${bias}`;
-    setBusy(key);
-    try {
-      const r = await spawn({ data: {
-        name: `${sym} ${bias === "good" ? "BULLISH" : "BEARISH"} · Bias Engine`,
-        pair, bias, context: ctx, vip: false,
-      }});
-      setLast({ slug: r.portal.slug, bias });
-      const url = `${window.location.origin}/p/${r.portal.slug}`;
-      navigator.clipboard.writeText(url).catch(() => {});
-      toast.success(`${sym} ${bias.toUpperCase()} portal live · link copied`);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Spawn failed");
-    } finally { setBusy(null); }
-  };
-
-  return (
-    <section className="mt-10 rounded-2xl border border-border bg-card p-6">
-      <div className="flex items-center gap-2 mb-2">
-        <TrendingUp className="h-5 w-5" style={{ color: "var(--neon-blue-bright)" }} />
-        <h2 className="font-[Montserrat] font-black text-xl text-white">Signal Command · Bias Engine</h2>
-        <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">One-Click Spawn</span>
-      </div>
-      <p className="text-sm text-muted-foreground mb-5">
-        Pick a pair, fire <span className="text-emerald-400 font-bold">GOOD</span> or <span className="text-red-400 font-bold">BAD</span> news bias. Firecrawl + Perplexity build a live-refreshing portal in seconds.
-      </p>
-      <div className="grid gap-5">
-        {SIGNAL_GROUPS.map((group) => (
-          <div key={group.label}>
-            <div className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground mb-2">{group.label}</div>
-            <div className="grid sm:grid-cols-3 gap-3">
-              {group.pairs.map((p) => (
-                <div key={p.sym} className="rounded-xl border border-border bg-black/30 p-3">
-                  <div className="flex items-baseline justify-between mb-2">
-                    <span className="font-[Montserrat] font-black text-white">{p.pair}</span>
-                    <span className="text-[10px] font-mono text-muted-foreground">{p.sym}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => fire(p.pair, p.sym, "good", p.goodCtx)}
-                      disabled={!!busy}
-                      className="rounded-md py-2 text-xs font-bold tracking-widest transition-all disabled:opacity-40 hover:scale-[1.02]"
-                      style={{ background: "linear-gradient(180deg,#00e08a33,#00e08a11)", border: "1px solid #00e08a88", color: "#7dffce", boxShadow: "0 0 16px #00e08a44" }}
-                    >
-                      {busy === `${p.sym}-good` ? <Loader2 className="h-3 w-3 animate-spin mx-auto" /> : "GOOD ▲"}
-                    </button>
-                    <button
-                      onClick={() => fire(p.pair, p.sym, "bad", p.badCtx)}
-                      disabled={!!busy}
-                      className="rounded-md py-2 text-xs font-bold tracking-widest transition-all disabled:opacity-40 hover:scale-[1.02]"
-                      style={{ background: "linear-gradient(180deg,#ff223333,#ff223311)", border: "1px solid #ff223388", color: "#ffb3b3", boxShadow: "0 0 16px #ff223344" }}
-                    >
-                      {busy === `${p.sym}-bad` ? <Loader2 className="h-3 w-3 animate-spin mx-auto" /> : "BAD ▼"}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-      {last && (
-        <div className="mt-5 rounded-lg border bg-black/40 p-3 text-xs flex items-center justify-between gap-3"
-          style={{ borderColor: last.bias === "good" ? "#00e08a66" : "#ff223366" }}>
-          <a href={`/p/${last.slug}`} target="_blank" rel="noopener noreferrer" className="font-mono hover:underline truncate"
-             style={{ color: last.bias === "good" ? "#00e08a" : "#ff2233" }}>
-            /p/{last.slug}
-          </a>
-          <span className="text-muted-foreground">Link copied to clipboard</span>
-        </div>
-      )}
-    </section>
-  );
-}
-
 type HubSettings = {
   id: string;
   hub_key: string;
@@ -1454,6 +1372,7 @@ function _NewsScoutSpawnerImpl() {
   const [last, setLast] = useState<{ slug: string; name: string } | null>(null);
   const [cineBusy, setCineBusy] = useState<null | "16:9" | "9:16">(null);
   const [cineUrl, setCineUrl] = useState<string | null>(null);
+  const [quickBusy, setQuickBusy] = useState<string | null>(null);
 
   const onCinema = async (aspect: "16:9" | "9:16") => {
     if (!last) return;
@@ -1480,6 +1399,25 @@ function _NewsScoutSpawnerImpl() {
     } catch (e: any) {
       toast.error(e?.message ?? "Spawn failed");
     } finally { setLoading(false); }
+  };
+
+  const quickSpawn = async (pairName: string, sym: string, defaultCtx: string) => {
+    setQuickBusy(sym);
+    try {
+      const r = await spawn({ data: {
+        name: `${sym} · Bias Engine`,
+        pair: pairName,
+        bias,
+        context: defaultCtx,
+        vip: false,
+      }});
+      setLast(r.portal);
+      const url = `${window.location.origin}/p/${r.portal.slug}`;
+      navigator.clipboard.writeText(url).catch(() => {});
+      toast.success(`${sym} portal live · link copied`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Spawn failed");
+    } finally { setQuickBusy(null); }
   };
 
   const url = last && typeof window !== "undefined" ? `${window.location.origin}/p/${last.slug}` : "";
@@ -1547,6 +1485,44 @@ function _NewsScoutSpawnerImpl() {
           </div>
         </div>
       )}
+      <div className="mt-6 pt-5 border-t border-border/60">
+        <div className="flex items-center gap-2 mb-1">
+          <TrendingUp className="h-4 w-4" style={{ color: "var(--neon-blue-bright)" }} />
+          <h3 className="font-[Montserrat] font-black text-sm text-white tracking-wide">Bias Engine · One-Click Spawn</h3>
+        </div>
+        <p className="text-xs text-muted-foreground mb-4">
+          Pick a pair to instantly spawn an intel portal using the bias selected above. Firecrawl + Perplexity assemble it in seconds.
+        </p>
+        <div className="grid gap-4">
+          {SIGNAL_GROUPS.map((group) => (
+            <div key={group.label}>
+              <div className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground mb-2">{group.label}</div>
+              <div className="grid sm:grid-cols-3 gap-2">
+                {group.pairs.map((p) => {
+                  const defaultCtx = bias === "good" ? p.goodCtx : p.badCtx;
+                  return (
+                    <button
+                      key={p.sym}
+                      onClick={() => quickSpawn(p.pair, p.sym, defaultCtx)}
+                      disabled={!!quickBusy}
+                      className="rounded-xl border bg-black/30 p-3 text-left transition-all disabled:opacity-40 hover:scale-[1.02]"
+                      style={{ borderColor: `${accent}55`, boxShadow: `0 0 14px ${accent}22` }}
+                    >
+                      <div className="flex items-baseline justify-between">
+                        <span className="font-[Montserrat] font-black text-white text-sm">{p.pair}</span>
+                        <span className="text-[10px] font-mono text-muted-foreground">{p.sym}</span>
+                      </div>
+                      <div className="mt-2 text-[10px] uppercase tracking-widest font-bold" style={{ color: accent }}>
+                        {quickBusy === p.sym ? <Loader2 className="h-3 w-3 animate-spin" /> : "Spawn ▶"}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
