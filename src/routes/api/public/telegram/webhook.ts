@@ -216,9 +216,32 @@ async function handleCommand(
   const code = m[2];
   if (!code) {
     // /start with no code:
-    //  - already-linked chat → branded welcome card (site wallpaper + theme)
-    //  - unlinked chat       → onboarding text pointing them at /account/passes
+    //   1. Always upsert the chat_id (+ tg username / name) into
+    //      telegram_chat_prefs so we have a first-class onboarding record
+    //      from the very first contact, even before they generate a code.
+    //   2. Already-linked chat → branded welcome card.
+    //   3. Unlinked chat       → clear numbered onboarding card.
     const sb = getSupabase() as any;
+    const nowIso = new Date().toISOString();
+    try {
+      await sb.from("telegram_chat_prefs").upsert(
+        {
+          chat_id: chatId,
+          tg_username: username || null,
+          first_name: (msg?.from?.first_name as string | undefined) ?? null,
+          last_name: (msg?.from?.last_name as string | undefined) ?? null,
+          last_start_at: nowIso,
+          updated_at: nowIso,
+        },
+        { onConflict: "chat_id" },
+      );
+    } catch (e) {
+      logWarn("tg.start.prefs_upsert_failed", {
+        chatIdSuffix: String(chatId).slice(-8),
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
+
     const { data: link } = await sb
       .from("telegram_user_links")
       .select("user_id")
@@ -238,9 +261,23 @@ async function handleCommand(
       }
       await sendBrandedWelcome(chatId, { returning: true, displayName });
     } else {
+      const hello = msg?.from?.first_name
+        ? `Hey ${escapeHtml(String(msg.from.first_name))} 👋`
+        : "Hey 👋";
       await tgSendMessage(
         chatId,
-        "Welcome to OG-Streamz. Get your link code at <b>/account/passes</b>, then send <code>/link CODE</code> here.",
+        `${hello}\n\n` +
+          `Welcome to <b>OG-Streamz</b>. This bot delivers your drops, ` +
+          `credits and live alerts straight into Telegram.\n\n` +
+          `<b>Link this chat to your account in 3 steps:</b>\n` +
+          `1. Open <b>ogstreamz.co.uk/account/passes</b> on the site.\n` +
+          `2. Tap <b>“Link Telegram”</b> to get your 8-character code.\n` +
+          `3. Send it back here as <code>/link CODE</code>.\n\n` +
+          `Once linked you can use:\n` +
+          `• <code>/me</code> — account status &amp; credits\n` +
+          `• <code>/msg TEXT</code> — message the OG-Streamz team\n` +
+          `• <code>/ask TEXT</code> — chat with the OG AI agent\n` +
+          `• <code>/help</code> — full command list`,
       );
     }
     return;
@@ -268,6 +305,28 @@ async function handleCommand(
   }
   // Branded welcome card — uses the site wallpaper + OG-Streamz theme.
   await sendBrandedWelcome(chatId, { returning: false, displayName: null });
+
+  // Mirror onboarding metadata into telegram_chat_prefs so the chat record
+  // exists even if the user never sent /start first.
+  try {
+    const nowIso = new Date().toISOString();
+    await (getSupabase() as any).from("telegram_chat_prefs").upsert(
+      {
+        chat_id: chatId,
+        tg_username: username || null,
+        first_name: (msg?.from?.first_name as string | undefined) ?? null,
+        last_name: (msg?.from?.last_name as string | undefined) ?? null,
+        last_start_at: nowIso,
+        updated_at: nowIso,
+      },
+      { onConflict: "chat_id" },
+    );
+  } catch (e) {
+    logWarn("tg.link.prefs_upsert_failed", {
+      chatIdSuffix: String(chatId).slice(-8),
+      error: e instanceof Error ? e.message : String(e),
+    });
+  }
 
   // Boss-only audit notice: tie this Telegram identity to the member's OG Pass.
   try {
