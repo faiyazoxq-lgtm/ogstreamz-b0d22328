@@ -104,9 +104,9 @@ async function getServerUrl(): Promise<string> {
   return v.replace(/\/+$/, "");
 }
 
-export const getStreamConfigStatus = createServerFn({ method: "GET" }).handler(
-  async (): Promise<StreamConfigStatus> => await checkServerUrl(),
-);
+export const getStreamConfigStatus = createServerFn({ method: "GET" })
+  .middleware([requireStrictAuth])
+  .handler(async (): Promise<StreamConfigStatus> => await checkServerUrl());
 
 // ──────────────────────────────────────────────────────────────────────
 // Boss-only: read / set / clear the configured stream server URL.
