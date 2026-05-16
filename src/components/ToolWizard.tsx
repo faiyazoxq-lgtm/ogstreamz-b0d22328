@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Sparkles, Wand2, ArrowRight, Bot, BrainCircuit, RotateCcw, ShieldCheck } from "lucide-react";
+import { Loader2, Sparkles, Wand2, ArrowRight, Bot, BrainCircuit, RotateCcw, ShieldCheck, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -88,6 +88,10 @@ export function ToolWizard({
     await askClaude(qa);
   };
 
+  const redraftOnly = async () => {
+    await runFinalize(qa);
+  };
+
   const apply = () => {
     if (!draft) return;
     onApply(draft);
@@ -161,9 +165,16 @@ export function ToolWizard({
               </div>
             ))}
           </div>
-          <Button onClick={submitAnswers} disabled={busy} className="w-full bg-gold text-primary-foreground hover:bg-gold/90 font-bold">
-            {busy ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Drafting with Gemini…</>) : (<>Continue <ArrowRight className="h-4 w-4 ml-2" /></>)}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            {draft && (
+              <Button onClick={redraftOnly} disabled={busy} variant="outline" className="flex-1">
+                {busy ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Re-drafting…</>) : (<><BrainCircuit className="h-4 w-4 mr-2" /> Re-draft with Gemini</>)}
+              </Button>
+            )}
+            <Button onClick={submitAnswers} disabled={busy} className="flex-1 bg-gold text-primary-foreground hover:bg-gold/90 font-bold">
+              {busy ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Asking Claude…</>) : (<>{draft ? "Ask Claude Again" : "Continue"} <ArrowRight className="h-4 w-4 ml-2" /></>)}
+            </Button>
+          </div>
         </div>
       )}
 
@@ -181,6 +192,11 @@ export function ToolWizard({
             <div><span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Logic</span><div className="text-muted-foreground whitespace-pre-wrap">{draft.logic}</div></div>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
+            {qa.length > 0 && (
+              <Button onClick={() => setStep("clarify")} variant="outline" className="flex-1">
+                <Pencil className="h-4 w-4 mr-2" /> Edit Answers
+              </Button>
+            )}
             <Button onClick={apply} variant="outline" className="flex-1">Apply to Form</Button>
             {onSpawn && (
               <Button onClick={() => setStep("confirm")} disabled={busy || !canSpawn} className="flex-1 bg-gold text-primary-foreground hover:bg-gold/90 font-bold">
