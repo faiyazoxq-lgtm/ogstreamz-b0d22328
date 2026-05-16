@@ -1855,12 +1855,16 @@ function TelegramSocialsPanel() {
                 <Button
                   size="sm"
                   className="btn-glass-blue text-white"
-                  disabled={busy === id || !brand}
+                  disabled={busy === id}
                   onClick={async () => {
                     setBusy(id);
                     try {
                       const r = await deploy({ data: { slug: p.slug } });
-                      toast.success(`Deployed to @${r.botUsername ?? "bot"}`);
+                      const tag = r.botUsername ? `@${r.botUsername}` : "bot";
+                      toast.success(`Deployed to ${tag} · listed in /portals`);
+                      if (r.deepLink) {
+                        try { navigator.clipboard?.writeText(r.deepLink); } catch { /* */ }
+                      }
                       reload();
                     } catch (e: any) { toast.error(e?.message ?? "Deploy failed"); }
                     finally { setBusy(null); }

@@ -143,38 +143,63 @@ export const deployToTelegram = createServerFn({ method: "POST" })
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
 
     const { data: portal } = await supabase
-      .from("portals").select("id, name, telegram_config").eq("slug", data.slug).maybeSingle();
+      .from("portals")
+      .select("id, name, slug, telegram_config")
+      .eq("slug", data.slug)
+      .maybeSingle();
     if (!portal) throw new Error("Portal not found");
-    const cfg = (portal.telegram_config ?? {}) as { brand?: BrandBible };
-    const brand = cfg.brand;
-    if (!brand) throw new Error("Generate the Brand Bible first");
+    const cfg = (portal.telegram_config ?? {}) as { brand?: BrandBible; botUsername?: string };
+    const brand = cfg.brand ?? {};
+    const displayName = (brand.brandName || portal.name || "Portal").slice(0, 64);
 
-    const me = await tg("getMe", {});
-    const name = (brand.brandName || portal.name).slice(0, 64);
-    const desc = (brand.bio || "Powered by 0G-PORTAL").slice(0, 512);
-    const shortDesc = (brand.shortBio || brand.bio || "0G-PORTAL").slice(0, 120);
+    // Identify the bot (so we can return a t.me deep link the boss can share).
+    const results: Record<string, any> = {};
+    let botUsername: string | null = (cfg.botUsername as string) ?? null;
+    try {
+      const me = await tg("getMe", {});
+      botUsername = me?.username ?? botUsername;
+      results.bot = botUsername;
+    } catch (e: any) {
+      results.getMe = e.message;
+    }
 
-    const results: Record<string, any> = { bot: me?.username ?? null };
-    try { results.setMyName = await tg("setMyName", { name }); } catch (e: any) { results.setMyName = e.message; }
-    try { results.setMyDescription = await tg("setMyDescription", { description: desc }); } catch (e: any) { results.setMyDescription = e.message; }
-    try { results.setMyShortDescription = await tg("setMyShortDescription", { short_description: shortDesc }); } catch (e: any) { results.setMyShortDescription = e.message; }
+    // Idempotently ensure /portals is exposed in the bot's command menu so
+    // members can list spawnable portals from any chat. We don't touch the
+    // bot's name / description / short description — those are global and
+    // would clobber every other deployed portal.
     try {
       results.setMyCommands = await tg("setMyCommands", {
         commands: [
-          { command: "start", description: `Welcome to ${name}` },
-          { command: "portal", description: "Open the 0G portal" },
-          { command: "vip", description: "VIP access" },
+          { command: "start", description: "Welcome / link your account" },
+          { command: "portals", description: "Browse spawnable portals" },
+          { command: "me", description: "Account & credits" },
+          { command: "help", description: "Show all commands" },
         ],
       });
-    } catch (e: any) { results.setMyCommands = e.message; }
+    } catch (e: any) {
+      results.setMyCommands = e.message;
+    }
 
     const next = {
       ...cfg,
-      botUsername: me?.username ?? (cfg as any).botUsername ?? null,
+      brand,
+      botUsername: botUsername ?? null,
       deployed: true,
       deployed_at: new Date().toISOString(),
+      // Snapshot used by the bot's /portals listing so renames in admin
+      // don't change live deployed cards until the boss re-deploys.
+      listing: {
+        displayName,
+        emoji: brand.logoEmoji ?? "🛰",
+        shortBio: (brand.shortBio || brand.bio || "").slice(0, 120),
+        slug: portal.slug,
+      },
       lastDeploy: results,
     };
     await supabase.from("portals").update({ telegram_config: next }).eq("id", portal.id);
-    return { results, botUsername: me?.username ?? null };
+
+    const deepLink = botUsername
+      ? `https://t.me/${botUsername}?start=p_${portal.slug}`
+      : null;
+    return { results, botUsername, deepLink };
   });
