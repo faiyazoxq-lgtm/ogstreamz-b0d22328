@@ -54,6 +54,10 @@ export function AnimatedCredits({
 
     return () => {
       if (raf.current) cancelAnimationFrame(raf.current);
+      if (hideTimer.current) {
+        window.clearTimeout(hideTimer.current);
+        hideTimer.current = null;
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
