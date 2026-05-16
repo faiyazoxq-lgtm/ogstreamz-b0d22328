@@ -10,6 +10,7 @@ import { streamFormatLyrics, requestStudioTrack, generatePortalTrack, getPortalT
 import { spawnMusic } from "@/lib/suno.functions";
 import { listPortalTracks, getTrackOwnership } from "@/lib/tracks.functions";
 import { TrackPlayer } from "@/components/TrackPlayer";
+import { OgBotComposer } from "@/components/OgBotComposer";
 import { SwearChatPanel } from "@/components/SwearChatPanel";
 import { OgWordmark } from "@/components/OgWordmark";
 import { CoinBalance } from "@/components/CoinBalance";
@@ -144,7 +145,6 @@ function MusicPortalPage() {
   const theme = THEMES[portal.theme] ?? THEMES["studio-blue"];
   const { user, profile, isAdmin, refresh: refreshAuth } = useAuth();
   const isVip = isAdmin || profile?.status === "vip";
-  const formatFn = useServerFn(streamFormatLyrics);
   const requestFn = useServerFn(requestStudioTrack);
   const listTracksFn = useServerFn(listPortalTracks);
   const ownershipFn = useServerFn(getTrackOwnership);
@@ -241,9 +241,9 @@ function MusicPortalPage() {
     };
   }, [user?.id]);
 
-  const [raw, setRaw] = useState("");
+  const [briefSeed, setBriefSeed] = useState("");
+  const [songTitle, setSongTitle] = useState("");
   const [lyrics, setLyrics] = useState("");
-  const [formatting, setFormatting] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [submitted, setSubmitted] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
