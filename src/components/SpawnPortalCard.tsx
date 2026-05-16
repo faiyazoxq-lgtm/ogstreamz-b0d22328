@@ -661,39 +661,112 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
 
             {step === 4 && (
               <div className="space-y-3">
-                <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Step 5 · Review</p>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                    Step 5 · Review &amp; tweak template
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={autoDescribe}
+                    disabled={describing || loading}
+                    className="h-7 px-2.5 text-[10px] uppercase tracking-[0.22em] font-bold border-[oklch(0.72_0.22_245/0.5)] hover:border-[oklch(0.72_0.22_245)] hover:bg-[oklch(0.72_0.22_245/0.08)]"
+                  >
+                    {describing
+                      ? <><Loader2 className="h-3 w-3 animate-spin mr-1.5" />Regenerating…</>
+                      : <><RotateCcw className="h-3 w-3 mr-1.5 text-amber-300" />Regen description</>}
+                  </Button>
+                </div>
+                <p className="text-[11px] text-muted-foreground -mt-1">
+                  Edit anything below before spending 🪙. Nothing is saved until you confirm.
+                </p>
+
                 <div className="rounded-md border border-border bg-background/60 divide-y divide-border">
-                  <div className="flex items-start gap-3 px-3 py-2">
-                    <Type className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                  {/* Name */}
+                  <div className="flex items-start gap-3 px-3 py-3">
+                    <Type className="h-3.5 w-3.5 text-muted-foreground mt-2 shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Name</div>
-                      <div className="text-foreground font-medium truncate">{nameTrim || "—"}</div>
+                      <label htmlFor="rev-name" className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Name</label>
+                      <Input
+                        id="rev-name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder={copy.namePh}
+                        className="mt-1 h-10 bg-background"
+                        disabled={loading}
+                        maxLength={NAME_MAX}
+                      />
+                      <p className="mt-1 text-[10px] text-muted-foreground">{nameTrim.length}/{NAME_MAX}</p>
+                      {fieldErrors.name && nameTrim.length > 0 && (
+                        <p className="text-[10px] text-destructive">{fieldErrors.name}</p>
+                      )}
                     </div>
-                    <button type="button" onClick={() => setStep(0)} className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground hover:text-foreground">Edit</button>
                   </div>
-                  <div className="flex items-start gap-3 px-3 py-2">
-                    <Tag className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+
+                  {/* Niche / description */}
+                  <div className="flex items-start gap-3 px-3 py-3">
+                    <Tag className="h-3.5 w-3.5 text-muted-foreground mt-2 shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Niche / theme</div>
-                      <div className="text-foreground font-medium line-clamp-3 break-words">{nicheTrim || "—"}</div>
+                      <label htmlFor="rev-niche" className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                        Description / niche
+                      </label>
+                      <textarea
+                        id="rev-niche"
+                        value={niche}
+                        onChange={(e) => setNiche(e.target.value)}
+                        placeholder={copy.nichePh}
+                        rows={5}
+                        disabled={loading || describing}
+                        className="mt-1 w-full bg-background border border-border rounded-md px-3 py-2 text-sm resize-y disabled:opacity-50"
+                        maxLength={NICHE_MAX}
+                      />
+                      <p className="mt-1 text-[10px] text-muted-foreground">
+                        This is the brief the generator follows. Tweak wording, placeholders or tone. {nicheTrim.length}/{NICHE_MAX}
+                      </p>
+                      {fieldErrors.niche && nicheTrim.length > 0 && (
+                        <p className="text-[10px] text-destructive">{fieldErrors.niche}</p>
+                      )}
                     </div>
-                    <button type="button" onClick={() => setStep(1)} className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground hover:text-foreground">Edit</button>
                   </div>
-                  <div className="flex items-start gap-3 px-3 py-2">
-                    <Palette className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+
+                  {/* Vibe */}
+                  <div className="flex items-start gap-3 px-3 py-3">
+                    <Palette className="h-3.5 w-3.5 text-muted-foreground mt-2 shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Vibe</div>
-                      <div className="text-foreground font-medium line-clamp-2 break-words">{vibe.trim() || "Auto"}</div>
+                      <label htmlFor="rev-vibe" className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                        Vibe <span className="text-foreground/50">(optional)</span>
+                      </label>
+                      <Input
+                        id="rev-vibe"
+                        value={vibe}
+                        onChange={(e) => setVibe(e.target.value)}
+                        placeholder={copy.vibePh}
+                        className="mt-1 h-10 bg-background"
+                        disabled={loading}
+                      />
+                      <p className="mt-1 text-[10px] text-muted-foreground">Leave blank to auto-derive from the theme.</p>
                     </div>
-                    <button type="button" onClick={() => setStep(2)} className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground hover:text-foreground">Edit</button>
                   </div>
-                  <div className="flex items-start gap-3 px-3 py-2">
-                    <Languages className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+
+                  {/* Language */}
+                  <div className="flex items-start gap-3 px-3 py-3">
+                    <Languages className="h-3.5 w-3.5 text-muted-foreground mt-2 shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Language</div>
-                      <div className="text-foreground font-medium truncate">{langTrim || "—"}</div>
+                      <label htmlFor="rev-lang" className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Language</label>
+                      <Input
+                        id="rev-lang"
+                        value={language}
+                        onChange={(e) => setLanguage(e.target.value)}
+                        placeholder="English"
+                        className="mt-1 h-10 bg-background"
+                        disabled={loading}
+                        maxLength={LANG_MAX}
+                      />
+                      {fieldErrors.language && (
+                        <p className="mt-1 text-[10px] text-destructive">{fieldErrors.language}</p>
+                      )}
                     </div>
-                    <button type="button" onClick={() => setStep(3)} className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground hover:text-foreground">Edit</button>
                   </div>
                 </div>
                 {!isValid && (
