@@ -254,7 +254,7 @@ describe("callClaude — Anthropic API failure cases", () => {
     });
 
     expect(fetchSpy).toHaveBeenCalledOnce();
-    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    const [url, init] = fetchSpy.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe("https://api.anthropic.com/v1/messages");
     expect(init.method).toBe("POST");
     const headers = init.headers as Record<string, string>;
@@ -278,9 +278,8 @@ describe("callClaude — Anthropic API failure cases", () => {
 
     await callClaude({ prompt: "hi" });
 
-    const body = JSON.parse(
-      (fetchSpy.mock.calls[0][1] as RequestInit).body as string,
-    );
+    const init = fetchSpy.mock.calls[0] as unknown as [string, RequestInit];
+    const body = JSON.parse(init[1].body as string);
     expect(body.model).toBe("claude-sonnet-4-5");
     expect(body.max_tokens).toBe(1024);
     expect(body.system).toBeUndefined();
