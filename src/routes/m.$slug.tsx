@@ -540,29 +540,6 @@ function MusicPortalPage() {
     }
   };
 
-  const onFormat = async () => {
-    if (!user) return toast.error("Sign in to compose");
-    if (!raw.trim()) return toast.error("Type your story first");
-    setFormatting(true);
-    setLyrics("");
-    try {
-      const stream = await formatFn({ data: { slug: portal.slug, raw } });
-      let acc = "";
-      for await (const chunk of stream as AsyncIterable<{ delta: string }>) {
-        if (chunk?.delta) {
-          acc += chunk.delta;
-          setLyrics(acc);
-        }
-      }
-      if (!acc.trim()) throw new Error("No lyrics returned");
-      toast.success("Lyrics formatted");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Format failed");
-    } finally {
-      setFormatting(false);
-    }
-  };
-
   const onGenerate = async () => {
     if (!user) return toast.error("Sign in to request a track");
     if (!lyrics.trim()) return toast.error("Format your lyrics first");
@@ -576,7 +553,7 @@ function MusicPortalPage() {
         data: {
           prompt: lyrics,
           style_tags: styleTags,
-          title: portal.name,
+          title: songTitle.trim() || portal.name,
           make_instrumental: false,
           portal_slug: portal.slug,
         },
