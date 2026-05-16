@@ -48,7 +48,7 @@ const ACCOUNT: ReadonlyArray<Item> = [
   { to: "/account/passes", label: "My Passes", icon: Crown, vip: true },
   { to: "/history", label: "Portal History", icon: History },
   { to: "/connect-telegram", label: "Telegram Inbox", icon: Send },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/settings", label: "OG-Pass", icon: Settings },
 ];
 
 function useNavPortals(): ReadonlyArray<Item> {
