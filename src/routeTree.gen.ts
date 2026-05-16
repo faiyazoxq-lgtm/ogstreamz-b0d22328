@@ -84,6 +84,7 @@ import { Route as BossHubsRouteImport } from './routes/boss.hubs'
 import { Route as BossFunctionIdeasRouteImport } from './routes/boss.function-ideas'
 import { Route as BossFunctionGrantsRouteImport } from './routes/boss.function-grants'
 import { Route as BossFunctionAuditRouteImport } from './routes/boss.function-audit'
+import { Route as BossFreePurchasesRouteImport } from './routes/boss.free-purchases'
 import { Route as BossDomainDenylistRouteImport } from './routes/boss.domain-denylist'
 import { Route as BossDomainRouteImport } from './routes/boss.domain'
 import { Route as BossDenylistAuditRouteImport } from './routes/boss.denylist-audit'
@@ -485,6 +486,11 @@ const BossFunctionAuditRoute = BossFunctionAuditRouteImport.update({
   path: '/function-audit',
   getParentRoute: () => BossRoute,
 } as any)
+const BossFreePurchasesRoute = BossFreePurchasesRouteImport.update({
+  id: '/free-purchases',
+  path: '/free-purchases',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossDomainDenylistRoute = BossDomainDenylistRouteImport.update({
   id: '/domain-denylist',
   path: '/domain-denylist',
@@ -669,6 +675,7 @@ export interface FileRoutesByFullPath {
   '/boss/denylist-audit': typeof BossDenylistAuditRoute
   '/boss/domain': typeof BossDomainRoute
   '/boss/domain-denylist': typeof BossDomainDenylistRoute
+  '/boss/free-purchases': typeof BossFreePurchasesRoute
   '/boss/function-audit': typeof BossFunctionAuditRoute
   '/boss/function-grants': typeof BossFunctionGrantsRoute
   '/boss/function-ideas': typeof BossFunctionIdeasRoute
@@ -770,6 +777,7 @@ export interface FileRoutesByTo {
   '/boss/denylist-audit': typeof BossDenylistAuditRoute
   '/boss/domain': typeof BossDomainRoute
   '/boss/domain-denylist': typeof BossDomainDenylistRoute
+  '/boss/free-purchases': typeof BossFreePurchasesRoute
   '/boss/function-audit': typeof BossFunctionAuditRoute
   '/boss/function-grants': typeof BossFunctionGrantsRoute
   '/boss/function-ideas': typeof BossFunctionIdeasRoute
@@ -873,6 +881,7 @@ export interface FileRoutesById {
   '/boss/denylist-audit': typeof BossDenylistAuditRoute
   '/boss/domain': typeof BossDomainRoute
   '/boss/domain-denylist': typeof BossDomainDenylistRoute
+  '/boss/free-purchases': typeof BossFreePurchasesRoute
   '/boss/function-audit': typeof BossFunctionAuditRoute
   '/boss/function-grants': typeof BossFunctionGrantsRoute
   '/boss/function-ideas': typeof BossFunctionIdeasRoute
@@ -977,6 +986,7 @@ export interface FileRouteTypes {
     | '/boss/denylist-audit'
     | '/boss/domain'
     | '/boss/domain-denylist'
+    | '/boss/free-purchases'
     | '/boss/function-audit'
     | '/boss/function-grants'
     | '/boss/function-ideas'
@@ -1078,6 +1088,7 @@ export interface FileRouteTypes {
     | '/boss/denylist-audit'
     | '/boss/domain'
     | '/boss/domain-denylist'
+    | '/boss/free-purchases'
     | '/boss/function-audit'
     | '/boss/function-grants'
     | '/boss/function-ideas'
@@ -1180,6 +1191,7 @@ export interface FileRouteTypes {
     | '/boss/denylist-audit'
     | '/boss/domain'
     | '/boss/domain-denylist'
+    | '/boss/free-purchases'
     | '/boss/function-audit'
     | '/boss/function-grants'
     | '/boss/function-ideas'
@@ -1816,6 +1828,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossFunctionAuditRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/free-purchases': {
+      id: '/boss/free-purchases'
+      path: '/free-purchases'
+      fullPath: '/boss/free-purchases'
+      preLoaderRoute: typeof BossFreePurchasesRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/domain-denylist': {
       id: '/boss/domain-denylist'
       path: '/domain-denylist'
@@ -2021,6 +2040,7 @@ interface BossRouteChildren {
   BossDenylistAuditRoute: typeof BossDenylistAuditRoute
   BossDomainRoute: typeof BossDomainRoute
   BossDomainDenylistRoute: typeof BossDomainDenylistRoute
+  BossFreePurchasesRoute: typeof BossFreePurchasesRoute
   BossFunctionAuditRoute: typeof BossFunctionAuditRoute
   BossFunctionGrantsRoute: typeof BossFunctionGrantsRoute
   BossFunctionIdeasRoute: typeof BossFunctionIdeasRoute
@@ -2062,6 +2082,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossDenylistAuditRoute: BossDenylistAuditRoute,
   BossDomainRoute: BossDomainRoute,
   BossDomainDenylistRoute: BossDomainDenylistRoute,
+  BossFreePurchasesRoute: BossFreePurchasesRoute,
   BossFunctionAuditRoute: BossFunctionAuditRoute,
   BossFunctionGrantsRoute: BossFunctionGrantsRoute,
   BossFunctionIdeasRoute: BossFunctionIdeasRoute,
@@ -2195,3 +2216,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
