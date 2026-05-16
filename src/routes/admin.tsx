@@ -269,7 +269,6 @@ function AdminPage() {
       <div className="space-y-6">
         <ScoutPanel />
         <LeadTrackingPanel />
-        <SignalCommandPanel />
         <NewsScoutSpawnerPanel />
       </div>
 
