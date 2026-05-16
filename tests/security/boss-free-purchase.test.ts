@@ -123,18 +123,18 @@ d("boss free-purchase never deducts coins (live RPC simulation)", () => {
     const ref = `audit-check-${Date.now()}`;
     const claims = JSON.stringify({ sub: bossId, role: "authenticated" });
     const sql = [
-      "begin",
-      `select set_config('role','authenticated',true)`,
-      `select set_config('request.jwt.claims', '${claims.replace(/'/g, "''")}', true)`,
-      `select public.purchase_with_coins('track_unlock','${ref}')`,
-      // capture deltas while still inside the tx
-      `select 'CREDITS=' || COALESCE(credits,0) from public.profiles where id='${bossId}'`,
-      `select 'AUDIT='   || count(*) from public.boss_purchase_audit where user_id='${bossId}' and ref='${ref}'`,
-      "rollback",
-    ].join(";\n");
-    const out = execSync(`psql -tA -c ${JSON.stringify(sql)}`, {
+      "begin;",
+      `select set_config('role','authenticated',true);`,
+      `select set_config('request.jwt.claims', '${claims.replace(/'/g, "''")}', true);`,
+      `select public.purchase_with_coins('track_unlock','${ref}');`,
+      `select 'CREDITS=' || COALESCE(credits,0) from public.profiles where id='${bossId}';`,
+      `select 'AUDIT='   || count(*) from public.boss_purchase_audit where user_id='${bossId}' and ref='${ref}';`,
+      "rollback;",
+    ].join("\n");
+    const out = execSync(`psql -tA`, {
+      input: sql,
       encoding: "utf8",
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: ["pipe", "pipe", "pipe"],
     });
 
     const credsDuringTx = out.match(/CREDITS=(\d+)/)?.[1];
