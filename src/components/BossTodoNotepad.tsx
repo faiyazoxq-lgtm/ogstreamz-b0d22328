@@ -160,12 +160,25 @@ export function BossTodoNotepad() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Background pull every 60s while the notepad is mounted. Skipped when a
-  // sheet isn't linked or another op is in flight.
+  // Background pull with exponential backoff. Starts at 60s, doubles on
+  // consecutive failures up to a 10-minute ceiling, resets to 60s after
+  // the next successful pull. Skipped when a sheet isn't linked or another
+  // op is in flight.
   useEffect(() => {
     if (!sheetConnected) return;
-    const id = window.setInterval(async () => {
-      if (syncState === "busy") return;
+    const BASE_MS = 60_000;
+    const MAX_MS = 10 * 60_000;
+    let delay = BASE_MS;
+    let timer: number | undefined;
+    let cancelled = false;
+
+    const tick = async () => {
+      if (cancelled) return;
+      if (syncState === "busy") {
+        // Reschedule without changing delay — try again at the next tick.
+        timer = window.setTimeout(tick, delay);
+        return;
+      }
       try {
         setSyncState("busy");
         const r = await pullFn();
@@ -174,16 +187,23 @@ export function BossTodoNotepad() {
         setLastPullUpdated(r.updated ?? 0);
         setSyncState("idle");
         if (r.updated > 0 || r.inserted > 0) await load();
-        // Refresh pending-push count after reconcile
         try {
           const s3: any = await statusFn();
           setPendingPush(s3.pendingPush ?? 0);
         } catch { /* ignore */ }
+        delay = BASE_MS; // success — reset backoff
       } catch {
         setSyncState("error");
+        delay = Math.min(delay * 2, MAX_MS); // failure — exponential backoff
       }
-    }, 60_000);
-    return () => window.clearInterval(id);
+      if (!cancelled) timer = window.setTimeout(tick, delay);
+    };
+
+    timer = window.setTimeout(tick, delay);
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sheetConnected]);
 
