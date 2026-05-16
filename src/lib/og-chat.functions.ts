@@ -220,6 +220,46 @@ async function generateImage(prompt: string): Promise<string> {
   return url;
 }
 
+/**
+ * Non-streaming Gemini Pro draft pass. Used in the super-intelligence chain
+ * (Perplexity → Gemini Pro analytical draft → Claude synthesis) so Claude
+ * gets a structured second-opinion outline on top of the raw research brief.
+ * Returns "" on failure so the chain still completes with research + Claude.
+ */
+async function geminiDraft(
+  query: string,
+  researchBrief: string,
+  sourcesBlock: string,
+): Promise<string> {
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey) return "";
+  const sys = `You are the ANALYST in a tri-model chain (Perplexity → Gemini Pro → Claude).
+Produce a tight, structured analytical draft (max ~350 words) that Claude will refine.
+Lead with the answer, then 3-6 bullet points of key facts, then any caveats.
+Cite source numbers like [1], [2] from the SOURCES block. No fluff, no preamble.`;
+  const user = `QUERY:\n${query}\n\n${researchBrief}\n\n${sourcesBlock}`;
+  try {
+    const res = await fetch(GATEWAY_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-3.1-pro-preview",
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: user },
+        ],
+      }),
+    });
+    if (!res.ok) return "";
+    const json = (await res.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    return (json.choices?.[0]?.message?.content ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
 const NORMAL_SYSTEM = `You are OG Bot in SAFE MODE — the Gemini Hub. Be fast, helpful,
 brand-safe, and conversational. British wit, light banter, NO swearing, NO chaos voice.
 Use markdown. Keep answers tight unless the user asks for depth. Safe Mode is the clean,
