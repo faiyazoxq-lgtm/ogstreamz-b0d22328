@@ -15,7 +15,8 @@
  *         VAULT_REAUTH_WINDOW_MS of `now`             // fresh portal login
  */
 
-export const VAULT_REAUTH_WINDOW_MS = 12 * 60 * 60 * 1000;
+export { VAULT_REAUTH_WINDOW_MS } from "@/lib/vault-constants";
+import { VAULT_REAUTH_WINDOW_MS } from "@/lib/vault-constants";
 
 export type VaultGateProfile = {
   rank: string | null | undefined;
