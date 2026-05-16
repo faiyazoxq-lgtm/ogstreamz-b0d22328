@@ -3,7 +3,7 @@ import { requireStrictAuth } from "@/lib/strict-auth";
 import { z } from "zod";
 import { callClaude } from "@/lib/claude.server";
 
-const InputSchema = z.object({
+export const ClaudeInputSchema = z.object({
   prompt: z.string().min(1).max(8000),
   system: z.string().max(4000).optional(),
   model: z.string().max(80).default("claude-sonnet-4-5"),
@@ -12,7 +12,7 @@ const InputSchema = z.object({
 
 export const askClaude = createServerFn({ method: "POST" })
   .middleware([requireStrictAuth])
-  .inputValidator((input) => InputSchema.parse(input))
+  .inputValidator((input) => ClaudeInputSchema.parse(input))
   .handler(async ({ data }): Promise<{ ok: true; text: string } | { ok: false; error: string }> => {
     return callClaude({
       prompt: data.prompt,
