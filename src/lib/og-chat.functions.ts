@@ -28,7 +28,7 @@ const IMAGE_MODEL = "google/gemini-3.1-flash-image-preview"; // Nano Banana 2
 export type ChatTurn = { role: "user" | "assistant"; content: string };
 
 export type StreamEvent =
-  | { type: "status"; stage: "classifying" | "researching" | "thinking" | "generating" | "finalizing" }
+  | { type: "status"; stage: "classifying" | "researching" | "thinking" | "drafting" | "generating" | "finalizing" }
   | { type: "research"; source: ResearchSource }
   | {
       type: "media";
