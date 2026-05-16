@@ -585,6 +585,39 @@ export type Database = {
         }
         Relationships: []
       }
+      boss_purchase_audit: {
+        Row: {
+          created_at: string
+          id: string
+          item_title: string | null
+          kind: string
+          metadata: Json
+          ref_id: string | null
+          user_id: string
+          would_have_cost_credits: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_title?: string | null
+          kind: string
+          metadata?: Json
+          ref_id?: string | null
+          user_id: string
+          would_have_cost_credits?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_title?: string | null
+          kind?: string
+          metadata?: Json
+          ref_id?: string | null
+          user_id?: string
+          would_have_cost_credits?: number
+        }
+        Relationships: []
+      }
       boss_settings: {
         Row: {
           created_at: string
