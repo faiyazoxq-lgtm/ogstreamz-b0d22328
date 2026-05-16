@@ -206,6 +206,12 @@ function HubsStripSlot() {
   return <HubsStrip className="pt-4 pb-2" />;
 }
 
+function HomeOnlyMotionToggle() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (pathname !== "/") return null;
+  return <ReducedMotionToggle />;
+}
+
 function TeleportOverlay() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   // see EyeGlowTuner below — separate component to keep state-changes scoped.
