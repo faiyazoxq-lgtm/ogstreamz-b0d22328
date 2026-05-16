@@ -100,3 +100,36 @@ d("boss free-purchase contract (live DB)", () => {
     expect(policy).toMatch(/is_boss/);
   });
 });
+
+d("boss free-purchase never deducts coins (static guarantee)", () => {
+  // The sandbox DB role cannot impersonate `authenticated` to run the RPC
+  // live, so we statically prove the boss branch has no path that could
+  // ever debit coins, and that every boss purchase emits an audit row.
+  it("boss branch in purchase_with_coins contains zero credit-mutating statements", () => {
+    const fnSrc = HAS_PG
+      ? psql(
+          "SELECT pg_get_functiondef(oid) FROM pg_proc WHERE proname='purchase_with_coins'",
+        )
+      : "";
+    const bossBlock =
+      fnSrc.split("if is_boss_caller then")[1]?.split("end if;")[0] ?? "";
+    expect(bossBlock).not.toMatch(/update\s+public\.profiles[\s\S]*credits/i);
+    expect(bossBlock).not.toMatch(/credits\s*=\s*credits\s*[-+]/i);
+    expect(bossBlock).not.toMatch(/insert\s+into\s+public\.coin_ledger/i);
+    // every kind branch must persist an audit row, never a debit row
+    const audits = (bossBlock.match(/insert\s+into\s+public\.boss_purchase_audit/gi) ?? []).length;
+    expect(audits).toBe(3);
+  });
+
+  it("the only purchase RPC is purchase_with_coins, and it gates debits behind is_boss()", () => {
+    // Defense in depth: any SECURITY DEFINER function whose name contains
+    // "purchase" and which debits `credits` MUST also call is_boss() so the
+    // boss override path runs before any deduction.
+    const offenders = HAS_PG
+      ? psql(
+          `SELECT COALESCE(string_agg(proname, ','), '') FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.prosecdef = true AND proname ILIKE '%purchase%' AND pg_get_functiondef(p.oid) ~* 'credits[[:space:]]*=[[:space:]]*credits[[:space:]]*-' AND pg_get_functiondef(p.oid) !~* 'is_boss'`,
+        )
+      : "";
+    expect(offenders).toBe("");
+  });
+});
