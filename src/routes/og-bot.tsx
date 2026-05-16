@@ -223,8 +223,9 @@ function ModeToggle({ mode, onChange, disabled }: { mode: Mode; onChange: (m: Mo
 function ResearchStatusBar({ stage, sources }: { stage: string; sources: Source[] }) {
   const label =
     stage === "researching" ? "OG Mode: Consulting Perplexity Sonar Pro…" :
-    stage === "thinking" ? "Gemini / GPT-5.5: Synthesizing research…" :
-    stage === "finalizing" ? "Gemini: Finalizing Synthesis…" :
+    stage === "drafting" ? "Gemini 3.1 Pro: Drafting analysis · GPT-5 critique queued…" :
+    stage === "thinking" ? "Council: Assembling brief for Claude…" :
+    stage === "finalizing" ? "Claude Sonnet 4.5: Synthesizing final answer…" :
     stage === "generating" ? "Creative Engine: Generating media…" :
     stage === "classifying" ? "Router: Detecting intent…" :
     `${stage}…`;
