@@ -158,15 +158,30 @@ async function handleCommand(
         chatId,
         "Available commands:\n" +
           "<code>/link CODE</code> — bind this chat to your account\n" +
+          "<code>/portals</code> — browse spawnable portals\n" +
           "<code>/me</code> — show your account status & credits\n" +
           "<code>/msg TEXT</code> — message the OG-Streamz team\n" +
           "<code>/unlink</code> — disconnect this chat\n\n" +
           "Get your code at <b>/account/passes</b>.",
       );
+      return;
+    }
+    if (/^\/portals?\b/i.test(trimmed)) {
+      await sendPortalsList(chatId);
+      return;
     }
     return;
   }
   const code = m[2];
+
+  // Deep-link from a shared portal card: /start p_<slug> launches that
+  // portal's card directly instead of the generic link flow.
+  if (code && /^p_/i.test(code)) {
+    const slug = code.slice(2).toLowerCase();
+    await sendPortalCard(chatId, slug);
+    return;
+  }
+
   if (!code) {
     // /start with no code:
     //  - already-linked chat → branded welcome card (site wallpaper + theme)
