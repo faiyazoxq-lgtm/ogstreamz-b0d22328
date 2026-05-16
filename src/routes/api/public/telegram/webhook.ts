@@ -42,7 +42,7 @@ async function handleCommand(
   const trimmed = text.trim();
 
   // --- Boss-only commands -------------------------------------------------
-  // Anything sent in the chat whose ID matches BOSS_TELEGRAM_API_KEY_TEST is
+  // Anything sent in the chat whose ID matches BOSS_TELEGRAM_CHAT_ID_TEST is
   // treated as the operator. Boss commands let the operator send DMs back
   // to members directly from Telegram, broadcast to all linked members,
   // and inspect inbox state — fully two-way messaging without leaving chat.
