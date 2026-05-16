@@ -18,7 +18,6 @@ import { spawnPortal, bossDeletePortal } from "@/lib/portals.functions";
 import { spawnMusicPortal } from "@/lib/music-portals.functions";
 import { createTrack } from "@/lib/tracks.functions";
 import { spawnTool } from "@/lib/tools.functions";
-import { spawnTradePortal } from "@/lib/trade.functions";
 import { spawnNewsPortal } from "@/lib/news.functions";
 import { generatePortalCinema } from "@/lib/cinema.functions";
 import { listBots, upsertBot, deleteBot, broadcastGlobalAlert, runSyndicateTickNow, getFleetStats, setSubscriberPlan, type Plan } from "@/lib/syndicate.functions";
@@ -280,7 +279,6 @@ function AdminPage() {
         <MusicSpawnerPanel />
         <TrackUploadPanel />
         <ToolSpawnerPanel />
-        <TradeSpawnerPanel />
       </div>
 
       <SectionHeader id="broadcast" icon={<MegaIcon className="h-4 w-4" />} label="Broadcast · Reach" tint="#00e08a" />
@@ -1142,10 +1140,6 @@ function CustomHubBuilderPanel() {
   );
 }
 
-function TradeSpawnerPanel() {
-  return _TradeSpawnerPanelImpl();
-}
-
 function NewsScoutSpawnerPanel() {
   return _NewsScoutSpawnerImpl();
 }
@@ -1551,78 +1545,6 @@ function _NewsScoutSpawnerImpl() {
               {cineBusy === "9:16" ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Rendering 9:16…</> : "Mobile View (9:16)"}
             </Button>
           </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function _TradeSpawnerPanelImpl() {
-  const spawn = useServerFn(spawnTradePortal);
-  const [name, setName] = useState("");
-  const [assetClass, setAssetClass] = useState<"Crypto"|"Forex"|"Stocks">("Crypto");
-  const [risk, setRisk] = useState<"Degen"|"Balanced"|"Safe">("Balanced");
-  const [vibe, setVibe] = useState("Whale Watching");
-  const [vip, setVip] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [last, setLast] = useState<{ slug: string; name: string } | null>(null);
-
-  const onSpawn = async () => {
-    if (!name.trim()) return toast.error("Name required");
-    setLoading(true);
-    try {
-      const r = await spawn({ data: { name: name.trim(), assetClass, risk, vibe: vibe.trim(), vip } });
-      setLast(r.portal);
-      toast.success(`TradeHUBB "${r.portal.name}" spawned`);
-      setName("");
-    } catch (e: any) { toast.error(e?.message ?? "Spawn failed"); }
-    finally { setLoading(false); }
-  };
-
-  const url = last && typeof window !== "undefined" ? `${window.location.origin}/td/${last.slug}` : "";
-
-  return (
-    <section className="mt-10 rounded-2xl border bg-card p-6" style={{ borderColor: "rgba(57,255,20,0.4)" }}>
-      <div className="flex items-center gap-2 mb-2">
-        <Rocket className="h-5 w-5" style={{ color: "#39ff14" }} />
-        <h2 className="font-[Montserrat] font-black text-xl text-white">TradeHUBB Spawner</h2>
-        <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">HFT Terminal</span>
-      </div>
-      <p className="text-sm text-muted-foreground mb-4">Spawn a live signal terminal — Perplexity + Firecrawl drive the SCAN MARKETS button.</p>
-      <div className="grid sm:grid-cols-2 gap-3">
-        <div>
-          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Terminal Name</label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Whale Pulse · BTC Desk" className="mt-1" />
-        </div>
-        <div>
-          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Asset Class</label>
-          <select value={assetClass} onChange={(e) => setAssetClass(e.target.value as any)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm mt-1">
-            <option>Crypto</option><option>Forex</option><option>Stocks</option>
-          </select>
-        </div>
-        <div>
-          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Risk Level</label>
-          <select value={risk} onChange={(e) => setRisk(e.target.value as any)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm mt-1">
-            <option>Degen</option><option>Balanced</option><option>Safe</option>
-          </select>
-        </div>
-        <div>
-          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Vibe</label>
-          <Input value={vibe} onChange={(e) => setVibe(e.target.value)} placeholder="Whale Watching" className="mt-1" />
-        </div>
-        <label className="flex items-center gap-2 text-sm text-white sm:col-span-2">
-          <input type="checkbox" checked={vip} onChange={(e) => setVip(e.target.checked)} /> VIP-only terminal
-        </label>
-      </div>
-      <Button onClick={onSpawn} disabled={loading} className="mt-4 w-full" style={{ background: "#39ff14", color: "#000" }}>
-        {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Calibrating signals…</> : <><Rocket className="h-4 w-4 mr-2" />Spawn Terminal</>}
-      </Button>
-      {last && url && (
-        <div className="mt-4 rounded-lg border border-[#39ff14]/40 bg-black/40 p-3 text-xs flex items-center justify-between gap-3">
-          <a href={url} target="_blank" rel="noopener noreferrer" className="font-mono text-[#39ff14] hover:underline truncate">{url}</a>
-          <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(url); toast.success("Link copied"); }}>
-            <Copy className="h-3 w-3 mr-1" /> Copy
-          </Button>
         </div>
       )}
     </section>
