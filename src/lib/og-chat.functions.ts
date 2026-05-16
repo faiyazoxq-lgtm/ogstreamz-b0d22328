@@ -28,7 +28,7 @@ const IMAGE_MODEL = "google/gemini-3.1-flash-image-preview"; // Nano Banana 2
 export type ChatTurn = { role: "user" | "assistant"; content: string };
 
 export type StreamEvent =
-  | { type: "status"; stage: "classifying" | "researching" | "thinking" | "generating" | "finalizing" }
+  | { type: "status"; stage: "classifying" | "researching" | "thinking" | "drafting" | "generating" | "finalizing" }
   | { type: "research"; source: ResearchSource }
   | {
       type: "media";
@@ -220,6 +220,46 @@ async function generateImage(prompt: string): Promise<string> {
   return url;
 }
 
+/**
+ * Non-streaming Gemini Pro draft pass. Used in the super-intelligence chain
+ * (Perplexity → Gemini Pro analytical draft → Claude synthesis) so Claude
+ * gets a structured second-opinion outline on top of the raw research brief.
+ * Returns "" on failure so the chain still completes with research + Claude.
+ */
+async function geminiDraft(
+  query: string,
+  researchBrief: string,
+  sourcesBlock: string,
+): Promise<string> {
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey) return "";
+  const sys = `You are the ANALYST in a tri-model chain (Perplexity → Gemini Pro → Claude).
+Produce a tight, structured analytical draft (max ~350 words) that Claude will refine.
+Lead with the answer, then 3-6 bullet points of key facts, then any caveats.
+Cite source numbers like [1], [2] from the SOURCES block. No fluff, no preamble.`;
+  const user = `QUERY:\n${query}\n\n${researchBrief}\n\n${sourcesBlock}`;
+  try {
+    const res = await fetch(GATEWAY_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-3.1-pro-preview",
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: user },
+        ],
+      }),
+    });
+    if (!res.ok) return "";
+    const json = (await res.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    return (json.choices?.[0]?.message?.content ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
 const NORMAL_SYSTEM = `You are OG Bot in SAFE MODE — the Gemini Hub. Be fast, helpful,
 brand-safe, and conversational. British wit, light banter, NO swearing, NO chaos voice.
 Use markdown. Keep answers tight unless the user asks for depth. Safe Mode is the clean,
@@ -339,8 +379,28 @@ export const streamOgChat = createServerFn({ method: "POST" })
         ? `RESEARCH BRIEF (from Perplexity Sonar Pro):\n${research.answer}`
         : "";
 
+      // Super-intelligence tri-chain: for code/research lanes where Claude is
+      // doing synthesis, slot Gemini Pro in as the analyst between Perplexity
+      // and Claude. Gemini's structured draft gives Claude a second opinion
+      // to refine, sharpen, or push back on.
+      let geminiBlock = "";
+      if (
+        synthModel.startsWith("anthropic/") &&
+        (intent === "code" || intent === "research")
+      ) {
+        yield { type: "status", stage: "drafting" };
+        const draft = await geminiDraft(message, researchBlock, sourcesBlock);
+        if (draft) {
+          geminiBlock = `ANALYTICAL DRAFT (from Gemini 3.1 Pro — second opinion to refine, not to copy):\n${draft}`;
+        }
+      }
+
+      const systemContent = [OG_SYSTEM, researchBlock, geminiBlock, sourcesBlock]
+        .filter(Boolean)
+        .join("\n\n");
+
       const messages = [
-        { role: "system", content: `${OG_SYSTEM}\n\n${researchBlock}\n\n${sourcesBlock}` },
+        { role: "system", content: systemContent },
         ...history.map((h) => ({ role: h.role, content: h.content })),
         { role: "user", content: message },
       ];
