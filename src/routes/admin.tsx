@@ -1499,11 +1499,10 @@ function _NewsScoutSpawnerImpl() {
               <div className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground mb-2">{group.label}</div>
               <div className="grid sm:grid-cols-3 gap-2">
                 {group.pairs.map((p) => {
-                  const defaultCtx = bias === "good" ? p.goodCtx : p.badCtx;
                   return (
                     <button
                       key={p.sym}
-                      onClick={() => quickSpawn(p.pair, p.sym, defaultCtx)}
+                      onClick={() => quickSpawn(p.pair, p.sym, p.ctx)}
                       disabled={!!quickBusy}
                       className="rounded-xl border bg-black/30 p-3 text-left transition-all disabled:opacity-40 hover:scale-[1.02]"
                       style={{ borderColor: `${accent}55`, boxShadow: `0 0 14px ${accent}22` }}
