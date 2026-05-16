@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { runWithStartContext } from "@tanstack/start-storage-context";
 
 /**
  * End-to-end integration test for `askClaude` exercised through the
@@ -59,6 +60,34 @@ vi.mock("@/lib/claude.server", () => ({
 // Import the serverFn AFTER mocks are registered.
 import { askClaude } from "./claude.functions";
 
+/**
+ * Tiny "server harness": every TanStack serverFn exposes `__executeServer`,
+ * the internal entry that runs the full middleware → validator → handler
+ * pipeline server-side. It expects to find a Start request context in
+ * AsyncLocalStorage (normally established by the request handler), so we
+ * stand one up with `runWithStartContext` and a minimal fake `Request`.
+ */
+function invokeAskClaude(data: unknown): Promise<unknown> {
+  const fakeRequest = new Request("https://test.local/_serverFn/askClaude", {
+    method: "POST",
+    headers: { authorization: "Bearer stub", "content-type": "application/json" },
+    body: JSON.stringify({ data }),
+  });
+  return runWithStartContext(
+    {
+      // Only fields the createServerFn pipeline actually touches in this test.
+      getRouter: (() => ({})) as never,
+      request: fakeRequest,
+      startOptions: {},
+      contextAfterGlobalMiddlewares: {},
+      executedRequestMiddlewares: new Set(),
+      handlerType: "serverFn",
+    } as never,
+    () => (askClaude as unknown as { __executeServer: (o: unknown) => Promise<unknown> })
+      .__executeServer({ data }),
+  );
+}
+
 const ORIGINAL_SUPABASE_URL = process.env.SUPABASE_URL;
 
 /** Build a valid claims object that satisfies every requireStrictAuth check. */
@@ -105,7 +134,7 @@ describe("askClaude e2e — auth gating", () => {
   it("rejects when no session is attached (requireSupabaseAuth)", async () => {
     state.claims = null;
     const { status, body } = await expectAuthFailure(
-      askClaude({ data: { prompt: "hi" } }),
+      invokeAskClaude({ prompt: "hi" }),
     );
     expect(status).toBe(401);
     expect(body).toMatch(/no-auth/i);
@@ -115,7 +144,7 @@ describe("askClaude e2e — auth gating", () => {
   it("rejects when claims are missing sub (requireStrictAuth)", async () => {
     state.claims = validClaims({ sub: "" });
     const { status, body } = await expectAuthFailure(
-      askClaude({ data: { prompt: "hi" } }),
+      invokeAskClaude({ prompt: "hi" }),
     );
     expect(status).toBe(401);
     expect(body).toMatch(/subject/i);
@@ -125,7 +154,7 @@ describe("askClaude e2e — auth gating", () => {
   it("rejects when exp is in the past (requireStrictAuth)", async () => {
     state.claims = validClaims({ exp: Math.floor(Date.now() / 1000) - 1 });
     const { status, body } = await expectAuthFailure(
-      askClaude({ data: { prompt: "hi" } }),
+      invokeAskClaude({ prompt: "hi" }),
     );
     expect(status).toBe(401);
     expect(body).toMatch(/expired/i);
@@ -135,7 +164,7 @@ describe("askClaude e2e — auth gating", () => {
   it("rejects when iss does not match SUPABASE_URL (requireStrictAuth)", async () => {
     state.claims = validClaims({ iss: "https://attacker.example.com/auth/v1" });
     const { status, body } = await expectAuthFailure(
-      askClaude({ data: { prompt: "hi" } }),
+      invokeAskClaude({ prompt: "hi" }),
     );
     expect(status).toBe(401);
     expect(body).toMatch(/issuer/i);
@@ -145,7 +174,7 @@ describe("askClaude e2e — auth gating", () => {
   it("rejects when aud does not include 'authenticated' (requireStrictAuth)", async () => {
     state.claims = validClaims({ aud: "anon" });
     const { status, body } = await expectAuthFailure(
-      askClaude({ data: { prompt: "hi" } }),
+      invokeAskClaude({ prompt: "hi" }),
     );
     expect(status).toBe(401);
     expect(body).toMatch(/audience/i);
@@ -160,30 +189,22 @@ describe("askClaude e2e — input validation (post-auth)", () => {
   });
 
   it("rejects empty prompt with a ZodError before reaching the handler", async () => {
-    await expect(
-      askClaude({ data: { prompt: "" } as never }),
-    ).rejects.toThrow();
+    await expect(invokeAskClaude({ prompt: "" })).rejects.toThrow();
     expect(state.callClaude).not.toHaveBeenCalled();
   });
 
   it("rejects prompt over 8000 chars", async () => {
-    await expect(
-      askClaude({ data: { prompt: "x".repeat(8001) } as never }),
-    ).rejects.toThrow();
+    await expect(invokeAskClaude({ prompt: "x".repeat(8001) })).rejects.toThrow();
     expect(state.callClaude).not.toHaveBeenCalled();
   });
 
   it("rejects maxTokens out of range", async () => {
-    await expect(
-      askClaude({ data: { prompt: "hi", maxTokens: 99999 } as never }),
-    ).rejects.toThrow();
+    await expect(invokeAskClaude({ prompt: "hi", maxTokens: 99999 })).rejects.toThrow();
     expect(state.callClaude).not.toHaveBeenCalled();
   });
 
   it("rejects non-integer maxTokens", async () => {
-    await expect(
-      askClaude({ data: { prompt: "hi", maxTokens: 1.5 } as never }),
-    ).rejects.toThrow();
+    await expect(invokeAskClaude({ prompt: "hi", maxTokens: 1.5 })).rejects.toThrow();
     expect(state.callClaude).not.toHaveBeenCalled();
   });
 });
@@ -197,7 +218,7 @@ describe("askClaude e2e — handler wiring (auth + validation pass)", () => {
   it("forwards validated data + applied defaults to callClaude and returns its result", async () => {
     state.callClaude.mockResolvedValueOnce({ ok: true, text: "pong" });
 
-    const result = await askClaude({ data: { prompt: "ping" } });
+    const result = await invokeAskClaude({ prompt: "ping" });
 
     expect(result).toEqual({ ok: true, text: "pong" });
     expect(state.callClaude).toHaveBeenCalledTimes(1);
@@ -213,13 +234,11 @@ describe("askClaude e2e — handler wiring (auth + validation pass)", () => {
   it("passes through caller-specified system/model/maxTokens unchanged", async () => {
     state.callClaude.mockResolvedValueOnce({ ok: true, text: "ok" });
 
-    await askClaude({
-      data: {
-        prompt: "hello",
-        system: "be brief",
-        model: "claude-opus-4",
-        maxTokens: 256,
-      },
+    await invokeAskClaude({
+      prompt: "hello",
+      system: "be brief",
+      model: "claude-opus-4",
+      maxTokens: 256,
     });
 
     expect(state.callClaude).toHaveBeenCalledWith({
@@ -233,7 +252,7 @@ describe("askClaude e2e — handler wiring (auth + validation pass)", () => {
   it("propagates callClaude's failure envelope without throwing", async () => {
     state.callClaude.mockResolvedValueOnce({ ok: false, error: "anthropic 500" });
 
-    const result = await askClaude({ data: { prompt: "hi" } });
+    const result = await invokeAskClaude({ prompt: "hi" });
 
     expect(result).toEqual({ ok: false, error: "anthropic 500" });
   });
@@ -241,6 +260,6 @@ describe("askClaude e2e — handler wiring (auth + validation pass)", () => {
   it("propagates a thrown error from callClaude to the caller", async () => {
     state.callClaude.mockRejectedValueOnce(new Error("network down"));
 
-    await expect(askClaude({ data: { prompt: "hi" } })).rejects.toThrow(/network down/);
+    await expect(invokeAskClaude({ prompt: "hi" })).rejects.toThrow(/network down/);
   });
 });
