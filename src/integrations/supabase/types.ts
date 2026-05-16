@@ -3449,17 +3449,32 @@ export type Database = {
       telegram_chat_prefs: {
         Row: {
           chat_id: number
+          first_name: string | null
+          last_name: string | null
+          last_start_at: string
+          started_at: string
           swearing_enabled: boolean
+          tg_username: string | null
           updated_at: string
         }
         Insert: {
           chat_id: number
+          first_name?: string | null
+          last_name?: string | null
+          last_start_at?: string
+          started_at?: string
           swearing_enabled?: boolean
+          tg_username?: string | null
           updated_at?: string
         }
         Update: {
           chat_id?: number
+          first_name?: string | null
+          last_name?: string | null
+          last_start_at?: string
+          started_at?: string
           swearing_enabled?: boolean
+          tg_username?: string | null
           updated_at?: string
         }
         Relationships: []
