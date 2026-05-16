@@ -27,6 +27,14 @@ export function AuthGate({ children }: { children: ReactNode }) {
     try {
       const qs = typeof window !== "undefined" ? window.location.search : "";
       const target = pathname + (qs || "");
+      // Defense-in-depth: never persist a public path as the post-auth
+      // redirect target. If we did, /auth could redirect back to /auth on
+      // sign-in and trigger a silent loop.
+      const targetPath = target.split("?")[0];
+      const isPublicTarget =
+        PUBLIC_PATHS.some((p) => targetPath === p || targetPath.startsWith(p + "/")) ||
+        targetPath.startsWith("/api/");
+      if (isPublicTarget) return;
       sessionStorage.setItem("post_auth_redirect", target);
     } catch { /* ignore */ }
   }, [user, isPublic, pathname]);
