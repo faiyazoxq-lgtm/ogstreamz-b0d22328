@@ -4,11 +4,12 @@ import { Loader2, Image as ImageIcon, Upload, Send, Trash2 } from "lucide-react"
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { supabase } from "@/integrations/supabase/client";
 import {
   importTelegramAvatar,
   setProfileAvatar,
+  uploadProfileAvatar,
 } from "@/lib/account-passes.functions";
+import { fileToBase64 } from "@/lib/file-to-base64";
 
 /**
  * Lets a member choose their OG Pass profile picture: either pull their
@@ -20,6 +21,7 @@ export function AvatarManagerCard() {
   const { user, profile, refresh } = useAuth();
   const importTg = useServerFn(importTelegramAvatar);
   const setAvatar = useServerFn(setProfileAvatar);
+  const uploadAvatar = useServerFn(uploadProfileAvatar);
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState<"tg" | "upload" | "remove" | null>(null);
 
@@ -54,15 +56,9 @@ export function AvatarManagerCard() {
     }
     setBusy("upload");
     try {
-      const ext = (file.name.split(".").pop() || "jpg").toLowerCase().slice(0, 5);
-      const key = `${user.id}/upload-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("avatars")
-        .upload(key, file, { contentType: file.type, upsert: true });
-      if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(key);
-      const url = `${pub.publicUrl}?v=${Date.now()}`;
-      await setAvatar({ data: { avatar_url: url } });
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const base64 = await fileToBase64(file);
+      await uploadAvatar({ data: { base64, mime: file.type, ext } });
       await refresh();
       toast.success("Profile picture updated");
     } catch (e: any) {
