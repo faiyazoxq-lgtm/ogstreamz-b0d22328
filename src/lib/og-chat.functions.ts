@@ -379,8 +379,28 @@ export const streamOgChat = createServerFn({ method: "POST" })
         ? `RESEARCH BRIEF (from Perplexity Sonar Pro):\n${research.answer}`
         : "";
 
+      // Super-intelligence tri-chain: for code/research lanes where Claude is
+      // doing synthesis, slot Gemini Pro in as the analyst between Perplexity
+      // and Claude. Gemini's structured draft gives Claude a second opinion
+      // to refine, sharpen, or push back on.
+      let geminiBlock = "";
+      if (
+        synthModel.startsWith("anthropic/") &&
+        (intent === "code" || intent === "research")
+      ) {
+        yield { type: "status", stage: "drafting" };
+        const draft = await geminiDraft(message, researchBlock, sourcesBlock);
+        if (draft) {
+          geminiBlock = `ANALYTICAL DRAFT (from Gemini 3.1 Pro — second opinion to refine, not to copy):\n${draft}`;
+        }
+      }
+
+      const systemContent = [OG_SYSTEM, researchBlock, geminiBlock, sourcesBlock]
+        .filter(Boolean)
+        .join("\n\n");
+
       const messages = [
-        { role: "system", content: `${OG_SYSTEM}\n\n${researchBlock}\n\n${sourcesBlock}` },
+        { role: "system", content: systemContent },
         ...history.map((h) => ({ role: h.role, content: h.content })),
         { role: "user", content: message },
       ];
