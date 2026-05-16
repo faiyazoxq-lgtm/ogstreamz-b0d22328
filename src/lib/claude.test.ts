@@ -340,15 +340,17 @@ describe("callClaude — malformed Anthropic responses", () => {
     expect(result).toEqual({ ok: true, text: "" });
   });
 
-  it("returns ok:true with empty text when content is not an array (object)", async () => {
+  it("returns ok:false deterministically when content is not an array", async () => {
     globalThis.fetch = vi.fn(async () =>
       jsonResponse(200, { content: { type: "text", text: "ignored" } }),
     ) as unknown as typeof fetch;
 
-    // `.map` on a non-array would throw; the helper guards via `?? []` so we
-    // get a deterministic empty-text success instead of an exception.
+    // `?? []` doesn't fire (the object isn't nullish) so `.map` throws. The
+    // outer try/catch converts that into a deterministic ok:false — no
+    // exception escapes the helper.
     const result = await callClaude({ prompt: "hi" });
-    expect(result.ok).toBe(true);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(typeof result.error).toBe("string");
   });
 
   it("returns ok:true with empty text when content items lack text fields", async () => {
