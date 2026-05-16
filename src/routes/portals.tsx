@@ -605,7 +605,7 @@ function PortalsHub() {
           </div>
         </div>
       ) : (
-        <div className="space-y-10">
+        <div className="space-y-4">
           {HUB_ORDER.map((hubKind) => {
             const hubItems = filtered.filter((i) => i.kind === hubKind);
             if (hubItems.length === 0) return null;
