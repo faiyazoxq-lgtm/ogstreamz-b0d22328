@@ -7,10 +7,6 @@ import { requireBoss } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/boss/control-centre")({
   beforeLoad: requireBoss,
-  // URL-backed UI state so refreshing or sharing the link restores the
-  // exact same set of expanded panels and the active search filter.
-  //   ?open=hub:hubs,site:overview   – which accordion items are open
-  //   ?q=pricing                     – panel search filter
   // URL-backed UI state: a search filter that survives refresh / share.
   //   ?q=pricing
   validateSearch: (raw: Record<string, unknown>) => ({
@@ -27,16 +23,14 @@ export const Route = createFileRoute("/boss/control-centre")({
 });
 
 /**
- * Mega "everything in one page" boss console.
+ * Boss Control Centre — single-page directory of every boss control.
  *
- * Each section lazy-loads the underlying route module on first expand and
- * mounts that module's `Route.options.component` directly — so each panel
- * is the real, fully-functional editor (not a copy). The original routes
- * remain reachable from the rail; this page just stacks them under one
- * scroll for a single-pane workflow.
- *
- * Performance: panels are unmounted while collapsed (Accordion does this
- * by default) so initial cost is just one fetch per opened section.
+ * Earlier versions lazy-mounted each route's component inside an
+ * accordion. That route-in-route mount path was fragile (route-bound
+ * hooks resolved to the wrong match, some panels never rendered) so
+ * this page now ships as a fast, deterministic grid of links. Each
+ * tile navigates to the live editor at its real route, which always
+ * works because it runs inside its own route context.
  */
 
 type Panel = {
