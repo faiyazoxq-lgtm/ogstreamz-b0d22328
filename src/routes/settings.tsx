@@ -36,7 +36,7 @@ export const Route = createFileRoute("/settings")({
   beforeLoad: requireMember,
   head: () => ({
     meta: [
-      { title: "Account Settings · 0G-PORTAL" },
+      { title: "OG-Pass · 0G-PORTAL" },
       { name: "description", content: "Edit your profile picture, bio and contact card." },
     ],
   }),
@@ -225,7 +225,7 @@ function SettingsPage() {
         .eq("id", user.id);
       if (error) throw error;
       await refresh?.();
-      toast.success("Settings saved");
+      toast.success("OG-Pass saved");
     } catch (err: any) {
       toast.error(err?.message ?? "Save failed");
     } finally {
@@ -245,7 +245,7 @@ function SettingsPage() {
       <div className="max-w-3xl mx-auto px-5 sm:px-8 py-12 sm:py-16">
         <header className="mb-10">
           <p className="text-xs uppercase tracking-[0.4em] font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
-            Account Settings
+            OG-Pass
           </p>
           <h1 className="mt-3 font-[Montserrat] font-black text-3xl sm:text-4xl text-metallic">
             Your Profile & Contact Card
