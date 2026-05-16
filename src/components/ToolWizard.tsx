@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Sparkles, Wand2, ArrowRight, Bot, BrainCircuit, RotateCcw, ShieldCheck, Pencil } from "lucide-react";
+import { Loader2, Sparkles, Wand2, ArrowRight, Bot, BrainCircuit, RotateCcw, ShieldCheck, Pencil, Plus, Trash2, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,6 +35,8 @@ export function ToolWizard({
   const [qa, setQa] = useState<QA[]>([]);
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState<WizardResult | null>(null);
+  const [editingQ, setEditingQ] = useState<number | null>(null);
+  const [editQDraft, setEditQDraft] = useState("");
 
   const reset = () => {
     setStep("brief");
@@ -150,8 +152,63 @@ export function ToolWizard({
           <div className="space-y-3">
             {qa.map((item, idx) => (
               <div key={idx} className="rounded-xl border border-border bg-background/40 p-3">
-                <div className="text-xs font-semibold text-foreground mb-2">{item.q}</div>
-                <Input
+                {editingQ === idx ? (
+                  <div className="flex items-start gap-2 mb-2">
+                    <Textarea
+                      value={editQDraft}
+                      onChange={(e) => setEditQDraft(e.target.value)}
+                      className="bg-background/60 text-xs min-h-16 flex-1"
+                      maxLength={400}
+                      autoFocus
+                    />
+                    <div className="flex flex-col gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7"
+                        onClick={() => {
+                          const next = qa.slice();
+                          next[idx] = { ...next[idx], q: editQDraft.trim() || next[idx].q };
+                          setQa(next);
+                          setEditingQ(null);
+                        }}
+                      >
+                        <Check className="h-3.5 w-3.5 text-gold" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingQ(null)}>
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="text-xs font-semibold text-foreground flex-1">{item.q}</div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6"
+                        onClick={() => {
+                          setEditingQ(idx);
+                          setEditQDraft(item.q);
+                        }}
+                        title="Edit question"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 text-destructive hover:text-destructive"
+                        onClick={() => setQa(qa.filter((_, i) => i !== idx))}
+                        title="Remove"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                <Textarea
                   value={item.a}
                   onChange={(e) => {
                     const next = qa.slice();
@@ -159,11 +216,20 @@ export function ToolWizard({
                     setQa(next);
                   }}
                   placeholder="Your answer (optional)"
-                  className="bg-background/60 text-sm"
+                  className="bg-background/60 text-sm min-h-20"
                   maxLength={600}
                 />
               </div>
             ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full border-dashed"
+              onClick={() => setQa([...qa, { q: "Custom note for Gemini", a: "" }])}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" /> Add a note
+            </Button>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             {draft && (
