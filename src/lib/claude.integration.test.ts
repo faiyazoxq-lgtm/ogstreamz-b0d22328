@@ -99,14 +99,22 @@ afterEach(() => {
 });
 
 /**
- * Tiny helper: every `throw new Response(...)` from middleware bubbles out as
- * the rejection value. Resolve it to `{ status, body }` so assertions stay
- * compact across all the auth branches below.
+ * Tiny helper: middleware that throws `new Response(...)` may surface either
+ * as a rejection (top-level mock) or inside the envelope's `error` field
+ * (chained middleware caught by the pipeline). Normalize both to
+ * `{ status, body }` so assertions stay compact across all auth branches.
  */
-async function expectAuthFailure(p: Promise<unknown>): Promise<{ status: number; body: string }> {
+async function expectAuthFailure(
+  p: Promise<{ result?: unknown; error?: unknown; context?: unknown }>,
+): Promise<{ status: number; body: string }> {
   try {
-    await p;
-    throw new Error("expected serverFn to reject");
+    const env = await p;
+    if (env?.error instanceof Response) {
+      return { status: env.error.status, body: await env.error.text() };
+    }
+    throw new Error(
+      `expected serverFn to reject or return a Response error, got: ${JSON.stringify(env)}`,
+    );
   } catch (e) {
     if (e instanceof Response) {
       return { status: e.status, body: await e.text() };
