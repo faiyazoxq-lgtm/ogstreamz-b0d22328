@@ -331,6 +331,98 @@ async function* streamClaude(
   }
 }
 
+/**
+ * Backpressure-aware wrapper for any AsyncIterable<string> delta source.
+ *
+ * Why: the upstream SSE readers (Gateway / Anthropic) emit many tiny deltas
+ * very fast. The downstream consumer is an async-generator server fn whose
+ * sink is the React UI — when the client tab is slow (heavy markdown render,
+ * tab backgrounded, throttled CPU), each yielded delta still costs a round
+ * trip across the AsyncGenerator boundary and a React state update.
+ *
+ * This wrapper:
+ *   1. Runs an eager "pump" task that pulls from the upstream source into a
+ *      bounded in-memory queue (capped by both item count and total chars).
+ *   2. When the queue is full, the pump awaits a drain signal before reading
+ *      the next upstream chunk — that pause naturally propagates TCP-level
+ *      backpressure to the gateway / Anthropic socket via the underlying
+ *      ReadableStream reader (no `read()` calls = no further data pulled).
+ *   3. On every consumer pull we drain the WHOLE queue and yield it as a
+ *      single coalesced string. A slow consumer therefore gets one big chunk
+ *      instead of N tiny ones, dropping per-delta overhead dramatically.
+ *   4. Errors and early-termination from either side are propagated cleanly
+ *      so the upstream fetch can be aborted (the source generators already
+ *      handle `return()` in a `finally` block).
+ */
+async function* bufferedDeltas(
+  source: AsyncIterable<string>,
+  opts: { maxQueueChars?: number; maxQueueItems?: number } = {},
+): AsyncGenerator<string> {
+  const MAX_CHARS = opts.maxQueueChars ?? 4096;
+  const MAX_ITEMS = opts.maxQueueItems ?? 32;
+
+  const queue: string[] = [];
+  let queuedChars = 0;
+  let producerDone = false;
+  let producerError: unknown = null;
+
+  let notifyConsumer: (() => void) | null = null;
+  let notifyProducer: (() => void) | null = null;
+  const waitForData = () => new Promise<void>((r) => { notifyConsumer = r; });
+  const waitForDrain = () => new Promise<void>((r) => { notifyProducer = r; });
+  const wakeConsumer = () => { const n = notifyConsumer; notifyConsumer = null; n?.(); };
+  const wakeProducer = () => { const n = notifyProducer; notifyProducer = null; n?.(); };
+
+  // Eager pump — pulls from upstream, blocks on drain when buffer is full.
+  const pump = (async () => {
+    try {
+      for await (const chunk of source) {
+        if (!chunk) continue;
+        // Backpressure: wait until consumer drains before reading the next
+        // upstream chunk. The for-await above will not call .next() on the
+        // source iterator while we're parked here, which means the SSE
+        // reader doesn't pull more bytes from the socket.
+        while (queue.length >= MAX_ITEMS || queuedChars + chunk.length > MAX_CHARS) {
+          await waitForDrain();
+        }
+        queue.push(chunk);
+        queuedChars += chunk.length;
+        wakeConsumer();
+      }
+    } catch (e) {
+      producerError = e;
+    } finally {
+      producerDone = true;
+      wakeConsumer();
+    }
+  })();
+
+  try {
+    while (true) {
+      if (queue.length === 0) {
+        if (producerDone) {
+          if (producerError) throw producerError;
+          return;
+        }
+        await waitForData();
+        continue;
+      }
+      // Coalesce every queued delta into one yielded chunk so a slow UI
+      // sink processes a single update instead of dozens.
+      const merged = queue.length === 1 ? queue[0] : queue.join("");
+      queue.length = 0;
+      queuedChars = 0;
+      wakeProducer();
+      yield merged;
+    }
+  } finally {
+    // Caller bailed early (return/throw): unblock the pump so the source
+    // iterator's own finally{} can run and abort its fetch.
+    wakeProducer();
+    await pump.catch(() => {});
+  }
+}
+
 /** Single-shot image generation via Nano Banana 2. Returns a data URL. */
 async function generateImage(prompt: string): Promise<string> {
   const apiKey = process.env.LOVABLE_API_KEY;
