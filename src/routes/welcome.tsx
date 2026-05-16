@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { LayoutDashboard, Sparkles, Compass, ArrowRight, Tv, ExternalLink, Send, CheckCircle2 } from "lucide-react";
+import { LayoutDashboard, Sparkles, Compass, ArrowRight, Tv, ExternalLink, Send, CheckCircle2, Coins, Gift, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import { SiteGuideSwearChat } from "@/components/SiteGuideSwearChat";
 import { VerifyStreamAccessCard } from "@/components/VerifyStreamAccessCard";
 import { StreamStatusWidget } from "@/components/StreamStatusWidget";
 import { getTelegramLinkStatus } from "@/lib/account-passes.functions";
+import { useSignupBonus } from "@/hooks/use-signup-bonus";
 
 // ----- Configurable Welcome layout -----
 // Order of the bottom CTA stack. Sections auto-hide when their `connected`
@@ -341,7 +342,7 @@ function WelcomePage() {
             <p className="mx-auto max-w-xl text-sm text-muted-foreground sm:text-base">
               {signedIn
                 ? "Each step below disappears once it's connected. When the list is empty, you're fully wired in."
-                : "Pick the door that fits what you're here for. You can switch between them any time once you're in."}
+                : "The ultimate portal home — create, describe and generate content from your tailored portal. Pick a door below to get started."}
             </p>
             {allConnected && (
               <div className="mx-auto mt-2 inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
@@ -350,6 +351,8 @@ function WelcomePage() {
             )}
           </div>
         </header>
+
+        {!signedIn && <SignupBonusHero />}
 
         {WELCOME_LAYOUT.map((id) => renderSection(id))}
 
@@ -371,5 +374,46 @@ function WelcomePage() {
         )}
       </div>
     </div>
+  );
+}
+
+function SignupBonusHero() {
+  const bonus = useSignupBonus();
+  return (
+    <section className="mx-auto w-full max-w-3xl">
+      <div className="relative overflow-hidden rounded-2xl border border-amber-300/40 bg-gradient-to-br from-amber-300/10 via-background to-background p-5 shadow-sm sm:p-6">
+        <div className="pointer-events-none absolute -top-12 -right-12 h-40 w-40 rounded-full bg-amber-300/20 blur-3xl" />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-amber-300/50 bg-amber-300/15 shadow-[0_0_30px_-6px_rgba(252,211,77,0.7)]">
+            <Coins className="h-6 w-6 text-amber-300" aria-hidden />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black tracking-tight text-amber-300 sm:text-4xl">
+                +{bonus}
+              </span>
+              <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-amber-300/85">
+                credits on signup
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Free credits land in your wallet the moment your account is confirmed —
+              spend them on any portal.
+            </p>
+            <ul className="mt-3 grid gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground sm:grid-cols-3">
+              <li className="flex items-center gap-1.5">
+                <Gift className="h-3.5 w-3.5 text-amber-300" aria-hidden /> {bonus} free credits
+              </li>
+              <li className="flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5 text-amber-300" aria-hidden /> No card required
+              </li>
+              <li className="flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-amber-300" aria-hidden /> All portals unlocked
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
