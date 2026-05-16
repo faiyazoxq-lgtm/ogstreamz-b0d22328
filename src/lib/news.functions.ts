@@ -305,26 +305,17 @@ async function buildScoutMeta(input: { pair: string; bias: NewsBias; context: st
 // ───── Admin: spawn a News Intelligence portal ─────
 export const spawnNewsPortal = createServerFn({ method: "POST" })
   .middleware([requireStrictAuth])
-  .inputValidator((data: { name: string; pair: string; bias: NewsBias; context: string; vip?: boolean }) => {
-    const name = String(data?.name ?? "").trim();
-    const pair = String(data?.pair ?? "").trim();
-    const ctx = String(data?.context ?? "").trim();
-    const bias = data?.bias;
-    if (!name || name.length > 80) throw new Error("Invalid portal name (1–80 chars required)");
-    if (!pair || pair.length > 40) throw new Error("Invalid asset pair (1–40 chars required)");
-    // Pair must look like a market ticker / asset name: letters, digits, space, /, -, .
-    if (!/^[A-Za-z0-9][A-Za-z0-9 ./-]{0,39}$/.test(pair)) {
-      throw new Error("Malformed asset pair: only letters, digits, space, '/', '-', '.' allowed");
-    }
-    if (bias !== "good" && bias !== "bad" && bias !== "neutral") {
-      throw new Error("Invalid bias: must be 'good', 'bad', or 'neutral'");
-    }
-    if (ctx.length > 200) throw new Error("Context too long (max 200 chars)");
-    return { name, pair, bias: bias as NewsBias, context: ctx, vip: !!data?.vip };
-  })
+  .inputValidator((data: { name: string; pair: string; bias: NewsBias; context: string; vip?: boolean }) => ({
+    name: String(data.name || "").trim().slice(0, 80),
+    pair: String(data.pair || "").trim().slice(0, 40),
+    bias: (data.bias === "bad" || data.bias === "good" || data.bias === "neutral" ? data.bias : "neutral") as NewsBias,
+    context: String(data.context || "").trim().slice(0, 200),
+    vip: !!data.vip,
+  }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
+    if (!data.name || !data.pair) throw new Error("Name and asset pair required");
 
     const meta = await buildScoutMeta({ pair: data.pair, bias: data.bias, context: data.context });
     const themeConfig = biasTheme(data.bias);

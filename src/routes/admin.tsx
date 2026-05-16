@@ -18,6 +18,7 @@ import { spawnPortal, bossDeletePortal } from "@/lib/portals.functions";
 import { spawnMusicPortal } from "@/lib/music-portals.functions";
 import { createTrack } from "@/lib/tracks.functions";
 import { spawnTool } from "@/lib/tools.functions";
+import { spawnTradePortal } from "@/lib/trade.functions";
 import { spawnNewsPortal } from "@/lib/news.functions";
 import { generatePortalCinema } from "@/lib/cinema.functions";
 import { listBots, upsertBot, deleteBot, broadcastGlobalAlert, runSyndicateTickNow, getFleetStats, setSubscriberPlan, type Plan } from "@/lib/syndicate.functions";
@@ -269,6 +270,7 @@ function AdminPage() {
       <div className="space-y-6">
         <ScoutPanel />
         <LeadTrackingPanel />
+        <SignalCommandPanel />
         <NewsScoutSpawnerPanel />
       </div>
 
@@ -278,6 +280,7 @@ function AdminPage() {
         <MusicSpawnerPanel />
         <TrackUploadPanel />
         <ToolSpawnerPanel />
+        <TradeSpawnerPanel />
       </div>
 
       <SectionHeader id="broadcast" icon={<MegaIcon className="h-4 w-4" />} label="Broadcast · Reach" tint="#00e08a" />
@@ -1139,32 +1142,117 @@ function CustomHubBuilderPanel() {
   );
 }
 
+function TradeSpawnerPanel() {
+  return _TradeSpawnerPanelImpl();
+}
+
 function NewsScoutSpawnerPanel() {
   return _NewsScoutSpawnerImpl();
 }
 
-const SIGNAL_GROUPS: { label: string; pairs: { pair: string; sym: string; ctx: string }[] }[] = [
+const SIGNAL_GROUPS: { label: string; pairs: { pair: string; sym: string; goodCtx: string; badCtx: string }[] }[] = [
   { label: "Metals", pairs: [
-    { pair: "Gold", sym: "XAU", ctx: "Macro drivers, Fed path, geopolitics, ETF flows" },
-    { pair: "Silver", sym: "XAG", ctx: "Industrial demand, solar cycle, USD trend" },
-    { pair: "Copper", sym: "HG", ctx: "China demand, EV cycle, mining supply" },
+    { pair: "Gold", sym: "XAU", goodCtx: "Fed rate cut, weak USD, inflation surge", badCtx: "War ceasefire, lower inflation, strong USD" },
+    { pair: "Silver", sym: "XAG", goodCtx: "Industrial demand, solar boom, weak USD", badCtx: "Recession fears, demand collapse" },
+    { pair: "Copper", sym: "HG", goodCtx: "China stimulus, EV demand, supply cuts", badCtx: "China slowdown, mining oversupply" },
   ]},
   { label: "Currencies", pairs: [
-    { pair: "GBP/USD", sym: "GBP", ctx: "BoE stance, UK GDP, USD trend" },
-    { pair: "EUR/USD", sym: "EUR", ctx: "ECB stance, EZ growth, USD trend" },
-    { pair: "USD/JPY", sym: "JPY", ctx: "Fed vs BoJ divergence, intervention risk" },
+    { pair: "GBP/USD", sym: "GBP", goodCtx: "BoE hawkish, UK GDP beat", badCtx: "BoE dovish, UK recession, USD strength" },
+    { pair: "EUR/USD", sym: "EUR", goodCtx: "ECB hawkish, EZ growth", badCtx: "ECB cuts, EZ recession, USD strength" },
+    { pair: "USD/JPY", sym: "JPY", goodCtx: "Fed hawkish, BoJ dovish", badCtx: "BoJ intervention, Fed cuts" },
   ]},
   { label: "Energies", pairs: [
-    { pair: "Oil WTI", sym: "WTI", ctx: "OPEC policy, Middle East risk, inventories" },
-    { pair: "Brent", sym: "BRN", ctx: "Geopolitics, supply disruption, demand outlook" },
-    { pair: "Natural Gas", sym: "NG", ctx: "Weather, Europe storage, LNG flows" },
+    { pair: "Oil WTI", sym: "WTI", goodCtx: "OPEC cuts, Hormuz blockade, war escalation", badCtx: "Ceasefire, OPEC oversupply, demand drop" },
+    { pair: "Brent", sym: "BRN", goodCtx: "Middle East conflict, supply disruption", badCtx: "Peace deal, inventory build" },
+    { pair: "Natural Gas", sym: "NG", goodCtx: "Cold snap, Europe shortage, LNG demand", badCtx: "Mild winter, oversupply" },
   ]},
   { label: "Indexes", pairs: [
-    { pair: "S&P 500", sym: "SPX", ctx: "Fed path, earnings, macro regime" },
-    { pair: "NASDAQ", sym: "NDX", ctx: "AI capex, tech earnings, rate sensitivity" },
-    { pair: "FTSE 100", sym: "UKX", ctx: "Commodity mix, GBP trend, UK macro" },
+    { pair: "S&P 500", sym: "SPX", goodCtx: "Fed cuts, AI earnings beat, soft landing", badCtx: "Recession, earnings miss, geopolitical shock" },
+    { pair: "NASDAQ", sym: "NDX", goodCtx: "AI capex boom, tech earnings beat", badCtx: "AI bubble fears, regulation, rate hikes" },
+    { pair: "FTSE 100", sym: "UKX", goodCtx: "Commodity rally, weak GBP boost", badCtx: "UK recession, energy crash" },
   ]},
 ];
+
+function SignalCommandPanel() {
+  const spawn = useServerFn(spawnNewsPortal);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [last, setLast] = useState<{ slug: string; bias: "good" | "bad" } | null>(null);
+
+  const fire = async (pair: string, sym: string, bias: "good" | "bad", ctx: string) => {
+    const key = `${sym}-${bias}`;
+    setBusy(key);
+    try {
+      const r = await spawn({ data: {
+        name: `${sym} ${bias === "good" ? "BULLISH" : "BEARISH"} · Bias Engine`,
+        pair, bias, context: ctx, vip: false,
+      }});
+      setLast({ slug: r.portal.slug, bias });
+      const url = `${window.location.origin}/p/${r.portal.slug}`;
+      navigator.clipboard.writeText(url).catch(() => {});
+      toast.success(`${sym} ${bias.toUpperCase()} portal live · link copied`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Spawn failed");
+    } finally { setBusy(null); }
+  };
+
+  return (
+    <section className="mt-10 rounded-2xl border border-border bg-card p-6">
+      <div className="flex items-center gap-2 mb-2">
+        <TrendingUp className="h-5 w-5" style={{ color: "var(--neon-blue-bright)" }} />
+        <h2 className="font-[Montserrat] font-black text-xl text-white">Signal Command · Bias Engine</h2>
+        <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">One-Click Spawn</span>
+      </div>
+      <p className="text-sm text-muted-foreground mb-5">
+        Pick a pair, fire <span className="text-emerald-400 font-bold">GOOD</span> or <span className="text-red-400 font-bold">BAD</span> news bias. Firecrawl + Perplexity build a live-refreshing portal in seconds.
+      </p>
+      <div className="grid gap-5">
+        {SIGNAL_GROUPS.map((group) => (
+          <div key={group.label}>
+            <div className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground mb-2">{group.label}</div>
+            <div className="grid sm:grid-cols-3 gap-3">
+              {group.pairs.map((p) => (
+                <div key={p.sym} className="rounded-xl border border-border bg-black/30 p-3">
+                  <div className="flex items-baseline justify-between mb-2">
+                    <span className="font-[Montserrat] font-black text-white">{p.pair}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">{p.sym}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => fire(p.pair, p.sym, "good", p.goodCtx)}
+                      disabled={!!busy}
+                      className="rounded-md py-2 text-xs font-bold tracking-widest transition-all disabled:opacity-40 hover:scale-[1.02]"
+                      style={{ background: "linear-gradient(180deg,#00e08a33,#00e08a11)", border: "1px solid #00e08a88", color: "#7dffce", boxShadow: "0 0 16px #00e08a44" }}
+                    >
+                      {busy === `${p.sym}-good` ? <Loader2 className="h-3 w-3 animate-spin mx-auto" /> : "GOOD ▲"}
+                    </button>
+                    <button
+                      onClick={() => fire(p.pair, p.sym, "bad", p.badCtx)}
+                      disabled={!!busy}
+                      className="rounded-md py-2 text-xs font-bold tracking-widest transition-all disabled:opacity-40 hover:scale-[1.02]"
+                      style={{ background: "linear-gradient(180deg,#ff223333,#ff223311)", border: "1px solid #ff223388", color: "#ffb3b3", boxShadow: "0 0 16px #ff223344" }}
+                    >
+                      {busy === `${p.sym}-bad` ? <Loader2 className="h-3 w-3 animate-spin mx-auto" /> : "BAD ▼"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      {last && (
+        <div className="mt-5 rounded-lg border bg-black/40 p-3 text-xs flex items-center justify-between gap-3"
+          style={{ borderColor: last.bias === "good" ? "#00e08a66" : "#ff223366" }}>
+          <a href={`/p/${last.slug}`} target="_blank" rel="noopener noreferrer" className="font-mono hover:underline truncate"
+             style={{ color: last.bias === "good" ? "#00e08a" : "#ff2233" }}>
+            /p/{last.slug}
+          </a>
+          <span className="text-muted-foreground">Link copied to clipboard</span>
+        </div>
+      )}
+    </section>
+  );
+}
 
 type HubSettings = {
   id: string;
@@ -1372,7 +1460,6 @@ function _NewsScoutSpawnerImpl() {
   const [last, setLast] = useState<{ slug: string; name: string } | null>(null);
   const [cineBusy, setCineBusy] = useState<null | "16:9" | "9:16">(null);
   const [cineUrl, setCineUrl] = useState<string | null>(null);
-  const [quickBusy, setQuickBusy] = useState<string | null>(null);
 
   const onCinema = async (aspect: "16:9" | "9:16") => {
     if (!last) return;
@@ -1399,25 +1486,6 @@ function _NewsScoutSpawnerImpl() {
     } catch (e: any) {
       toast.error(e?.message ?? "Spawn failed");
     } finally { setLoading(false); }
-  };
-
-  const quickSpawn = async (pairName: string, sym: string, defaultCtx: string) => {
-    setQuickBusy(sym);
-    try {
-      const r = await spawn({ data: {
-        name: `${sym} · Bias Engine`,
-        pair: pairName,
-        bias,
-        context: defaultCtx,
-        vip: false,
-      }});
-      setLast(r.portal);
-      const url = `${window.location.origin}/p/${r.portal.slug}`;
-      navigator.clipboard.writeText(url).catch(() => {});
-      toast.success(`${sym} portal live · link copied`);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Spawn failed");
-    } finally { setQuickBusy(null); }
   };
 
   const url = last && typeof window !== "undefined" ? `${window.location.origin}/p/${last.slug}` : "";
@@ -1485,43 +1553,78 @@ function _NewsScoutSpawnerImpl() {
           </div>
         </div>
       )}
-      <div className="mt-6 pt-5 border-t border-border/60">
-        <div className="flex items-center gap-2 mb-1">
-          <TrendingUp className="h-4 w-4" style={{ color: "var(--neon-blue-bright)" }} />
-          <h3 className="font-[Montserrat] font-black text-sm text-white tracking-wide">Bias Engine · One-Click Spawn</h3>
-        </div>
-        <p className="text-xs text-muted-foreground mb-4">
-          Pick a pair to instantly spawn an intel portal using the bias selected above. Firecrawl + Perplexity assemble it in seconds.
-        </p>
-        <div className="grid gap-4">
-          {SIGNAL_GROUPS.map((group) => (
-            <div key={group.label}>
-              <div className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground mb-2">{group.label}</div>
-              <div className="grid sm:grid-cols-3 gap-2">
-                {group.pairs.map((p) => {
-                  return (
-                    <button
-                      key={p.sym}
-                      onClick={() => quickSpawn(p.pair, p.sym, p.ctx)}
-                      disabled={!!quickBusy}
-                      className="rounded-xl border bg-black/30 p-3 text-left transition-all disabled:opacity-40 hover:scale-[1.02]"
-                      style={{ borderColor: `${accent}55`, boxShadow: `0 0 14px ${accent}22` }}
-                    >
-                      <div className="flex items-baseline justify-between">
-                        <span className="font-[Montserrat] font-black text-white text-sm">{p.pair}</span>
-                        <span className="text-[10px] font-mono text-muted-foreground">{p.sym}</span>
-                      </div>
-                      <div className="mt-2 text-[10px] uppercase tracking-widest font-bold" style={{ color: accent }}>
-                        {quickBusy === p.sym ? <Loader2 className="h-3 w-3 animate-spin" /> : "Spawn ▶"}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
+    </section>
+  );
+}
+
+function _TradeSpawnerPanelImpl() {
+  const spawn = useServerFn(spawnTradePortal);
+  const [name, setName] = useState("");
+  const [assetClass, setAssetClass] = useState<"Crypto"|"Forex"|"Stocks">("Crypto");
+  const [risk, setRisk] = useState<"Degen"|"Balanced"|"Safe">("Balanced");
+  const [vibe, setVibe] = useState("Whale Watching");
+  const [vip, setVip] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [last, setLast] = useState<{ slug: string; name: string } | null>(null);
+
+  const onSpawn = async () => {
+    if (!name.trim()) return toast.error("Name required");
+    setLoading(true);
+    try {
+      const r = await spawn({ data: { name: name.trim(), assetClass, risk, vibe: vibe.trim(), vip } });
+      setLast(r.portal);
+      toast.success(`TradeHUBB "${r.portal.name}" spawned`);
+      setName("");
+    } catch (e: any) { toast.error(e?.message ?? "Spawn failed"); }
+    finally { setLoading(false); }
+  };
+
+  const url = last && typeof window !== "undefined" ? `${window.location.origin}/td/${last.slug}` : "";
+
+  return (
+    <section className="mt-10 rounded-2xl border bg-card p-6" style={{ borderColor: "rgba(57,255,20,0.4)" }}>
+      <div className="flex items-center gap-2 mb-2">
+        <Rocket className="h-5 w-5" style={{ color: "#39ff14" }} />
+        <h2 className="font-[Montserrat] font-black text-xl text-white">TradeHUBB Spawner</h2>
+        <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">HFT Terminal</span>
       </div>
+      <p className="text-sm text-muted-foreground mb-4">Spawn a live signal terminal — Perplexity + Firecrawl drive the SCAN MARKETS button.</p>
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Terminal Name</label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Whale Pulse · BTC Desk" className="mt-1" />
+        </div>
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Asset Class</label>
+          <select value={assetClass} onChange={(e) => setAssetClass(e.target.value as any)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm mt-1">
+            <option>Crypto</option><option>Forex</option><option>Stocks</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Risk Level</label>
+          <select value={risk} onChange={(e) => setRisk(e.target.value as any)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm mt-1">
+            <option>Degen</option><option>Balanced</option><option>Safe</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Vibe</label>
+          <Input value={vibe} onChange={(e) => setVibe(e.target.value)} placeholder="Whale Watching" className="mt-1" />
+        </div>
+        <label className="flex items-center gap-2 text-sm text-white sm:col-span-2">
+          <input type="checkbox" checked={vip} onChange={(e) => setVip(e.target.checked)} /> VIP-only terminal
+        </label>
+      </div>
+      <Button onClick={onSpawn} disabled={loading} className="mt-4 w-full" style={{ background: "#39ff14", color: "#000" }}>
+        {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Calibrating signals…</> : <><Rocket className="h-4 w-4 mr-2" />Spawn Terminal</>}
+      </Button>
+      {last && url && (
+        <div className="mt-4 rounded-lg border border-[#39ff14]/40 bg-black/40 p-3 text-xs flex items-center justify-between gap-3">
+          <a href={url} target="_blank" rel="noopener noreferrer" className="font-mono text-[#39ff14] hover:underline truncate">{url}</a>
+          <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(url); toast.success("Link copied"); }}>
+            <Copy className="h-3 w-3 mr-1" /> Copy
+          </Button>
+        </div>
+      )}
     </section>
   );
 }
@@ -1854,16 +1957,12 @@ function TelegramSocialsPanel() {
                 <Button
                   size="sm"
                   className="btn-glass-blue text-white"
-                  disabled={busy === id}
+                  disabled={busy === id || !brand}
                   onClick={async () => {
                     setBusy(id);
                     try {
                       const r = await deploy({ data: { slug: p.slug } });
-                      const tag = r.botUsername ? `@${r.botUsername}` : "bot";
-                      toast.success(`Deployed to ${tag} · listed in /portals`);
-                      if (r.deepLink) {
-                        try { navigator.clipboard?.writeText(r.deepLink); } catch { /* */ }
-                      }
+                      toast.success(`Deployed to @${r.botUsername ?? "bot"}`);
                       reload();
                     } catch (e: any) { toast.error(e?.message ?? "Deploy failed"); }
                     finally { setBusy(null); }

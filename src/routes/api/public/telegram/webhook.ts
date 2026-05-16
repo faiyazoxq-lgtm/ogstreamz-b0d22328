@@ -158,30 +158,15 @@ async function handleCommand(
         chatId,
         "Available commands:\n" +
           "<code>/link CODE</code> — bind this chat to your account\n" +
-          "<code>/portals</code> — browse spawnable portals\n" +
           "<code>/me</code> — show your account status & credits\n" +
           "<code>/msg TEXT</code> — message the OG-Streamz team\n" +
           "<code>/unlink</code> — disconnect this chat\n\n" +
           "Get your code at <b>/account/passes</b>.",
       );
-      return;
-    }
-    if (/^\/portals?\b/i.test(trimmed)) {
-      await sendPortalsList(chatId);
-      return;
     }
     return;
   }
   const code = m[2];
-
-  // Deep-link from a shared portal card: /start p_<slug> launches that
-  // portal's card directly instead of the generic link flow.
-  if (code && /^p_/i.test(code)) {
-    const slug = code.slice(2).toLowerCase();
-    await sendPortalCard(chatId, slug);
-    return;
-  }
-
   if (!code) {
     // /start with no code:
     //  - already-linked chat → branded welcome card (site wallpaper + theme)
@@ -368,120 +353,6 @@ async function sendBrandedWelcome(
       error: e instanceof Error ? e.message : String(e),
     });
     await tgSendMessage(chatId, caption, { reply_markup });
-  }
-}
-
-/**
- * Send the list of deployed/spawnable portals as inline-keyboard buttons.
- * Each button uses callback_data `portal:<slug>` so the tap handler renders
- * that portal's branded card without leaving Telegram.
- */
-async function sendPortalsList(chatId: number) {
-  const sb = getSupabase() as any;
-  const { data, error } = await sb
-    .from("portals")
-    .select("slug, name, telegram_config")
-    .eq("published", true)
-    .order("created_at", { ascending: false })
-    .limit(60);
-  if (error) {
-    logError("tg.webhook.portals_query_failed", { error: error.message });
-    await tgSendMessage(chatId, "Portals list temporarily unavailable.");
-    return;
-  }
-  const deployed = (data ?? []).filter((p: any) => p?.telegram_config?.deployed);
-  if (deployed.length === 0) {
-    await tgSendMessage(chatId, "No portals deployed to Telegram yet. Check back soon.");
-    return;
-  }
-  const rows = deployed.slice(0, 30).map((p: any) => {
-    const listing = p.telegram_config?.listing ?? {};
-    const brand = p.telegram_config?.brand ?? {};
-    const emoji = listing.emoji || brand.logoEmoji || "🛰";
-    const name = (listing.displayName || brand.brandName || p.name || p.slug).slice(0, 48);
-    return [{ text: `${emoji} ${name}`, callback_data: `portal:${p.slug}`.slice(0, 64) }];
-  });
-  await tgSendMessage(
-    chatId,
-    `🛰 <b>Spawnable Portals</b>\nTap one to launch its card.`,
-    { reply_markup: { inline_keyboard: rows } as TgInlineKeyboard },
-  );
-}
-
-/**
- * Render a single portal as a Telegram card: brand-emoji + name in caption,
- * with "Open Portal" / "Join Group" / "VIP" inline URL buttons. Falls back
- * to a plain message if Telegram rejects the photo.
- */
-async function sendPortalCard(chatId: number, slug: string) {
-  const sb = getSupabase() as any;
-  const { data: p } = await sb
-    .from("portals")
-    .select("slug, name, niche, wallpaper_url, seo_image_url, seo_description, telegram_config")
-    .eq("slug", slug)
-    .eq("published", true)
-    .maybeSingle();
-  if (!p || !p?.telegram_config?.deployed) {
-    await tgSendMessage(chatId, "That portal is no longer available.");
-    return;
-  }
-  const cfg = p.telegram_config ?? {};
-  const brand = cfg.brand ?? {};
-  const listing = cfg.listing ?? {};
-  const emoji = listing.emoji || brand.logoEmoji || "🛰";
-  const displayName = listing.displayName || brand.brandName || p.name || p.slug;
-  const blurb =
-    brand.shortBio || brand.bio || listing.shortBio || p.seo_description || p.niche || "";
-  const siteBase = (process.env.PUBLIC_SITE_URL || "https://ogstreamz.co.uk").replace(/\/$/, "");
-  const portalUrl = `${siteBase}/p/${p.slug}`;
-  const photo = (p.wallpaper_url as string) || (p.seo_image_url as string) || `${siteBase}/brand/og-image.jpg`;
-
-  const caption =
-    `${emoji} <b>${escapeHtml(String(displayName)).slice(0, 80)}</b>\n` +
-    (blurb ? `<i>${escapeHtml(String(blurb)).slice(0, 280)}</i>\n\n` : "\n") +
-    `🌐 ${portalUrl}`;
-
-  const buttons: TgInlineKeyboard["inline_keyboard"] = [
-    [{ text: "🌐 Open Portal", url: portalUrl }],
-  ];
-  if (cfg.groupLink) buttons.push([{ text: "💬 Join Group", url: String(cfg.groupLink) }]);
-  if (cfg.vipLink) buttons.push([{ text: "👑 VIP Access", url: String(cfg.vipLink) }]);
-  buttons.push([{ text: "⬅ Back to portals", callback_data: "portals:list" }]);
-
-  const reply_markup: TgInlineKeyboard = { inline_keyboard: buttons };
-  try {
-    await tgSendPhoto(chatId, photo, caption, { reply_markup });
-  } catch (e) {
-    logError("tg.webhook.portal_card_failed", {
-      slug,
-      chatIdSuffix: String(chatId).slice(-8),
-      error: e instanceof Error ? e.message : String(e),
-    });
-    await tgSendMessage(chatId, caption, { reply_markup });
-  }
-}
-
-/**
- * Inline-button taps prefixed with `portal:` (single portal card) or the
- * sentinel `portals:list` (re-show the listing).
- */
-async function handlePortalCallback(cb: any): Promise<void> {
-  const data: string = cb?.data ?? "";
-  const chatId: number | undefined = cb?.message?.chat?.id;
-  const cbId: string | undefined = cb?.id;
-  if (!chatId || !cbId) return;
-  try {
-    await tgCall("answerCallbackQuery", { callback_query_id: cbId }, { tag: "tg.answerCb", silent: true });
-  } catch {
-    // Non-fatal — the in-chat reply is the real payload.
-  }
-  if (data === "portals:list") {
-    await sendPortalsList(chatId);
-    return;
-  }
-  if (data.startsWith("portal:")) {
-    const slug = data.slice("portal:".length).trim().toLowerCase();
-    if (slug) await sendPortalCard(chatId, slug);
   }
 }
 
@@ -701,16 +572,6 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
               await handleWelcomeCallback(update.callback_query);
             } catch (e) {
               logError("tg.webhook.welcome_callback_failed", {
-                error: e instanceof Error ? e.message : String(e),
-              });
-            }
-            return Response.json({ ok: true });
-          }
-          if (cbData.startsWith("portal:") || cbData === "portals:list") {
-            try {
-              await handlePortalCallback(update.callback_query);
-            } catch (e) {
-              logError("tg.webhook.portal_callback_failed", {
                 error: e instanceof Error ? e.message : String(e),
               });
             }
