@@ -21,9 +21,6 @@ export const describePortal = createServerFn({ method: "POST" })
     language: String(data.language ?? "English").trim().slice(0, 40) || "English",
   }))
   .handler(async ({ data }): Promise<{ description: string }> => {
-    const LOVABLE = process.env.LOVABLE_API_KEY;
-    if (!LOVABLE) throw new Error("AI is not configured");
-
     const seed = [data.name && `Name: ${data.name}`, data.niche && `Keywords: ${data.niche}`, data.vibe && `Vibe: ${data.vibe}`]
       .filter(Boolean)
       .join("\n");
@@ -33,6 +30,38 @@ export const describePortal = createServerFn({ method: "POST" })
       `You expand short keywords into a vivid, concrete brief for ${KIND_BRIEF[data.kind]}. ` +
       `Write 2-3 tight sentences (max 380 chars) in ${data.language}. ` +
       `Be specific about audience, tone and visual mood. No headings, no quotes, no markdown, no emoji.`;
+
+    // Super-intelligence path: Claude writes wizard templates when wired.
+    const ANTHROPIC = process.env.ANTHROPIC_API_KEY;
+    if (ANTHROPIC) {
+      try {
+        const r = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "x-api-key": ANTHROPIC,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-5",
+            max_tokens: 400,
+            system,
+            messages: [{ role: "user", content: seed }],
+          }),
+        });
+        if (r.ok) {
+          const j = (await r.json()) as { content?: Array<{ type?: string; text?: string }> };
+          const text = (j.content ?? []).map((b) => (b?.type === "text" ? b.text ?? "" : "")).join("").trim();
+          if (text) return { description: text.slice(0, 400) };
+        }
+        // fall through to gateway on non-OK
+      } catch {
+        // fall through to gateway
+      }
+    }
+
+    const LOVABLE = process.env.LOVABLE_API_KEY;
+    if (!LOVABLE) throw new Error("AI is not configured");
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
