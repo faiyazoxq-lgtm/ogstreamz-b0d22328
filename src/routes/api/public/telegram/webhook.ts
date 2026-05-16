@@ -306,6 +306,28 @@ async function handleCommand(
   // Branded welcome card — uses the site wallpaper + OG-Streamz theme.
   await sendBrandedWelcome(chatId, { returning: false, displayName: null });
 
+  // Mirror onboarding metadata into telegram_chat_prefs so the chat record
+  // exists even if the user never sent /start first.
+  try {
+    const nowIso = new Date().toISOString();
+    await (getSupabase() as any).from("telegram_chat_prefs").upsert(
+      {
+        chat_id: chatId,
+        tg_username: username || null,
+        first_name: (msg?.from?.first_name as string | undefined) ?? null,
+        last_name: (msg?.from?.last_name as string | undefined) ?? null,
+        last_start_at: nowIso,
+        updated_at: nowIso,
+      },
+      { onConflict: "chat_id" },
+    );
+  } catch (e) {
+    logWarn("tg.link.prefs_upsert_failed", {
+      chatIdSuffix: String(chatId).slice(-8),
+      error: e instanceof Error ? e.message : String(e),
+    });
+  }
+
   // Boss-only audit notice: tie this Telegram identity to the member's OG Pass.
   try {
     const sb = getSupabase() as any;
