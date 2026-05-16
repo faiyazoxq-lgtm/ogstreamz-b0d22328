@@ -126,12 +126,7 @@ d("boss free-purchase never deducts coins (static guarantee)", () => {
     // for credit deductions that bypass is_boss().
     const offenders = HAS_PG
       ? psql(
-          `SELECT string_agg(proname, ',') FROM pg_proc p
-           JOIN pg_namespace n ON n.oid=p.pronamespace
-           WHERE n.nspname='public'
-             AND p.prosecdef = true
-             AND pg_get_functiondef(p.oid) ~* 'credits\\s*=\\s*credits\\s*-'
-             AND pg_get_functiondef(p.oid) !~* 'is_boss'`,
+          `SELECT COALESCE(string_agg(proname, ','), '') FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.prosecdef = true AND pg_get_functiondef(p.oid) ~* 'credits[[:space:]]*=[[:space:]]*credits[[:space:]]*-' AND pg_get_functiondef(p.oid) !~* 'is_boss'`,
         )
       : "";
     expect(offenders).toBe("");
