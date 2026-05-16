@@ -81,9 +81,20 @@ export function CoinCheckout({ kind, ref, cost, itemTitle, successLabel, onSucce
         <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
           {isBoss ? "No payment required" : "Pay with coins"}
         </p>
-        <p className="mt-2 font-[Montserrat] font-black text-4xl text-metallic">
-          {isBoss ? <>FREE</> : <>{cost} <span className="text-2xl">🪙</span></>}
-        </p>
+        {isBoss ? (
+          <div className="mt-2 flex items-baseline justify-center gap-3">
+            <span className="font-[Montserrat] font-semibold text-xl text-muted-foreground/70 line-through decoration-2 decoration-destructive/70">
+              {cost} 🪙
+            </span>
+            <span className="font-[Montserrat] font-black text-4xl text-metallic">
+              FREE
+            </span>
+          </div>
+        ) : (
+          <p className="mt-2 font-[Montserrat] font-black text-4xl text-metallic">
+            {cost} <span className="text-2xl">🪙</span>
+          </p>
+        )}
         <p className="mt-1 text-xs text-muted-foreground">
           {itemTitle}
         </p>
