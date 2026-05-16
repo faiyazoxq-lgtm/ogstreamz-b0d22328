@@ -21,10 +21,11 @@ export function CoinCheckout({ kind, ref, cost, itemTitle, successLabel, onSucce
   const { profile, refresh } = useAuth() as any;
   const purchase = useServerFn(purchaseWithCoins);
   const balance = profile?.credits ?? 0;
+  const isBoss = profile?.rank === "boss";
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<null | { pending: boolean }>(null);
 
-  const insufficient = balance < cost;
+  const insufficient = !isBoss && balance < cost;
 
   const handleBuy = async () => {
     setBusy(true);
@@ -42,7 +43,9 @@ export function CoinCheckout({ kind, ref, cost, itemTitle, successLabel, onSucce
       onSuccess?.(res);
       if (typeof refresh === "function") refresh();
       toast.success(
-        res.pending_approval
+        res.boss_override
+          ? `${itemTitle} unlocked — Boss override (free).`
+          : res.pending_approval
           ? `Pass requested — boss will approve. ${res.cost} 🪙 reserved.`
           : `${itemTitle} unlocked! −${res.cost} 🪙`
       );
@@ -70,23 +73,25 @@ export function CoinCheckout({ kind, ref, cost, itemTitle, successLabel, onSucce
   return (
     <div className="rounded-2xl border border-gold/40 bg-gradient-to-br from-gold/10 via-card to-card p-6 space-y-4">
       <div className="text-center">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Pay with coins</p>
+        <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+          {isBoss ? "Boss override" : "Pay with coins"}
+        </p>
         <p className="mt-2 font-[Montserrat] font-black text-4xl text-metallic">
-          {cost} <span className="text-2xl">🪙</span>
+          {isBoss ? <>FREE</> : <>{cost} <span className="text-2xl">🪙</span></>}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
           {itemTitle}
         </p>
       </div>
 
-      <div className="flex items-center justify-between rounded-lg border border-border bg-background/40 px-3 py-2 text-xs">
+      {!isBoss && <div className="flex items-center justify-between rounded-lg border border-border bg-background/40 px-3 py-2 text-xs">
         <span className="flex items-center gap-2 text-muted-foreground">
           <Coins className="h-3.5 w-3.5 text-gold" /> Your wallet
         </span>
         <span className={insufficient ? "font-bold text-destructive" : "font-bold text-foreground"}>
           {balance} 🪙
         </span>
-      </div>
+      </div>}
 
       {insufficient ? (
         <div className="space-y-3">
@@ -114,6 +119,8 @@ export function CoinCheckout({ kind, ref, cost, itemTitle, successLabel, onSucce
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Spending coins…
             </>
+          ) : isBoss ? (
+            <>Confirm — Boss override (free)</>
           ) : (
             <>Confirm — Spend {cost} 🪙</>
           )}
@@ -121,7 +128,7 @@ export function CoinCheckout({ kind, ref, cost, itemTitle, successLabel, onSucce
       )}
 
       <p className="text-center text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-        1 🪙 = £1 · No card needed
+        {isBoss ? "Boss accounts skip payment" : "1 🪙 = £1 · No card needed"}
       </p>
     </div>
   );
