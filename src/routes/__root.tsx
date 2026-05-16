@@ -177,7 +177,7 @@ function RootComponent() {
             <SystemGlitchOverlay />
             {/* LiveThinkingFeed removed — was a bottom-right Boss watermark popup */}
             <EnforcerConsole />
-            <ReducedMotionToggle />
+            <HomeOnlyMotionToggle />
             <AlignmentQAOverlay />
             <PupilCalibrator />
             <OgBotFloatingWidget />
