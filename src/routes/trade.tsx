@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { Activity, ArrowRight, Crown, ShieldAlert, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BossChatPanel } from "@/components/BossChatPanel";
-import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { CreditWallet } from "@/components/CreditWallet";
 import { ZeroGBadge } from "@/components/ZeroGBadge";
 
@@ -133,7 +132,6 @@ function TradeHubPage() {
         Risk Disclosure · Not Financial Advice · Markets carry capital loss risk
       </div>
       <CreditWallet className="mt-10" />
-      <SpawnPortalCard kind="trade" />
     </main>
   );
 }
