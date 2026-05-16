@@ -93,15 +93,18 @@ No markdown. No commentary.`;
       body: JSON.stringify({
         model: "sonar",
         messages: [
-          { role: "system", content: "Output strict JSON only." },
+          { role: "system", content: "Output strict JSON only. No markdown, no commentary." },
           { role: "user", content: prompt },
         ],
-        response_format: { type: "json_object" },
         temperature: 0.6,
         max_tokens: 1500,
       }),
     });
-    if (!r.ok) throw new Error(`Perplexity ${r.status}`);
+    if (!r.ok) {
+      const body = await r.text().catch(() => "");
+      console.error("Perplexity spawnTool error", r.status, body.slice(0, 500));
+      throw new Error(`Perplexity ${r.status}: ${body.slice(0, 200)}`);
+    }
     const j = await r.json();
     const raw: string = j?.choices?.[0]?.message?.content ?? "{}";
     const m = raw.match(/\{[\s\S]*\}/);
