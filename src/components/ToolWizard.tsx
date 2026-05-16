@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Sparkles, Wand2, ArrowRight, Bot, BrainCircuit, RotateCcw } from "lucide-react";
+import { Loader2, Sparkles, Wand2, ArrowRight, Bot, BrainCircuit, RotateCcw, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,7 +9,7 @@ import { wizardClarify, wizardFinalize } from "@/lib/tool-wizard.functions";
 import type { ToolAudience } from "@/lib/tools.functions";
 
 type QA = { q: string; a: string };
-type Step = "brief" | "clarify" | "review";
+type Step = "brief" | "clarify" | "review" | "confirm";
 
 export type WizardResult = {
   name: string;
@@ -98,6 +98,7 @@ export function ToolWizard({
     if (!draft || !onSpawn) return;
     onApply(draft);
     await onSpawn(draft);
+    reset();
   };
 
   return (
@@ -182,10 +183,46 @@ export function ToolWizard({
           <div className="flex flex-col sm:flex-row gap-2">
             <Button onClick={apply} variant="outline" className="flex-1">Apply to Form</Button>
             {onSpawn && (
-              <Button onClick={spawn} disabled={busy || !canSpawn} className="flex-1 bg-gold text-primary-foreground hover:bg-gold/90 font-bold">
-                {busy ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Spawning…</>) : (<><Wand2 className="h-4 w-4 mr-2" /> Spawn Now</>)}
+              <Button onClick={() => setStep("confirm")} disabled={busy || !canSpawn} className="flex-1 bg-gold text-primary-foreground hover:bg-gold/90 font-bold">
+                <Wand2 className="h-4 w-4 mr-2" /> Preview & Spawn
               </Button>
             )}
+          </div>
+        </div>
+      )}
+
+      {step === "confirm" && draft && (
+        <div className="space-y-4">
+          <p className="text-xs text-muted-foreground flex items-center gap-2">
+            <ShieldCheck className="h-3.5 w-3.5 text-gold" /> Final preview — confirm to spawn this portal. This cannot be undone.
+          </p>
+          <div className="rounded-xl border border-gold/40 bg-background/70 p-4 space-y-3 text-sm">
+            <div>
+              <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Portal Name</span>
+              <div className="font-black text-base text-gold">{draft.name}</div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Audience</span>
+                <div className="font-semibold">{draft.audience}</div>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Vibe</span>
+                <div className="font-semibold">{draft.vibe}</div>
+              </div>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Logic</span>
+              <div className="text-foreground whitespace-pre-wrap mt-1">{draft.logic}</div>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button onClick={() => setStep("review")} variant="outline" disabled={busy} className="flex-1">
+              Back to Edit
+            </Button>
+            <Button onClick={spawn} disabled={busy || !canSpawn} className="flex-1 bg-gold text-primary-foreground hover:bg-gold/90 font-bold">
+              {busy ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Spawning…</>) : (<><ShieldCheck className="h-4 w-4 mr-2" /> Confirm & Spawn</>)}
+            </Button>
           </div>
         </div>
       )}
