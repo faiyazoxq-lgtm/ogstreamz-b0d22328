@@ -622,7 +622,7 @@ function MusicPortalPage() {
           <p className="mt-3 text-sm opacity-70">{portal.style} · {portal.language}</p>
         </header>
 
-        <MusicHooksSection portal={portal} theme={theme} onUseHook={(text) => setRaw(text)} />
+        <MusicHooksSection portal={portal} theme={theme} onUseHook={(text) => setBriefSeed(text)} />
 
         {tracks.length > 0 && (
           <section className="mb-10">
@@ -646,41 +646,19 @@ function MusicPortalPage() {
           </section>
         )}
 
-        <section
-          className="rounded-2xl border p-6 sm:p-8 mb-8"
-          style={{ borderColor: `${theme.accent}55`, background: `${theme.accent}08`, boxShadow: `0 0 60px ${theme.accent}22` }}
-        >
-          <div className="flex items-center gap-2 mb-3">
-            <Music className="h-4 w-4" style={{ color: theme.accent }} />
-            <h2 className="text-sm uppercase tracking-[0.3em] font-bold" style={{ color: theme.accent }}>Compose Your Vision</h2>
-          </div>
-          <textarea
-            value={raw}
-            onChange={(e) => setRaw(e.target.value)}
-            placeholder={`Tell your story in any language. We'll shape it into ${portal.style} verses...`}
-            rows={6}
-            className="w-full bg-black/40 border rounded-md px-4 py-3 text-sm resize-y focus:outline-none focus:ring-2"
-            style={{ borderColor: `${theme.accent}40`, color: "#fff" }}
-          />
-          <Button
-            onClick={onFormat}
-            disabled={formatting}
-            className="mt-4 h-11 px-6 text-xs uppercase tracking-[0.25em] font-bold border"
-            style={{ background: `${theme.accent}20`, color: theme.accent, borderColor: theme.accent }}
-          >
-            {formatting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Crafting...</> : <><Wand2 className="h-4 w-4 mr-2" />Format for Song</>}
-          </Button>
-
-          {lyrics && (
-            <div className="mt-6">
-              <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 mb-2">Suno-Ready Lyrics</p>
-              <pre
-                className="whitespace-pre-wrap text-sm leading-relaxed bg-black/50 border rounded-md p-4 max-h-96 overflow-auto"
-                style={{ borderColor: `${theme.accent}40`, fontFamily: "ui-monospace, monospace" }}
-              >{lyrics}</pre>
-            </div>
+        <OgBotComposer
+          slug={portal.slug}
+          accent={theme.accent}
+          portalSwearDefault={!!portal.swear_chat_enabled}
+          religious={/(nasheed|naat|hamd|qasida|qawwali|sufi|spirit|mosque|hymn|gospel|sacred|devotional|worship|psalm|bhajan|kirtan|christian|islamic|muslim|catholic|prayer|holy|gurbani)/i.test(
+            `${portal.name} ${portal.style ?? ""} ${portal.vibe ?? ""} ${portal.language}`,
           )}
-        </section>
+          prefillBrief={briefSeed}
+          onReady={({ title, lyrics: ly }) => {
+            setSongTitle(title);
+            setLyrics(ly);
+          }}
+        />
 
         {/* Suno V5.5 Style Vector Stack */}
         <section
