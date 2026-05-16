@@ -14,6 +14,11 @@ import {
   handleCredsCallback,
   handleBossCredsReply,
 } from "@/lib/stream-credential-bot.server";
+import {
+  getPerplexityReply,
+  getSwearingEnabled,
+  setSwearingEnabled,
+} from "@/lib/perplexity.server";
 
 let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
@@ -40,6 +45,45 @@ async function handleCommand(
   msg: any,
 ) {
   const trimmed = text.trim();
+
+  // --- AI agent: /swear toggle + /ask <prompt> --------------------------
+  // These work in any chat (no link required) so members can try the agent
+  // before binding their account.
+  if (/^\/swear\b/i.test(trimmed)) {
+    const current = await getSwearingEnabled(chatId);
+    const next = !current;
+    await setSwearingEnabled(chatId, next);
+    await tgSendMessage(
+      chatId,
+      next
+        ? "🤬 <b>Swearing agent ACTIVATED.</b> Brace yourself."
+        : "😇 <b>Swearing agent OFF.</b> Clean mode engaged.",
+    );
+    return;
+  }
+  if (/^\/ask\b/i.test(trimmed)) {
+    const prompt = trimmed.replace(/^\/ask\s*/i, "").trim();
+    if (!prompt) {
+      await tgSendMessage(
+        chatId,
+        "Give me something to work with. <code>/ask &lt;your question&gt;</code>",
+      );
+      return;
+    }
+    try {
+      await tgCall(
+        "sendChatAction",
+        { chat_id: chatId, action: "typing" },
+        { tag: "tg.typing", silent: true },
+      );
+    } catch {
+      // non-fatal
+    }
+    const swearing = await getSwearingEnabled(chatId);
+    const reply = await getPerplexityReply(chatId, prompt, swearing);
+    await tgSendMessage(chatId, escapeHtml(reply).slice(0, 3500));
+    return;
+  }
 
   // --- Boss-only commands -------------------------------------------------
   // Anything sent in the chat whose ID matches BOSS_TELEGRAM_CHAT_ID_TEST is
@@ -161,6 +205,8 @@ async function handleCommand(
           "<code>/me</code> — show your account status & credits\n" +
           "<code>/status</code> — alias of /me\n" +
           "<code>/msg TEXT</code> — message the OG-Streamz team\n" +
+          "<code>/ask TEXT</code> — chat with the OG AI agent\n" +
+          "<code>/swear</code> — toggle the swearing agent on/off\n" +
           "<code>/unlink</code> — disconnect this chat\n\n" +
           "Get your code at <b>/account/passes</b>.",
       );
