@@ -27,6 +27,78 @@ const MAX_HISTORY_TURNS = 8;
 interface Turn { role: "user" | "assistant"; content: string }
 const history = new Map<number, Turn[]>();
 
+// ─── Deep research (used by og-chat) ────────────────────────────────────────
+
+export type ResearchSource = {
+  url: string;
+  title?: string;
+  snippet?: string;
+};
+
+export type ResearchResult = {
+  answer: string;
+  sources: ResearchSource[];
+  model: string;
+};
+
+const RESEARCH_ENDPOINT = "https://api.perplexity.ai/chat/completions";
+
+export async function deepResearch(
+  query: string,
+  opts?: { recency?: "day" | "week" | "month" | "year"; model?: string },
+): Promise<ResearchResult> {
+  const apiKey = process.env.PERPLEXITY_API_KEY;
+  if (!apiKey) throw new Error("PERPLEXITY_API_KEY is not configured");
+
+  const model = opts?.model ?? "sonar-pro";
+
+  const res = await fetch(RESEARCH_ENDPOINT, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a research assistant. Answer the user's question with concrete, citable facts from the live web. Be terse — bullet points or 2-3 short paragraphs max. Do not editorialize.",
+        },
+        { role: "user", content: query },
+      ],
+      ...(opts?.recency ? { search_recency_filter: opts.recency } : {}),
+      return_citations: true,
+    }),
+  });
+
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`Perplexity ${res.status}: ${t.slice(0, 300)}`);
+  }
+
+  type PpxResp = {
+    choices?: Array<{ message?: { content?: string } }>;
+    citations?: string[];
+    search_results?: Array<{ url: string; title?: string; snippet?: string }>;
+  };
+  const json = (await res.json()) as PpxResp;
+
+  const answer = json.choices?.[0]?.message?.content?.trim() ?? "";
+  const sources: ResearchSource[] = Array.isArray(json.search_results) && json.search_results.length
+    ? json.search_results.slice(0, 6).map((s) => ({
+        url: s.url,
+        title: s.title,
+        snippet: s.snippet?.slice(0, 240),
+      }))
+    : (json.citations ?? []).slice(0, 6).map((url) => ({ url }));
+
+  return { answer, sources, model };
+}
+
+// ─── OG chat agent (used by Telegram /ask + /swear) ─────────────────────────
+
 let _sb: ReturnType<typeof createClient> | null = null;
 function sb() {
   if (!_sb) {
