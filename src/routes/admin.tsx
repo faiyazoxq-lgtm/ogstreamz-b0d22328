@@ -18,7 +18,6 @@ import { spawnPortal, bossDeletePortal } from "@/lib/portals.functions";
 import { spawnMusicPortal } from "@/lib/music-portals.functions";
 import { createTrack } from "@/lib/tracks.functions";
 import { spawnTool } from "@/lib/tools.functions";
-import { spawnTradePortal } from "@/lib/trade.functions";
 import { spawnNewsPortal } from "@/lib/news.functions";
 import { generatePortalCinema } from "@/lib/cinema.functions";
 import { listBots, upsertBot, deleteBot, broadcastGlobalAlert, runSyndicateTickNow, getFleetStats, setSubscriberPlan, type Plan } from "@/lib/syndicate.functions";
@@ -280,7 +279,6 @@ function AdminPage() {
         <MusicSpawnerPanel />
         <TrackUploadPanel />
         <ToolSpawnerPanel />
-        <TradeSpawnerPanel />
       </div>
 
       <SectionHeader id="broadcast" icon={<MegaIcon className="h-4 w-4" />} label="Broadcast · Reach" tint="#00e08a" />
@@ -1140,10 +1138,6 @@ function CustomHubBuilderPanel() {
       </div>
     </section>
   );
-}
-
-function TradeSpawnerPanel() {
-  return _TradeSpawnerPanelImpl();
 }
 
 function NewsScoutSpawnerPanel() {
