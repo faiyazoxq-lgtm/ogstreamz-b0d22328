@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 const STORAGE_KEY = "ogs_reduced_motion"; // "on" | "off" | absent (= follow OS)
 const EVENT = "ogs:reduced-motion-change";
+const HTML_CLASS = "reduce-motion";
 
 function readPreference(): boolean {
   if (typeof window === "undefined") return false;
@@ -52,4 +53,18 @@ export function setReducedMotionMode(mode: ReducedMotionMode) {
     else localStorage.setItem(STORAGE_KEY, mode);
     window.dispatchEvent(new Event(EVENT));
   } catch { /* ignore */ }
+}
+
+/**
+ * Mounts once at the app root. Keeps `<html class="reduce-motion">` in sync
+ * with the resolved reduced-motion preference (OS setting OR manual override),
+ * so global CSS can disable animation/transitions app-wide — even on pages
+ * that don't render the toggle UI.
+ */
+export function useReducedMotionRootSync(): void {
+  const reduced = useReducedMotion();
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.documentElement.classList.toggle(HTML_CLASS, reduced);
+  }, [reduced]);
 }
