@@ -55,7 +55,7 @@ async function handleCommand(
   // --- Member self-service commands ---------------------------------------
   // /me /account /credits /unlink /msg <text> /help
   // All of these require the chat to already be linked to a profile.
-  if (/^\/(me|account|credits|unlink|msg|contact|boss)\b/i.test(trimmed)) {
+  if (/^\/(me|status|account|credits|unlink|msg|contact|boss)\b/i.test(trimmed)) {
     const sb = getSupabase() as any;
     const { data: link } = await sb
       .from("telegram_user_links")
@@ -70,7 +70,7 @@ async function handleCommand(
       return;
     }
 
-    if (/^\/(me|account|credits)\b/i.test(trimmed)) {
+    if (/^\/(me|status|account|credits)\b/i.test(trimmed)) {
       const { data: prof } = await sb
         .from("profiles")
         .select("email,display_name,status,rank,credits,stream_status,stream_expires_at")
@@ -91,7 +91,7 @@ async function handleCommand(
           (prof.rank ? ` · ${escapeHtml(prof.rank)}` : "") +
           `\n💰 Credits: <b>${Number(prof.credits ?? 0)}</b>\n` +
           `📺 Stream: ${escapeHtml(prof.stream_status || "none")} · expires ${exp}\n\n` +
-          `Commands: /me · /msg &lt;text&gt; · /unlink · /help`,
+          `Commands: /me · /status · /msg &lt;text&gt; · /unlink · /help`,
       );
       return;
     }
@@ -159,6 +159,7 @@ async function handleCommand(
         "Available commands:\n" +
           "<code>/link CODE</code> — bind this chat to your account\n" +
           "<code>/me</code> — show your account status & credits\n" +
+          "<code>/status</code> — alias of /me\n" +
           "<code>/msg TEXT</code> — message the OG-Streamz team\n" +
           "<code>/unlink</code> — disconnect this chat\n\n" +
           "Get your code at <b>/account/passes</b>.",
@@ -292,6 +293,7 @@ async function handleWelcomeCallback(cb: any): Promise<void> {
       chatId,
       "<b>OG-Streamz commands</b>\n" +
         "<code>/me</code> — account &amp; credits\n" +
+        "<code>/status</code> — alias of /me\n" +
         "<code>/msg TEXT</code> — message the team\n" +
         "<code>/unlink</code> — disconnect this chat\n" +
         "<code>/start</code> — re-show the welcome card\n\n" +
