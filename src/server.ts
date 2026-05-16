@@ -3,6 +3,39 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 
+// ---------------------------------------------------------------------------
+// Startup secret check
+//
+// Runs once on Worker cold start. Warns loudly if any required secret is
+// missing so a deploy doesn't silently serve broken functionality (Stripe
+// checkout, admin DB writes, Telegram). Never throws — a missing secret
+// must not take the whole site down.
+// ---------------------------------------------------------------------------
+const REQUIRED_SECRETS = [
+  "STRIPE_SECRET_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "TELEGRAM_API_KEY",
+] as const;
+
+let secretCheckRan = false;
+function checkRequiredSecretsOnce() {
+  if (secretCheckRan) return;
+  secretCheckRan = true;
+  const missing = REQUIRED_SECRETS.filter((name) => {
+    const v = process.env[name];
+    return v === undefined || v === null || v === "";
+  });
+  if (missing.length === 0) return;
+  for (const name of missing) {
+    console.error(
+      `[startup] MISSING REQUIRED SECRET: ${name} — features depending on it will fail at runtime.`,
+    );
+  }
+  console.error(
+    `[startup] ${missing.length} required secret(s) missing: ${missing.join(", ")}`,
+  );
+}
+
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
@@ -68,6 +101,7 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    checkRequiredSecretsOnce();
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
