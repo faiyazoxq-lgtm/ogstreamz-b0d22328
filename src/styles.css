@@ -1,4 +1,28 @@
 @import "tailwindcss" source(none);
+
+/* ------------------------------------------------------------------
+ * Reduced-motion global override
+ *
+ * Mirrors the `prefers-reduced-motion: reduce` media query when the user
+ * has manually forced reduced motion via the in-app toggle (which sets
+ * `html.reduce-motion`). This kills CSS animations, transitions, and
+ * smooth scrolling app-wide so the preference applies on every page —
+ * even pages where the toggle UI isn't rendered.
+ *
+ * Components that read JS state (useReducedMotion) already handle this
+ * separately; this block covers the long tail of CSS-driven motion.
+ * ------------------------------------------------------------------ */
+html.reduce-motion,
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  transition-delay: 0ms !important;
+  scroll-behavior: auto !important;
+}
 @source "../src";
 @import "tw-animate-css";
 
