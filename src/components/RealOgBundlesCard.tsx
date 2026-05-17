@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Crown, Coins, Flame, Sparkles, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
+import { isVipProfile } from "@/lib/roles";
 import { REAL_OG_BUNDLES, bundleSavingsCents, type RealOgBundle } from "@/lib/real-og-bundles";
 import { RealOgBundleCheckout } from "@/components/RealOgBundleCheckout";
 

@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
+import { isVipProfile } from "@/lib/roles";
 import { toast } from "sonner";
 import { createPortalUnlockCheckout, getPortalUnlockStatus } from "@/lib/portals.functions";
 import { chargePortalUse } from "@/lib/portal-use.functions";

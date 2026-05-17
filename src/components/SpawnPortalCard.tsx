@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { spawnPortal } from "@/lib/portals.functions";
 import { describePortal } from "@/lib/portal-describe.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile } from "@/lib/roles";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { OGBotDraftPanel } from "@/components/og-bot/OGBotDraftPanel";
 

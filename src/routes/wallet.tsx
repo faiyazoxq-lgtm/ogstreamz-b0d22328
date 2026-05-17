@@ -7,6 +7,7 @@ import { CoinActivity } from "@/components/CoinActivity";
 import { CoinTopUpModal } from "@/components/CoinTopUpModal";
 import { requireMember, redirectBossAway } from "@/lib/route-guards";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile } from "@/lib/roles";
 
 export const Route = createFileRoute("/wallet")({
   beforeLoad: async (ctx) => {

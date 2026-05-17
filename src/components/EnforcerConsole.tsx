@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Terminal, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile } from "@/lib/roles";
 import { useGlobalMood } from "@/hooks/use-global-mood";
 import { SkeletonShimmer } from "./SkeletonShimmer";
 

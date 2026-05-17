@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Crown, Coins, LogOut, Shield, Sparkles, Zap, Flame, Skull, Settings, Heart, Send, Pencil, Check, X, Infinity as InfinityIcon, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile, isVipProfile } from "@/lib/roles";
 import { FlameBackdrop } from "@/components/FlameBackdrop";
 import { CREDIT_PACK_LIST } from "@/lib/credit-packs";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";

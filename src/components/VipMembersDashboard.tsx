@@ -9,6 +9,7 @@ import {
   RefreshCw, AlertTriangle, ExternalLink, Loader2, CheckCircle2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile, isVipProfile } from "@/lib/roles";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PlanChip, StatusBadge } from "@/components/SubscriptionBadges";
 import { VipReferralCard } from "@/components/VipReferralCard";

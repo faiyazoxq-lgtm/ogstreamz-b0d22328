@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, Radio, LineChart, Sparkles, Crown, Cpu, Rocket } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile } from "@/lib/roles";
 
 const ITEMS = [
   { to: "/", label: "Home", icon: Home },

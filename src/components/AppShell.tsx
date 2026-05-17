@@ -9,6 +9,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile, isVipProfile } from "@/lib/roles";
 import { supabase } from "@/integrations/supabase/client";
 import { OgWordmark } from "@/components/OgWordmark";
 import { AnimatedCredits } from "@/components/AnimatedCredits";

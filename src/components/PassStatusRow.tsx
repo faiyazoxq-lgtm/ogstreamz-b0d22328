@@ -14,6 +14,7 @@ import {
 import { Link } from "@tanstack/react-router";
 import { OgPassBadge } from "@/components/OgPassBadge";
 import { socialToUrl } from "@/lib/social-handles";
+import { isBossProfile, isVipProfile } from "@/lib/roles";
 
 type ContactCard = Record<string, string | null | undefined> | null | undefined;
 

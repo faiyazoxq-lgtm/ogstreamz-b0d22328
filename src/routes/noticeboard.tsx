@@ -4,6 +4,7 @@ import {
   Download, Zap, Radio, Star, ShieldCheck, Music, ArrowRight, Eye,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { isVipProfile } from "@/lib/roles";
 
 export const Route = createFileRoute("/noticeboard")({
   head: () => ({

@@ -2,6 +2,7 @@ import { type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { Crown, Lock, Bot, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile, isVipProfile } from "@/lib/roles";
 import { SiteGuideSwearChat } from "@/components/SiteGuideSwearChat";
 
 /**

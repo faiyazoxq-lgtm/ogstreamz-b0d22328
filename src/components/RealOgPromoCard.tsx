@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Crown, Sparkles, Check, ShieldCheck, Infinity as InfinityIcon, Zap, Flame } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
+import { isVipProfile } from "@/lib/roles";
 import { RealOgCheckout } from "@/components/RealOgCheckout";
 
 /**

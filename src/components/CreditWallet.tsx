@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Coins, Plus, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile } from "@/lib/roles";
 import { Button } from "@/components/ui/button";
 
 /**
