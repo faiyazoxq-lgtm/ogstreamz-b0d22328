@@ -64,9 +64,9 @@ export const listVaultCredentials = createServerFn({ method: "GET" })
   .middleware([requireBoss])
   .handler(async ({ context }): Promise<VaultCredentialRow[]> => {
     // Plain-text username/password are no longer stored — fetch via the
-    // Boss-only RPC that decrypts on the server. Admin client used because
-    // boss_* functions revoke EXECUTE from authenticated.
-    const { data, error } = await supabaseAdmin.rpc("boss_list_vault_credentials");
+    // Boss-only RPC that decrypts on the server with the signed-in user context.
+    const { supabase } = context as { supabase: any };
+    const { data, error } = await supabase.rpc("boss_list_vault_credentials");
     if (error) throw new Error(error.message);
     return (data ?? []) as VaultCredentialRow[];
   });
@@ -90,7 +90,8 @@ export const upsertVaultCredential = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     if (!data.username || !data.password) throw new Error("Username and password required");
-    const { data: id, error } = await (supabaseAdmin as any).rpc("boss_upsert_vault_credential", {
+    const { supabase } = context as { supabase: any };
+    const { data: id, error } = await supabase.rpc("boss_upsert_vault_credential", {
       _id: data.id,
       _label: data.label,
       _username: data.username,
@@ -106,7 +107,8 @@ export const deleteVaultCredential = createServerFn({ method: "POST" })
   .middleware([requireBoss])
   .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
   .handler(async ({ data, context }) => {
-    const { error } = await supabaseAdmin.rpc("boss_delete_vault_credential", { _id: data.id });
+    const { supabase } = context as { supabase: any };
+    const { error } = await supabase.rpc("boss_delete_vault_credential", { _id: data.id });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
