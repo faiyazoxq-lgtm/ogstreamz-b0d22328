@@ -1,3 +1,5 @@
+import { isVipProfileWithPass, isStreamProfile } from "@/lib/roles";
+
 /**
  * Server-side VIP gate. Use inside any `createServerFn` whose UI is paywalled
  * so a non-VIP cannot bypass the front-end gate by calling the function
@@ -42,11 +44,8 @@ export async function assertVipAccess(
 
   const profile = profileRes?.data ?? null;
   const isAdmin = !!roleRes?.data;
-  const isBoss = profile?.rank === "boss";
-  const isVipProfile = profile?.status === "vip" || profile?.rank === "vip";
   const hasActivePass = !!passRes?.data;
-
-  if (isAdmin || isBoss || isVipProfile || hasActivePass) return;
+  if (isVipProfileWithPass(profile, { isAdmin, hasActivePass })) return;
 
   throw new Error(
     `VIP membership required for ${feature}. Visit the store to unlock — your credit was not charged.`,
@@ -77,14 +76,8 @@ export async function assertUsageAccess(
   if (profile?.banned) throw new Error("Account suspended.");
 
   const isAdmin = !!roleRes?.data;
-  const rank = profile?.rank as string | undefined;
   const allowed =
-    isAdmin ||
-    rank === "boss" ||
-    rank === "vip" ||
-    rank === "stream_user" ||
-    profile?.status === "vip" ||
-    !!passRes?.data;
+    isStreamProfile(profile, { isAdmin }) || !!passRes?.data;
 
   if (!allowed) {
     throw new Error(
