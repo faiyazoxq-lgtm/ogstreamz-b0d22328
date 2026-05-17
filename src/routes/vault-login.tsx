@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
+import { isVipProfile } from "@/lib/roles";
 import { OgWordmark } from "@/components/OgWordmark";
 
 export const Route = createFileRoute("/vault-login")({
@@ -23,12 +24,7 @@ export const Route = createFileRoute("/vault-login")({
 function VaultLoginPage() {
   const navigate = useNavigate();
   const { user, profile, isAdmin } = useAuth();
-  const isVip =
-    isAdmin ||
-    profile?.status === "vip" ||
-    profile?.rank === "vip" ||
-    profile?.rank === "boss" ||
-    profile?.feature_flags?.real_og === true;
+  const isVip = isVipProfile(profile, { isAdmin });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);

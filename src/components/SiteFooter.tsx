@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { OgWordmark } from "@/components/OgWordmark";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile, isVipProfile } from "@/lib/roles";
 
 /**
  * Public footer — gives every visitor (signed in or not) a clear,
@@ -14,13 +15,8 @@ import { useAuth } from "@/hooks/use-auth";
 export function SiteFooter() {
   const year = new Date().getFullYear();
   const { profile, isAdmin } = useAuth();
-  const isBoss = isAdmin;
-  const isVip =
-    isAdmin ||
-    profile?.status === "vip" ||
-    profile?.rank === "vip" ||
-    profile?.rank === "boss" ||
-    profile?.feature_flags?.real_og === true;
+  const isBoss = isBossProfile(profile, { isAdmin });
+  const isVip = isVipProfile(profile, { isAdmin });
   const allGroups = [
     {
       title: "Hubs",

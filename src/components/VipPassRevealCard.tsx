@@ -6,6 +6,7 @@ import { toPng } from "html-to-image";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { isVipProfile } from "@/lib/roles";
 import { supabase } from "@/integrations/supabase/client";
 import { revealVipPass, type VipPassRevealResult } from "@/lib/vip-pass-pool.functions";
 import { trackReferralEvent } from "@/lib/track-referral";
@@ -17,13 +18,7 @@ export function VipPassRevealCard() {
   const { user, profile } = useAuth();
   const reveal = useServerFn(revealVipPass);
 
-  const isVip =
-    !!profile && (
-      profile.status === "vip" ||
-      profile.rank === "vip" ||
-      profile.rank === "boss" ||
-      !!(profile.feature_flags as any)?.real_og
-    );
+  const isVip = isVipProfile(profile);
 
   const [data, setData] = useState<VipPassRevealResult | null>(null);
   const [loading, setLoading] = useState(false);

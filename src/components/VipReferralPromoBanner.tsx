@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Crown, Gift, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { isVipProfile } from "@/lib/roles";
 
 /**
  * Top-of-page promo banner shown ONLY to VIP / Real OG members.
@@ -21,12 +22,7 @@ export function VipReferralPromoBanner() {
     } catch { /* noop */ }
   }, []);
 
-  const isVip =
-    isAdmin ||
-    profile?.status === "vip" ||
-    profile?.rank === "vip" ||
-    profile?.rank === "boss" ||
-    profile?.feature_flags?.real_og === true;
+  const isVip = isVipProfile(profile, { isAdmin });
 
   // VIP-only banner. Hidden on auth, the dashboard pages where the
   // referral card already renders, checkout, and form flows.

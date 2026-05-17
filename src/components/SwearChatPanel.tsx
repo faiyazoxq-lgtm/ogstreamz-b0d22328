@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { swearChat } from "@/lib/swear-chat.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile, isVipProfile } from "@/lib/roles";
 import { toast } from "sonner";
 import { Send, Skull, Loader2 } from "lucide-react";
 
@@ -21,13 +22,10 @@ export function SwearChatPanel({
   accent?: string;
 }) {
   const { profile } = useAuth();
-  const isBoss = profile?.rank === "boss";
+  const isBoss = isBossProfile(profile);
   // Server-side gate is `has_active_vip` (VIP / paid tier only). Mirror that
   // here to avoid letting free users send a message that will just 403.
-  const isPaid =
-    profile?.status === "vip" ||
-    profile?.rank === "vip" ||
-    profile?.rank === "boss";
+  const isPaid = isVipProfile(profile);
   const on = enabled;
   const [sending, setSending] = useState(false);
   const [draft, setDraft] = useState("");
