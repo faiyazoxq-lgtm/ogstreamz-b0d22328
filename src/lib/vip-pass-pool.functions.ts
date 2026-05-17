@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireStrictAuth } from "@/lib/strict-auth";
 import { requireBoss } from "@/integrations/supabase/boss-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type VipPassRevealResult =
   | {
@@ -41,7 +40,8 @@ export type VipPassPoolRow = {
 export const listVipPassPool = createServerFn({ method: "GET" })
   .middleware([requireBoss])
   .handler(async ({ context }): Promise<VipPassPoolRow[]> => {
-    const { data, error } = await supabaseAdmin.rpc("boss_list_vip_pass_pool");
+    const { supabase } = context as { supabase: any };
+    const { data, error } = await supabase.rpc("boss_list_vip_pass_pool");
     if (error) throw new Error(error.message);
     return (data ?? []) as VipPassPoolRow[];
   });
@@ -71,7 +71,8 @@ export const upsertVipPassPool = createServerFn({ method: "POST" })
     if (!hasCode && !hasCred) {
       throw new Error("Provide a code OR a username and password");
     }
-    const { data: id, error } = await (supabaseAdmin as any).rpc("boss_upsert_vip_pass_pool", {
+    const { supabase } = context as { supabase: any };
+    const { data: id, error } = await supabase.rpc("boss_upsert_vip_pass_pool", {
       _id: data.id,
       _label: data.label,
       _code: data.code,
@@ -88,7 +89,8 @@ export const deleteVipPassPool = createServerFn({ method: "POST" })
   .middleware([requireBoss])
   .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
   .handler(async ({ data, context }) => {
-    const { error } = await supabaseAdmin.rpc("boss_delete_vip_pass_pool", { _id: data.id });
+    const { supabase } = context as { supabase: any };
+    const { error } = await supabase.rpc("boss_delete_vip_pass_pool", { _id: data.id });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
