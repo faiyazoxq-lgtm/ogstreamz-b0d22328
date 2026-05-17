@@ -185,7 +185,7 @@ function PortalPage() {
   }, [headingFont, bodyFont, portal.slug]);
 
   const { user, profile } = useAuth();
-  const isVipMember = profile?.rank === "vip" || profile?.rank === "boss";
+  const isVipMember = isVipProfile(profile);
   const tg = portal.telegram_config ?? {};
   const groupLink = tg.groupLink || (tg.botUsername ? `https://t.me/${tg.botUsername}` : null);
   const vipLink = tg.vipLink || null;
@@ -766,7 +766,7 @@ function NewsHubView({ portal }: { portal: Portal }) {
   const bodyFont: string = T?.fontPair?.body || "JetBrains Mono";
 
   const { user, profile } = useAuth();
-  const isVip = profile?.rank === "vip" || profile?.rank === "boss";
+  const isVip = isVipProfile(profile);
   const checkoutFn = useServerFn(createPortalUnlockCheckout);
   const statusFn = useServerFn(getPortalUnlockStatus);
   const refreshFn = useServerFn(refreshNewsScout);

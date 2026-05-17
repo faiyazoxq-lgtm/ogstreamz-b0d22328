@@ -19,8 +19,8 @@ export function NonVipFormGate({
   label?: string;
 }) {
   const { user, profile, isAdmin } = useAuth();
-  const isBoss = isAdmin;
-  const isVip = isBoss || profile?.status === "vip";
+  const isBoss = isBossProfile(profile, { isAdmin });
+  const isVip = isVipProfile(profile, { isAdmin });
   if (isVip) return <>{children}</>;
 
   return (

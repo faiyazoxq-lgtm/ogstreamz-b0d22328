@@ -14,10 +14,7 @@ export function RealOgBundlesCard() {
   const { user, profile } = useAuth();
   const [openSku, setOpenSku] = useState<string | null>(null);
 
-  const isRealOg =
-    profile?.feature_flags?.real_og === true ||
-    profile?.rank === "boss" ||
-    profile?.rank === "vip";
+  const isRealOg = isVipProfile(profile);
 
   if (isRealOg) return null;
 

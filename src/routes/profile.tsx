@@ -88,8 +88,8 @@ function ProfilePage() {
     return <main className="px-5 py-20 text-center text-muted-foreground">Loading vault…</main>;
   }
 
-  const isVip = profile?.status === "vip";
-  const isBoss = profile?.rank === "boss";
+  const isVip = isVipProfile(profile);
+  const isBoss = isBossProfile(profile);
   const isFriendsFamily =
     isBoss || ((profile as any)?.feature_flags?.friends_family === true);
   const credits = profile?.credits ?? 0;

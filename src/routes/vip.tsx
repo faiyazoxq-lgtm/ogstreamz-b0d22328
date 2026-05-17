@@ -87,7 +87,7 @@ const TESTIMONIALS = [
 
 function VipPage() {
   const { user, profile, isAdmin } = useAuth();
-  const isVip = isAdmin || profile?.status === "vip";
+  const isVip = isVipProfile(profile, { isAdmin });
   const search = Route.useSearch();
   const [plan, setPlan] = useState<"vip_monthly" | "vip_yearly">("vip_yearly");
   const [clientSecret, setClientSecret] = useState<string | null>(null);

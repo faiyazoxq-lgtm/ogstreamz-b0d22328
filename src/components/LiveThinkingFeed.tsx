@@ -19,7 +19,7 @@ export function LiveThinkingFeed() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [open, setOpen] = useState(true);
 
-  const isBoss = profile?.rank === "boss";
+  const isBoss = isBossProfile(profile);
 
   useEffect(() => {
     if (!isBoss) return;

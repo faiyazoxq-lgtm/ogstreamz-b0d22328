@@ -56,7 +56,7 @@ const PROMPTS: Prompt[] = [
 
 function ToolPromptBuilder() {
   const { user, profile, isAdmin } = useAuth();
-  const isVip = profile?.status === "vip" || isAdmin;
+  const isVip = isVipProfile(profile, { isAdmin });
   const navigate = useNavigate();
   const spawnFn = useServerFn(spawnTool);
 

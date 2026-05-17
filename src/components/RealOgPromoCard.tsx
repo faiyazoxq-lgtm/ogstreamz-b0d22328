@@ -15,10 +15,7 @@ export function RealOgPromoCard() {
   const { user, profile } = useAuth();
   const [open, setOpen] = useState(false);
 
-  const isRealOg =
-    profile?.feature_flags?.real_og === true ||
-    profile?.rank === "boss" ||
-    profile?.rank === "vip";
+  const isRealOg = isVipProfile(profile);
 
   return (
     <section className="relative max-w-5xl mx-auto px-5 sm:px-8 -mt-2 pb-12">

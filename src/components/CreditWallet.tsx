@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
  */
 export function CreditWallet({ className }: { className?: string }) {
   const { user, profile, loading, hasStoredSession } = useAuth();
-  const isBoss = profile?.rank === "boss";
+  const isBoss = isBossProfile(profile);
 
   // Don't flash the unauthed state while a stored session is being restored
   if (!user && (loading || hasStoredSession)) {

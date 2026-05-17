@@ -22,7 +22,7 @@ type LogRow = {
  */
 export function EnforcerConsole() {
   const { profile, isAdmin, loading } = useAuth();
-  const isBoss = profile?.rank === "boss" || isAdmin;
+  const isBoss = isBossProfile(profile, { isAdmin });
   const { mood } = useGlobalMood();
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<LogRow[]>([]);

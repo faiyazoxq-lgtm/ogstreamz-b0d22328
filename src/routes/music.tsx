@@ -53,7 +53,7 @@ const PROMPTS: Prompt[] = [
 
 function MusicPromptBuilder() {
   const { user, profile, isAdmin } = useAuth();
-  const isVip = profile?.status === "vip" || isAdmin;
+  const isVip = isVipProfile(profile, { isAdmin });
   const navigate = useNavigate();
   const spawnFn = useServerFn(spawnMusicPortal);
 

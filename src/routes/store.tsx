@@ -65,7 +65,7 @@ function StorePage() {
   const [catalog, setCatalog] = useState<CatalogPreview[]>([]);
   const [loadingCatalog, setLoadingCatalog] = useState(true);
 
-  const isBoss = profile?.rank === "boss";
+  const isBoss = isBossProfile(profile);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
@@ -113,7 +113,7 @@ function StorePage() {
   }
 
   const credits = profile?.credits ?? 0;
-  const isVip = profile?.status === "vip";
+  const isVip = isVipProfile(profile);
   const songs = creditsPerSong > 0 ? Math.floor(credits / creditsPerSong) : 0;
   const pct = Math.max(2, Math.min(100, (credits / 100) * 100));
 

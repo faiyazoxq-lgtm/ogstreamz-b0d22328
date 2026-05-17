@@ -52,7 +52,7 @@ function fmtDate(iso: string) {
 
 function NoticeboardPage() {
   const { user, profile, isAdmin } = useAuth();
-  const isVip = isAdmin || profile?.status === "vip";
+  const isVip = isVipProfile(profile, { isAdmin });
 
   const sorted = [...PERKS].sort((a, b) => b.added.localeCompare(a.added));
   const latest = sorted.slice(0, 3);

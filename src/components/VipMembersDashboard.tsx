@@ -23,8 +23,8 @@ import { OgPassBadge } from "@/components/OgPassBadge";
  */
 export function VipMembersDashboard() {
   const { user, profile, isAdmin } = useAuth();
-  const isBoss = isAdmin;
-  const isVip = isBoss || profile?.status === "vip";
+  const isBoss = isBossProfile(profile, { isAdmin });
+  const isVip = isVipProfile(profile, { isAdmin });
   const { sub, planLabel, renewalExact, timezone } = useSubscription({
     userId: user?.id ?? null,
   });

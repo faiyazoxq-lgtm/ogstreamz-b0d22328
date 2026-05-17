@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export function MusicHubBalance({ className }: { className?: string }) {
   const { user, profile, loading, hasStoredSession, refresh } = useAuth();
-  const isBoss = profile?.rank === "boss";
+  const isBoss = isBossProfile(profile);
 
   const [liveCredits, setLiveCredits] = useState<number | null>(null);
   const [delta, setDelta] = useState<{ value: number; reason: string | null; key: number } | null>(null);
