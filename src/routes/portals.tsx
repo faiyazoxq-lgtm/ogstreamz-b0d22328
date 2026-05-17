@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 import { requireMember } from "@/lib/route-guards";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile, isVipProfile } from "@/lib/roles";
 import ogBotAvatar from "@/assets/og-streamz-wallpaper.png";
 
 type PortalRow = {
