@@ -336,9 +336,20 @@ function WelcomePage() {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               {signedIn ? "Welcome back" : "Welcome"}
             </p>
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              {signedIn ? "Finish wiring up your account" : "Login / sign up"}
-            </h1>
+            {signedIn ? (
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                Finish wiring up your account
+              </h1>
+            ) : (
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                <Link
+                  to="/auth"
+                  className="text-primary underline-offset-4 hover:underline focus-visible:underline"
+                >
+                  Login / sign up
+                </Link>
+              </h1>
+            )}
             <p className="mx-auto max-w-xl text-sm text-muted-foreground sm:text-base">
               {signedIn
                 ? "Each step below disappears once it's connected. When the list is empty, you're fully wired in."
