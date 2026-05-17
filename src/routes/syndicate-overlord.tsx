@@ -29,7 +29,6 @@ import {
 } from "@/lib/overlord.functions";
 import { bossListResellers, bossCreateReseller, bossTopupReseller } from "@/lib/reseller.functions";
 import { PassShareCardPanel } from "@/components/overlord/PassShareCardPanel";
-import { VaultCredentialsAdmin } from "@/components/boss/VaultCredentialsAdmin";
 import { VipPassPoolAdmin } from "@/components/boss/VipPassPoolAdmin";
 import { VipNotificationsAdmin } from "@/components/boss/VipNotificationsAdmin";
 import { BossAnnouncementButton } from "@/components/boss/BossAnnouncementButton";
@@ -304,11 +303,7 @@ function OverlordPage() {
                 actions: [],
               },
               {
-                v: "vault", icon: Lock, label: "0G-VAULT Pool",
-                actions: [],
-              },
-              {
-                v: "vippool", icon: Crown, label: "VIP Pass Pool",
+                v: "vippool", icon: Crown, label: "VIP Vault Passes",
                 actions: [],
               },
               {
@@ -493,7 +488,6 @@ function OverlordPage() {
           <TabsContent value="store" className="mt-4"><StoreProductsPanel /></TabsContent>
           <TabsContent value="resellers" className="mt-4"><ResellerAdminPanel rows={rows} /></TabsContent>
           <TabsContent value="share" className="mt-4"><PassShareCardPanel /></TabsContent>
-          <TabsContent value="vault" className="mt-4"><VaultCredentialsAdmin /></TabsContent>
           <TabsContent value="vippool" className="mt-4"><VipPassPoolAdmin /></TabsContent>
           <TabsContent value="comms" className="mt-4"><VipNotificationsAdmin rows={rows} /></TabsContent>
         </Tabs>
