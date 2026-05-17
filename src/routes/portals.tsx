@@ -187,11 +187,10 @@ export const Route = createFileRoute("/portals")({
 
 function PortalsHub() {
   const { user, isAdmin, profile } = useAuth();
-  const isBoss = isAdmin || profile?.rank === "boss";
+  const isBoss = isBossProfile(profile, { isAdmin });
   // VIPs already know MusicHUB inside-out — suppress the OG BoT empty-state
   // nudge for the `music` kind so it stops cluttering their Portals page.
-  const isVip =
-    isBoss || profile?.rank === "vip" || profile?.status === "vip";
+  const isVip = isVipProfile(profile, { isAdmin });
   const [items, setItems] = useState<Item[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Filter / scope / search query are persisted in the URL via validateSearch
