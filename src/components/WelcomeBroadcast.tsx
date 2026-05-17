@@ -69,18 +69,17 @@ export function WelcomeBroadcast({
           Sign Up Free
         </Link>
 
-        <Link
-          to="/auth"
-          className="block w-full py-2 text-xs font-bold uppercase tracking-[0.25em] text-white/70 transition-colors hover:text-white"
-        >
+        <div className="w-full py-2 text-center text-xs font-bold uppercase tracking-[0.25em] text-white/70">
           <span className="opacity-60">Already a Legend?</span>{" "}
-          <span
-            className="ml-1 underline underline-offset-4 decoration-1"
+          <Link
+            to="/auth"
+            search={{ mode: "login" } as never}
+            className="ml-1 inline-block underline underline-offset-4 decoration-1 transition-colors hover:text-white"
             style={{ color: "var(--gold, #f4c869)" }}
           >
             Log In
-          </span>
-        </Link>
+          </Link>
+        </div>
 
         {/* Micro social proof */}
         <div className="mt-4 flex flex-col items-center gap-2.5">
