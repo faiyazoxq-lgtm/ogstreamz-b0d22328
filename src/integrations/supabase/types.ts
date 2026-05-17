@@ -4588,29 +4588,18 @@ export type Database = {
         }
         Returns: string
       }
-      boss_upsert_vip_pass_pool:
-        | {
-            Args: {
-              _active: boolean
-              _code: string
-              _id: string
-              _label: string
-              _sort_order: number
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              _active: boolean
-              _code: string
-              _id: string
-              _label: string
-              _password?: string
-              _sort_order: number
-              _username?: string
-            }
-            Returns: string
-          }
+      boss_upsert_vip_pass_pool: {
+        Args: {
+          _active: boolean
+          _code: string
+          _id: string
+          _label: string
+          _password?: string
+          _sort_order: number
+          _username?: string
+        }
+        Returns: string
+      }
       bot_factory_create: {
         Args: {
           p_asset_class: string

@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.boss_upsert_vip_pass_pool(uuid, text, text, boolean, integer);
