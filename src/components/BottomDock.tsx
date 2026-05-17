@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, Radio, LineChart, Sparkles, Crown, Cpu, Rocket } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile } from "@/lib/roles";
 
 const ITEMS = [
   { to: "/", label: "Home", icon: Home },
@@ -13,7 +14,7 @@ const ITEMS = [
 export function BottomDock() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { profile } = useAuth();
-  const isBoss = profile?.rank === "boss";
+  const isBoss = isBossProfile(profile);
 
   // Hide on admin/auth screens to keep them clean
   if (pathname.startsWith("/login") || pathname.startsWith("/signup")) return null;

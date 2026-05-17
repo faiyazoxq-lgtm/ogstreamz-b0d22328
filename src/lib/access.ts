@@ -1,4 +1,5 @@
 import { useAuth, type SyndicateRank } from "@/hooks/use-auth";
+import { isBossProfile, isStreamProfile, isVipProfile } from "@/lib/roles";
 
 /**
  * Role / access tiers for the OGSTREAMZ access ladder.
@@ -26,9 +27,10 @@ export function tierFor(opts: {
 }): AccessTier {
   if (!opts.signedIn) return "visitor";
   if (opts.banned) return "visitor"; // banned users get marketing only
-  if (opts.isAdmin || opts.rank === "boss") return "boss";
-  if (opts.rank === "vip" || opts.status === "vip") return "vip";
-  if (opts.rank === "stream_user") return "stream";
+  const profile = { rank: opts.rank ?? null, status: opts.status ?? null };
+  if (isBossProfile(profile, { isAdmin: opts.isAdmin })) return "boss";
+  if (isVipProfile(profile, { isAdmin: opts.isAdmin })) return "vip";
+  if (isStreamProfile(profile, { isAdmin: opts.isAdmin })) return "stream";
   return "member";
 }
 

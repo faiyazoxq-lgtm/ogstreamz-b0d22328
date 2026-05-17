@@ -9,6 +9,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile, isVipProfile } from "@/lib/roles";
 import { supabase } from "@/integrations/supabase/client";
 import { OgWordmark } from "@/components/OgWordmark";
 import { AnimatedCredits } from "@/components/AnimatedCredits";
@@ -679,8 +680,8 @@ const COLLAPSE_KEY = "ogp:sidebar:collapsed";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, profile, isAdmin, loading } = useAuth();
-  const isBoss = isAdmin;
-  const isVip = !isBoss && profile?.status === "vip";
+  const isBoss = isBossProfile(profile, { isAdmin });
+  const isVip = !isBoss && isVipProfile(profile, { isAdmin });
   const portals = useNavPortals();
   const visibleHubs = HUBS.filter((h) => !h.bossOnly || isBoss);
 

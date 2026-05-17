@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Brain, ChevronDown, ChevronUp } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile } from "@/lib/roles";
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalMood } from "@/hooks/use-global-mood";
 
@@ -19,7 +20,7 @@ export function LiveThinkingFeed() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [open, setOpen] = useState(true);
 
-  const isBoss = profile?.rank === "boss";
+  const isBoss = isBossProfile(profile);
 
   useEffect(() => {
     if (!isBoss) return;

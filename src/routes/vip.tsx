@@ -13,6 +13,7 @@ import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { createCheckoutSession } from "@/lib/payments.functions";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { useAuth } from "@/hooks/use-auth";
+import { isVipProfile } from "@/lib/roles";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PlanChip, StatusBadge } from "@/components/SubscriptionBadges";
 import { VaultGuard } from "@/components/VaultGuard";
@@ -87,7 +88,7 @@ const TESTIMONIALS = [
 
 function VipPage() {
   const { user, profile, isAdmin } = useAuth();
-  const isVip = isAdmin || profile?.status === "vip";
+  const isVip = isVipProfile(profile, { isAdmin });
   const search = Route.useSearch();
   const [plan, setPlan] = useState<"vip_monthly" | "vip_yearly">("vip_yearly");
   const [clientSecret, setClientSecret] = useState<string | null>(null);

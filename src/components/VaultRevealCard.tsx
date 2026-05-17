@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { isVipProfile } from "@/lib/roles";
 import {
   revealVaultCredential,
   type VaultRevealResult,
@@ -19,13 +20,7 @@ export function VaultRevealCard() {
   const { user, profile } = useAuth();
   const reveal = useServerFn(revealVaultCredential);
 
-  const isRealOg =
-    !!profile && (
-      profile.status === "vip" ||
-      profile.rank === "vip" ||
-      profile.rank === "boss" ||
-      !!(profile.feature_flags as any)?.real_og
-    );
+  const isRealOg = isVipProfile(profile);
 
   const [data, setData] = useState<VaultRevealResult | null>(null);
   const [loading, setLoading] = useState(false);

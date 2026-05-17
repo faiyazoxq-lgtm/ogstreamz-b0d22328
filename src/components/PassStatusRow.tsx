@@ -14,6 +14,7 @@ import {
 import { Link } from "@tanstack/react-router";
 import { OgPassBadge } from "@/components/OgPassBadge";
 import { socialToUrl } from "@/lib/social-handles";
+import { isBossProfile, isVipProfile } from "@/lib/roles";
 
 type ContactCard = Record<string, string | null | undefined> | null | undefined;
 
@@ -135,8 +136,8 @@ export function PassStatusRow({
   showRank?: boolean;
 }) {
   if (!profile?.og_pass_no) return null;
-  const isVip = profile.status === "vip" || profile.rank === "boss";
-  const isBoss = profile.rank === "boss";
+  const isVip = isVipProfile(profile as any);
+  const isBoss = isBossProfile(profile as any);
   const streamActive = isStreamActive(profile);
   const credits = typeof profile.credits === "number" ? profile.credits : null;
   const contact = readContactCard(profile);

@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Crown, Coins, Flame, Sparkles, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
+import { isVipProfile } from "@/lib/roles";
 import { REAL_OG_BUNDLES, bundleSavingsCents, type RealOgBundle } from "@/lib/real-og-bundles";
 import { RealOgBundleCheckout } from "@/components/RealOgBundleCheckout";
 
@@ -14,10 +15,7 @@ export function RealOgBundlesCard() {
   const { user, profile } = useAuth();
   const [openSku, setOpenSku] = useState<string | null>(null);
 
-  const isRealOg =
-    profile?.feature_flags?.real_og === true ||
-    profile?.rank === "boss" ||
-    profile?.rank === "vip";
+  const isRealOg = isVipProfile(profile);
 
   if (isRealOg) return null;
 

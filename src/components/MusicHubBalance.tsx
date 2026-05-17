@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Coins, Plus, Loader2, ArrowDownRight, ArrowUpRight, Gift, Sparkles, Crown, Infinity as InfinityIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile } from "@/lib/roles";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -15,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export function MusicHubBalance({ className }: { className?: string }) {
   const { user, profile, loading, hasStoredSession, refresh } = useAuth();
-  const isBoss = profile?.rank === "boss";
+  const isBoss = isBossProfile(profile);
 
   const [liveCredits, setLiveCredits] = useState<number | null>(null);
   const [delta, setDelta] = useState<{ value: number; reason: string | null; key: number } | null>(null);

@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { spawnPortal } from "@/lib/portals.functions";
 import { describePortal } from "@/lib/portal-describe.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile } from "@/lib/roles";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { OGBotDraftPanel } from "@/components/og-bot/OGBotDraftPanel";
 
@@ -36,7 +37,7 @@ export function SpawnPortalCard({ kind }: { kind: Kind }) {
   const { user, profile, isAdmin, refresh } = useAuth();
   // Portal generation is currently boss/admin-only. Members and VIPs can
   // browse portals freely but the "Spawn" panel is shown in a locked state.
-  const isBoss = isAdmin || profile?.rank === "boss";
+  const isBoss = isBossProfile(profile, { isAdmin });
   const spawn = useServerFn(spawnPortal);
   const describe = useServerFn(describePortal);
   const copy = COPY[kind];

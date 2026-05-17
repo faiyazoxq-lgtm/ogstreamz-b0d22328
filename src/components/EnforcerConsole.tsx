@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Terminal, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile } from "@/lib/roles";
 import { useGlobalMood } from "@/hooks/use-global-mood";
 import { SkeletonShimmer } from "./SkeletonShimmer";
 
@@ -22,7 +23,7 @@ type LogRow = {
  */
 export function EnforcerConsole() {
   const { profile, isAdmin, loading } = useAuth();
-  const isBoss = profile?.rank === "boss" || isAdmin;
+  const isBoss = isBossProfile(profile, { isAdmin });
   const { mood } = useGlobalMood();
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<LogRow[]>([]);

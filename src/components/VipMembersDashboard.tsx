@@ -9,6 +9,7 @@ import {
   RefreshCw, AlertTriangle, ExternalLink, Loader2, CheckCircle2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile, isVipProfile } from "@/lib/roles";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PlanChip, StatusBadge } from "@/components/SubscriptionBadges";
 import { VipReferralCard } from "@/components/VipReferralCard";
@@ -23,8 +24,8 @@ import { OgPassBadge } from "@/components/OgPassBadge";
  */
 export function VipMembersDashboard() {
   const { user, profile, isAdmin } = useAuth();
-  const isBoss = isAdmin;
-  const isVip = isBoss || profile?.status === "vip";
+  const isBoss = isBossProfile(profile, { isAdmin });
+  const isVip = isVipProfile(profile, { isAdmin });
   const { sub, planLabel, renewalExact, timezone } = useSubscription({
     userId: user?.id ?? null,
   });

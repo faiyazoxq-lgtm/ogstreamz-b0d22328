@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
+import { isVipProfile } from "@/lib/roles";
 import { spawnMusicPortal } from "@/lib/music-spawn.functions";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
 import { MusicHubBalance } from "@/components/MusicHubBalance";
@@ -53,7 +54,7 @@ const PROMPTS: Prompt[] = [
 
 function MusicPromptBuilder() {
   const { user, profile, isAdmin } = useAuth();
-  const isVip = profile?.status === "vip" || isAdmin;
+  const isVip = isVipProfile(profile, { isAdmin });
   const navigate = useNavigate();
   const spawnFn = useServerFn(spawnMusicPortal);
 

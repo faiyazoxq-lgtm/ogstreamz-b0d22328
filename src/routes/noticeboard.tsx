@@ -4,6 +4,7 @@ import {
   Download, Zap, Radio, Star, ShieldCheck, Music, ArrowRight, Eye,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { isVipProfile } from "@/lib/roles";
 
 export const Route = createFileRoute("/noticeboard")({
   head: () => ({
@@ -52,7 +53,7 @@ function fmtDate(iso: string) {
 
 function NoticeboardPage() {
   const { user, profile, isAdmin } = useAuth();
-  const isVip = isAdmin || profile?.status === "vip";
+  const isVip = isVipProfile(profile, { isAdmin });
 
   const sorted = [...PERKS].sort((a, b) => b.added.localeCompare(a.added));
   const latest = sorted.slice(0, 3);

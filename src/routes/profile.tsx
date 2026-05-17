@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Crown, Coins, LogOut, Shield, Sparkles, Zap, Flame, Skull, Settings, Heart, Send, Pencil, Check, X, Infinity as InfinityIcon, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile, isVipProfile } from "@/lib/roles";
 import { FlameBackdrop } from "@/components/FlameBackdrop";
 import { CREDIT_PACK_LIST } from "@/lib/credit-packs";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
@@ -88,8 +89,8 @@ function ProfilePage() {
     return <main className="px-5 py-20 text-center text-muted-foreground">Loading vault…</main>;
   }
 
-  const isVip = profile?.status === "vip";
-  const isBoss = profile?.rank === "boss";
+  const isVip = isVipProfile(profile);
+  const isBoss = isBossProfile(profile);
   const isFriendsFamily =
     isBoss || ((profile as any)?.feature_flags?.friends_family === true);
   const credits = profile?.credits ?? 0;

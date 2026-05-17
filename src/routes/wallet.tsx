@@ -7,6 +7,7 @@ import { CoinActivity } from "@/components/CoinActivity";
 import { CoinTopUpModal } from "@/components/CoinTopUpModal";
 import { requireMember, redirectBossAway } from "@/lib/route-guards";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile } from "@/lib/roles";
 
 export const Route = createFileRoute("/wallet")({
   beforeLoad: async (ctx) => {
@@ -35,7 +36,7 @@ export const Route = createFileRoute("/wallet")({
 function WalletPage() {
   const [topUpOpen, setTopUpOpen] = useState(false);
   const { profile } = useAuth();
-  const isBoss = profile?.rank === "boss";
+  const isBoss = isBossProfile(profile);
   const { topup, reason, need, from } = Route.useSearch();
   const insufficient = reason === "insufficient";
 

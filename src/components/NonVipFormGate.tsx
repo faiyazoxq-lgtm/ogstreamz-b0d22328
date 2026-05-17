@@ -2,6 +2,7 @@ import { type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { Crown, Lock, Bot, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { isBossProfile, isVipProfile } from "@/lib/roles";
 import { SiteGuideSwearChat } from "@/components/SiteGuideSwearChat";
 
 /**
@@ -19,8 +20,8 @@ export function NonVipFormGate({
   label?: string;
 }) {
   const { user, profile, isAdmin } = useAuth();
-  const isBoss = isAdmin;
-  const isVip = isBoss || profile?.status === "vip";
+  const isBoss = isBossProfile(profile, { isAdmin });
+  const isVip = isVipProfile(profile, { isAdmin });
   if (isVip) return <>{children}</>;
 
   return (

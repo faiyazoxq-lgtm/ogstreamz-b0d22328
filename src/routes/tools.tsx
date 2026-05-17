@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
+import { isVipProfile } from "@/lib/roles";
 import { supabase } from "@/integrations/supabase/client";
 import { spawnTool, type ToolAudience } from "@/lib/tools.functions";
 import { SpawnPortalCard } from "@/components/SpawnPortalCard";
@@ -56,7 +57,7 @@ const PROMPTS: Prompt[] = [
 
 function ToolPromptBuilder() {
   const { user, profile, isAdmin } = useAuth();
-  const isVip = profile?.status === "vip" || isAdmin;
+  const isVip = isVipProfile(profile, { isAdmin });
   const navigate = useNavigate();
   const spawnFn = useServerFn(spawnTool);
 
