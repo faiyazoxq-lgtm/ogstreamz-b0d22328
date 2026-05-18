@@ -17,7 +17,7 @@ export function WelcomeBroadcast({
   return (
     <section
       aria-label="Welcome to 0G-STREAMZ"
-      className="relative z-10 mx-auto flex min-h-[88vh] w-full max-w-[480px] flex-col items-center justify-between px-6 pt-10 pb-12 text-center"
+      className="relative z-10 mx-auto flex min-h-[88vh] w-full max-w-[480px] flex-col items-center justify-between px-4 pt-10 pb-12 text-center sm:px-6"
     >
       {/* Status header — broadcast frequency line */}
       <div className="flex w-full items-center opacity-50">
@@ -39,14 +39,20 @@ export function WelcomeBroadcast({
             className="absolute inset-0 -z-10 rounded-full opacity-30 blur-3xl"
             style={{ background: "oklch(0.72 0.22 245)" }}
           />
-          <h1 className="text-[6.5rem] sm:text-[9rem] leading-none">
+          <h1
+            className="leading-none whitespace-nowrap"
+            style={{ fontSize: "clamp(3rem, 18vw, 9rem)" }}
+          >
             <OgWordmark suffix="-STREAMZ" />
           </h1>
         </div>
 
         <p
-          className="max-w-[340px] text-xl sm:text-2xl font-light uppercase leading-snug tracking-wide text-white/90"
-          style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}
+          className="mx-auto w-full max-w-[18rem] sm:max-w-[22rem] font-light uppercase leading-snug tracking-wide text-white/90 [text-wrap:balance]"
+          style={{
+            textShadow: "0 1px 8px rgba(0,0,0,0.8)",
+            fontSize: "clamp(1rem, 4.5vw, 1.5rem)",
+          }}
         >
           The global{" "}
           <span className="font-bold" style={{ color: "var(--gold, #f4c869)" }}>
