@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { LayoutDashboard, Sparkles, Compass, ArrowRight, Send, CheckCircle2, Coins, Gift, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Sparkles, Compass, ArrowRight, Send, CheckCircle2, Coins, Gift, ShieldCheck, Tv, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.jpg";
 import { FlameBackdrop } from "@/components/FlameBackdrop";
 import { SiteGuideSwearChat } from "@/components/SiteGuideSwearChat";
@@ -14,13 +15,14 @@ import { useSignupBonus } from "@/hooks/use-signup-bonus";
 // ----- Configurable Welcome layout -----
 // Order of the bottom CTA stack. Sections auto-hide when their `connected`
 // predicate is true, so the page collapses as the user wires things up.
-type SectionId = "signin" | "telegram" | "verify_stream" | "stream_status" | "guide";
+type SectionId = "signin" | "telegram" | "verify_stream" | "stream_status" | "guide" | "streamz_profile";
 const WELCOME_LAYOUT: SectionId[] = [
   "signin",        // Sign-in / sign-up choice cards (hidden once signed in)
   "guide",         // Guttermouth guide (always shown)
   "telegram",      // Connect Telegram (hidden once linked)
   "verify_stream", // Verify Stream Access (hidden once stream tagged active)
   "stream_status", // Live status widget (hidden if nothing to show & not signed in)
+  "streamz_profile", // 0G STREAMZ profile card (signed-in only)
 ];
 
 export const Route = createFileRoute("/welcome")({
@@ -82,6 +84,25 @@ function WelcomePage() {
   const { user, profile } = useAuth();
   const fetchTgStatus = useServerFn(getTelegramLinkStatus);
   const [tgLinked, setTgLinked] = useState<boolean | null>(null);
+  const [streamUrl, setStreamUrl] = useState<string>("https://ogstreamz.co.uk");
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase
+      .from("store_settings")
+      .select("stream_portal_url")
+      .eq("id", 1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        const u = (data as { stream_portal_url?: string } | null)?.stream_portal_url;
+        if (u) setStreamUrl(u);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  let streamHost = streamUrl;
+  try { streamHost = new URL(streamUrl).host; } catch { /* ignore */ }
 
   // Keep telegram-linked state fresh while signed in.
   useEffect(() => {
@@ -224,6 +245,38 @@ function WelcomePage() {
         return (
           <section key="stream_status" className="mx-auto w-full max-w-3xl">
             <StreamStatusWidget />
+          </section>
+        );
+
+      case "streamz_profile":
+        if (!signedIn) return null;
+        return (
+          <section key="streamz_profile" className="mx-auto w-full max-w-3xl">
+            <a
+              href={streamUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-border bg-card p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <div className="flex items-center justify-between">
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-background/80 ring-1 ring-border">
+                  <Tv className="h-5 w-5" aria-hidden />
+                </span>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  Streaming portal
+                </span>
+              </div>
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold tracking-tight">0G STREAMZ Profile</h2>
+                <p className="text-sm text-muted-foreground">
+                  Jump to your streaming portal profile and manage your stream link.
+                </p>
+              </div>
+              <div className="mt-auto inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+                {streamHost}
+                <ExternalLink className="h-4 w-4 shrink-0 transition group-hover:translate-x-0.5" aria-hidden />
+              </div>
+            </a>
           </section>
         );
 
