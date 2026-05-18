@@ -338,10 +338,13 @@ function WelcomePage() {
           />
           <div className="space-y-3">
             <p
-              className="text-6xl sm:text-8xl uppercase tracking-[0.32em] text-amber-300"
+              className="uppercase text-amber-300 whitespace-nowrap"
               style={{
                 fontFamily: "'Bungee', 'Lilita One', system-ui, sans-serif",
                 fontWeight: 900,
+                fontSize: "clamp(2rem, 13vw, 6rem)",
+                letterSpacing: "0.15em",
+                lineHeight: 1,
                 textShadow:
                   "0 0 36px rgba(244,200,105,0.75), 2px 0 0 currentColor, -2px 0 0 currentColor, 0 2px 0 currentColor, 0 -2px 0 currentColor, 2px 2px 0 currentColor, -2px -2px 0 currentColor, 2px -2px 0 currentColor, -2px 2px 0 currentColor, 0 4px 0 rgba(0,0,0,0.95), 0 10px 30px rgba(0,0,0,0.9)",
                 WebkitTextStroke: "5px rgba(0,0,0,0.7)",
