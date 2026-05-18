@@ -336,9 +336,9 @@ function WelcomePage() {
                 "0 0 80px -10px rgba(244,200,105,0.45), 0 0 40px -8px oklch(0.72 0.22 245 / 0.35)",
             }}
           />
-          <div className="space-y-4">
-            <p className="text-3xl sm:text-5xl font-black uppercase tracking-[0.45em] text-amber-300 drop-shadow-[0_2px_18px_rgba(244,200,105,0.55)]">
-              {signedIn ? "👋 Welcome back" : "✨ Welcome, friend"}
+          <div className="space-y-3">
+            <p className="text-2xl sm:text-3xl font-black uppercase tracking-[0.4em] text-amber-300">
+              {signedIn ? "Welcome back" : "Welcome"}
             </p>
             {signedIn ? (
               <h1 className="text-6xl sm:text-8xl font-black tracking-tight">
