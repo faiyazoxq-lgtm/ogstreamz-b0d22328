@@ -200,8 +200,10 @@ function HubsStripSlot() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { isAdmin, profile } = useAuth();
   const isBoss = isAdmin || profile?.rank === "boss";
-  // Hubs are Boss-only — hide the strip from members and VIPs.
-  if (!isBoss) return null;
+  const hasHubGrant = !!(profile as { hub_access?: boolean } | null)?.hub_access;
+  // Hubs are Boss-only (plus users boss has granted hub access to) —
+  // hide the strip from everyone else.
+  if (!isBoss && !hasHubGrant) return null;
   const HUB_ROUTES = new Set(["/", "/music", "/jokes", "/trade", "/connect", "/battle", "/tools"]);
   const showStrip = HUB_ROUTES.has(pathname) || pathname.startsWith("/hub/");
   if (!showStrip) return null;

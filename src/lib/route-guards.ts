@@ -229,7 +229,7 @@ export async function requireBossHub({ location }: GuardCtx) {
   if (!uid) { stash(); throw redirect({ to: "/auth" }); }
 
   const [{ data: prof }, { data: adminRow }] = await Promise.all([
-    supabase.from("profiles").select("rank,banned").eq("id", uid).maybeSingle(),
+    supabase.from("profiles").select("rank,banned,hub_access").eq("id", uid).maybeSingle(),
     supabase.from("user_roles").select("role").eq("user_id", uid).eq("role", "admin").maybeSingle(),
   ]);
 
@@ -237,7 +237,8 @@ export async function requireBossHub({ location }: GuardCtx) {
     throw redirect({ to: "/", search: { banned: "1" } as never });
   }
   const isBoss = prof?.rank === "boss" || !!adminRow;
-  if (!isBoss) {
+  const hasHubGrant = !!(prof as { hub_access?: boolean } | null)?.hub_access;
+  if (!isBoss && !hasHubGrant) {
     throw redirect({ to: "/portals", search: { forbidden: "hub" } as never });
   }
 }

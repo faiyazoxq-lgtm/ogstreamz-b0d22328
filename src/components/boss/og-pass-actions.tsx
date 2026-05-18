@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import {
   Coins, Crown, ShieldOff, ShieldCheck, LogOut, Tv, Flame, Mail,
   Users as UsersIcon, History, IdCard, ExternalLink, Star, Megaphone,
-  ScrollText, Bell, KeyRound, BadgeCheck, BadgeX, RotateCw, EyeOff, Heart,
+  ScrollText, Bell, KeyRound, BadgeCheck, BadgeX, RotateCw, EyeOff, Heart, LayoutDashboard,
   type LucideIcon,
 } from "lucide-react";
 import type { RosterRow } from "@/lib/boss-users.functions";
@@ -32,7 +32,7 @@ export type ActionKey =
   | "comms.email" | "comms.notify" | "comms.announce"
   | "audit.user-log" | "audit.security-events" | "audit.sessions"
   | "profile.display-name" | "profile.avatar" | "profile.og-pass-no"
-  | "profile.friends-family";
+  | "profile.friends-family" | "profile.hub-access";
 
 
 export type ActionCtx = {
@@ -84,6 +84,7 @@ export type HandlerRegistry = {
   grantVip: (userId: string, days: number) => Promise<unknown>;
   revokeVipForUser: (userId: string) => Promise<unknown>;
   setFriendsFamily: (userId: string, enabled: boolean) => Promise<unknown>;
+  setHubAccess: (userId: string, enabled: boolean) => Promise<unknown>;
 };
 
 import { OG_TIERS, OG_TIER_LABEL } from "@/lib/og-tier";
@@ -399,6 +400,16 @@ export function buildCatalog(reg: HandlerRegistry): Category[] {
                 const next = !row.is_friends_family;
                 if (!window.confirm(`${next ? "Mark" : "Remove"} ${row.email} as Friends & Family?`)) return;
                 run(() => reg.setFriendsFamily(row.id, next));
+              },
+            },
+            {
+              key: "profile.hub-access", label: "Hub access", icon: LayoutDashboard,
+              hint: "Allow this user to see /hub/* (otherwise they only see /portals)",
+              bulkEligible: true,
+              handler: ({ row, run }) => {
+                const next = !row.hub_access;
+                if (!window.confirm(`${next ? "Grant" : "Revoke"} Hub access for ${row.email}?`)) return;
+                run(() => reg.setHubAccess(row.id, next));
               },
             },
           ],

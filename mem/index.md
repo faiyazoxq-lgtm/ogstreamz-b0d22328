@@ -11,4 +11,5 @@ Gold/metal accents must use `--og-gold-*` and `--og-metal-ink` tokens — never 
 ## Memories
 
 - [Portals column ACL](mem://features/portals-column-acl.md) — Which `public.portals` columns are readable by anon vs authenticated and how to extend safely
+- [Hub access grant](mem://features/hub-access-grant.md) — `/hub/*` is boss-only plus a per-user `profiles.hub_access` toggle managed from OG-Passes
 - [OG gold halo tokens](mem://design/og-gold-tokens.md) — Shared CSS variables for the OG PORTAL electric-gold and metallic halo palette

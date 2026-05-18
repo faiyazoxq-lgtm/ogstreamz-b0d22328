@@ -28,6 +28,7 @@ export type RosterRow = {
   avatar_url: string | null;
   og_tier: OgTier | null;
   is_friends_family?: boolean | null;
+  hub_access?: boolean | null;
 };
 
 export const listRoster = createServerFn({ method: "GET" })
@@ -42,7 +43,7 @@ export const listRoster = createServerFn({ method: "GET" })
     const { supabase } = context as any;
     let q = supabase
       .from("profiles")
-      .select("id,email,display_name,rank,status,credits,banned,banned_reason,stream_status,stream_verified_at,stream_expires_at,created_at,feature_flags,og_pass_no,member_tier,contact_card,avatar_url,og_tier,is_friends_family")
+      .select("id,email,display_name,rank,status,credits,banned,banned_reason,stream_status,stream_verified_at,stream_expires_at,created_at,feature_flags,og_pass_no,member_tier,contact_card,avatar_url,og_tier,is_friends_family,hub_access")
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .limit(data.limit + 1);
@@ -259,4 +260,29 @@ export const setFriendsFamily = createServerFn({ method: "POST" })
       after: { is_friends_family: data.enabled },
     });
     return { ok: true, is_friends_family: data.enabled };
+  });
+
+export const setHubAccess = createServerFn({ method: "POST" })
+  .middleware([requireBoss])
+  .inputValidator((d: { userId: string; enabled: boolean }) => ({
+    userId: String(d.userId),
+    enabled: !!d.enabled,
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context as any;
+    const { data: prev } = await supabase
+      .from("profiles").select("hub_access").eq("id", data.userId).maybeSingle();
+    const { error } = await supabase
+      .from("profiles")
+      .update({ hub_access: data.enabled })
+      .eq("id", data.userId);
+    if (error) throw new Error(error.message);
+    await logBossAction(supabase, {
+      action: "set_hub_access",
+      surface: "/boss/og-passes",
+      targetUserId: data.userId,
+      before: prev ?? null,
+      after: { hub_access: data.enabled },
+    });
+    return { ok: true, hub_access: data.enabled };
   });
