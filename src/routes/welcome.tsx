@@ -344,9 +344,19 @@ function WelcomePage() {
               <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
                 <Link
                   to="/auth"
-                  className="text-primary underline-offset-4 hover:underline focus-visible:underline"
+                  className="group inline-flex items-center gap-2 rounded-xl border border-amber-300/40 bg-black/40 px-4 py-2 underline decoration-2 decoration-amber-300/70 underline-offset-[6px] backdrop-blur-sm transition hover:border-amber-300 hover:bg-black/60 hover:decoration-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                  style={{
+                    color: "var(--gold, #f4c869)",
+                    textShadow: "0 0 18px rgba(244,200,105,0.55), 0 2px 6px rgba(0,0,0,0.85)",
+                    boxShadow:
+                      "0 0 0 1px rgba(244,200,105,0.15), 0 0 40px -8px rgba(244,200,105,0.55)",
+                  }}
                 >
                   Login / sign up
+                  <ArrowRight
+                    className="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-1"
+                    aria-hidden
+                  />
                 </Link>
               </h1>
             )}
