@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { LayoutDashboard, Sparkles, Compass, ArrowRight, Send, CheckCircle2, Coins, Gift, ShieldCheck, Tv, ExternalLink } from "lucide-react";
+import { LayoutDashboard, Sparkles, Compass, ArrowRight, Send, CheckCircle2, Coins, Gift, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import logo from "@/assets/logo.jpg";
 import { FlameBackdrop } from "@/components/FlameBackdrop";
@@ -15,14 +14,13 @@ import { useSignupBonus } from "@/hooks/use-signup-bonus";
 // ----- Configurable Welcome layout -----
 // Order of the bottom CTA stack. Sections auto-hide when their `connected`
 // predicate is true, so the page collapses as the user wires things up.
-type SectionId = "signin" | "telegram" | "verify_stream" | "stream_status" | "streamz_profile" | "guide";
+type SectionId = "signin" | "telegram" | "verify_stream" | "stream_status" | "guide";
 const WELCOME_LAYOUT: SectionId[] = [
   "signin",        // Sign-in / sign-up choice cards (hidden once signed in)
   "guide",         // Guttermouth guide (always shown)
   "telegram",      // Connect Telegram (hidden once linked)
   "verify_stream", // Verify Stream Access (hidden once stream tagged active)
   "stream_status", // Live status widget (hidden if nothing to show & not signed in)
-  "streamz_profile", // External 0G STREAMZ profile (signed-in only)
 ];
 
 export const Route = createFileRoute("/welcome")({
@@ -84,21 +82,6 @@ function WelcomePage() {
   const { user, profile } = useAuth();
   const fetchTgStatus = useServerFn(getTelegramLinkStatus);
   const [tgLinked, setTgLinked] = useState<boolean | null>(null);
-  const [streamUrl, setStreamUrl] = useState<string>("https://ogstreamz.co.uk");
-
-  // Load configurable streamz portal URL (signed-in users only).
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("store_settings")
-      .select("stream_portal_url")
-      .eq("id", 1)
-      .maybeSingle()
-      .then(({ data }) => {
-        const u = (data as { stream_portal_url?: string } | null)?.stream_portal_url;
-        if (u && /^https?:\/\//i.test(u)) setStreamUrl(u);
-      });
-  }, [user?.id]);
 
   // Keep telegram-linked state fresh while signed in.
   useEffect(() => {
@@ -243,51 +226,6 @@ function WelcomePage() {
             <StreamStatusWidget />
           </section>
         );
-
-      case "streamz_profile": {
-        if (!signedIn) return null;
-        let streamHost = "";
-        try {
-          streamHost = new URL(streamUrl).host.replace(/^www\./, "");
-        } catch {
-          streamHost = streamUrl;
-        }
-        return (
-          <section key="streamz_profile" className="mx-auto w-full max-w-3xl">
-            <a
-              href={streamUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-br from-destructive/30 to-destructive/5 opacity-60 transition group-hover:opacity-100"
-                aria-hidden
-              />
-              <div className="relative flex items-center justify-between">
-                <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-background/80 ring-1 ring-border">
-                  <Tv className="h-5 w-5" aria-hidden />
-                </span>
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                  Streaming portal
-                </span>
-              </div>
-              <div className="relative space-y-1">
-                <h2 className="text-xl font-semibold tracking-tight">0G STREAMZ Profile</h2>
-                <p className="text-sm text-muted-foreground">
-                  Sign in on the streaming domain to manage your line, expiry and devices.
-                </p>
-              </div>
-              <div className="relative mt-auto flex items-center justify-between text-sm font-medium text-primary">
-                <span className="inline-flex items-center gap-1">
-                  Open {streamHost}
-                  <ExternalLink className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
-                </span>
-              </div>
-            </a>
-          </section>
-        );
-      }
 
       default:
         return null;
