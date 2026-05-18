@@ -53,15 +53,16 @@ type Choice = {
   accent: string;
 };
 
+const HUB_CHOICE: Choice = {
+  to: "/",
+  title: "The HUB",
+  tagline: "Home base",
+  desc: "Land in the main hub — quick access to every Syndicate channel and your stream link.",
+  Icon: Compass,
+  accent: "from-primary/30 to-primary/5",
+};
+
 const CHOICES: Choice[] = [
-  {
-    to: "/",
-    title: "The HUB",
-    tagline: "Home base",
-    desc: "Land in the main hub — quick access to every Syndicate channel and your stream link.",
-    Icon: Compass,
-    accent: "from-primary/30 to-primary/5",
-  },
   {
     to: "/dashboard",
     title: "Dashboard",
@@ -81,7 +82,9 @@ const CHOICES: Choice[] = [
 ];
 
 function WelcomePage() {
-  const { user, profile } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
+  const canSeeHub = isAdmin || profile?.rank === "boss" || profile?.hub_access === true;
+  const choices: Choice[] = canSeeHub ? [HUB_CHOICE, ...CHOICES] : CHOICES;
   const fetchTgStatus = useServerFn(getTelegramLinkStatus);
   const [tgLinked, setTgLinked] = useState<boolean | null>(null);
   const [streamUrl, setStreamUrl] = useState<string>("https://ogstreamz.co.uk");
@@ -155,7 +158,7 @@ function WelcomePage() {
         if (!showSignin) return null;
         return (
           <section key="signin" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {CHOICES.map(({ to, title, tagline, desc, Icon, accent }) => (
+            {choices.map(({ to, title, tagline, desc, Icon, accent }) => (
               <Link
                 key={to}
                 to="/auth"
