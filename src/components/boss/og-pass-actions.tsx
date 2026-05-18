@@ -32,7 +32,7 @@ export type ActionKey =
   | "comms.email" | "comms.notify" | "comms.announce"
   | "audit.user-log" | "audit.security-events" | "audit.sessions"
   | "profile.display-name" | "profile.avatar" | "profile.og-pass-no"
-  | "profile.friends-family";
+  | "profile.friends-family" | "profile.hub-access";
 
 
 export type ActionCtx = {
