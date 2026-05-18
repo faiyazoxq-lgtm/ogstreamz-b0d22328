@@ -330,7 +330,7 @@ function WelcomePage() {
           <img
             src={logo}
             alt="0G-PORTAL logo"
-            className="h-[13.2rem] w-[13.2rem] sm:h-[16.8rem] sm:w-[16.8rem] rounded-3xl border border-border shadow-2xl ring-1 ring-amber-300/20"
+            className="h-[13.2rem] w-[15.84rem] sm:h-[16.8rem] sm:w-[20.16rem] max-w-full object-cover rounded-3xl border border-border shadow-2xl ring-1 ring-amber-300/20"
             style={{
               boxShadow:
                 "0 0 80px -10px rgba(244,200,105,0.45), 0 0 40px -8px oklch(0.72 0.22 245 / 0.35)",
