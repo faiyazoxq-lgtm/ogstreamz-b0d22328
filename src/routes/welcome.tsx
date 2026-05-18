@@ -337,7 +337,15 @@ function WelcomePage() {
             }}
           />
           <div className="space-y-3">
-            <p className="text-2xl sm:text-3xl font-black uppercase tracking-[0.4em] text-amber-300">
+            <p
+              className="text-4xl sm:text-6xl uppercase tracking-[0.35em] text-amber-300"
+              style={{
+                fontFamily: "'Bungee', 'Lilita One', system-ui, sans-serif",
+                textShadow:
+                  "0 0 28px rgba(244,200,105,0.55), 0 2px 0 rgba(0,0,0,0.9), 0 4px 18px rgba(0,0,0,0.8)",
+                WebkitTextStroke: "1px rgba(0,0,0,0.35)",
+              }}
+            >
               {signedIn ? "Welcome back" : "Welcome"}
             </p>
             {signedIn ? (
