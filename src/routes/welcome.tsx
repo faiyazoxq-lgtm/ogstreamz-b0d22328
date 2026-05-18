@@ -85,9 +85,11 @@ function WelcomePage() {
   const fetchTgStatus = useServerFn(getTelegramLinkStatus);
   const [tgLinked, setTgLinked] = useState<boolean | null>(null);
   const [streamUrl, setStreamUrl] = useState<string>("https://ogstreamz.co.uk");
+  const [streamUrlLoading, setStreamUrlLoading] = useState<boolean>(true);
 
   useEffect(() => {
     let cancelled = false;
+    setStreamUrlLoading(true);
     supabase
       .from("store_settings")
       .select("stream_portal_url")
@@ -97,6 +99,9 @@ function WelcomePage() {
         if (cancelled) return;
         const u = (data as { stream_portal_url?: string } | null)?.stream_portal_url;
         if (u) setStreamUrl(u);
+        setStreamUrlLoading(false);
+      }, () => {
+        if (!cancelled) setStreamUrlLoading(false);
       });
     return () => { cancelled = true; };
   }, []);
