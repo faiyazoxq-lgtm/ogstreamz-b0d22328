@@ -338,13 +338,13 @@ function WelcomePage() {
           />
           <div className="space-y-3">
             <p
-              className="text-4xl sm:text-6xl uppercase tracking-[0.35em] text-amber-300"
+              className="text-6xl sm:text-8xl uppercase tracking-[0.32em] text-amber-300"
               style={{
                 fontFamily: "'Bungee', 'Lilita One', system-ui, sans-serif",
                 fontWeight: 900,
                 textShadow:
-                  "0 0 28px rgba(244,200,105,0.6), 1px 0 0 currentColor, -1px 0 0 currentColor, 0 1px 0 currentColor, 0 -1px 0 currentColor, 0 3px 0 rgba(0,0,0,0.95), 0 6px 22px rgba(0,0,0,0.85)",
-                WebkitTextStroke: "3px rgba(0,0,0,0.55)",
+                  "0 0 36px rgba(244,200,105,0.75), 2px 0 0 currentColor, -2px 0 0 currentColor, 0 2px 0 currentColor, 0 -2px 0 currentColor, 2px 2px 0 currentColor, -2px -2px 0 currentColor, 2px -2px 0 currentColor, -2px 2px 0 currentColor, 0 4px 0 rgba(0,0,0,0.95), 0 10px 30px rgba(0,0,0,0.9)",
+                WebkitTextStroke: "5px rgba(0,0,0,0.7)",
               }}
             >
               {signedIn ? "Welcome back" : "Welcome"}
