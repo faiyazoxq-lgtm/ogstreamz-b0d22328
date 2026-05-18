@@ -419,7 +419,7 @@ function MobileHeader({
     <header
       role="banner"
       aria-label="Site header"
-      className="md:hidden sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur px-4 py-2 flex flex-nowrap items-center gap-3 h-16 min-h-16 max-h-16 overflow-hidden"
+      className="md:hidden sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur px-4 py-2 flex flex-nowrap items-center gap-3 h-20 min-h-20 max-h-20 overflow-hidden"
     >
       {/* Skip link — only visible when focused, lets keyboard users jump
           past the navbar straight to page content. */}
@@ -432,14 +432,14 @@ function MobileHeader({
       <Link
         to="/"
         aria-label="OG-PORTAL home"
-        className="brand-glow inline-flex items-center min-w-0 flex-1 h-14 max-h-14 px-1.5 rounded-lg overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-gold/80 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-safe:transition-shadow"
+        className="brand-glow inline-flex items-center min-w-0 flex-1 h-16 max-h-16 px-2 rounded-lg overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-gold/80 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-safe:transition-shadow"
       >
         <OgWordmark
           suffix="-PORTAL"
           fit
-          maxFontSize={44}
-          minFontSize={24}
-          className="text-white font-black tracking-[-0.02em] drop-shadow-[0_0_14px_oklch(0.72_0.22_245/0.5)]"
+          maxFontSize={60}
+          minFontSize={32}
+          className="text-white font-black tracking-[-0.02em] drop-shadow-[0_0_16px_oklch(0.72_0.22_245/0.55)]"
         />
       </Link>
       {user && !isBoss && (
