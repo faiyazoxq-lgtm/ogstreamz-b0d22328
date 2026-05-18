@@ -330,22 +330,22 @@ function WelcomePage() {
           <img
             src={logo}
             alt="0G-PORTAL logo"
-            className="h-[13.2rem] w-[15.84rem] sm:h-[16.8rem] sm:w-[20.16rem] max-w-full object-contain rounded-3xl border border-border shadow-2xl ring-1 ring-amber-300/20"
+            className="h-[17.16rem] w-[20.59rem] sm:h-[21.84rem] sm:w-[26.21rem] max-w-full object-contain rounded-3xl border border-border shadow-2xl ring-1 ring-amber-300/20"
             style={{
               boxShadow:
                 "0 0 80px -10px rgba(244,200,105,0.45), 0 0 40px -8px oklch(0.72 0.22 245 / 0.35)",
             }}
           />
           <div className="space-y-3">
-            <p className="text-lg sm:text-xl font-black uppercase tracking-[0.4em] text-amber-300">
+            <p className="text-2xl sm:text-3xl font-black uppercase tracking-[0.4em] text-amber-300">
               {signedIn ? "Welcome back" : "Welcome"}
             </p>
             {signedIn ? (
-              <h1 className="text-5xl sm:text-7xl font-black tracking-tight">
+              <h1 className="text-6xl sm:text-8xl font-black tracking-tight">
                 Finish wiring up your account
               </h1>
             ) : (
-              <h1 className="text-6xl sm:text-8xl font-black tracking-tight leading-[1.05]">
+              <h1 className="text-7xl sm:text-9xl font-black tracking-tight leading-[1.05]">
                 <Link
                   to="/auth"
                   className="group inline-flex items-center gap-3 rounded-2xl border-2 border-amber-300/50 bg-black/40 px-6 py-4 underline decoration-2 decoration-amber-300/70 underline-offset-[8px] backdrop-blur-sm transition hover:border-amber-300 hover:bg-black/60 hover:decoration-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
