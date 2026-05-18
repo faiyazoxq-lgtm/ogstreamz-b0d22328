@@ -196,12 +196,12 @@ function DesktopSidebar({
       {/* Header / Brand */}
       <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"} gap-2 px-3 py-3 border-b border-border/60`}>
         {!collapsed ? (
-          <Link to="/" aria-label="Home" className="brand-glow inline-flex items-center min-w-0 flex-1 px-1 rounded-lg hover:bg-white/[0.04] transition-colors">
+          <Link to="/" aria-label="Home" className="brand-glow inline-flex items-center min-w-0 flex-1 px-2 py-1 rounded-lg hover:bg-white/[0.04] transition-colors">
             <OgWordmark
               suffix="-PORTAL"
               fit
-              maxFontSize={36}
-              minFontSize={20}
+              maxFontSize={48}
+              minFontSize={24}
               className="text-white font-black tracking-[-0.02em] drop-shadow-[0_0_14px_oklch(0.72_0.22_245/0.5)]"
             />
           </Link>
@@ -419,7 +419,7 @@ function MobileHeader({
     <header
       role="banner"
       aria-label="Site header"
-      className="md:hidden sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur px-3 py-2 flex flex-nowrap items-center gap-2 h-14 min-h-14 max-h-14 overflow-hidden"
+      className="md:hidden sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur px-4 py-2 flex flex-nowrap items-center gap-3 h-16 min-h-16 max-h-16 overflow-hidden"
     >
       {/* Skip link — only visible when focused, lets keyboard users jump
           past the navbar straight to page content. */}
@@ -432,9 +432,15 @@ function MobileHeader({
       <Link
         to="/"
         aria-label="OG-PORTAL home"
-        className="brand-glow inline-flex items-center min-w-0 flex-1 h-11 max-h-11 px-1 rounded-lg overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-gold/80 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-safe:transition-shadow"
+        className="brand-glow inline-flex items-center min-w-0 flex-1 h-14 max-h-14 px-1.5 rounded-lg overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-gold/80 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-safe:transition-shadow"
       >
-        <OgWordmark suffix="-PORTAL" fit maxFontSize={26} minFontSize={16} className="text-white font-black tracking-[-0.02em]" />
+        <OgWordmark
+          suffix="-PORTAL"
+          fit
+          maxFontSize={44}
+          minFontSize={24}
+          className="text-white font-black tracking-[-0.02em] drop-shadow-[0_0_14px_oklch(0.72_0.22_245/0.5)]"
+        />
       </Link>
       {user && !isBoss && (
         <Link
