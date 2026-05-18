@@ -255,6 +255,28 @@ function WelcomePage() {
 
       case "streamz_profile":
         if (!signedIn) return null;
+        if (streamUrlLoading) {
+          return (
+            <section key="streamz_profile" className="mx-auto w-full max-w-3xl">
+              <div
+                className="relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm"
+                aria-busy="true"
+                aria-label="Loading 0G STREAMZ Profile"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-muted/60 ring-1 ring-border animate-pulse" />
+                  <span className="h-3 w-24 rounded bg-muted/60 animate-pulse" />
+                </div>
+                <div className="space-y-2">
+                  <div className="h-5 w-48 rounded bg-muted/60 animate-pulse" />
+                  <div className="h-3 w-full rounded bg-muted/50 animate-pulse" />
+                  <div className="h-3 w-2/3 rounded bg-muted/50 animate-pulse" />
+                </div>
+                <div className="mt-1 h-4 w-40 rounded bg-muted/60 animate-pulse" />
+              </div>
+            </section>
+          );
+        }
         return (
           <section key="streamz_profile" className="mx-auto w-full max-w-3xl">
             <a
