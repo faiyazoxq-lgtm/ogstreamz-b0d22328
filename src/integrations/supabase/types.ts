@@ -2326,6 +2326,7 @@ export type Database = {
           email: string
           feature_flags: Json
           free_clicks_used: number
+          hub_access: boolean
           id: string
           is_friends_family: boolean
           member_tier: string | null
@@ -2358,6 +2359,7 @@ export type Database = {
           email: string
           feature_flags?: Json
           free_clicks_used?: number
+          hub_access?: boolean
           id: string
           is_friends_family?: boolean
           member_tier?: string | null
@@ -2390,6 +2392,7 @@ export type Database = {
           email?: string
           feature_flags?: Json
           free_clicks_used?: number
+          hub_access?: boolean
           id?: string
           is_friends_family?: boolean
           member_tier?: string | null
