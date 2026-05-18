@@ -266,7 +266,7 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
   const isUser = msg.role === "user";
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div className={`max-w-[90%] space-y-2 rounded-2xl px-5 py-4 text-base sm:text-lg leading-relaxed ${isUser ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+      <div className={`max-w-[90%] space-y-2 rounded-2xl px-5 py-4 text-base sm:text-lg font-medium leading-[1.7] tracking-[-0.005em] ${isUser ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
         {!isUser && msg.mode && (
           <div className="flex items-center gap-2">
             <Badge variant={msg.mode === "og" ? "default" : "secondary"} className="text-[10px]">
@@ -279,7 +279,7 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
         {msg.media?.map((m, i) => <MediaCard key={i} media={m} />)}
 
         {msg.content && (
-          <div className="prose prose-base sm:prose-lg dark:prose-invert max-w-none break-words leading-relaxed">
+          <div className="prose prose-base sm:prose-lg dark:prose-invert max-w-none break-words font-medium leading-[1.75] prose-p:leading-[1.75] prose-p:my-3 prose-headings:font-bold prose-headings:tracking-tight prose-strong:font-bold prose-li:leading-[1.7] prose-li:my-1">
             <ReactMarkdown>{msg.content}</ReactMarkdown>
           </div>
         )}
