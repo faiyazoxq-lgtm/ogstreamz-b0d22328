@@ -48,10 +48,10 @@ export function WelcomeBroadcast({
         </div>
 
         <p
-          className="mx-auto w-full max-w-[18rem] sm:max-w-[22rem] font-light uppercase leading-snug tracking-wide text-white/90 [text-wrap:balance]"
+          className="mx-auto mt-2 w-full max-w-[16rem] sm:max-w-[20rem] px-2 font-light uppercase leading-snug tracking-wide text-white/90 [text-wrap:balance] [hyphens:auto] break-words"
           style={{
             textShadow: "0 1px 8px rgba(0,0,0,0.8)",
-            fontSize: "clamp(1rem, 4.5vw, 1.5rem)",
+            fontSize: "clamp(0.95rem, 4vw, 1.4rem)",
           }}
         >
           The global{" "}
