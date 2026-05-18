@@ -5,10 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { HubSectionsRenderer } from "@/components/HubSectionsRenderer";
 import { HubSectionsZ, type HubSection } from "@/lib/hub-sections";
 import { useAuth } from "@/hooks/use-auth";
-import { requireMember } from "@/lib/route-guards";
+import { requireBossHub } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/hub/$slug")({
-  beforeLoad: requireMember,
+  beforeLoad: requireBossHub,
   component: HubPage,
   notFoundComponent: () => (
     <div className="max-w-xl mx-auto px-6 py-24 text-center">
