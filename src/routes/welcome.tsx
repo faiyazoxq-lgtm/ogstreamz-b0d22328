@@ -326,35 +326,39 @@ function WelcomePage() {
         }}
       />
       <div className="relative mx-auto flex max-w-5xl flex-col gap-10 px-4 py-10 sm:py-16">
-        <header className="flex flex-col items-center gap-4 text-center">
+        <header className="flex min-h-[50vh] flex-col items-center justify-center gap-6 text-center">
           <img
             src={logo}
             alt="0G-PORTAL logo"
-            className="h-14 w-14 rounded-xl border border-border shadow-sm"
+            className="h-44 w-44 sm:h-56 sm:w-56 rounded-3xl border border-border shadow-2xl ring-1 ring-amber-300/20"
+            style={{
+              boxShadow:
+                "0 0 80px -10px rgba(244,200,105,0.45), 0 0 40px -8px oklch(0.72 0.22 245 / 0.35)",
+            }}
           />
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          <div className="space-y-3">
+            <p className="text-base sm:text-lg font-bold uppercase tracking-[0.4em] text-amber-300/90">
               {signedIn ? "Welcome back" : "Welcome"}
             </p>
             {signedIn ? (
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              <h1 className="text-4xl sm:text-6xl font-black tracking-tight">
                 Finish wiring up your account
               </h1>
             ) : (
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              <h1 className="text-5xl sm:text-7xl font-black tracking-tight leading-[1.05]">
                 <Link
                   to="/auth"
-                  className="group inline-flex items-center gap-2 rounded-xl border border-amber-300/40 bg-black/40 px-4 py-2 underline decoration-2 decoration-amber-300/70 underline-offset-[6px] backdrop-blur-sm transition hover:border-amber-300 hover:bg-black/60 hover:decoration-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                  className="group inline-flex items-center gap-3 rounded-2xl border-2 border-amber-300/50 bg-black/40 px-6 py-4 underline decoration-2 decoration-amber-300/70 underline-offset-[8px] backdrop-blur-sm transition hover:border-amber-300 hover:bg-black/60 hover:decoration-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
                   style={{
                     color: "var(--gold, #f4c869)",
-                    textShadow: "0 0 18px rgba(244,200,105,0.55), 0 2px 6px rgba(0,0,0,0.85)",
+                    textShadow: "0 0 24px rgba(244,200,105,0.6), 0 2px 8px rgba(0,0,0,0.9)",
                     boxShadow:
-                      "0 0 0 1px rgba(244,200,105,0.15), 0 0 40px -8px rgba(244,200,105,0.55)",
+                      "0 0 0 1px rgba(244,200,105,0.18), 0 0 60px -10px rgba(244,200,105,0.65)",
                   }}
                 >
                   Login / sign up
                   <ArrowRight
-                    className="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-1"
+                    className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 transition-transform group-hover:translate-x-1"
                     aria-hidden
                   />
                 </Link>
