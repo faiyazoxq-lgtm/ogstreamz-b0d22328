@@ -174,7 +174,7 @@ function OgBotPage() {
         )}
       </div>
 
-      <div className="mt-4 flex items-end gap-2">
+      <div className="mt-4 flex items-end gap-3">
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -185,12 +185,18 @@ function OgBotPage() {
             }
           }}
           placeholder={mode === "og" ? "Ask anything — I'll research, synthesize, and let rip…" : "Quick clean question for Safe Mode…"}
-          rows={2}
-          className="resize-none"
+          rows={3}
+          className="resize-none text-base sm:text-lg leading-relaxed px-4 py-3 min-h-[88px] rounded-xl"
           disabled={busy}
         />
-        <Button onClick={() => void send()} disabled={busy || !input.trim()} size="lg">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+        <Button
+          onClick={() => void send()}
+          disabled={busy || !input.trim()}
+          size="lg"
+          className="h-[88px] w-16 sm:w-20 rounded-xl shrink-0"
+          aria-label="Send message"
+        >
+          {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <Send className="h-6 w-6" />}
         </Button>
       </div>
     </div>
