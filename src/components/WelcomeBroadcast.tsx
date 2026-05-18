@@ -39,13 +39,13 @@ export function WelcomeBroadcast({
             className="absolute inset-0 -z-10 rounded-full opacity-30 blur-3xl"
             style={{ background: "oklch(0.72 0.22 245)" }}
           />
-          <h1 className="text-7xl sm:text-8xl leading-none">
+          <h1 className="text-[6.5rem] sm:text-[9rem] leading-none">
             <OgWordmark suffix="-STREAMZ" />
           </h1>
         </div>
 
         <p
-          className="max-w-[280px] text-base sm:text-lg font-light uppercase leading-tight tracking-wide text-white/90"
+          className="max-w-[340px] text-xl sm:text-2xl font-light uppercase leading-snug tracking-wide text-white/90"
           style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}
         >
           The global{" "}
