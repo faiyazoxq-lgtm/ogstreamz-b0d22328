@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { LayoutDashboard, Sparkles, Compass, ArrowRight, Tv, ExternalLink, Send, CheckCircle2, Coins, Gift, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Sparkles, Compass, ArrowRight, Send, CheckCircle2, Coins, Gift, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,7 +80,6 @@ const CHOICES: Choice[] = [
 ];
 
 function WelcomePage() {
-  const [streamUrl, setStreamUrl] = useState<string>("https://ogstreamz.co.uk");
   const { user, profile } = useAuth();
   const fetchTgStatus = useServerFn(getTelegramLinkStatus);
   const [tgLinked, setTgLinked] = useState<boolean | null>(null);
@@ -102,55 +101,6 @@ function WelcomePage() {
     })();
     return () => { cancelled = true; };
   }, [user?.id, fetchTgStatus]);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function loadStreamUrl() {
-      const { data } = await supabase
-        .from("store_settings")
-        .select("stream_portal_url")
-        .eq("id", 1)
-        .maybeSingle();
-      if (cancelled) return;
-      const u = (data as { stream_portal_url?: string } | null)?.stream_portal_url;
-      if (u && /^https?:\/\//i.test(u)) setStreamUrl(u);
-    }
-    loadStreamUrl();
-
-    // Live updates: re-read whenever the boss saves a new portal URL.
-    const channel = supabase
-      .channel("store_settings_welcome")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "store_settings" },
-        (payload) => {
-          const next = (payload.new as { stream_portal_url?: string } | null)
-            ?.stream_portal_url;
-          if (next && /^https?:\/\//i.test(next)) setStreamUrl(next);
-          else loadStreamUrl();
-        },
-      )
-      .subscribe();
-
-    // Safety net: refetch when the tab regains focus.
-    const onVisible = () => {
-      if (document.visibilityState === "visible") loadStreamUrl();
-    };
-    document.addEventListener("visibilitychange", onVisible);
-
-    return () => {
-      cancelled = true;
-      document.removeEventListener("visibilitychange", onVisible);
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  let streamHost = "";
-  try {
-    streamHost = new URL(streamUrl).host.replace(/^www\./, "");
-  } catch {
-    streamHost = streamUrl;
-  }
 
   // Connection state per option — drives auto-hide of CTAs / banners.
   const signedIn = !!user;
