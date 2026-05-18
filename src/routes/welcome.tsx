@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { LayoutDashboard, Sparkles, Compass, ArrowRight, Tv, ExternalLink, Send, CheckCircle2, Coins, Gift, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Sparkles, Compass, ArrowRight, Send, CheckCircle2, Coins, Gift, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import logo from "@/assets/logo.jpg";
 import { FlameBackdrop } from "@/components/FlameBackdrop";
@@ -80,7 +79,6 @@ const CHOICES: Choice[] = [
 ];
 
 function WelcomePage() {
-  const [streamUrl, setStreamUrl] = useState<string>("https://ogstreamz.co.uk");
   const { user, profile } = useAuth();
   const fetchTgStatus = useServerFn(getTelegramLinkStatus);
   const [tgLinked, setTgLinked] = useState<boolean | null>(null);
@@ -102,55 +100,6 @@ function WelcomePage() {
     })();
     return () => { cancelled = true; };
   }, [user?.id, fetchTgStatus]);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function loadStreamUrl() {
-      const { data } = await supabase
-        .from("store_settings")
-        .select("stream_portal_url")
-        .eq("id", 1)
-        .maybeSingle();
-      if (cancelled) return;
-      const u = (data as { stream_portal_url?: string } | null)?.stream_portal_url;
-      if (u && /^https?:\/\//i.test(u)) setStreamUrl(u);
-    }
-    loadStreamUrl();
-
-    // Live updates: re-read whenever the boss saves a new portal URL.
-    const channel = supabase
-      .channel("store_settings_welcome")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "store_settings" },
-        (payload) => {
-          const next = (payload.new as { stream_portal_url?: string } | null)
-            ?.stream_portal_url;
-          if (next && /^https?:\/\//i.test(next)) setStreamUrl(next);
-          else loadStreamUrl();
-        },
-      )
-      .subscribe();
-
-    // Safety net: refetch when the tab regains focus.
-    const onVisible = () => {
-      if (document.visibilityState === "visible") loadStreamUrl();
-    };
-    document.addEventListener("visibilitychange", onVisible);
-
-    return () => {
-      cancelled = true;
-      document.removeEventListener("visibilitychange", onVisible);
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  let streamHost = "";
-  try {
-    streamHost = new URL(streamUrl).host.replace(/^www\./, "");
-  } catch {
-    streamHost = streamUrl;
-  }
 
   // Connection state per option — drives auto-hide of CTAs / banners.
   const signedIn = !!user;
@@ -217,34 +166,6 @@ function WelcomePage() {
               </Link>
             ))}
 
-            {/* External 0G STREAMZ profile sign-in (only while signed-out) */}
-            <a
-              href={streamUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-destructive/30 to-destructive/5 opacity-60 transition group-hover:opacity-100" aria-hidden />
-              <div className="relative flex items-center justify-between">
-                <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-background/80 ring-1 ring-border">
-                  <Tv className="h-5 w-5" aria-hidden />
-                </span>
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Streaming portal</span>
-              </div>
-              <div className="relative space-y-1">
-                <h2 className="text-xl font-semibold tracking-tight">0G STREAMZ Profile</h2>
-                <p className="text-sm text-muted-foreground">
-                  Login / sign up on the streaming domain to manage your line, expiry and devices.
-                </p>
-              </div>
-              <div className="relative mt-auto text-sm font-medium leading-snug text-primary">
-                <span>Open </span>
-                <span className="inline-flex items-baseline whitespace-nowrap align-baseline break-all">
-                  <span className="break-all">{streamHost}</span>
-                  <ExternalLink className="ml-1 inline-block h-4 w-4 shrink-0 translate-y-[2px] transition group-hover:translate-x-0.5" aria-hidden />
-                </span>
-              </div>
-            </a>
           </section>
         );
 
