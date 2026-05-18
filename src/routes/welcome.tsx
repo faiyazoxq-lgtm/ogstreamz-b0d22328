@@ -217,34 +217,6 @@ function WelcomePage() {
               </Link>
             ))}
 
-            {/* External 0G STREAMZ profile sign-in (only while signed-out) */}
-            <a
-              href={streamUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-destructive/30 to-destructive/5 opacity-60 transition group-hover:opacity-100" aria-hidden />
-              <div className="relative flex items-center justify-between">
-                <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-background/80 ring-1 ring-border">
-                  <Tv className="h-5 w-5" aria-hidden />
-                </span>
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Streaming portal</span>
-              </div>
-              <div className="relative space-y-1">
-                <h2 className="text-xl font-semibold tracking-tight">0G STREAMZ Profile</h2>
-                <p className="text-sm text-muted-foreground">
-                  Login / sign up on the streaming domain to manage your line, expiry and devices.
-                </p>
-              </div>
-              <div className="relative mt-auto text-sm font-medium leading-snug text-primary">
-                <span>Open </span>
-                <span className="inline-flex items-baseline whitespace-nowrap align-baseline break-all">
-                  <span className="break-all">{streamHost}</span>
-                  <ExternalLink className="ml-1 inline-block h-4 w-4 shrink-0 translate-y-[2px] transition group-hover:translate-x-0.5" aria-hidden />
-                </span>
-              </div>
-            </a>
           </section>
         );
 
