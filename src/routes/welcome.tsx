@@ -330,22 +330,22 @@ function WelcomePage() {
           <img
             src={logo}
             alt="0G-PORTAL logo"
-            className="h-44 w-44 sm:h-56 sm:w-56 rounded-3xl border border-border shadow-2xl ring-1 ring-amber-300/20"
+            className="h-[13.2rem] w-[13.2rem] sm:h-[16.8rem] sm:w-[16.8rem] rounded-3xl border border-border shadow-2xl ring-1 ring-amber-300/20"
             style={{
               boxShadow:
                 "0 0 80px -10px rgba(244,200,105,0.45), 0 0 40px -8px oklch(0.72 0.22 245 / 0.35)",
             }}
           />
           <div className="space-y-3">
-            <p className="text-base sm:text-lg font-bold uppercase tracking-[0.4em] text-amber-300/90">
+            <p className="text-lg sm:text-xl font-black uppercase tracking-[0.4em] text-amber-300">
               {signedIn ? "Welcome back" : "Welcome"}
             </p>
             {signedIn ? (
-              <h1 className="text-4xl sm:text-6xl font-black tracking-tight">
+              <h1 className="text-5xl sm:text-7xl font-black tracking-tight">
                 Finish wiring up your account
               </h1>
             ) : (
-              <h1 className="text-5xl sm:text-7xl font-black tracking-tight leading-[1.05]">
+              <h1 className="text-6xl sm:text-8xl font-black tracking-tight leading-[1.05]">
                 <Link
                   to="/auth"
                   className="group inline-flex items-center gap-3 rounded-2xl border-2 border-amber-300/50 bg-black/40 px-6 py-4 underline decoration-2 decoration-amber-300/70 underline-offset-[8px] backdrop-blur-sm transition hover:border-amber-300 hover:bg-black/60 hover:decoration-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
