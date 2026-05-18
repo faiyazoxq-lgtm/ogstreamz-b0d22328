@@ -357,10 +357,10 @@ function WelcomePage() {
                 Finish wiring up your account
               </h1>
             ) : (
-              <h1 className="text-7xl sm:text-9xl font-black tracking-tight leading-[1.05]">
+              <h1 className="font-black tracking-tight leading-[1.05]" style={{ fontSize: "clamp(1.75rem, 9vw, 6rem)" }}>
                 <Link
                   to="/auth"
-                  className="group inline-flex items-center gap-3 rounded-2xl border-2 border-amber-300/50 bg-black/40 px-6 py-4 underline decoration-2 decoration-amber-300/70 underline-offset-[8px] backdrop-blur-sm transition hover:border-amber-300 hover:bg-black/60 hover:decoration-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                  className="group inline-flex items-center gap-3 whitespace-nowrap rounded-2xl border-2 border-amber-300/50 bg-black/40 px-4 py-3 sm:px-6 sm:py-4 underline decoration-2 decoration-amber-300/70 underline-offset-[8px] backdrop-blur-sm transition hover:border-amber-300 hover:bg-black/60 hover:decoration-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
                   style={{
                     color: "var(--gold, #f4c869)",
                     textShadow: "0 0 24px rgba(244,200,105,0.6), 0 2px 8px rgba(0,0,0,0.9)",
@@ -370,7 +370,7 @@ function WelcomePage() {
                 >
                   Login / sign up
                   <ArrowRight
-                    className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 transition-transform group-hover:translate-x-1"
+                    className="h-6 w-6 sm:h-10 sm:w-10 shrink-0 transition-transform group-hover:translate-x-1"
                     aria-hidden
                   />
                 </Link>
