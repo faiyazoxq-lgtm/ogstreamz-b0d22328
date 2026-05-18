@@ -338,7 +338,7 @@ function WelcomePage() {
           />
           <div className="space-y-3">
             <p
-              className="uppercase text-amber-300 whitespace-nowrap"
+              className="uppercase text-amber-300 whitespace-nowrap animate-silver-shimmer"
               style={{
                 fontFamily: "'Bungee', 'Lilita One', system-ui, sans-serif",
                 fontWeight: 900,

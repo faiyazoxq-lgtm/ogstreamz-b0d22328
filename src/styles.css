@@ -1470,4 +1470,17 @@ html[data-mood="og"] {
     0% { transform: translateX(-100%); }
     100% { transform: translateX(300%); }
   }
+
+  @keyframes silver-shimmer {
+    0%, 100% {
+      filter: drop-shadow(0 0 6px rgba(220, 225, 235, 0.35)) brightness(1);
+    }
+    50% {
+      filter: drop-shadow(0 0 16px rgba(245, 248, 255, 0.85)) brightness(1.18);
+    }
+  }
+
+  .animate-silver-shimmer {
+    animation: silver-shimmer 3.2s ease-in-out infinite;
+  }
 }
