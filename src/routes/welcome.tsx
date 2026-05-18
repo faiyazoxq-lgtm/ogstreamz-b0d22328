@@ -347,7 +347,7 @@ function WelcomePage() {
                 lineHeight: 1,
                 textShadow:
                   "0 0 36px rgba(244,200,105,0.75), 3px 0 0 currentColor, -3px 0 0 currentColor, 0 3px 0 currentColor, 0 -3px 0 currentColor, 3px 3px 0 currentColor, -3px -3px 0 currentColor, 3px -3px 0 currentColor, -3px 3px 0 currentColor, 0 0 0 4px #c0c6d1, 0 0 14px rgba(220,225,235,0.85), 0 5px 0 rgba(0,0,0,0.95), 0 12px 32px rgba(0,0,0,0.95)",
-                WebkitTextStroke: "7px #d8dde6",
+                WebkitTextStroke: "clamp(2.5px, 1.2vw, 7px) #d8dde6",
               }}
             >
               {signedIn ? "Welcome back" : "Welcome"}
