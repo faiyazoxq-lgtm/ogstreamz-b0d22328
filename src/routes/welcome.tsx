@@ -337,7 +337,21 @@ function WelcomePage() {
             }}
           />
           <div className="space-y-3">
-            <p className="text-lg sm:text-xl font-black uppercase tracking-[0.4em] text-amber-300">
+            <p
+              className="text-lg sm:text-xl font-black uppercase tracking-[0.4em]"
+              style={{
+                color: "#b8862a",
+                backgroundImage:
+                  "linear-gradient(180deg, #f0c75a 0%, #b8862a 45%, #6b4a14 100%)",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                textShadow:
+                  "0 0 28px rgba(184,134,42,0.65), 0 0 8px rgba(107,74,20,0.9)",
+                filter:
+                  "drop-shadow(0 1px 0 rgba(0,0,0,0.8)) drop-shadow(0 0 18px rgba(184,134,42,0.55))",
+              }}
+            >
               {signedIn ? "Welcome back" : "Welcome"}
             </p>
             {signedIn ? (
@@ -348,17 +362,26 @@ function WelcomePage() {
               <h1 className="text-6xl sm:text-8xl font-black tracking-tight leading-[1.05]">
                 <Link
                   to="/auth"
-                  className="group inline-flex items-center gap-3 rounded-2xl border-2 border-amber-300/50 bg-black/40 px-6 py-4 underline decoration-2 decoration-amber-300/70 underline-offset-[8px] backdrop-blur-sm transition hover:border-amber-300 hover:bg-black/60 hover:decoration-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                  className="group inline-flex items-center gap-3 rounded-2xl border-2 bg-black/55 px-6 py-4 underline decoration-2 underline-offset-[8px] backdrop-blur-sm transition hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2"
                   style={{
-                    color: "var(--gold, #f4c869)",
-                    textShadow: "0 0 24px rgba(244,200,105,0.6), 0 2px 8px rgba(0,0,0,0.9)",
+                    borderColor: "rgba(184,134,42,0.7)",
+                    color: "transparent",
+                    backgroundImage:
+                      "linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.55)), linear-gradient(180deg, #f0c75a 0%, #b8862a 50%, #6b4a14 100%)",
+                    backgroundClip: "padding-box, text",
+                    WebkitBackgroundClip: "padding-box, text",
+                    WebkitTextFillColor: "transparent",
+                    textDecorationColor: "#b8862a",
+                    textShadow:
+                      "0 0 28px rgba(184,134,42,0.7), 0 2px 8px rgba(0,0,0,0.95), 0 0 4px rgba(107,74,20,0.95)",
                     boxShadow:
-                      "0 0 0 1px rgba(244,200,105,0.18), 0 0 60px -10px rgba(244,200,105,0.65)",
+                      "0 0 0 1px rgba(184,134,42,0.35), 0 0 80px -8px rgba(184,134,42,0.75), inset 0 0 40px -12px rgba(184,134,42,0.4)",
                   }}
                 >
                   Login / sign up
                   <ArrowRight
                     className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 transition-transform group-hover:translate-x-1"
+                    style={{ color: "#d9a73b", filter: "drop-shadow(0 0 10px rgba(184,134,42,0.8))" }}
                     aria-hidden
                   />
                 </Link>
