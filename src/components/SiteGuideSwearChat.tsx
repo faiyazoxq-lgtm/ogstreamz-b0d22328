@@ -246,9 +246,9 @@ export function SiteGuideSwearChat() {
               submit(draft);
             }
           }}
-          rows={1}
+          rows={4}
           placeholder="What are you trying to do? I'll point the way (rudely)."
-          className="flex-1 resize-none bg-black/40 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1"
+          className="flex-1 resize-y min-h-[120px] bg-black/40 border border-white/10 rounded-md px-3 py-3 text-base leading-relaxed focus:outline-none focus:ring-1"
           style={{ caretColor: accent }}
         />
         <button
