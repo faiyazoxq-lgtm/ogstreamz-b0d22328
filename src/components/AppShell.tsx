@@ -196,12 +196,12 @@ function DesktopSidebar({
       {/* Header / Brand */}
       <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"} gap-2 px-3 py-3 border-b border-border/60`}>
         {!collapsed ? (
-          <Link to="/" aria-label="Home" className="brand-glow inline-flex items-center min-w-0 flex-1 px-1 rounded-lg hover:bg-white/[0.04] transition-colors">
+          <Link to="/" aria-label="Home" className="brand-glow inline-flex items-center min-w-0 flex-1 px-2 py-1 rounded-lg hover:bg-white/[0.04] transition-colors">
             <OgWordmark
               suffix="-PORTAL"
               fit
-              maxFontSize={36}
-              minFontSize={20}
+              maxFontSize={48}
+              minFontSize={24}
               className="text-white font-black tracking-[-0.02em] drop-shadow-[0_0_14px_oklch(0.72_0.22_245/0.5)]"
             />
           </Link>
