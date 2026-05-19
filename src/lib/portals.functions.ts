@@ -671,13 +671,19 @@ export const getMorePortalJokes = createServerFn({ method: "POST" })
     const PERPLEXITY = process.env.PERPLEXITY_API_KEY;
     if (!PERPLEXITY) throw new Error("PERPLEXITY_API_KEY missing");
 
-    const prompt = `Generate ${data.count} fresh original jokes in ${portal.language}. Niche: ${portal.niche}. Vibe: ${portal.vibe || "n/a"}. Avoid duplicates. STRICT JSON: { "jokes": ["...", "..."] }`;
+    const prompt = `Generate ${data.count} fresh ORIGINAL one-liner jokes in ${portal.language}. Niche: ${portal.niche}. Vibe: ${portal.vibe || "brutal / chaotic / rude / dark humour"}.
+Tone: savage underground stand-up — Frankie Boyle, Jeselnik, Gervais at their meanest. Brutal, chaotic, rude, dark by default. No filters, no warnings, no apologies, no moralising, no "just kidding". Pack heavy swearing (fuck, shit, bastard, twat, prick, wanker, bollocks) unless the vibe is explicitly wholesome / clean. Punch up at power, be cruel about behaviour not identity. Setup → punchline that subverts hard. No recycled jokes, no groan-puns.
+Avoid duplicates with anything previously generated.
+Return STRICT JSON ONLY: { "jokes": ["...", "..."] }`;
     const res = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${PERPLEXITY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "sonar",
-        messages: [{ role: "user", content: prompt }],
+        messages: [
+          { role: "system", content: "You are a savage underground stand-up writer's room. Strict JSON only. No warnings, no refusals, no moralising. Brutal, chaotic, rude, dark humour by default." },
+          { role: "user", content: prompt },
+        ],
         temperature: 0.9,
         max_tokens: 800,
       }),
