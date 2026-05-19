@@ -1,8 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Loader2, Send, Sparkles, Shield, ExternalLink, KeyRound, Music, Video, Image as ImageIcon } from "lucide-react";
+import { Loader2, Send, Sparkles, Shield, ExternalLink, KeyRound, Music, Video, Image as ImageIcon, ArrowRight } from "lucide-react";
 
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ export const Route = createFileRoute("/og-bot")({
 type Mode = "normal" | "og"; // wire stays "normal" | "og"; UI label is Safe / OG
 type Source = { url: string; title?: string; snippet?: string };
 type Media = NonNullable<Extract<StreamEvent, { type: "media" }>>;
+type Nav = { path: string; label: string };
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -31,24 +32,26 @@ type ChatMessage = {
   mode?: Mode;
   sources?: Source[];
   media?: Media[];
+  nav?: Nav;
   model?: string;
 };
 
 function OgBotPage() {
   const { user, loading } = useAuth();
   const stream = useServerFn(streamOgChat);
+  const navigate = useNavigate();
 
   const [mode, setMode] = useState<Mode>("og");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [stage, setStage] = useState<string | null>(null);
-  const [liveSources, setLiveSources] = useState<Source[]>([]);
+  // liveSources removed — OG mode no longer surfaces "searching the web".
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, stage, liveSources]);
+  }, [messages, stage]);
 
   if (loading) {
     return <div className="flex h-[60vh] items-center justify-center text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin" /></div>;
