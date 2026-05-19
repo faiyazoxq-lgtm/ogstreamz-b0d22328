@@ -36,7 +36,11 @@ function VaultLoginPage() {
     return () => clearTimeout(t);
   }, []);
 
-  const dest = "/dashboard";
+  // VIPs (and admins) should land directly in the VIP Vault when they tap
+  // "Enter Vault" — sending them to /dashboard hides the vault behind an
+  // extra hop and feels like the button does nothing (esp. inside the
+  // Telegram in-app browser). Non-VIPs still go to /dashboard.
+  const dest = isVip ? "/vip" : "/dashboard";
 
   const oauth = async (provider: "google" | "apple") => {
     setLoading(true);
@@ -164,7 +168,7 @@ function VaultLoginPage() {
                 <p className="text-xs text-cyan-100/80">Signed in as <span className="font-bold">{user.email}</span></p>
                 <Button
                   type="button"
-                  onClick={() => navigate({ to: "/dashboard" as never })}
+                  onClick={() => navigate({ to: dest as never })}
                   className="mt-2 w-full h-10 bg-cyan-400/20 hover:bg-cyan-400/30 border border-cyan-300/50 text-cyan-50 font-bold uppercase tracking-[0.2em]"
                 >
                   Enter Vault <ArrowRight className="h-4 w-4 ml-2" />
