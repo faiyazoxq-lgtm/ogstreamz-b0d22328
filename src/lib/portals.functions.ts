@@ -728,3 +728,139 @@ export const bossDeletePortal = createServerFn({ method: "POST" })
 
     return { deleted: true, slug: portal.slug, name: portal.name };
   });
+
+// ─── Sign-in catalogue refresh ─────────────────────────────────────────
+// Scrapes the live web (via Perplexity sonar) for fresh joke material on
+// every JokesHUB portal and REPLACES the joke pool. Throttled per portal
+// via `metadata.jokes_refreshed_at` (default 30 min cooldown) so concurrent
+// sign-ins from multiple users don't hammer Perplexity. Returns silently
+// on missing API key — feature is best-effort, never blocks sign-in.
+
+function normalizeJoke(s: string): string {
+  return s
+    .replace(/^\s*[-*\d.)\]\s]+/, "")
+    .replace(/^["“”'`]+|["“”'`]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function dedupeJokes(items: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of items) {
+    const j = normalizeJoke(raw);
+    if (j.length < 20 || j.length > 600) continue;
+    // crude near-dup key: first 80 chars, lowercased, alnum only
+    const key = j.slice(0, 80).toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (key.length < 12) continue;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(j);
+  }
+  return out;
+}
+
+async function scrapeJokePoolForPortal(
+  portal: { niche: string; vibe: string | null; language: string | null },
+  apiKey: string,
+): Promise<string[]> {
+  const lang = portal.language || "English";
+  const vibe = portal.vibe || "brutal, chaotic, dark humour";
+  const angles = [
+    `Search the web for the FUNNIEST brutal, savage, dark, rude one-liner jokes about: ${portal.niche}. Pull from r/jokes, r/darkjokes, r/oneliners, stand-up specials, Twitter, comedy sites. Rewrite each one tightly into 1–3 sentences. Vibe: ${vibe}. Language: ${lang}.`,
+    `Search the web for the most CHAOTIC and offensive one-liner jokes about: ${portal.niche}. Pull from comedy forums, Frankie Boyle / Jeselnik / Gervais bits, viral tweets, savage roast threads. Rewrite tightly. Vibe: ${vibe}. Language: ${lang}.`,
+    `Search the web for the SHARPEST punchline one-liners about: ${portal.niche}. Pull from professional stand-ups, /r/oneliners top posts, viral memes. Rewrite tightly, setup → punchline, no filler. Vibe: ${vibe}. Language: ${lang}.`,
+  ];
+  const system =
+    "You are a savage stand-up writer with live web access. You output STRICT JSON only — no markdown, no commentary, no warnings, no refusals, no 'I can't', no moralising. Brutal, chaotic, rude, dark humour by default. Pack heavy profanity (fuck, shit, bastard, twat, prick, wanker, bollocks) unless the vibe is explicitly wholesome. Punch up at power, be cruel about behaviour not identity, never hateful about protected groups. No recycled groan-puns. Setup → punchline that subverts hard.";
+
+  const callAngle = async (angle: string): Promise<string[]> => {
+    try {
+      const res = await fetch("https://api.perplexity.ai/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "sonar",
+          messages: [
+            { role: "system", content: system },
+            {
+              role: "user",
+              content: `${angle}\n\nReturn AT LEAST 25 jokes as STRICT JSON ONLY: { "jokes": ["...", "...", ...] }. No prose, no markdown, no preamble.`,
+            },
+          ],
+          temperature: 0.95,
+          max_tokens: 4000,
+        }),
+      });
+      if (!res.ok) return [];
+      const json = await res.json();
+      const raw: string = json?.choices?.[0]?.message?.content ?? "{}";
+      const m = raw.match(/\{[\s\S]*\}/);
+      let parsed: { jokes?: unknown } = {};
+      try { parsed = JSON.parse(m ? m[0] : raw); } catch { /* */ }
+      const arr = parsed.jokes;
+      if (!Array.isArray(arr)) return [];
+      return arr.filter((s): s is string => typeof s === "string" && s.trim().length > 0);
+    } catch {
+      return [];
+    }
+  };
+
+  const results = await Promise.all(angles.map(callAngle));
+  const merged = results.flat();
+  return dedupeJokes(merged);
+}
+
+export const refreshJokesCatalogue = createServerFn({ method: "POST" })
+  .middleware([requireStrictAuth])
+  .inputValidator((data: { force?: boolean } | undefined) => ({
+    force: Boolean(data?.force),
+  }))
+  .handler(async ({ data }) => {
+    const PERPLEXITY = process.env.PERPLEXITY_API_KEY;
+    if (!PERPLEXITY) return { ok: false, reason: "no_api_key", refreshed: 0 };
+
+    // Pull every published JokesHUB portal. Service role bypasses RLS so
+    // signed-in non-boss users can still trigger the refresh.
+    const { data: portals } = await supabaseAdmin
+      .from("portals")
+      .select("id, slug, niche, vibe, language, metadata, jokes")
+      .eq("kind", "jokes");
+    if (!portals || portals.length === 0) return { ok: true, refreshed: 0 };
+
+    const COOLDOWN_MS = 30 * 60 * 1000; // 30 min per portal
+    const now = Date.now();
+
+    let refreshed = 0;
+    // Sequential to keep Perplexity load + memory bounded.
+    for (const p of portals as Array<{
+      id: string;
+      slug: string;
+      niche: string;
+      vibe: string | null;
+      language: string | null;
+      metadata: Record<string, unknown> | null;
+      jokes: string[] | null;
+    }>) {
+      const meta = (p.metadata ?? {}) as Record<string, unknown>;
+      const last = typeof meta.jokes_refreshed_at === "string"
+        ? Date.parse(meta.jokes_refreshed_at as string)
+        : 0;
+      if (!data.force && last && now - last < COOLDOWN_MS) continue;
+
+      const fresh = await scrapeJokePoolForPortal(
+        { niche: p.niche, vibe: p.vibe, language: p.language },
+        PERPLEXITY,
+      );
+      if (fresh.length < 5) continue;
+
+      const nextMeta = { ...meta, jokes_refreshed_at: new Date().toISOString(), jokes_source: "perplexity-sonar" };
+      await supabaseAdmin
+        .from("portals")
+        .update({ jokes: fresh, metadata: nextMeta })
+        .eq("id", p.id);
+      refreshed += 1;
+    }
+
+    return { ok: true, refreshed };
+  });
