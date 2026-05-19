@@ -23,7 +23,6 @@ export const STYLE_PRESETS: StylePreset[] = [
   { id: "sarcastic", label: "Sarcastic", Icon: Drama },
   { id: "legendary", label: "Legendary", Icon: Crown },
   { id: "gritty", label: "Gritty", Icon: Flame },
-  { id: "indian", label: "Indian Roast", Icon: Flame },
 ];
 
 type Prompt = { label: string; phrase: string; styleId?: string };
@@ -34,7 +33,6 @@ const PROMPTS: Prompt[] = [
   { label: "Sarcastic",      phrase: "sarcastic, dry, eye-roll delivery",              styleId: "sarcastic" },
   { label: "Legendary",      phrase: "legendary stand-up energy, mic-drop punchlines", styleId: "legendary" },
   { label: "Gritty",         phrase: "gritty, raw, no-filter street comedy",           styleId: "gritty" },
-  { label: "Indian Roast",   phrase: "brutal Indian/desi one-liners, ethnic stereotypes uncensored — aunties, arranged marriage, IIT, cricket, Bollywood, chappal, dowry, accents — no filter", styleId: "indian" },
   { label: "Deadpan",        phrase: "deadpan delivery, zero emotion" },
   { label: "Absurd",         phrase: "absurd, surreal, makes-no-sense logic" },
   { label: "Self-Deprecating", phrase: "self-deprecating, roast-yourself-first" },
