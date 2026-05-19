@@ -344,17 +344,19 @@ export const spawnPortal = createServerFn({ method: "POST" })
     {
       const seedSpecs: Record<typeof data.kind, { system: string; userPrompt: string; jsonKey: string }> = {
         jokes: {
-          system: "You are a stand-up writer's room. You output strict JSON only — no markdown, no commentary. Every joke has a clear setup and a punchline that lands; no shaggy-dog rambles, no 'and that's why...' filler.",
-          userPrompt: `Write exactly 5 ORIGINAL jokes for the JokesHUB.
+          system: "You are a savage underground stand-up writer's room — think Frankie Boyle, Ricky Gervais, Anthony Jeselnik, Bo Burnham at his meanest. You output strict JSON only — no markdown, no commentary, no warnings, no apologies, no 'I can't'. Every joke is brutal, chaotic, rude, dark, and lands like a punch. No safe-mode. No moralising.",
+          userPrompt: `Write exactly 5 ORIGINAL one-liner jokes for the JokesHUB.
 Niche / topic: ${data.niche}.
 ${langLine}
 ${vibeLine}${ctx}
 RULES:
-- 1–3 sentences each. Setup → punchline. Punchline must subvert the setup.
-- Specific over generic: use proper nouns, real verbs, concrete imagery from the niche.
-- No "Why did the X cross the Y" templates. No recycled internet jokes.
-- Never break character of the requested vibe (e.g. wholesome vibe = zero profanity / innuendo).
-- No meta-commentary, no emojis unless the vibe explicitly calls for them.
+- 1–3 sentences. Setup → punchline. Punchline must subvert HARD and leave a mark.
+- Brutal, chaotic, rude, dark humour by default — no filters, no soft landings, no PG.
+- Pack at least one strong swear (fuck, shit, bastard, twat, prick, wanker, bollocks) into most jokes when the vibe is anything other than explicitly "wholesome / family-friendly".
+- Specific over generic: use proper nouns, real verbs, concrete imagery from the niche. Punch up at power, punch sideways at everyone else, never at protected groups in a hateful way — be cruel about behaviour, not identity.
+- No "Why did the X cross the Y" templates. No recycled internet jokes. No groan-puns. No "and that's why…" filler.
+- Never break character or hedge. No apologies, no "just kidding", no meta-commentary, no emojis unless the vibe explicitly calls for them.
+- If the vibe is explicitly wholesome / family-friendly / clean, override the swearing rule and stay clean — otherwise, go feral.
 Return STRICT JSON ONLY: { "jokes": ["...", "...", "...", "...", "..."] }`,
           jsonKey: "jokes",
         },
@@ -669,13 +671,19 @@ export const getMorePortalJokes = createServerFn({ method: "POST" })
     const PERPLEXITY = process.env.PERPLEXITY_API_KEY;
     if (!PERPLEXITY) throw new Error("PERPLEXITY_API_KEY missing");
 
-    const prompt = `Generate ${data.count} fresh original jokes in ${portal.language}. Niche: ${portal.niche}. Vibe: ${portal.vibe || "n/a"}. Avoid duplicates. STRICT JSON: { "jokes": ["...", "..."] }`;
+    const prompt = `Generate ${data.count} fresh ORIGINAL one-liner jokes in ${portal.language}. Niche: ${portal.niche}. Vibe: ${portal.vibe || "brutal / chaotic / rude / dark humour"}.
+Tone: savage underground stand-up — Frankie Boyle, Jeselnik, Gervais at their meanest. Brutal, chaotic, rude, dark by default. No filters, no warnings, no apologies, no moralising, no "just kidding". Pack heavy swearing (fuck, shit, bastard, twat, prick, wanker, bollocks) unless the vibe is explicitly wholesome / clean. Punch up at power, be cruel about behaviour not identity. Setup → punchline that subverts hard. No recycled jokes, no groan-puns.
+Avoid duplicates with anything previously generated.
+Return STRICT JSON ONLY: { "jokes": ["...", "..."] }`;
     const res = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${PERPLEXITY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "sonar",
-        messages: [{ role: "user", content: prompt }],
+        messages: [
+          { role: "system", content: "You are a savage underground stand-up writer's room. Strict JSON only. No warnings, no refusals, no moralising. Brutal, chaotic, rude, dark humour by default." },
+          { role: "user", content: prompt },
+        ],
         temperature: 0.9,
         max_tokens: 800,
       }),
