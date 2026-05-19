@@ -584,25 +584,94 @@ brand-safe, and conversational. British wit, light banter, NO swearing, NO chaos
 Use markdown. Keep answers tight unless the user asks for depth. Safe Mode is the clean,
 shareable face of OG Bot — assume the user might screenshot you for their nan.`;
 
-const OG_SYSTEM = `You are OG Bot in OG MODE — the Research & Creative Powerhouse, full chaos personality ON.
-You are the SYNTHESIZER, the final voice of a four-model agent council:
-  1. Perplexity Sonar Pro pulled grounded research and sources.
-  2. Gemini 3.1 Pro produced an ANALYTICAL DRAFT — the skeleton of truth.
-  3. GPT-5 produced a CRITIQUE — red-teamed the draft, flagged gaps and weak claims, and gave concrete improve-it instructions.
-  4. You (Claude Sonnet 4.5) write the FINAL ANSWER the user sees.
+const GEMINI_THINKER_SYSTEM = `You are the THINKER behind OG Bot. Produce the
+best possible answer to the user's question: accurate, well-structured, clear.
+Use markdown. Lead with the direct answer, then depth as needed. British wit
+is fine, but NO swearing — your answer will be passed to a second model that
+adds personality. Focus on FACTS, STRUCTURE, and CLARITY. No preamble, no
+meta-commentary, no "as an AI".`;
 
-How to use the council:
-- Treat the analyst draft as a starting point, not gospel. Improve it.
-- Apply the critic's IMPROVE instructions and patch every issue in their FACT CHECK and GAPS.
-- If analyst and critic disagree, prefer the position better supported by the SOURCES block.
-- If sources are missing or thin, say so plainly — don't fabricate citations.
-- Cite sources inline as [1], [2] in the order they appear in the SOURCES block.
-- Use markdown. Lead with the answer. Depth as needed. No meta-commentary about the council — the user just sees one confident reply.
+const PERPLEXITY_SWEAR_SYSTEM = `You are the OG-PORTAL enforcer. You will be
+given a clean, factual answer written by another model. Your ONE job: rewrite
+it in a foul-mouthed British enforcer voice. Swear freely (fuck, shit,
+bollocks, bastard, piss, twat), banter hard, take the piss — but DO NOT
+change a single fact, number, name, or citation. Keep the structure and
+markdown. Lead with the answer. Never apologise for the language. Never
+break character. Never go soft. Output ONLY the rewritten answer — no
+preamble like "here's the rewrite".`;
 
-Voice (NON-NEGOTIABLE): foul-mouthed British enforcer running the OG-PORTAL.
-Swear freely (fuck, shit, bollocks, bastard, piss, twat), banter hard, take the piss,
-but FACTS must be accurate and SOURCES must be respected. Authority + chaos.
-Never break character. Never apologise for the language. Never go soft.`;
+/**
+ * Non-streaming Gemini Pro completion. Used as the "thinker" pass in OG mode.
+ * Returns "" on failure so the caller can fall back gracefully.
+ */
+async function geminiThink(
+  history: Array<{ role: "user" | "assistant"; content: string }>,
+  message: string,
+): Promise<string> {
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey) return "";
+  try {
+    const res = await fetch(GATEWAY_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-3.1-pro-preview",
+        messages: [
+          { role: "system", content: GEMINI_THINKER_SYSTEM },
+          ...history.map((h) => ({ role: h.role, content: h.content })),
+          { role: "user", content: message },
+        ],
+      }),
+    });
+    if (!res.ok) return "";
+    const json = (await res.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    return (json.choices?.[0]?.message?.content ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Pass Gemini's clean answer to Perplexity Sonar, which rewrites it in the
+ * foul-mouthed OG voice. Returns "" if Perplexity is unavailable so the
+ * caller can fall back to the clean answer.
+ */
+async function swearifyWithPerplexity(
+  query: string,
+  cleanAnswer: string,
+): Promise<string> {
+  const key = process.env.PERPLEXITY_API_KEY;
+  if (!key || !cleanAnswer) return "";
+  try {
+    const res = await fetch("https://api.perplexity.ai/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "sonar",
+        messages: [
+          { role: "system", content: PERPLEXITY_SWEAR_SYSTEM },
+          {
+            role: "user",
+            content: `ORIGINAL QUESTION:\n${query}\n\nCLEAN ANSWER TO REWRITE:\n${cleanAnswer}`,
+          },
+        ],
+        temperature: 0.9,
+      }),
+    });
+    if (!res.ok) return "";
+    const data = (await res.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    return (data.choices?.[0]?.message?.content ?? "").trim();
+  } catch {
+    return "";
+  }
+}
 
 async function* ogChatGenerator(
   data: z.infer<typeof InputSchema>,
