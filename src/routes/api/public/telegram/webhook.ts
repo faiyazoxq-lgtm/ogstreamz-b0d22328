@@ -99,7 +99,7 @@ async function handleCommand(
   // --- Member self-service commands ---------------------------------------
   // /me /account /credits /unlink /msg <text> /help
   // All of these require the chat to already be linked to a profile.
-  if (/^\/(me|status|account|credits|unlink|msg|contact|boss)\b/i.test(trimmed)) {
+  if (/^\/(me|status|account|credits|unlink|msg|contact|boss|vault|vip)\b/i.test(trimmed)) {
     const sb = getSupabase() as any;
     const { data: link } = await sb
       .from("telegram_user_links")
@@ -111,6 +111,38 @@ async function handleCommand(
         chatId,
         "You're not linked yet. Visit <b>/account/passes</b> on the site to get a code, then send <code>/link CODE</code> here.",
       );
+      return;
+    }
+
+    // /vault & /vip — VIP Vault deep-link, with quick tier check so non-VIP
+    // members get a clear upgrade nudge instead of a dead link.
+    if (/^\/(vault|vip)\b/i.test(trimmed)) {
+      const siteBase = (process.env.PUBLIC_SITE_URL || "https://ogstreamz.co.uk").replace(/\/$/, "");
+      const { data: prof } = await sb
+        .from("profiles")
+        .select("status,rank")
+        .eq("id", link.user_id)
+        .maybeSingle();
+      const tier = String(prof?.status ?? "member").toLowerCase();
+      const isVipTier = tier === "vip" || tier === "boss" || tier === "admin";
+      const vaultKb: TgInlineKeyboard = {
+        inline_keyboard: [
+          [
+            { text: "🔓 Open VIP Vault", url: `${siteBase}/vip` },
+            { text: "🎟 My Passes", url: `${siteBase}/account/passes` },
+          ],
+          [{ text: "👤 View my profile", url: `${siteBase}/profile` }],
+        ],
+      };
+      const body = isVipTier
+        ? `🔓 <b>VIP Vault — unlocked</b>\n\n` +
+          `Tier: <b>${escapeHtml(prof?.status || "vip")}</b>` +
+          (prof?.rank ? ` · ${escapeHtml(prof.rank)}` : "") +
+          `\n\nTap below to open the Vault.`
+        : `🔒 <b>VIP Vault — locked</b>\n\n` +
+          `Your tier: <b>${escapeHtml(prof?.status || "member")}</b>\n\n` +
+          `Upgrade your OG Pass to unlock full Vault access — keys, drops & private feeds.`;
+      await tgSendMessage(chatId, body, { reply_markup: vaultKb });
       return;
     }
 
