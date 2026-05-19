@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import ReactMarkdown from "react-markdown";
 import { Link } from "@tanstack/react-router";
-import { Send, Loader2, Compass, Flame, Globe, Sparkles } from "lucide-react";
+import { Send, Loader2, Compass, Flame, Sparkles } from "lucide-react";
 import { siteGuideChatStream } from "@/lib/site-guide.functions";
 import ogBotAvatar from "@/assets/og-streamz-wallpaper.png";
 import { useAuth } from "@/hooks/use-auth";
@@ -56,8 +56,30 @@ export function SiteGuideSwearChat() {
   const [chaos, setChaos] = useState(true);
   const [sending, setSending] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([]);
-  const [thinking, setThinking] = useState<"searching" | "synthesizing" | null>(null);
+  const [thinking, setThinking] = useState<boolean>(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Per-user session memory: messages survive route changes / reloads in this
+  // browser tab, and clear automatically when the user signs out (key changes
+  // to "anon" and we don't restore anon history into a signed-in chat).
+  const storageKey = user ? `og-bot:chat:${user.id}` : null;
+
+  useEffect(() => {
+    if (!storageKey) return;
+    try {
+      const raw = sessionStorage.getItem(storageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) setMsgs(parsed);
+      }
+    } catch { /* noop */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (!storageKey) return;
+    try { sessionStorage.setItem(storageKey, JSON.stringify(msgs)); } catch { /* noop */ }
+  }, [msgs, storageKey]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -72,7 +94,7 @@ export function SiteGuideSwearChat() {
     setMsgs(next);
     setDraft("");
     setSending(true);
-    setThinking("searching");
+    setThinking(true);
     try {
       const result = await send({ data: { messages: next, chaos } });
       const events: any[] = Array.isArray((result as any)?.events) ? (result as any).events : [];
@@ -92,8 +114,8 @@ export function SiteGuideSwearChat() {
       for (const evt of events) {
         if (!evt || typeof evt !== "object") continue;
         if (evt.type === "phase") {
-          if (evt.phase === "done") setThinking(null);
-          else setThinking(evt.phase);
+          if (evt.phase === "done") setThinking(false);
+          else setThinking(true);
         } else if (evt.type === "delta" && typeof evt.text === "string") {
           assembled += evt.text;
           pushOrUpdate();
@@ -117,7 +139,7 @@ export function SiteGuideSwearChat() {
       setMsgs((m) => [...m, { role: "assistant", content: `🚨 ${msg}` }]);
     } finally {
       setSending(false);
-      setThinking(null);
+      setThinking(false);
     }
   };
 
@@ -125,7 +147,7 @@ export function SiteGuideSwearChat() {
 
   return (
     <section
-      className="rounded-2xl border bg-black/50 backdrop-blur overflow-hidden"
+      className="rounded-2xl border bg-black/90 backdrop-blur overflow-hidden"
       style={{ borderColor: `${accent}55`, boxShadow: `0 0 50px -25px ${accent}` }}
       aria-label="Site guide swear chat"
     >
@@ -228,22 +250,13 @@ export function SiteGuideSwearChat() {
             className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg border w-fit"
             style={{ borderColor: `${accent}55`, background: `${accent}12`, color: "#ffd1dc" }}
           >
-            {thinking === "searching" ? (
-              <>
-                <Globe className="h-3.5 w-3.5 animate-pulse" />
-                <span className="font-mono uppercase tracking-wider text-[11px]">Searching the web…</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-3.5 w-3.5 animate-pulse" />
-                <span className="font-mono uppercase tracking-wider text-[11px]">Synthesizing response…</span>
-              </>
-            )}
+            <Sparkles className="h-3.5 w-3.5 animate-pulse" />
+            <span className="font-mono uppercase tracking-wider text-[11px]">Thinking…</span>
           </div>
         )}
         {sending && !thinking && (
           <div className="flex items-center gap-2 text-xs text-white/50">
-            <Loader2 className="h-3 w-3 animate-spin" /> guttermouth is plotting a route…
+            <Loader2 className="h-3 w-3 animate-spin" /> guttermouth is cooking…
           </div>
         )}
       </div>
