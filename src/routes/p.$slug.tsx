@@ -247,7 +247,7 @@ function PortalPage() {
     if (queueRef.current.length === 0) {
       // Exhausted — reshuffle but keep current idx out of the front to
       // avoid an immediate visual repeat.
-      const fresh = shuffle(jokes.map((_: unknown, i: number) => i).filter((i: number) => i !== idx));
+      const fresh = shuffle<number>(jokes.map((_: unknown, i: number) => i).filter((i: number) => i !== idx));
       queueRef.current = fresh;
     }
     const next = queueRef.current.shift()!;
