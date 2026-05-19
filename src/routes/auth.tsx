@@ -327,14 +327,14 @@ function AuthPage() {
   };
 
   return (
-    <main className="relative min-h-[calc(100vh-4rem)] flex items-start lg:items-center justify-center px-4 sm:px-5 py-8 sm:py-12 overflow-x-hidden">
+    <main className="relative min-h-[calc(100svh-4rem)] flex items-start lg:items-center justify-center px-4 sm:px-5 py-8 sm:py-12 overflow-x-clip">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 h-[500px] w-[700px] rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245_/_0.35),transparent)] animate-pulse-gold" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 h-[500px] w-[min(700px,90vw)] rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245_/_0.35),transparent)] animate-pulse-gold" />
       </div>
 
-      <div className="relative w-full max-w-6xl grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-6 lg:gap-10 items-start">
+      <div className="relative w-full max-w-6xl grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-6 lg:gap-10 items-start min-w-0">
         {/* LEFT: welcome message + bonus + auth card */}
-        <div className="w-full max-w-md mx-auto lg:mx-0 lg:ml-auto">
+        <div className="w-full max-w-md mx-auto lg:mx-0 lg:ml-auto min-w-0">
         <Link to="/" className="flex items-center justify-center lg:justify-start gap-3 mb-6 sm:mb-8">
           <img src={logo} alt="0G-PORTAL" className="h-10 w-10 rounded-md ring-1 ring-[oklch(0.72_0.22_245/0.5)]" />
           <OgWordmark suffix="-PORTAL" className="text-2xl text-metallic" />
@@ -407,7 +407,7 @@ function AuthPage() {
           <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-[0_0_60px_-10px_oklch(0.72_0.22_245/0.4)] space-y-5 text-center">
             <header className="space-y-1">
               <h1 className="text-2xl font-bold text-metallic">Welcome back</h1>
-              <p className="text-sm text-muted-foreground truncate">
+              <p className="text-sm text-muted-foreground truncate break-all">
                 {user.email}
               </p>
             </header>
