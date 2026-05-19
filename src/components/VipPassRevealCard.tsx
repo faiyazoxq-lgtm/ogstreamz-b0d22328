@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Crown, Eye, Copy, Check, Timer, Loader2, Flame, Lock, Download, Sparkles } from "lucide-react";
+import { Crown, Eye, Copy, Check, Timer, Loader2, Flame, Lock, Download, Sparkles, Gift } from "lucide-react";
 import { toPng } from "html-to-image";
+import { QRCodeSVG } from "qrcode.react";
 import vaultLogo from "@/assets/og-vault-safe.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
