@@ -140,20 +140,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               );
             }
           } catch { /* sessionStorage may be unavailable */ }
-          // Fire-and-forget: refresh the JokesHUB catalogue from the live
-          // web on each sign-in. Server fn is throttled per-portal (30 min
-          // cooldown) so concurrent sign-ins don't hammer the API. Tab
-          // dedupe keeps a single browser tab from re-firing on token
-          // refresh storms.
-          try {
-            const jkey = "jokes:catalogue-refreshed";
-            if (typeof sessionStorage !== "undefined" && !sessionStorage.getItem(jkey)) {
-              sessionStorage.setItem(jkey, "1");
-              import("@/lib/portals.functions").then(({ refreshJokesCatalogue }) => {
-                refreshJokesCatalogue({ data: {} }).catch(() => {/* silent — best-effort */});
-              }).catch(() => {/* silent */});
-            }
-          } catch { /* sessionStorage may be unavailable */ }
+          // Jokes catalogue is NOT auto-refreshed on sign-in anymore — it
+          // only refreshes when a VIP presses the portal's hit button, so
+          // we never burn Perplexity tokens for inactive sessions.
         } else if (_event === "PASSWORD_RECOVERY") {
           logSecurityEvent({ data: { event: "password_recovery" } }).catch(() => {});
         } else if (_event === "USER_UPDATED") {
