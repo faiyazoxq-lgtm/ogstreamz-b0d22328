@@ -140,6 +140,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               );
             }
           } catch { /* sessionStorage may be unavailable */ }
+          // Fire-and-forget: refresh the JokesHUB catalogue from the live
+          // web on each sign-in. Server fn is throttled per-portal (30 min
+          // cooldown) so concurrent sign-ins don't hammer the API. Tab
+          // dedupe keeps a single browser tab from re-firing on token
+          // refresh storms.
+          try {
+            const jkey = "jokes:catalogue-refreshed";
+            if (typeof sessionStorage !== "undefined" && !sessionStorage.getItem(jkey)) {
+              sessionStorage.setItem(jkey, "1");
+              import("@/lib/portals.functions").then(({ refreshJokesCatalogue }) => {
+                refreshJokesCatalogue({ data: {} }).catch(() => {/* silent — best-effort */});
+              }).catch(() => {/* silent */});
+            }
+          } catch { /* sessionStorage may be unavailable */ }
         } else if (_event === "PASSWORD_RECOVERY") {
           logSecurityEvent({ data: { event: "password_recovery" } }).catch(() => {});
         } else if (_event === "USER_UPDATED") {
@@ -154,6 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           sessionStorage.removeItem("boss:tg-login-notified");
           sessionStorage.removeItem("sec:signin-logged");
+          sessionStorage.removeItem("jokes:catalogue-refreshed");
         } catch { /* noop */ }
       }
     });
