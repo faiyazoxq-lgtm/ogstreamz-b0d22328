@@ -40,6 +40,7 @@ export type StreamEvent =
       providerLabel?: string;
       message?: string;
     }
+  | { type: "navigate"; path: string; label: string; reason?: string }
   | { type: "delta"; text: string }
   | { type: "done"; model: string; intent: Intent };
 
@@ -600,6 +601,109 @@ markdown. Lead with the answer. Never apologise for the language. Never
 break character. Never go soft. Output ONLY the rewritten answer — no
 preamble like "here's the rewrite".`;
 
+// User-facing routes the bot can deep-link the user to.
+const NAV_ROUTES: Array<{ path: string; label: string; keywords: string }> = [
+  { path: "/", label: "Home", keywords: "home landing" },
+  { path: "/portals", label: "Portals", keywords: "portals hubs list" },
+  { path: "/store", label: "Store", keywords: "store shop buy purchase passes credits" },
+  { path: "/account/passes", label: "My Passes", keywords: "my passes account subscription" },
+  { path: "/wallet", label: "Wallet", keywords: "wallet balance credits topup" },
+  { path: "/vip", label: "VIP", keywords: "vip premium membership" },
+  { path: "/battle", label: "Battle", keywords: "battle arena fight" },
+  { path: "/battlehub", label: "Battle Hub", keywords: "battle hub" },
+  { path: "/jokes", label: "Jokes", keywords: "jokes humour comedy" },
+  { path: "/music", label: "Music", keywords: "music tracks audio" },
+  { path: "/noticeboard", label: "Noticeboard", keywords: "noticeboard announcements news" },
+  { path: "/history", label: "History", keywords: "history past activity" },
+  { path: "/my-generations", label: "My Generations", keywords: "my generations images videos" },
+  { path: "/profile", label: "Profile", keywords: "profile account me" },
+  { path: "/settings", label: "Settings", keywords: "settings preferences" },
+  { path: "/dashboard", label: "Dashboard", keywords: "dashboard" },
+  { path: "/connect", label: "Connect", keywords: "connect link integrations" },
+  { path: "/connect-telegram", label: "Connect Telegram", keywords: "telegram link" },
+  { path: "/tools", label: "Tools", keywords: "tools utilities" },
+  { path: "/formhub", label: "Form Hub", keywords: "forms formhub" },
+  { path: "/letterhub", label: "Letter Hub", keywords: "letters letterhub" },
+  { path: "/appealhub", label: "Appeal Hub", keywords: "appeal appeals" },
+  { path: "/fleet", label: "Fleet", keywords: "fleet" },
+  { path: "/trade", label: "Trade", keywords: "trade trading" },
+  { path: "/reseller", label: "Reseller", keywords: "reseller resell" },
+  { path: "/syndicate", label: "Syndicate", keywords: "syndicate" },
+  { path: "/og-bot", label: "OG Bot", keywords: "og bot chat" },
+];
+
+/**
+ * Single Gemini Flash hop that decides:
+ *   - is this a navigation request? → which route
+ *   - is this a simple question? → answer directly (skip the Pro+Perplexity hops)
+ *   - else: complex, fall through to the full pipeline
+ */
+async function routeQuery(
+  history: Array<{ role: "user" | "assistant"; content: string }>,
+  message: string,
+): Promise<{
+  action: "navigate" | "answer" | "complex";
+  path?: string;
+  label?: string;
+  answer?: string;
+}> {
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey) return { action: "complex" };
+
+  const routesList = NAV_ROUTES.map((r) => `  ${r.path}  — ${r.label} (${r.keywords})`).join("\n");
+  const sys = `You are the OG Bot router. Decide what to do with the user's message.
+
+Return STRICT JSON only, no prose, matching:
+{ "action": "navigate" | "answer" | "complex",
+  "path": "/route",        // only when action=navigate, pick from the catalog
+  "label": "Route Label",  // only when action=navigate
+  "answer": "..."          // only when action=answer; concise, factual, NO swearing
+}
+
+Rules:
+- "navigate": user is asking to GO somewhere, OPEN a page, or asking WHERE to do X on the site (e.g. "take me to the store", "where do I buy passes", "open my wallet"). Pick the closest path from the catalog.
+- "answer": small-talk, greetings, definitions, short factual or conversational questions you can confidently answer in 1-3 short paragraphs. Keep it concise.
+- "complex": research-heavy, multi-step reasoning, code, long-form analysis, or anything you're unsure of. Leave "answer" empty.
+
+Route catalog:
+${routesList}`;
+
+  try {
+    const res = await fetch(GATEWAY_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: sys },
+          ...history.slice(-4).map((h) => ({ role: h.role, content: h.content })),
+          { role: "user", content: message },
+        ],
+      }),
+    });
+    if (!res.ok) return { action: "complex" };
+    const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const raw = json.choices?.[0]?.message?.content ?? "";
+    const parsed = JSON.parse(raw) as {
+      action?: string;
+      path?: string;
+      label?: string;
+      answer?: string;
+    };
+    if (parsed.action === "navigate" && parsed.path) {
+      const match = NAV_ROUTES.find((r) => r.path === parsed.path);
+      if (match) return { action: "navigate", path: match.path, label: match.label };
+    }
+    if (parsed.action === "answer" && parsed.answer) {
+      return { action: "answer", answer: parsed.answer };
+    }
+    return { action: "complex" };
+  } catch {
+    return { action: "complex" };
+  }
+}
+
 /**
  * Non-streaming Gemini Pro completion. Used as the "thinker" pass in OG mode.
  * Returns "" on failure so the caller can fall back gracefully.
@@ -753,6 +857,36 @@ async function* ogChatGenerator(
       // unavailable, we fall back to Gemini's clean answer so the user
       // always gets a reply.
       yield { type: "status", stage: "thinking" };
+
+      // Fast path: router decides navigate / quick-answer / complex.
+      const routed = await routeQuery(history, message);
+
+      if (routed.action === "navigate" && routed.path && routed.label) {
+        yield { type: "navigate", path: routed.path, label: routed.label };
+        // Quick OG-voice blurb to go with the link.
+        const blurb = await swearifyWithPerplexity(
+          message,
+          `Taking you to **${routed.label}** (${routed.path}).`,
+        );
+        yield { type: "delta", text: blurb || `Taking you to **${routed.label}** — tap the card above.` };
+        yield { type: "done", model: "gemini-flash-router", intent };
+        return;
+      }
+
+      // Simple question → use the Flash answer directly, then OG-voice it.
+      // Skips the slow Gemini Pro pass entirely.
+      if (routed.action === "answer" && routed.answer) {
+        const swearifiedFast = await swearifyWithPerplexity(message, routed.answer);
+        yield { type: "delta", text: swearifiedFast || routed.answer };
+        yield {
+          type: "done",
+          model: swearifiedFast ? "gemini-flash + perplexity-sonar" : "gemini-flash",
+          intent,
+        };
+        return;
+      }
+
+      // Complex: full Gemini Pro think → Perplexity rewrite.
       const cleanAnswer = await geminiThink(history, message);
       if (!cleanAnswer) {
         yield { type: "delta", text: "_⚠️ Couldn't reach Gemini — try again._" };

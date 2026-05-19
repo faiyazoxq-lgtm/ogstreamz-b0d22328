@@ -1,8 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Loader2, Send, Sparkles, Shield, ExternalLink, KeyRound, Music, Video, Image as ImageIcon } from "lucide-react";
+import { Loader2, Send, Sparkles, Shield, KeyRound, Music, Video, Image as ImageIcon, ArrowRight } from "lucide-react";
 
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ export const Route = createFileRoute("/og-bot")({
 type Mode = "normal" | "og"; // wire stays "normal" | "og"; UI label is Safe / OG
 type Source = { url: string; title?: string; snippet?: string };
 type Media = NonNullable<Extract<StreamEvent, { type: "media" }>>;
+type Nav = { path: string; label: string };
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -31,24 +32,26 @@ type ChatMessage = {
   mode?: Mode;
   sources?: Source[];
   media?: Media[];
+  nav?: Nav;
   model?: string;
 };
 
 function OgBotPage() {
   const { user, loading } = useAuth();
   const stream = useServerFn(streamOgChat);
+  const navigate = useNavigate();
 
   const [mode, setMode] = useState<Mode>("og");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [stage, setStage] = useState<string | null>(null);
-  const [liveSources, setLiveSources] = useState<Source[]>([]);
+  // liveSources removed — OG mode no longer surfaces "searching the web".
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, stage, liveSources]);
+  }, [messages, stage]);
 
   if (loading) {
     return <div className="flex h-[60vh] items-center justify-center text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin" /></div>;
@@ -67,8 +70,7 @@ function OgBotPage() {
     if (!text || busy) return;
     setBusy(true);
     setInput("");
-    setLiveSources([]);
-    setStage("classifying");
+    setStage("thinking");
 
     const userMsg: ChatMessage = { role: "user", content: text };
     const history = messages.map((m) => ({ role: m.role, content: m.content }));
@@ -84,8 +86,20 @@ function OgBotPage() {
       for (const ev of result.events) {
         if (ev.type === "status") setStage(ev.stage);
         else if (ev.type === "research") {
+          // research events are intentionally hidden in the UI
           collectedSources.push(ev.source);
-          setLiveSources([...collectedSources]);
+        } else if (ev.type === "navigate") {
+          const nav: Nav = { path: ev.path, label: ev.label };
+          setMessages((prev) => {
+            const next = [...prev];
+            const last = next[next.length - 1];
+            if (last?.role === "assistant") last.nav = nav;
+            return next;
+          });
+          // Auto-navigate after a short beat so the user sees the card.
+          setTimeout(() => {
+            navigate({ to: ev.path as never }).catch(() => {});
+          }, 900);
         } else if (ev.type === "media") {
           collectedMedia.push(ev);
           setMessages((prev) => {
@@ -132,7 +146,6 @@ function OgBotPage() {
     } finally {
       setBusy(false);
       setStage(null);
-      setLiveSources([]);
     }
   }
 
@@ -145,8 +158,8 @@ function OgBotPage() {
           </h1>
           <p className="text-xs text-muted-foreground">
             {mode === "og"
-              ? "OG Mode · Gemini 3.1 Pro thinks → Perplexity adds the OG voice · image · music · video"
-              : "Safe Mode · Gemini 3 Flash · fast, clean, brand-safe assistance"}
+              ? "OG Mode · chat, navigate the site, or generate image / music / video"
+              : "Safe Mode · fast, clean, brand-safe assistance"}
           </p>
         </div>
         <ModeToggle mode={mode} onChange={setMode} disabled={busy} />
@@ -155,8 +168,7 @@ function OgBotPage() {
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto rounded-lg border bg-card/30 p-4">
         {messages.length === 0 && (
           <div className="py-12 text-center text-sm text-muted-foreground">
-            Ask anything. In <strong>Safe Mode</strong> you get clean Gemini Flash. In <strong>OG Mode</strong> Gemini Pro thinks through the answer, then Perplexity rewrites it in full OG voice — same facts, no manners.
-            Say "make an image of…", "make a song…", or "make a video…" to trigger media tools (OG Mode only).
+            Ask anything, or tell me where to take you on the site ("open the store", "take me to my wallet"). In <strong>OG Mode</strong> I answer in full OG voice — same facts, no manners. Say "make an image of…", "make a song…", or "make a video…" to trigger media tools.
           </div>
         )}
 
@@ -164,12 +176,9 @@ function OgBotPage() {
           <MessageBubble key={i} msg={m} />
         ))}
 
-        {stage && mode === "og" && (
-          <ResearchStatusBar stage={stage} sources={liveSources} />
-        )}
-        {stage && mode === "normal" && (
+        {stage && (
           <div className="text-xs text-muted-foreground italic flex items-center gap-2">
-            <Loader2 className="h-3 w-3 animate-spin" /> {stage}…
+            <Loader2 className="h-3 w-3 animate-spin" /> Thinking…
           </div>
         )}
       </div>
@@ -226,39 +235,18 @@ function ModeToggle({ mode, onChange, disabled }: { mode: Mode; onChange: (m: Mo
   );
 }
 
-function ResearchStatusBar({ stage, sources }: { stage: string; sources: Source[] }) {
-  const label =
-    stage === "researching" ? "OG Mode: Consulting Perplexity Sonar Pro…" :
-    stage === "drafting" ? "Gemini 3.1 Pro: Drafting analysis · GPT-5 critique queued…" :
-    stage === "thinking" ? "Council: Assembling brief for Claude…" :
-    stage === "finalizing" ? "Claude Sonnet 4.5: Synthesizing final answer…" :
-    stage === "generating" ? "Creative Engine: Generating media…" :
-    stage === "classifying" ? "Router: Detecting intent…" :
-    `${stage}…`;
-
+function NavCard({ nav }: { nav: Nav }) {
   return (
-    <Card className="border-primary/40 bg-primary/5 p-3">
-      <div className="flex items-center gap-2 text-sm font-medium text-primary">
-        <Loader2 className="h-4 w-4 animate-spin" /> {label}
-      </div>
-      {sources.length > 0 && (
-        <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-          {sources.map((s, i) => (
-            <li key={i} className="flex items-start gap-1.5">
-              <span className="font-mono text-primary">[{i + 1}]</span>
-              {s.url ? (
-                <a href={s.url} target="_blank" rel="noopener noreferrer" className="hover:text-foreground inline-flex items-center gap-1">
-                  <span className="line-clamp-1">{s.title ?? s.url}</span>
-                  <ExternalLink className="h-3 w-3 shrink-0" />
-                </a>
-              ) : (
-                <span className="line-clamp-1">{s.title}</span>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
+    <Link to={nav.path as never}>
+      <Card className="flex items-center justify-between gap-3 border-primary/40 bg-primary/5 p-3 hover:bg-primary/10 transition">
+        <div className="text-sm">
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Go to</div>
+          <div className="font-semibold text-primary">{nav.label}</div>
+          <div className="text-[11px] text-muted-foreground font-mono">{nav.path}</div>
+        </div>
+        <ArrowRight className="h-4 w-4 text-primary" />
+      </Card>
+    </Link>
   );
 }
 
@@ -277,6 +265,8 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
         )}
 
         {msg.media?.map((m, i) => <MediaCard key={i} media={m} />)}
+
+        {msg.nav && <NavCard nav={msg.nav} />}
 
         {msg.content && (
           <div className="prose prose-base sm:prose-lg dark:prose-invert max-w-none break-words font-medium leading-[1.75] prose-p:leading-[1.75] prose-p:my-3 prose-headings:font-bold prose-headings:tracking-tight prose-strong:font-bold prose-li:leading-[1.7] prose-li:my-1">
