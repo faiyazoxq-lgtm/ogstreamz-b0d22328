@@ -297,6 +297,33 @@ function PortalPage() {
 
   const useCost = Math.max(0, Math.floor(Number(portal.use_credit_cost) || 0));
 
+  // First press on a JokesHUB portal scrapes a fresh batch from the live web.
+  // Once-per-session per portal so a tap-spam doesn't burn Perplexity tokens.
+  const maybeRefreshJokes = async () => {
+    if (portal.kind !== "jokes") return;
+    const key = `jokes:refreshed:${portal.slug}`;
+    try {
+      if (typeof sessionStorage !== "undefined" && sessionStorage.getItem(key)) return;
+    } catch { /* */ }
+    if (refreshingJokes) return;
+    setRefreshingJokes(true);
+    try {
+      try { sessionStorage.setItem(key, "1"); } catch { /* */ }
+      const r = await refreshJokesFn({ data: { slug: portal.slug } });
+      if (r?.ok && (r as any).refreshed > 0) {
+        const { data: row } = await supabase
+          .from("portals_public").select("jokes").eq("slug", portal.slug).maybeSingle();
+        const next = (row?.jokes as string[] | undefined) ?? [];
+        if (next.length) {
+          setFreshJokes(next);
+          queueRef.current = []; // rebuild on next advance
+          toast.success(`Loaded ${next.length} fresh jokes`);
+        }
+      }
+    } catch { /* silent — best-effort */ }
+    finally { setRefreshingJokes(false); }
+  };
+
   const hit = async (e?: React.MouseEvent) => {
     if (!owned) {
       startUnlock();
@@ -342,6 +369,8 @@ function PortalPage() {
       }
       return;
     }
+    // Fire fresh-joke scrape on first press (jokes portals only).
+    maybeRefreshJokes();
     advance();
     setHits((h) => h + 1);
     controls.start(HIT_ANIMS[T.animation] ?? HIT_ANIMS.pulse);
