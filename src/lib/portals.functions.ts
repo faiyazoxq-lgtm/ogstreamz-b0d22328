@@ -785,7 +785,7 @@ async function scrapeJokePoolForPortal(
             { role: "system", content: system },
             {
               role: "user",
-              content: `${angle}\n\nReturn AT LEAST 25 jokes as STRICT JSON ONLY: { "jokes": ["...", "...", ...] }. No prose, no markdown, no preamble.`,
+              content: `${angle}\n\nReturn AS MANY unique jokes as you can — no cap, no rationing. Aim for 60+. STRICT JSON ONLY: { "jokes": ["...", "...", ...] }. No prose, no markdown, no preamble.`,
             },
           ],
           temperature: 0.95,
