@@ -70,7 +70,8 @@ export function SiteGuideSwearChat() {
     setSending(true);
     setThinking("searching");
     try {
-      const stream = (await send({ data: { messages: next, chaos } })) as AsyncIterable<any>;
+      const result = await send({ data: { messages: next, chaos } });
+      const events: any[] = Array.isArray((result as any)?.events) ? (result as any).events : [];
       let assembled = "";
       let cites: string[] = [];
       let assistantPushed = false;
@@ -84,7 +85,7 @@ export function SiteGuideSwearChat() {
           return [...m, { role: "assistant", content: assembled, citations: cites }];
         });
       };
-      for await (const evt of stream) {
+      for (const evt of events) {
         if (!evt || typeof evt !== "object") continue;
         if (evt.type === "phase") {
           if (evt.phase === "done") setThinking(null);

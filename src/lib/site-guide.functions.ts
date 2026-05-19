@@ -370,22 +370,16 @@ function parseSseDeltas(chunk: string, leftover: string): { deltas: string[]; re
   return { deltas, rest: buffer, done };
 }
 
-export const siteGuideChatStream = createServerFn({ method: "POST" })
-  .middleware([requireStrictAuth])
-  .inputValidator((d: { messages: Msg[]; chaos?: boolean }) => ({
-    messages: (Array.isArray(d?.messages) ? d.messages : [])
-      .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
-      .slice(-20)
-      .map((m) => ({ role: m.role, content: String(m.content).slice(0, 1500) })),
-    chaos: !!d?.chaos,
-  }))
-  .handler(async function* ({ data, context }): AsyncGenerator<StreamEvent> {
+async function* siteGuideGenerator(
+  data: { messages: Msg[]; chaos: boolean },
+  context: { supabase: any; userId: string },
+): AsyncGenerator<StreamEvent> {
     const lovableKey = process.env.LOVABLE_API_KEY;
     const perplexityKey = process.env.PERPLEXITY_API_KEY;
     if (!lovableKey) { yield { type: "error", message: "AI gateway not configured" }; return; }
     if (data.messages.length === 0) { yield { type: "error", message: "Say something" }; return; }
 
-    const { supabase, userId } = context as { supabase: any; userId: string };
+    const { supabase, userId } = context;
 
     // --- Memory load (best-effort) ---
     let facts: string[] = [];
@@ -517,4 +511,21 @@ export const siteGuideChatStream = createServerFn({ method: "POST" })
       newMessageCount: turnIndex,
       probed: shouldProbe,
     }).catch((e) => console.error("og_bot_memory write failed", e));
+}
+
+export const siteGuideChatStream = createServerFn({ method: "POST" })
+  .middleware([requireStrictAuth])
+  .inputValidator((d: { messages: Msg[]; chaos?: boolean }) => ({
+    messages: (Array.isArray(d?.messages) ? d.messages : [])
+      .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
+      .slice(-20)
+      .map((m) => ({ role: m.role, content: String(m.content).slice(0, 1500) })),
+    chaos: !!d?.chaos,
+  }))
+  .handler(async ({ data, context }): Promise<{ events: StreamEvent[] }> => {
+    const events: StreamEvent[] = [];
+    for await (const ev of siteGuideGenerator(data, context as { supabase: any; userId: string })) {
+      events.push(ev);
+    }
+    return { events };
   });
