@@ -403,7 +403,6 @@ Return STRICT JSON ONLY: { "items": ["...", "...", "...", "...", "..."] }`,
       };
       const spec = seedSpecs[data.kind];
 
-      const seedCap = data.kind === "jokes" ? 60 : 5;
       const callSeed = async (extraSystem?: string): Promise<string[]> => {
         const res = await fetch("https://api.perplexity.ai/chat/completions", {
           method: "POST",
@@ -425,9 +424,10 @@ Return STRICT JSON ONLY: { "items": ["...", "...", "...", "...", "..."] }`,
         let parsed: Record<string, unknown> = {};
         try { parsed = JSON.parse(match ? match[0] : raw); } catch { /* */ }
         const arr = (parsed[spec.jsonKey] ?? parsed.items ?? parsed.jokes) as unknown;
-        return (Array.isArray(arr) ? arr : [])
-          .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
-          .slice(0, seedCap);
+        const items = (Array.isArray(arr) ? arr : [])
+          .filter((s): s is string => typeof s === "string" && s.trim().length > 0);
+        // Non-joke kinds keep a small seed; jokes take everything the model returns.
+        return data.kind === "jokes" ? items : items.slice(0, 5);
       };
 
       jokes = await callSeed();
