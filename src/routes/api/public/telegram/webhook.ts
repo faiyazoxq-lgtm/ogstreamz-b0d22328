@@ -236,6 +236,8 @@ async function handleCommand(
           "<code>/link CODE</code> — bind this chat to your account\n" +
           "<code>/me</code> — show your account status & credits\n" +
           "<code>/status</code> — alias of /me\n" +
+          "<code>/vault</code> — VIP Vault access\n" +
+          "<code>/vip</code> — alias of /vault\n" +
           "<code>/msg TEXT</code> — message the OG-Streamz team\n" +
           "<code>/ask TEXT</code> — chat with the OG AI agent\n" +
           "<code>/swear</code> — toggle the swearing agent on/off\n" +
