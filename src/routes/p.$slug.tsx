@@ -195,7 +195,6 @@ function PortalPage() {
   const chargeUseFn = useServerFn(chargePortalUse);
   const navigate = useNavigate();
 
-  const [idx, setIdx] = useState(0);
   const [hits, setHits] = useState(0);
   const [owned, setOwned] = useState<boolean>(!portal.vip);
   const [unlocking, setUnlocking] = useState(false);
@@ -215,6 +214,45 @@ function PortalPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioSnippet = (portal as any).audio_snippet_url as string | null | undefined;
   const hitContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // ── Shuffled, non-repeating joke queue ──────────────────────────────
+  // Each portal visit starts on a random joke. Subsequent "hits" walk a
+  // shuffled queue so the same joke never appears twice until every joke
+  // in the pool has been shown; then it reshuffles (avoiding an immediate
+  // back-to-back of the last-shown joke).
+  const queueKey = `portal:queue:${portal.slug}`;
+  const shuffle = <T,>(arr: T[]): T[] => {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+  const queueRef = useRef<number[]>([]);
+  const [idx, setIdx] = useState<number>(() => {
+    if (jokes.length <= 1) return 0;
+    return Math.floor(Math.random() * jokes.length);
+  });
+  useEffect(() => {
+    // Build the queue once per portal mount, excluding the initial idx
+    // so the first "next" never repeats what you opened on.
+    const indices = jokes.map((_: unknown, i: number) => i).filter((i: number) => i !== idx);
+    queueRef.current = shuffle(indices);
+    try { sessionStorage.removeItem(queueKey); } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [portal.slug, jokes.length]);
+  const advance = () => {
+    if (jokes.length <= 1) return;
+    if (queueRef.current.length === 0) {
+      // Exhausted — reshuffle but keep current idx out of the front to
+      // avoid an immediate visual repeat.
+      const fresh = shuffle<number>(jokes.map((_: unknown, i: number) => i).filter((i: number) => i !== idx));
+      queueRef.current = fresh;
+    }
+    const next = queueRef.current.shift()!;
+    setIdx(next);
+  };
 
   // Lead tracking: increment view counter on mount
   useEffect(() => {
@@ -291,7 +329,7 @@ function PortalPage() {
           }
           return;
         }
-        setIdx((i) => (i + 1) % jokes.length);
+        advance();
         setHits((h) => h + 1);
         controls.start(HIT_ANIMS[T.animation] ?? HIT_ANIMS.pulse);
         if (captured) spawnParticles(captured);
@@ -300,7 +338,7 @@ function PortalPage() {
       }
       return;
     }
-    setIdx((i) => (i + 1) % jokes.length);
+    advance();
     setHits((h) => h + 1);
     controls.start(HIT_ANIMS[T.animation] ?? HIT_ANIMS.pulse);
     if (e) spawnParticles({ x: e.clientX, y: e.clientY });
