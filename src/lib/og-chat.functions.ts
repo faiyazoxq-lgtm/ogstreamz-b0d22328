@@ -857,6 +857,36 @@ async function* ogChatGenerator(
       // unavailable, we fall back to Gemini's clean answer so the user
       // always gets a reply.
       yield { type: "status", stage: "thinking" };
+
+      // Fast path: router decides navigate / quick-answer / complex.
+      const routed = await routeQuery(history, message);
+
+      if (routed.action === "navigate" && routed.path && routed.label) {
+        yield { type: "navigate", path: routed.path, label: routed.label };
+        // Quick OG-voice blurb to go with the link.
+        const blurb = await swearifyWithPerplexity(
+          message,
+          `Taking you to **${routed.label}** (${routed.path}).`,
+        );
+        yield { type: "delta", text: blurb || `Taking you to **${routed.label}** — tap the card above.` };
+        yield { type: "done", model: "gemini-flash-router", intent };
+        return;
+      }
+
+      // Simple question → use the Flash answer directly, then OG-voice it.
+      // Skips the slow Gemini Pro pass entirely.
+      if (routed.action === "answer" && routed.answer) {
+        const swearifiedFast = await swearifyWithPerplexity(message, routed.answer);
+        yield { type: "delta", text: swearifiedFast || routed.answer };
+        yield {
+          type: "done",
+          model: swearifiedFast ? "gemini-flash + perplexity-sonar" : "gemini-flash",
+          intent,
+        };
+        return;
+      }
+
+      // Complex: full Gemini Pro think → Perplexity rewrite.
       const cleanAnswer = await geminiThink(history, message);
       if (!cleanAnswer) {
         yield { type: "delta", text: "_⚠️ Couldn't reach Gemini — try again._" };
