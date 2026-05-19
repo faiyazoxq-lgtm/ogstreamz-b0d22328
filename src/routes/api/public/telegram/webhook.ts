@@ -218,7 +218,7 @@ async function handleCommand(
   // Telegram's `start` parameter only accepts [A-Za-z0-9_-]. Split on the
   // double-underscore so we recover the 8-char link CODE that
   // `claim_telegram_link_code` actually stored.
-  const [codePart, ogPassTagPart] = rawArg ? rawArg.split("__", 2) : [undefined, undefined];
+  const [codePart] = rawArg ? rawArg.split("__", 2) : [undefined];
   const code = codePart;
   if (!code) {
     // /start with no code:
