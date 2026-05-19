@@ -329,12 +329,12 @@ function WelcomePage() {
             "radial-gradient(ellipse 70% 55% at 50% 60%, transparent 0%, rgba(0,0,0,0.35) 45%, #000 80%)",
         }}
       />
-      <div className="relative mx-auto flex max-w-5xl flex-col gap-10 px-4 py-10 sm:py-16">
-        <header className="flex min-h-[50vh] flex-col items-center justify-center gap-6 text-center">
+      <div className="relative mx-auto flex w-full max-w-5xl flex-col gap-10 px-4 py-10 sm:py-16 overflow-x-hidden">
+        <header className="flex min-h-[50vh] w-full flex-col items-center justify-center gap-6 text-center">
           <img
             src={logo}
             alt="0G-PORTAL logo"
-            className="h-[17.16rem] w-[20.59rem] sm:h-[21.84rem] sm:w-[26.21rem] max-w-full object-contain rounded-3xl border border-border shadow-2xl ring-1 ring-amber-300/20"
+            className="aspect-[20.59/17.16] w-[min(20.59rem,100%)] sm:w-[26.21rem] sm:h-[21.84rem] max-w-full object-contain rounded-3xl border border-border shadow-2xl ring-1 ring-amber-300/20"
             style={{
               boxShadow:
                 "0 0 80px -10px rgba(244,200,105,0.45), 0 0 40px -8px oklch(0.72 0.22 245 / 0.35)",
