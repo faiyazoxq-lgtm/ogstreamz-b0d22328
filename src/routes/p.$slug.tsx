@@ -9,7 +9,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { isVipProfile } from "@/lib/roles";
 import { toast } from "sonner";
-import { createPortalUnlockCheckout, getPortalUnlockStatus } from "@/lib/portals.functions";
+import { createPortalUnlockCheckout, getPortalUnlockStatus, refreshJokesCatalogue } from "@/lib/portals.functions";
 import { chargePortalUse } from "@/lib/portal-use.functions";
 import { refreshNewsScout, type NewsScoutMeta, type NewsArticle } from "@/lib/news.functions";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
@@ -193,6 +193,7 @@ function PortalPage() {
   const checkoutFn = useServerFn(createPortalUnlockCheckout);
   const statusFn = useServerFn(getPortalUnlockStatus);
   const chargeUseFn = useServerFn(chargePortalUse);
+  const refreshJokesFn = useServerFn(refreshJokesCatalogue);
   const navigate = useNavigate();
 
   const [hits, setHits] = useState(0);
@@ -201,6 +202,8 @@ function PortalPage() {
   const [charging, setCharging] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [sharedIdea, setSharedIdea] = useState<string | null>(null);
+  const [freshJokes, setFreshJokes] = useState<string[] | null>(null);
+  const [refreshingJokes, setRefreshingJokes] = useState(false);
   const controls = useAnimationControls();
   const seedsByKind: Record<string, string[] | undefined> = {
     music: portal.music_hooks,
@@ -209,7 +212,8 @@ function PortalPage() {
     tools: portal.tool_ideas,
   };
   const kindSeeds = seedsByKind[portal.kind];
-  const seeds = (kindSeeds && kindSeeds.length ? kindSeeds : portal.jokes) ?? [];
+  const liveJokes = portal.kind === "jokes" && freshJokes && freshJokes.length ? freshJokes : portal.jokes;
+  const seeds = (kindSeeds && kindSeeds.length ? kindSeeds : liveJokes) ?? [];
   const jokes = seeds.length ? seeds : ["No content loaded yet."];
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioSnippet = (portal as any).audio_snippet_url as string | null | undefined;
@@ -293,6 +297,33 @@ function PortalPage() {
 
   const useCost = Math.max(0, Math.floor(Number(portal.use_credit_cost) || 0));
 
+  // First press on a JokesHUB portal scrapes a fresh batch from the live web.
+  // Once-per-session per portal so a tap-spam doesn't burn Perplexity tokens.
+  const maybeRefreshJokes = async () => {
+    if (portal.kind !== "jokes") return;
+    const key = `jokes:refreshed:${portal.slug}`;
+    try {
+      if (typeof sessionStorage !== "undefined" && sessionStorage.getItem(key)) return;
+    } catch { /* */ }
+    if (refreshingJokes) return;
+    setRefreshingJokes(true);
+    try {
+      try { sessionStorage.setItem(key, "1"); } catch { /* */ }
+      const r = await refreshJokesFn({ data: { slug: portal.slug } });
+      if (r?.ok && (r as any).refreshed > 0) {
+        const { data: row } = await supabase
+          .from("portals_public").select("jokes").eq("slug", portal.slug).maybeSingle();
+        const next = (row?.jokes as string[] | undefined) ?? [];
+        if (next.length) {
+          setFreshJokes(next);
+          queueRef.current = []; // rebuild on next advance
+          toast.success(`Loaded ${next.length} fresh jokes`);
+        }
+      }
+    } catch { /* silent — best-effort */ }
+    finally { setRefreshingJokes(false); }
+  };
+
   const hit = async (e?: React.MouseEvent) => {
     if (!owned) {
       startUnlock();
@@ -333,11 +364,14 @@ function PortalPage() {
         setHits((h) => h + 1);
         controls.start(HIT_ANIMS[T.animation] ?? HIT_ANIMS.pulse);
         if (captured) spawnParticles(captured);
+        maybeRefreshJokes();
       } finally {
         setCharging(false);
       }
       return;
     }
+    // Fire fresh-joke scrape on first press (jokes portals only).
+    maybeRefreshJokes();
     advance();
     setHits((h) => h + 1);
     controls.start(HIT_ANIMS[T.animation] ?? HIT_ANIMS.pulse);

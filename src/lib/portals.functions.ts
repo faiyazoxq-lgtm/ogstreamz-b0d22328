@@ -403,7 +403,6 @@ Return STRICT JSON ONLY: { "items": ["...", "...", "...", "...", "..."] }`,
       };
       const spec = seedSpecs[data.kind];
 
-      const seedCap = data.kind === "jokes" ? 60 : 5;
       const callSeed = async (extraSystem?: string): Promise<string[]> => {
         const res = await fetch("https://api.perplexity.ai/chat/completions", {
           method: "POST",
@@ -425,9 +424,10 @@ Return STRICT JSON ONLY: { "items": ["...", "...", "...", "...", "..."] }`,
         let parsed: Record<string, unknown> = {};
         try { parsed = JSON.parse(match ? match[0] : raw); } catch { /* */ }
         const arr = (parsed[spec.jsonKey] ?? parsed.items ?? parsed.jokes) as unknown;
-        return (Array.isArray(arr) ? arr : [])
-          .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
-          .slice(0, seedCap);
+        const items = (Array.isArray(arr) ? arr : [])
+          .filter((s): s is string => typeof s === "string" && s.trim().length > 0);
+        // Non-joke kinds keep a small seed; jokes take everything the model returns.
+        return data.kind === "jokes" ? items : items.slice(0, 5);
       };
 
       jokes = await callSeed();
@@ -785,7 +785,7 @@ async function scrapeJokePoolForPortal(
             { role: "system", content: system },
             {
               role: "user",
-              content: `${angle}\n\nReturn AT LEAST 25 jokes as STRICT JSON ONLY: { "jokes": ["...", "...", ...] }. No prose, no markdown, no preamble.`,
+              content: `${angle}\n\nReturn AS MANY unique jokes as you can — no cap, no rationing. Aim for 60+. STRICT JSON ONLY: { "jokes": ["...", "...", ...] }. No prose, no markdown, no preamble.`,
             },
           ],
           temperature: 0.95,
@@ -813,25 +813,26 @@ async function scrapeJokePoolForPortal(
 
 export const refreshJokesCatalogue = createServerFn({ method: "POST" })
   .middleware([requireStrictAuth])
-  .inputValidator((data: { force?: boolean } | undefined) => ({
+  .inputValidator((data: { slug?: string; force?: boolean } | undefined) => ({
+    slug: typeof data?.slug === "string" && data.slug.trim() ? data.slug.trim() : null,
     force: Boolean(data?.force),
   }))
   .handler(async ({ data }) => {
     const PERPLEXITY = process.env.PERPLEXITY_API_KEY;
     if (!PERPLEXITY) return { ok: false, reason: "no_api_key", refreshed: 0 };
 
-    // Pull every published JokesHUB portal. Service role bypasses RLS so
-    // signed-in non-boss users can still trigger the refresh.
-    const { data: portals } = await supabaseAdmin
+    // Pull JokesHUB portals — scoped to a single slug when provided, since
+    // refreshes are now user-triggered per portal (hit-button on the page).
+    let query = supabaseAdmin
       .from("portals")
       .select("id, slug, niche, vibe, language, metadata, jokes")
       .eq("kind", "jokes");
+    if (data.slug) query = query.eq("slug", data.slug);
+    const { data: portals } = await query;
     if (!portals || portals.length === 0) return { ok: true, refreshed: 0 };
 
-    const COOLDOWN_MS = 30 * 60 * 1000; // 30 min per portal
-    const now = Date.now();
-
     let refreshed = 0;
+    let total = 0;
     // Sequential to keep Perplexity load + memory bounded.
     for (const p of portals as Array<{
       id: string;
@@ -843,16 +844,12 @@ export const refreshJokesCatalogue = createServerFn({ method: "POST" })
       jokes: string[] | null;
     }>) {
       const meta = (p.metadata ?? {}) as Record<string, unknown>;
-      const last = typeof meta.jokes_refreshed_at === "string"
-        ? Date.parse(meta.jokes_refreshed_at as string)
-        : 0;
-      if (!data.force && last && now - last < COOLDOWN_MS) continue;
-
+      // No cooldown — user-triggered refreshes always run.
       const fresh = await scrapeJokePoolForPortal(
         { niche: p.niche, vibe: p.vibe, language: p.language },
         PERPLEXITY,
       );
-      if (fresh.length < 5) continue;
+      if (fresh.length === 0) continue;
 
       const nextMeta = { ...meta, jokes_refreshed_at: new Date().toISOString(), jokes_source: "perplexity-sonar" };
       await supabaseAdmin
@@ -860,7 +857,8 @@ export const refreshJokesCatalogue = createServerFn({ method: "POST" })
         .update({ jokes: fresh, metadata: nextMeta })
         .eq("id", p.id);
       refreshed += 1;
+      total += fresh.length;
     }
 
-    return { ok: true, refreshed };
+    return { ok: true, refreshed, total };
   });
