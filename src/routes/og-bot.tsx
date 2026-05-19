@@ -16,7 +16,7 @@ export const Route = createFileRoute("/og-bot")({
   head: () => ({
     meta: [
       { title: "OG Bot · Research & Creative Powerhouse" },
-      { name: "description", content: "Chat with OG Bot — Safe Mode for fast clean Gemini chat, OG Mode for Perplexity-grounded research with full chaos personality, image, music and video generation." },
+      { name: "description", content: "Chat with OG Bot — Safe Mode for fast clean Gemini chat, OG Mode for Gemini reasoning rewritten by Perplexity in full OG voice, plus image, music and video generation." },
     ],
   }),
 });
@@ -145,7 +145,7 @@ function OgBotPage() {
           </h1>
           <p className="text-xs text-muted-foreground">
             {mode === "og"
-              ? "OG Mode · Perplexity Sonar Pro → Gemini 3.1 Pro / GPT-5.5 · chaos personality · image · music · video"
+              ? "OG Mode · Gemini 3.1 Pro thinks → Perplexity adds the OG voice · image · music · video"
               : "Safe Mode · Gemini 3 Flash · fast, clean, brand-safe assistance"}
           </p>
         </div>
@@ -155,7 +155,7 @@ function OgBotPage() {
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto rounded-lg border bg-card/30 p-4">
         {messages.length === 0 && (
           <div className="py-12 text-center text-sm text-muted-foreground">
-            Ask anything. In <strong>Safe Mode</strong> you get clean Gemini Flash. In <strong>OG Mode</strong> I research with Perplexity then synthesize with Gemini Pro / GPT-5.5 — full chaos voice on.
+            Ask anything. In <strong>Safe Mode</strong> you get clean Gemini Flash. In <strong>OG Mode</strong> Gemini Pro thinks through the answer, then Perplexity rewrites it in full OG voice — same facts, no manners.
             Say "make an image of…", "make a song…", or "make a video…" to trigger media tools (OG Mode only).
           </div>
         )}
