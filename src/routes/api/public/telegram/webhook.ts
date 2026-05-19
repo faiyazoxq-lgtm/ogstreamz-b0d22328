@@ -19,6 +19,30 @@ import {
   getSwearingEnabled,
   setSwearingEnabled,
 } from "@/lib/perplexity.server";
+import { mintTelegramAuthUrl } from "@/lib/telegram-auth-link.server";
+
+/**
+ * Build a Telegram URL-button URL that signs the linked user in on the
+ * website and lands them on `destPath`. Falls back to the plain site URL
+ * (which forces a manual login) if token minting fails.
+ */
+async function autoAuthUrl(
+  userId: string | null | undefined,
+  destPath: string,
+  chatId: number,
+): Promise<string> {
+  const siteBase = (process.env.PUBLIC_SITE_URL || "https://ogstreamz.co.uk").replace(/\/$/, "");
+  const fallback = `${siteBase}${destPath.startsWith("/") ? destPath : "/" + destPath}`;
+  if (!userId) return fallback;
+  try {
+    return await mintTelegramAuthUrl(userId, destPath, { chatId });
+  } catch (e) {
+    logWarn("tg.autoAuthUrl.mint_failed", {
+      error: e instanceof Error ? e.message : String(e),
+    });
+    return fallback;
+  }
+}
 
 let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
@@ -117,7 +141,6 @@ async function handleCommand(
     // /vault & /vip — VIP Vault deep-link, with quick tier check so non-VIP
     // members get a clear upgrade nudge instead of a dead link.
     if (/^\/(vault|vip)\b/i.test(trimmed)) {
-      const siteBase = (process.env.PUBLIC_SITE_URL || "https://ogstreamz.co.uk").replace(/\/$/, "");
       const { data: prof } = await sb
         .from("profiles")
         .select("status,rank")
@@ -125,13 +148,18 @@ async function handleCommand(
         .maybeSingle();
       const tier = String(prof?.status ?? "member").toLowerCase();
       const isVipTier = tier === "vip" || tier === "boss" || tier === "admin";
+      const [vaultUrl, passesUrl, profileUrl] = await Promise.all([
+        autoAuthUrl(link.user_id, "/vip", chatId),
+        autoAuthUrl(link.user_id, "/account/passes", chatId),
+        autoAuthUrl(link.user_id, "/profile", chatId),
+      ]);
       const vaultKb: TgInlineKeyboard = {
         inline_keyboard: [
           [
-            { text: "🔓 Open VIP Vault", url: `${siteBase}/vip` },
-            { text: "🎟 My Passes", url: `${siteBase}/account/passes` },
+            { text: "🔓 Open VIP Vault", url: vaultUrl },
+            { text: "🎟 My Passes", url: passesUrl },
           ],
-          [{ text: "👤 View my profile", url: `${siteBase}/profile` }],
+          [{ text: "👤 View my profile", url: profileUrl }],
         ],
       };
       const body = isVipTier
@@ -407,12 +435,22 @@ async function handleCommand(
           (linkedProfile.rank ? ` · ${escapeHtml(linkedProfile.rank)}` : "") +
           "\n"
         : "";
-    const siteBase = (process.env.PUBLIC_SITE_URL || "https://ogstreamz.co.uk").replace(/\/$/, "");
+    const sbAdmin = getSupabase() as any;
+    const { data: linkRow } = await sbAdmin
+      .from("telegram_user_links")
+      .select("user_id")
+      .eq("chat_id", chatId)
+      .maybeSingle();
+    const linkedUserId: string | null = linkRow?.user_id ?? null;
+    const [profileUrl, vaultUrl] = await Promise.all([
+      autoAuthUrl(linkedUserId, "/profile", chatId),
+      autoAuthUrl(linkedUserId, "/vip", chatId),
+    ]);
     const confirmKeyboard: TgInlineKeyboard = {
       inline_keyboard: [
         [
-          { text: "👤 View my profile", url: `${siteBase}/profile` },
-          { text: "🔓 VIP Vault", url: `${siteBase}/vip` },
+          { text: "👤 View my profile", url: profileUrl },
+          { text: "🔓 VIP Vault", url: vaultUrl },
         ],
         [{ text: "🔌 Unlink this chat", callback_data: "wc:unlink" }],
       ],
@@ -625,11 +663,29 @@ async function sendBrandedWelcome(
     `<code>/msg TEXT</code> · message the team\n` +
     `<code>/help</code> · see everything\n\n` +
     `🌐 ${siteBase}`;
+  // Look up the linked user (if any) so the buttons can deep-link the
+  // member straight into the site already signed in.
+  let linkedUserId: string | null = null;
+  try {
+    const sb = getSupabase() as any;
+    const { data: link } = await sb
+      .from("telegram_user_links")
+      .select("user_id")
+      .eq("chat_id", chatId)
+      .maybeSingle();
+    linkedUserId = link?.user_id ?? null;
+  } catch {
+    // best-effort — fallback to plain URLs
+  }
+  const [passesUrl, homeUrl] = await Promise.all([
+    autoAuthUrl(linkedUserId, "/account/passes", chatId),
+    autoAuthUrl(linkedUserId, "/", chatId),
+  ]);
   const reply_markup: TgInlineKeyboard = {
     inline_keyboard: [
       [
-        { text: "🎟 VIP Pass", url: `${siteBase}/account/passes` },
-        { text: "📡 Live Drops", url: `${siteBase}/` },
+        { text: "🎟 VIP Pass", url: passesUrl },
+        { text: "📡 Live Drops", url: homeUrl },
       ],
       [{ text: "❓ Help", callback_data: "wc:help" }],
     ],
