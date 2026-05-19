@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Power, Sparkles, RotateCcw, Radio, Skull, SprayCan, Crown, Drama, Flame } from "lucide-react";
+import { Power, Sparkles, RotateCcw, Radio, Skull, SprayCan, Crown, Drama, Flame, Utensils } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,6 +23,7 @@ export const STYLE_PRESETS: StylePreset[] = [
   { id: "sarcastic", label: "Sarcastic", Icon: Drama },
   { id: "legendary", label: "Legendary", Icon: Crown },
   { id: "gritty", label: "Gritty", Icon: Flame },
+  { id: "indian", label: "Desi / Indian", Icon: Utensils },
 ];
 
 type Prompt = { label: string; phrase: string; styleId?: string };
@@ -33,6 +34,7 @@ const PROMPTS: Prompt[] = [
   { label: "Sarcastic",      phrase: "sarcastic, dry, eye-roll delivery",              styleId: "sarcastic" },
   { label: "Legendary",      phrase: "legendary stand-up energy, mic-drop punchlines", styleId: "legendary" },
   { label: "Gritty",         phrase: "gritty, raw, no-filter street comedy",           styleId: "gritty" },
+  { label: "Desi / Indian",  phrase: "raw desi humour — aunties, arranged marriage, Sharma ji ka beta, ethnic one-liners, no filter", styleId: "indian" },
   { label: "Deadpan",        phrase: "deadpan delivery, zero emotion" },
   { label: "Absurd",         phrase: "absurd, surreal, makes-no-sense logic" },
   { label: "Self-Deprecating", phrase: "self-deprecating, roast-yourself-first" },
