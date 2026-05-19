@@ -3485,6 +3485,36 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_auth_tokens: {
+        Row: {
+          chat_id: number | null
+          created_at: string
+          dest_path: string
+          expires_at: string
+          token: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          chat_id?: number | null
+          created_at?: string
+          dest_path?: string
+          expires_at: string
+          token: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          chat_id?: number | null
+          created_at?: string
+          dest_path?: string
+          expires_at?: string
+          token?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       telegram_chat_prefs: {
         Row: {
           chat_id: number
