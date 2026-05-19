@@ -435,12 +435,22 @@ async function handleCommand(
           (linkedProfile.rank ? ` · ${escapeHtml(linkedProfile.rank)}` : "") +
           "\n"
         : "";
-    const siteBase = (process.env.PUBLIC_SITE_URL || "https://ogstreamz.co.uk").replace(/\/$/, "");
+    const sbAdmin = getSupabase() as any;
+    const { data: linkRow } = await sbAdmin
+      .from("telegram_user_links")
+      .select("user_id")
+      .eq("chat_id", chatId)
+      .maybeSingle();
+    const linkedUserId: string | null = linkRow?.user_id ?? null;
+    const [profileUrl, vaultUrl] = await Promise.all([
+      autoAuthUrl(linkedUserId, "/profile", chatId),
+      autoAuthUrl(linkedUserId, "/vip", chatId),
+    ]);
     const confirmKeyboard: TgInlineKeyboard = {
       inline_keyboard: [
         [
-          { text: "👤 View my profile", url: `${siteBase}/profile` },
-          { text: "🔓 VIP Vault", url: `${siteBase}/vip` },
+          { text: "👤 View my profile", url: profileUrl },
+          { text: "🔓 VIP Vault", url: vaultUrl },
         ],
         [{ text: "🔌 Unlink this chat", callback_data: "wc:unlink" }],
       ],
