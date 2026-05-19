@@ -663,11 +663,29 @@ async function sendBrandedWelcome(
     `<code>/msg TEXT</code> · message the team\n` +
     `<code>/help</code> · see everything\n\n` +
     `🌐 ${siteBase}`;
+  // Look up the linked user (if any) so the buttons can deep-link the
+  // member straight into the site already signed in.
+  let linkedUserId: string | null = null;
+  try {
+    const sb = getSupabase() as any;
+    const { data: link } = await sb
+      .from("telegram_user_links")
+      .select("user_id")
+      .eq("chat_id", chatId)
+      .maybeSingle();
+    linkedUserId = link?.user_id ?? null;
+  } catch {
+    // best-effort — fallback to plain URLs
+  }
+  const [passesUrl, homeUrl] = await Promise.all([
+    autoAuthUrl(linkedUserId, "/account/passes", chatId),
+    autoAuthUrl(linkedUserId, "/", chatId),
+  ]);
   const reply_markup: TgInlineKeyboard = {
     inline_keyboard: [
       [
-        { text: "🎟 VIP Pass", url: `${siteBase}/account/passes` },
-        { text: "📡 Live Drops", url: `${siteBase}/` },
+        { text: "🎟 VIP Pass", url: passesUrl },
+        { text: "📡 Live Drops", url: homeUrl },
       ],
       [{ text: "❓ Help", callback_data: "wc:help" }],
     ],
