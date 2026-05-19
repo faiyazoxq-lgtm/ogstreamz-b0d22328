@@ -258,6 +258,11 @@ function PortalPage() {
     }
     const next = queueRef.current.shift()!;
     setIdx(next);
+    // Mark the joke we're about to show as seen for this user (jokes
+    // portals only, signed-in only). Fire-and-forget.
+    if (portal.kind === "jokes" && user && jokes[next]) {
+      markSeenFn({ data: { slug: portal.slug, jokes: [jokes[next]] } }).catch(() => {});
+    }
   };
 
   // Lead tracking: increment view counter on mount
@@ -319,27 +324,24 @@ function PortalPage() {
 
   const useCost = Math.max(0, Math.floor(Number(portal.use_credit_cost) || 0));
 
-  // First press on a JokesHUB portal scrapes a fresh batch from the live web.
-  // Once-per-session per portal so a tap-spam doesn't burn Perplexity tokens.
+  // First press on a JokesHUB portal asks the server to top up the shared
+  // catalogue. The server only calls Perplexity if THIS user has fewer
+  // than ~10 unseen jokes left, so we never burn tokens when other users
+  // have already generated enough fresh material.
   const maybeRefreshJokes = async () => {
     if (portal.kind !== "jokes") return;
-    const key = `jokes:refreshed:${portal.slug}`;
-    try {
-      if (typeof sessionStorage !== "undefined" && sessionStorage.getItem(key)) return;
-    } catch { /* */ }
     if (refreshingJokes) return;
     setRefreshingJokes(true);
     try {
-      try { sessionStorage.setItem(key, "1"); } catch { /* */ }
       const r = await refreshJokesFn({ data: { slug: portal.slug } });
-      if (r?.ok && (r as any).refreshed > 0) {
-        const { data: row } = await supabase
-          .from("portals_public").select("jokes").eq("slug", portal.slug).maybeSingle();
-        const next = (row?.jokes as string[] | undefined) ?? [];
+      if (r?.ok && (r as any).added > 0) {
+        // Server appended new jokes — pull this user's unseen subset.
+        const u = await getUnseenFn({ data: { slug: portal.slug } });
+        const next = (u?.jokes as string[] | undefined) ?? [];
         if (next.length) {
           setFreshJokes(next);
-          queueRef.current = []; // rebuild on next advance
-          toast.success(`Loaded ${next.length} fresh jokes`);
+          queueRef.current = [];
+          toast.success(`Loaded ${(r as any).added} fresh jokes`);
         }
       }
     } catch { /* silent — best-effort */ }
