@@ -81,7 +81,7 @@ function OgBotPage() {
       const collectedMedia: Media[] = [];
       let model: string | undefined;
 
-      for await (const ev of result as AsyncIterable<StreamEvent>) {
+      for (const ev of result.events) {
         if (ev.type === "status") setStage(ev.stage);
         else if (ev.type === "research") {
           collectedSources.push(ev.source);
