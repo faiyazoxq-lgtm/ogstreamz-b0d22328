@@ -40,6 +40,7 @@ export type StreamEvent =
       providerLabel?: string;
       message?: string;
     }
+  | { type: "navigate"; path: string; label: string; reason?: string }
   | { type: "delta"; text: string }
   | { type: "done"; model: string; intent: Intent };
 
