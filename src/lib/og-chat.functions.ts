@@ -747,71 +747,27 @@ async function* ogChatGenerator(
         return;
       }
 
-      // OG mode chat: Perplexity → Gemini Pro / GPT-5.5 synth.
-      yield { type: "status", stage: "researching" };
-      let research: { sources: ResearchSource[]; answer: string } = { sources: [], answer: "" };
-      try {
-        research = await deepResearch(message);
-        for (const src of research.sources) yield { type: "research", source: src };
-      } catch (e) {
-        yield {
-          type: "research",
-          source: {
-            url: "",
-            title: "Research failed",
-            snippet: e instanceof Error ? e.message : "Perplexity unavailable",
-          },
-        };
-      }
-
+      // OG mode: Gemini thinks the answer → Perplexity rewrites it in the
+      // foul-mouthed OG-PORTAL voice. Two non-streaming hops; the second
+      // hop is what gives OG mode its personality. If Perplexity is
+      // unavailable, we fall back to Gemini's clean answer so the user
+      // always gets a reply.
       yield { type: "status", stage: "thinking" };
-      const synthModel = pickSynthesisModel(intent);
-
-      const sourcesBlock = research.sources.length
-        ? "SOURCES:\n" +
-          research.sources
-            .map((s, i) => `[${i + 1}] ${s.title ?? s.url}${s.url ? ` — ${s.url}` : ""}${s.snippet ? `\n    ${s.snippet}` : ""}`)
-            .join("\n")
-        : "SOURCES: (none — research step returned nothing; answer from general knowledge and say so).";
-
-      const researchBlock = research.answer
-        ? `RESEARCH BRIEF (from Perplexity Sonar Pro):\n${research.answer}`
-        : "";
-
-      // ───────── AGENT COUNCIL ─────────
-      // Run on EVERY OG query so the synthesizer always gets a structured
-      // draft + red-team critique to work from. Both steps degrade silently:
-      // if either returns "", the synthesizer still has research + sources.
-      let geminiBlock = "";
-      let criticBlock = "";
-
-      yield { type: "status", stage: "drafting" };
-      const draft = await geminiDraft(message, researchBlock, sourcesBlock);
-      if (draft) {
-        geminiBlock = `ANALYTICAL DRAFT (from Gemini 3.1 Pro — improve, don't copy):\n${draft}`;
-
-        // Critic only runs if we have a draft to critique.
-        const critique = await gptCritique(message, researchBlock, sourcesBlock, draft);
-        if (critique) {
-          criticBlock = `CRITIQUE (from GPT-5 — apply the IMPROVE instructions and patch every FACT CHECK / GAPS issue):\n${critique}`;
-        }
+      const cleanAnswer = await geminiThink(history, message);
+      if (!cleanAnswer) {
+        yield { type: "delta", text: "_⚠️ Couldn't reach Gemini — try again._" };
+        yield { type: "done", model: "gemini-3.1-pro-preview", intent };
+        return;
       }
-
-      const systemContent = [OG_SYSTEM, researchBlock, geminiBlock, criticBlock, sourcesBlock]
-        .filter(Boolean)
-        .join("\n\n");
-
-      const messages = [
-        { role: "system", content: systemContent },
-        ...history.map((h) => ({ role: h.role, content: h.content })),
-        { role: "user", content: message },
-      ];
 
       yield { type: "status", stage: "finalizing" };
-      for await (const chunk of bufferedDeltas(streamGateway(synthModel, messages))) {
-        yield { type: "delta", text: chunk };
-      }
-      yield { type: "done", model: synthModel, intent };
+      const swearified = await swearifyWithPerplexity(message, cleanAnswer);
+      yield { type: "delta", text: swearified || cleanAnswer };
+      yield {
+        type: "done",
+        model: swearified ? "gemini-3.1-pro + perplexity-sonar" : "gemini-3.1-pro-preview",
+        intent,
+      };
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       yield { type: "delta", text: `\n\n_⚠️ ${msg}_` };
