@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Loader2, Send, Sparkles, Shield, ExternalLink, KeyRound, Music, Video, Image as ImageIcon, ArrowRight } from "lucide-react";
+import { Loader2, Send, Sparkles, Shield, KeyRound, Music, Video, Image as ImageIcon, ArrowRight } from "lucide-react";
 
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
