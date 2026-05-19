@@ -235,39 +235,18 @@ function ModeToggle({ mode, onChange, disabled }: { mode: Mode; onChange: (m: Mo
   );
 }
 
-function ResearchStatusBar({ stage, sources }: { stage: string; sources: Source[] }) {
-  const label =
-    stage === "researching" ? "OG Mode: Consulting Perplexity Sonar Pro…" :
-    stage === "drafting" ? "Gemini 3.1 Pro: Drafting analysis · GPT-5 critique queued…" :
-    stage === "thinking" ? "Council: Assembling brief for Claude…" :
-    stage === "finalizing" ? "Claude Sonnet 4.5: Synthesizing final answer…" :
-    stage === "generating" ? "Creative Engine: Generating media…" :
-    stage === "classifying" ? "Router: Detecting intent…" :
-    `${stage}…`;
-
+function NavCard({ nav }: { nav: Nav }) {
   return (
-    <Card className="border-primary/40 bg-primary/5 p-3">
-      <div className="flex items-center gap-2 text-sm font-medium text-primary">
-        <Loader2 className="h-4 w-4 animate-spin" /> {label}
-      </div>
-      {sources.length > 0 && (
-        <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-          {sources.map((s, i) => (
-            <li key={i} className="flex items-start gap-1.5">
-              <span className="font-mono text-primary">[{i + 1}]</span>
-              {s.url ? (
-                <a href={s.url} target="_blank" rel="noopener noreferrer" className="hover:text-foreground inline-flex items-center gap-1">
-                  <span className="line-clamp-1">{s.title ?? s.url}</span>
-                  <ExternalLink className="h-3 w-3 shrink-0" />
-                </a>
-              ) : (
-                <span className="line-clamp-1">{s.title}</span>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
+    <Link to={nav.path as never}>
+      <Card className="flex items-center justify-between gap-3 border-primary/40 bg-primary/5 p-3 hover:bg-primary/10 transition">
+        <div className="text-sm">
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Go to</div>
+          <div className="font-semibold text-primary">{nav.label}</div>
+          <div className="text-[11px] text-muted-foreground font-mono">{nav.path}</div>
+        </div>
+        <ArrowRight className="h-4 w-4 text-primary" />
+      </Card>
+    </Link>
   );
 }
 
@@ -286,6 +265,8 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
         )}
 
         {msg.media?.map((m, i) => <MediaCard key={i} media={m} />)}
+
+        {msg.nav && <NavCard nav={msg.nav} />}
 
         {msg.content && (
           <div className="prose prose-base sm:prose-lg dark:prose-invert max-w-none break-words font-medium leading-[1.75] prose-p:leading-[1.75] prose-p:my-3 prose-headings:font-bold prose-headings:tracking-tight prose-strong:font-bold prose-li:leading-[1.7] prose-li:my-1">
