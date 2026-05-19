@@ -604,11 +604,10 @@ Swear freely (fuck, shit, bollocks, bastard, piss, twat), banter hard, take the 
 but FACTS must be accurate and SOURCES must be respected. Authority + chaos.
 Never break character. Never apologise for the language. Never go soft.`;
 
-export const streamOgChat = createServerFn({ method: "POST" })
-  .middleware([requireStrictAuth])
-  .inputValidator((input) => InputSchema.parse(input))
-  .handler(async function* ({ data }): AsyncGenerator<StreamEvent> {
-    const { mode, history, message } = data as z.infer<typeof InputSchema>;
+async function* ogChatGenerator(
+  data: z.infer<typeof InputSchema>,
+): AsyncGenerator<StreamEvent> {
+    const { mode, history, message } = data;
     const intent = classifyIntent(message);
 
     try {
@@ -749,6 +748,23 @@ export const streamOgChat = createServerFn({ method: "POST" })
       yield { type: "delta", text: `\n\n_⚠️ ${msg}_` };
       yield { type: "done", model: "error", intent };
     }
+}
+
+/**
+ * Server function wrapper. TanStack Start serverFn RPC does not preserve
+ * async generators across the wire, so we collect every event into an array
+ * and the client iterates that array. The chat replays the events in order,
+ * which keeps the UI logic unchanged at the cost of streaming granularity.
+ */
+export const streamOgChat = createServerFn({ method: "POST" })
+  .middleware([requireStrictAuth])
+  .inputValidator((input) => InputSchema.parse(input))
+  .handler(async ({ data }): Promise<{ events: StreamEvent[] }> => {
+    const events: StreamEvent[] = [];
+    for await (const ev of ogChatGenerator(data as z.infer<typeof InputSchema>)) {
+      events.push(ev);
+    }
+    return { events };
   });
 
 function escMd(s: string): string {
