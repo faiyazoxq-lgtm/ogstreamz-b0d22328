@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, RotateCw, Radio, Loader2 } from "lucide-react";
 import { FlameBackdrop } from "@/components/FlameBackdrop";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -58,14 +58,74 @@ const JOKE_LIBRARY: Record<string, string[]> = {
     "Sleep is a luxury. The grind is unionized.",
     "I don't have bad days. I have research material.",
   ],
+  indian: [
+    "My mum's chappal travels faster than light. Einstein never met a Punjabi mother.",
+    "Indian parents don't say 'I love you' — they say 'have you eaten?' and slap an extra roti on your plate.",
+    "Arranged marriage is just LinkedIn for aunties.",
+    "Dad slammed the brakes so hard his arm did the seatbelt's job. NASA studies that reflex.",
+    "My CV says 'fluent in English.' My WhatsApp says 'kindly do the needful.'",
+    "Indian weddings: 3 days, 400 cousins, one DJ playing the same Honey Singh song on loop.",
+    "Mum's recipe: 'add masala till your soul tells you to stop.' My soul has trust issues.",
+    "Engineer, doctor, or family disappointment. Pick one before age 22.",
+    "Indian Wi-Fi password is the same as the dowry — long, complicated, and nobody talks about it.",
+    "Grew up on Complan and emotional blackmail. Still 5'6.",
+    "My horoscope said I'd find love. Mum said I'd find a Patel from Ahmedabad. Mum won.",
+    "Aunties don't gossip — they 'share concerns at full volume in the kitchen.'",
+    "Indian standard time means the wedding starts at 7pm sharp, food at 11.",
+    "Got 96% in boards. Sharma ji ka beta got 97. I am still grounded.",
+    "Dad's toolbox: one screwdriver, one Old Monk bottle, twenty years of jugaad.",
+    "My mother negotiates vegetable prices like she's defusing a nuclear bomb. And wins.",
+    "Cricket isn't a sport in India. It's a hostage situation involving the TV remote.",
+    "Indian parents see 'mental health' the same way they see decaf coffee — fake American problem.",
+    "Bought a designer shirt. Mum cut the tag off and used the box to store dal.",
+    "Every Indian household has one drawer of plastic bags and one bag of plastic drawers.",
+    "I told dad I want to be a YouTuber. He's still laughing. It's been six years.",
+    "Indian dads don't have hobbies. They have opinions on the news at 9pm.",
+    "My grandmother survived partition, polio, and three power cuts during her favourite serial. Don't test her.",
+    "Auntie asked my salary at the wedding before she asked my name. Networking, basically.",
+    "Indian girls aren't allowed to date. They're allowed to be 'introduced to a nice boy from a good family.'",
+    "Dosa is just a crepe that went to engineering college.",
+    "Family WhatsApp group: 400 good-mornings, one funeral notice, zero replies to my promotion.",
+    "My mum doesn't trust microwaves, GPS, or me.",
+    "Got drunk once at 19. Dad still brings it up at every Diwali. It's our love language.",
+    "Indian uncle at the airport carries 47kg of pickle and one shirt.",
+    "Yoga in the West is a $90 class. In India it's grandma stretching before yelling at the milkman.",
+    "Indian moms can spot one strand of hair in a plate of rice from across the room. CIA, hire them.",
+    "We don't celebrate Valentine's. We celebrate Karva Chauth — a fasting Olympics with bonus emotional damage.",
+    "My cousin became a doctor. I became a vibe. Guess who's not invited to Diwali.",
+    "Dad fixes everything with Fevicol, duct tape, and threats.",
+    "Indian parents say 'log kya kahenge' before every decision. The logs have never paid my rent.",
+    "Punjabi weddings have more outfit changes than a Beyoncé tour.",
+    "Asked dad for pocket money. He gave me a lecture on inflation and walked off.",
+    "Auntie's compliment: 'You've become healthy.' Translation: 'You're fat.'",
+    "Indian summer is just God doing tandoori.",
+    "My mum's tea is so strong it ghosted three boyfriends for me.",
+    "Holi is the only day a desi dad lets you touch him without flinching.",
+    "Indian household rule: the Amul butter tub never contains butter. It contains last week's sabzi.",
+    "South Indian filter coffee will resurrect you and then judge you for sleeping in.",
+    "Marwari uncle haggled at his own son's wedding caterer. Saved ₹400. Legend.",
+    "Indian astrology said I'd be rich. My bank account said 'kindly try again later.'",
+    "Mum doesn't believe in therapy. She believes in 'go drink water and stop drama.'",
+    "Every Bengali household is one fish curry away from a Nobel Prize argument.",
+    "Indian dads buy one pair of Bata sandals in 1987 and wear them to their own funeral.",
+    "I told my mum I'm in a relationship. She asked his caste before his name.",
+  ],
 };
 
-function pickFor(styles: string[], custom: string): string {
+function fisherYates<T>(arr: T[]): T[] {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildPool(styles: string[]): string[] {
   const pools = styles.filter((s) => JOKE_LIBRARY[s]).flatMap((s) => JOKE_LIBRARY[s]);
   const all = pools.length > 0 ? pools : Object.values(JOKE_LIBRARY).flat();
-  const joke = all[Math.floor(Math.random() * all.length)];
-  if (custom) return joke + ` (${custom} edition)`;
-  return joke;
+  // De-dupe in case the same joke appears across pools.
+  return Array.from(new Set(all));
 }
 
 function JokePortal() {
@@ -83,12 +143,36 @@ function JokePortal() {
     return custom ? [...preset, custom] : preset;
   }, [styleIds, custom]);
 
-  const [joke, setJoke] = useState<string>(() => (live ? "" : pickFor(styleIds, custom)));
+  const [joke, setJoke] = useState<string>("");
   const [headline, setHeadline] = useState<string>("");
   const [source, setSource] = useState<string | undefined>(undefined);
   const [count, setCount] = useState(live ? 0 : 1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Shuffle queue — fresh, randomised order every time the portal opens.
+  // We never repeat a joke until the whole pool has been served, then
+  // reshuffle and start again.
+  const queueRef = useRef<string[]>([]);
+
+  const drawJoke = (): string => {
+    if (queueRef.current.length === 0) {
+      queueRef.current = fisherYates(buildPool(styleIds));
+    }
+    const next = queueRef.current.shift() ?? "";
+    return custom ? `${next} (${custom} edition)` : next;
+  };
+
+  // Seed the queue + first joke on mount (or when style mix changes).
+  // Runs every portal open since this component remounts per visit.
+  useEffect(() => {
+    queueRef.current = fisherYates(buildPool(styleIds));
+    if (!live) {
+      setJoke(drawJoke());
+      setCount(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [styles, custom, live]);
 
   const fetchLive = async () => {
     setLoading(true);
@@ -124,7 +208,7 @@ function JokePortal() {
       void fetchLive();
       return;
     }
-    setJoke(pickFor(styleIds, custom));
+    setJoke(drawJoke());
     setCount((c) => c + 1);
   };
 
