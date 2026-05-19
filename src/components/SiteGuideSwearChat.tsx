@@ -144,9 +144,9 @@ export function SiteGuideSwearChat() {
             background: chaos ? "#ff7a0022" : "#71717a11",
             color: chaos ? "#ff9a3c" : "#a1a1aa",
           }}
-          title="Toggle Chaos Mode — louder, ruder, all caps."
+          title="Toggle OG Mode — louder, ruder, all caps."
         >
-          <Flame className="h-3 w-3" /> Chaos {chaos ? "ON" : "OFF"}
+          <Flame className="h-3 w-3" /> OG {chaos ? "ON" : "OFF"}
         </button>
       </header>
 
