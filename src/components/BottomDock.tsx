@@ -13,11 +13,13 @@ const ITEMS = [
 
 export function BottomDock() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const isBoss = isBossProfile(profile);
 
   // Hide on admin/auth screens to keep them clean
   if (pathname.startsWith("/login") || pathname.startsWith("/signup")) return null;
+  // Hide entirely until the user is signed in
+  if (!user) return null;
 
   const items = isBoss
     ? [
