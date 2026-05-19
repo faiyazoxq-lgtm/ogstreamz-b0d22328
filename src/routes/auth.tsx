@@ -327,14 +327,14 @@ function AuthPage() {
   };
 
   return (
-    <main className="relative w-full max-w-full min-h-[calc(100vh-4rem)] flex items-start lg:items-center justify-center px-3 sm:px-5 py-6 sm:py-12 overflow-x-clip">
+    <main className="relative min-h-[calc(100vh-4rem)] flex items-start lg:items-center justify-center px-4 sm:px-5 py-8 sm:py-12 overflow-x-hidden">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 h-[500px] w-[700px] rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245_/_0.35),transparent)] animate-pulse-gold" />
       </div>
 
-      <div className="relative w-full max-w-6xl min-w-0 grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-6 lg:gap-10 items-start">
+      <div className="relative w-full max-w-6xl grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-6 lg:gap-10 items-start">
         {/* LEFT: welcome message + bonus + auth card */}
-        <div className="w-full max-w-md min-w-0 mx-auto lg:mx-0 lg:ml-auto">
+        <div className="w-full max-w-md mx-auto lg:mx-0 lg:ml-auto">
         <Link to="/" className="flex items-center justify-center lg:justify-start gap-3 mb-6 sm:mb-8">
           <img src={logo} alt="0G-PORTAL" className="h-10 w-10 rounded-md ring-1 ring-[oklch(0.72_0.22_245/0.5)]" />
           <OgWordmark suffix="-PORTAL" className="text-2xl text-metallic" />
@@ -347,14 +347,14 @@ function AuthPage() {
                 ◈ Vault 0G ◈
               </span>
               <h1
-                className="text-[1.6rem] sm:text-5xl uppercase text-white drop-shadow-[0_0_18px_rgba(56,189,248,0.55)] break-words"
-                style={{ fontFamily: "'Black Ops One', 'Cinzel', system-ui, sans-serif", letterSpacing: "0.04em" }}
+                className="text-3xl sm:text-5xl uppercase text-white drop-shadow-[0_0_18px_rgba(56,189,248,0.55)] break-words"
+                style={{ fontFamily: "'Black Ops One', 'Cinzel', system-ui, sans-serif", letterSpacing: "0.08em" }}
               >
                 Welcome
               </h1>
               <p
-                className="text-xs sm:text-base text-sky-100/90 break-words"
-                style={{ fontFamily: "'Cinzel', serif", letterSpacing: "0.06em" }}
+                className="text-sm sm:text-base text-sky-100/90"
+                style={{ fontFamily: "'Cinzel', serif", letterSpacing: "0.12em" }}
               >
                 Join or continue your story
               </p>
