@@ -102,7 +102,15 @@ export function SiteGuideSwearChat() {
         }
       }
     } catch (e: any) {
-      setMsgs((m) => [...m, { role: "assistant", content: `🚨 ${e?.message ?? "shit broke"}` }]);
+      let msg = "shit broke";
+      if (e instanceof Response) {
+        msg = e.status === 401
+          ? "You need to sign in to use OG Bot."
+          : `Request failed (${e.status})`;
+      } else if (e?.message) {
+        msg = e.message;
+      }
+      setMsgs((m) => [...m, { role: "assistant", content: `🚨 ${msg}` }]);
     } finally {
       setSending(false);
       setThinking(null);
