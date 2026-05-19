@@ -331,6 +331,10 @@ function PortalPage() {
   const maybeRefreshJokes = async () => {
     if (portal.kind !== "jokes") return;
     if (refreshingJokes) return;
+    // Only ask the server to top up when the local queue is running low —
+    // avoids hammering the DB on every tap. Server then decides whether to
+    // actually call Perplexity based on unseen-count.
+    if (queueRef.current.length > 3 && (freshJokes?.length ?? 0) > 0) return;
     setRefreshingJokes(true);
     try {
       const r = await refreshJokesFn({ data: { slug: portal.slug } });
