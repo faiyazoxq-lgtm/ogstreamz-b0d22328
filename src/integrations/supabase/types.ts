@@ -1904,6 +1904,42 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_joke_views: {
+        Row: {
+          joke_key: string
+          portal_id: string
+          seen_at: string
+          user_id: string
+        }
+        Insert: {
+          joke_key: string
+          portal_id: string
+          seen_at?: string
+          user_id: string
+        }
+        Update: {
+          joke_key?: string
+          portal_id?: string
+          seen_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_joke_views_portal_id_fkey"
+            columns: ["portal_id"]
+            isOneToOne: false
+            referencedRelation: "portals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_joke_views_portal_id_fkey"
+            columns: ["portal_id"]
+            isOneToOne: false
+            referencedRelation: "portals_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_marketing: {
         Row: {
           apollo_filters: Json
