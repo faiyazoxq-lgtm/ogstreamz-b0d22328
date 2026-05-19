@@ -237,7 +237,7 @@ function PortalPage() {
   useEffect(() => {
     // Build the queue once per portal mount, excluding the initial idx
     // so the first "next" never repeats what you opened on.
-    const indices = jokes.map((_, i) => i).filter((i) => i !== idx);
+    const indices = jokes.map((_: unknown, i: number) => i).filter((i: number) => i !== idx);
     queueRef.current = shuffle(indices);
     try { sessionStorage.removeItem(queueKey); } catch { /* ignore */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -247,7 +247,7 @@ function PortalPage() {
     if (queueRef.current.length === 0) {
       // Exhausted — reshuffle but keep current idx out of the front to
       // avoid an immediate visual repeat.
-      const fresh = shuffle(jokes.map((_, i) => i).filter((i) => i !== idx));
+      const fresh = shuffle(jokes.map((_: unknown, i: number) => i).filter((i: number) => i !== idx));
       queueRef.current = fresh;
     }
     const next = queueRef.current.shift()!;
