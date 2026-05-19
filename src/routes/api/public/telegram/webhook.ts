@@ -141,7 +141,6 @@ async function handleCommand(
     // /vault & /vip — VIP Vault deep-link, with quick tier check so non-VIP
     // members get a clear upgrade nudge instead of a dead link.
     if (/^\/(vault|vip)\b/i.test(trimmed)) {
-      const siteBase = (process.env.PUBLIC_SITE_URL || "https://ogstreamz.co.uk").replace(/\/$/, "");
       const { data: prof } = await sb
         .from("profiles")
         .select("status,rank")
