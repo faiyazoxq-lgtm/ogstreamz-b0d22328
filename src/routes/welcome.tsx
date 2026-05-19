@@ -342,11 +342,11 @@ function WelcomePage() {
           />
           <div className="space-y-3">
             <p
-              className="uppercase text-amber-300 whitespace-nowrap animate-silver-shimmer"
+              className="uppercase text-amber-300 animate-silver-shimmer break-words"
               style={{
                 fontFamily: "'Bungee', 'Lilita One', system-ui, sans-serif",
                 fontWeight: 900,
-                fontSize: "clamp(2rem, 13vw, 6rem)",
+                fontSize: "clamp(1.75rem, 9vw, 6rem)",
                 letterSpacing: "0.15em",
                 lineHeight: 1,
                 textShadow:
@@ -359,15 +359,15 @@ function WelcomePage() {
             {signedIn ? (
               <h1
                 className="font-black tracking-tight leading-[1.05] break-words"
-                style={{ fontSize: "clamp(1.75rem, 9vw, 6rem)" }}
+                style={{ fontSize: "clamp(1.5rem, 7vw, 6rem)" }}
               >
                 Finish wiring up your account
               </h1>
             ) : (
-              <h1 className="font-black tracking-tight leading-[1.05]" style={{ fontSize: "clamp(1.75rem, 9vw, 6rem)" }}>
+              <h1 className="font-black tracking-tight leading-[1.05]" style={{ fontSize: "clamp(1.5rem, 7vw, 6rem)" }}>
                 <Link
                   to="/auth"
-                  className="group inline-flex items-center gap-3 whitespace-nowrap rounded-2xl border-2 border-amber-300/50 bg-black/40 px-4 py-3 sm:px-6 sm:py-4 underline decoration-2 decoration-amber-300/70 underline-offset-[8px] backdrop-blur-sm transition hover:border-amber-300 hover:bg-black/60 hover:decoration-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                  className="group inline-flex max-w-full items-center gap-2 sm:gap-3 rounded-2xl border-2 border-amber-300/50 bg-black/40 px-3 py-2.5 sm:px-6 sm:py-4 underline decoration-2 decoration-amber-300/70 underline-offset-[8px] backdrop-blur-sm transition hover:border-amber-300 hover:bg-black/60 hover:decoration-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
                   style={{
                     color: "var(--gold, #f4c869)",
                     textShadow: "0 0 24px rgba(244,200,105,0.6), 0 2px 8px rgba(0,0,0,0.9)",
@@ -377,7 +377,7 @@ function WelcomePage() {
                 >
                   Login / sign up
                   <ArrowRight
-                    className="h-6 w-6 sm:h-10 sm:w-10 shrink-0 transition-transform group-hover:translate-x-1"
+                    className="h-5 w-5 sm:h-10 sm:w-10 shrink-0 transition-transform group-hover:translate-x-1"
                     aria-hidden
                   />
                 </Link>
