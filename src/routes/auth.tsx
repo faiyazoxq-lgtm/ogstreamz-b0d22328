@@ -327,7 +327,7 @@ function AuthPage() {
   };
 
   return (
-    <main className="relative min-h-[calc(100vh-4rem)] flex items-start lg:items-center justify-center px-4 sm:px-5 py-8 sm:py-12">
+    <main className="relative min-h-[calc(100vh-4rem)] flex items-start lg:items-center justify-center px-4 sm:px-5 py-8 sm:py-12 overflow-x-hidden">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 h-[500px] w-[700px] rounded-full blur-3xl bg-[radial-gradient(closest-side,oklch(0.72_0.22_245_/_0.35),transparent)] animate-pulse-gold" />
       </div>
@@ -503,7 +503,7 @@ function AuthPage() {
               type="button"
               disabled={loading}
               onClick={google}
-              className="w-full h-14 text-base font-bold uppercase tracking-[0.18em] bg-gradient-to-r from-amber-300 via-amber-200 to-amber-400 text-black hover:brightness-110 border border-amber-200/80 shadow-[0_10px_40px_-10px_oklch(0.78_0.18_85/0.85)] ring-1 ring-amber-200/60"
+              className="w-full h-14 text-sm sm:text-base font-bold uppercase tracking-[0.08em] sm:tracking-[0.16em] bg-gradient-to-r from-amber-300 via-amber-200 to-amber-400 text-black hover:brightness-110 border border-amber-200/80 shadow-[0_10px_40px_-10px_oklch(0.78_0.18_85/0.85)] ring-1 ring-amber-200/60"
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5 mr-3" aria-hidden>
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
