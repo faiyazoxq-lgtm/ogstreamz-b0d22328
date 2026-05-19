@@ -149,13 +149,18 @@ async function handleCommand(
         .maybeSingle();
       const tier = String(prof?.status ?? "member").toLowerCase();
       const isVipTier = tier === "vip" || tier === "boss" || tier === "admin";
+      const [vaultUrl, passesUrl, profileUrl] = await Promise.all([
+        autoAuthUrl(link.user_id, "/vip", chatId),
+        autoAuthUrl(link.user_id, "/account/passes", chatId),
+        autoAuthUrl(link.user_id, "/profile", chatId),
+      ]);
       const vaultKb: TgInlineKeyboard = {
         inline_keyboard: [
           [
-            { text: "🔓 Open VIP Vault", url: `${siteBase}/vip` },
-            { text: "🎟 My Passes", url: `${siteBase}/account/passes` },
+            { text: "🔓 Open VIP Vault", url: vaultUrl },
+            { text: "🎟 My Passes", url: passesUrl },
           ],
-          [{ text: "👤 View my profile", url: `${siteBase}/profile` }],
+          [{ text: "👤 View my profile", url: profileUrl }],
         ],
       };
       const body = isVipTier
