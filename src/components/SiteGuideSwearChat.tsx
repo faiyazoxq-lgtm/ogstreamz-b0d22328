@@ -5,6 +5,7 @@ import { Link } from "@tanstack/react-router";
 import { Send, Loader2, Compass, Flame, Globe, Sparkles } from "lucide-react";
 import { siteGuideChatStream } from "@/lib/site-guide.functions";
 import ogBotAvatar from "@/assets/og-streamz-wallpaper.png";
+import { useAuth } from "@/hooks/use-auth";
 
 type Msg = { role: "user" | "assistant"; content: string; citations?: string[] };
 
@@ -49,6 +50,7 @@ function MarkdownLink({ href, children, ...rest }: any) {
 }
 
 export function SiteGuideSwearChat() {
+  const { user } = useAuth();
   const send = useServerFn(siteGuideChatStream);
   const [draft, setDraft] = useState("");
   const [chaos, setChaos] = useState(true);
@@ -60,6 +62,8 @@ export function SiteGuideSwearChat() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [msgs.length, sending, thinking]);
+
+  if (!user) return null;
 
   const submit = async (text: string) => {
     const t = text.trim();
