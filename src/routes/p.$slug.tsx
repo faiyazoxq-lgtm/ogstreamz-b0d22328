@@ -9,7 +9,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { isVipProfile } from "@/lib/roles";
 import { toast } from "sonner";
-import { createPortalUnlockCheckout, getPortalUnlockStatus, refreshJokesCatalogue } from "@/lib/portals.functions";
+import { createPortalUnlockCheckout, getPortalUnlockStatus, refreshJokesCatalogue, markJokesSeen, getUnseenJokes } from "@/lib/portals.functions";
 import { chargePortalUse } from "@/lib/portal-use.functions";
 import { refreshNewsScout, type NewsScoutMeta, type NewsArticle } from "@/lib/news.functions";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
@@ -194,6 +194,8 @@ function PortalPage() {
   const statusFn = useServerFn(getPortalUnlockStatus);
   const chargeUseFn = useServerFn(chargePortalUse);
   const refreshJokesFn = useServerFn(refreshJokesCatalogue);
+  const markSeenFn = useServerFn(markJokesSeen);
+  const getUnseenFn = useServerFn(getUnseenJokes);
   const navigate = useNavigate();
 
   const [hits, setHits] = useState(0);
@@ -256,6 +258,11 @@ function PortalPage() {
     }
     const next = queueRef.current.shift()!;
     setIdx(next);
+    // Mark the joke we're about to show as seen for this user (jokes
+    // portals only, signed-in only). Fire-and-forget.
+    if (portal.kind === "jokes" && user && jokes[next]) {
+      markSeenFn({ data: { slug: portal.slug, jokes: [jokes[next]] } }).catch(() => {});
+    }
   };
 
   // Lead tracking: increment view counter on mount
@@ -271,6 +278,26 @@ function PortalPage() {
       .then((r) => setOwned(r.owned))
       .catch(() => setOwned(false));
   }, [portal.id, portal.vip, user, statusFn]);
+
+  // On mount: signed-in viewers on JokesHUB portals get their PERSONAL
+  // unseen subset of the shared catalogue so they never repeat a joke
+  // another session already showed them. Server returns the full pool
+  // as graceful fallback once they've seen everything.
+  useEffect(() => {
+    if (portal.kind !== "jokes" || !user) return;
+    let cancelled = false;
+    getUnseenFn({ data: { slug: portal.slug } })
+      .then((r) => {
+        if (cancelled) return;
+        const next = (r?.jokes as string[] | undefined) ?? [];
+        if (next.length) {
+          setFreshJokes(next);
+          queueRef.current = [];
+        }
+      })
+      .catch(() => { /* silent */ });
+    return () => { cancelled = true; };
+  }, [portal.kind, portal.slug, user, getUnseenFn]);
 
   const spawnParticles = (origin: { x: number; y: number }) => {
     const host = hitContainerRef.current;
@@ -297,27 +324,28 @@ function PortalPage() {
 
   const useCost = Math.max(0, Math.floor(Number(portal.use_credit_cost) || 0));
 
-  // First press on a JokesHUB portal scrapes a fresh batch from the live web.
-  // Once-per-session per portal so a tap-spam doesn't burn Perplexity tokens.
+  // First press on a JokesHUB portal asks the server to top up the shared
+  // catalogue. The server only calls Perplexity if THIS user has fewer
+  // than ~10 unseen jokes left, so we never burn tokens when other users
+  // have already generated enough fresh material.
   const maybeRefreshJokes = async () => {
     if (portal.kind !== "jokes") return;
-    const key = `jokes:refreshed:${portal.slug}`;
-    try {
-      if (typeof sessionStorage !== "undefined" && sessionStorage.getItem(key)) return;
-    } catch { /* */ }
     if (refreshingJokes) return;
+    // Only ask the server to top up when the local queue is running low —
+    // avoids hammering the DB on every tap. Server then decides whether to
+    // actually call Perplexity based on unseen-count.
+    if (queueRef.current.length > 3 && (freshJokes?.length ?? 0) > 0) return;
     setRefreshingJokes(true);
     try {
-      try { sessionStorage.setItem(key, "1"); } catch { /* */ }
       const r = await refreshJokesFn({ data: { slug: portal.slug } });
-      if (r?.ok && (r as any).refreshed > 0) {
-        const { data: row } = await supabase
-          .from("portals_public").select("jokes").eq("slug", portal.slug).maybeSingle();
-        const next = (row?.jokes as string[] | undefined) ?? [];
+      if (r?.ok && (r as any).added > 0) {
+        // Server appended new jokes — pull this user's unseen subset.
+        const u = await getUnseenFn({ data: { slug: portal.slug } });
+        const next = (u?.jokes as string[] | undefined) ?? [];
         if (next.length) {
           setFreshJokes(next);
-          queueRef.current = []; // rebuild on next advance
-          toast.success(`Loaded ${next.length} fresh jokes`);
+          queueRef.current = [];
+          toast.success(`Loaded ${(r as any).added} fresh jokes`);
         }
       }
     } catch { /* silent — best-effort */ }
