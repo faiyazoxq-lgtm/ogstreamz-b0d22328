@@ -274,6 +274,26 @@ function PortalPage() {
       .catch(() => setOwned(false));
   }, [portal.id, portal.vip, user, statusFn]);
 
+  // On mount: signed-in viewers on JokesHUB portals get their PERSONAL
+  // unseen subset of the shared catalogue so they never repeat a joke
+  // another session already showed them. Server returns the full pool
+  // as graceful fallback once they've seen everything.
+  useEffect(() => {
+    if (portal.kind !== "jokes" || !user) return;
+    let cancelled = false;
+    getUnseenFn({ data: { slug: portal.slug } })
+      .then((r) => {
+        if (cancelled) return;
+        const next = (r?.jokes as string[] | undefined) ?? [];
+        if (next.length) {
+          setFreshJokes(next);
+          queueRef.current = [];
+        }
+      })
+      .catch(() => { /* silent */ });
+    return () => { cancelled = true; };
+  }, [portal.kind, portal.slug, user, getUnseenFn]);
+
   const spawnParticles = (origin: { x: number; y: number }) => {
     const host = hitContainerRef.current;
     if (!host) return;
