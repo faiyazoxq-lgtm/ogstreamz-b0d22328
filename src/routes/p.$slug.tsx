@@ -195,7 +195,6 @@ function PortalPage() {
   const chargeUseFn = useServerFn(chargePortalUse);
   const navigate = useNavigate();
 
-  const [idx, setIdx] = useState(0);
   const [hits, setHits] = useState(0);
   const [owned, setOwned] = useState<boolean>(!portal.vip);
   const [unlocking, setUnlocking] = useState(false);
