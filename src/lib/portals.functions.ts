@@ -956,7 +956,9 @@ export const getUnseenJokes = createServerFn({ method: "POST" })
     const { data: portal } = await supabaseAdmin
       .from("portals").select("id, jokes").eq("slug", data.slug).maybeSingle();
     if (!portal?.id) return { jokes: [] as string[], unseen: 0, total: 0 };
-    const all: string[] = Array.isArray(portal.jokes) ? portal.jokes : [];
+    const all: string[] = Array.isArray(portal.jokes)
+      ? (portal.jokes as unknown[]).filter((j): j is string => typeof j === "string")
+      : [];
     if (!userId || all.length === 0) return { jokes: all, unseen: all.length, total: all.length };
     const { data: views } = await supabaseAdmin
       .from("portal_joke_views")
