@@ -143,7 +143,7 @@ function JokePortal() {
     return custom ? [...preset, custom] : preset;
   }, [styleIds, custom]);
 
-  const [joke, setJoke] = useState<string>(() => (live ? "" : pickFor(styleIds, custom)));
+  const [joke, setJoke] = useState<string>("");
   const [headline, setHeadline] = useState<string>("");
   const [source, setSource] = useState<string | undefined>(undefined);
   const [count, setCount] = useState(live ? 0 : 1);
