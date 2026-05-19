@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, RotateCw, Radio, Loader2 } from "lucide-react";
 import { FlameBackdrop } from "@/components/FlameBackdrop";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -58,14 +58,65 @@ const JOKE_LIBRARY: Record<string, string[]> = {
     "Sleep is a luxury. The grind is unionized.",
     "I don't have bad days. I have research material.",
   ],
+  indian: [
+    "My mom didn't raise a quitter. She raised an engineer who quit engineering to do an MBA.",
+    "Indian parents' love language is loudly telling Sharma aunty your CGPA.",
+    "I told my dad I want to be an artist. He said sure beta, draw the curtains and go study.",
+    "My therapist asked about childhood trauma. I said, ever heard of Sharma ji ka beta?",
+    "Indian weddings: 4 days, 8 outfits, 12 cousins fighting over the DJ, 0 sleep.",
+    "My CV has more certifications than my mom's pressure cooker has whistles.",
+    "Arranged marriage app loading… 'Fair, slim, homely, MBA, height 5'10\", salary not important' — and that's just what HE wants.",
+    "Dowry is illegal. The 'gifts for our son' inflation is not.",
+    "Why do Indian kids do well in school? Because failing is a beating, passing is the bare minimum, and topping is finally being allowed to sit down.",
+    "I told my dad I'm depressed. He turned off the AC and said see, now you have a real problem.",
+    "Indian dads don't say 'I love you.' They say 'is the car locked' from three rooms away.",
+    "My mom uses one Tupperware for 14 years and 'we don't have money for that' for everything I want.",
+    "Bro got an arranged marriage and his wife's first question was 'package kitna hai.'",
+    "Indian wifi password is longer than my will to live.",
+    "Plumber in India fixes the tap. Three days later water comes from the ceiling. He calls it 'jugaad.'",
+    "Indian aunties don't gossip. They 'share concern' at 200 decibels.",
+    "Why did Rahul cry in math class? Because Sharma ji ka beta got 99 and Rahul got 98.",
+    "My family thinks therapy is something rich white people invented to avoid touching their mother's feet.",
+    "Got rejected by a girl on Shaadi.com because my caste was 'too modern.'",
+    "Indian cricket fan logic: we lost because YOU got up from the sofa.",
+    "Mom: beta what do you want for dinner. Me: anything. Mom: anything is not a dish. Me: aloo. Mom: aloo is over. Why did you ask.",
+    "Petrol prices in India now come with a counselling helpline.",
+    "My dad's WhatsApp DP has been a sunrise photo with 'Good Morning' written on it since 2017.",
+    "Indian parents see one Instagram story and think you are in a relationship, pregnant, and have lost the family honour — in that order.",
+    "Reservation, recession, recession, reservation — my career feels like a Punjabi wedding playlist.",
+    "Why do desi guys hit the gym? So aunties have something new to comment on besides their salary.",
+    "Indian Uber driver took me on a tour of three cities to avoid one signal.",
+    "Got 90% — dad asked where the other 10 went. Got 95% — dad asked where the other 5 went. Got 100% — dad asked who I cheated off.",
+    "My grandmother survived Partition, Emergency, and 4 governments. She is unbothered by your gluten allergy.",
+    "Why is chai better than your situationship? Because chai actually shows up at 4pm like it promised.",
+    "Indian dating: 6 months sneaking around, then suddenly meet the parents and pretend you only know each other from 'mutual friends' — Google.",
+    "My cousin moved to Canada and the only Indian thing left in him is taking off his shoes inside the house.",
+    "Patel hotel chain runs America. Singh runs your taxi. Reddy runs your tech. White people: 'we built this country.'",
+    "Indian household rule: switches must be off, lights must be off, fan must be off, AC must be off — but the geyser must run 24/7 for some reason.",
+    "Mummy uses old shampoo bottles to store ghee, old ghee dabbas to store sewing needles, and a Bisleri bottle for petrol. She is the original recycler, fight me.",
+  ],
 };
 
-function pickFor(styles: string[], custom: string): string {
+function detectIndian(custom: string, styles: string[]): boolean {
+  if (styles.includes("indian")) return true;
+  return /\b(indian|desi|bollywood|punjabi|gujarati|tamil|telugu|bengali|south\s*asian|sharma|patel|aunty|chai|paneer|biryani)\b/i.test(
+    custom || "",
+  );
+}
+
+function poolFor(styles: string[], custom: string): string[] {
+  if (detectIndian(custom, styles)) return [...JOKE_LIBRARY.indian];
   const pools = styles.filter((s) => JOKE_LIBRARY[s]).flatMap((s) => JOKE_LIBRARY[s]);
-  const all = pools.length > 0 ? pools : Object.values(JOKE_LIBRARY).flat();
-  const joke = all[Math.floor(Math.random() * all.length)];
-  if (custom) return joke + ` (${custom} edition)`;
-  return joke;
+  return pools.length > 0 ? pools : Object.values(JOKE_LIBRARY).flat();
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
 function JokePortal() {
@@ -83,12 +134,31 @@ function JokePortal() {
     return custom ? [...preset, custom] : preset;
   }, [styleIds, custom]);
 
-  const [joke, setJoke] = useState<string>(() => (live ? "" : pickFor(styleIds, custom)));
+  // Shuffled queue — no joke repeats until the whole pool is exhausted.
+  const queueRef = useRef<string[]>(shuffle(poolFor(styleIds, custom)));
+  const pullNext = (): string => {
+    if (queueRef.current.length === 0) {
+      queueRef.current = shuffle(poolFor(styleIds, custom));
+    }
+    return queueRef.current.shift() as string;
+  };
+
+  const [joke, setJoke] = useState<string>(() => (live ? "" : pullNext()));
   const [headline, setHeadline] = useState<string>("");
   const [source, setSource] = useState<string | undefined>(undefined);
   const [count, setCount] = useState(live ? 0 : 1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Re-shuffle whenever the styles / brief change.
+  useEffect(() => {
+    queueRef.current = shuffle(poolFor(styleIds, custom));
+    if (!live) {
+      setJoke(pullNext());
+      setCount(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [styles, custom, live]);
 
   const fetchLive = async () => {
     setLoading(true);
@@ -124,7 +194,7 @@ function JokePortal() {
       void fetchLive();
       return;
     }
-    setJoke(pickFor(styleIds, custom));
+    setJoke(pullNext());
     setCount((c) => c + 1);
   };
 
