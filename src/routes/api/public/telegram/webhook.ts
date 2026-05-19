@@ -332,7 +332,16 @@ async function handleCommand(
         .select("display_name,email,og_pass_no,status,rank")
         .eq("id", link.user_id)
         .maybeSingle();
-      if (prof) linkedProfile = prof as typeof linkedProfile;
+      if (prof) {
+        const p = prof as any;
+        linkedProfile = {
+          display_name: p.display_name ?? null,
+          email: p.email ?? null,
+          og_pass_no: p.og_pass_no ?? null,
+          status: p.status ?? null,
+          rank: p.rank ?? null,
+        };
+      }
     }
   } catch (e) {
     logWarn("tg.link.profile_lookup_failed", {
