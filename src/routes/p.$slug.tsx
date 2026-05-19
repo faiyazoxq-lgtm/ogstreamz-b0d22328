@@ -9,7 +9,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { isVipProfile } from "@/lib/roles";
 import { toast } from "sonner";
-import { createPortalUnlockCheckout, getPortalUnlockStatus, refreshJokesCatalogue } from "@/lib/portals.functions";
+import { createPortalUnlockCheckout, getPortalUnlockStatus, refreshJokesCatalogue, markJokesSeen, getUnseenJokes } from "@/lib/portals.functions";
 import { chargePortalUse } from "@/lib/portal-use.functions";
 import { refreshNewsScout, type NewsScoutMeta, type NewsArticle } from "@/lib/news.functions";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
@@ -194,6 +194,8 @@ function PortalPage() {
   const statusFn = useServerFn(getPortalUnlockStatus);
   const chargeUseFn = useServerFn(chargePortalUse);
   const refreshJokesFn = useServerFn(refreshJokesCatalogue);
+  const markSeenFn = useServerFn(markJokesSeen);
+  const getUnseenFn = useServerFn(getUnseenJokes);
   const navigate = useNavigate();
 
   const [hits, setHits] = useState(0);
