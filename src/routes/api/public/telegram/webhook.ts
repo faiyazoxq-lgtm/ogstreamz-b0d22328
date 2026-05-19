@@ -498,11 +498,61 @@ async function handleWelcomeCallback(cb: any): Promise<void> {
       "<b>OG-Streamz commands</b>\n" +
         "<code>/me</code> — account &amp; credits\n" +
         "<code>/status</code> — alias of /me\n" +
+        "<code>/vault</code> — VIP Vault access\n" +
+        "<code>/vip</code> — alias of /vault\n" +
         "<code>/msg TEXT</code> — message the team\n" +
         "<code>/unlink</code> — disconnect this chat\n" +
         "<code>/start</code> — re-show the welcome card\n\n" +
         "Tap <b>VIP Pass</b> or <b>Live Drops</b> on the welcome card to jump back to the site.",
     );
+    return;
+  }
+
+  // Inline "Unlink this chat" tap from the success-confirmation card.
+  if (data === "wc:unlink") {
+    const sb = getSupabase() as any;
+    const { data: link } = await sb
+      .from("telegram_user_links")
+      .select("user_id")
+      .eq("chat_id", chatId)
+      .maybeSingle();
+    if (!link?.user_id) {
+      await tgSendMessage(
+        chatId,
+        "Nothing to unlink — this chat isn't bound to any profile.",
+      );
+      return;
+    }
+    try {
+      await sb
+        .from("telegram_user_links")
+        .update({ chat_id: null, tg_username: null, linked_at: null })
+        .eq("user_id", link.user_id);
+      await tgSendMessage(
+        chatId,
+        "🔌 <b>Unlinked.</b> This chat is no longer connected to your OG-Streamz profile.\n\n" +
+          "Re-link any time from <b>/account/passes</b> on the site.",
+      );
+    } catch (e) {
+      logError("tg.webhook.unlink_callback_failed", {
+        chatIdSuffix: String(chatId).slice(-8),
+        error: e instanceof Error ? e.message : String(e),
+      });
+      await tgSendMessage(chatId, "Could not unlink right now — try /unlink instead.");
+    }
+    return;
+  }
+
+  // Inline "VIP Vault" deep-link confirmation if Telegram falls back to a
+  // callback button on older clients — currently unused (we ship URL buttons)
+  // but keeps future-compat clean.
+  if (data === "wc:vault") {
+    const siteBase = (process.env.PUBLIC_SITE_URL || "https://ogstreamz.co.uk").replace(/\/$/, "");
+    await tgSendMessage(
+      chatId,
+      `🔓 <b>VIP Vault</b>\nOpen on the site: ${siteBase}/vip`,
+    );
+    return;
   }
 }
 
