@@ -9,7 +9,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { isVipProfile } from "@/lib/roles";
 import { toast } from "sonner";
-import { createPortalUnlockCheckout, getPortalUnlockStatus } from "@/lib/portals.functions";
+import { createPortalUnlockCheckout, getPortalUnlockStatus, refreshJokesCatalogue } from "@/lib/portals.functions";
 import { chargePortalUse } from "@/lib/portal-use.functions";
 import { refreshNewsScout, type NewsScoutMeta, type NewsArticle } from "@/lib/news.functions";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
@@ -193,6 +193,7 @@ function PortalPage() {
   const checkoutFn = useServerFn(createPortalUnlockCheckout);
   const statusFn = useServerFn(getPortalUnlockStatus);
   const chargeUseFn = useServerFn(chargePortalUse);
+  const refreshJokesFn = useServerFn(refreshJokesCatalogue);
   const navigate = useNavigate();
 
   const [hits, setHits] = useState(0);
@@ -201,6 +202,8 @@ function PortalPage() {
   const [charging, setCharging] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [sharedIdea, setSharedIdea] = useState<string | null>(null);
+  const [freshJokes, setFreshJokes] = useState<string[] | null>(null);
+  const [refreshingJokes, setRefreshingJokes] = useState(false);
   const controls = useAnimationControls();
   const seedsByKind: Record<string, string[] | undefined> = {
     music: portal.music_hooks,
@@ -209,7 +212,8 @@ function PortalPage() {
     tools: portal.tool_ideas,
   };
   const kindSeeds = seedsByKind[portal.kind];
-  const seeds = (kindSeeds && kindSeeds.length ? kindSeeds : portal.jokes) ?? [];
+  const liveJokes = portal.kind === "jokes" && freshJokes && freshJokes.length ? freshJokes : portal.jokes;
+  const seeds = (kindSeeds && kindSeeds.length ? kindSeeds : liveJokes) ?? [];
   const jokes = seeds.length ? seeds : ["No content loaded yet."];
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioSnippet = (portal as any).audio_snippet_url as string | null | undefined;
