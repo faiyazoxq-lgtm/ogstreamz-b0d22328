@@ -373,6 +373,16 @@ async function handleCommand(
           (linkedProfile.rank ? ` · ${escapeHtml(linkedProfile.rank)}` : "") +
           "\n"
         : "";
+    const siteBase = (process.env.PUBLIC_SITE_URL || "https://ogstreamz.co.uk").replace(/\/$/, "");
+    const confirmKeyboard: TgInlineKeyboard = {
+      inline_keyboard: [
+        [
+          { text: "👤 View my profile", url: `${siteBase}/profile` },
+          { text: "🔓 VIP Vault", url: `${siteBase}/vip` },
+        ],
+        [{ text: "🔌 Unlink this chat", callback_data: "wc:unlink" }],
+      ],
+    };
     await tgSendMessage(
       chatId,
       `✅ <b>Successfully connected</b>\n\n` +
@@ -383,8 +393,9 @@ async function handleCommand(
           : "") +
         ogLine +
         tierLine +
-        `\nIf this isn't you, send <code>/unlink</code> right away.\n` +
-        `Otherwise you're all set — try <code>/me</code> any time.`,
+        `\nTap <b>View my profile</b> to verify the account, or <b>Unlink</b> if it's wrong.\n` +
+        `Try <code>/me</code>, <code>/vault</code> or <code>/help</code> any time.`,
+      { reply_markup: confirmKeyboard },
     );
   } else {
     // Defensive fallback: claim succeeded but lookup failed. Still confirm.
