@@ -584,25 +584,94 @@ brand-safe, and conversational. British wit, light banter, NO swearing, NO chaos
 Use markdown. Keep answers tight unless the user asks for depth. Safe Mode is the clean,
 shareable face of OG Bot — assume the user might screenshot you for their nan.`;
 
-const OG_SYSTEM = `You are OG Bot in OG MODE — the Research & Creative Powerhouse, full chaos personality ON.
-You are the SYNTHESIZER, the final voice of a four-model agent council:
-  1. Perplexity Sonar Pro pulled grounded research and sources.
-  2. Gemini 3.1 Pro produced an ANALYTICAL DRAFT — the skeleton of truth.
-  3. GPT-5 produced a CRITIQUE — red-teamed the draft, flagged gaps and weak claims, and gave concrete improve-it instructions.
-  4. You (Claude Sonnet 4.5) write the FINAL ANSWER the user sees.
+const GEMINI_THINKER_SYSTEM = `You are the THINKER behind OG Bot. Produce the
+best possible answer to the user's question: accurate, well-structured, clear.
+Use markdown. Lead with the direct answer, then depth as needed. British wit
+is fine, but NO swearing — your answer will be passed to a second model that
+adds personality. Focus on FACTS, STRUCTURE, and CLARITY. No preamble, no
+meta-commentary, no "as an AI".`;
 
-How to use the council:
-- Treat the analyst draft as a starting point, not gospel. Improve it.
-- Apply the critic's IMPROVE instructions and patch every issue in their FACT CHECK and GAPS.
-- If analyst and critic disagree, prefer the position better supported by the SOURCES block.
-- If sources are missing or thin, say so plainly — don't fabricate citations.
-- Cite sources inline as [1], [2] in the order they appear in the SOURCES block.
-- Use markdown. Lead with the answer. Depth as needed. No meta-commentary about the council — the user just sees one confident reply.
+const PERPLEXITY_SWEAR_SYSTEM = `You are the OG-PORTAL enforcer. You will be
+given a clean, factual answer written by another model. Your ONE job: rewrite
+it in a foul-mouthed British enforcer voice. Swear freely (fuck, shit,
+bollocks, bastard, piss, twat), banter hard, take the piss — but DO NOT
+change a single fact, number, name, or citation. Keep the structure and
+markdown. Lead with the answer. Never apologise for the language. Never
+break character. Never go soft. Output ONLY the rewritten answer — no
+preamble like "here's the rewrite".`;
 
-Voice (NON-NEGOTIABLE): foul-mouthed British enforcer running the OG-PORTAL.
-Swear freely (fuck, shit, bollocks, bastard, piss, twat), banter hard, take the piss,
-but FACTS must be accurate and SOURCES must be respected. Authority + chaos.
-Never break character. Never apologise for the language. Never go soft.`;
+/**
+ * Non-streaming Gemini Pro completion. Used as the "thinker" pass in OG mode.
+ * Returns "" on failure so the caller can fall back gracefully.
+ */
+async function geminiThink(
+  history: Array<{ role: "user" | "assistant"; content: string }>,
+  message: string,
+): Promise<string> {
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey) return "";
+  try {
+    const res = await fetch(GATEWAY_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-3.1-pro-preview",
+        messages: [
+          { role: "system", content: GEMINI_THINKER_SYSTEM },
+          ...history.map((h) => ({ role: h.role, content: h.content })),
+          { role: "user", content: message },
+        ],
+      }),
+    });
+    if (!res.ok) return "";
+    const json = (await res.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    return (json.choices?.[0]?.message?.content ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Pass Gemini's clean answer to Perplexity Sonar, which rewrites it in the
+ * foul-mouthed OG voice. Returns "" if Perplexity is unavailable so the
+ * caller can fall back to the clean answer.
+ */
+async function swearifyWithPerplexity(
+  query: string,
+  cleanAnswer: string,
+): Promise<string> {
+  const key = process.env.PERPLEXITY_API_KEY;
+  if (!key || !cleanAnswer) return "";
+  try {
+    const res = await fetch("https://api.perplexity.ai/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "sonar",
+        messages: [
+          { role: "system", content: PERPLEXITY_SWEAR_SYSTEM },
+          {
+            role: "user",
+            content: `ORIGINAL QUESTION:\n${query}\n\nCLEAN ANSWER TO REWRITE:\n${cleanAnswer}`,
+          },
+        ],
+        temperature: 0.9,
+      }),
+    });
+    if (!res.ok) return "";
+    const data = (await res.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    return (data.choices?.[0]?.message?.content ?? "").trim();
+  } catch {
+    return "";
+  }
+}
 
 async function* ogChatGenerator(
   data: z.infer<typeof InputSchema>,
@@ -678,71 +747,27 @@ async function* ogChatGenerator(
         return;
       }
 
-      // OG mode chat: Perplexity → Gemini Pro / GPT-5.5 synth.
-      yield { type: "status", stage: "researching" };
-      let research: { sources: ResearchSource[]; answer: string } = { sources: [], answer: "" };
-      try {
-        research = await deepResearch(message);
-        for (const src of research.sources) yield { type: "research", source: src };
-      } catch (e) {
-        yield {
-          type: "research",
-          source: {
-            url: "",
-            title: "Research failed",
-            snippet: e instanceof Error ? e.message : "Perplexity unavailable",
-          },
-        };
-      }
-
+      // OG mode: Gemini thinks the answer → Perplexity rewrites it in the
+      // foul-mouthed OG-PORTAL voice. Two non-streaming hops; the second
+      // hop is what gives OG mode its personality. If Perplexity is
+      // unavailable, we fall back to Gemini's clean answer so the user
+      // always gets a reply.
       yield { type: "status", stage: "thinking" };
-      const synthModel = pickSynthesisModel(intent);
-
-      const sourcesBlock = research.sources.length
-        ? "SOURCES:\n" +
-          research.sources
-            .map((s, i) => `[${i + 1}] ${s.title ?? s.url}${s.url ? ` — ${s.url}` : ""}${s.snippet ? `\n    ${s.snippet}` : ""}`)
-            .join("\n")
-        : "SOURCES: (none — research step returned nothing; answer from general knowledge and say so).";
-
-      const researchBlock = research.answer
-        ? `RESEARCH BRIEF (from Perplexity Sonar Pro):\n${research.answer}`
-        : "";
-
-      // ───────── AGENT COUNCIL ─────────
-      // Run on EVERY OG query so the synthesizer always gets a structured
-      // draft + red-team critique to work from. Both steps degrade silently:
-      // if either returns "", the synthesizer still has research + sources.
-      let geminiBlock = "";
-      let criticBlock = "";
-
-      yield { type: "status", stage: "drafting" };
-      const draft = await geminiDraft(message, researchBlock, sourcesBlock);
-      if (draft) {
-        geminiBlock = `ANALYTICAL DRAFT (from Gemini 3.1 Pro — improve, don't copy):\n${draft}`;
-
-        // Critic only runs if we have a draft to critique.
-        const critique = await gptCritique(message, researchBlock, sourcesBlock, draft);
-        if (critique) {
-          criticBlock = `CRITIQUE (from GPT-5 — apply the IMPROVE instructions and patch every FACT CHECK / GAPS issue):\n${critique}`;
-        }
+      const cleanAnswer = await geminiThink(history, message);
+      if (!cleanAnswer) {
+        yield { type: "delta", text: "_⚠️ Couldn't reach Gemini — try again._" };
+        yield { type: "done", model: "gemini-3.1-pro-preview", intent };
+        return;
       }
-
-      const systemContent = [OG_SYSTEM, researchBlock, geminiBlock, criticBlock, sourcesBlock]
-        .filter(Boolean)
-        .join("\n\n");
-
-      const messages = [
-        { role: "system", content: systemContent },
-        ...history.map((h) => ({ role: h.role, content: h.content })),
-        { role: "user", content: message },
-      ];
 
       yield { type: "status", stage: "finalizing" };
-      for await (const chunk of bufferedDeltas(streamGateway(synthModel, messages))) {
-        yield { type: "delta", text: chunk };
-      }
-      yield { type: "done", model: synthModel, intent };
+      const swearified = await swearifyWithPerplexity(message, cleanAnswer);
+      yield { type: "delta", text: swearified || cleanAnswer };
+      yield {
+        type: "done",
+        model: swearified ? "gemini-3.1-pro + perplexity-sonar" : "gemini-3.1-pro-preview",
+        intent,
+      };
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       yield { type: "delta", text: `\n\n_⚠️ ${msg}_` };

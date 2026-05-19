@@ -100,7 +100,7 @@ export function ChaosModeIndicator({ hubKey, label }: Props) {
         <img
           key={`${isChaosOn ? "up" : "fist"}-${flipKey}`}
           src={isChaosOn ? fingerUp : fistBump}
-          alt={isChaosOn ? "Middle finger up — chaos mode on" : "Fist bump — chaos mode off"}
+          alt={isChaosOn ? "Middle finger up — OG mode on" : "Fist bump — OG mode off"}
           width={40}
           height={40}
           loading="lazy"
@@ -123,7 +123,7 @@ export function ChaosModeIndicator({ hubKey, label }: Props) {
           className="syndicate-header text-sm font-black"
           style={{ color: isChaosOn ? "#ff2e55" : "#00F2FF" }}
         >
-          CHAOS MODE · {mode === null ? "…" : isChaosOn ? "ON" : "OFF"}
+          OG MODE · {mode === null ? "…" : isChaosOn ? "ON" : "OFF"}
         </span>
         <span className="text-[10px] uppercase tracking-[0.18em] text-white/45">
           {!enabled
