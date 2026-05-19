@@ -70,8 +70,7 @@ function OgBotPage() {
     if (!text || busy) return;
     setBusy(true);
     setInput("");
-    setLiveSources([]);
-    setStage("classifying");
+    setStage("thinking");
 
     const userMsg: ChatMessage = { role: "user", content: text };
     const history = messages.map((m) => ({ role: m.role, content: m.content }));
@@ -87,8 +86,20 @@ function OgBotPage() {
       for (const ev of result.events) {
         if (ev.type === "status") setStage(ev.stage);
         else if (ev.type === "research") {
+          // research events are intentionally hidden in the UI
           collectedSources.push(ev.source);
-          setLiveSources([...collectedSources]);
+        } else if (ev.type === "navigate") {
+          const nav: Nav = { path: ev.path, label: ev.label };
+          setMessages((prev) => {
+            const next = [...prev];
+            const last = next[next.length - 1];
+            if (last?.role === "assistant") last.nav = nav;
+            return next;
+          });
+          // Auto-navigate after a short beat so the user sees the card.
+          setTimeout(() => {
+            navigate({ to: ev.path as never }).catch(() => {});
+          }, 900);
         } else if (ev.type === "media") {
           collectedMedia.push(ev);
           setMessages((prev) => {
@@ -135,7 +146,6 @@ function OgBotPage() {
     } finally {
       setBusy(false);
       setStage(null);
-      setLiveSources([]);
     }
   }
 
@@ -148,8 +158,8 @@ function OgBotPage() {
           </h1>
           <p className="text-xs text-muted-foreground">
             {mode === "og"
-              ? "OG Mode · Gemini 3.1 Pro thinks → Perplexity adds the OG voice · image · music · video"
-              : "Safe Mode · Gemini 3 Flash · fast, clean, brand-safe assistance"}
+              ? "OG Mode · chat, navigate the site, or generate image / music / video"
+              : "Safe Mode · fast, clean, brand-safe assistance"}
           </p>
         </div>
         <ModeToggle mode={mode} onChange={setMode} disabled={busy} />
@@ -158,8 +168,7 @@ function OgBotPage() {
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto rounded-lg border bg-card/30 p-4">
         {messages.length === 0 && (
           <div className="py-12 text-center text-sm text-muted-foreground">
-            Ask anything. In <strong>Safe Mode</strong> you get clean Gemini Flash. In <strong>OG Mode</strong> Gemini Pro thinks through the answer, then Perplexity rewrites it in full OG voice — same facts, no manners.
-            Say "make an image of…", "make a song…", or "make a video…" to trigger media tools (OG Mode only).
+            Ask anything, or tell me where to take you on the site ("open the store", "take me to my wallet"). In <strong>OG Mode</strong> I answer in full OG voice — same facts, no manners. Say "make an image of…", "make a song…", or "make a video…" to trigger media tools.
           </div>
         )}
 
@@ -167,12 +176,9 @@ function OgBotPage() {
           <MessageBubble key={i} msg={m} />
         ))}
 
-        {stage && mode === "og" && (
-          <ResearchStatusBar stage={stage} sources={liveSources} />
-        )}
-        {stage && mode === "normal" && (
+        {stage && (
           <div className="text-xs text-muted-foreground italic flex items-center gap-2">
-            <Loader2 className="h-3 w-3 animate-spin" /> {stage}…
+            <Loader2 className="h-3 w-3 animate-spin" /> Thinking…
           </div>
         )}
       </div>
