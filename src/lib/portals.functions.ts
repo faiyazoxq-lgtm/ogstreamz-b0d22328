@@ -744,6 +744,12 @@ function normalizeJoke(s: string): string {
     .trim();
 }
 
+/** Stable per-joke fingerprint for cross-user dedupe / seen-tracking. */
+function jokeKey(s: string): string {
+  const norm = normalizeJoke(s).toLowerCase().replace(/[^a-z0-9]/g, "");
+  return norm.slice(0, 120);
+}
+
 function dedupeJokes(items: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -817,9 +823,9 @@ export const refreshJokesCatalogue = createServerFn({ method: "POST" })
     slug: typeof data?.slug === "string" && data.slug.trim() ? data.slug.trim() : null,
     force: Boolean(data?.force),
   }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const PERPLEXITY = process.env.PERPLEXITY_API_KEY;
-    if (!PERPLEXITY) return { ok: false, reason: "no_api_key", refreshed: 0 };
+    const userId = (context as { userId?: string } | undefined)?.userId ?? null;
 
     // Pull JokesHUB portals — scoped to a single slug when provided, since
     // refreshes are now user-triggered per portal (hit-button on the page).
@@ -831,8 +837,13 @@ export const refreshJokesCatalogue = createServerFn({ method: "POST" })
     const { data: portals } = await query;
     if (!portals || portals.length === 0) return { ok: true, refreshed: 0 };
 
+    // Threshold: if the user still has this many unseen jokes in the
+    // existing catalogue, skip the Perplexity call entirely.
+    const UNSEEN_THRESHOLD = 10;
+
     let refreshed = 0;
-    let total = 0;
+    let added = 0;
+    let unseenAvailable = 0;
     // Sequential to keep Perplexity load + memory bounded.
     for (const p of portals as Array<{
       id: string;
@@ -844,21 +855,113 @@ export const refreshJokesCatalogue = createServerFn({ method: "POST" })
       jokes: string[] | null;
     }>) {
       const meta = (p.metadata ?? {}) as Record<string, unknown>;
-      // No cooldown — user-triggered refreshes always run.
+      const existing = Array.isArray(p.jokes) ? p.jokes : [];
+
+      // Per-user gate: count how many existing jokes this user has NOT yet seen.
+      let unseenCount = existing.length;
+      let seenKeys = new Set<string>();
+      if (userId && existing.length > 0) {
+        const { data: views } = await supabaseAdmin
+          .from("portal_joke_views")
+          .select("joke_key")
+          .eq("user_id", userId)
+          .eq("portal_id", p.id);
+        seenKeys = new Set((views ?? []).map((v: { joke_key: string }) => v.joke_key));
+        unseenCount = existing.filter((j) => !seenKeys.has(jokeKey(j))).length;
+      }
+      unseenAvailable += unseenCount;
+
+      // Skip Perplexity if user still has plenty of unseen catalogue jokes.
+      if (!data.force && unseenCount >= UNSEEN_THRESHOLD) continue;
+
+      // Need fresh material. Bail gracefully if no API key configured.
+      if (!PERPLEXITY) continue;
+
       const fresh = await scrapeJokePoolForPortal(
         { niche: p.niche, vibe: p.vibe, language: p.language },
         PERPLEXITY,
       );
       if (fresh.length === 0) continue;
 
-      const nextMeta = { ...meta, jokes_refreshed_at: new Date().toISOString(), jokes_source: "perplexity-sonar" };
+      // APPEND to the existing catalogue, deduped by fingerprint, so
+      // every generated joke is reused for other users who haven't seen it.
+      const existingKeys = new Set(existing.map(jokeKey));
+      const newOnes = fresh.filter((j) => {
+        const k = jokeKey(j);
+        if (existingKeys.has(k)) return false;
+        existingKeys.add(k);
+        return true;
+      });
+      if (newOnes.length === 0) continue;
+
+      const merged = existing.concat(newOnes);
+      const nextMeta = {
+        ...meta,
+        jokes_refreshed_at: new Date().toISOString(),
+        jokes_source: "perplexity-sonar",
+        jokes_total: merged.length,
+      };
       await supabaseAdmin
         .from("portals")
-        .update({ jokes: fresh, metadata: nextMeta })
+        .update({ jokes: merged, metadata: nextMeta })
         .eq("id", p.id);
       refreshed += 1;
-      total += fresh.length;
+      added += newOnes.length;
+      unseenAvailable += newOnes.length;
     }
 
-    return { ok: true, refreshed, total };
+    return { ok: true, refreshed, added, unseenAvailable };
+  });
+
+// ─── Per-user seen tracking ────────────────────────────────────────────
+// Records which jokes the signed-in user has been shown in a portal so
+// future visits (and the refresh gate above) can skip them. Fire-and-
+// forget from the UI on each "drop it" press.
+export const markJokesSeen = createServerFn({ method: "POST" })
+  .middleware([requireStrictAuth])
+  .inputValidator((input: { slug: string; jokes: string[] }) => {
+    if (!input?.slug || typeof input.slug !== "string") throw new Error("slug required");
+    const jokes = Array.isArray(input.jokes)
+      ? input.jokes.filter((j): j is string => typeof j === "string" && j.trim().length > 0).slice(0, 50)
+      : [];
+    return { slug: input.slug.trim(), jokes };
+  })
+  .handler(async ({ data, context }) => {
+    const userId = (context as { userId?: string }).userId;
+    if (!userId || data.jokes.length === 0) return { ok: true, marked: 0 };
+    const { data: portal } = await supabaseAdmin
+      .from("portals").select("id").eq("slug", data.slug).maybeSingle();
+    if (!portal?.id) return { ok: false, marked: 0 };
+    const rows = Array.from(new Set(data.jokes.map(jokeKey)))
+      .filter((k) => k.length >= 12)
+      .map((joke_key) => ({ user_id: userId, portal_id: portal.id, joke_key }));
+    if (rows.length === 0) return { ok: true, marked: 0 };
+    await supabaseAdmin
+      .from("portal_joke_views")
+      .upsert(rows, { onConflict: "user_id,portal_id,joke_key", ignoreDuplicates: true });
+    return { ok: true, marked: rows.length };
+  });
+
+// Returns the catalogue filtered to jokes the signed-in user has not seen yet.
+// If they've seen everything, returns the full pool (graceful fallback) so the
+// UI never goes blank — the refresh path is what tops up new material.
+export const getUnseenJokes = createServerFn({ method: "POST" })
+  .middleware([requireStrictAuth])
+  .inputValidator((input: { slug: string }) => {
+    if (!input?.slug) throw new Error("slug required");
+    return { slug: input.slug.trim() };
+  })
+  .handler(async ({ data, context }) => {
+    const userId = (context as { userId?: string }).userId;
+    const { data: portal } = await supabaseAdmin
+      .from("portals").select("id, jokes").eq("slug", data.slug).maybeSingle();
+    if (!portal?.id) return { jokes: [] as string[], unseen: 0, total: 0 };
+    const all: string[] = Array.isArray(portal.jokes) ? portal.jokes : [];
+    if (!userId || all.length === 0) return { jokes: all, unseen: all.length, total: all.length };
+    const { data: views } = await supabaseAdmin
+      .from("portal_joke_views")
+      .select("joke_key").eq("user_id", userId).eq("portal_id", portal.id);
+    const seen = new Set((views ?? []).map((v: { joke_key: string }) => v.joke_key));
+    const unseen = all.filter((j) => !seen.has(jokeKey(j)));
+    return { jokes: unseen.length > 0 ? unseen : all, unseen: unseen.length, total: all.length };
   });
