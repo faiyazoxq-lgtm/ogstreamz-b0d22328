@@ -213,7 +213,13 @@ async function handleCommand(
     }
     return;
   }
-  const code = m[2];
+  const rawArg = m[2];
+  // Deep links from the site arrive as `/start CODE__OGPASSTAG` because
+  // Telegram's `start` parameter only accepts [A-Za-z0-9_-]. Split on the
+  // double-underscore so we recover the 8-char link CODE that
+  // `claim_telegram_link_code` actually stored.
+  const [codePart, ogPassTagPart] = rawArg ? rawArg.split("__", 2) : [undefined, undefined];
+  const code = codePart;
   if (!code) {
     // /start with no code:
     //   1. Always upsert the chat_id (+ tg username / name) into
