@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Crown, Eye, Copy, Check, Timer, Loader2, Flame, Lock, Download, Sparkles, Share2, Gift } from "lucide-react";
+import { Crown, Eye, Copy, Check, Timer, Loader2, Flame, Lock, Download, Sparkles, Gift } from "lucide-react";
 import { toPng } from "html-to-image";
 import { QRCodeSVG } from "qrcode.react";
+import vaultLogo from "@/assets/og-vault-safe.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { isVipProfile } from "@/lib/roles";
@@ -289,12 +290,12 @@ export function VipPassRevealCard() {
 
       <div className="relative">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-3">
-            <Crown className="h-5 w-5 text-cyan-300" />
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.4em] font-bold text-cyan-200">VIP Pass · Drop</p>
-              <h2 className="mt-0.5 font-[Montserrat] font-black text-2xl text-white [text-shadow:_0_0_18px_rgba(0,200,255,0.6)]">
-                Random Pass — 15-min window
+          <div className="flex items-center gap-3 min-w-0">
+            <Crown className="h-5 w-5 text-cyan-300 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-[0.4em] font-bold text-cyan-200">Vault Access · 15-min window</p>
+              <h2 className="mt-0.5 font-[Montserrat] font-black text-xl sm:text-3xl text-white [text-shadow:_0_0_18px_rgba(0,200,255,0.6)] leading-tight">
+                VIP Access Code <span className="text-cyan-300">for the Vault</span>
               </h2>
             </div>
           </div>
@@ -376,53 +377,35 @@ export function VipPassRevealCard() {
                   </div>
                 </div>
 
-                <div className="relative space-y-2.5">
-                  <div className="flex items-stretch gap-3">
-                    <div className="flex-1 min-w-0 space-y-2.5">
-                  {data.username && (
-                    <div className="rounded-xl border border-cyan-300/30 bg-black/40 px-4 py-2.5 backdrop-blur-sm">
-                      <p className="text-[9px] uppercase tracking-[0.35em] text-cyan-200/70 mb-0.5">Username</p>
-                      <code className="font-mono text-base sm:text-lg font-black text-white break-all">
-                        {data.username}
-                      </code>
-                    </div>
-                  )}
-                  {data.password && (
-                    <div className="rounded-xl border border-cyan-300/30 bg-black/40 px-4 py-2.5 backdrop-blur-sm">
-                      <p className="text-[9px] uppercase tracking-[0.35em] text-cyan-200/70 mb-0.5">Password</p>
-                      <code
-                        className="font-mono text-base sm:text-lg font-black text-white break-all"
-                        style={{ textShadow: "0 0 10px rgba(0,212,255,0.6)" }}
-                      >
-                        {data.password}
-                      </code>
-                    </div>
-                  )}
-                  {data.code && (
-                    <div className="rounded-xl border border-cyan-300/30 bg-black/40 px-4 py-2.5 backdrop-blur-sm">
-                      <p className="text-[9px] uppercase tracking-[0.35em] text-cyan-200/70 mb-0.5">Code</p>
-                      <code
-                        className="font-mono text-base sm:text-lg font-black text-white break-all"
-                        style={{ textShadow: "0 0 10px rgba(0,212,255,0.6)" }}
-                      >
-                        {data.code}
-                      </code>
-                    </div>
-                  )}
-                    </div>
-                    {qrPayload && (
-                      <div className="shrink-0 self-center rounded-xl border border-cyan-300/40 bg-white p-2 shadow-[0_0_18px_rgba(0,200,255,0.45)]">
-                        <QRCodeSVG
-                          value={qrPayload}
-                          size={104}
-                          level="M"
-                          bgColor="#ffffff"
-                          fgColor="#020617"
-                          marginSize={1}
-                        />
-                        <p className="mt-1 text-center text-[8px] uppercase tracking-[0.3em] font-black text-slate-700">
-                          Scan
-                        </p>
+                {/* Dominant vault logo + clean credentials stack */}
+                <div className="relative flex flex-col items-center text-center gap-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 rounded-full blur-2xl bg-cyan-400/30" />
+                    <img
+                      src={vaultLogo}
+                      alt="OG Vault"
+                      className="relative h-28 w-28 sm:h-36 sm:w-36 object-contain drop-shadow-[0_0_18px_rgba(0,212,255,0.55)]"
+                    />
+                  </div>
+
+                  <div className="w-full max-w-sm space-y-3">
+                    {data.username && (
+                      <div className="rounded-xl border border-cyan-300/30 bg-black/50 px-5 py-3 backdrop-blur-sm">
+                        <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-200/70 mb-1">Username</p>
+                        <code className="font-mono text-2xl sm:text-3xl font-black text-white break-all tracking-wider">
+                          {data.username}
+                        </code>
+                      </div>
+                    )}
+                    {data.password && (
+                      <div className="rounded-xl border border-cyan-300/30 bg-black/50 px-5 py-3 backdrop-blur-sm">
+                        <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-200/70 mb-1">Password</p>
+                        <code
+                          className="font-mono text-2xl sm:text-3xl font-black text-white break-all tracking-wider"
+                          style={{ textShadow: "0 0 10px rgba(0,212,255,0.6)" }}
+                        >
+                          {data.password}
+                        </code>
                       </div>
                     )}
                   </div>
@@ -446,12 +429,7 @@ export function VipPassRevealCard() {
               )}
               {data.password && (
                 <Button size="sm" onClick={() => doCopy(data.password || "")} className="bg-cyan-400/15 hover:bg-cyan-400/30 text-cyan-100 border border-cyan-300/50">
-                  <Copy className="h-3.5 w-3.5 mr-1.5" /> Pass
-                </Button>
-              )}
-              {data.code && (
-                <Button size="sm" onClick={() => doCopy(data.code)} className="bg-cyan-400/15 hover:bg-cyan-400/30 text-cyan-100 border border-cyan-300/50">
-                  {copied ? <Check className="h-3.5 w-3.5 mr-1.5" /> : <Copy className="h-3.5 w-3.5 mr-1.5" />} Code
+                  {copied ? <Check className="h-3.5 w-3.5 mr-1.5" /> : <Copy className="h-3.5 w-3.5 mr-1.5" />} Pass
                 </Button>
               )}
               <Button
@@ -462,16 +440,6 @@ export function VipPassRevealCard() {
               >
                 {downloading ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Download className="h-3.5 w-3.5 mr-1.5" />}
                 Save image
-              </Button>
-              <Button
-                size="sm"
-                onClick={doShare}
-                disabled={sharing || !referralUrl}
-                title={referralUrl ? "Share your VIP invite link" : "Preparing your invite link…"}
-                className="bg-gradient-to-r from-[#ff2a8a] to-[#00d4ff] text-black font-black uppercase tracking-[0.2em] shadow-[0_0_18px_rgba(255,42,138,0.5)] hover:brightness-110"
-              >
-                {sharing ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Gift className="h-3.5 w-3.5 mr-1.5" />}
-                Share invite
               </Button>
             </div>
 
