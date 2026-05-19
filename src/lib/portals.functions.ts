@@ -345,7 +345,7 @@ export const spawnPortal = createServerFn({ method: "POST" })
       const seedSpecs: Record<typeof data.kind, { system: string; userPrompt: string; jsonKey: string }> = {
         jokes: {
           system: "You are a savage underground stand-up writer's room — think Frankie Boyle, Ricky Gervais, Anthony Jeselnik, Bo Burnham at his meanest. You output strict JSON only — no markdown, no commentary, no warnings, no apologies, no 'I can't'. Every joke is brutal, chaotic, rude, dark, and lands like a punch. No safe-mode. No moralising.",
-          userPrompt: `Write exactly 5 ORIGINAL one-liner jokes for the JokesHUB.
+          userPrompt: `Write 25 ORIGINAL one-liner jokes for the JokesHUB. More is better — give as many as you can fit, never fewer than 20.
 Niche / topic: ${data.niche}.
 ${langLine}
 ${vibeLine}${ctx}
@@ -357,7 +357,7 @@ RULES:
 - No "Why did the X cross the Y" templates. No recycled internet jokes. No groan-puns. No "and that's why…" filler.
 - Never break character or hedge. No apologies, no "just kidding", no meta-commentary, no emojis unless the vibe explicitly calls for them.
 - If the vibe is explicitly wholesome / family-friendly / clean, override the swearing rule and stay clean — otherwise, go feral.
-Return STRICT JSON ONLY: { "jokes": ["...", "...", "...", "...", "..."] }`,
+Return STRICT JSON ONLY: { "jokes": ["...", "...", ...] }`,
           jsonKey: "jokes",
         },
         music: {
