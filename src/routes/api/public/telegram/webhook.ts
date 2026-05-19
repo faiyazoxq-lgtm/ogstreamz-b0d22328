@@ -309,8 +309,90 @@ async function handleCommand(
     await tgSendMessage(chatId, why);
     return;
   }
+  // Look up the freshly-linked profile so we can show the member exactly
+  // which OG-Streamz account this Telegram chat is now bound to. This is
+  // the explicit "successfully connected" confirmation.
+  let linkedProfile: {
+    display_name: string | null;
+    email: string | null;
+    og_pass_no: number | null;
+    status: string | null;
+    rank: string | null;
+  } | null = null;
+  try {
+    const sb = getSupabase() as any;
+    const { data: link } = await sb
+      .from("telegram_user_links")
+      .select("user_id")
+      .eq("chat_id", chatId)
+      .maybeSingle();
+    if (link?.user_id) {
+      const { data: prof } = await sb
+        .from("profiles")
+        .select("display_name,email,og_pass_no,status,rank")
+        .eq("id", link.user_id)
+        .maybeSingle();
+      if (prof) {
+        const p = prof as any;
+        linkedProfile = {
+          display_name: p.display_name ?? null,
+          email: p.email ?? null,
+          og_pass_no: p.og_pass_no ?? null,
+          status: p.status ?? null,
+          rank: p.rank ?? null,
+        };
+      }
+    }
+  } catch (e) {
+    logWarn("tg.link.profile_lookup_failed", {
+      chatIdSuffix: String(chatId).slice(-8),
+      error: e instanceof Error ? e.message : String(e),
+    });
+  }
+
   // Branded welcome card — uses the site wallpaper + OG-Streamz theme.
-  await sendBrandedWelcome(chatId, { returning: false, displayName: null });
+  await sendBrandedWelcome(chatId, {
+    returning: false,
+    displayName: linkedProfile?.display_name || linkedProfile?.email || null,
+  });
+
+  // Explicit profile-bound confirmation so the member can verify the
+  // right account was linked (and spot a wrong-account mistake fast).
+  if (linkedProfile) {
+    const who =
+      linkedProfile.display_name ||
+      linkedProfile.email ||
+      "your OG-Streamz profile";
+    const ogLine =
+      linkedProfile.og_pass_no != null
+        ? `🪪 OG PASS: <b>#${linkedProfile.og_pass_no}</b>\n`
+        : "";
+    const tierLine =
+      linkedProfile.status || linkedProfile.rank
+        ? `🎟 Tier: <b>${escapeHtml(linkedProfile.status || "member")}</b>` +
+          (linkedProfile.rank ? ` · ${escapeHtml(linkedProfile.rank)}` : "") +
+          "\n"
+        : "";
+    await tgSendMessage(
+      chatId,
+      `✅ <b>Successfully connected</b>\n\n` +
+        `This Telegram chat is now bound to:\n` +
+        `👤 <b>${escapeHtml(String(who))}</b>\n` +
+        (linkedProfile.email && linkedProfile.email !== who
+          ? `📧 <code>${escapeHtml(linkedProfile.email)}</code>\n`
+          : "") +
+        ogLine +
+        tierLine +
+        `\nIf this isn't you, send <code>/unlink</code> right away.\n` +
+        `Otherwise you're all set — try <code>/me</code> any time.`,
+    );
+  } else {
+    // Defensive fallback: claim succeeded but lookup failed. Still confirm.
+    await tgSendMessage(
+      chatId,
+      "✅ <b>Successfully connected.</b> This chat is now bound to your OG-Streamz profile. Send <code>/me</code> to see your account.",
+    );
+  }
 
   // Mirror onboarding metadata into telegram_chat_prefs so the chat record
   // exists even if the user never sent /start first.
