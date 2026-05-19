@@ -403,6 +403,7 @@ Return STRICT JSON ONLY: { "items": ["...", "...", "...", "...", "..."] }`,
       };
       const spec = seedSpecs[data.kind];
 
+      const seedCap = data.kind === "jokes" ? 60 : 5;
       const callSeed = async (extraSystem?: string): Promise<string[]> => {
         const res = await fetch("https://api.perplexity.ai/chat/completions", {
           method: "POST",
@@ -414,7 +415,7 @@ Return STRICT JSON ONLY: { "items": ["...", "...", "...", "...", "..."] }`,
               { role: "user", content: spec.userPrompt },
             ],
             temperature: 0.85,
-            max_tokens: 1100,
+            max_tokens: data.kind === "jokes" ? 3500 : 1100,
           }),
         });
         if (!res.ok) throw new Error(`Perplexity ${res.status}`);
@@ -426,7 +427,7 @@ Return STRICT JSON ONLY: { "items": ["...", "...", "...", "...", "..."] }`,
         const arr = (parsed[spec.jsonKey] ?? parsed.items ?? parsed.jokes) as unknown;
         return (Array.isArray(arr) ? arr : [])
           .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
-          .slice(0, 5);
+          .slice(0, seedCap);
       };
 
       jokes = await callSeed();
