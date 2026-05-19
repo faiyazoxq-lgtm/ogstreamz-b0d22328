@@ -357,7 +357,10 @@ function WelcomePage() {
               {signedIn ? "Welcome back" : "Welcome"}
             </p>
             {signedIn ? (
-              <h1 className="text-6xl sm:text-8xl font-black tracking-tight">
+              <h1
+                className="font-black tracking-tight leading-[1.05] break-words"
+                style={{ fontSize: "clamp(1.75rem, 9vw, 6rem)" }}
+              >
                 Finish wiring up your account
               </h1>
             ) : (
