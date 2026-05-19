@@ -42,7 +42,7 @@ export async function mintTelegramAuthUrl(
   const ttl = Math.max(60, Math.min(opts.ttlSeconds ?? 600, 60 * 60));
   const expiresAt = new Date(Date.now() + ttl * 1000).toISOString();
   const dest = safeDestPath(destPath);
-  const { error } = await admin().from("telegram_auth_tokens").insert({
+  const { error } = await (admin().from("telegram_auth_tokens") as any).insert({
     token,
     user_id: userId,
     dest_path: dest,
