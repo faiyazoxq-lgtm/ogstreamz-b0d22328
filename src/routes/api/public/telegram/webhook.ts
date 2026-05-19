@@ -19,6 +19,30 @@ import {
   getSwearingEnabled,
   setSwearingEnabled,
 } from "@/lib/perplexity.server";
+import { mintTelegramAuthUrl } from "@/lib/telegram-auth-link.server";
+
+/**
+ * Build a Telegram URL-button URL that signs the linked user in on the
+ * website and lands them on `destPath`. Falls back to the plain site URL
+ * (which forces a manual login) if token minting fails.
+ */
+async function autoAuthUrl(
+  userId: string | null | undefined,
+  destPath: string,
+  chatId: number,
+): Promise<string> {
+  const siteBase = (process.env.PUBLIC_SITE_URL || "https://ogstreamz.co.uk").replace(/\/$/, "");
+  const fallback = `${siteBase}${destPath.startsWith("/") ? destPath : "/" + destPath}`;
+  if (!userId) return fallback;
+  try {
+    return await mintTelegramAuthUrl(userId, destPath, { chatId });
+  } catch (e) {
+    logWarn("tg.autoAuthUrl.mint_failed", {
+      error: e instanceof Error ? e.message : String(e),
+    });
+    return fallback;
+  }
+}
 
 let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
