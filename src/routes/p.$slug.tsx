@@ -364,6 +364,7 @@ function PortalPage() {
         setHits((h) => h + 1);
         controls.start(HIT_ANIMS[T.animation] ?? HIT_ANIMS.pulse);
         if (captured) spawnParticles(captured);
+        maybeRefreshJokes();
       } finally {
         setCharging(false);
       }
