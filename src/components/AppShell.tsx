@@ -15,6 +15,7 @@ import { OgWordmark } from "@/components/OgWordmark";
 import { AnimatedCredits } from "@/components/AnimatedCredits";
 import { MasterSwearToggle } from "@/components/MasterSwearToggle";
 import { SiteSearch } from "@/components/SiteSearch";
+import { TelegramConnectedWatcher } from "@/components/TelegramConnectedWatcher";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger,
 } from "@/components/ui/sheet";
@@ -706,6 +707,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen w-full">
+      <TelegramConnectedWatcher userId={user?.id ?? null} />
       <DesktopSidebar
         isBoss={isBoss}
         isVip={!!isVip}
