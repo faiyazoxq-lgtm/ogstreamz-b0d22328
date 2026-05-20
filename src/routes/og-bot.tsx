@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Loader2, Send, Sparkles, Shield, KeyRound, Music, Video, Image as ImageIcon, ArrowRight } from "lucide-react";
+import { Loader2, Send, Sparkles, Shield, KeyRound, Music, Video, Image as ImageIcon, ArrowRight, Tv, ChevronDown } from "lucide-react";
 
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { streamOgChat, type StreamEvent } from "@/lib/og-chat.functions";
+import { IptvExpiryChecker } from "@/components/IptvExpiryChecker";
 
 export const Route = createFileRoute("/og-bot")({
   component: OgBotPage,
@@ -46,6 +47,7 @@ function OgBotPage() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [stage, setStage] = useState<string | null>(null);
+  const [iptvOpen, setIptvOpen] = useState(false);
   // liveSources removed — OG mode no longer surfaces "searching the web".
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -164,6 +166,25 @@ function OgBotPage() {
         </div>
         <ModeToggle mode={mode} onChange={setMode} disabled={busy} />
       </header>
+
+      <div className="mb-3">
+        <button
+          type="button"
+          onClick={() => setIptvOpen((v) => !v)}
+          className="w-full flex items-center justify-between gap-2 rounded-lg border border-cyan-300/30 bg-cyan-400/5 px-4 py-2.5 text-left hover:bg-cyan-400/10 transition"
+        >
+          <span className="flex items-center gap-2 text-sm font-bold text-cyan-100">
+            <Tv className="h-4 w-4 text-cyan-300" />
+            Check IPTV line status &amp; expiry
+          </span>
+          <ChevronDown className={`h-4 w-4 text-cyan-200 transition-transform ${iptvOpen ? "rotate-180" : ""}`} />
+        </button>
+        {iptvOpen && (
+          <div className="mt-2">
+            <IptvExpiryChecker />
+          </div>
+        )}
+      </div>
 
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto rounded-lg border bg-card/30 p-4">
         {messages.length === 0 && (
