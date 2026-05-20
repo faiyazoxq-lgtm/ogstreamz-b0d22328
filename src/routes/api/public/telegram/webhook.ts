@@ -494,6 +494,28 @@ async function handleCommand(
     );
   }
 
+  // Kick off IPTV credential capture so the member can see their line
+  // status & expiry right inside Telegram. Skip if we already have creds
+  // on file (re-linking shouldn't blow them away — use /relinkstream).
+  try {
+    const sbIp = getSupabase() as any;
+    const { data: existing } = await sbIp
+      .from("telegram_user_links")
+      .select("iptv_enc_username")
+      .eq("chat_id", chatId)
+      .maybeSingle();
+    if (!existing?.iptv_enc_username) {
+      await startIptvCapture(chatId);
+    } else {
+      await showIptvExpiry(chatId);
+    }
+  } catch (e) {
+    logWarn("tg.link.iptv_kickoff_failed", {
+      chatIdSuffix: String(chatId).slice(-8),
+      error: e instanceof Error ? e.message : String(e),
+    });
+  }
+
   // Mirror onboarding metadata into telegram_chat_prefs so the chat record
   // exists even if the user never sent /start first.
   try {
