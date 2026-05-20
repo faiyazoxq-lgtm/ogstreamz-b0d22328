@@ -10,8 +10,14 @@ import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
 import { isVipProfile } from "@/lib/roles";
 import { OgWordmark } from "@/components/OgWordmark";
+import { setVaultUnlocked } from "@/lib/vault-unlock";
 
 export const Route = createFileRoute("/vault-login")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: typeof search.redirect === "string" && search.redirect.startsWith("/")
+      ? search.redirect
+      : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "0G-VAULT Login · VIP Pass" },
@@ -23,6 +29,7 @@ export const Route = createFileRoute("/vault-login")({
 
 function VaultLoginPage() {
   const navigate = useNavigate();
+  const search = Route.useSearch();
   const { user, profile, isAdmin } = useAuth();
   const isVip = isVipProfile(profile, { isAdmin });
   const [email, setEmail] = useState("");
@@ -40,7 +47,12 @@ function VaultLoginPage() {
   // "Enter Vault" — sending them to /dashboard hides the vault behind an
   // extra hop and feels like the button does nothing (esp. inside the
   // Telegram in-app browser). Non-VIPs still go to /dashboard.
-  const dest = isVip ? "/vip" : "/dashboard";
+  const dest = search.redirect ?? (isVip ? "/vip" : "/dashboard");
+
+  const enterVault = () => {
+    setVaultUnlocked();
+    navigate({ to: dest as never });
+  };
 
   const oauth = async (provider: "google" | "apple") => {
     setLoading(true);
@@ -50,7 +62,7 @@ function VaultLoginPage() {
       });
       if (r.error) throw r.error;
       if (r.redirected) return;
-      navigate({ to: dest as never });
+      enterVault();
     } catch (e: any) {
       toast.error(e?.message ?? `${provider} sign-in failed`);
       setLoading(false);
@@ -64,6 +76,7 @@ function VaultLoginPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      setVaultUnlocked();
       toast.success("Vault unlocked");
       navigate({ to: dest as never });
     } catch (e: any) {
@@ -168,7 +181,7 @@ function VaultLoginPage() {
                 <p className="text-xs text-cyan-100/80">Signed in as <span className="font-bold">{user.email}</span></p>
                 <Button
                   type="button"
-                  onClick={() => navigate({ to: dest as never })}
+                  onClick={enterVault}
                   className="mt-2 w-full h-10 bg-cyan-400/20 hover:bg-cyan-400/30 border border-cyan-300/50 text-cyan-50 font-bold uppercase tracking-[0.2em]"
                 >
                   Enter Vault <ArrowRight className="h-4 w-4 ml-2" />
