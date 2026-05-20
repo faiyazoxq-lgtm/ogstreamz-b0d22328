@@ -962,6 +962,16 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
             }
             return Response.json({ ok: true });
           }
+          if (cbData.startsWith("iptv:")) {
+            try {
+              await handleIptvCallback(update.callback_query);
+            } catch (e) {
+              logError("tg.webhook.iptv_callback_failed", {
+                error: e instanceof Error ? e.message : String(e),
+              });
+            }
+            return Response.json({ ok: true });
+          }
           try {
             await handleCredsCallback(update.callback_query);
           } catch (e) {
@@ -1046,6 +1056,17 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           }
         } catch (e) {
           logError("tg.webhook.creds_reply_failed", {
+            error: e instanceof Error ? e.message : String(e),
+          });
+        }
+
+        // Member IPTV credential capture force-reply.
+        try {
+          if (await handleIptvReply(msg)) {
+            return Response.json({ ok: true });
+          }
+        } catch (e) {
+          logError("tg.webhook.iptv_reply_failed", {
             error: e instanceof Error ? e.message : String(e),
           });
         }
