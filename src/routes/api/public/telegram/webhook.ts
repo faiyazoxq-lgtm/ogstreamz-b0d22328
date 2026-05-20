@@ -15,6 +15,12 @@ import {
   handleBossCredsReply,
 } from "@/lib/stream-credential-bot.server";
 import {
+  startIptvCapture,
+  handleIptvReply,
+  handleIptvCallback,
+  showIptvExpiry,
+} from "@/lib/telegram-iptv.server";
+import {
   getPerplexityReply,
   getSwearingEnabled,
   setSwearingEnabled,
@@ -123,7 +129,7 @@ async function handleCommand(
   // --- Member self-service commands ---------------------------------------
   // /me /account /credits /unlink /msg <text> /help
   // All of these require the chat to already be linked to a profile.
-  if (/^\/(me|status|account|credits|unlink|msg|contact|boss|vault|vip)\b/i.test(trimmed)) {
+  if (/^\/(me|status|account|credits|unlink|msg|contact|boss|vault|vip|expiry|stream|linkstream|relinkstream)\b/i.test(trimmed)) {
     const sb = getSupabase() as any;
     const { data: link } = await sb
       .from("telegram_user_links")
@@ -135,6 +141,17 @@ async function handleCommand(
         chatId,
         "You're not linked yet. Visit <b>/account/passes</b> on the site to get a code, then send <code>/link CODE</code> here.",
       );
+      return;
+    }
+
+    // /expiry & /stream — show IPTV line status + expiry pulled live.
+    if (/^\/(expiry|stream)\b/i.test(trimmed)) {
+      await showIptvExpiry(chatId);
+      return;
+    }
+    // /linkstream & /relinkstream — (re)start IPTV credential capture.
+    if (/^\/(linkstream|relinkstream)\b/i.test(trimmed)) {
+      await startIptvCapture(chatId);
       return;
     }
 
@@ -266,6 +283,8 @@ async function handleCommand(
           "<code>/status</code> — alias of /me\n" +
           "<code>/vault</code> — VIP Vault access\n" +
           "<code>/vip</code> — alias of /vault\n" +
+          "<code>/expiry</code> — show stream line status & expiry\n" +
+          "<code>/linkstream</code> — set/replace your IPTV username & password\n" +
           "<code>/msg TEXT</code> — message the OG-Streamz team\n" +
           "<code>/ask TEXT</code> — chat with the OG AI agent\n" +
           "<code>/swear</code> — toggle the swearing agent on/off\n" +
@@ -475,6 +494,28 @@ async function handleCommand(
       chatId,
       "✅ <b>Successfully connected.</b> This chat is now bound to your OG-Streamz profile. Send <code>/me</code> to see your account.",
     );
+  }
+
+  // Kick off IPTV credential capture so the member can see their line
+  // status & expiry right inside Telegram. Skip if we already have creds
+  // on file (re-linking shouldn't blow them away — use /relinkstream).
+  try {
+    const sbIp = getSupabase() as any;
+    const { data: existing } = await sbIp
+      .from("telegram_user_links")
+      .select("iptv_enc_username")
+      .eq("chat_id", chatId)
+      .maybeSingle();
+    if (!existing?.iptv_enc_username) {
+      await startIptvCapture(chatId);
+    } else {
+      await showIptvExpiry(chatId);
+    }
+  } catch (e) {
+    logWarn("tg.link.iptv_kickoff_failed", {
+      chatIdSuffix: String(chatId).slice(-8),
+      error: e instanceof Error ? e.message : String(e),
+    });
   }
 
   // Mirror onboarding metadata into telegram_chat_prefs so the chat record
@@ -923,6 +964,16 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
             }
             return Response.json({ ok: true });
           }
+          if (cbData.startsWith("iptv:")) {
+            try {
+              await handleIptvCallback(update.callback_query);
+            } catch (e) {
+              logError("tg.webhook.iptv_callback_failed", {
+                error: e instanceof Error ? e.message : String(e),
+              });
+            }
+            return Response.json({ ok: true });
+          }
           try {
             await handleCredsCallback(update.callback_query);
           } catch (e) {
@@ -1007,6 +1058,17 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           }
         } catch (e) {
           logError("tg.webhook.creds_reply_failed", {
+            error: e instanceof Error ? e.message : String(e),
+          });
+        }
+
+        // Member IPTV credential capture force-reply.
+        try {
+          if (await handleIptvReply(msg)) {
+            return Response.json({ ok: true });
+          }
+        } catch (e) {
+          logError("tg.webhook.iptv_reply_failed", {
             error: e instanceof Error ? e.message : String(e),
           });
         }

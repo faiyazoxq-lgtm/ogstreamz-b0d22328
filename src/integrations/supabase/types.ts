@@ -3690,6 +3690,12 @@ export type Database = {
           chat_id: number | null
           code_expires_at: string | null
           created_at: string
+          iptv_checked_at: string | null
+          iptv_draft_username: string | null
+          iptv_enc_password: string | null
+          iptv_enc_username: string | null
+          iptv_expires_at: string | null
+          iptv_status: string | null
           link_code: string | null
           linked_at: string | null
           notify_live: boolean
@@ -3703,6 +3709,12 @@ export type Database = {
           chat_id?: number | null
           code_expires_at?: string | null
           created_at?: string
+          iptv_checked_at?: string | null
+          iptv_draft_username?: string | null
+          iptv_enc_password?: string | null
+          iptv_enc_username?: string | null
+          iptv_expires_at?: string | null
+          iptv_status?: string | null
           link_code?: string | null
           linked_at?: string | null
           notify_live?: boolean
@@ -3716,6 +3728,12 @@ export type Database = {
           chat_id?: number | null
           code_expires_at?: string | null
           created_at?: string
+          iptv_checked_at?: string | null
+          iptv_draft_username?: string | null
+          iptv_enc_password?: string | null
+          iptv_enc_username?: string | null
+          iptv_expires_at?: string | null
+          iptv_status?: string | null
           link_code?: string | null
           linked_at?: string | null
           notify_live?: boolean
@@ -5002,6 +5020,30 @@ export type Database = {
       text_contains_denylisted_domain: {
         Args: { _text: string }
         Returns: boolean
+      }
+      tg_get_iptv_creds: {
+        Args: { _chat_id: number }
+        Returns: {
+          checked_at: string
+          expires_at: string
+          password: string
+          status: string
+          username: string
+        }[]
+      }
+      tg_set_iptv_creds: {
+        Args: {
+          _chat_id: number
+          _expires_at: string
+          _password: string
+          _status: string
+          _username: string
+        }
+        Returns: undefined
+      }
+      tg_set_iptv_status: {
+        Args: { _chat_id: number; _expires_at: string; _status: string }
+        Returns: undefined
       }
     }
     Enums: {
