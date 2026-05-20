@@ -129,7 +129,7 @@ async function handleCommand(
   // --- Member self-service commands ---------------------------------------
   // /me /account /credits /unlink /msg <text> /help
   // All of these require the chat to already be linked to a profile.
-  if (/^\/(me|status|account|credits|unlink|msg|contact|boss|vault|vip)\b/i.test(trimmed)) {
+  if (/^\/(me|status|account|credits|unlink|msg|contact|boss|vault|vip|expiry|stream|linkstream|relinkstream)\b/i.test(trimmed)) {
     const sb = getSupabase() as any;
     const { data: link } = await sb
       .from("telegram_user_links")
@@ -141,6 +141,17 @@ async function handleCommand(
         chatId,
         "You're not linked yet. Visit <b>/account/passes</b> on the site to get a code, then send <code>/link CODE</code> here.",
       );
+      return;
+    }
+
+    // /expiry & /stream — show IPTV line status + expiry pulled live.
+    if (/^\/(expiry|stream)\b/i.test(trimmed)) {
+      await showIptvExpiry(chatId);
+      return;
+    }
+    // /linkstream & /relinkstream — (re)start IPTV credential capture.
+    if (/^\/(linkstream|relinkstream)\b/i.test(trimmed)) {
+      await startIptvCapture(chatId);
       return;
     }
 
