@@ -283,6 +283,8 @@ async function handleCommand(
           "<code>/status</code> — alias of /me\n" +
           "<code>/vault</code> — VIP Vault access\n" +
           "<code>/vip</code> — alias of /vault\n" +
+          "<code>/expiry</code> — show stream line status & expiry\n" +
+          "<code>/linkstream</code> — set/replace your IPTV username & password\n" +
           "<code>/msg TEXT</code> — message the OG-Streamz team\n" +
           "<code>/ask TEXT</code> — chat with the OG AI agent\n" +
           "<code>/swear</code> — toggle the swearing agent on/off\n" +
