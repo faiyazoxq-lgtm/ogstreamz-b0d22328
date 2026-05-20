@@ -19,6 +19,7 @@ import { PlanChip, StatusBadge } from "@/components/SubscriptionBadges";
 import { VaultGuard } from "@/components/VaultGuard";
 import { VipReferralCard } from "@/components/VipReferralCard";
 import { VipMembersDashboard } from "@/components/VipMembersDashboard";
+import { IptvExpiryChecker } from "@/components/IptvExpiryChecker";
 import { requireMember } from "@/lib/route-guards";
 import { NonMemberTrap } from "@/components/NonMemberTrap";
 
@@ -164,6 +165,9 @@ function VipPage() {
 
       {/* Members area — only shown when the visitor is already VIP. */}
       <VipMembersDashboard />
+
+      {/* IPTV expiry checker — server-side, URL never exposed to client. */}
+      <IptvExpiryChecker />
 
       {/* STICKY IN-PAGE NAV */}
       <nav
