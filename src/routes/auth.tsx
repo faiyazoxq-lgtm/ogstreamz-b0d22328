@@ -570,7 +570,7 @@ function AuthPage() {
             </Button>
           </section>
 
-          <Divider label="or with email" />
+          <Divider label="Sign in with OG Streamz profile" />
 
           <Tabs value={mode} onValueChange={(v) => setMode(v as "login" | "signup")} className="w-full space-y-5">
             <TabsList className="grid grid-cols-2 w-full">
@@ -579,34 +579,63 @@ function AuthPage() {
             </TabsList>
 
             <TabsContent value="login" className="space-y-4 mt-0">
-              <AuthForm
-                email={email}
-                setEmail={(v) => { setEmail(v); if (emailError) setEmailError(null); }}
-                password={password}
-                setPassword={setPassword}
-                loading={loading}
-                submit={submit}
-                cta="Sign In"
-                emailError={emailError}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                disabled={loading || !email}
-                onClick={magicLink}
-                aria-describedby="magic-link-help-login"
-                className="w-full h-12 border-[oklch(0.78_0.18_85/0.5)] hover:bg-[oklch(0.78_0.18_85/0.1)] text-amber-200"
-              >
-                <Wand2 className="h-4 w-4 mr-2" />
-                Email me a magic link
-              </Button>
-              <p id="magic-link-help-login" className="text-xs text-muted-foreground -mt-1">
-                We'll email a one-tap sign-in link to{" "}
-                <span className="font-semibold text-foreground">
-                  {email || "the address above"}
-                </span>
-                . The link expires in ~1 hour and works only on this device.
-              </p>
+              <form onSubmit={streamSignIn} className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="stream-username" className="text-xs uppercase tracking-[0.2em] font-bold">
+                    M3U Username
+                  </Label>
+                  <div className="relative">
+                    <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="stream-username"
+                      type="text"
+                      autoComplete="username"
+                      value={streamUser}
+                      onChange={(e) => setStreamUser(e.target.value)}
+                      disabled={loading}
+                      required
+                      className="pl-9 h-12"
+                      placeholder="your stream username"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="stream-password" className="text-xs uppercase tracking-[0.2em] font-bold">
+                    M3U Password
+                  </Label>
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="stream-password"
+                      type="password"
+                      autoComplete="current-password"
+                      value={streamPass}
+                      onChange={(e) => setStreamPass(e.target.value)}
+                      disabled={loading}
+                      required
+                      className="pl-9 h-12"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                </div>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-12 bg-gradient-to-r from-[#00aaff] to-[#0077cc] font-bold uppercase tracking-[0.2em] text-white hover:opacity-90"
+                >
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Tv className="h-4 w-4 mr-2" />
+                      Sign in with stream profile
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-muted-foreground -mt-1">
+                  Use the username & password from your m3u line. Your stream profile must already be linked to a website account.
+                </p>
+              </form>
               <div className="flex items-start justify-between gap-3 text-xs">
                 <label className="flex items-start gap-2 cursor-pointer text-muted-foreground hover:text-foreground">
                   <Checkbox
