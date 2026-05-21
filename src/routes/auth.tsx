@@ -329,6 +329,42 @@ function AuthPage() {
     }
   };
 
+  const streamSignIn = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!streamUser || !streamPass) {
+      toast.error("Enter your stream username and password");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await signInWithStreamProfile({
+        data: { username: streamUser, password: streamPass },
+      });
+      if (!res.ok) {
+        if (res.error === "no_link") {
+          toast.error("No website account is linked to that stream profile.", {
+            description: "Create an account first, then link your stream.",
+          });
+        } else {
+          toast.error(res.error || "Stream sign-in failed");
+        }
+        return;
+      }
+      const { error } = await supabase.auth.verifyOtp({
+        type: "magiclink",
+        token_hash: res.tokenHash,
+      });
+      if (error) throw error;
+      if (remember) markTabSession(); else clearTabSession();
+      toast.success("Locked in. Frequency unlocked.");
+      navigate({ to: consumeRedirect() as never });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Stream sign-in failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <main className="relative min-h-[calc(100svh-4rem)] flex items-start lg:items-center justify-center px-4 sm:px-5 py-8 sm:py-12 overflow-x-clip">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
