@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Loader2, LogIn, Mail, Lock, Tv, User } from "lucide-react";
+import { Loader2, LogIn, Mail, Lock } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import { signInWithStreamCredentials } from "@/lib/stream-signin.functions";
 import { Link } from "@tanstack/react-router";
 
 export function SignInModal({
@@ -26,10 +25,6 @@ export function SignInModal({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [streamOpen, setStreamOpen] = useState(false);
-  const [streamUser, setStreamUser] = useState("");
-  const [streamPass, setStreamPass] = useState("");
-  const [streamLoading, setStreamLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -63,33 +58,6 @@ export function SignInModal({
     }
   }
 
-  async function handleStreamSignIn(e: FormEvent) {
-    e.preventDefault();
-    if (!streamUser.trim() || !streamPass) {
-      toast.error("Enter your OG Streamz username and password");
-      return;
-    }
-    setStreamLoading(true);
-    try {
-      const res = await signInWithStreamCredentials({
-        data: {
-          username: streamUser.trim(),
-          password: streamPass,
-          redirectTo: window.location.origin,
-        },
-      });
-      if (!res.ok) {
-        toast.error(res.error || "Sign-in failed");
-        return;
-      }
-      window.location.href = res.actionLink;
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Sign-in failed");
-    } finally {
-      setStreamLoading(false);
-    }
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md border-white/10 bg-gradient-to-br from-[#001a33] via-[#000914] to-black text-white">
@@ -112,56 +80,6 @@ export function SignInModal({
         >
           Continue with Google
         </Button>
-
-        <button
-          type="button"
-          onClick={() => setStreamOpen((v) => !v)}
-          className="flex w-full items-center justify-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#7fd5ff] underline-offset-4 hover:underline"
-        >
-          <Tv className="h-3.5 w-3.5" />
-          Continue with OG Streamz profile
-        </button>
-
-        {streamOpen && (
-          <form
-            onSubmit={handleStreamSignIn}
-            className="space-y-2 rounded-md border border-[#7fd5ff]/20 bg-[#001a33]/50 p-3"
-          >
-            <div className="relative">
-              <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-              <Input
-                type="text"
-                autoComplete="username"
-                value={streamUser}
-                onChange={(e) => setStreamUser(e.target.value)}
-                disabled={streamLoading}
-                required
-                className="pl-9 bg-black/40 border-white/15 text-white placeholder:text-white/30"
-                placeholder="Stream username"
-              />
-            </div>
-            <div className="relative">
-              <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-              <Input
-                type="password"
-                autoComplete="current-password"
-                value={streamPass}
-                onChange={(e) => setStreamPass(e.target.value)}
-                disabled={streamLoading}
-                required
-                className="pl-9 bg-black/40 border-white/15 text-white placeholder:text-white/30"
-                placeholder="Stream password"
-              />
-            </div>
-            <Button
-              type="submit"
-              disabled={streamLoading}
-              className="w-full bg-gradient-to-r from-[#7fd5ff] to-[#0077cc] font-bold uppercase tracking-[0.2em] text-black hover:opacity-90"
-            >
-              {streamLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign in with stream"}
-            </Button>
-          </form>
-        )}
 
         <div className="relative my-1 flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] text-white/40">
           <span className="h-px flex-1 bg-white/10" />

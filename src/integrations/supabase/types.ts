@@ -4798,10 +4798,6 @@ export type Database = {
         }
         Returns: string
       }
-      find_user_by_stream_credentials: {
-        Args: { _password: string; _username: string }
-        Returns: string
-      }
       gen_unique_referral_code: { Args: never; Returns: string }
       get_action_billing: {
         Args: { _action_key: string }
