@@ -4802,6 +4802,10 @@ export type Database = {
         Args: { _password: string; _username: string }
         Returns: string
       }
+      find_user_id_by_stream_username: {
+        Args: { _username: string }
+        Returns: string
+      }
       gen_unique_referral_code: { Args: never; Returns: string }
       get_action_billing: {
         Args: { _action_key: string }
