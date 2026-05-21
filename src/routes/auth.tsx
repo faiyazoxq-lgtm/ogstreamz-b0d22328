@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { Mail, Lock, Loader2, Send, Wand2, Coins, ArrowRight, Heart, Check } from "lucide-react";
+import { Mail, Lock, Loader2, Send, Wand2, Coins, ArrowRight, Heart, Check, Tv, User } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { OgWordmark } from "@/components/OgWordmark";
@@ -12,6 +12,7 @@ import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { claimSignupPass } from "@/lib/passes.functions";
+import { signInWithStreamProfile } from "@/lib/stream-signin.functions";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getRemember, setRemember, markTabSession, clearTabSession } from "@/lib/remember-session";
 import logo from "@/assets/logo.jpg";
@@ -43,6 +44,8 @@ function AuthPage() {
   const [signedInDest, setSignedInDest] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [vipReferral, setVipReferral] = useState<string>("");
+  const [streamUser, setStreamUser] = useState("");
+  const [streamPass, setStreamPass] = useState("");
   const [magicLinkNotice, setMagicLinkNotice] = useState<
     | { kind: "consumed"; email: string }
     | { kind: "failed"; reason: string }
