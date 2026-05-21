@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { Mail, Lock, Loader2, Send, Wand2, Coins, ArrowRight, Heart, Check, Tv, User } from "lucide-react";
+import { Mail, Lock, Loader2, Send, Wand2, Coins, ArrowRight, Heart, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { OgWordmark } from "@/components/OgWordmark";
@@ -12,7 +12,6 @@ import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { claimSignupPass } from "@/lib/passes.functions";
-import { signInWithStreamProfile } from "@/lib/stream-signin.functions";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getRemember, setRemember, markTabSession, clearTabSession } from "@/lib/remember-session";
 import logo from "@/assets/logo.jpg";
@@ -44,8 +43,6 @@ function AuthPage() {
   const [signedInDest, setSignedInDest] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [vipReferral, setVipReferral] = useState<string>("");
-  const [streamUser, setStreamUser] = useState("");
-  const [streamPass, setStreamPass] = useState("");
   const [magicLinkNotice, setMagicLinkNotice] = useState<
     | { kind: "consumed"; email: string }
     | { kind: "failed"; reason: string }
@@ -329,42 +326,6 @@ function AuthPage() {
     }
   };
 
-  const streamSignIn = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!streamUser || !streamPass) {
-      toast.error("Enter your stream username and password");
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await signInWithStreamProfile({
-        data: { username: streamUser, password: streamPass },
-      });
-      if (!res.ok) {
-        if (res.error === "no_link") {
-          toast.error("No website account is linked to that stream profile.", {
-            description: "Create an account first, then link your stream.",
-          });
-        } else {
-          toast.error(res.error || "Stream sign-in failed");
-        }
-        return;
-      }
-      const { error } = await supabase.auth.verifyOtp({
-        type: "magiclink",
-        token_hash: res.tokenHash,
-      });
-      if (error) throw error;
-      if (remember) markTabSession(); else clearTabSession();
-      toast.success("Locked in. Frequency unlocked.");
-      navigate({ to: consumeRedirect() as never });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Stream sign-in failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <main className="relative min-h-[calc(100svh-4rem)] flex items-start lg:items-center justify-center px-4 sm:px-5 py-8 sm:py-12 overflow-x-clip">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -570,7 +531,7 @@ function AuthPage() {
             </Button>
           </section>
 
-          <Divider label="Sign in with OG Streamz profile" />
+          <Divider label="or with email" />
 
           <Tabs value={mode} onValueChange={(v) => setMode(v as "login" | "signup")} className="w-full space-y-5">
             <TabsList className="grid grid-cols-2 w-full">
@@ -579,63 +540,34 @@ function AuthPage() {
             </TabsList>
 
             <TabsContent value="login" className="space-y-4 mt-0">
-              <form onSubmit={streamSignIn} className="space-y-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="stream-username" className="text-xs uppercase tracking-[0.2em] font-bold">
-                    M3U Username
-                  </Label>
-                  <div className="relative">
-                    <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="stream-username"
-                      type="text"
-                      autoComplete="username"
-                      value={streamUser}
-                      onChange={(e) => setStreamUser(e.target.value)}
-                      disabled={loading}
-                      required
-                      className="pl-9 h-12"
-                      placeholder="your stream username"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="stream-password" className="text-xs uppercase tracking-[0.2em] font-bold">
-                    M3U Password
-                  </Label>
-                  <div className="relative">
-                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="stream-password"
-                      type="password"
-                      autoComplete="current-password"
-                      value={streamPass}
-                      onChange={(e) => setStreamPass(e.target.value)}
-                      disabled={loading}
-                      required
-                      className="pl-9 h-12"
-                      placeholder="••••••••"
-                    />
-                  </div>
-                </div>
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-12 bg-gradient-to-r from-[#00aaff] to-[#0077cc] font-bold uppercase tracking-[0.2em] text-white hover:opacity-90"
-                >
-                  {loading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Tv className="h-4 w-4 mr-2" />
-                      Sign in with stream profile
-                    </>
-                  )}
-                </Button>
-                <p className="text-xs text-muted-foreground -mt-1">
-                  Use the username & password from your m3u line. Your stream profile must already be linked to a website account.
-                </p>
-              </form>
+              <AuthForm
+                email={email}
+                setEmail={(v) => { setEmail(v); if (emailError) setEmailError(null); }}
+                password={password}
+                setPassword={setPassword}
+                loading={loading}
+                submit={submit}
+                cta="Sign In"
+                emailError={emailError}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={loading || !email}
+                onClick={magicLink}
+                aria-describedby="magic-link-help-login"
+                className="w-full h-12 border-[oklch(0.78_0.18_85/0.5)] hover:bg-[oklch(0.78_0.18_85/0.1)] text-amber-200"
+              >
+                <Wand2 className="h-4 w-4 mr-2" />
+                Email me a magic link
+              </Button>
+              <p id="magic-link-help-login" className="text-xs text-muted-foreground -mt-1">
+                We'll email a one-tap sign-in link to{" "}
+                <span className="font-semibold text-foreground">
+                  {email || "the address above"}
+                </span>
+                . The link expires in ~1 hour and works only on this device.
+              </p>
               <div className="flex items-start justify-between gap-3 text-xs">
                 <label className="flex items-start gap-2 cursor-pointer text-muted-foreground hover:text-foreground">
                   <Checkbox
