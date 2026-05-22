@@ -20,6 +20,7 @@ import { OgPassBadge } from "@/components/OgPassBadge";
 import { PassStatusRow } from "@/components/PassStatusRow";
 import { StreamLinkCard } from "@/components/StreamLinkCard";
 import { TelegramLinkCard } from "@/components/TelegramLinkCard";
+import { ConnectionsStatusBanner } from "@/components/ConnectionsStatusBanner";
 import { AvatarManagerCard } from "@/components/AvatarManagerCard";
 import { SocialConnectionsCard } from "@/components/SocialConnectionsCard";
 import { CoinActivity } from "@/components/CoinActivity";
@@ -272,6 +273,9 @@ function ProfilePage() {
           </section>
         )}
 
+        {/* Connection status banner — Telegram + OG Streamz at a glance */}
+        <ConnectionsStatusBanner />
+
         <section className="grid sm:grid-cols-2 gap-5">
           <div className="rounded-2xl border border-[oklch(0.72_0.22_245/0.4)] bg-card p-6 sm:p-8 animate-pulse-gold">
             <div className="flex items-center gap-3 text-muted-foreground text-xs uppercase tracking-[0.3em]">
@@ -450,7 +454,7 @@ function ProfilePage() {
         )}
 
         {/* Connections — socials + verified accounts */}
-        <section className="mt-10 space-y-5">
+        <section id="connections" className="mt-10 space-y-5 scroll-mt-24">
           <header className="text-center">
             <p className="text-xs uppercase tracking-[0.4em] font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
               Connections
