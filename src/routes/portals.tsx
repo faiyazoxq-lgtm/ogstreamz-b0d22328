@@ -91,8 +91,8 @@ function OgBotEmpty({
       cta: `Spawn a ${meta.label} portal`,
     },
     mine: {
-      title: `You haven't spawned a fucking ${meta.label} portal.`,
-      body: `Stop scrolling like a tourist and make some shit. Two clicks in ${meta.hub} and you're on the board.`,
+      title: `You haven't spawned a ${meta.label} portal yet.`,
+      body: `Head over to ${meta.hub} and create your first portal — it only takes a moment.`,
       cta: `Spawn one in ${meta.hub}`,
     },
     any: {
