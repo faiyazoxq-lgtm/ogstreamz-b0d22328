@@ -42,7 +42,7 @@ export function NonVipHome({ displayName }: { displayName?: string | null }) {
       </header>
 
       {/* Connections — Telegram + OG Streamz link status & expiry */}
-      <ConnectionsStatusBanner />
+      <ConnectionsStatusBanner hideWhenComplete />
 
       {/* OG-Bot chat hero */}
       <div
