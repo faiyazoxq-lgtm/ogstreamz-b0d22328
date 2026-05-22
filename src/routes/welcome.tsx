@@ -11,6 +11,7 @@ import { VerifyStreamAccessCard } from "@/components/VerifyStreamAccessCard";
 import { StreamStatusWidget } from "@/components/StreamStatusWidget";
 import { getTelegramLinkStatus } from "@/lib/account-passes.functions";
 import { useSignupBonus } from "@/hooks/use-signup-bonus";
+import { ConnectionsStatusBanner } from "@/components/ConnectionsStatusBanner";
 
 // ----- Configurable Welcome layout -----
 // Order of the bottom CTA stack. Sections auto-hide when their `connected`
@@ -397,6 +398,12 @@ function WelcomePage() {
         </header>
 
         {!signedIn && <SignupBonusHero />}
+
+        {signedIn && (
+          <div className="mx-auto w-full max-w-3xl">
+            <ConnectionsStatusBanner />
+          </div>
+        )}
 
         {WELCOME_LAYOUT.map((id) => renderSection(id))}
 
