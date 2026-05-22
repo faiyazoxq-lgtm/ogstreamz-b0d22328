@@ -11,7 +11,7 @@ import { getTelegramLinkStatus } from "@/lib/account-passes.functions";
  * (m3u) link status + expiry. Linking persists on the account so users
  * never have to re-link.
  */
-export function ConnectionsStatusBanner() {
+export function ConnectionsStatusBanner({ hideWhenComplete = false }: { hideWhenComplete?: boolean } = {}) {
   const { profile } = useAuth();
   const fetchTg = useServerFn(getTelegramLinkStatus);
   const navigate = useNavigate();
@@ -51,6 +51,8 @@ export function ConnectionsStatusBanner() {
   };
 
   const bothConnected = tgLinked && streamLinked;
+
+  if (hideWhenComplete && bothConnected && !loadingTg) return null;
 
   return (
     <section className="mb-8 rounded-2xl border border-border bg-card/60 backdrop-blur p-4 sm:p-5">
