@@ -326,14 +326,10 @@ function SubSummary({
 function HistoryGroup({ title, empty, Icon, children }: { title: string; empty: string; Icon: any; children: React.ReactNode }) {
   const items = Array.isArray(children) ? children : [children];
   const hasContent = items.filter(Boolean).length > 0;
-  // Hide empty history groups entirely so freshly signed-in members aren't
-  // greeted by a wall of "you haven't done X yet" placeholders.
-  if (!hasContent) return null;
-  void empty;
   return (
     <div className="rounded-2xl border border-border bg-card p-5">
       <p className="text-sm font-bold text-metallic mb-3"><Icon className="inline h-4 w-4 mr-2 text-[color:var(--neon-blue-bright)]" />{title}</p>
-      <ul className="divide-y divide-border">{children}</ul>
+      {hasContent ? <ul className="divide-y divide-border">{children}</ul> : <p className="text-sm text-muted-foreground">{empty}</p>}
     </div>
   );
 }
