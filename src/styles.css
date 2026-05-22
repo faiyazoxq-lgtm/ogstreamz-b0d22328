@@ -1484,3 +1484,139 @@ html[data-mood="og"] {
     animation: silver-shimmer 3.2s ease-in-out infinite;
   }
 }
+
+/* ---------------------------------------------------------------
+   Connections banner CTA buttons — premium dark-luxury treatment.
+   Two accents (blue + gold) share the same metallic shell, neon
+   border, animated sheen and outward glow halo. Used by
+   ConnectionsStatusBanner for the per-pill "Connect" button and
+   the header "Set up" shortcut.
+   --------------------------------------------------------------- */
+@layer components {
+  .connections-cta {
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.95rem;
+    border-radius: 9999px;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    line-height: 1;
+    color: #fff;
+    background:
+      linear-gradient(180deg,
+        color-mix(in oklab, var(--cta-accent, #38bdf8) 22%, #0b0f1a) 0%,
+        #06080f 100%);
+    border: 1px solid color-mix(in oklab, var(--cta-accent, #38bdf8) 55%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--cta-accent, #38bdf8) 18%, transparent) inset,
+      0 1px 0 color-mix(in oklab, var(--cta-accent-bright, #7dd3fc) 35%, transparent) inset,
+      0 6px 18px -8px color-mix(in oklab, var(--cta-accent, #38bdf8) 70%, transparent),
+      0 0 22px -6px color-mix(in oklab, var(--cta-accent, #38bdf8) 55%, transparent);
+    cursor: pointer;
+    transition: transform 220ms ease, box-shadow 260ms ease, border-color 220ms ease, background 220ms ease;
+    overflow: hidden;
+  }
+  .connections-cta::before {
+    /* sheen sweep */
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(115deg,
+      transparent 30%,
+      color-mix(in oklab, var(--cta-accent-bright, #7dd3fc) 55%, transparent) 50%,
+      transparent 70%);
+    transform: translateX(-120%);
+    opacity: 0.0;
+    pointer-events: none;
+    z-index: 1;
+    mix-blend-mode: screen;
+    transition: opacity 200ms ease;
+  }
+  .connections-cta::after {
+    /* outer halo */
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: -1;
+    background: radial-gradient(60% 100% at 50% 50%,
+      color-mix(in oklab, var(--cta-accent, #38bdf8) 55%, transparent) 0%,
+      transparent 70%);
+    opacity: 0.55;
+    filter: blur(8px);
+    transition: opacity 260ms ease, filter 260ms ease;
+  }
+  .connections-cta > * { position: relative; z-index: 2; }
+  .connections-cta svg {
+    transition: transform 220ms ease;
+    filter: drop-shadow(0 0 6px color-mix(in oklab, var(--cta-accent-bright, #7dd3fc) 70%, transparent));
+  }
+  .connections-cta:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in oklab, var(--cta-accent-bright, #7dd3fc) 85%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--cta-accent, #38bdf8) 30%, transparent) inset,
+      0 1px 0 color-mix(in oklab, var(--cta-accent-bright, #7dd3fc) 55%, transparent) inset,
+      0 10px 26px -10px color-mix(in oklab, var(--cta-accent, #38bdf8) 80%, transparent),
+      0 0 38px -6px color-mix(in oklab, var(--cta-accent-bright, #7dd3fc) 70%, transparent);
+  }
+  .connections-cta:hover::after { opacity: 0.9; filter: blur(12px); }
+  .connections-cta:hover::before { animation: cta-sheen 900ms ease forwards; opacity: 1; }
+  .connections-cta:hover svg { transform: translateX(2px); }
+  .connections-cta:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px color-mix(in oklab, var(--cta-accent-bright, #7dd3fc) 90%, transparent),
+      0 0 0 4px color-mix(in oklab, var(--cta-accent, #38bdf8) 35%, transparent);
+  }
+  .connections-cta:active { transform: translateY(0); }
+
+  /* Blue (Telegram) accent */
+  .connections-cta--blue {
+    --cta-accent: var(--neon-blue-bright, #38bdf8);
+    --cta-accent-bright: #93e5ff;
+  }
+
+  /* Gold (OG Streamz) accent */
+  .connections-cta--gold {
+    --cta-accent: var(--og-gold, #d4a017);
+    --cta-accent-bright: var(--og-gold-bright, #f5cf5a);
+    color: #fff8e0;
+    background:
+      linear-gradient(180deg,
+        color-mix(in oklab, var(--og-gold-warm) 32%, #120b04) 0%,
+        #0a0703 100%);
+  }
+  .connections-cta--gold svg {
+    filter: drop-shadow(0 0 6px color-mix(in oklab, var(--og-gold-bright) 75%, transparent));
+  }
+
+  /* Compact variant for the header "Set up" link */
+  .connections-cta--mini {
+    padding: 0.32rem 0.7rem;
+    font-size: 9.5px;
+    letter-spacing: 0.2em;
+    gap: 0.35rem;
+    --cta-accent: var(--neon-blue-bright, #38bdf8);
+    --cta-accent-bright: #93e5ff;
+  }
+
+  @keyframes cta-sheen {
+    0%   { transform: translateX(-120%); }
+    100% { transform: translateX(120%); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .connections-cta,
+    .connections-cta::before,
+    .connections-cta::after,
+    .connections-cta svg { transition: none; animation: none; }
+  }
+}
