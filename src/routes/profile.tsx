@@ -20,6 +20,7 @@ import { OgPassBadge } from "@/components/OgPassBadge";
 import { PassStatusRow } from "@/components/PassStatusRow";
 import { StreamLinkCard } from "@/components/StreamLinkCard";
 import { TelegramLinkCard } from "@/components/TelegramLinkCard";
+import { ConnectionsStatusBanner } from "@/components/ConnectionsStatusBanner";
 import { AvatarManagerCard } from "@/components/AvatarManagerCard";
 import { SocialConnectionsCard } from "@/components/SocialConnectionsCard";
 import { CoinActivity } from "@/components/CoinActivity";
