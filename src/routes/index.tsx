@@ -29,6 +29,7 @@ import { usePortalCount } from "@/hooks/use-portal-count";
 import { TelegramConnectBanner } from "@/components/TelegramConnectBanner";
 import { WelcomeBroadcast } from "@/components/WelcomeBroadcast";
 import { NonVipHome } from "@/components/NonVipHome";
+import { ConnectionsStatusBanner } from "@/components/ConnectionsStatusBanner";
 import { BossOpsStrip } from "@/components/BossOpsStrip";
 import { BossTodoNotepad } from "@/components/BossTodoNotepad";
 import { LockupOverflowDebug } from "@/components/LockupOverflowDebug";
@@ -183,6 +184,12 @@ function Index() {
         </div>
       </section>
       <LockupOverflowDebug />
+
+      {user && (isVipMember || isBoss) && (
+        <section className="relative max-w-3xl mx-auto px-4 sm:px-8 -mt-2 pb-6">
+          <ConnectionsStatusBanner />
+        </section>
+      )}
 
       {/* Promo cards — only shown to VIP/Boss to keep the welcome page calm
           for everyone else. Non-VIP users get a single subtle "Become VIP"
