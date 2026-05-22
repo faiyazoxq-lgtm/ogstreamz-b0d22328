@@ -298,24 +298,58 @@ async function probeXtream(
   username: string,
   password: string,
 ): Promise<{ info: XtreamUserInfo } | { reason: StreamReasonCode; detail?: string }> {
-  const url = `${server}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 8000);
+  // Build candidate origins to try. Many Xtream panels listen on a
+  // non-standard port (8080/8000/2095/2082), so if the user/Boss configured
+  // just `http://host.tld` we try a handful of common ports before giving up.
+  const candidates: string[] = [];
+  const seen = new Set<string>();
+  const push = (s: string) => { if (s && !seen.has(s)) { seen.add(s); candidates.push(s); } };
+  push(server);
   try {
-    let res: Response;
-    try {
-      res = await fetch(url, { signal: ctrl.signal, headers: { Accept: "application/json" } });
-    } catch (e: any) {
-      if (e?.name === "AbortError") return { reason: "server_timeout" };
-      return { reason: "server_unreachable", detail: e?.message };
+    const u = new URL(server);
+    if (!u.port) {
+      for (const p of ["80", "8080", "8000", "2095", "2082", "25461"]) {
+        push(`${u.protocol}//${u.hostname}:${p}`);
+      }
     }
-    if (!res.ok) return { reason: "server_error", detail: `HTTP ${res.status}` };
-    const json = (await res.json().catch(() => ({}))) as { user_info?: XtreamUserInfo } | XtreamUserInfo;
-    const ui = ((json as any)?.user_info ?? json) as XtreamUserInfo;
-    return { info: ui ?? {} };
-  } finally {
-    clearTimeout(t);
+  } catch { /* ignore */ }
+
+  let lastReason: StreamReasonCode = "server_unreachable";
+  let lastDetail: string | undefined;
+
+  for (const base of candidates) {
+    const url = `${base}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 8000);
+    try {
+      let res: Response;
+      try {
+        res = await fetch(url, { signal: ctrl.signal, headers: { Accept: "application/json" } });
+      } catch (e: any) {
+        lastReason = e?.name === "AbortError" ? "server_timeout" : "server_unreachable";
+        lastDetail = e?.message;
+        continue;
+      }
+      if (!res.ok) {
+        lastReason = "server_error";
+        lastDetail = `HTTP ${res.status}`;
+        // 404/5xx on this port — try the next candidate.
+        continue;
+      }
+      const text = await res.text();
+      let json: any = {};
+      try { json = JSON.parse(text); } catch {
+        lastReason = "server_error";
+        lastDetail = "Invalid response";
+        continue;
+      }
+      const ui = ((json as any)?.user_info ?? json) as XtreamUserInfo;
+      return { info: ui ?? {} };
+    } finally {
+      clearTimeout(t);
+    }
   }
+  return { reason: lastReason, detail: lastDetail };
 }
 
 export const verifyAndLinkStream = createServerFn({ method: "POST" })
