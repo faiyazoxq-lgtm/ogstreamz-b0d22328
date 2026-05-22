@@ -1,0 +1,1 @@
+ALTER FUNCTION public.enqueue_stream_verification(uuid, text, text, text, text, timestamp with time zone, jsonb) SET search_path TO 'public', 'extensions';
