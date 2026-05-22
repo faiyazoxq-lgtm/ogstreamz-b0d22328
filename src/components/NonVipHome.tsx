@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Music2, Smile, Wrench, TrendingUp, Crown, ArrowRight } from "lucide-react";
 import { SiteGuideSwearChat } from "@/components/SiteGuideSwearChat";
+import { ConnectionsStatusBanner } from "@/components/ConnectionsStatusBanner";
 
 /**
  * Logged-in, non-VIP home.
@@ -39,6 +40,9 @@ export function NonVipHome({ displayName }: { displayName?: string | null }) {
           Member
         </span>
       </header>
+
+      {/* Connections — Telegram + OG Streamz link status & expiry */}
+      <ConnectionsStatusBanner />
 
       {/* OG-Bot chat hero */}
       <div
