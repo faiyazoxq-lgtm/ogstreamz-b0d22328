@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { Send, Tv, CheckCircle2, AlertCircle, Loader2, ArrowRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getTelegramLinkStatus } from "@/lib/account-passes.functions";
@@ -13,6 +14,8 @@ import { getTelegramLinkStatus } from "@/lib/account-passes.functions";
 export function ConnectionsStatusBanner() {
   const { profile } = useAuth();
   const fetchTg = useServerFn(getTelegramLinkStatus);
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [tg, setTg] = useState<{ chat_id: number | null; tg_username: string | null } | null>(null);
   const [loadingTg, setLoadingTg] = useState(true);
 
@@ -37,8 +40,14 @@ export function ConnectionsStatusBanner() {
     : null;
 
   const scrollToConnections = () => {
-    const el = document.getElementById("connections");
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (pathname === "/profile") {
+      const el = document.getElementById("connections");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+    }
+    navigate({ to: "/profile", hash: "connections" });
   };
 
   const bothConnected = tgLinked && streamLinked;
