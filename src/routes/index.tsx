@@ -121,6 +121,11 @@ function Index() {
         </div>
       )}
       {user && (isVipMember || isBoss) && (
+        <section className="relative max-w-3xl mx-auto px-4 sm:px-8 pt-4">
+          <ConnectionsStatusBanner hideWhenComplete />
+        </section>
+      )}
+      {user && (isVipMember || isBoss) && (
       <>
       {/* Ambient glow — only for VIP/Boss; non-VIP gets a calm dark canvas. */}
       {(isVipMember || isBoss) && (
@@ -184,12 +189,6 @@ function Index() {
         </div>
       </section>
       <LockupOverflowDebug />
-
-      {user && (isVipMember || isBoss) && (
-        <section className="relative max-w-3xl mx-auto px-4 sm:px-8 -mt-2 pb-6">
-          <ConnectionsStatusBanner />
-        </section>
-      )}
 
       {/* Promo cards — only shown to VIP/Boss to keep the welcome page calm
           for everyone else. Non-VIP users get a single subtle "Become VIP"
