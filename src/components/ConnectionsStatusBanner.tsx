@@ -106,7 +106,7 @@ export function ConnectionsStatusBanner({ hideWhenComplete = false }: { hideWhen
         ) : (
           <button
             onClick={tgLinked && !streamLinked ? openStreamDialog : scrollToConnections}
-            className="text-[10px] uppercase tracking-widest font-bold text-[var(--neon-blue-bright)] inline-flex items-center gap-1 hover:opacity-80"
+            className="connections-cta connections-cta--mini"
           >
             Set up <ArrowRight className="h-3 w-3" />
           </button>
@@ -120,6 +120,7 @@ export function ConnectionsStatusBanner({ hideWhenComplete = false }: { hideWhen
           label="Telegram bot"
           loading={loadingTg}
           linked={tgLinked}
+          accent="blue"
           primary={tgLinked
             ? (tg?.tg_username ? `@${tg.tg_username}` : "Connected")
             : "Not connected"}
@@ -136,6 +137,7 @@ export function ConnectionsStatusBanner({ hideWhenComplete = false }: { hideWhen
           loading={false}
           linked={streamLinked}
           warning={expired}
+          accent="gold"
           primary={streamLinked
             ? (expired ? "Expired" : (streamStatus === "Active" ? "Active" : streamStatus ?? "Linked"))
             : "Not linked"}
@@ -197,7 +199,7 @@ export function ConnectionsStatusBanner({ hideWhenComplete = false }: { hideWhen
 }
 
 function StatusPill({
-  icon, label, loading, linked, warning, primary, secondary, onConnect,
+  icon, label, loading, linked, warning, primary, secondary, onConnect, accent = "blue",
 }: {
   icon: React.ReactNode;
   label: string;
@@ -207,6 +209,7 @@ function StatusPill({
   primary: string;
   secondary: string;
   onConnect: () => void;
+  accent?: "blue" | "gold";
 }) {
   const ring = warning
     ? "border-amber-500/40"
@@ -236,9 +239,10 @@ function StatusPill({
         {!loading && !linked && (
           <button
             onClick={onConnect}
-            className="mt-2 text-[11px] uppercase tracking-widest font-bold text-[var(--neon-blue-bright)] inline-flex items-center gap-1 hover:opacity-80"
+            className={`connections-cta mt-2.5 ${accent === "gold" ? "connections-cta--gold" : "connections-cta--blue"}`}
           >
-            Connect <ArrowRight className="h-3 w-3" />
+            <span>Connect</span>
+            <ArrowRight className="h-3.5 w-3.5" />
           </button>
         )}
       </div>
