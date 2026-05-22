@@ -47,6 +47,20 @@ export type StreamConfigStatus =
  * into `app_settings` ('stream_server_url'). DB value wins; env is fallback.
  */
 async function readRawServerUrl(): Promise<string> {
+  const toOrigin = (raw: string): string => {
+    let v = raw.trim();
+    if (!v) return "";
+    if (!/^https?:\/\//i.test(v)) v = "http://" + v;
+    try {
+      const u = new URL(v);
+      // Accept full template URLs (e.g. .../get.php?username=...) and
+      // reduce them to just the origin. The Xtream player_api lives at
+      // `${origin}/player_api.php` regardless of the m3u download path.
+      return `${u.protocol}//${u.host}`;
+    } catch {
+      return v.replace(/\/+$/, "");
+    }
+  };
   try {
     const { data } = await supabaseAdmin
       .from("app_settings" as never)
@@ -54,11 +68,11 @@ async function readRawServerUrl(): Promise<string> {
       .eq("key", "stream_server_url")
       .maybeSingle();
     const dbVal = ((data as any)?.value ?? "").toString().trim();
-    if (dbVal) return dbVal;
+    if (dbVal) return toOrigin(dbVal);
   } catch {
     /* fall through to env */
   }
-  return (process.env.STREAM_SERVER_URL || "").trim();
+  return toOrigin(process.env.STREAM_SERVER_URL || "");
 }
 
 async function checkServerUrl(): Promise<StreamConfigStatus> {
