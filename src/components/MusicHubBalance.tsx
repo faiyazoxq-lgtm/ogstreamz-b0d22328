@@ -150,7 +150,7 @@ export function MusicHubBalance({ className }: { className?: string }) {
           </div>
         </div>
         <Button asChild size="sm" variant="outline" className="ml-auto border-pink-400/40 text-pink-200 hover:bg-pink-500/10">
-          <Link to="/admin" hash="roster">Manage credits</Link>
+          <Link to="/boss/members" hash="roster">Manage credits</Link>
         </Button>
       </div>
     );
