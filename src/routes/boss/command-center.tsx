@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { Component, type ErrorInfo, type ReactNode, useEffect, useState } from "react";
 import {
   Users,
   Boxes,
@@ -15,6 +15,10 @@ import {
   XCircle,
   Loader2,
   Terminal,
+  Trash2,
+  AlertTriangle,
+  ShieldAlert,
+  Globe,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { requireBoss } from "@/lib/route-guards";
@@ -23,11 +27,25 @@ import { useServerFn } from "@tanstack/react-start";
 import { listRoster, setHubAccess, setBanned, adjustCredits } from "@/lib/boss-users.functions";
 import { sendTelegramReply } from "@/lib/telegram-inbox.functions";
 import { listSecretsInventory } from "@/lib/secrets-inventory.functions";
+import {
+  listPortalsForBoss,
+  listCalculatorsForBoss,
+  bossSetPortalVip,
+  bossSetCalculatorPublished,
+  listDomainDenylist,
+  addDomainToDenylist,
+  removeDomainFromDenylist,
+  getMaintenanceMode,
+  setMaintenanceMode,
+  purgeOldSecurityEvents,
+} from "@/lib/boss-command-center.functions";
+import { bossSetPortalPublished } from "@/lib/boss-admin-misc.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -41,6 +59,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { MasterSwearToggle } from "@/components/MasterSwearToggle";
 import { BossStreamServerUrlCard } from "@/components/BossStreamServerUrlCard";
+import { BossSpendPanel } from "@/components/BossSpendPanel";
+import { BossTodoNotepad } from "@/components/BossTodoNotepad";
+import { BossChatPanel } from "@/components/BossChatPanel";
 
 export const Route = createFileRoute("/boss/command-center")({
   beforeLoad: requireBoss,
@@ -102,20 +123,63 @@ function CommandCenterPage() {
         </TabsList>
 
         <TabsContent value="users">
-          <UsersCrmTab />
+          <ModuleBoundary title="Users & CRM"><UsersCrmTab /></ModuleBoundary>
         </TabsContent>
         <TabsContent value="portals">
-          <ModulePlaceholder title="Portals & Content" />
+          <ModuleBoundary title="Portals & Content"><PortalsContentTab /></ModuleBoundary>
         </TabsContent>
         <TabsContent value="ai">
-          <AiEngineTab />
+          <ModuleBoundary title="AI Engine"><AiEngineTab /></ModuleBoundary>
         </TabsContent>
         <TabsContent value="ops">
-          <ModulePlaceholder title="Ops & Sync" />
+          <ModuleBoundary title="Ops & Sync"><OpsSyncTab /></ModuleBoundary>
         </TabsContent>
       </Tabs>
     </div>
   );
+}
+
+/* ────────────────────────────────────────────────────────────────
+ * Error Boundary (per-module)
+ * ──────────────────────────────────────────────────────────────── */
+class ModuleBoundary extends Component<
+  { title: string; children: ReactNode },
+  { error: Error | null }
+> {
+  state = { error: null as Error | null };
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error(`[CommandCenter:${this.props.title}]`, error, info);
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <Card className="bg-background border-rose-500/40 shadow-2xl">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-rose-400">
+              <AlertTriangle className="h-4 w-4" /> {this.props.title} crashed
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <pre className="text-xs text-rose-300/80 whitespace-pre-wrap bg-black/40 p-3 rounded">
+              {this.state.error.message}
+            </pre>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={() => this.setState({ error: null })}
+            >
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 /* ────────────────────────────────────────────────────────────────
@@ -711,5 +775,424 @@ function ModulePlaceholder({ title }: { title: string }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────
+ * Tab 2 — Portals & Content
+ * ──────────────────────────────────────────────────────────────── */
+function PortalsContentTab() {
+  const listPortalsFn = useServerFn(listPortalsForBoss);
+  const listCalcsFn = useServerFn(listCalculatorsForBoss);
+  const qc = useQueryClient();
+
+  const portalsQ = useQuery({
+    queryKey: ["cc-portals"],
+    queryFn: () => listPortalsFn(),
+  });
+  const calcsQ = useQuery({
+    queryKey: ["cc-calculators"],
+    queryFn: () => listCalcsFn(),
+  });
+
+  const setPublishedFn = useServerFn(bossSetPortalPublished);
+  const setVipFn = useServerFn(bossSetPortalVip);
+  const setCalcPubFn = useServerFn(bossSetCalculatorPublished);
+
+  const publishedMut = useMutation({
+    mutationFn: (v: { id: string; published: boolean }) =>
+      setPublishedFn({ data: { portal_id: v.id, published: v.published } }),
+    onSuccess: (_d, v) => {
+      toast.success(`Portal ${v.published ? "published" : "unpublished"}`);
+      qc.invalidateQueries({ queryKey: ["cc-portals"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const vipMut = useMutation({
+    mutationFn: (v: { id: string; vip: boolean }) =>
+      setVipFn({ data: { portal_id: v.id, vip: v.vip } }),
+    onSuccess: (_d, v) => {
+      toast.success(`VIP gate ${v.vip ? "ON" : "OFF"}`);
+      qc.invalidateQueries({ queryKey: ["cc-portals"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const calcMut = useMutation({
+    mutationFn: (v: { id: string; published: boolean }) =>
+      setCalcPubFn({ data: { id: v.id, published: v.published } }),
+    onSuccess: (_d, v) => {
+      toast.success(`Calculator ${v.published ? "published" : "unpublished"}`);
+      qc.invalidateQueries({ queryKey: ["cc-calculators"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-6">
+      <Card className="bg-background border-border shadow-2xl">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Boxes className="h-4 w-4 text-gold" /> Portal Manager
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            {portalsQ.data?.rows.length ?? 0} portals · toggle publish &amp; VIP gate inline.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {portalsQ.isLoading && (
+            <div className="text-sm text-muted-foreground py-4">
+              <Loader2 className="inline h-4 w-4 animate-spin mr-2" /> Loading portals…
+            </div>
+          )}
+          {portalsQ.error && (
+            <div className="text-sm text-rose-400 py-2">
+              {(portalsQ.error as Error).message}
+            </div>
+          )}
+          <div className="rounded-lg border border-border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Portal</TableHead>
+                  <TableHead className="w-[110px]">Kind</TableHead>
+                  <TableHead className="w-[90px] text-right">Views</TableHead>
+                  <TableHead className="w-[130px] text-center">Published</TableHead>
+                  <TableHead className="w-[130px] text-center">VIP Gate</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(portalsQ.data?.rows ?? []).map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell>
+                      <div className="font-medium text-sm">{p.name}</div>
+                      <div className="text-[10px] text-muted-foreground font-mono">/{p.slug}</div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-[10px] uppercase">
+                        {p.kind ?? "—"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-sm">{p.view_count}</TableCell>
+                    <TableCell className="text-center">
+                      <Switch
+                        checked={p.published}
+                        disabled={publishedMut.isPending}
+                        onCheckedChange={(v) => publishedMut.mutate({ id: p.id, published: v })}
+                      />
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Switch
+                        checked={p.vip}
+                        disabled={vipMut.isPending}
+                        onCheckedChange={(v) => vipMut.mutate({ id: p.id, vip: v })}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {!portalsQ.isLoading && (portalsQ.data?.rows.length ?? 0) === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
+                      No portals yet.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-background border-border shadow-2xl">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Boxes className="h-4 w-4 text-gold" /> Calculators
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-lg border border-border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Calculator</TableHead>
+                  <TableHead className="w-[90px]">VIP</TableHead>
+                  <TableHead className="w-[130px] text-center">Published</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(calcsQ.data?.rows ?? []).map((c) => (
+                  <TableRow key={c.id}>
+                    <TableCell>
+                      <div className="font-medium text-sm">{c.name}</div>
+                      <div className="text-[10px] text-muted-foreground font-mono">/{c.slug}</div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={c.vip ? "default" : "outline"} className="text-[10px]">
+                        {c.vip ? "VIP" : "FREE"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Switch
+                        checked={c.published}
+                        disabled={calcMut.isPending}
+                        onCheckedChange={(v) => calcMut.mutate({ id: c.id, published: v })}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {!calcsQ.isLoading && (calcsQ.data?.rows.length ?? 0) === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-muted-foreground py-6">
+                      No calculators.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <DomainDenylistManager />
+    </div>
+  );
+}
+
+function DomainDenylistManager() {
+  const listFn = useServerFn(listDomainDenylist);
+  const addFn = useServerFn(addDomainToDenylist);
+  const removeFn = useServerFn(removeDomainFromDenylist);
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["cc-denylist"],
+    queryFn: () => listFn(),
+  });
+
+  const [domain, setDomain] = useState("");
+  const [note, setNote] = useState("");
+
+  const addMut = useMutation({
+    mutationFn: () => addFn({ data: { domain: domain.trim(), note: note.trim() || undefined } }),
+    onSuccess: () => {
+      toast.success(`Added ${domain.trim()} to denylist`);
+      setDomain("");
+      setNote("");
+      qc.invalidateQueries({ queryKey: ["cc-denylist"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const removeMut = useMutation({
+    mutationFn: (id: string) => removeFn({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Removed from denylist");
+      qc.invalidateQueries({ queryKey: ["cc-denylist"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Card className="bg-background border-border shadow-2xl">
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Globe className="h-4 w-4 text-gold" /> Domain Denylist
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Blocked domains across portals, URL checks, and outbound link sanitization.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex gap-2 flex-wrap">
+          <Input
+            value={domain}
+            onChange={(e) => setDomain(e.target.value)}
+            placeholder="example.com"
+            className="flex-1 min-w-[200px]"
+          />
+          <Input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Reason (optional)"
+            className="flex-1 min-w-[200px]"
+          />
+          <Button
+            onClick={() => addMut.mutate()}
+            disabled={addMut.isPending || !domain.trim()}
+            className="bg-gold text-black hover:bg-gold/90 font-semibold"
+          >
+            <Plus className="h-4 w-4 mr-1" /> Block
+          </Button>
+        </div>
+        <div className="rounded-lg border border-border overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Domain</TableHead>
+                <TableHead>Note</TableHead>
+                <TableHead className="w-[80px] text-right">—</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading && (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center text-muted-foreground py-4">
+                    <Loader2 className="inline h-4 w-4 animate-spin mr-2" /> Loading…
+                  </TableCell>
+                </TableRow>
+              )}
+              {!isLoading && (data?.rows.length ?? 0) === 0 && (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center text-muted-foreground py-4">
+                    No domains blocked.
+                  </TableCell>
+                </TableRow>
+              )}
+              {(data?.rows ?? []).map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell className="font-mono text-xs">{r.domain}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{r.note || "—"}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => removeMut.mutate(r.id)}
+                      disabled={removeMut.isPending}
+                      className="h-7 px-2"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────
+ * Tab 4 — Ops & Sync
+ * ──────────────────────────────────────────────────────────────── */
+function OpsSyncTab() {
+  return (
+    <div className="space-y-6">
+      <ModuleBoundary title="Spend">
+        <BossSpendPanel />
+      </ModuleBoundary>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <ModuleBoundary title="Todo">
+          <BossTodoNotepad />
+        </ModuleBoundary>
+        <ModuleBoundary title="Swearing Agent">
+          <BossChatPanel />
+        </ModuleBoundary>
+      </div>
+
+      <ModuleBoundary title="System Emergency">
+        <SystemEmergency />
+      </ModuleBoundary>
+    </div>
+  );
+}
+
+function SystemEmergency() {
+  const getMaintFn = useServerFn(getMaintenanceMode);
+  const setMaintFn = useServerFn(setMaintenanceMode);
+  const purgeFn = useServerFn(purgeOldSecurityEvents);
+  const qc = useQueryClient();
+
+  const maintQ = useQuery({
+    queryKey: ["cc-maintenance"],
+    queryFn: () => getMaintFn(),
+  });
+
+  const maintMut = useMutation({
+    mutationFn: (enabled: boolean) => setMaintFn({ data: { enabled } }),
+    onSuccess: (_d, enabled) => {
+      toast.success(`Maintenance mode ${enabled ? "ENABLED" : "disabled"}`);
+      qc.invalidateQueries({ queryKey: ["cc-maintenance"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const purgeMut = useMutation({
+    mutationFn: () => purgeFn(),
+    onSuccess: (res) => {
+      toast.success(`Purged ${res.deleted} security events older than 30 days`);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const enabled = !!maintQ.data?.enabled;
+
+  return (
+    <Card className="bg-background border-rose-500/30 shadow-2xl">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-rose-300">
+          <ShieldAlert className="h-4 w-4" /> System Emergency
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">
+          God-mode switches. Affects every signed-in user immediately.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div
+          className={`flex items-center justify-between gap-4 rounded-lg border p-4 ${
+            enabled
+              ? "border-rose-500/40 bg-rose-500/10"
+              : "border-border bg-background"
+          }`}
+        >
+          <div>
+            <div className="font-semibold text-base flex items-center gap-2">
+              <AlertTriangle className={`h-4 w-4 ${enabled ? "text-rose-400" : "text-muted-foreground"}`} />
+              Maintenance Mode
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Sets <code className="text-gold">app_settings.app_maintenance</code>.
+              {maintQ.data?.updated_at && (
+                <> Last changed {new Date(maintQ.data.updated_at).toLocaleString()}.</>
+              )}
+            </p>
+          </div>
+          <Switch
+            checked={enabled}
+            disabled={maintMut.isPending || maintQ.isLoading}
+            onCheckedChange={(v) => maintMut.mutate(v)}
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-4 rounded-lg border border-border p-4">
+          <div>
+            <div className="font-semibold text-base flex items-center gap-2">
+              <Trash2 className="h-4 w-4 text-gold" /> Purge Old Logs
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Deletes <code>security_events</code> rows older than 30 days.
+            </p>
+          </div>
+          <Button
+            onClick={() => {
+              if (confirm("Permanently delete security_events older than 30 days?")) {
+                purgeMut.mutate();
+              }
+            }}
+            disabled={purgeMut.isPending}
+            className="bg-gold text-black hover:bg-gold/90 font-semibold"
+          >
+            {purgeMut.isPending ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4 mr-1" />
+            )}
+            Purge
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
