@@ -3,17 +3,14 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Crown, Users, Coins, Ticket, KeyRound, Handshake, Inbox, FileText, ArrowUpRight,
   Share2, ShieldCheck, BarChart3, Skull, Activity, RefreshCw, AlertTriangle, Tv,
-  Tags, Music, CheckCircle2, Radio, Zap, Bell, CreditCard, Power, Snowflake, Undo2,
-  Rocket, Boxes, Grid3x3, Settings as SettingsIcon, Sparkles, Loader2, ShieldAlert, Gauge, Send, ShieldOff, ScanSearch, ListChecks, Brain,
+  Tags, Music, CheckCircle2, Radio, Zap, Power, Bell,
+  Rocket, Boxes, Grid3x3, Settings as SettingsIcon, Sparkles, Gauge, Send,
+  ShieldOff, ScanSearch, ListChecks, Brain,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { usePaymentMode, setPaymentMode } from "@/hooks/use-payment-mode";
 import { CollapsiblePanel } from "@/components/boss/CollapsiblePanel";
-import { PowerToggle, type PowerToggleConfirm } from "@/components/boss/PowerToggle";
-import { QuickJump } from "@/components/boss/QuickJump";
 import { TelegramInboxPanel } from "@/components/boss/TelegramInboxPanel";
 import { TelegramConnectionPanel } from "@/components/boss/TelegramConnectionPanel";
-import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/boss/overview")({
@@ -123,67 +120,8 @@ function BossOverview() {
     activeProducts: 0,
     newToday: 0,
   });
-  const [swearDefault, setSwearDefault] = useState<boolean | null>(null);
-  const [togglingSwear, setTogglingSwear] = useState(false);
-  const paymentMode = usePaymentMode();
-  const [togglingPayments, setTogglingPayments] = useState(false);
-  const [coinFrozen, setCoinFrozen] = useState<boolean | null>(null);
-  const [togglingCoin, setTogglingCoin] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Reverse-purchases tool (merged from /boss/power)
-  type Reversal = {
-    id: string; source_table: string; source_id: string; user_id: string;
-    credits_reversed: number; amount_cents: number; currency: string;
-    reason: string | null; created_at: string;
-  };
-  type ReverseResult = {
-    dry_run: boolean; window_minutes: number; cutoff: string;
-    credit_purchases_reversed: number; track_purchases_reversed: number;
-    credits_refunded: number; amount_cents_affected: number;
-  };
-  const WINDOW_PRESETS = [5, 15, 60, 240, 1440];
-  const [windowMinutes, setWindowMinutes] = useState<string>("60");
-  const [confirmText, setConfirmText] = useState("");
-  const [running, setRunning] = useState(false);
-  const [lastResult, setLastResult] = useState<ReverseResult | null>(null);
-  const [history, setHistory] = useState<Reversal[]>([]);
-  const minutes = useMemo(() => Math.max(0, Math.trunc(Number(windowMinutes) || 0)), [windowMinutes]);
-
-  async function refreshReverseHistory() {
-    const { data } = await supabase
-      .from("purchase_reversals")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(15);
-    setHistory((data ?? []) as Reversal[]);
-  }
-
-  async function runReverse(dryRun: boolean) {
-    if (!minutes) { toast.error("Enter a window in minutes"); return; }
-    if (!dryRun && confirmText.trim().toUpperCase() !== "REVERSE") {
-      toast.error('Type REVERSE to confirm');
-      return;
-    }
-    setRunning(true);
-    const { data, error } = await supabase.rpc("reverse_recent_purchases", {
-      window_minutes: minutes,
-      dry_run: dryRun,
-    });
-    setRunning(false);
-    if (error) { toast.error(error.message); return; }
-    const result = data as unknown as ReverseResult;
-    setLastResult(result);
-    if (dryRun) {
-      toast.success(`Preview: would reverse ${result.credit_purchases_reversed + result.track_purchases_reversed} purchase(s)`);
-    } else {
-      toast.success(`Reversed ${result.credit_purchases_reversed + result.track_purchases_reversed} purchase(s)`);
-      setConfirmText("");
-      await refreshReverseHistory();
-    }
-  }
-
-  useEffect(() => { void refreshReverseHistory(); }, []);
   // user is referenced via useAuth() so handlers can attribute updates if extended
   void user;
 
@@ -229,13 +167,8 @@ function BossOverview() {
         activeProducts: Math.max(0, prods),
         newToday: Math.max(0, newToday),
       });
-      setSwearDefault(civ?.data?.swear_default ?? null);
-      const { data: coinRow } = await supabase
-        .from("app_settings")
-        .select("value")
-        .eq("key", "power.coin_frozen")
-        .maybeSingle();
-      setCoinFrozen(coinRow?.value === true);
+      // swear_default / coin_frozen are owned by /boss/power; no need to mirror here.
+      void civ;
       setLastSync(new Date());
     } catch (e: any) {
       setError(e?.message ?? "Failed to load command-center metrics");
@@ -251,88 +184,6 @@ function BossOverview() {
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  async function toggleSwear() {
-    if (swearDefault === null) return;
-    setTogglingSwear(true);
-    const next = !swearDefault;
-    const { error } = await supabase
-      .from("civility_settings")
-      .update({ swear_default: next, updated_at: new Date().toISOString() })
-      .eq("id", 1);
-    if (!error) setSwearDefault(next);
-    setTogglingSwear(false);
-  }
-
-  async function toggleCoinFreeze() {
-    if (coinFrozen === null) return;
-    setTogglingCoin(true);
-    const next = !coinFrozen;
-    const { error } = await supabase
-      .from("app_settings")
-      .upsert({ key: "power.coin_frozen", value: next }, { onConflict: "key" });
-    if (!error) setCoinFrozen(next);
-    setTogglingCoin(false);
-  }
-
-  async function applyPaymentMode(next: "live" | "test") {
-    setTogglingPayments(true);
-    try {
-      await setPaymentMode(next);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to switch payment mode");
-    } finally {
-      setTogglingPayments(false);
-    }
-  }
-
-  function togglePaymentMode() {
-    void applyPaymentMode(paymentMode === "live" ? "test" : "live");
-  }
-
-  const paymentsConfirm: PowerToggleConfirm = {
-    when: "always",
-    tone: paymentMode === "live" ? "warning" : "danger",
-    title: paymentMode === "live"
-      ? "Switch payments to TEST mode?"
-      : "Switch payments to LIVE mode?",
-    description: paymentMode === "live" ? (
-      <>
-        <p>Every checkout will move to <strong>sandbox cards only</strong>.</p>
-        <p className="text-amber-300">Real customers will see a "Test Mode" banner and cannot complete real purchases.</p>
-      </>
-    ) : (
-      <>
-        <p>Every checkout site-wide will charge <strong>real money</strong> to real cards immediately.</p>
-        <p className="text-orange-300">The "Test Mode" banner will disappear for all members the moment you confirm.</p>
-      </>
-    ),
-    confirmLabel: paymentMode === "live" ? "Yes, go TEST" : "Yes, go LIVE",
-    cancelLabel: paymentMode === "live" ? "Stay in live mode" : "Stay in test mode",
-    typeToConfirm: paymentMode === "live" ? undefined : "GO LIVE",
-  };
-  const coinConfirm: PowerToggleConfirm = {
-    when: "deactivate",
-    tone: "danger",
-    title: "Freeze all coin flows?",
-    description: (
-      <>
-        <p>Every member will be <strong>blocked from earning or spending credits</strong> until you thaw.</p>
-        <p className="text-rose-300">Active battles, tips and store purchases will fail mid-flight.</p>
-      </>
-    ),
-    confirmLabel: "Freeze coins",
-    cancelLabel: "Keep flowing",
-    typeToConfirm: "FREEZE",
-  };
-  const swearConfirm: PowerToggleConfirm = {
-    when: "activate",
-    tone: "warning",
-    title: "Default new sessions to Guttermouth?",
-    description: <p>New visitors will land in foul-mouth chat by default. Existing sessions are unaffected.</p>,
-    confirmLabel: "Unleash",
-    cancelLabel: "Stay civil",
-  };
 
   const metrics: Metric[] = [
     { key: "profiles", label: "Members", value: loading ? null : stats.profiles, Icon: Users, tint: "#3ad6ff", to: "/boss/users", format: fmtNum },
@@ -445,199 +296,27 @@ function BossOverview() {
       </CollapsiblePanel>
 
       {/* Power Bar — large tactile toggles */}
-      <CollapsiblePanel
-        id="power"
-        title="Power Bar"
-        Icon={Power}
-        tint="#ffd166"
-        subtitle="One-tap master switches for payments, coins & chat tone"
+      {/* Power Bar / Reverse purchases now owned by /boss/power */}
+      <Link
+        to="/boss/power"
+        className="glass-obsidian-cmd rounded-2xl p-5 flex items-center gap-4 hover:-translate-y-0.5 transition"
+        style={{ borderColor: "#ffd16655" }}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <PowerToggle
-            title="Payments"
-            Icon={CreditCard}
-            active={paymentMode === "live"}
-            activeLabel="LIVE"
-            inactiveLabel="TEST"
-            activeTint="#00e08a"
-            inactiveTint="#ff9940"
-            activeHint="Charging real cards site-wide"
-            inactiveHint="Sandbox only · safe to toggle on"
-            onToggle={togglePaymentMode}
-            saving={togglingPayments}
-            ready
-            confirm={paymentsConfirm}
-          />
-          <PowerToggle
-            title="Coin transactions"
-            Icon={Coins}
-            active={coinFrozen === false}
-            activeLabel="FLOWING"
-            inactiveLabel="FROZEN"
-            activeTint="#00e08a"
-            inactiveTint="#ff5577"
-            activeHint="Earn / spend live across the site"
-            inactiveHint="All earn / spend halted — tap to thaw"
-            onToggle={toggleCoinFreeze}
-            saving={togglingCoin}
-            ready={coinFrozen !== null}
-            confirm={coinConfirm}
-          />
-          <PowerToggle
-            title="Guttermouth"
-            Icon={Skull}
-            active={swearDefault === true}
-            activeLabel="ON"
-            inactiveLabel="OFF"
-            activeTint="#ff2e55"
-            inactiveTint="#3ad6ff"
-            activeHint="Foul-mouth chat is default for new sessions"
-            inactiveHint="Civil mode default · tap to unleash"
-            onToggle={toggleSwear}
-            saving={togglingSwear}
-            ready={swearDefault !== null}
-            confirm={swearConfirm}
-          />
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
-          <QuickJump to="/boss/overview" hash="reverse" Icon={Undo2} label="Reverse" tint="#ff5577" />
-          <QuickJump to="/boss/publish-check" Icon={Rocket} label="Publish" tint="#ffd166" />
-          <QuickJump to="/boss/analytics" Icon={BarChart3} label="Analytics" tint="#00e08a" />
-          <QuickJump to="/boss/api-keys" Icon={KeyRound} label="Agent Keys" tint="#a78bfa" />
-        </div>
-      </CollapsiblePanel>
-
-      {/* Reverse purchases (merged from /boss/power) */}
-      <CollapsiblePanel
-        id="reverse"
-        title="Reverse Recent Purchases"
-        Icon={Undo2}
-        tint="#ff5577"
-        defaultOpen={false}
-        subtitle="Refund credit purchases & log track reversals — always dry-run first"
-        badge={
-          <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/15 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-[0.2em] text-rose-200 ring-1 ring-rose-400/40">
-            destructive
-          </span>
-        }
-      >
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/55 font-bold mr-1">Window</span>
-            {WINDOW_PRESETS.map((m) => {
-              const active = minutes === m;
-              return (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setWindowMinutes(String(m))}
-                  className={[
-                    "inline-flex items-center rounded-full px-3 py-1 text-xs font-bold tabular-nums transition active:scale-[0.96]",
-                    active
-                      ? "bg-rose-500/25 text-rose-200 ring-1 ring-rose-400/60 shadow-[0_0_18px_-6px_rgba(244,63,94,0.7)]"
-                      : "bg-white/5 text-white/55 hover:text-white/90 ring-1 ring-white/10",
-                  ].join(" ")}
-                >
-                  {m < 60 ? `${m}m` : m < 1440 ? `${m / 60}h` : `${m / 1440}d`}
-                </button>
-              );
-            })}
-            <input
-              type="number"
-              min={1}
-              max={10080}
-              value={windowMinutes}
-              onChange={(e) => setWindowMinutes(e.target.value)}
-              className="w-20 rounded-md border border-white/10 bg-black/30 px-2 py-1 text-xs text-white/90 tabular-nums"
-              aria-label="Custom window in minutes"
-            />
-          </div>
-
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="flex flex-col gap-1 text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/55 font-bold flex-1 min-w-[180px]">
-              Confirm — type <span className="text-rose-300">REVERSE</span>
-              <input
-                type="text"
-                value={confirmText}
-                onChange={(e) => setConfirmText(e.target.value)}
-                placeholder="REVERSE"
-                className="rounded-md border border-white/10 bg-black/30 px-3 py-2 text-sm text-white/95 font-mono tracking-widest"
-              />
-            </label>
-            <div className="flex gap-2 flex-wrap">
-              <button
-                type="button"
-                onClick={() => runReverse(true)}
-                disabled={running || !minutes}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-bold text-white/90 hover:bg-white/10 disabled:opacity-50 active:scale-[0.97] transition"
-              >
-                {running ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldAlert className="h-3.5 w-3.5" />} Dry run
-              </button>
-              <button
-                type="button"
-                onClick={() => runReverse(false)}
-                disabled={running || !minutes || confirmText.trim().toUpperCase() !== "REVERSE"}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-rose-400/60 bg-rose-500/20 px-4 py-2.5 text-xs font-extrabold text-rose-100 hover:bg-rose-500/30 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition shadow-[0_0_18px_-8px_rgba(244,63,94,0.8)]"
-              >
-                {running ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Undo2 className="h-3.5 w-3.5" />} Reverse now
-              </button>
-            </div>
-          </div>
-
-          {lastResult && (
-            <div className="rounded-xl border border-white/10 bg-black/30 p-3 space-y-2">
-              <div className="flex items-center gap-2 text-white/90 text-xs">
-                <AlertTriangle className="h-3.5 w-3.5" style={{ color: "#ffd166" }} />
-                <span className="font-extrabold uppercase tracking-[0.2em]">
-                  {lastResult.dry_run ? "Dry-run preview" : "Reversal complete"}
-                </span>
-                <span className="text-white/45">· cutoff {new Date(lastResult.cutoff).toLocaleString()}</span>
-              </div>
-              <ul className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                <ReverseStat label="Credit purchases" value={lastResult.credit_purchases_reversed} />
-                <ReverseStat label="Track purchases" value={lastResult.track_purchases_reversed} />
-                <ReverseStat label="Coins refunded" value={lastResult.credits_refunded} />
-                <ReverseStat label="Amount (¢)" value={lastResult.amount_cents_affected} />
-              </ul>
-            </div>
-          )}
-
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/55 font-bold">Recent reversals</h3>
-              <span className="text-[10px] terminal-mono text-white/35 tabular-nums">{history.length} shown</span>
-            </div>
-            {history.length === 0 ? (
-              <p className="text-xs text-white/40 py-3 text-center">No reversals yet.</p>
-            ) : (
-              <div className="overflow-x-auto -mx-1">
-                <table className="w-full text-xs">
-                  <thead className="text-[10px] uppercase tracking-[0.2em] text-white/45">
-                    <tr>
-                      <th className="text-left py-2 px-1">When</th>
-                      <th className="text-left py-2 px-1">Source</th>
-                      <th className="text-left py-2 px-1 hidden sm:table-cell">User</th>
-                      <th className="text-right py-2 px-1">Coins</th>
-                      <th className="text-right py-2 px-1">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {history.map((r) => (
-                      <tr key={r.id} className="hover:bg-white/5 transition-colors">
-                        <td className="py-2 px-1 text-white/55">{new Date(r.created_at).toLocaleString()}</td>
-                        <td className="py-2 px-1 font-mono text-[11px] text-white/85">{r.source_table}</td>
-                        <td className="py-2 px-1 font-mono text-[11px] text-white/55 hidden sm:table-cell" title={r.user_id}>{r.user_id.slice(0, 8)}…</td>
-                        <td className="py-2 px-1 text-right tabular-nums text-gold font-bold">-{r.credits_reversed}</td>
-                        <td className="py-2 px-1 text-right tabular-nums text-white/85">{(r.amount_cents / 100).toFixed(2)} {r.currency.toUpperCase()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+        <span
+          className="h-12 w-12 rounded-xl flex items-center justify-center"
+          style={{ background: "#ffd16620", border: "1px solid #ffd16655" }}
+        >
+          <Power className="h-5 w-5" style={{ color: "#ffd166" }} />
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="syndicate-header text-sm text-white/95">Power Bar</div>
+          <div className="text-[11px] text-white/55">
+            Payments, coin freeze, swear default & reverse purchases — all live on{" "}
+            <span className="text-gold">/boss/power</span>.
           </div>
         </div>
-      </CollapsiblePanel>
+        <ArrowUpRight className="h-4 w-4 text-white/40" />
+      </Link>
 
       {/* Action queue */}
       <CollapsiblePanel
@@ -772,11 +451,3 @@ function BossOverview() {
   );
 }
 
-function ReverseStat({ label, value }: { label: string; value: number }) {
-  return (
-    <li className="rounded-md border border-white/10 bg-white/5 px-2 py-1.5">
-      <div className="text-[10px] uppercase tracking-[0.2em] terminal-mono text-white/45 font-bold">{label}</div>
-      <div className="text-sm font-extrabold text-white/95 tabular-nums mt-0.5">{value}</div>
-    </li>
-  );
-}

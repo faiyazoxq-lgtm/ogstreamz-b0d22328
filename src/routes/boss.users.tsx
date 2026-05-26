@@ -23,7 +23,7 @@ const RANK_TINT: Record<string, string> = {
   prospect: "#94a3b8", enforcer: "#3ad6ff", stream_user: "#a78bfa", vip: "#ffd166", boss: "#ff2e55",
 };
 
-function BossUsers() {
+export function BossUsers() {
   const list = useServerFn(listRoster);
   const setRankRpc = useServerFn(setRankFn);
   const setStatusRpc = useServerFn(setStatusFn);

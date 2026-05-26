@@ -23,7 +23,7 @@ export const Route = createFileRoute("/boss/og-passes")({
   component: BossOgPasses,
 });
 
-function BossOgPasses() {
+export function BossOgPasses() {
   const list = useServerFn(listRoster);
   const reg: HandlerRegistry = {
     setRank: (uid, tier) => useServerFnInline(setOgTier)({ data: { userId: uid, tier: tier as any } }),

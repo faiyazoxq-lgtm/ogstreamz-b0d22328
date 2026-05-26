@@ -82,6 +82,15 @@ function AdminPage() {
     if (!user || !isAdmin) navigate({ to: "/" });
   }, [user, isAdmin, loading, navigate]);
 
+  // Legacy admin hash redirect → /boss/members tabs
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const h = window.location.hash.replace(/^#/, "");
+    if (["topups", "roster", "passes", "codes", "resellers", "share", "notes"].includes(h)) {
+      navigate({ to: "/boss/members", hash: h, replace: true });
+    }
+  }, [navigate]);
+
   useEffect(() => {
     if (!isAdmin) return;
     supabase
