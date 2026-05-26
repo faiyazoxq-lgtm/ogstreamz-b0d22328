@@ -79,6 +79,7 @@ import { Route as BossPortalCostsRouteImport } from './routes/boss.portal-costs'
 import { Route as BossOverviewRouteImport } from './routes/boss.overview'
 import { Route as BossOgPassesRouteImport } from './routes/boss.og-passes'
 import { Route as BossOgBotMemoryRouteImport } from './routes/boss.og-bot-memory'
+import { Route as BossMembersRouteImport } from './routes/boss.members'
 import { Route as BossLexiconRouteImport } from './routes/boss.lexicon'
 import { Route as BossHubsRouteImport } from './routes/boss.hubs'
 import { Route as BossFunctionIdeasRouteImport } from './routes/boss.function-ideas'
@@ -463,6 +464,11 @@ const BossOgBotMemoryRoute = BossOgBotMemoryRouteImport.update({
   path: '/og-bot-memory',
   getParentRoute: () => BossRoute,
 } as any)
+const BossMembersRoute = BossMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossLexiconRoute = BossLexiconRouteImport.update({
   id: '/lexicon',
   path: '/lexicon',
@@ -694,6 +700,7 @@ export interface FileRoutesByFullPath {
   '/boss/function-ideas': typeof BossFunctionIdeasRoute
   '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
+  '/boss/members': typeof BossMembersRoute
   '/boss/og-bot-memory': typeof BossOgBotMemoryRoute
   '/boss/og-passes': typeof BossOgPassesRoute
   '/boss/overview': typeof BossOverviewRoute
@@ -798,6 +805,7 @@ export interface FileRoutesByTo {
   '/boss/function-ideas': typeof BossFunctionIdeasRoute
   '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
+  '/boss/members': typeof BossMembersRoute
   '/boss/og-bot-memory': typeof BossOgBotMemoryRoute
   '/boss/og-passes': typeof BossOgPassesRoute
   '/boss/overview': typeof BossOverviewRoute
@@ -904,6 +912,7 @@ export interface FileRoutesById {
   '/boss/function-ideas': typeof BossFunctionIdeasRoute
   '/boss/hubs': typeof BossHubsRouteWithChildren
   '/boss/lexicon': typeof BossLexiconRoute
+  '/boss/members': typeof BossMembersRoute
   '/boss/og-bot-memory': typeof BossOgBotMemoryRoute
   '/boss/og-passes': typeof BossOgPassesRoute
   '/boss/overview': typeof BossOverviewRoute
@@ -1011,6 +1020,7 @@ export interface FileRouteTypes {
     | '/boss/function-ideas'
     | '/boss/hubs'
     | '/boss/lexicon'
+    | '/boss/members'
     | '/boss/og-bot-memory'
     | '/boss/og-passes'
     | '/boss/overview'
@@ -1115,6 +1125,7 @@ export interface FileRouteTypes {
     | '/boss/function-ideas'
     | '/boss/hubs'
     | '/boss/lexicon'
+    | '/boss/members'
     | '/boss/og-bot-memory'
     | '/boss/og-passes'
     | '/boss/overview'
@@ -1220,6 +1231,7 @@ export interface FileRouteTypes {
     | '/boss/function-ideas'
     | '/boss/hubs'
     | '/boss/lexicon'
+    | '/boss/members'
     | '/boss/og-bot-memory'
     | '/boss/og-passes'
     | '/boss/overview'
@@ -1818,6 +1830,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossOgBotMemoryRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/members': {
+      id: '/boss/members'
+      path: '/members'
+      fullPath: '/boss/members'
+      preLoaderRoute: typeof BossMembersRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/lexicon': {
       id: '/boss/lexicon'
       path: '/lexicon'
@@ -2086,6 +2105,7 @@ interface BossRouteChildren {
   BossFunctionIdeasRoute: typeof BossFunctionIdeasRoute
   BossHubsRoute: typeof BossHubsRouteWithChildren
   BossLexiconRoute: typeof BossLexiconRoute
+  BossMembersRoute: typeof BossMembersRoute
   BossOgBotMemoryRoute: typeof BossOgBotMemoryRoute
   BossOgPassesRoute: typeof BossOgPassesRoute
   BossOverviewRoute: typeof BossOverviewRoute
@@ -2129,6 +2149,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossFunctionIdeasRoute: BossFunctionIdeasRoute,
   BossHubsRoute: BossHubsRouteWithChildren,
   BossLexiconRoute: BossLexiconRoute,
+  BossMembersRoute: BossMembersRoute,
   BossOgBotMemoryRoute: BossOgBotMemoryRoute,
   BossOgPassesRoute: BossOgPassesRoute,
   BossOverviewRoute: BossOverviewRoute,
