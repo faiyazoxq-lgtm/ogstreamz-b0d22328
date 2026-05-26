@@ -50,6 +50,7 @@ const GROUPS: RailGroup[] = [
     Icon: Users,
     tint: "#3ad6ff",
     items: [
+      { to: "/boss/members", label: "Members", Icon: Users, desc: "Roster · Top-ups · Passes · Codes · Resellers · Share · Notes" },
       { to: "/boss/users", label: "Roster", Icon: Users, desc: "Rank, credits, bans" },
       { to: "/boss/stream-queue", label: "Stream Queue", Icon: Tv, desc: "Pending verifications" },
       { to: "/boss/contacts", label: "Contacts", Icon: Phone, desc: "Phone numbers & spares" },
@@ -61,7 +62,7 @@ const GROUPS: RailGroup[] = [
     Icon: Wallet,
     tint: "#00e08a",
     items: [
-      { to: "/boss/overview", label: "Power Bar", Icon: Power, desc: "Master toggles & reverse tool" },
+      { to: "/boss/power", label: "Power Bar", Icon: Power, desc: "Master toggles & reverse tool" },
       { to: "/boss/pricing", label: "Pricing", Icon: Tags, desc: "Coin packs & products" },
       { to: "/boss/portal-costs", label: "Coin Costs", Icon: Coins, desc: "Per-hub & per-portal" },
       { to: "/boss/promotions", label: "Promotions", Icon: Megaphone, desc: "Sign-up bonus & promos" },
