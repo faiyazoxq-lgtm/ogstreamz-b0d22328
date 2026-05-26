@@ -196,17 +196,8 @@ function BossOverview() {
     { key: "queue", label: "Pending Actions", value: loading ? null : stats.topupPending + stats.streamVerifyPending + stats.customTrackPending + stats.pendingCreditGrants, Icon: Inbox, tint: "#ff5577", format: fmtNum },
   ];
 
-  const actionQueue: ActionItem[] = [
-    { key: "topups", label: "Top-up requests", count: stats.topupPending, to: "/admin", hash: "topups", Icon: Inbox, tint: "#ff5577", hint: "Approve or deny credit top-ups" },
-    { key: "stream", label: "Stream verifications", count: stats.streamVerifyPending, to: "/boss/stream-queue", Icon: Tv, tint: "#3ad6ff", hint: "Confirm 0G STREAMZ portal access" },
-    { key: "ctracks", label: "Custom track requests", count: stats.customTrackPending, to: "/admin", hash: "tracks", Icon: Music, tint: "#a78bfa", hint: "Review user-submitted track briefs" },
-    { key: "grants", label: "Pending credit grants", count: stats.pendingCreditGrants, to: "/admin", hash: "roster", Icon: Coins, tint: "#ffd166", hint: "Pre-allocated credits awaiting attach" },
-  ];
-
-  const totalQueue = useMemo(
-    () => actionQueue.reduce((a, b) => a + b.count, 0),
-    [actionQueue],
-  );
+  const totalQueue =
+    stats.topupPending + stats.streamVerifyPending + stats.customTrackPending + stats.pendingCreditGrants;
   const ok = !loading && !error && totalQueue === 0;
 
   return (
