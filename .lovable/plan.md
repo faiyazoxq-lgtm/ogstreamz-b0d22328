@@ -1,94 +1,93 @@
-## What you already have (no work needed)
+## Scope check — important
 
-I checked the codebase carefully — the bulk of what you described is already shipped:
+You listed seven legacy admin hash sections to fold in: `admin#topups, admin#roster, admin#passes, admin#codes, admin#resellers, admin#share, admin#notes`.
 
-| Requirement | Status | Where |
-|---|---|---|
-| Music portals auto-generate a unique background wallpaper | Done | `generatePortalWallpaper` in `src/lib/portals.functions.ts` (Nano Banana 2, on portal create) |
-| Same template structure for every music portal | Done | `src/routes/m.$slug.tsx` — single themed template, wallpaper layered behind |
-| Format raw description into Suno-ready lyrics (with `[Verse]` / `[Chorus]` tags) | Done | `streamFormatLyrics` in `src/lib/music-portals.functions.ts` (Gemini 3 Flash, streams tokens) |
-| Suno generates **2 versions** | Done | `generatePortalTrack` → webhook fills `audio_url_v1` and `audio_url_v2` |
-| **30-second preview** before unlock | Done | `PreviewPlayer` clamps to 30 s while `download_unlocked = false` |
-| Unlock full song with **2 coins** | Done | `unlockPortalTrackDownload` charges exactly 2 coins (matches your slider answer) |
-| Boss-override (no payment) | Done last turn |
+When I grep `src/routes/admin.tsx` (2,702 lines), the actual hash sections that exist are:
 
-So this plan only covers the **net-new** behaviour: AI-assisted portal creation, a guided "OG-Bot asks" wizard, and per-generation swearing via Perplexity.
-
----
-
-## 1. Boss: "Generate music portal from a description"
-
-Today the boss types every field manually in `src/routes/boss.portals.tsx`. Add a one-shot AI helper for `kind = "music"` only.
-
-- New server fn `generateMusicPortalDraft(description: string)` in `src/lib/music-portals.functions.ts`:
-  - Calls Lovable AI Gateway with `google/gemini-3-flash-preview`, structured output (`response_format: json_object`).
-  - Returns: `{ name, niche, style, vibe, theme, music_hooks[5], seo_title, seo_description, wallpaper_prompt }`.
-  - Uses the existing portal style examples from `portals.functions.ts` as few-shot context so output stays on-brand.
-- In `boss.portals.tsx` and `boss.hubs.new.tsx`, add an "AI draft from vibe" panel above the form (music kind only):
-  - Textarea + "Generate draft" button → fills the form fields client-side, leaving the boss free to edit before save.
-  - Wallpaper still auto-generates on save (no change needed there).
-
-## 2. Fan-side OG-Bot conversational wizard
-
-Replace the current single textarea on `m.$slug.tsx` ("Compose Your Vision") with a 3-step guided flow. Bot turns appear as styled chat bubbles, user inputs appear inline.
-
-```text
-OG-Bot:  "What's the song called?"
-User:    [ song title input ]            -> "Next"
-
-OG-Bot:  "Tell me what this song is about. Story, mood, lines you want in there."
-User:    [ description textarea ]
-         Swearing?  ( ) Clean  ( ) Heavy swears
-                                            -> "Format my lyrics"
-
-OG-Bot:  "Here's your draft —"             (streams Suno-ready lyrics)
-         [ Use these / Edit / Regenerate ]
+```
+roster · intel · spawners · broadcast · hubs · mood · homehubs · topups · command · nerd-stats
 ```
 
-State machine: `idle → askingName → askingBrief → formatting → reviewing → ready-to-generate`. After "Use these", flow drops the user into the existing Suno style picker / Generate button untouched.
+There is no `passes`, `codes`, `resellers`, `share`, or `notes` section on `/admin`. Those features live elsewhere:
 
-The title captured in step 1 is passed to `spawnMusic` as `title` so Suno labels the track correctly.
+- passes → `/boss/og-passes`, `/account/passes`, `vip-pass-pool.functions`
+- codes  → no dedicated route (mint-code flow is buried inside admin roster row actions)
+- resellers → `/reseller`, `reseller-audit`, `boss.reseller-audit.tsx`
+- share → not found as a route or section
+- notes → `/boss/todo` (notepad) and `BossTodoNotepad`
 
-## 3. Swearing per generation (Gemini + Perplexity)
+**Before I build this**, please confirm one of:
+(a) Only fold in what actually exists (`topups`, `roster`, plus any of the others I can locate by feature), or
+(b) Treat the list as a target taxonomy — I create empty/placeholder tabs for `codes / share / notes` and wire in the closest existing surface for `passes` and `resellers`, or
+(c) You meant a different file (not `/admin`) — point me at it.
 
-Currently swearing is portal-wide (`portal.swear_chat_enabled`). Your request is per-song, decided during the description phase.
-
-- Extend `streamFormatLyrics` to accept an optional `swear: "clean" | "heavy"` override:
-  - `clean` → always clean, even if portal has swear mode on (still blocked for religious portals).
-  - `heavy` → Gemini writes the lyrics **clean first** (your instruction: "use gemini 3 then edited with swearing"), then a follow-up server step calls Perplexity (`sonar` model) with the clean draft and a swear-injection prompt that returns the same structure with brutal swears woven into lines (not stuffed at random).
-  - Religious portals override `heavy` back to clean.
-- New server fn `enhanceWithPerplexitySwears(lyrics: string)` in a new `src/lib/lyrics-enhance.server.ts`. Uses `PERPLEXITY_API_KEY` (already in secrets). Returns `{ lyrics }`.
-- The UI streams Gemini tokens as normal, then shows "Adding heat…" while Perplexity rewrites, then swaps in the swearing version. Both versions stay in component state so the user can flip between clean and swearing before generating.
-
-## 4. Small UX & copy tweaks
-
-- Cost breakdown card on `m.$slug.tsx` already says "1 coin Generate / Free 30-sec preview / 2 coins Unlock". Keeps as-is.
-- Add a clear "Boss can also enable swearing per-portal" hint in the wizard footer so non-religious portals don't confuse boss-level toggle with the per-song toggle.
+Below is the plan assuming **(b)**, which matches "first-class /boss/members tabs" most cleanly. Tell me if you want (a) or (c) instead and I'll re-plan.
 
 ---
 
-## Technical details (for me, not the user)
+## Plan (assuming option b)
 
-- **No DB migration required.** Existing columns cover everything: `tracks.title` already nullable, `portals.swear_chat_enabled` already controls portal-wide default, `suno_jobs` already has `audio_url_v1/v2` and `download_unlocked_at`.
-- All AI calls stay server-side: Gemini via Lovable AI Gateway, Perplexity via `process.env.PERPLEXITY_API_KEY`. No new secrets.
-- Lovable AI Gateway model: `google/gemini-3-flash-preview` (matches your "use gemini 3" instruction).
-- Perplexity model: `sonar` (cheapest, fast — we don't need grounding for swear injection).
-- All new server fns use `requireStrictAuth` middleware. The portal-draft generator additionally checks `is_boss` so only boss can call it.
-- Religious portal detection reuses the existing `isReligiousPortal()` helper so devotional MusicHubs are never poisoned with swears regardless of toggle.
-- Wizard component lives in `src/components/OgBotComposer.tsx` so `m.$slug.tsx` stays readable.
+### 1. New unified route: `src/routes/boss.members.tsx`
 
-## Files touched
+Single page using shadcn `<Tabs>` with these tabs, in order:
 
-- `src/lib/music-portals.functions.ts` — extend `streamFormatLyrics(swear?)`, add `generateMusicPortalDraft`
-- `src/lib/lyrics-enhance.server.ts` (new) — Perplexity swear-injection helper
-- `src/components/OgBotComposer.tsx` (new) — 3-step wizard
-- `src/components/BossPortalAiDraft.tsx` (new) — boss "generate from description" panel
-- `src/routes/m.$slug.tsx` — swap textarea for `<OgBotComposer />`
-- `src/routes/boss.portals.tsx` — mount `<BossPortalAiDraft />` on music kind
-- `src/routes/boss.hubs.new.tsx` — same panel for the new-hub flow
+1. **Roster** — extracted from `admin.tsx` lines ~190–268 (search/filter/sort table, rank/credits/ban controls). Reuses existing `listRoster`, `setRank`, `setBanned`, `adjustCredits`, `setHubAccess` server fns. Member detail drawer is reused from existing pattern in `boss.users.tsx`.
+2. **Top-Ups** — extracted from `admin.tsx#topups` section. Reuses `bossListTopupRequests`, `bossApproveTopup`, `bossDenyTopup`, `bossSetFriendsFamily`.
+3. **Passes** — embeds the existing `boss.og-passes.tsx` panel + `vip-pass-pool` admin (same server fns).
+4. **Codes** — promo/invite code minting. Pulls the inline mint-code action out of the admin roster and gives it its own panel. No new server fn.
+5. **Resellers** — embeds existing reseller audit table (`boss.reseller-audit.tsx`) and reseller list.
+6. **Share** — public share link / referral controls (placeholder panel if no current surface — to be filled when you specify what "share" should do).
+7. **Notes** — embeds `BossTodoNotepad`.
 
-## Out of scope (ask if you want any of these)
+Route lives at top-level `/boss/members` (sibling of `boss.overview.tsx`), gated by `requireBoss`. URL hash drives the active tab (`/boss/members#topups`) for deep-linkable parity with old `/admin#topups`.
 
-- Voice cloning / custom singer per portal
-- Saving multiple lyric drafts per song
-- Auto-publishing the generated song to the portal catalog (currently the boss promotes a `suno_job` to a `tracks` row separately)
+### 2. De-dup Overview ↔ Power
+
+`boss.overview.tsx` (782 LOC) and `boss.power.tsx` (520 LOC) both render:
+
+- payment mode toggle
+- coin freeze
+- swear default
+- reverse purchases panel
+
+I will:
+
+- Keep `boss.power.tsx` as the canonical home for these four controls (since the rail already labels it "Power Bar").
+- Remove the duplicated blocks from `boss.overview.tsx` and replace with a single `<Link to="/boss/power">Open Power Bar</Link>` card so the overview stays a dashboard, not a control panel.
+- No server-fn changes; same mutations remain in `PowerStatusBar` / power components.
+
+### 3. Redirects
+
+Add a tiny route file `src/routes/admin.legacy-redirect.ts`? No — `/admin` itself is still useful, so instead:
+
+- In `src/routes/admin.tsx`, add a top-of-component `useEffect` that, if `location.hash` matches one of `#topups|#roster|#passes|#codes|#resellers|#share|#notes`, calls `navigate({ to: "/boss/members", hash: <same> , replace: true })`.
+- This preserves `/admin` for the sections that aren't being moved (intel, spawners, broadcast, etc.) while transparently bouncing the seven listed hashes.
+
+### 4. Rail / navigation
+
+`src/routes/boss.tsx` rail update:
+- People group: add **Members** → `/boss/members` as the top item; demote `Roster` to point at `/boss/members#roster`.
+- Money & Power: keep `Power Bar` → `/boss/power`; remove the duplicate `Power Bar` that currently points at `/boss/overview`.
+- Leave all other rail items untouched.
+
+### 5. Files touched
+
+```
+NEW   src/routes/boss.members.tsx              (≈400 LOC; composes existing components)
+EDIT  src/routes/boss.overview.tsx             (-~300 LOC; remove dup controls, add CTA card)
+EDIT  src/routes/boss.tsx                      (rail entries)
+EDIT  src/routes/admin.tsx                     (+~15 LOC; hash redirect effect)
+```
+
+No server functions, no migrations, no auth changes.
+
+### 6. Out of scope (call out so we agree)
+
+- I will not rewrite `boss.power.tsx`'s internals — only confirm it owns the four shared controls.
+- I will not delete `/admin` or its remaining sections (intel/spawners/broadcast/hubs/mood/homehubs/command/nerd-stats stay where they are).
+- I will not add new server functions or change any mutation contract.
+- Visual styling reuses existing tokens; no new design tokens.
+
+---
+
+**Please confirm a/b/c above, and confirm the rail change in step 4, and I'll build it.**
