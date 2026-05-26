@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Crown, Users, Coins, Inbox, ArrowUpRight,
-  BarChart3, Activity, RefreshCw, AlertTriangle, Tv,
+  Crown, Users, Coins, Ticket, KeyRound, Handshake, Inbox, FileText, ArrowUpRight,
+  Share2, ShieldCheck, BarChart3, Skull, Activity, RefreshCw, AlertTriangle, Tv,
   Tags, Music, CheckCircle2, Radio, Zap, Power,
-  Rocket, Boxes, Gauge, Send,
+  Rocket, Boxes, Grid3x3, Settings as SettingsIcon, Sparkles, Gauge, Send,
+  ShieldOff, ScanSearch, ListChecks, Brain,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CollapsiblePanel } from "@/components/boss/CollapsiblePanel";
