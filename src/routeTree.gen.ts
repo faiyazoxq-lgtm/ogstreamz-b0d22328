@@ -77,10 +77,12 @@ import { Route as BossPortalsRouteImport } from './routes/boss.portals'
 import { Route as BossPortalUsageRouteImport } from './routes/boss.portal-usage'
 import { Route as BossPortalCostsRouteImport } from './routes/boss.portal-costs'
 import { Route as BossOverviewRouteImport } from './routes/boss.overview'
+import { Route as BossOpsRouteImport } from './routes/boss.ops'
 import { Route as BossOgPassesRouteImport } from './routes/boss.og-passes'
 import { Route as BossOgBotMemoryRouteImport } from './routes/boss.og-bot-memory'
 import { Route as BossMembersRouteImport } from './routes/boss.members'
 import { Route as BossLexiconRouteImport } from './routes/boss.lexicon'
+import { Route as BossInfrastructureRouteImport } from './routes/boss.infrastructure'
 import { Route as BossHubsRouteImport } from './routes/boss.hubs'
 import { Route as BossFunctionIdeasRouteImport } from './routes/boss.function-ideas'
 import { Route as BossFunctionGrantsRouteImport } from './routes/boss.function-grants'
@@ -90,6 +92,7 @@ import { Route as BossDomainDenylistRouteImport } from './routes/boss.domain-den
 import { Route as BossDomainRouteImport } from './routes/boss.domain'
 import { Route as BossDenylistAuditRouteImport } from './routes/boss.denylist-audit'
 import { Route as BossControlCentreRouteImport } from './routes/boss.control-centre'
+import { Route as BossContentRouteImport } from './routes/boss.content'
 import { Route as BossContactsRouteImport } from './routes/boss.contacts'
 import { Route as BossCommandCenterRouteImport } from './routes/boss/command-center'
 import { Route as BossCivilityRouteImport } from './routes/boss.civility'
@@ -454,6 +457,11 @@ const BossOverviewRoute = BossOverviewRouteImport.update({
   path: '/overview',
   getParentRoute: () => BossRoute,
 } as any)
+const BossOpsRoute = BossOpsRouteImport.update({
+  id: '/ops',
+  path: '/ops',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossOgPassesRoute = BossOgPassesRouteImport.update({
   id: '/og-passes',
   path: '/og-passes',
@@ -472,6 +480,11 @@ const BossMembersRoute = BossMembersRouteImport.update({
 const BossLexiconRoute = BossLexiconRouteImport.update({
   id: '/lexicon',
   path: '/lexicon',
+  getParentRoute: () => BossRoute,
+} as any)
+const BossInfrastructureRoute = BossInfrastructureRouteImport.update({
+  id: '/infrastructure',
+  path: '/infrastructure',
   getParentRoute: () => BossRoute,
 } as any)
 const BossHubsRoute = BossHubsRouteImport.update({
@@ -517,6 +530,11 @@ const BossDenylistAuditRoute = BossDenylistAuditRouteImport.update({
 const BossControlCentreRoute = BossControlCentreRouteImport.update({
   id: '/control-centre',
   path: '/control-centre',
+  getParentRoute: () => BossRoute,
+} as any)
+const BossContentRoute = BossContentRouteImport.update({
+  id: '/content',
+  path: '/content',
   getParentRoute: () => BossRoute,
 } as any)
 const BossContactsRoute = BossContactsRouteImport.update({
@@ -690,6 +708,7 @@ export interface FileRoutesByFullPath {
   '/boss/civility': typeof BossCivilityRoute
   '/boss/command-center': typeof BossCommandCenterRoute
   '/boss/contacts': typeof BossContactsRoute
+  '/boss/content': typeof BossContentRoute
   '/boss/control-centre': typeof BossControlCentreRoute
   '/boss/denylist-audit': typeof BossDenylistAuditRoute
   '/boss/domain': typeof BossDomainRoute
@@ -699,10 +718,12 @@ export interface FileRoutesByFullPath {
   '/boss/function-grants': typeof BossFunctionGrantsRoute
   '/boss/function-ideas': typeof BossFunctionIdeasRoute
   '/boss/hubs': typeof BossHubsRouteWithChildren
+  '/boss/infrastructure': typeof BossInfrastructureRoute
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/members': typeof BossMembersRoute
   '/boss/og-bot-memory': typeof BossOgBotMemoryRoute
   '/boss/og-passes': typeof BossOgPassesRoute
+  '/boss/ops': typeof BossOpsRoute
   '/boss/overview': typeof BossOverviewRoute
   '/boss/portal-costs': typeof BossPortalCostsRoute
   '/boss/portal-usage': typeof BossPortalUsageRoute
@@ -795,6 +816,7 @@ export interface FileRoutesByTo {
   '/boss/civility': typeof BossCivilityRoute
   '/boss/command-center': typeof BossCommandCenterRoute
   '/boss/contacts': typeof BossContactsRoute
+  '/boss/content': typeof BossContentRoute
   '/boss/control-centre': typeof BossControlCentreRoute
   '/boss/denylist-audit': typeof BossDenylistAuditRoute
   '/boss/domain': typeof BossDomainRoute
@@ -804,10 +826,12 @@ export interface FileRoutesByTo {
   '/boss/function-grants': typeof BossFunctionGrantsRoute
   '/boss/function-ideas': typeof BossFunctionIdeasRoute
   '/boss/hubs': typeof BossHubsRouteWithChildren
+  '/boss/infrastructure': typeof BossInfrastructureRoute
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/members': typeof BossMembersRoute
   '/boss/og-bot-memory': typeof BossOgBotMemoryRoute
   '/boss/og-passes': typeof BossOgPassesRoute
+  '/boss/ops': typeof BossOpsRoute
   '/boss/overview': typeof BossOverviewRoute
   '/boss/portal-costs': typeof BossPortalCostsRoute
   '/boss/portal-usage': typeof BossPortalUsageRoute
@@ -902,6 +926,7 @@ export interface FileRoutesById {
   '/boss/civility': typeof BossCivilityRoute
   '/boss/command-center': typeof BossCommandCenterRoute
   '/boss/contacts': typeof BossContactsRoute
+  '/boss/content': typeof BossContentRoute
   '/boss/control-centre': typeof BossControlCentreRoute
   '/boss/denylist-audit': typeof BossDenylistAuditRoute
   '/boss/domain': typeof BossDomainRoute
@@ -911,10 +936,12 @@ export interface FileRoutesById {
   '/boss/function-grants': typeof BossFunctionGrantsRoute
   '/boss/function-ideas': typeof BossFunctionIdeasRoute
   '/boss/hubs': typeof BossHubsRouteWithChildren
+  '/boss/infrastructure': typeof BossInfrastructureRoute
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/members': typeof BossMembersRoute
   '/boss/og-bot-memory': typeof BossOgBotMemoryRoute
   '/boss/og-passes': typeof BossOgPassesRoute
+  '/boss/ops': typeof BossOpsRoute
   '/boss/overview': typeof BossOverviewRoute
   '/boss/portal-costs': typeof BossPortalCostsRoute
   '/boss/portal-usage': typeof BossPortalUsageRoute
@@ -1010,6 +1037,7 @@ export interface FileRouteTypes {
     | '/boss/civility'
     | '/boss/command-center'
     | '/boss/contacts'
+    | '/boss/content'
     | '/boss/control-centre'
     | '/boss/denylist-audit'
     | '/boss/domain'
@@ -1019,10 +1047,12 @@ export interface FileRouteTypes {
     | '/boss/function-grants'
     | '/boss/function-ideas'
     | '/boss/hubs'
+    | '/boss/infrastructure'
     | '/boss/lexicon'
     | '/boss/members'
     | '/boss/og-bot-memory'
     | '/boss/og-passes'
+    | '/boss/ops'
     | '/boss/overview'
     | '/boss/portal-costs'
     | '/boss/portal-usage'
@@ -1115,6 +1145,7 @@ export interface FileRouteTypes {
     | '/boss/civility'
     | '/boss/command-center'
     | '/boss/contacts'
+    | '/boss/content'
     | '/boss/control-centre'
     | '/boss/denylist-audit'
     | '/boss/domain'
@@ -1124,10 +1155,12 @@ export interface FileRouteTypes {
     | '/boss/function-grants'
     | '/boss/function-ideas'
     | '/boss/hubs'
+    | '/boss/infrastructure'
     | '/boss/lexicon'
     | '/boss/members'
     | '/boss/og-bot-memory'
     | '/boss/og-passes'
+    | '/boss/ops'
     | '/boss/overview'
     | '/boss/portal-costs'
     | '/boss/portal-usage'
@@ -1221,6 +1254,7 @@ export interface FileRouteTypes {
     | '/boss/civility'
     | '/boss/command-center'
     | '/boss/contacts'
+    | '/boss/content'
     | '/boss/control-centre'
     | '/boss/denylist-audit'
     | '/boss/domain'
@@ -1230,10 +1264,12 @@ export interface FileRouteTypes {
     | '/boss/function-grants'
     | '/boss/function-ideas'
     | '/boss/hubs'
+    | '/boss/infrastructure'
     | '/boss/lexicon'
     | '/boss/members'
     | '/boss/og-bot-memory'
     | '/boss/og-passes'
+    | '/boss/ops'
     | '/boss/overview'
     | '/boss/portal-costs'
     | '/boss/portal-usage'
@@ -1816,6 +1852,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossOverviewRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/ops': {
+      id: '/boss/ops'
+      path: '/ops'
+      fullPath: '/boss/ops'
+      preLoaderRoute: typeof BossOpsRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/og-passes': {
       id: '/boss/og-passes'
       path: '/og-passes'
@@ -1842,6 +1885,13 @@ declare module '@tanstack/react-router' {
       path: '/lexicon'
       fullPath: '/boss/lexicon'
       preLoaderRoute: typeof BossLexiconRouteImport
+      parentRoute: typeof BossRoute
+    }
+    '/boss/infrastructure': {
+      id: '/boss/infrastructure'
+      path: '/infrastructure'
+      fullPath: '/boss/infrastructure'
+      preLoaderRoute: typeof BossInfrastructureRouteImport
       parentRoute: typeof BossRoute
     }
     '/boss/hubs': {
@@ -1905,6 +1955,13 @@ declare module '@tanstack/react-router' {
       path: '/control-centre'
       fullPath: '/boss/control-centre'
       preLoaderRoute: typeof BossControlCentreRouteImport
+      parentRoute: typeof BossRoute
+    }
+    '/boss/content': {
+      id: '/boss/content'
+      path: '/content'
+      fullPath: '/boss/content'
+      preLoaderRoute: typeof BossContentRouteImport
       parentRoute: typeof BossRoute
     }
     '/boss/contacts': {
@@ -2095,6 +2152,7 @@ interface BossRouteChildren {
   BossCivilityRoute: typeof BossCivilityRoute
   BossCommandCenterRoute: typeof BossCommandCenterRoute
   BossContactsRoute: typeof BossContactsRoute
+  BossContentRoute: typeof BossContentRoute
   BossControlCentreRoute: typeof BossControlCentreRoute
   BossDenylistAuditRoute: typeof BossDenylistAuditRoute
   BossDomainRoute: typeof BossDomainRoute
@@ -2104,10 +2162,12 @@ interface BossRouteChildren {
   BossFunctionGrantsRoute: typeof BossFunctionGrantsRoute
   BossFunctionIdeasRoute: typeof BossFunctionIdeasRoute
   BossHubsRoute: typeof BossHubsRouteWithChildren
+  BossInfrastructureRoute: typeof BossInfrastructureRoute
   BossLexiconRoute: typeof BossLexiconRoute
   BossMembersRoute: typeof BossMembersRoute
   BossOgBotMemoryRoute: typeof BossOgBotMemoryRoute
   BossOgPassesRoute: typeof BossOgPassesRoute
+  BossOpsRoute: typeof BossOpsRoute
   BossOverviewRoute: typeof BossOverviewRoute
   BossPortalCostsRoute: typeof BossPortalCostsRoute
   BossPortalUsageRoute: typeof BossPortalUsageRoute
@@ -2139,6 +2199,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossCivilityRoute: BossCivilityRoute,
   BossCommandCenterRoute: BossCommandCenterRoute,
   BossContactsRoute: BossContactsRoute,
+  BossContentRoute: BossContentRoute,
   BossControlCentreRoute: BossControlCentreRoute,
   BossDenylistAuditRoute: BossDenylistAuditRoute,
   BossDomainRoute: BossDomainRoute,
@@ -2148,10 +2209,12 @@ const BossRouteChildren: BossRouteChildren = {
   BossFunctionGrantsRoute: BossFunctionGrantsRoute,
   BossFunctionIdeasRoute: BossFunctionIdeasRoute,
   BossHubsRoute: BossHubsRouteWithChildren,
+  BossInfrastructureRoute: BossInfrastructureRoute,
   BossLexiconRoute: BossLexiconRoute,
   BossMembersRoute: BossMembersRoute,
   BossOgBotMemoryRoute: BossOgBotMemoryRoute,
   BossOgPassesRoute: BossOgPassesRoute,
+  BossOpsRoute: BossOpsRoute,
   BossOverviewRoute: BossOverviewRoute,
   BossPortalCostsRoute: BossPortalCostsRoute,
   BossPortalUsageRoute: BossPortalUsageRoute,
