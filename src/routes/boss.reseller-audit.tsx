@@ -78,7 +78,7 @@ function SortHeader({
   );
 }
 
-function BossResellerAuditPage() {
+export function BossResellerAuditPage() {
   const list = useServerFn(listResellerAudit);
   const [rows, setRows] = useState<ResellerAuditRow[]>([]);
   const [loading, setLoading] = useState(true);

@@ -35,7 +35,7 @@ const COLUMNS: { id: Todo["status"]; label: string; Icon: typeof Circle }[] = [
   { id: "done",        label: "Done",        Icon: CheckCircle2 },
 ];
 
-function BossTodoPage() {
+export function BossTodoPage() {
   const [items, setItems] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
