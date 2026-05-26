@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Crown, Users, Coins, Ticket, KeyRound, Handshake, Inbox, FileText, ArrowUpRight,
   Share2, ShieldCheck, BarChart3, Skull, Activity, RefreshCw, AlertTriangle, Tv,
-  Tags, Music, CheckCircle2, Radio, Zap, Power, Bell,
+  Tags, Music, CheckCircle2, Radio, Zap, Bell,
   Rocket, Boxes, Grid3x3, Settings as SettingsIcon, Sparkles, Gauge, Send,
   ShieldOff, ScanSearch, ListChecks, Brain,
 } from "lucide-react";
@@ -11,6 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { CollapsiblePanel } from "@/components/boss/CollapsiblePanel";
 import { TelegramInboxPanel } from "@/components/boss/TelegramInboxPanel";
 import { TelegramConnectionPanel } from "@/components/boss/TelegramConnectionPanel";
+import { GlobalPowerPanel } from "@/components/boss/GlobalPowerPanel";
+import { PendingQueuesPanel } from "@/components/boss/PendingQueuesPanel";
+import { ReversePurchasesPanel } from "@/components/boss/ReversePurchasesPanel";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/boss/overview")({
@@ -60,8 +63,7 @@ const TILES: Tile[] = [
   // People
   { to: "/boss/users",               label: "User Roster",       blurb: "Rank, status, credits, ban, force sign-out, stream verify",   Icon: Users,        tint: "#3ad6ff" },
   { to: "/boss/stream-queue",        label: "Stream Queue",      blurb: "Pending 0G STREAMZ portal verifications",                     Icon: Tv,           tint: "#3ad6ff" },
-  // Money & Power
-  { to: "/boss/power",               label: "Power Controls",    blurb: "Freeze payments, freeze coins, reverse recent purchases",     Icon: Power,        tint: "#ff5577" },
+  // Money & Power (toggles & reverse tool live inline on this page)
   { to: "/boss/pricing",             label: "Pricing",           blurb: "Coin packs & store product catalogue",                        Icon: Tags,         tint: "#00e08a" },
   { to: "/boss/portal-costs",        label: "Coin Costs",        blurb: "Per-hub create & per-portal use costs",                       Icon: Coins,        tint: "#ffd166" },
   { to: "/boss/portal-usage",        label: "Portal Usage Audit", blurb: "Every charged portal action — slug, user, cost, time",        Icon: Coins,        tint: "#ffd166" },
@@ -97,7 +99,7 @@ const TILES: Tile[] = [
 
 const TILE_CATEGORIES: { id: string; label: string; tint: string; labels: string[] }[] = [
   { id: "people",     label: "People",        tint: "#3ad6ff", labels: ["User Roster", "Stream Queue"] },
-  { id: "money",      label: "Money & Power", tint: "#ffd166", labels: ["Power Controls", "Pricing", "Coin Costs", "Top-Up Requests", "Adjust Credits", "VIP Passes", "Redeem Codes", "Resellers", "Share Cards", "Boss Notes", "Admin Console"] },
+  { id: "money",      label: "Money & Power", tint: "#ffd166", labels: ["Pricing", "Coin Costs", "Top-Up Requests", "Adjust Credits", "VIP Passes", "Redeem Codes", "Resellers", "Share Cards", "Boss Notes", "Admin Console"] },
   { id: "content",    label: "Content",       tint: "#a78bfa", labels: ["Hubs", "Portals"] },
   { id: "moderation", label: "Moderation",    tint: "#ff2e55", labels: ["Civility Controls", "Swear Lexicon"] },
   { id: "insights",   label: "Insights",      tint: "#00e08a", labels: ["Analytics", "Overlord Deck"] },
