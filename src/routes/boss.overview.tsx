@@ -288,91 +288,14 @@ function BossOverview() {
       </div>
       </CollapsiblePanel>
 
-      {/* Power Bar — large tactile toggles */}
-      {/* Power Bar / Reverse purchases now owned by /boss/power */}
-      <Link
-        to="/boss/power"
-        className="glass-obsidian-cmd rounded-2xl p-5 flex items-center gap-4 hover:-translate-y-0.5 transition"
-        style={{ borderColor: "#ffd16655" }}
-      >
-        <span
-          className="h-12 w-12 rounded-xl flex items-center justify-center"
-          style={{ background: "#ffd16620", border: "1px solid #ffd16655" }}
-        >
-          <Power className="h-5 w-5" style={{ color: "#ffd166" }} />
-        </span>
-        <div className="flex-1 min-w-0">
-          <div className="syndicate-header text-sm text-white/95">Power Bar</div>
-          <div className="text-[11px] text-white/55">
-            Payments, coin freeze, swear default & reverse purchases — all live on{" "}
-            <span className="text-gold">/boss/power</span>.
-          </div>
-        </div>
-        <ArrowUpRight className="h-4 w-4 text-white/40" />
-      </Link>
+      {/* Canonical global power controls (single source of truth) */}
+      <GlobalPowerPanel />
 
-      {/* Action queue */}
-      <CollapsiblePanel
-        id="queue"
-        title="Action Queue"
-        Icon={Inbox}
-        tint="#ff5577"
-        subtitle="Outstanding requests waiting on a Boss decision"
-        badge={
-          <span
-            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-[0.2em] tabular-nums"
-            style={{
-              background: totalQueue > 0 ? "rgba(255,85,119,0.18)" : "rgba(0,224,138,0.12)",
-              color: totalQueue > 0 ? "#ff8aa3" : "#7be3b6",
-              border: `1px solid ${totalQueue > 0 ? "#ff557766" : "#00e08a55"}`,
-            }}
-          >
-            {totalQueue} open
-          </span>
-        }
-      >
-        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {actionQueue.map((a) => {
-            const urgent = a.count > 0;
-            return (
-              <li key={a.key}>
-                <Link
-                  to={a.to}
-                  hash={a.hash}
-                  className="flex items-center gap-3 p-3 group rounded-xl border transition active:scale-[0.99]"
-                  style={{
-                    borderColor: urgent ? `${a.tint}55` : "rgba(255,255,255,0.06)",
-                    background: urgent ? `${a.tint}10` : "rgba(255,255,255,0.02)",
-                  }}
-                >
-                  <span
-                    className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: `${a.tint}1f`, border: `1px solid ${a.tint}55` }}
-                  >
-                    <a.Icon className="h-4 w-4" style={{ color: a.tint }} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-bold text-white/95 truncate tracking-tight">{a.label}</div>
-                    <div className="text-[11px] text-white/50 truncate">{a.hint}</div>
-                  </div>
-                  <span
-                    className="inline-flex items-center justify-center min-w-[2rem] h-6 px-2 rounded-full text-xs font-extrabold tabular-nums"
-                    style={{
-                      background: urgent ? `${a.tint}25` : "rgba(255,255,255,0.04)",
-                      color: urgent ? a.tint : "rgba(255,255,255,0.45)",
-                      border: `1px solid ${urgent ? a.tint + "66" : "rgba(255,255,255,0.08)"}`,
-                      boxShadow: urgent ? `0 0 12px -3px ${a.tint}66` : "none",
-                    }}
-                  >
-                    {a.count}
-                  </span>
-                  <ArrowUpRight className="h-4 w-4 text-white/30 group-hover:text-white/70 transition" />
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </CollapsiblePanel>
+      {/* Canonical pending-action queue (single source of truth) */}
+      <PendingQueuesPanel />
+
+      {/* Canonical reverse-purchases tool + recent reversals (single source of truth) */}
+      <ReversePurchasesPanel />
 
       <CollapsiblePanel
         id="telegram-inbox"
