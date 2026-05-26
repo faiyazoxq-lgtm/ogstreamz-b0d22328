@@ -90,6 +90,7 @@ import { Route as BossDomainDenylistRouteImport } from './routes/boss.domain-den
 import { Route as BossDomainRouteImport } from './routes/boss.domain'
 import { Route as BossDenylistAuditRouteImport } from './routes/boss.denylist-audit'
 import { Route as BossControlCentreRouteImport } from './routes/boss.control-centre'
+import { Route as BossContentRouteImport } from './routes/boss.content'
 import { Route as BossContactsRouteImport } from './routes/boss.contacts'
 import { Route as BossCommandCenterRouteImport } from './routes/boss/command-center'
 import { Route as BossCivilityRouteImport } from './routes/boss.civility'
@@ -519,6 +520,11 @@ const BossControlCentreRoute = BossControlCentreRouteImport.update({
   path: '/control-centre',
   getParentRoute: () => BossRoute,
 } as any)
+const BossContentRoute = BossContentRouteImport.update({
+  id: '/content',
+  path: '/content',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossContactsRoute = BossContactsRouteImport.update({
   id: '/contacts',
   path: '/contacts',
@@ -690,6 +696,7 @@ export interface FileRoutesByFullPath {
   '/boss/civility': typeof BossCivilityRoute
   '/boss/command-center': typeof BossCommandCenterRoute
   '/boss/contacts': typeof BossContactsRoute
+  '/boss/content': typeof BossContentRoute
   '/boss/control-centre': typeof BossControlCentreRoute
   '/boss/denylist-audit': typeof BossDenylistAuditRoute
   '/boss/domain': typeof BossDomainRoute
@@ -795,6 +802,7 @@ export interface FileRoutesByTo {
   '/boss/civility': typeof BossCivilityRoute
   '/boss/command-center': typeof BossCommandCenterRoute
   '/boss/contacts': typeof BossContactsRoute
+  '/boss/content': typeof BossContentRoute
   '/boss/control-centre': typeof BossControlCentreRoute
   '/boss/denylist-audit': typeof BossDenylistAuditRoute
   '/boss/domain': typeof BossDomainRoute
@@ -902,6 +910,7 @@ export interface FileRoutesById {
   '/boss/civility': typeof BossCivilityRoute
   '/boss/command-center': typeof BossCommandCenterRoute
   '/boss/contacts': typeof BossContactsRoute
+  '/boss/content': typeof BossContentRoute
   '/boss/control-centre': typeof BossControlCentreRoute
   '/boss/denylist-audit': typeof BossDenylistAuditRoute
   '/boss/domain': typeof BossDomainRoute
@@ -1010,6 +1019,7 @@ export interface FileRouteTypes {
     | '/boss/civility'
     | '/boss/command-center'
     | '/boss/contacts'
+    | '/boss/content'
     | '/boss/control-centre'
     | '/boss/denylist-audit'
     | '/boss/domain'
@@ -1115,6 +1125,7 @@ export interface FileRouteTypes {
     | '/boss/civility'
     | '/boss/command-center'
     | '/boss/contacts'
+    | '/boss/content'
     | '/boss/control-centre'
     | '/boss/denylist-audit'
     | '/boss/domain'
@@ -1221,6 +1232,7 @@ export interface FileRouteTypes {
     | '/boss/civility'
     | '/boss/command-center'
     | '/boss/contacts'
+    | '/boss/content'
     | '/boss/control-centre'
     | '/boss/denylist-audit'
     | '/boss/domain'
@@ -1907,6 +1919,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossControlCentreRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/content': {
+      id: '/boss/content'
+      path: '/content'
+      fullPath: '/boss/content'
+      preLoaderRoute: typeof BossContentRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/contacts': {
       id: '/boss/contacts'
       path: '/contacts'
@@ -2095,6 +2114,7 @@ interface BossRouteChildren {
   BossCivilityRoute: typeof BossCivilityRoute
   BossCommandCenterRoute: typeof BossCommandCenterRoute
   BossContactsRoute: typeof BossContactsRoute
+  BossContentRoute: typeof BossContentRoute
   BossControlCentreRoute: typeof BossControlCentreRoute
   BossDenylistAuditRoute: typeof BossDenylistAuditRoute
   BossDomainRoute: typeof BossDomainRoute
@@ -2139,6 +2159,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossCivilityRoute: BossCivilityRoute,
   BossCommandCenterRoute: BossCommandCenterRoute,
   BossContactsRoute: BossContactsRoute,
+  BossContentRoute: BossContentRoute,
   BossControlCentreRoute: BossControlCentreRoute,
   BossDenylistAuditRoute: BossDenylistAuditRoute,
   BossDomainRoute: BossDomainRoute,
