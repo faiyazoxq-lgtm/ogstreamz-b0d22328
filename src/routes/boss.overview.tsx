@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Crown, Users, Coins, Ticket, KeyRound, Handshake, Inbox, FileText, ArrowUpRight,
   Share2, ShieldCheck, BarChart3, Skull, Activity, RefreshCw, AlertTriangle, Tv,
@@ -35,17 +35,6 @@ type Metric = {
   to?: string;
   hash?: string;
   format?: (n: number) => string;
-};
-
-type ActionItem = {
-  key: string;
-  label: string;
-  count: number;
-  to: string;
-  hash?: string;
-  Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
-  tint: string;
-  hint: string;
 };
 
 const fmtNum = (n: number) => n.toLocaleString("en-GB");
