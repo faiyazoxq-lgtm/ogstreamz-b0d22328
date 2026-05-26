@@ -32,6 +32,19 @@ const CONTROL_CENTRE: RailItem = {
 
 const GROUPS: RailGroup[] = [
   {
+    id: "dashboard",
+    label: "Dashboard",
+    Icon: LayoutGrid,
+    tint: "#ffd166",
+    items: [
+      { to: "/boss/overview",       label: "Overview",       Icon: Crown,         exact: true, desc: "Merged command surface" },
+      { to: "/boss/members",        label: "Members",        Icon: Users,         desc: "Roster · Top-ups · Passes · Codes" },
+      { to: "/boss/content",        label: "Content",        Icon: Boxes,         desc: "Hubs · Portals · Promotions" },
+      { to: "/boss/ops",            label: "Ops",            Icon: Power,         desc: "Power bar · Alerts · Publish · Analytics" },
+      { to: "/boss/infrastructure", label: "Infrastructure", Icon: SlidersHorizontal, desc: "Keys · Secrets · Functions · Settings" },
+    ],
+  },
+  {
     id: "command",
     label: "Command",
     Icon: Crown,

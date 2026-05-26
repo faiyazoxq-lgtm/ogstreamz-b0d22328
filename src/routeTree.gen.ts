@@ -82,6 +82,7 @@ import { Route as BossOgPassesRouteImport } from './routes/boss.og-passes'
 import { Route as BossOgBotMemoryRouteImport } from './routes/boss.og-bot-memory'
 import { Route as BossMembersRouteImport } from './routes/boss.members'
 import { Route as BossLexiconRouteImport } from './routes/boss.lexicon'
+import { Route as BossInfrastructureRouteImport } from './routes/boss.infrastructure'
 import { Route as BossHubsRouteImport } from './routes/boss.hubs'
 import { Route as BossFunctionIdeasRouteImport } from './routes/boss.function-ideas'
 import { Route as BossFunctionGrantsRouteImport } from './routes/boss.function-grants'
@@ -481,6 +482,11 @@ const BossLexiconRoute = BossLexiconRouteImport.update({
   path: '/lexicon',
   getParentRoute: () => BossRoute,
 } as any)
+const BossInfrastructureRoute = BossInfrastructureRouteImport.update({
+  id: '/infrastructure',
+  path: '/infrastructure',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossHubsRoute = BossHubsRouteImport.update({
   id: '/hubs',
   path: '/hubs',
@@ -712,6 +718,7 @@ export interface FileRoutesByFullPath {
   '/boss/function-grants': typeof BossFunctionGrantsRoute
   '/boss/function-ideas': typeof BossFunctionIdeasRoute
   '/boss/hubs': typeof BossHubsRouteWithChildren
+  '/boss/infrastructure': typeof BossInfrastructureRoute
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/members': typeof BossMembersRoute
   '/boss/og-bot-memory': typeof BossOgBotMemoryRoute
@@ -819,6 +826,7 @@ export interface FileRoutesByTo {
   '/boss/function-grants': typeof BossFunctionGrantsRoute
   '/boss/function-ideas': typeof BossFunctionIdeasRoute
   '/boss/hubs': typeof BossHubsRouteWithChildren
+  '/boss/infrastructure': typeof BossInfrastructureRoute
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/members': typeof BossMembersRoute
   '/boss/og-bot-memory': typeof BossOgBotMemoryRoute
@@ -928,6 +936,7 @@ export interface FileRoutesById {
   '/boss/function-grants': typeof BossFunctionGrantsRoute
   '/boss/function-ideas': typeof BossFunctionIdeasRoute
   '/boss/hubs': typeof BossHubsRouteWithChildren
+  '/boss/infrastructure': typeof BossInfrastructureRoute
   '/boss/lexicon': typeof BossLexiconRoute
   '/boss/members': typeof BossMembersRoute
   '/boss/og-bot-memory': typeof BossOgBotMemoryRoute
@@ -1038,6 +1047,7 @@ export interface FileRouteTypes {
     | '/boss/function-grants'
     | '/boss/function-ideas'
     | '/boss/hubs'
+    | '/boss/infrastructure'
     | '/boss/lexicon'
     | '/boss/members'
     | '/boss/og-bot-memory'
@@ -1145,6 +1155,7 @@ export interface FileRouteTypes {
     | '/boss/function-grants'
     | '/boss/function-ideas'
     | '/boss/hubs'
+    | '/boss/infrastructure'
     | '/boss/lexicon'
     | '/boss/members'
     | '/boss/og-bot-memory'
@@ -1253,6 +1264,7 @@ export interface FileRouteTypes {
     | '/boss/function-grants'
     | '/boss/function-ideas'
     | '/boss/hubs'
+    | '/boss/infrastructure'
     | '/boss/lexicon'
     | '/boss/members'
     | '/boss/og-bot-memory'
@@ -1875,6 +1887,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossLexiconRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/infrastructure': {
+      id: '/boss/infrastructure'
+      path: '/infrastructure'
+      fullPath: '/boss/infrastructure'
+      preLoaderRoute: typeof BossInfrastructureRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/hubs': {
       id: '/boss/hubs'
       path: '/hubs'
@@ -2143,6 +2162,7 @@ interface BossRouteChildren {
   BossFunctionGrantsRoute: typeof BossFunctionGrantsRoute
   BossFunctionIdeasRoute: typeof BossFunctionIdeasRoute
   BossHubsRoute: typeof BossHubsRouteWithChildren
+  BossInfrastructureRoute: typeof BossInfrastructureRoute
   BossLexiconRoute: typeof BossLexiconRoute
   BossMembersRoute: typeof BossMembersRoute
   BossOgBotMemoryRoute: typeof BossOgBotMemoryRoute
@@ -2189,6 +2209,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossFunctionGrantsRoute: BossFunctionGrantsRoute,
   BossFunctionIdeasRoute: BossFunctionIdeasRoute,
   BossHubsRoute: BossHubsRouteWithChildren,
+  BossInfrastructureRoute: BossInfrastructureRoute,
   BossLexiconRoute: BossLexiconRoute,
   BossMembersRoute: BossMembersRoute,
   BossOgBotMemoryRoute: BossOgBotMemoryRoute,
