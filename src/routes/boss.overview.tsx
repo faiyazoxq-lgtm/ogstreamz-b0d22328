@@ -120,67 +120,8 @@ function BossOverview() {
     activeProducts: 0,
     newToday: 0,
   });
-  const [swearDefault, setSwearDefault] = useState<boolean | null>(null);
-  const [togglingSwear, setTogglingSwear] = useState(false);
-  const paymentMode = usePaymentMode();
-  const [togglingPayments, setTogglingPayments] = useState(false);
-  const [coinFrozen, setCoinFrozen] = useState<boolean | null>(null);
-  const [togglingCoin, setTogglingCoin] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Reverse-purchases tool (merged from /boss/power)
-  type Reversal = {
-    id: string; source_table: string; source_id: string; user_id: string;
-    credits_reversed: number; amount_cents: number; currency: string;
-    reason: string | null; created_at: string;
-  };
-  type ReverseResult = {
-    dry_run: boolean; window_minutes: number; cutoff: string;
-    credit_purchases_reversed: number; track_purchases_reversed: number;
-    credits_refunded: number; amount_cents_affected: number;
-  };
-  const WINDOW_PRESETS = [5, 15, 60, 240, 1440];
-  const [windowMinutes, setWindowMinutes] = useState<string>("60");
-  const [confirmText, setConfirmText] = useState("");
-  const [running, setRunning] = useState(false);
-  const [lastResult, setLastResult] = useState<ReverseResult | null>(null);
-  const [history, setHistory] = useState<Reversal[]>([]);
-  const minutes = useMemo(() => Math.max(0, Math.trunc(Number(windowMinutes) || 0)), [windowMinutes]);
-
-  async function refreshReverseHistory() {
-    const { data } = await supabase
-      .from("purchase_reversals")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(15);
-    setHistory((data ?? []) as Reversal[]);
-  }
-
-  async function runReverse(dryRun: boolean) {
-    if (!minutes) { toast.error("Enter a window in minutes"); return; }
-    if (!dryRun && confirmText.trim().toUpperCase() !== "REVERSE") {
-      toast.error('Type REVERSE to confirm');
-      return;
-    }
-    setRunning(true);
-    const { data, error } = await supabase.rpc("reverse_recent_purchases", {
-      window_minutes: minutes,
-      dry_run: dryRun,
-    });
-    setRunning(false);
-    if (error) { toast.error(error.message); return; }
-    const result = data as unknown as ReverseResult;
-    setLastResult(result);
-    if (dryRun) {
-      toast.success(`Preview: would reverse ${result.credit_purchases_reversed + result.track_purchases_reversed} purchase(s)`);
-    } else {
-      toast.success(`Reversed ${result.credit_purchases_reversed + result.track_purchases_reversed} purchase(s)`);
-      setConfirmText("");
-      await refreshReverseHistory();
-    }
-  }
-
-  useEffect(() => { void refreshReverseHistory(); }, []);
   // user is referenced via useAuth() so handlers can attribute updates if extended
   void user;
 
@@ -226,13 +167,8 @@ function BossOverview() {
         activeProducts: Math.max(0, prods),
         newToday: Math.max(0, newToday),
       });
-      setSwearDefault(civ?.data?.swear_default ?? null);
-      const { data: coinRow } = await supabase
-        .from("app_settings")
-        .select("value")
-        .eq("key", "power.coin_frozen")
-        .maybeSingle();
-      setCoinFrozen(coinRow?.value === true);
+      // swear_default / coin_frozen are owned by /boss/power; no need to mirror here.
+      void civ;
       setLastSync(new Date());
     } catch (e: any) {
       setError(e?.message ?? "Failed to load command-center metrics");
@@ -248,88 +184,6 @@ function BossOverview() {
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  async function toggleSwear() {
-    if (swearDefault === null) return;
-    setTogglingSwear(true);
-    const next = !swearDefault;
-    const { error } = await supabase
-      .from("civility_settings")
-      .update({ swear_default: next, updated_at: new Date().toISOString() })
-      .eq("id", 1);
-    if (!error) setSwearDefault(next);
-    setTogglingSwear(false);
-  }
-
-  async function toggleCoinFreeze() {
-    if (coinFrozen === null) return;
-    setTogglingCoin(true);
-    const next = !coinFrozen;
-    const { error } = await supabase
-      .from("app_settings")
-      .upsert({ key: "power.coin_frozen", value: next }, { onConflict: "key" });
-    if (!error) setCoinFrozen(next);
-    setTogglingCoin(false);
-  }
-
-  async function applyPaymentMode(next: "live" | "test") {
-    setTogglingPayments(true);
-    try {
-      await setPaymentMode(next);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to switch payment mode");
-    } finally {
-      setTogglingPayments(false);
-    }
-  }
-
-  function togglePaymentMode() {
-    void applyPaymentMode(paymentMode === "live" ? "test" : "live");
-  }
-
-  const paymentsConfirm: PowerToggleConfirm = {
-    when: "always",
-    tone: paymentMode === "live" ? "warning" : "danger",
-    title: paymentMode === "live"
-      ? "Switch payments to TEST mode?"
-      : "Switch payments to LIVE mode?",
-    description: paymentMode === "live" ? (
-      <>
-        <p>Every checkout will move to <strong>sandbox cards only</strong>.</p>
-        <p className="text-amber-300">Real customers will see a "Test Mode" banner and cannot complete real purchases.</p>
-      </>
-    ) : (
-      <>
-        <p>Every checkout site-wide will charge <strong>real money</strong> to real cards immediately.</p>
-        <p className="text-orange-300">The "Test Mode" banner will disappear for all members the moment you confirm.</p>
-      </>
-    ),
-    confirmLabel: paymentMode === "live" ? "Yes, go TEST" : "Yes, go LIVE",
-    cancelLabel: paymentMode === "live" ? "Stay in live mode" : "Stay in test mode",
-    typeToConfirm: paymentMode === "live" ? undefined : "GO LIVE",
-  };
-  const coinConfirm: PowerToggleConfirm = {
-    when: "deactivate",
-    tone: "danger",
-    title: "Freeze all coin flows?",
-    description: (
-      <>
-        <p>Every member will be <strong>blocked from earning or spending credits</strong> until you thaw.</p>
-        <p className="text-rose-300">Active battles, tips and store purchases will fail mid-flight.</p>
-      </>
-    ),
-    confirmLabel: "Freeze coins",
-    cancelLabel: "Keep flowing",
-    typeToConfirm: "FREEZE",
-  };
-  const swearConfirm: PowerToggleConfirm = {
-    when: "activate",
-    tone: "warning",
-    title: "Default new sessions to Guttermouth?",
-    description: <p>New visitors will land in foul-mouth chat by default. Existing sessions are unaffected.</p>,
-    confirmLabel: "Unleash",
-    cancelLabel: "Stay civil",
-  };
 
   const metrics: Metric[] = [
     { key: "profiles", label: "Members", value: loading ? null : stats.profiles, Icon: Users, tint: "#3ad6ff", to: "/boss/users", format: fmtNum },
