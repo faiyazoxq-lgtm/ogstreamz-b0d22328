@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { Component, type ErrorInfo, type ReactNode, useEffect, useState } from "react";
 import {
   Users,
   Boxes,
@@ -15,6 +15,10 @@ import {
   XCircle,
   Loader2,
   Terminal,
+  Trash2,
+  AlertTriangle,
+  ShieldAlert,
+  Globe,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { requireBoss } from "@/lib/route-guards";
@@ -23,11 +27,25 @@ import { useServerFn } from "@tanstack/react-start";
 import { listRoster, setHubAccess, setBanned, adjustCredits } from "@/lib/boss-users.functions";
 import { sendTelegramReply } from "@/lib/telegram-inbox.functions";
 import { listSecretsInventory } from "@/lib/secrets-inventory.functions";
+import {
+  listPortalsForBoss,
+  listCalculatorsForBoss,
+  bossSetPortalVip,
+  bossSetCalculatorPublished,
+  listDomainDenylist,
+  addDomainToDenylist,
+  removeDomainFromDenylist,
+  getMaintenanceMode,
+  setMaintenanceMode,
+  purgeOldSecurityEvents,
+} from "@/lib/boss-command-center.functions";
+import { bossSetPortalPublished } from "@/lib/boss-admin-misc.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -41,6 +59,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { MasterSwearToggle } from "@/components/MasterSwearToggle";
 import { BossStreamServerUrlCard } from "@/components/BossStreamServerUrlCard";
+import { BossSpendPanel } from "@/components/BossSpendPanel";
+import { BossTodoNotepad } from "@/components/BossTodoNotepad";
+import { BossChatPanel } from "@/components/BossChatPanel";
 
 export const Route = createFileRoute("/boss/command-center")({
   beforeLoad: requireBoss,
@@ -102,20 +123,63 @@ function CommandCenterPage() {
         </TabsList>
 
         <TabsContent value="users">
-          <UsersCrmTab />
+          <ModuleBoundary title="Users & CRM"><UsersCrmTab /></ModuleBoundary>
         </TabsContent>
         <TabsContent value="portals">
-          <ModulePlaceholder title="Portals & Content" />
+          <ModuleBoundary title="Portals & Content"><PortalsContentTab /></ModuleBoundary>
         </TabsContent>
         <TabsContent value="ai">
-          <AiEngineTab />
+          <ModuleBoundary title="AI Engine"><AiEngineTab /></ModuleBoundary>
         </TabsContent>
         <TabsContent value="ops">
-          <ModulePlaceholder title="Ops & Sync" />
+          <ModuleBoundary title="Ops & Sync"><OpsSyncTab /></ModuleBoundary>
         </TabsContent>
       </Tabs>
     </div>
   );
+}
+
+/* ────────────────────────────────────────────────────────────────
+ * Error Boundary (per-module)
+ * ──────────────────────────────────────────────────────────────── */
+class ModuleBoundary extends Component<
+  { title: string; children: ReactNode },
+  { error: Error | null }
+> {
+  state = { error: null as Error | null };
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error(`[CommandCenter:${this.props.title}]`, error, info);
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <Card className="bg-background border-rose-500/40 shadow-2xl">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-rose-400">
+              <AlertTriangle className="h-4 w-4" /> {this.props.title} crashed
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <pre className="text-xs text-rose-300/80 whitespace-pre-wrap bg-black/40 p-3 rounded">
+              {this.state.error.message}
+            </pre>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={() => this.setState({ error: null })}
+            >
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 /* ────────────────────────────────────────────────────────────────
