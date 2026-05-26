@@ -77,6 +77,7 @@ import { Route as BossPortalsRouteImport } from './routes/boss.portals'
 import { Route as BossPortalUsageRouteImport } from './routes/boss.portal-usage'
 import { Route as BossPortalCostsRouteImport } from './routes/boss.portal-costs'
 import { Route as BossOverviewRouteImport } from './routes/boss.overview'
+import { Route as BossOpsRouteImport } from './routes/boss.ops'
 import { Route as BossOgPassesRouteImport } from './routes/boss.og-passes'
 import { Route as BossOgBotMemoryRouteImport } from './routes/boss.og-bot-memory'
 import { Route as BossMembersRouteImport } from './routes/boss.members'
@@ -455,6 +456,11 @@ const BossOverviewRoute = BossOverviewRouteImport.update({
   path: '/overview',
   getParentRoute: () => BossRoute,
 } as any)
+const BossOpsRoute = BossOpsRouteImport.update({
+  id: '/ops',
+  path: '/ops',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossOgPassesRoute = BossOgPassesRouteImport.update({
   id: '/og-passes',
   path: '/og-passes',
@@ -710,6 +716,7 @@ export interface FileRoutesByFullPath {
   '/boss/members': typeof BossMembersRoute
   '/boss/og-bot-memory': typeof BossOgBotMemoryRoute
   '/boss/og-passes': typeof BossOgPassesRoute
+  '/boss/ops': typeof BossOpsRoute
   '/boss/overview': typeof BossOverviewRoute
   '/boss/portal-costs': typeof BossPortalCostsRoute
   '/boss/portal-usage': typeof BossPortalUsageRoute
@@ -816,6 +823,7 @@ export interface FileRoutesByTo {
   '/boss/members': typeof BossMembersRoute
   '/boss/og-bot-memory': typeof BossOgBotMemoryRoute
   '/boss/og-passes': typeof BossOgPassesRoute
+  '/boss/ops': typeof BossOpsRoute
   '/boss/overview': typeof BossOverviewRoute
   '/boss/portal-costs': typeof BossPortalCostsRoute
   '/boss/portal-usage': typeof BossPortalUsageRoute
@@ -924,6 +932,7 @@ export interface FileRoutesById {
   '/boss/members': typeof BossMembersRoute
   '/boss/og-bot-memory': typeof BossOgBotMemoryRoute
   '/boss/og-passes': typeof BossOgPassesRoute
+  '/boss/ops': typeof BossOpsRoute
   '/boss/overview': typeof BossOverviewRoute
   '/boss/portal-costs': typeof BossPortalCostsRoute
   '/boss/portal-usage': typeof BossPortalUsageRoute
@@ -1033,6 +1042,7 @@ export interface FileRouteTypes {
     | '/boss/members'
     | '/boss/og-bot-memory'
     | '/boss/og-passes'
+    | '/boss/ops'
     | '/boss/overview'
     | '/boss/portal-costs'
     | '/boss/portal-usage'
@@ -1139,6 +1149,7 @@ export interface FileRouteTypes {
     | '/boss/members'
     | '/boss/og-bot-memory'
     | '/boss/og-passes'
+    | '/boss/ops'
     | '/boss/overview'
     | '/boss/portal-costs'
     | '/boss/portal-usage'
@@ -1246,6 +1257,7 @@ export interface FileRouteTypes {
     | '/boss/members'
     | '/boss/og-bot-memory'
     | '/boss/og-passes'
+    | '/boss/ops'
     | '/boss/overview'
     | '/boss/portal-costs'
     | '/boss/portal-usage'
@@ -1828,6 +1840,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossOverviewRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/ops': {
+      id: '/boss/ops'
+      path: '/ops'
+      fullPath: '/boss/ops'
+      preLoaderRoute: typeof BossOpsRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/og-passes': {
       id: '/boss/og-passes'
       path: '/og-passes'
@@ -2128,6 +2147,7 @@ interface BossRouteChildren {
   BossMembersRoute: typeof BossMembersRoute
   BossOgBotMemoryRoute: typeof BossOgBotMemoryRoute
   BossOgPassesRoute: typeof BossOgPassesRoute
+  BossOpsRoute: typeof BossOpsRoute
   BossOverviewRoute: typeof BossOverviewRoute
   BossPortalCostsRoute: typeof BossPortalCostsRoute
   BossPortalUsageRoute: typeof BossPortalUsageRoute
@@ -2173,6 +2193,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossMembersRoute: BossMembersRoute,
   BossOgBotMemoryRoute: BossOgBotMemoryRoute,
   BossOgPassesRoute: BossOgPassesRoute,
+  BossOpsRoute: BossOpsRoute,
   BossOverviewRoute: BossOverviewRoute,
   BossPortalCostsRoute: BossPortalCostsRoute,
   BossPortalUsageRoute: BossPortalUsageRoute,
