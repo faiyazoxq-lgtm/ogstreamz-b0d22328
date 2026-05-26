@@ -1,74 +1,35 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Component, type ErrorInfo, type ReactNode, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import {
-  Users,
-  Boxes,
-  Cpu,
-  Activity,
-  Send,
-  Plus,
-  Minus,
-  ShieldOff,
-  ShieldCheck,
-  Coins,
-  CheckCircle2,
-  XCircle,
-  Loader2,
-  Terminal,
-  Trash2,
-  AlertTriangle,
-  ShieldAlert,
-  Globe,
+  Users, Boxes, Cpu, Activity, Search, Coins, ShieldOff, ShieldCheck,
+  Send, Power, PowerOff, KeyRound, ShieldAlert, RefreshCw, Loader2, X,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { requireBoss } from "@/lib/route-guards";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
-import { listRoster, setHubAccess, setBanned, adjustCredits } from "@/lib/boss-users.functions";
-import { sendTelegramReply } from "@/lib/telegram-inbox.functions";
-import { listSecretsInventory } from "@/lib/secrets-inventory.functions";
-import {
-  listPortalsForBoss,
-  listCalculatorsForBoss,
-  bossSetPortalVip,
-  bossSetCalculatorPublished,
-  listDomainDenylist,
-  addDomainToDenylist,
-  removeDomainFromDenylist,
-  getMaintenanceMode,
-  setMaintenanceMode,
-  purgeOldSecurityEvents,
-} from "@/lib/boss-command-center.functions";
-import { bossSetPortalPublished } from "@/lib/boss-admin-misc.functions";
-import { supabase } from "@/integrations/supabase/client";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { requireBoss } from "@/lib/route-guards";
+import { supabase } from "@/integrations/supabase/client";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
-import { MasterSwearToggle } from "@/components/MasterSwearToggle";
-import { BossStreamServerUrlCard } from "@/components/BossStreamServerUrlCard";
+  listRoster, adjustCredits, setBanned, setHubAccess, type RosterRow,
+} from "@/lib/boss-users.functions";
+import { bossSetPortalPublished } from "@/lib/boss-admin-misc.functions";
+import { sendTelegramReply } from "@/lib/telegram-inbox.functions";
+import { listSecretsInventory, type SecretsInventorySection } from "@/lib/secrets-inventory.functions";
 import { BossSpendPanel } from "@/components/BossSpendPanel";
 import { BossTodoNotepad } from "@/components/BossTodoNotepad";
 import { BossChatPanel } from "@/components/BossChatPanel";
+import { BossStreamServerUrlCard } from "@/components/BossStreamServerUrlCard";
+import { MasterSwearToggle } from "@/components/MasterSwearToggle";
 
 export const Route = createFileRoute("/boss/command-center")({
   beforeLoad: requireBoss,
   head: () => ({
     meta: [
       { title: "Command Center · Boss" },
-      { name: "description", content: "Unified Boss mega dashboard: users, portals, AI engine, ops & sync." },
+      { name: "description", content: "Unified Boss mega dashboard: users, portals, AI/system, telemetry." },
     ],
   }),
   component: CommandCenterPage,
@@ -77,1122 +38,524 @@ export const Route = createFileRoute("/boss/command-center")({
 function CommandCenterPage() {
   return (
     <div className="py-6">
-      <header className="mb-6">
+      <header className="mb-5">
         <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gold">
           Mega Command Center
         </h1>
         <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mt-1">
-          Unified surface · users · portals · AI · ops
+          Single surface · users · portals · ai · telemetry
         </p>
       </header>
 
       <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full bg-background/60 border border-border rounded-xl p-1 mb-6">
-          <TabsTrigger
-            value="users"
-            className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm gap-1.5 text-xs sm:text-sm"
-          >
-            <Users className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">1. Users & CRM</span>
-            <span className="sm:hidden">Users</span>
+        <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full bg-background/60 border border-gold/20 rounded-xl p-1 mb-5">
+          <TabsTrigger value="users" className="data-[state=active]:bg-gold/15 data-[state=active]:text-gold gap-1.5">
+            <Users className="h-3.5 w-3.5" /> Users & Comms
           </TabsTrigger>
-          <TabsTrigger
-            value="portals"
-            className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm gap-1.5 text-xs sm:text-sm"
-          >
-            <Boxes className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">2. Portals & Content</span>
-            <span className="sm:hidden">Portals</span>
+          <TabsTrigger value="portals" className="data-[state=active]:bg-gold/15 data-[state=active]:text-gold gap-1.5">
+            <Boxes className="h-3.5 w-3.5" /> Portals & Content
           </TabsTrigger>
-          <TabsTrigger
-            value="ai"
-            className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm gap-1.5 text-xs sm:text-sm"
-          >
-            <Cpu className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">3. AI Engine</span>
-            <span className="sm:hidden">AI</span>
+          <TabsTrigger value="ai" className="data-[state=active]:bg-gold/15 data-[state=active]:text-gold gap-1.5">
+            <Cpu className="h-3.5 w-3.5" /> AI & System
           </TabsTrigger>
-          <TabsTrigger
-            value="ops"
-            className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm gap-1.5 text-xs sm:text-sm"
-          >
-            <Activity className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">4. Ops & Sync</span>
-            <span className="sm:hidden">Ops</span>
+          <TabsTrigger value="ops" className="data-[state=active]:bg-gold/15 data-[state=active]:text-gold gap-1.5">
+            <Activity className="h-3.5 w-3.5" /> Telemetry & Ops
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="users">
-          <ModuleBoundary title="Users & CRM"><UsersCrmTab /></ModuleBoundary>
-        </TabsContent>
-        <TabsContent value="portals">
-          <ModuleBoundary title="Portals & Content"><PortalsContentTab /></ModuleBoundary>
-        </TabsContent>
-        <TabsContent value="ai">
-          <ModuleBoundary title="AI Engine"><AiEngineTab /></ModuleBoundary>
-        </TabsContent>
-        <TabsContent value="ops">
-          <ModuleBoundary title="Ops & Sync"><OpsSyncTab /></ModuleBoundary>
-        </TabsContent>
+        <TabsContent value="users"><UsersTab /></TabsContent>
+        <TabsContent value="portals"><PortalsTab /></TabsContent>
+        <TabsContent value="ai"><AiSystemTab /></TabsContent>
+        <TabsContent value="ops"><OpsTab /></TabsContent>
       </Tabs>
     </div>
   );
 }
 
-/* ────────────────────────────────────────────────────────────────
- * Error Boundary (per-module)
- * ──────────────────────────────────────────────────────────────── */
-class ModuleBoundary extends Component<
-  { title: string; children: ReactNode },
-  { error: Error | null }
-> {
-  state = { error: null as Error | null };
-  static getDerivedStateFromError(error: Error) {
-    return { error };
-  }
-  componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error(`[CommandCenter:${this.props.title}]`, error, info);
-  }
-  render() {
-    if (this.state.error) {
-      return (
-        <Card className="bg-background border-rose-500/40 shadow-2xl">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-rose-400">
-              <AlertTriangle className="h-4 w-4" /> {this.props.title} crashed
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <pre className="text-xs text-rose-300/80 whitespace-pre-wrap bg-black/40 p-3 rounded">
-              {this.state.error.message}
-            </pre>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-3"
-              onClick={() => this.setState({ error: null })}
-            >
-              Retry
-            </Button>
-          </CardContent>
-        </Card>
-      );
-    }
-    return this.props.children;
-  }
-}
+/* ─────────────────────────── Tab 1: Users & Comms ─────────────────────────── */
 
-/* ────────────────────────────────────────────────────────────────
- * Tab 1 — Users & CRM
- * ──────────────────────────────────────────────────────────────── */
-function UsersCrmTab() {
-  const [search, setSearch] = useState("");
-  const [debounced, setDebounced] = useState("");
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(search.trim()), 300);
-    return () => clearTimeout(id);
-  }, [search]);
+function UsersTab() {
+  const listFn = useServerFn(listRoster);
+  const banFn = useServerFn(setBanned);
+  const hubFn = useServerFn(setHubAccess);
+  const creditsFn = useServerFn(adjustCredits);
 
-  const listRosterFn = useServerFn(listRoster);
-  const qc = useQueryClient();
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["boss-roster", debounced],
-    queryFn: () => listRosterFn({ data: { search: debounced, limit: 50 } }),
-  });
-
-  const rows = data?.rows ?? [];
-  const userIds = rows.map((r) => r.id);
-
-  // Fetch telegram chat_id mapping for visible users
-  const { data: tgLinks } = useQuery({
-    queryKey: ["tg-links-for-roster", userIds],
-    enabled: userIds.length > 0,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("telegram_user_links")
-        .select("user_id, chat_id")
-        .in("user_id", userIds);
-      if (error) throw error;
-      const map = new Map<string, number>();
-      for (const row of data ?? []) {
-        if (row.chat_id) map.set(row.user_id, Number(row.chat_id));
-      }
-      return map;
-    },
-  });
-
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["boss-roster"] });
-
-  return (
-    <Card className="bg-background border-border shadow-2xl">
-      <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
-        <div>
-          <CardTitle className="text-lg">Users & CRM</CardTitle>
-          <p className="text-xs text-muted-foreground mt-1">
-            {rows.length} of {data?.hasMore ? `${rows.length}+` : rows.length} profiles
-          </p>
-        </div>
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search email or name…"
-          className="max-w-xs"
-        />
-      </CardHeader>
-      <CardContent>
-        {error && (
-          <div className="text-sm text-rose-400 py-4">
-            Failed to load roster: {(error as Error).message}
-          </div>
-        )}
-        <div className="rounded-lg border border-border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead className="w-[90px]">Rank</TableHead>
-                <TableHead className="w-[90px] text-right">Coins</TableHead>
-                <TableHead className="w-[110px]">Hub</TableHead>
-                <TableHead className="w-[100px]">Status</TableHead>
-                <TableHead className="text-right w-[280px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                    <Loader2 className="inline h-4 w-4 animate-spin mr-2" /> Loading roster…
-                  </TableCell>
-                </TableRow>
-              )}
-              {!isLoading && rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                    No users match.
-                  </TableCell>
-                </TableRow>
-              )}
-              {rows.map((u) => (
-                <UserRow
-                  key={u.id}
-                  user={u}
-                  chatId={tgLinks?.get(u.id) ?? null}
-                  onChange={invalidate}
-                />
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-type RosterUser = {
-  id: string;
-  email: string | null;
-  display_name?: string | null;
-  rank: string | null;
-  banned: boolean | null;
-  credits: number | null;
-  hub_access?: boolean | null;
-};
-
-function UserRow({
-  user,
-  chatId,
-  onChange,
-}: {
-  user: RosterUser;
-  chatId: number | null;
-  onChange: () => void;
-}) {
-  const setHubAccessFn = useServerFn(setHubAccess);
-  const setBannedFn = useServerFn(setBanned);
-  const adjustCreditsFn = useServerFn(adjustCredits);
-
-  const hubMut = useMutation({
-    mutationFn: () =>
-      setHubAccessFn({ data: { userId: user.id, enabled: !user.hub_access } }),
-    onSuccess: () => {
-      toast.success(`Hub ${!user.hub_access ? "granted" : "revoked"}`);
-      onChange();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const banMut = useMutation({
-    mutationFn: () =>
-      setBannedFn({
-        data: { userId: user.id, banned: !user.banned, reason: user.banned ? undefined : "boss:command-center" },
-      }),
-    onSuccess: () => {
-      toast.success(user.banned ? "User unbanned" : "User banned");
-      onChange();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  return (
-    <TableRow>
-      <TableCell>
-        <div className="font-medium text-sm">{user.email ?? "—"}</div>
-        {user.display_name && (
-          <div className="text-xs text-muted-foreground">{user.display_name}</div>
-        )}
-      </TableCell>
-      <TableCell>
-        <Badge variant="outline" className="text-[10px] uppercase tracking-wider">
-          {user.rank ?? "—"}
-        </Badge>
-      </TableCell>
-      <TableCell className="text-right tabular-nums font-mono text-sm">
-        {user.credits ?? 0}
-      </TableCell>
-      <TableCell>
-        <Badge variant={user.hub_access ? "default" : "secondary"} className="text-[10px]">
-          {user.hub_access ? "ENABLED" : "OFF"}
-        </Badge>
-      </TableCell>
-      <TableCell>
-        {user.banned ? (
-          <Badge variant="destructive" className="text-[10px]">BANNED</Badge>
-        ) : (
-          <Badge variant="outline" className="text-[10px] text-emerald-400 border-emerald-400/30">
-            ACTIVE
-          </Badge>
-        )}
-      </TableCell>
-      <TableCell className="text-right">
-        <div className="flex items-center justify-end gap-1.5 flex-wrap">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => hubMut.mutate()}
-            disabled={hubMut.isPending}
-            className="h-7 px-2 text-xs"
-            title="Toggle Hub Access"
-          >
-            {user.hub_access ? <ShieldOff className="h-3 w-3" /> : <ShieldCheck className="h-3 w-3" />}
-          </Button>
-          <Button
-            size="sm"
-            variant={user.banned ? "outline" : "destructive"}
-            onClick={() => banMut.mutate()}
-            disabled={banMut.isPending}
-            className="h-7 px-2 text-xs"
-            title={user.banned ? "Unban" : "Ban"}
-          >
-            {user.banned ? "Unban" : "Ban"}
-          </Button>
-          <AdjustCoinsDialog
-            user={user}
-            onApply={async (delta, reason) => {
-              await adjustCreditsFn({ data: { userId: user.id, delta, reason } });
-              onChange();
-            }}
-          />
-          {chatId !== null && (
-            <TelegramDialog chatId={chatId} userEmail={user.email ?? "user"} />
-          )}
-        </div>
-      </TableCell>
-    </TableRow>
-  );
-}
-
-function AdjustCoinsDialog({
-  user,
-  onApply,
-}: {
-  user: RosterUser;
-  onApply: (delta: number, reason: string) => Promise<void>;
-}) {
-  const [open, setOpen] = useState(false);
-  const [amount, setAmount] = useState("100");
-  const [reason, setReason] = useState("");
-  const [pending, setPending] = useState(false);
-
-  const submit = async (sign: 1 | -1) => {
-    const n = Math.trunc(Number(amount));
-    if (!Number.isFinite(n) || n <= 0) {
-      toast.error("Enter a positive amount");
-      return;
-    }
-    setPending(true);
-    try {
-      await onApply(sign * n, reason || "boss:adjust");
-      toast.success(`${sign > 0 ? "Added" : "Removed"} ${n} coins`);
-      setOpen(false);
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setPending(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" title="Adjust Coins">
-          <Coins className="h-3 w-3" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Adjust Coins</DialogTitle>
-          <DialogDescription>
-            {user.email} · current balance:{" "}
-            <span className="font-mono">{user.credits ?? 0}</span>
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3 py-2">
-          <div>
-            <label className="text-xs uppercase tracking-wider text-muted-foreground">Amount</label>
-            <Input
-              type="number"
-              min={1}
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              autoFocus
-            />
-          </div>
-          <div>
-            <label className="text-xs uppercase tracking-wider text-muted-foreground">Reason (optional)</label>
-            <Input
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="boss:adjust"
-            />
-          </div>
-        </div>
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => submit(-1)} disabled={pending}>
-            <Minus className="h-4 w-4 mr-1" /> Remove
-          </Button>
-          <Button onClick={() => submit(1)} disabled={pending}>
-            <Plus className="h-4 w-4 mr-1" /> Add
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function TelegramDialog({ chatId, userEmail }: { chatId: number; userEmail: string }) {
-  const [open, setOpen] = useState(false);
-  const [text, setText] = useState("");
-  const [pending, setPending] = useState(false);
-  const sendFn = useServerFn(sendTelegramReply);
-
-  const send = async () => {
-    const msg = text.trim();
-    if (!msg) {
-      toast.error("Empty message");
-      return;
-    }
-    setPending(true);
-    try {
-      await sendFn({ data: { chatId, text: msg } });
-      toast.success("Telegram message sent");
-      setText("");
-      setOpen(false);
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setPending(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-7 px-2 text-xs"
-          title="Message via Telegram"
-        >
-          <Send className="h-3 w-3" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Telegram Message</DialogTitle>
-          <DialogDescription>
-            DM {userEmail} via the platform bot · chat id <span className="font-mono">{chatId}</span>
-          </DialogDescription>
-        </DialogHeader>
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Write your message…"
-          rows={5}
-          maxLength={4000}
-          className="w-full rounded-md border border-input bg-background p-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        />
-        <DialogFooter>
-          <Button onClick={send} disabled={pending}>
-            <Send className="h-4 w-4 mr-1" /> Send
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────────
- * Tab 3 — AI Engine
- * ──────────────────────────────────────────────────────────────── */
-function AiEngineTab() {
-  const listSecretsFn = useServerFn(listSecretsInventory);
-  const { data: inventory } = useQuery({
-    queryKey: ["secrets-inventory"],
-    queryFn: () => listSecretsFn(),
-  });
-
-  // Build a status grid for the key AI / platform services
-  const services: Array<{ key: string; label: string; secretName: string }> = [
-    { key: "suno", label: "Suno (Music Gen)", secretName: "SUNO_API_KEY" },
-    { key: "perplexity", label: "Perplexity (Research)", secretName: "PERPLEXITY_API_KEY" },
-    { key: "lovable", label: "Lovable AI Gateway", secretName: "LOVABLE_API_KEY" },
-    { key: "shapes", label: "Shapes Inference", secretName: "SHAPES_API_KEY" },
-    { key: "telegram", label: "Telegram Bot", secretName: "TELEGRAM_API_KEY" },
-    { key: "supabase", label: "Lovable Cloud (DB)", secretName: "__supabase__" },
-  ];
-
-  // We can know a secret is *catalogued*; presence in env is not exposed.
-  // Treat catalogued+ping-able as "configured". Supabase we ping directly.
-  const cataloguedNames = new Set<string>(
-    inventory?.sections.flatMap((s) => s.entries.map((e) => e.name)) ?? [],
-  );
-
-  return (
-    <div className="grid gap-6 lg:grid-cols-3">
-      <div className="lg:col-span-2 space-y-6">
-        <Card className="bg-background border-border shadow-2xl">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Activity className="h-4 w-4" /> Connection Status
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">
-              Live health of upstream AI providers and the platform database.
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {services.map((s) => (
-                <ServiceHealthTile
-                  key={s.key}
-                  label={s.label}
-                  serviceKey={s.key}
-                  configured={s.key === "supabase" ? true : cataloguedNames.has(s.secretName)}
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <PlatformLogViewer />
-      </div>
-
-      <div className="space-y-6">
-        <MasterSwearToggle />
-        <BossStreamServerUrlCard />
-      </div>
-    </div>
-  );
-}
-
-function ServiceHealthTile({
-  label,
-  serviceKey,
-  configured,
-}: {
-  label: string;
-  serviceKey: string;
-  configured: boolean;
-}) {
-  const [status, setStatus] = useState<"checking" | "ok" | "down" | "unconfigured">(
-    configured ? "checking" : "unconfigured",
-  );
-  const [latency, setLatency] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!configured) {
-      setStatus("unconfigured");
-      return;
-    }
-    let alive = true;
-    const t0 = performance.now();
-    (async () => {
-      try {
-        if (serviceKey === "supabase") {
-          const { error } = await supabase.from("profiles").select("id", { head: true, count: "exact" }).limit(1);
-          if (!alive) return;
-          setStatus(error ? "down" : "ok");
-        } else {
-          // For external providers we cannot probe from the browser (CORS / secrets).
-          // Catalogued = "configured & ready" until a probe endpoint exists.
-          setStatus("ok");
-        }
-      } catch {
-        if (alive) setStatus("down");
-      } finally {
-        if (alive) setLatency(Math.round(performance.now() - t0));
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [serviceKey, configured]);
-
-  const tone =
-    status === "ok"
-      ? "border-emerald-500/30 bg-emerald-500/5"
-      : status === "down"
-      ? "border-rose-500/40 bg-rose-500/5"
-      : status === "unconfigured"
-      ? "border-border bg-muted/20"
-      : "border-border bg-background";
-
-  return (
-    <div className={`rounded-lg border ${tone} p-3 flex items-center justify-between gap-2`}>
-      <div>
-        <div className="text-sm font-medium">{label}</div>
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-          {status === "checking" && "Checking…"}
-          {status === "ok" && `Healthy${latency != null ? ` · ${latency}ms` : ""}`}
-          {status === "down" && "Unreachable"}
-          {status === "unconfigured" && "Not configured"}
-        </div>
-      </div>
-      {status === "checking" && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-      {status === "ok" && <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
-      {status === "down" && <XCircle className="h-4 w-4 text-rose-400" />}
-      {status === "unconfigured" && <XCircle className="h-4 w-4 text-muted-foreground" />}
-    </div>
-  );
-}
-
-type AiLogRow = {
-  id: string;
-  source: string;
-  level: string;
-  message: string;
-  mood: string | null;
-  created_at: string;
-};
-
-function PlatformLogViewer() {
-  const [rows, setRows] = useState<AiLogRow[]>([]);
+  const [rows, setRows] = useState<RosterRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [tgFor, setTgFor] = useState<RosterRow | null>(null);
 
-  useEffect(() => {
-    let alive = true;
-    supabase
-      .from("ai_logs")
-      .select("id, source, level, message, mood, created_at")
-      .order("created_at", { ascending: false })
-      .limit(50)
-      .then(({ data }) => {
-        if (!alive) return;
-        setRows(((data as AiLogRow[]) ?? []));
-        setLoading(false);
-      });
-    const channel = supabase
-      .channel("ai-logs-command-center")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "ai_logs" },
-        (payload: any) => {
-          const row = payload.new as AiLogRow;
-          setRows((rs) => [row, ...rs].slice(0, 50));
-        },
-      )
-      .subscribe();
-    return () => {
-      alive = false;
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  const reload = async () => {
+    setLoading(true);
+    try {
+      const r: any = await listFn({ data: { search, limit: 50 } });
+      setRows(r?.rows ?? []);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to load roster");
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => { reload(); /* eslint-disable-next-line */ }, []);
+
+  const onSearch = (e: React.FormEvent) => { e.preventDefault(); reload(); };
+
+  const toggleHub = async (r: RosterRow) => {
+    setBusyId(r.id);
+    try {
+      await hubFn({ data: { userId: r.id, enabled: !r.hub_access } });
+      setRows((rs) => rs.map((x) => x.id === r.id ? { ...x, hub_access: !r.hub_access } : x));
+      toast.success(`Hub access ${!r.hub_access ? "granted" : "revoked"}`);
+    } catch (e: any) { toast.error(e?.message || "Failed"); }
+    finally { setBusyId(null); }
+  };
+
+  const toggleBan = async (r: RosterRow) => {
+    setBusyId(r.id);
+    try {
+      await banFn({ data: { userId: r.id, banned: !r.banned, reason: r.banned ? undefined : "Boss action" } });
+      setRows((rs) => rs.map((x) => x.id === r.id ? { ...x, banned: !r.banned } : x));
+      toast.success(!r.banned ? "Banned" : "Unbanned");
+    } catch (e: any) { toast.error(e?.message || "Failed"); }
+    finally { setBusyId(null); }
+  };
+
+  const adjust = async (r: RosterRow, delta: number) => {
+    setBusyId(r.id);
+    try {
+      await creditsFn({ data: { userId: r.id, delta, reason: delta > 0 ? "Boss gift" : "Boss deduct" } });
+      setRows((rs) => rs.map((x) => x.id === r.id ? { ...x, credits: Math.max(0, (x.credits || 0) + delta) } : x));
+      toast.success(`${delta > 0 ? "+" : ""}${delta} coins`);
+    } catch (e: any) { toast.error(e?.message || "Failed"); }
+    finally { setBusyId(null); }
+  };
 
   return (
-    <Card className="bg-background border-border shadow-2xl">
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Terminal className="h-4 w-4" /> Platform Log Viewer
-        </CardTitle>
-        <p className="text-xs text-muted-foreground">Last 50 entries from ai_logs (live).</p>
-      </CardHeader>
-      <CardContent>
-        <div className="rounded-lg border border-border bg-black/60 max-h-[420px] overflow-y-auto p-3 font-mono text-[11px] space-y-1">
-          {loading && (
-            <div className="text-muted-foreground">
-              <Loader2 className="inline h-3 w-3 animate-spin mr-2" /> Loading…
-            </div>
-          )}
-          {!loading && rows.length === 0 && (
-            <div className="text-muted-foreground italic">// no log entries yet</div>
-          )}
+    <div className="rounded-2xl border border-gold/20 bg-background/40 p-4 sm:p-5">
+      <form onSubmit={onSearch} className="flex gap-2 mb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by email or name…"
+            className="pl-9 bg-background/60"
+          />
+        </div>
+        <Button type="submit" variant="outline" className="border-gold/30">
+          <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Search
+        </Button>
+      </form>
+
+      {loading ? (
+        <p className="py-10 text-center text-sm text-muted-foreground">Loading roster…</p>
+      ) : rows.length === 0 ? (
+        <p className="py-10 text-center text-sm text-muted-foreground">No users found.</p>
+      ) : (
+        <div className="divide-y divide-white/5 -mx-2">
           {rows.map((r) => {
-            const tone =
-              r.level === "error"
-                ? "text-rose-300"
-                : r.level === "warn"
-                ? "text-amber-300"
-                : "text-white/85";
+            const busy = busyId === r.id;
             return (
-              <div key={r.id} className={tone}>
-                <span className="text-muted-foreground">
-                  [{new Date(r.created_at).toLocaleTimeString()}]
-                </span>{" "}
-                <span className="text-primary/80">{r.source}</span>/
-                <span className="uppercase">{r.level}</span> ▸ {r.message}
+              <div key={r.id} className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 px-2 py-3 items-center hover:bg-white/[0.02]">
+                <div className="min-w-0">
+                  <p className="font-semibold text-sm truncate">{r.display_name || r.email}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {r.email} · <span className="uppercase tracking-widest">{r.rank}</span>
+                    {r.banned && <span className="ml-2 text-destructive">· BANNED</span>}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 justify-end">
+                  <ToggleChip
+                    on={!!r.hub_access}
+                    label="Hub"
+                    onClick={() => toggleHub(r)}
+                    disabled={busy}
+                    activeTint="cyan"
+                  />
+                  <ToggleChip
+                    on={r.banned}
+                    label={r.banned ? "Banned" : "Active"}
+                    onClick={() => toggleBan(r)}
+                    disabled={busy}
+                    activeTint="red"
+                  />
+                  <div className="inline-flex items-center gap-1 rounded-md border border-gold/30 bg-gold/5 px-2 py-1">
+                    <Coins className="h-3 w-3 text-gold" />
+                    <span className="font-mono text-xs font-bold text-gold tabular-nums w-12 text-right">{r.credits ?? 0}</span>
+                    <button
+                      type="button"
+                      onClick={() => adjust(r, 100)}
+                      disabled={busy}
+                      className="ml-1 text-[10px] font-bold uppercase tracking-widest text-emerald-400 hover:text-emerald-300 disabled:opacity-40"
+                    >+100</button>
+                    <button
+                      type="button"
+                      onClick={() => adjust(r, -100)}
+                      disabled={busy}
+                      className="text-[10px] font-bold uppercase tracking-widest text-destructive hover:text-destructive/80 disabled:opacity-40"
+                    >−100</button>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="border-cyan-400/40 text-cyan-300 hover:bg-cyan-400/10 h-8"
+                    onClick={() => setTgFor(r)}
+                  >
+                    <Send className="h-3 w-3 mr-1" /> Telegram
+                  </Button>
+                </div>
               </div>
             );
           })}
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      {tgFor && <TelegramDialog user={tgFor} onClose={() => setTgFor(null)} />}
+    </div>
   );
 }
 
-function ModulePlaceholder({ title }: { title: string }) {
+function ToggleChip({
+  on, label, onClick, disabled, activeTint,
+}: { on: boolean; label: string; onClick: () => void; disabled?: boolean; activeTint: "cyan" | "red" }) {
+  const tint =
+    on && activeTint === "cyan" ? "border-cyan-400/50 bg-cyan-400/10 text-cyan-300"
+    : on && activeTint === "red" ? "border-destructive/50 bg-destructive/10 text-destructive"
+    : "border-white/10 bg-white/5 text-muted-foreground hover:text-foreground";
   return (
-    <div className="rounded-xl border border-border bg-background shadow-2xl p-8 sm:p-12">
-      <div className="flex flex-col items-center justify-center gap-4 text-center">
-        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
-          <Activity className="h-6 w-6 text-primary/60" />
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest transition disabled:opacity-50 ${tint}`}
+    >
+      {on ? <ShieldCheck className="h-3 w-3" /> : <ShieldOff className="h-3 w-3" />}
+      {label}
+    </button>
+  );
+}
+
+function TelegramDialog({ user, onClose }: { user: RosterRow; onClose: () => void }) {
+  const sendFn = useServerFn(sendTelegramReply);
+  const [chatId, setChatId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("telegram_user_links")
+        .select("chat_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      setChatId((data as any)?.chat_id ?? null);
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [user.id]);
+
+  const send = async () => {
+    if (!chatId || !text.trim()) return;
+    setBusy(true);
+    try {
+      await sendFn({ data: { chatId: Number(chatId), text: text.trim() } });
+      toast.success("Telegram message sent");
+      onClose();
+    } catch (e: any) {
+      toast.error(e?.message || "Send failed");
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
+      <div
+        className="w-full max-w-md rounded-2xl border border-gold/30 bg-background p-5 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-bold text-sm uppercase tracking-widest text-gold">Send Telegram</h3>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
         </div>
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">
-            Loading {title} Module…
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1 max-w-sm">
-            This operational surface is being prepared. Check back shortly for live data.
-          </p>
-        </div>
+        <p className="text-xs text-muted-foreground mb-3">
+          To: <span className="text-foreground font-semibold">{user.display_name || user.email}</span>
+        </p>
+        {loading ? (
+          <p className="text-xs text-muted-foreground py-6 text-center">Looking up Telegram link…</p>
+        ) : !chatId ? (
+          <p className="text-xs text-destructive py-6 text-center">User has not connected Telegram.</p>
+        ) : (
+          <>
+            <Textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Type your message…"
+              rows={4}
+              className="bg-background/60 mb-3"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={onClose}>Cancel</Button>
+              <Button onClick={send} disabled={busy || !text.trim()} className="bg-gold text-background hover:bg-gold/90">
+                {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Send className="h-3.5 w-3.5 mr-1.5" />}
+                Send
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
-/* ────────────────────────────────────────────────────────────────
- * Tab 2 — Portals & Content
- * ──────────────────────────────────────────────────────────────── */
-function PortalsContentTab() {
-  const listPortalsFn = useServerFn(listPortalsForBoss);
-  const listCalcsFn = useServerFn(listCalculatorsForBoss);
-  const qc = useQueryClient();
+/* ─────────────────────────── Tab 2: Portals & Content ─────────────────────────── */
 
-  const portalsQ = useQuery({
-    queryKey: ["cc-portals"],
-    queryFn: () => listPortalsFn(),
-  });
-  const calcsQ = useQuery({
-    queryKey: ["cc-calculators"],
-    queryFn: () => listCalcsFn(),
-  });
+type PortalRow = { id: string; slug: string; name: string; kind: string; published: boolean; view_count: number };
 
-  const setPublishedFn = useServerFn(bossSetPortalPublished);
-  const setVipFn = useServerFn(bossSetPortalVip);
-  const setCalcPubFn = useServerFn(bossSetCalculatorPublished);
+function PortalsTab() {
+  const publishFn = useServerFn(bossSetPortalPublished);
+  const [rows, setRows] = useState<PortalRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [filter, setFilter] = useState("");
 
-  const publishedMut = useMutation({
-    mutationFn: (v: { id: string; published: boolean }) =>
-      setPublishedFn({ data: { portal_id: v.id, published: v.published } }),
-    onSuccess: (_d, v) => {
-      toast.success(`Portal ${v.published ? "published" : "unpublished"}`);
-      qc.invalidateQueries({ queryKey: ["cc-portals"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const reload = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("portals")
+      .select("id, slug, name, kind, published, view_count")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) toast.error(error.message);
+    setRows((data ?? []) as PortalRow[]);
+    setLoading(false);
+  };
+  useEffect(() => { reload(); }, []);
 
-  const vipMut = useMutation({
-    mutationFn: (v: { id: string; vip: boolean }) =>
-      setVipFn({ data: { portal_id: v.id, vip: v.vip } }),
-    onSuccess: (_d, v) => {
-      toast.success(`VIP gate ${v.vip ? "ON" : "OFF"}`);
-      qc.invalidateQueries({ queryKey: ["cc-portals"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const togglePublished = async (r: PortalRow) => {
+    setBusyId(r.id);
+    try {
+      await publishFn({ data: { portal_id: r.id, published: !r.published } });
+      setRows((rs) => rs.map((x) => x.id === r.id ? { ...x, published: !r.published } : x));
+      toast.success(!r.published ? "Published" : "Unpublished");
+    } catch (e: any) { toast.error(e?.message || "Failed"); }
+    finally { setBusyId(null); }
+  };
 
-  const calcMut = useMutation({
-    mutationFn: (v: { id: string; published: boolean }) =>
-      setCalcPubFn({ data: { id: v.id, published: v.published } }),
-    onSuccess: (_d, v) => {
-      toast.success(`Calculator ${v.published ? "published" : "unpublished"}`);
-      qc.invalidateQueries({ queryKey: ["cc-calculators"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const filtered = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) => r.name.toLowerCase().includes(q) || r.slug.toLowerCase().includes(q) || r.kind.toLowerCase().includes(q));
+  }, [rows, filter]);
 
   return (
-    <div className="space-y-6">
-      <Card className="bg-background border-border shadow-2xl">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Boxes className="h-4 w-4 text-gold" /> Portal Manager
-          </CardTitle>
-          <p className="text-xs text-muted-foreground">
-            {portalsQ.data?.rows.length ?? 0} portals · toggle publish &amp; VIP gate inline.
-          </p>
-        </CardHeader>
-        <CardContent>
-          {portalsQ.isLoading && (
-            <div className="text-sm text-muted-foreground py-4">
-              <Loader2 className="inline h-4 w-4 animate-spin mr-2" /> Loading portals…
-            </div>
-          )}
-          {portalsQ.error && (
-            <div className="text-sm text-rose-400 py-2">
-              {(portalsQ.error as Error).message}
-            </div>
-          )}
-          <div className="rounded-lg border border-border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Portal</TableHead>
-                  <TableHead className="w-[110px]">Kind</TableHead>
-                  <TableHead className="w-[90px] text-right">Views</TableHead>
-                  <TableHead className="w-[130px] text-center">Published</TableHead>
-                  <TableHead className="w-[130px] text-center">VIP Gate</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(portalsQ.data?.rows ?? []).map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell>
-                      <div className="font-medium text-sm">{p.name}</div>
-                      <div className="text-[10px] text-muted-foreground font-mono">/{p.slug}</div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-[10px] uppercase">
-                        {p.kind ?? "—"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-sm">{p.view_count}</TableCell>
-                    <TableCell className="text-center">
-                      <Switch
-                        checked={p.published}
-                        disabled={publishedMut.isPending}
-                        onCheckedChange={(v) => publishedMut.mutate({ id: p.id, published: v })}
-                      />
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Switch
-                        checked={p.vip}
-                        disabled={vipMut.isPending}
-                        onCheckedChange={(v) => vipMut.mutate({ id: p.id, vip: v })}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {!portalsQ.isLoading && (portalsQ.data?.rows.length ?? 0) === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
-                      No portals yet.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
+      <div className="rounded-2xl border border-gold/20 bg-background/40 p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-gold inline-flex items-center gap-2">
+            <Boxes className="h-4 w-4" /> Portals · {rows.length}
+          </h2>
+          <Input
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Filter…"
+            className="max-w-[200px] bg-background/60 h-8 text-xs"
+          />
+        </div>
 
-      <Card className="bg-background border-border shadow-2xl">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Boxes className="h-4 w-4 text-gold" /> Calculators
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-lg border border-border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Calculator</TableHead>
-                  <TableHead className="w-[90px]">VIP</TableHead>
-                  <TableHead className="w-[130px] text-center">Published</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(calcsQ.data?.rows ?? []).map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell>
-                      <div className="font-medium text-sm">{c.name}</div>
-                      <div className="text-[10px] text-muted-foreground font-mono">/{c.slug}</div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={c.vip ? "default" : "outline"} className="text-[10px]">
-                        {c.vip ? "VIP" : "FREE"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Switch
-                        checked={c.published}
-                        disabled={calcMut.isPending}
-                        onCheckedChange={(v) => calcMut.mutate({ id: c.id, published: v })}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {!calcsQ.isLoading && (calcsQ.data?.rows.length ?? 0) === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center text-muted-foreground py-6">
-                      No calculators.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+        {loading ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">Loading portals…</p>
+        ) : filtered.length === 0 ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">No portals.</p>
+        ) : (
+          <div className="divide-y divide-white/5">
+            {filtered.map((r) => (
+              <div key={r.id} className="flex items-center justify-between gap-3 py-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-sm truncate">{r.name}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    <span className="uppercase tracking-widest">{r.kind}</span> · /{r.slug} · {r.view_count} views
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => togglePublished(r)}
+                  disabled={busyId === r.id}
+                  className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest transition disabled:opacity-50 ${
+                    r.published
+                      ? "border-emerald-400/50 bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/20"
+                      : "border-white/10 bg-white/5 text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {r.published ? <Power className="h-3 w-3" /> : <PowerOff className="h-3 w-3" />}
+                  {r.published ? "Live" : "Hidden"}
+                </button>
+              </div>
+            ))}
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
-      <DomainDenylistManager />
+      <DomainDenylistInline />
     </div>
   );
 }
 
-function DomainDenylistManager() {
-  const listFn = useServerFn(listDomainDenylist);
-  const addFn = useServerFn(addDomainToDenylist);
-  const removeFn = useServerFn(removeDomainFromDenylist);
-  const qc = useQueryClient();
-  const { data, isLoading } = useQuery({
-    queryKey: ["cc-denylist"],
-    queryFn: () => listFn(),
-  });
-
+function DomainDenylistInline() {
+  type Row = { id: string; domain: string; note: string; created_at: string };
+  const [rows, setRows] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(true);
   const [domain, setDomain] = useState("");
   const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const addMut = useMutation({
-    mutationFn: () => addFn({ data: { domain: domain.trim(), note: note.trim() || undefined } }),
-    onSuccess: () => {
-      toast.success(`Added ${domain.trim()} to denylist`);
-      setDomain("");
-      setNote("");
-      qc.invalidateQueries({ queryKey: ["cc-denylist"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const reload = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("domain_denylist")
+      .select("id, domain, note, created_at")
+      .order("created_at", { ascending: false });
+    if (error) toast.error(error.message);
+    setRows((data ?? []) as Row[]);
+    setLoading(false);
+  };
+  useEffect(() => { reload(); }, []);
 
-  const removeMut = useMutation({
-    mutationFn: (id: string) => removeFn({ data: { id } }),
-    onSuccess: () => {
-      toast.success("Removed from denylist");
-      qc.invalidateQueries({ queryKey: ["cc-denylist"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const add = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const d = domain.trim().toLowerCase();
+    if (!d) return;
+    setBusy(true);
+    const { error } = await supabase.from("domain_denylist").insert({ domain: d, note: note.trim() });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    setDomain(""); setNote("");
+    toast.success("Blocked");
+    reload();
+  };
+
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("domain_denylist").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    setRows((rs) => rs.filter((r) => r.id !== id));
+    toast.success("Removed");
+  };
 
   return (
-    <Card className="bg-background border-border shadow-2xl">
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Globe className="h-4 w-4 text-gold" /> Domain Denylist
-        </CardTitle>
-        <p className="text-xs text-muted-foreground">
-          Blocked domains across portals, URL checks, and outbound link sanitization.
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex gap-2 flex-wrap">
-          <Input
-            value={domain}
-            onChange={(e) => setDomain(e.target.value)}
-            placeholder="example.com"
-            className="flex-1 min-w-[200px]"
-          />
-          <Input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Reason (optional)"
-            className="flex-1 min-w-[200px]"
-          />
-          <Button
-            onClick={() => addMut.mutate()}
-            disabled={addMut.isPending || !domain.trim()}
-            className="bg-gold text-black hover:bg-gold/90 font-semibold"
-          >
-            <Plus className="h-4 w-4 mr-1" /> Block
-          </Button>
-        </div>
-        <div className="rounded-lg border border-border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Domain</TableHead>
-                <TableHead>Note</TableHead>
-                <TableHead className="w-[80px] text-right">—</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading && (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground py-4">
-                    <Loader2 className="inline h-4 w-4 animate-spin mr-2" /> Loading…
-                  </TableCell>
-                </TableRow>
-              )}
-              {!isLoading && (data?.rows.length ?? 0) === 0 && (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground py-4">
-                    No domains blocked.
-                  </TableCell>
-                </TableRow>
-              )}
-              {(data?.rows ?? []).map((r) => (
-                <TableRow key={r.id}>
-                  <TableCell className="font-mono text-xs">{r.domain}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{r.note || "—"}</TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => removeMut.mutate(r.id)}
-                      disabled={removeMut.isPending}
-                      className="h-7 px-2"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+    <div className="rounded-2xl border border-destructive/30 bg-destructive/[0.03] p-4 sm:p-5">
+      <h2 className="text-sm font-bold uppercase tracking-widest text-destructive inline-flex items-center gap-2 mb-3">
+        <ShieldAlert className="h-4 w-4" /> Domain Denylist
+      </h2>
 
-/* ────────────────────────────────────────────────────────────────
- * Tab 4 — Ops & Sync
- * ──────────────────────────────────────────────────────────────── */
-function OpsSyncTab() {
-  return (
-    <div className="space-y-6">
-      <ModuleBoundary title="Spend">
-        <BossSpendPanel />
-      </ModuleBoundary>
+      <form onSubmit={add} className="space-y-2 mb-4">
+        <Input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="example.com" className="bg-background/60 h-9 text-xs font-mono" />
+        <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Reason (optional)" className="bg-background/60 h-9 text-xs" />
+        <Button type="submit" disabled={busy || !domain.trim()} className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground h-8 text-xs uppercase tracking-widest">
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Block"}
+        </Button>
+      </form>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <ModuleBoundary title="Todo">
-          <BossTodoNotepad />
-        </ModuleBoundary>
-        <ModuleBoundary title="Swearing Agent">
-          <BossChatPanel />
-        </ModuleBoundary>
-      </div>
-
-      <ModuleBoundary title="System Emergency">
-        <SystemEmergency />
-      </ModuleBoundary>
+      {loading ? (
+        <p className="text-xs text-muted-foreground py-4 text-center">Loading…</p>
+      ) : rows.length === 0 ? (
+        <p className="text-xs text-muted-foreground py-4 text-center">No blocked domains.</p>
+      ) : (
+        <ul className="space-y-1 max-h-72 overflow-y-auto">
+          {rows.map((r) => (
+            <li key={r.id} className="flex items-center justify-between gap-2 rounded-md border border-white/5 bg-background/30 px-2 py-1.5">
+              <div className="min-w-0">
+                <p className="font-mono text-xs truncate">{r.domain}</p>
+                {r.note && <p className="text-[10px] text-muted-foreground truncate">{r.note}</p>}
+              </div>
+              <button onClick={() => remove(r.id)} className="text-destructive hover:text-destructive/80 shrink-0">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
 
-function SystemEmergency() {
-  const getMaintFn = useServerFn(getMaintenanceMode);
-  const setMaintFn = useServerFn(setMaintenanceMode);
-  const purgeFn = useServerFn(purgeOldSecurityEvents);
-  const qc = useQueryClient();
+/* ─────────────────────────── Tab 3: AI & System ─────────────────────────── */
 
-  const maintQ = useQuery({
-    queryKey: ["cc-maintenance"],
-    queryFn: () => getMaintFn(),
-  });
+function AiSystemTab() {
+  const listFn = useServerFn(listSecretsInventory);
+  const [sections, setSections] = useState<SecretsInventorySection[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const maintMut = useMutation({
-    mutationFn: (enabled: boolean) => setMaintFn({ data: { enabled } }),
-    onSuccess: (_d, enabled) => {
-      toast.success(`Maintenance mode ${enabled ? "ENABLED" : "disabled"}`);
-      qc.invalidateQueries({ queryKey: ["cc-maintenance"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const purgeMut = useMutation({
-    mutationFn: () => purgeFn(),
-    onSuccess: (res) => {
-      toast.success(`Purged ${res.deleted} security events older than 30 days`);
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const enabled = !!maintQ.data?.enabled;
+  useEffect(() => {
+    (async () => {
+      try {
+        const r: any = await listFn();
+        setSections(r?.sections ?? []);
+      } catch (e: any) { toast.error(e?.message || "Failed"); }
+      finally { setLoading(false); }
+    })();
+  }, [listFn]);
 
   return (
-    <Card className="bg-background border-rose-500/30 shadow-2xl">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-rose-300">
-          <ShieldAlert className="h-4 w-4" /> System Emergency
-        </CardTitle>
-        <p className="text-xs text-muted-foreground">
-          God-mode switches. Affects every signed-in user immediately.
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        <div
-          className={`flex items-center justify-between gap-4 rounded-lg border p-4 ${
-            enabled
-              ? "border-rose-500/40 bg-rose-500/10"
-              : "border-border bg-background"
-          }`}
-        >
-          <div>
-            <div className="font-semibold text-base flex items-center gap-2">
-              <AlertTriangle className={`h-4 w-4 ${enabled ? "text-rose-400" : "text-muted-foreground"}`} />
-              Maintenance Mode
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Sets <code className="text-gold">app_settings.app_maintenance</code>.
-              {maintQ.data?.updated_at && (
-                <> Last changed {new Date(maintQ.data.updated_at).toLocaleString()}.</>
-              )}
-            </p>
-          </div>
-          <Switch
-            checked={enabled}
-            disabled={maintMut.isPending || maintQ.isLoading}
-            onCheckedChange={(v) => maintMut.mutate(v)}
-          />
+    <div className="space-y-5">
+      <div className="rounded-2xl border border-gold/20 bg-background/40 p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-gold inline-flex items-center gap-2">
+            <KeyRound className="h-4 w-4" /> AI & API Status
+          </h2>
+          <MasterSwearToggle />
         </div>
 
-        <div className="flex items-center justify-between gap-4 rounded-lg border border-border p-4">
-          <div>
-            <div className="font-semibold text-base flex items-center gap-2">
-              <Trash2 className="h-4 w-4 text-gold" /> Purge Old Logs
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Deletes <code>security_events</code> rows older than 30 days.
-            </p>
-          </div>
-          <Button
-            onClick={() => {
-              if (confirm("Permanently delete security_events older than 30 days?")) {
-                purgeMut.mutate();
-              }
-            }}
-            disabled={purgeMut.isPending}
-            className="bg-gold text-black hover:bg-gold/90 font-semibold"
-          >
-            {purgeMut.isPending ? (
-              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-            ) : (
-              <Trash2 className="h-4 w-4 mr-1" />
+        {loading ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">Loading inventory…</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {sections.flatMap((s) =>
+              s.entries.map((e) => (
+                <div
+                  key={e.name}
+                  className="rounded-lg border border-white/10 bg-background/40 px-3 py-3"
+                  style={{ boxShadow: `inset 0 0 0 1px ${s.tint}22` }}
+                >
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="font-mono text-[11px] font-bold truncate" style={{ color: s.tint }}>{e.name}</span>
+                    <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_currentColor]" aria-label="configured" />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground line-clamp-2">{e.purpose}</p>
+                  {e.tags.length > 0 && (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {e.tags.map((t) => (
+                        <span key={t} className="text-[9px] uppercase tracking-widest text-white/40 border border-white/10 rounded px-1">{t}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
             )}
-            Purge
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+          </div>
+        )}
+      </div>
+
+      <BossStreamServerUrlCard />
+    </div>
+  );
+}
+
+/* ─────────────────────────── Tab 4: Telemetry & Ops ─────────────────────────── */
+
+function OpsTab() {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-5">
+      <div className="space-y-5 min-w-0">
+        <BossSpendPanel />
+        <BossTodoNotepad />
+      </div>
+      <div className="rounded-2xl border border-gold/20 bg-background/40 p-4">
+        <h2 className="text-sm font-bold uppercase tracking-widest text-gold mb-3">Reality Check Chat</h2>
+        <BossChatPanel />
+      </div>
+    </div>
   );
 }
