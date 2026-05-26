@@ -104,7 +104,7 @@ function UsersTab() {
   const toggleHub = async (r: RosterRow) => {
     setBusyId(r.id);
     try {
-      await hubFn({ data: { userId: r.id, value: !r.hub_access } });
+      await hubFn({ data: { userId: r.id, enabled: !r.hub_access } });
       setRows((rs) => rs.map((x) => x.id === r.id ? { ...x, hub_access: !r.hub_access } : x));
       toast.success(`Hub access ${!r.hub_access ? "granted" : "revoked"}`);
     } catch (e: any) { toast.error(e?.message || "Failed"); }
@@ -114,7 +114,7 @@ function UsersTab() {
   const toggleBan = async (r: RosterRow) => {
     setBusyId(r.id);
     try {
-      await banFn({ data: { userId: r.id, banned: !r.banned, reason: r.banned ? null : "Boss action" } });
+      await banFn({ data: { userId: r.id, banned: !r.banned, reason: r.banned ? undefined : "Boss action" } });
       setRows((rs) => rs.map((x) => x.id === r.id ? { ...x, banned: !r.banned } : x));
       toast.success(!r.banned ? "Banned" : "Unbanned");
     } catch (e: any) { toast.error(e?.message || "Failed"); }
