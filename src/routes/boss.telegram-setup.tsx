@@ -394,7 +394,6 @@ export function TelegramSetupPage() {
           aid, not a server-side audit trail. Re-run any step at any time;
           BotFather always overwrites the previous value.
         </p>
-      </div>
     </div>
   );
 }
