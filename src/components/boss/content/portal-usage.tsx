@@ -1,10 +1,22 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Coins, RefreshCw, Search, Download, Gift } from "lucide-react";
+import {
+  Coins,
+  RefreshCw,
+  Search,
+  Download,
+  Gift,
+  Activity,
+  FileText,
+  ShieldCheck,
+  Clock,
+  Inbox,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 type AuditRow = {
   id: string;
@@ -16,6 +28,19 @@ type AuditRow = {
   created_at: string;
 };
 type ProfileLite = { id: string; email: string | null };
+
+function relativeTime(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return `${sec}s ago`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  if (day < 7) return `${day}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
 
 export function PortalUsagePanel() {
   const [rows, setRows] = useState<AuditRow[]>([]);
@@ -52,7 +77,9 @@ export function PortalUsagePanel() {
     }
     setLoading(false);
   }
-  useEffect(() => { void load(); }, [limit]);
+  useEffect(() => {
+    void load();
+  }, [limit]);
 
   const filtered = useMemo(() => {
     const t = q.trim().toLowerCase();
@@ -94,33 +121,43 @@ export function PortalUsagePanel() {
 
   return (
     <div className="min-h-screen text-foreground p-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
-        <div>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Coins className="h-6 w-6 text-primary" />
             Portal Usage Audit
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Every charged (or free) portal action, newest first.
-          </p>
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            <p className="text-sm text-muted-foreground">
+              Charged and free portal activity, newest first.
+            </p>
+            <Badge variant="outline" className="text-xs gap-1 font-normal">
+              <ShieldCheck className="h-3 w-3" />
+              Read-only review surface
+            </Badge>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} /> Refresh
+            <RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} />
+            Refresh
           </Button>
           <Button variant="outline" size="sm" onClick={exportCsv} disabled={!filtered.length}>
-            <Download className="h-4 w-4 mr-1" /> CSV
+            <Download className="h-4 w-4 mr-1" />
+            Export CSV
           </Button>
         </div>
       </div>
 
+      {/* Search & limit */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search slug, user id, email"
+            placeholder="Search portal slug, user ID, or email…"
             className="pl-9"
           />
         </div>
@@ -136,74 +173,161 @@ export function PortalUsagePanel() {
         </select>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        <Stat label="Actions" value={totals.count.toString()} />
-        <Stat label="Coins charged" value={totals.totalCost.toString()} />
-        <Stat label="Free / privileged" value={totals.freeCount.toString()} />
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3 mb-5">
+        <Stat
+          label="Actions"
+          value={totals.count.toString()}
+          icon={Activity}
+          tint="#60a5fa"
+        />
+        <Stat
+          label="Coins charged"
+          value={totals.totalCost.toString()}
+          icon={Coins}
+          tint="#fbbf24"
+        />
+        <Stat
+          label="Free / privileged"
+          value={totals.freeCount.toString()}
+          icon={Gift}
+          tint="#34d399"
+        />
       </div>
 
+      {/* Table */}
       <div className="border border-border rounded-lg overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/40 text-muted-foreground">
             <tr>
-              <th className="text-left px-3 py-2 font-medium">When</th>
-              <th className="text-left px-3 py-2 font-medium">Portal</th>
+              <th className="text-left px-3 py-2 font-medium w-[140px]">
+                <span className="inline-flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" />
+                  Time
+                </span>
+              </th>
+              <th className="text-left px-3 py-2 font-medium">
+                <span className="inline-flex items-center gap-1">
+                  <FileText className="h-3.5 w-3.5" />
+                  Portal
+                </span>
+              </th>
               <th className="text-left px-3 py-2 font-medium">User</th>
-              <th className="text-right px-3 py-2 font-medium">Cost</th>
+              <th className="text-right px-3 py-2 font-medium w-[110px]">Cost</th>
             </tr>
           </thead>
           <tbody>
             {loading && (
-              <tr><td colSpan={4} className="px-3 py-8 text-center text-muted-foreground">Loading…</td></tr>
+              <tr>
+                <td colSpan={4} className="px-3 py-10 text-center text-muted-foreground">
+                  <div className="flex flex-col items-center gap-2">
+                    <RefreshCw className="h-5 w-5 animate-spin opacity-50" />
+                    <span>Loading usage records…</span>
+                  </div>
+                </td>
+              </tr>
             )}
+
             {!loading && filtered.length === 0 && (
-              <tr><td colSpan={4} className="px-3 py-8 text-center text-muted-foreground">No usage yet.</td></tr>
+              <tr>
+                <td colSpan={4} className="px-3 py-12 text-center">
+                  <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                    <Inbox className="h-8 w-8 opacity-40" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">No usage records</p>
+                      <p className="text-xs mt-0.5">
+                        {q.trim()
+                          ? "Try a different search term."
+                          : "Portal activity will appear here once members start using portals."}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+              </tr>
             )}
-            {!loading && filtered.map((r) => {
-              const p = profiles[r.user_id];
-              return (
-                <tr key={r.id} className="border-t border-border hover:bg-muted/20">
-                  <td className="px-3 py-2 whitespace-nowrap text-muted-foreground">
-                    {new Date(r.created_at).toLocaleString()}
-                  </td>
-                  <td className="px-3 py-2">
-                    <Link
-                      to="/p/$slug"
-                      params={{ slug: r.portal_slug }}
-                      className="text-primary hover:underline font-mono"
-                    >
-                      {r.portal_slug}
-                    </Link>
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="text-foreground">{p?.email ?? "—"}</div>
-                    <div className="text-[11px] text-muted-foreground font-mono">{r.user_id}</div>
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    {r.free ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-500 font-medium">
-                        <Gift className="h-3.5 w-3.5" /> FREE
+
+            {!loading &&
+              filtered.map((r) => {
+                const p = profiles[r.user_id];
+                return (
+                  <tr
+                    key={r.id}
+                    className="border-t border-border hover:bg-muted/20 transition-colors"
+                  >
+                    <td className="px-3 py-2.5 whitespace-nowrap text-muted-foreground">
+                      <span title={new Date(r.created_at).toLocaleString()}>
+                        {relativeTime(r.created_at)}
                       </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 font-medium">
-                        {r.cost} <Coins className="h-3.5 w-3.5 text-amber-400" />
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <Link
+                        to="/p/$slug"
+                        params={{ slug: r.portal_slug }}
+                        className="text-primary hover:underline font-mono text-[13px]"
+                      >
+                        {r.portal_slug}
+                      </Link>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <div className="text-foreground text-[13px]">
+                        {p?.email ?? (
+                          <span className="text-muted-foreground italic">No email</span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground font-mono mt-0.5">
+                        {r.user_id.slice(0, 8)}…
+                      </div>
+                    </td>
+                    <td className="px-3 py-2.5 text-right">
+                      {r.free ? (
+                        <span className="inline-flex items-center gap-1 text-emerald-500 font-medium text-[13px]">
+                          <Gift className="h-3.5 w-3.5" />
+                          FREE
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 font-medium text-[13px]">
+                          <span className="tabular-nums">{r.cost}</span>
+                          <Coins className="h-3.5 w-3.5 text-amber-400" />
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
           </tbody>
         </table>
       </div>
+
+      {/* Footer count */}
+      {!loading && filtered.length > 0 && (
+        <div className="mt-3 text-xs text-muted-foreground text-right">
+          Showing {filtered.length} of {rows.length} records
+          {q.trim() ? ` (filtered by "${q.trim()}")` : ""}
+        </div>
+      )}
     </div>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  icon: Icon,
+  tint,
+}: {
+  label: string;
+  value: string;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  tint: string;
+}) {
   return (
     <div className="border border-border rounded-lg px-4 py-3 bg-card">
-      <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="flex items-center gap-2">
+        <Icon className="h-4 w-4" style={{ color: tint }} />
+        <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+          {label}
+        </div>
+      </div>
       <div className="text-2xl font-semibold mt-1">{value}</div>
     </div>
   );
