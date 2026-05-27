@@ -30,6 +30,7 @@ import { Route as OgBotRouteImport } from './routes/og-bot'
 import { Route as NoticeboardRouteImport } from './routes/noticeboard'
 import { Route as MyGenerationsRouteImport } from './routes/my-generations'
 import { Route as MusicRouteImport } from './routes/music'
+import { Route as MessageBossRouteImport } from './routes/message-boss'
 import { Route as LetterhubRouteImport } from './routes/letterhub'
 import { Route as JokesRouteImport } from './routes/jokes'
 import { Route as HistoryRouteImport } from './routes/history'
@@ -220,6 +221,11 @@ const MyGenerationsRoute = MyGenerationsRouteImport.update({
 const MusicRoute = MusicRouteImport.update({
   id: '/music',
   path: '/music',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessageBossRoute = MessageBossRouteImport.update({
+  id: '/message-boss',
+  path: '/message-boss',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LetterhubRoute = LetterhubRouteImport.update({
@@ -676,6 +682,7 @@ export interface FileRoutesByFullPath {
   '/history': typeof HistoryRoute
   '/jokes': typeof JokesRouteWithChildren
   '/letterhub': typeof LetterhubRoute
+  '/message-boss': typeof MessageBossRoute
   '/music': typeof MusicRoute
   '/my-generations': typeof MyGenerationsRoute
   '/noticeboard': typeof NoticeboardRoute
@@ -784,6 +791,7 @@ export interface FileRoutesByTo {
   '/history': typeof HistoryRoute
   '/jokes': typeof JokesRouteWithChildren
   '/letterhub': typeof LetterhubRoute
+  '/message-boss': typeof MessageBossRoute
   '/music': typeof MusicRoute
   '/my-generations': typeof MyGenerationsRoute
   '/noticeboard': typeof NoticeboardRoute
@@ -894,6 +902,7 @@ export interface FileRoutesById {
   '/history': typeof HistoryRoute
   '/jokes': typeof JokesRouteWithChildren
   '/letterhub': typeof LetterhubRoute
+  '/message-boss': typeof MessageBossRoute
   '/music': typeof MusicRoute
   '/my-generations': typeof MyGenerationsRoute
   '/noticeboard': typeof NoticeboardRoute
@@ -1005,6 +1014,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/jokes'
     | '/letterhub'
+    | '/message-boss'
     | '/music'
     | '/my-generations'
     | '/noticeboard'
@@ -1113,6 +1123,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/jokes'
     | '/letterhub'
+    | '/message-boss'
     | '/music'
     | '/my-generations'
     | '/noticeboard'
@@ -1222,6 +1233,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/jokes'
     | '/letterhub'
+    | '/message-boss'
     | '/music'
     | '/my-generations'
     | '/noticeboard'
@@ -1332,6 +1344,7 @@ export interface RootRouteChildren {
   HistoryRoute: typeof HistoryRoute
   JokesRoute: typeof JokesRouteWithChildren
   LetterhubRoute: typeof LetterhubRoute
+  MessageBossRoute: typeof MessageBossRoute
   MusicRoute: typeof MusicRoute
   MyGenerationsRoute: typeof MyGenerationsRoute
   NoticeboardRoute: typeof NoticeboardRoute
@@ -1521,6 +1534,13 @@ declare module '@tanstack/react-router' {
       path: '/music'
       fullPath: '/music'
       preLoaderRoute: typeof MusicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/message-boss': {
+      id: '/message-boss'
+      path: '/message-boss'
+      fullPath: '/message-boss'
+      preLoaderRoute: typeof MessageBossRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/letterhub': {
@@ -2298,6 +2318,7 @@ const rootRouteChildren: RootRouteChildren = {
   HistoryRoute: HistoryRoute,
   JokesRoute: JokesRouteWithChildren,
   LetterhubRoute: LetterhubRoute,
+  MessageBossRoute: MessageBossRoute,
   MusicRoute: MusicRoute,
   MyGenerationsRoute: MyGenerationsRoute,
   NoticeboardRoute: NoticeboardRoute,
