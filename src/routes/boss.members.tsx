@@ -6,7 +6,7 @@ import { requireBoss } from "@/lib/route-guards";
 import { BossUsers } from "@/routes/boss.users";
 import { BossOgPasses } from "@/routes/boss.og-passes";
 import { BossResellerAuditPage } from "@/routes/boss.reseller-audit";
-import { BossTodoPage } from "@/routes/boss.todo";
+import { BossTodoPage } from "@/components/boss/ops/todo";
 import { TopUpRequestsPanel } from "@/components/TopUpRequestsPanel";
 import { VipPassPoolAdmin } from "@/components/boss/VipPassPoolAdmin";
 

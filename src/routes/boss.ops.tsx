@@ -7,7 +7,7 @@ import { AlertsPanel } from "@/components/boss/ops/alerts";
 import { PublishCheckPanel } from "@/components/boss/ops/publish-check";
 import { AnalyticsPanel } from "@/components/boss/ops/analytics";
 import { OverlordPanel } from "@/components/boss/ops/overlord";
-import { BossTodoPage } from "@/routes/boss.todo";
+import { BossTodoPage } from "@/components/boss/ops/todo";
 
 export const Route = createFileRoute("/boss/ops")({
   beforeLoad: requireBoss,
