@@ -3,6 +3,7 @@ import { useEffect, useMemo } from "react";
 import { Grid3x3, Boxes, Tags, Coins, BarChart3, ShieldCheck, Skull } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { requireBoss } from "@/lib/route-guards";
+import { BossTabIntro } from "@/components/boss/tab-intro";
 import { PortalsPanel } from "@/components/boss/content/portals";
 import { HubsPanel } from "@/components/boss/content/hubs";
 import { PricingPanel } from "@/components/boss/content/pricing";
@@ -81,7 +82,7 @@ function BossContentPage() {
             <TabsTrigger
               key={t.id}
               value={t.id}
-              title={`${t.group} · ${t.purpose}`}
+              title={t.purpose}
               className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60 gap-1.5"
             >
               <t.Icon className="h-3.5 w-3.5" style={{ color: t.tint }} />
@@ -92,7 +93,13 @@ function BossContentPage() {
 
         {TABS.map((t) => (
           <TabsContent key={t.id} value={t.id} className="mt-5 space-y-4">
-            <TabIntro tab={t.id} />
+            <BossTabIntro
+              icon={t.Icon}
+              label={t.label}
+              purpose={t.purpose}
+              tint={t.tint}
+              group={t.group}
+            />
             {t.id === "portals"    && <PortalsPanel />}
             {t.id === "hubs"       && <HubsPanel />}
             {t.id === "pricing"    && <PricingPanel />}
@@ -103,28 +110,6 @@ function BossContentPage() {
           </TabsContent>
         ))}
       </Tabs>
-    </div>
-  );
-}
-
-function TabIntro({ tab }: { tab: TabId }) {
-  const meta = TABS.find((t) => t.id === tab)!;
-  return (
-    <div
-      className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2 text-xs text-white/55"
-      style={{ borderLeft: `2px solid ${meta.tint}` }}
-    >
-      <span className="inline-flex items-center gap-1.5 font-semibold text-white/80">
-        <meta.Icon className="h-3.5 w-3.5" style={{ color: meta.tint }} />
-        {meta.label}
-      </span>
-      <span
-        className="text-[10px] uppercase tracking-[0.2em] font-bold"
-        style={{ color: meta.tint }}
-      >
-        {meta.group}
-      </span>
-      <span>{meta.purpose}</span>
     </div>
   );
 }
