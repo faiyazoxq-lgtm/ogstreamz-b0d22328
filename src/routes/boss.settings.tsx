@@ -1,14 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Coins, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { requireBoss } from "@/lib/route-guards";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/boss/settings")({
-  beforeLoad: requireBoss,
-  component: SettingsPage,
+  beforeLoad: ({ location }) => {
+    if (location.pathname.replace(/\/$/, "") === "/boss/settings") {
+      throw redirect({ to: "/boss/infrastructure", hash: "settings", replace: true });
+    }
+  },
+  component: () => null,
 });
 
 export function SettingsPage() {
