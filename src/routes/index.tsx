@@ -33,6 +33,7 @@ import { ConnectionsStatusBanner } from "@/components/ConnectionsStatusBanner";
 import { BossOpsStrip } from "@/components/BossOpsStrip";
 import { BossTodoNotepad } from "@/components/BossTodoNotepad";
 import { LockupOverflowDebug } from "@/components/LockupOverflowDebug";
+import { MessageBossForm } from "@/components/MessageBossForm";
 
 const ICONS: Record<string, any> = {
   Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
@@ -445,6 +446,11 @@ function Index() {
       <VaultLoginModal open={vaultOpen} onClose={() => setVaultOpen(false)} />
       </>
       )}
+
+      {/* Direct Line — visible to everyone; form handles its own sign-in state */}
+      <section className="relative max-w-xl mx-auto px-4 sm:px-8 pb-10 sm:pb-16">
+        <MessageBossForm />
+      </section>
     </main>
   );
 }
