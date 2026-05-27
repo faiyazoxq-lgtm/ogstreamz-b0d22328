@@ -1,28 +1,49 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Power, Bell, Rocket, ShieldCheck, BarChart3, ScrollText } from "lucide-react";
+import { createFileRoute, useLocation, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo } from "react";
+import { Bell, Rocket, BarChart3, LayoutDashboard, FileText } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { requireBoss } from "@/lib/route-guards";
+import { AlertsPanel } from "@/components/boss/ops/alerts";
+import { PublishCheckPanel } from "@/components/boss/ops/publish-check";
+import { AnalyticsPanel } from "@/components/boss/ops/analytics";
+import { OverlordPanel } from "@/components/boss/ops/overlord";
+import { BossTodoPage } from "@/routes/boss.todo";
 
 export const Route = createFileRoute("/boss/ops")({
   beforeLoad: requireBoss,
   head: () => ({
     meta: [
       { title: "Ops · Boss · 0G-STREAMZ" },
-      { name: "description", content: "Power bar, alerts, publish checks, civility and analytics — day-to-day operations." },
+      { name: "description", content: "Alerts, publish checks, analytics, overlord deck and boss to-do — unified operations surface." },
     ],
   }),
   component: BossOpsPage,
 });
 
-const SECTIONS = [
-  { id: "power",     label: "Power Bar",     blurb: "Master toggles & reverse tool.", Icon: Power,       tint: "#00e08a" },
-  { id: "alerts",    label: "Alerts",        blurb: "Live incident feed.",            Icon: Bell,        tint: "#ff5577" },
-  { id: "publish",   label: "Publish Check", blurb: "Pre-publish validation.",        Icon: Rocket,      tint: "#ffd166" },
-  { id: "civility",  label: "Civility",      blurb: "Default site tone & lexicon.",   Icon: ShieldCheck, tint: "#3ad6ff" },
-  { id: "analytics", label: "Analytics",     blurb: "Portal & syndicate metrics.",    Icon: BarChart3,   tint: "#a78bfa" },
-  { id: "audit",     label: "Audit Log",     blurb: "Boss action history.",           Icon: ScrollText,  tint: "#94a3b8" },
+const TABS = [
+  { id: "alerts",   label: "Alerts",        Icon: Bell,            tint: "#ff5577" },
+  { id: "publish",  label: "Publish Check", Icon: Rocket,          tint: "#ffd166" },
+  { id: "analytics",label: "Analytics",     Icon: BarChart3,       tint: "#a78bfa" },
+  { id: "overlord", label: "Overlord",      Icon: LayoutDashboard, tint: "#3ad6ff" },
+  { id: "todo",     label: "Boss To-Do",    Icon: FileText,        tint: "#00e08a" },
 ] as const;
 
+type TabId = typeof TABS[number]["id"];
+
 function BossOpsPage() {
+  const loc = useLocation();
+  const navigate = useNavigate();
+  const active = useMemo<TabId>(() => {
+    const h = (loc.hash || "").replace(/^#/, "");
+    return (TABS.find((t) => t.id === h)?.id ?? "alerts") as TabId;
+  }, [loc.hash]);
+
+  useEffect(() => {
+    if (!loc.hash) {
+      void navigate({ to: "/boss/ops", hash: "alerts", replace: true });
+    }
+  }, [loc.hash, navigate]);
+
   return (
     <div className="space-y-5">
       <header className="glass-obsidian-cmd rounded-3xl p-5 md:p-6">
@@ -33,27 +54,33 @@ function BossOpsPage() {
           Operations Dashboard
         </h1>
         <p className="mt-2 text-sm text-white/60 max-w-2xl">
-          Future home for the power bar, alerts, publish gates, moderation defaults and analytics.
+          Alerts, publish validation, analytics, overlord deck and the boss to-do list in one place.
         </p>
       </header>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {SECTIONS.map((s) => (
-          <div
-            key={s.id}
-            className="glass-obsidian-cmd rounded-2xl p-4 border border-white/5"
-          >
-            <div className="flex items-center gap-2">
-              <s.Icon className="h-4 w-4" style={{ color: s.tint }} />
-              <span className="text-sm font-semibold text-white/90">{s.label}</span>
-            </div>
-            <p className="mt-2 text-xs text-white/50">{s.blurb}</p>
-            <p className="mt-3 text-[10px] uppercase tracking-[0.25em] text-white/30">
-              Coming soon
-            </p>
-          </div>
-        ))}
-      </div>
+      <Tabs
+        value={active}
+        onValueChange={(v) => navigate({ to: "/boss/ops", hash: v, replace: false })}
+      >
+        <TabsList className="flex flex-wrap gap-1 bg-white/5 p-1 rounded-xl">
+          {TABS.map((t) => (
+            <TabsTrigger
+              key={t.id}
+              value={t.id}
+              className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60 gap-1.5"
+            >
+              <t.Icon className="h-3.5 w-3.5" style={{ color: t.tint }} />
+              {t.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        <TabsContent value="alerts" className="mt-5"><AlertsPanel /></TabsContent>
+        <TabsContent value="publish" className="mt-5"><PublishCheckPanel /></TabsContent>
+        <TabsContent value="analytics" className="mt-5"><AnalyticsPanel /></TabsContent>
+        <TabsContent value="overlord" className="mt-5"><OverlordPanel /></TabsContent>
+        <TabsContent value="todo" className="mt-5"><BossTodoPage /></TabsContent>
+      </Tabs>
     </div>
   );
 }
