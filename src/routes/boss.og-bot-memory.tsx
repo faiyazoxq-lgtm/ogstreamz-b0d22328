@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Brain, Loader2, Plus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -6,13 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/boss/og-bot-memory")({
-  head: () => ({
-    meta: [
-      { title: "OG Bot Memory · Boss Portal" },
-      { name: "description", content: "View, edit, and clear the persistent facts OG Bot remembers about you between sessions." },
-    ],
-  }),
-  component: OGBotMemoryPage,
+  beforeLoad: ({ location }) => {
+    if (location.pathname.replace(/\/$/, "") === "/boss/og-bot-memory") {
+      throw redirect({ to: "/boss/infrastructure", hash: "og-bot-memory", replace: true });
+    }
+  },
+  component: () => null,
 });
 
 type MemoryRow = {
@@ -21,7 +20,7 @@ type MemoryRow = {
   updated_at: string | null;
 };
 
-function OGBotMemoryPage() {
+export function OGBotMemoryPage() {
   const { user, profile, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const isBoss = profile?.rank === "boss" || isAdmin;

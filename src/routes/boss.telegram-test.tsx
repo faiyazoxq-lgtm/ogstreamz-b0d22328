@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Send, Loader2, HeartPulse, CheckCircle2, XCircle } from "lucide-react";
@@ -11,16 +11,15 @@ import { sendTelegramReply } from "@/lib/telegram-inbox.functions";
 import { bossBotHealthCheck } from "@/lib/bot-health.functions";
 
 export const Route = createFileRoute("/boss/telegram-test")({
-  head: () => ({
-    meta: [
-      { title: "Telegram Test · 0G Boss" },
-      { name: "description", content: "Send a test Telegram message from the dashboard." },
-    ],
-  }),
-  component: TelegramTestPage,
+  beforeLoad: ({ location }) => {
+    if (location.pathname.replace(/\/$/, "") === "/boss/telegram-test") {
+      throw redirect({ to: "/boss/infrastructure", hash: "telegram-test", replace: true });
+    }
+  },
+  component: () => null,
 });
 
-function TelegramTestPage() {
+export function TelegramTestPage() {
   const sendFn = useServerFn(sendTelegramReply);
   const healthFn = useServerFn(bossBotHealthCheck);
   const [chatId, setChatId] = useState("");
