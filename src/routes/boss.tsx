@@ -4,7 +4,7 @@ import {
   Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft,
   ShieldAlert, Tv, Tags, Bell, Sparkles, Settings, Boxes, Grid3x3,
   Coins, Power, Rocket, KeyRound, Wallet, SlidersHorizontal, Lock, ScrollText,
-  ShieldOff, Lightbulb, Megaphone, Phone, LayoutGrid, Brain,
+  ShieldOff, Lightbulb, Megaphone, Phone, LayoutGrid, Brain, FileText,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { BossSearch } from "@/components/BossSearch";
