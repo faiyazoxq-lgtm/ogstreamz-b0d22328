@@ -4,7 +4,7 @@ import {
   Crown, Users, Coins, Ticket, KeyRound, Handshake, Inbox, FileText, ArrowUpRight,
   Share2, ShieldCheck, BarChart3, Skull, Activity, RefreshCw, AlertTriangle, Tv,
   Tags, CheckCircle2, Radio, Zap, Bell,
-  Rocket, Boxes, Grid3x3, Settings as SettingsIcon, Sparkles, Gauge, Send,
+  Rocket, Boxes, Grid3x3, Settings as SettingsIcon, Gauge, Send,
   ShieldOff, ScanSearch, ListChecks, Brain,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
