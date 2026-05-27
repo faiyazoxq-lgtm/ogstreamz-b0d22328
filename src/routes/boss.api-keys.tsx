@@ -1,4 +1,5 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { exactPathRedirect } from "@/lib/boss-redirects";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -17,7 +18,10 @@ import {
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/boss/api-keys")({
-  beforeLoad: ({ location }) => {
+  beforeLoad: exactPathRedirect("/boss/api-keys", () => ({
+    to: "/boss/infrastructure",
+    hash: "agent-keys",
+  })),
     if (location.pathname.replace(/\/$/, "") === "/boss/api-keys") {
       throw redirect({ to: "/boss/infrastructure", hash: "agent-keys", replace: true });
     }
