@@ -2,12 +2,23 @@ import { createFileRoute } from "@tanstack/react-router";
 import { exactPathRedirect } from "@/lib/boss-redirects";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Send, Loader2, HeartPulse, CheckCircle2, XCircle } from "lucide-react";
+import {
+  Send,
+  Loader2,
+  HeartPulse,
+  CheckCircle2,
+  XCircle,
+  Activity,
+  MessageSquare,
+  AlertTriangle,
+  Radio,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { sendTelegramReply } from "@/lib/telegram-inbox.functions";
 import { bossBotHealthCheck } from "@/lib/bot-health.functions";
 
@@ -25,7 +36,11 @@ export function TelegramTestPage() {
   const [chatId, setChatId] = useState("");
   const [text, setText] = useState("Hello from 0G-STREAMZ boss dashboard 👋");
   const [busy, setBusy] = useState(false);
-  const [lastResult, setLastResult] = useState<string | null>(null);
+  const [lastResult, setLastResult] = useState<{
+    ok: boolean;
+    message: string;
+    detail?: string;
+  } | null>(null);
   const [healthBusy, setHealthBusy] = useState(false);
   const [health, setHealth] = useState<Awaited<ReturnType<typeof bossBotHealthCheck>> | null>(null);
 
@@ -59,11 +74,11 @@ export function TelegramTestPage() {
     try {
       const res = await sendFn({ data: { chatId: id, text: text.trim() } });
       const mid = res?.message_id ?? "—";
-      setLastResult(`Delivered. message_id: ${mid}`);
+      setLastResult({ ok: true, message: "Delivered", detail: `message_id: ${mid}` });
       toast.success("Message sent");
     } catch (err: any) {
       const msg = err?.message ?? String(err);
-      setLastResult(`Failed: ${msg}`);
+      setLastResult({ ok: false, message: "Failed", detail: msg });
       toast.error(msg);
     } finally {
       setBusy(false);
@@ -72,17 +87,28 @@ export function TelegramTestPage() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <p className="text-sm text-muted-foreground">
-        Send a message via @Ogstreamzbot to any chat_id the bot can reach.
-        Member chat_ids appear in the inbox or via /me in Telegram.
-      </p>
+      {/* Page header */}
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Telegram Test & Diagnostics</h1>
+        <p className="text-sm text-muted-foreground mt-1 max-w-xl">
+          Send a live test message via <strong>@Ogstreamzbot</strong> and run health checks to verify connectivity.
+        </p>
+      </div>
 
+      {/* Send form */}
       <form
         onSubmit={handleSend}
-        className="space-y-4 rounded-lg border border-border bg-card p-5"
+        className="rounded-xl border border-border bg-card p-5 space-y-5"
       >
+        <div className="flex items-center gap-2 mb-1">
+          <MessageSquare className="h-4 w-4 text-sky-400" />
+          <h2 className="text-sm font-semibold text-foreground">Send test message</h2>
+        </div>
+
         <div className="space-y-2">
-          <Label htmlFor="chat-id">Chat ID</Label>
+          <Label htmlFor="chat-id" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Chat ID
+          </Label>
           <Input
             id="chat-id"
             inputMode="numeric"
@@ -90,24 +116,29 @@ export function TelegramTestPage() {
             value={chatId}
             onChange={(e) => setChatId(e.target.value)}
             disabled={busy}
+            className="text-sm tabular-nums"
           />
           <p className="text-xs text-muted-foreground">
-            Use your own Telegram numeric ID to test. The bot must have an open
-            chat with that user.
+            Use your own Telegram numeric ID to test. The bot must have an open chat with that user.
           </p>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="msg">Message</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="msg" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Message
+            </Label>
+            <span className="text-[10px] text-muted-foreground tabular-nums">{text.length}/4096</span>
+          </div>
           <Textarea
             id="msg"
-            rows={5}
+            rows={4}
             maxLength={4096}
             value={text}
             onChange={(e) => setText(e.target.value)}
             disabled={busy}
+            className="text-sm resize-none"
           />
-          <p className="text-xs text-muted-foreground">{text.length}/4096</p>
         </div>
 
         <Button type="submit" disabled={busy} className="w-full">
@@ -125,71 +156,98 @@ export function TelegramTestPage() {
         </Button>
 
         {lastResult && (
-          <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
-            {lastResult}
+          <div className={`rounded-lg border px-3 py-2.5 text-sm flex items-start gap-2 ${
+            lastResult.ok
+              ? "border-emerald-500/20 bg-emerald-500/[0.04] text-emerald-100"
+              : "border-red-500/20 bg-red-500/[0.04] text-red-100"
+          }`}>
+            {lastResult.ok ? (
+              <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-emerald-400" />
+            ) : (
+              <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-red-400" />
+            )}
+            <div className="min-w-0">
+              <span className="font-medium">{lastResult.message}</span>
+              {lastResult.detail && (
+                <p className="text-xs text-muted-foreground mt-0.5 font-mono">{lastResult.detail}</p>
+              )}
+            </div>
           </div>
         )}
       </form>
 
-      <section className="mt-8 rounded-lg border border-border bg-card p-5">
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight">Bot health check</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Verifies bot auth, webhook registration, recent inbound delivery,
-              and sends a live test message to the boss chat.
+      {/* Health check */}
+      <section className="rounded-xl border border-border bg-card p-5">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <Activity className="h-4 w-4 text-emerald-400" />
+              <h2 className="text-sm font-semibold text-foreground">Bot health check</h2>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground max-w-lg leading-relaxed">
+              Verifies bot authentication, webhook registration, inbound delivery, and outbound reachability.
             </p>
           </div>
-          <Button onClick={runHealth} disabled={healthBusy} variant="secondary">
+          <Button onClick={runHealth} disabled={healthBusy} size="sm" variant="secondary" className="shrink-0 gap-1.5">
             {healthBusy ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Checking…
-              </>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
-              <>
-                <HeartPulse className="mr-2 h-4 w-4" />
-                Run health check
-              </>
+              <HeartPulse className="h-3.5 w-3.5" />
             )}
+            {healthBusy ? "Checking…" : "Run check"}
           </Button>
         </div>
 
         {health && (
-          <div className="space-y-2">
-            <div className="text-sm">
-              Overall:{" "}
-              <span className={health.healthy ? "text-emerald-500" : "text-red-500"}>
+          <div className="space-y-3">
+            {/* Overall status */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge
+                variant="outline"
+                className={`text-xs gap-1 font-medium ${
+                  health.healthy
+                    ? "text-emerald-400 border-emerald-400/20"
+                    : "text-red-400 border-red-400/20"
+                }`}
+              >
+                {health.healthy ? (
+                  <CheckCircle2 className="h-3 w-3" />
+                ) : (
+                  <XCircle className="h-3 w-3" />
+                )}
                 {health.healthy ? "Healthy" : "Degraded"}
-              </span>{" "}
-              <span className="text-muted-foreground">
-                · {health.duration_ms}ms · {new Date(health.checked_at).toLocaleTimeString()}
+              </Badge>
+              <span className="text-xs text-muted-foreground font-mono">
+                {health.duration_ms}ms · {new Date(health.checked_at).toLocaleTimeString()}
               </span>
             </div>
-            <ul className="divide-y divide-border rounded-md border border-border">
+
+            {/* Per-check rows */}
+            <ul className="divide-y divide-border rounded-lg border border-border overflow-hidden">
               {(
                 [
-                  ["getMe", "Bot auth (getMe)"],
-                  ["webhook", "Webhook registration"],
-                  ["inbound", "Inbound updates received"],
-                  ["outbound", "Outbound test message"],
+                  ["getMe", "Bot auth (getMe)", "Can the bot authenticate with Telegram?"],
+                  ["webhook", "Webhook registration", "Is the webhook URL registered and reachable?"],
+                  ["inbound", "Inbound updates", "Has the bot received recent inbound messages?"],
+                  ["outbound", "Outbound delivery", "Can the bot send a test message?"],
                 ] as const
-              ).map(([key, label]) => {
+              ).map(([key, label, hint]) => {
                 const c = health.checks[key];
                 return (
-                  <li key={key} className="flex items-start gap-3 px-3 py-2 text-sm">
+                  <li key={key} className="flex items-start gap-3 px-3 py-3 text-sm hover:bg-muted/20 transition-colors">
                     {c.ok ? (
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
                     ) : (
-                      <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+                      <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="font-medium">{label}</div>
-                      {!c.ok && (
-                        <div className="mt-0.5 text-xs text-red-500">{c.error}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">{hint}</div>
+                      {!c.ok && c.error && (
+                        <div className="mt-1.5 text-xs text-red-400">{c.error}</div>
                       )}
-                      {c.detail && (
-                        <pre className="mt-1 overflow-x-auto rounded bg-muted/40 px-2 py-1 text-[11px] leading-snug text-muted-foreground">
+                      {c.ok && c.detail && (
+                        <pre className="mt-1.5 overflow-x-auto rounded-md bg-muted/40 px-2 py-1 text-[10px] leading-snug text-muted-foreground font-mono">
                           {JSON.stringify(c.detail, null, 2)}
                         </pre>
                       )}
