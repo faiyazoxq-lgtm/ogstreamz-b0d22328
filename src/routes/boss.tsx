@@ -64,10 +64,13 @@ const GROUPS: RailGroup[] = [
     Icon: Users,
     tint: "#3ad6ff",
     items: [
-      { to: "/boss/members", label: "Members", Icon: Users, desc: "Roster · Top-ups · Passes · Codes · Resellers · Share · Notes" },
-      { to: "/boss/users", label: "Roster", Icon: Users, desc: "Rank, credits, bans" },
-      { to: "/boss/stream-queue", label: "Stream Queue", Icon: Tv, desc: "Pending verifications" },
-      { to: "/boss/contacts", label: "Contacts", Icon: Phone, desc: "Phone numbers & spares" },
+      { to: "/boss/members", hash: "roster",    label: "Roster",     Icon: Users,    desc: "Members, ranks & credits" },
+      { to: "/boss/members", hash: "topups",    label: "Top-Ups",    Icon: Wallet,   desc: "Approve credit requests" },
+      { to: "/boss/members", hash: "passes",    label: "Passes",     Icon: Tags,     desc: "VIP passes" },
+      { to: "/boss/members", hash: "codes",     label: "Codes",      Icon: KeyRound, desc: "Redeem codes" },
+      { to: "/boss/members", hash: "resellers", label: "Resellers",  Icon: Users,    desc: "Reseller wallets" },
+      { to: "/boss/stream-queue", label: "Stream Queue", Icon: Tv,    desc: "Pending verifications" },
+      { to: "/boss/contacts",     label: "Contacts",     Icon: Phone, desc: "Phone numbers & spares" },
     ],
   },
   {
@@ -79,8 +82,9 @@ const GROUPS: RailGroup[] = [
       { to: "/boss/overview", label: "Power Bar", Icon: Power, exact: false, desc: "Master toggles & reverse tool" },
       { to: "/boss/content", hash: "pricing", label: "Pricing", Icon: Tags, desc: "Coin packs & products" },
       { to: "/boss/content", hash: "coin-costs", label: "Coin Costs", Icon: Coins, desc: "Per-hub & per-portal" },
+      { to: "/boss/content", hash: "usage", label: "Portal Usage", Icon: BarChart3, desc: "Per-portal spend & visits" },
       { to: "/boss/promotions", label: "Promotions", Icon: Megaphone, desc: "Sign-up bonus & promos" },
-      { to: "/admin", label: "Admin Console", Icon: Sparkles, desc: "Top-ups, passes, vault" },
+      { to: "/admin", label: "Legacy Admin", Icon: Sparkles, desc: "Original admin console" },
     ],
   },
   {
@@ -91,7 +95,9 @@ const GROUPS: RailGroup[] = [
     items: [
       { to: "/boss/content", hash: "hubs", label: "Hubs", Icon: Boxes, desc: "Built-in & custom hubs" },
       { to: "/boss/content", hash: "portals", label: "Portals", Icon: Grid3x3, desc: "Manage portals" },
-      { to: "/boss/content", hash: "usage", label: "Portal Usage", Icon: Boxes, desc: "Per-portal spend & visits" },
+      { to: "/boss/content", hash: "pricing", label: "Pricing", Icon: Tags, desc: "Coin packs & products" },
+      { to: "/boss/content", hash: "coin-costs", label: "Coin Costs", Icon: Coins, desc: "Per-hub & per-portal" },
+      { to: "/boss/content", hash: "usage", label: "Portal Usage", Icon: BarChart3, desc: "Per-portal spend & visits" },
     ],
   },
   {
@@ -101,7 +107,7 @@ const GROUPS: RailGroup[] = [
     tint: "#ff5577",
     items: [
       { to: "/boss/content", hash: "civility", label: "Civility", Icon: ShieldCheck, desc: "Default site tone" },
-      { to: "/boss/content", hash: "lexicon", label: "Lexicon", Icon: Skull, desc: "Word lists" },
+      { to: "/boss/content", hash: "lexicon", label: "Swear Lexicon", Icon: Skull, desc: "Word lists & openers" },
       { to: "/boss/ai-agent", label: "0G Bot · AI Agent", Icon: Brain, desc: "All bot settings in one place" },
     ],
   },
@@ -112,6 +118,11 @@ const GROUPS: RailGroup[] = [
     tint: "#94a3b8",
     items: [
       { to: "/boss/infrastructure", hash: "agent-keys", label: "Agent Keys", Icon: KeyRound, desc: "Encrypted vault" },
+      { to: "/boss/infrastructure", hash: "telegram-setup", label: "Telegram Setup", Icon: Phone, desc: "BotFather checklist" },
+      { to: "/boss/infrastructure", hash: "domain-denylist", label: "Domain Denylist", Icon: ShieldOff, desc: "Block specific domains" },
+      { to: "/boss/infrastructure", hash: "denylist-audit", label: "Denylist Audit", Icon: ScrollText, desc: "Scan for blocked domains" },
+      { to: "/boss/infrastructure", hash: "og-bot-memory", label: "OG Bot Memory", Icon: Brain, desc: "Persistent bot facts" },
+      { to: "/boss/infrastructure", hash: "settings", label: "Settings", Icon: Settings, desc: "Tunables" },
       { to: "/boss/secrets-inventory", label: "Secrets Inventory", Icon: Lock, desc: "Platform secrets list" },
       { to: "/boss/function-audit", label: "Function Audit", Icon: ScrollText, desc: "Exposed DB functions" },
       { to: "/boss/audit-log", label: "Audit Log", Icon: ScrollText, desc: "Boss action history" },
@@ -119,7 +130,6 @@ const GROUPS: RailGroup[] = [
       { to: "/boss/function-grants", label: "Function Grants", Icon: ShieldOff, desc: "Revoke EXECUTE w/ restore log" },
       { to: "/boss/function-ideas", label: "Function Ideas", Icon: Lightbulb, desc: "Plug-in & feature backlog" },
       { to: "/boss/realtime-denials", label: "Realtime Denials", Icon: ShieldAlert, desc: "Audit denied subscriptions" },
-      { to: "/boss/infrastructure", hash: "settings", label: "Settings", Icon: Settings, desc: "Tunables" },
     ],
   },
 ];
@@ -203,7 +213,6 @@ function BossLayout() {
           </div>
           <Link
             to="/boss/overview"
-            hash="power"
             className="hidden sm:inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/40 hover:text-gold transition shrink-0"
           >
             Power Bar →
@@ -216,7 +225,7 @@ function BossLayout() {
         top={TOP}
         groups={GROUPS}
         alertsUnread={alertsUnread}
-        alertsTo="/boss/alerts"
+        alertsTo="/boss/ops"
       />
 
       <main className="min-w-0">
