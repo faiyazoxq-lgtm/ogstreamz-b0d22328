@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
@@ -6,17 +6,14 @@ import { ScanSearch, Loader2, AlertTriangle, CheckCircle2, Database, Globe, Arro
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { runDenylistAudit, type AuditHit, type AuditReport } from "@/lib/denylist-audit.functions";
-import { requireBoss } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/boss/denylist-audit")({
-  beforeLoad: requireBoss,
-  head: () => ({
-    meta: [
-      { title: "Denylist Audit · Boss · 0G-STREAMZ" },
-      { name: "description", content: "Scan stored fields, rendered pages, and redirects for blocked domains." },
-    ],
-  }),
-  component: DenylistAuditPage,
+  beforeLoad: ({ location }) => {
+    if (location.pathname.replace(/\/$/, "") === "/boss/denylist-audit") {
+      throw redirect({ to: "/boss/infrastructure", hash: "denylist-audit", replace: true });
+    }
+  },
+  component: () => null,
 });
 
 const SOURCE_META: Record<AuditHit["source"], { label: string; Icon: typeof Database; tint: string }> = {
