@@ -75,7 +75,7 @@ const GROUPS: RailGroup[] = [
     Icon: Wallet,
     tint: "#00e08a",
     items: [
-      { to: "/boss/power", label: "Power Bar", Icon: Power, desc: "Master toggles & reverse tool" },
+      { to: "/boss/overview", label: "Power Bar", Icon: Power, exact: false, desc: "Master toggles & reverse tool" },
       { to: "/boss/pricing", label: "Pricing", Icon: Tags, desc: "Coin packs & products" },
       { to: "/boss/portal-costs", label: "Coin Costs", Icon: Coins, desc: "Per-hub & per-portal" },
       { to: "/boss/promotions", label: "Promotions", Icon: Megaphone, desc: "Sign-up bonus & promos" },

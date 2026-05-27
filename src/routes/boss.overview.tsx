@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Crown, Users, Coins, Ticket, KeyRound, Handshake, Inbox, FileText, ArrowUpRight,
   Share2, ShieldCheck, BarChart3, Skull, Activity, RefreshCw, AlertTriangle, Tv,
-  Tags, Music, CheckCircle2, Radio, Zap, Power, Bell,
+  Tags, CheckCircle2, Radio, Zap, Bell,
   Rocket, Boxes, Grid3x3, Settings as SettingsIcon, Sparkles, Gauge, Send,
   ShieldOff, ScanSearch, ListChecks, Brain,
 } from "lucide-react";
@@ -11,6 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { CollapsiblePanel } from "@/components/boss/CollapsiblePanel";
 import { TelegramInboxPanel } from "@/components/boss/TelegramInboxPanel";
 import { TelegramConnectionPanel } from "@/components/boss/TelegramConnectionPanel";
+import { GlobalPowerPanel } from "@/components/boss/GlobalPowerPanel";
+import { PendingQueuesPanel } from "@/components/boss/PendingQueuesPanel";
+import { ReversePurchasesPanel } from "@/components/boss/ReversePurchasesPanel";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/boss/overview")({
@@ -34,17 +37,6 @@ type Metric = {
   format?: (n: number) => string;
 };
 
-type ActionItem = {
-  key: string;
-  label: string;
-  count: number;
-  to: string;
-  hash?: string;
-  Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
-  tint: string;
-  hint: string;
-};
-
 const fmtNum = (n: number) => n.toLocaleString("en-GB");
 
 type Tile = {
@@ -60,8 +52,7 @@ const TILES: Tile[] = [
   // People
   { to: "/boss/users",               label: "User Roster",       blurb: "Rank, status, credits, ban, force sign-out, stream verify",   Icon: Users,        tint: "#3ad6ff" },
   { to: "/boss/stream-queue",        label: "Stream Queue",      blurb: "Pending 0G STREAMZ portal verifications",                     Icon: Tv,           tint: "#3ad6ff" },
-  // Money & Power
-  { to: "/boss/power",               label: "Power Controls",    blurb: "Freeze payments, freeze coins, reverse recent purchases",     Icon: Power,        tint: "#ff5577" },
+  // Money & Power (toggles & reverse tool live inline on this page)
   { to: "/boss/pricing",             label: "Pricing",           blurb: "Coin packs & store product catalogue",                        Icon: Tags,         tint: "#00e08a" },
   { to: "/boss/portal-costs",        label: "Coin Costs",        blurb: "Per-hub create & per-portal use costs",                       Icon: Coins,        tint: "#ffd166" },
   { to: "/boss/portal-usage",        label: "Portal Usage Audit", blurb: "Every charged portal action — slug, user, cost, time",        Icon: Coins,        tint: "#ffd166" },
@@ -97,7 +88,7 @@ const TILES: Tile[] = [
 
 const TILE_CATEGORIES: { id: string; label: string; tint: string; labels: string[] }[] = [
   { id: "people",     label: "People",        tint: "#3ad6ff", labels: ["User Roster", "Stream Queue"] },
-  { id: "money",      label: "Money & Power", tint: "#ffd166", labels: ["Power Controls", "Pricing", "Coin Costs", "Top-Up Requests", "Adjust Credits", "VIP Passes", "Redeem Codes", "Resellers", "Share Cards", "Boss Notes", "Admin Console"] },
+  { id: "money",      label: "Money & Power", tint: "#ffd166", labels: ["Pricing", "Coin Costs", "Top-Up Requests", "Adjust Credits", "VIP Passes", "Redeem Codes", "Resellers", "Share Cards", "Boss Notes", "Admin Console"] },
   { id: "content",    label: "Content",       tint: "#a78bfa", labels: ["Hubs", "Portals"] },
   { id: "moderation", label: "Moderation",    tint: "#ff2e55", labels: ["Civility Controls", "Swear Lexicon"] },
   { id: "insights",   label: "Insights",      tint: "#00e08a", labels: ["Analytics", "Overlord Deck"] },
@@ -194,17 +185,8 @@ function BossOverview() {
     { key: "queue", label: "Pending Actions", value: loading ? null : stats.topupPending + stats.streamVerifyPending + stats.customTrackPending + stats.pendingCreditGrants, Icon: Inbox, tint: "#ff5577", format: fmtNum },
   ];
 
-  const actionQueue: ActionItem[] = [
-    { key: "topups", label: "Top-up requests", count: stats.topupPending, to: "/admin", hash: "topups", Icon: Inbox, tint: "#ff5577", hint: "Approve or deny credit top-ups" },
-    { key: "stream", label: "Stream verifications", count: stats.streamVerifyPending, to: "/boss/stream-queue", Icon: Tv, tint: "#3ad6ff", hint: "Confirm 0G STREAMZ portal access" },
-    { key: "ctracks", label: "Custom track requests", count: stats.customTrackPending, to: "/admin", hash: "tracks", Icon: Music, tint: "#a78bfa", hint: "Review user-submitted track briefs" },
-    { key: "grants", label: "Pending credit grants", count: stats.pendingCreditGrants, to: "/admin", hash: "roster", Icon: Coins, tint: "#ffd166", hint: "Pre-allocated credits awaiting attach" },
-  ];
-
-  const totalQueue = useMemo(
-    () => actionQueue.reduce((a, b) => a + b.count, 0),
-    [actionQueue],
-  );
+  const totalQueue =
+    stats.topupPending + stats.streamVerifyPending + stats.customTrackPending + stats.pendingCreditGrants;
   const ok = !loading && !error && totalQueue === 0;
 
   return (
@@ -295,91 +277,14 @@ function BossOverview() {
       </div>
       </CollapsiblePanel>
 
-      {/* Power Bar — large tactile toggles */}
-      {/* Power Bar / Reverse purchases now owned by /boss/power */}
-      <Link
-        to="/boss/power"
-        className="glass-obsidian-cmd rounded-2xl p-5 flex items-center gap-4 hover:-translate-y-0.5 transition"
-        style={{ borderColor: "#ffd16655" }}
-      >
-        <span
-          className="h-12 w-12 rounded-xl flex items-center justify-center"
-          style={{ background: "#ffd16620", border: "1px solid #ffd16655" }}
-        >
-          <Power className="h-5 w-5" style={{ color: "#ffd166" }} />
-        </span>
-        <div className="flex-1 min-w-0">
-          <div className="syndicate-header text-sm text-white/95">Power Bar</div>
-          <div className="text-[11px] text-white/55">
-            Payments, coin freeze, swear default & reverse purchases — all live on{" "}
-            <span className="text-gold">/boss/power</span>.
-          </div>
-        </div>
-        <ArrowUpRight className="h-4 w-4 text-white/40" />
-      </Link>
+      {/* Canonical global power controls (single source of truth) */}
+      <GlobalPowerPanel />
 
-      {/* Action queue */}
-      <CollapsiblePanel
-        id="queue"
-        title="Action Queue"
-        Icon={Inbox}
-        tint="#ff5577"
-        subtitle="Outstanding requests waiting on a Boss decision"
-        badge={
-          <span
-            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-[0.2em] tabular-nums"
-            style={{
-              background: totalQueue > 0 ? "rgba(255,85,119,0.18)" : "rgba(0,224,138,0.12)",
-              color: totalQueue > 0 ? "#ff8aa3" : "#7be3b6",
-              border: `1px solid ${totalQueue > 0 ? "#ff557766" : "#00e08a55"}`,
-            }}
-          >
-            {totalQueue} open
-          </span>
-        }
-      >
-        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {actionQueue.map((a) => {
-            const urgent = a.count > 0;
-            return (
-              <li key={a.key}>
-                <Link
-                  to={a.to}
-                  hash={a.hash}
-                  className="flex items-center gap-3 p-3 group rounded-xl border transition active:scale-[0.99]"
-                  style={{
-                    borderColor: urgent ? `${a.tint}55` : "rgba(255,255,255,0.06)",
-                    background: urgent ? `${a.tint}10` : "rgba(255,255,255,0.02)",
-                  }}
-                >
-                  <span
-                    className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: `${a.tint}1f`, border: `1px solid ${a.tint}55` }}
-                  >
-                    <a.Icon className="h-4 w-4" style={{ color: a.tint }} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-bold text-white/95 truncate tracking-tight">{a.label}</div>
-                    <div className="text-[11px] text-white/50 truncate">{a.hint}</div>
-                  </div>
-                  <span
-                    className="inline-flex items-center justify-center min-w-[2rem] h-6 px-2 rounded-full text-xs font-extrabold tabular-nums"
-                    style={{
-                      background: urgent ? `${a.tint}25` : "rgba(255,255,255,0.04)",
-                      color: urgent ? a.tint : "rgba(255,255,255,0.45)",
-                      border: `1px solid ${urgent ? a.tint + "66" : "rgba(255,255,255,0.08)"}`,
-                      boxShadow: urgent ? `0 0 12px -3px ${a.tint}66` : "none",
-                    }}
-                  >
-                    {a.count}
-                  </span>
-                  <ArrowUpRight className="h-4 w-4 text-white/30 group-hover:text-white/70 transition" />
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </CollapsiblePanel>
+      {/* Canonical pending-action queue (single source of truth) */}
+      <PendingQueuesPanel />
+
+      {/* Canonical reverse-purchases tool + recent reversals (single source of truth) */}
+      <ReversePurchasesPanel />
 
       <CollapsiblePanel
         id="telegram-inbox"

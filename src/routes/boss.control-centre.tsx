@@ -87,7 +87,6 @@ const GROUPS: Group[] = [
     Icon: Globe2, tint: "#ffd166",
     panels: [
       { id: "overview", label: "Power bar", desc: "Master toggles & reverse tool", to: "/boss/overview" },
-      { id: "power", label: "Power detail", desc: "Detailed kill switches", to: "/boss/power" },
       { id: "settings", label: "Site settings", desc: "Tunables", to: "/boss/settings" },
       { id: "pricing", label: "Pricing", desc: "Coin packs & products", to: "/boss/pricing" },
       { id: "promotions", label: "Promotions", desc: "Sign-up bonus & promos", to: "/boss/promotions" },
