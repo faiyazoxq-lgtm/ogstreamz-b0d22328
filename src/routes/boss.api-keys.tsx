@@ -3,7 +3,7 @@ import { exactPathRedirect } from "@/lib/boss-redirects";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { KeyRound, Plus, Eye, EyeOff, Trash2, Save, Loader2, ShieldAlert, Copy, Check, Settings2, RotateCcw } from "lucide-react";
+import { KeyRound, Plus, Eye, EyeOff, Trash2, Save, Loader2, ShieldAlert, ShieldCheck, Copy, Check, Settings2, RotateCcw, Lock, Clock } from "lucide-react";
 import {
   listAgentKeys,
   upsertAgentKey,
@@ -71,6 +71,9 @@ export function ApiKeysPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [showPresetsEditor, setShowPresetsEditor] = useState(false);
 
+  const totalKeys = data?.keys.length ?? 0;
+  const groupCount = grouped.length;
+
   const upsertMut = useMutation({
     mutationFn: (input: { key_name: string; value: string; label?: string; agent_group?: string; description?: string }) =>
       upsertFn({ data: input }),
@@ -99,8 +102,15 @@ export function ApiKeysPage() {
             <KeyRound className="h-5 w-5 text-gold" />
           </span>
           <div className="min-w-0 flex-1">
-            <h1 className="syndicate-header text-2xl text-foreground">Agent API Keys</h1>
-            <p className="text-sm text-muted-foreground">Encrypted vault for every AI agent and integration. Boss-only — values are never shipped to members.</p>
+            <h1 className="syndicate-header text-2xl text-foreground">Agent Key Vault</h1>
+            <p className="text-sm text-muted-foreground">
+              Encrypted secrets for AI agents and integrations. Boss-only — values stay on the server and are never shipped to members.
+            </p>
+            {!isLoading && totalKeys > 0 && (
+              <p className="mt-1.5 text-[11px] uppercase tracking-[0.2em] text-muted-foreground/80">
+                {totalKeys} key{totalKeys === 1 ? "" : "s"} · {groupCount} group{groupCount === 1 ? "" : "s"}
+              </p>
+            )}
           </div>
           <button
             type="button"
@@ -118,12 +128,19 @@ export function ApiKeysPage() {
           </button>
         </div>
 
-        <div className="mt-4 flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-200">
-          <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0" />
-          <span>
-            Values are encrypted at rest with pgp_sym_encrypt and only decrypted when you explicitly press <em>Reveal</em>.
-            Keys live in the database — to use them in server functions you can still keep platform-managed runtime secrets in parallel.
-          </span>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <div className="flex items-start gap-2 rounded-md border border-emerald-500/25 bg-emerald-500/5 px-3 py-2 text-xs text-emerald-100/90">
+            <ShieldCheck className="h-4 w-4 mt-0.5 shrink-0 text-emerald-300" />
+            <span>
+              <span className="font-bold text-emerald-200">Encrypted at rest</span> with pgp_sym_encrypt. Values only decrypt when you press <em>Reveal</em>.
+            </span>
+          </div>
+          <div className="flex items-start gap-2 rounded-md border border-amber-500/25 bg-amber-500/5 px-3 py-2 text-xs text-amber-100/90">
+            <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0 text-amber-300" />
+            <span>
+              <span className="font-bold text-amber-200">Replace</span> overwrites the stored value instantly. <span className="font-bold text-amber-200">Delete</span> is permanent — no undo.
+            </span>
+          </div>
         </div>
       </header>
 
@@ -165,16 +182,34 @@ export function ApiKeysPage() {
           <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" /> Loading vault…
         </div>
       ) : grouped.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
-          No keys stored yet. Click <span className="font-bold text-gold">Add key</span> to add your first one.
+        <div className="rounded-2xl border border-dashed border-gold/30 bg-card p-10 text-center">
+          <span className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gold/10 ring-1 ring-gold/30">
+            <Lock className="h-5 w-5 text-gold" />
+          </span>
+          <p className="syndicate-header text-base text-foreground">Vault is empty</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Add your first secret to start powering agents and integrations.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowAdd(true)}
+            className="mt-4 inline-flex items-center gap-2 rounded-md border border-gold/40 bg-gold/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-gold hover:bg-gold/25"
+          >
+            <Plus className="h-4 w-4" /> Add first key
+          </button>
         </div>
       ) : (
         <div className="space-y-6">
           {grouped.map(([group, rows]) => (
             <div key={group} className="space-y-2">
-              <h2 className="text-[11px] uppercase tracking-[0.3em] text-gold font-bold">
-                {presets.find((g) => g.id === group)?.label ?? group} <span className="text-muted-foreground">· {rows.length}</span>
-              </h2>
+              <div className="flex items-center gap-2 border-b border-border/60 pb-1.5">
+                <h2 className="text-[11px] uppercase tracking-[0.3em] text-gold font-bold">
+                  {presets.find((g) => g.id === group)?.label ?? group}
+                </h2>
+                <span className="rounded-full border border-border bg-secondary/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
+                  {rows.length}
+                </span>
+              </div>
               <ul className="space-y-2">
                 {rows.map((k) => (
                   <KeyRow
