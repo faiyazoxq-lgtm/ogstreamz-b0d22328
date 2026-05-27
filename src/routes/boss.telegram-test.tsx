@@ -1,4 +1,5 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { exactPathRedirect } from "@/lib/boss-redirects";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Send, Loader2, HeartPulse, CheckCircle2, XCircle } from "lucide-react";
@@ -11,11 +12,10 @@ import { sendTelegramReply } from "@/lib/telegram-inbox.functions";
 import { bossBotHealthCheck } from "@/lib/bot-health.functions";
 
 export const Route = createFileRoute("/boss/telegram-test")({
-  beforeLoad: ({ location }) => {
-    if (location.pathname.replace(/\/$/, "") === "/boss/telegram-test") {
-      throw redirect({ to: "/boss/infrastructure", hash: "telegram-test", replace: true });
-    }
-  },
+  beforeLoad: exactPathRedirect("/boss/telegram-test", () => ({
+    to: "/boss/infrastructure",
+    hash: "telegram-test",
+  })),
   component: () => null,
 });
 

@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { exactPathRedirect } from "@/lib/boss-redirects";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Brain, Loader2, Plus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -6,11 +7,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/boss/og-bot-memory")({
-  beforeLoad: ({ location }) => {
-    if (location.pathname.replace(/\/$/, "") === "/boss/og-bot-memory") {
-      throw redirect({ to: "/boss/infrastructure", hash: "og-bot-memory", replace: true });
-    }
-  },
+  beforeLoad: exactPathRedirect("/boss/og-bot-memory", () => ({
+    to: "/boss/infrastructure",
+    hash: "og-bot-memory",
+  })),
   component: () => null,
 });
 

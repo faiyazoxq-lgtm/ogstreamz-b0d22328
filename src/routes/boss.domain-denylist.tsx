@@ -1,4 +1,5 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { exactPathRedirect } from "@/lib/boss-redirects";
 import { useEffect, useState } from "react";
 import { ShieldOff, Plus, Trash2, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -13,11 +14,10 @@ type Row = {
 };
 
 export const Route = createFileRoute("/boss/domain-denylist")({
-  beforeLoad: ({ location }) => {
-    if (location.pathname.replace(/\/$/, "") === "/boss/domain-denylist") {
-      throw redirect({ to: "/boss/infrastructure", hash: "domain-denylist", replace: true });
-    }
-  },
+  beforeLoad: exactPathRedirect("/boss/domain-denylist", () => ({
+    to: "/boss/infrastructure",
+    hash: "domain-denylist",
+  })),
   component: () => null,
 });
 
