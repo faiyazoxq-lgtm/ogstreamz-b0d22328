@@ -14,12 +14,15 @@ import {
   Image as ImageIcon,
   ListChecks,
   RotateCcw,
+  Megaphone,
+  Loader2,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useServerFn } from "@tanstack/react-start";
 import { requestMembersConnectTelegram } from "@/lib/telegram-invites.functions";
-import { Megaphone, Loader2 } from "lucide-react";
 
 const BOT_USERNAME = "Ogstreamzbot";
 const BOTFATHER_URL = "https://t.me/BotFather";
@@ -151,12 +154,12 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   return (
     <Button
       size="sm"
-      variant="outline"
+      variant="ghost"
       onClick={onCopy}
-      className="h-7 px-2 text-[11px] gap-1"
+      className="h-7 px-2 text-[11px] gap-1 text-muted-foreground hover:text-foreground"
       aria-label={"Copy " + label}
     >
-      {copied ? <CheckCircle2 className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+      {copied ? <CheckCircle2 className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
       {copied ? "Copied" : "Copy"}
     </Button>
   );
@@ -186,6 +189,7 @@ export function TelegramSetupPage() {
     [done],
   );
   const pct = Math.round((completed / STEPS.length) * 100);
+  const allDone = completed === STEPS.length;
 
   // Boss broadcast: prompt every unlinked member to add @Ogstreamzbot.
   const sendInvites = useServerFn(requestMembersConnectTelegram);
@@ -217,183 +221,197 @@ export function TelegramSetupPage() {
   };
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground max-w-xl">
-          One-time configuration for <strong>@{BOT_USERNAME}</strong>.
-          Open BotFather, then tick off each step. Commands are copy-ready.
-        </p>
-        <div className="flex items-center gap-2">
-          <Button asChild className="bg-sky-500 hover:bg-sky-400 text-black font-black uppercase tracking-wider">
+    <div className="space-y-6">
+      {/* Page header */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-foreground">Telegram Setup</h1>
+          <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+            One-time configuration for <strong>@{BOT_USERNAME}</strong> via BotFather.
+            Work through each step and tick them off as you go.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button asChild size="sm" className="gap-1.5">
             <a href={BOTFATHER_URL} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4 mr-2" />
+              <ExternalLink className="h-4 w-4" />
               Open BotFather
             </a>
           </Button>
-          <button
-            type="button"
-            onClick={reset}
-            className="text-[11px] uppercase tracking-widest text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-          >
-            <RotateCcw className="h-3 w-3" /> Reset
-          </button>
+          <Button size="sm" variant="ghost" onClick={reset} className="text-muted-foreground hover:text-foreground gap-1">
+            <RotateCcw className="h-3.5 w-3.5" />
+            Reset
+          </Button>
         </div>
       </div>
 
-        <div className="mb-6 rounded-xl border border-border bg-card/60 p-4">
-          <div className="mb-4 rounded-2xl border border-amber-400/30 bg-amber-500/[0.06] p-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="flex items-start gap-3 min-w-0">
-                <span
-                  aria-hidden
-                  className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-amber-400/40 bg-amber-500/15 shrink-0"
-                >
-                  <Megaphone className="h-4 w-4 text-amber-300" />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-[0.3em] font-black text-amber-300">
-                    Member outreach
-                  </p>
-                  <h2 className="font-[Montserrat] font-black text-lg text-foreground">
-                    Invite members to add @{BOT_USERNAME}
-                  </h2>
-                  <p className="mt-1 text-xs text-muted-foreground max-w-md">
-                    Sends an in-app prompt to every member who hasn't linked
-                    Telegram yet, with a one-tap link to grab their code at{" "}
-                    <code className="text-foreground">/account/passes</code>.
-                    Once they link, they can run <code>/me</code>,{" "}
-                    <code>/credits</code> and <code>/msg</code> from chat.
-                  </p>
-                  {lastInvite && (
-                    <p className="mt-2 text-[11px] font-mono text-amber-200/80">
-                      Last blast: {lastInvite.invited} invited ·{" "}
-                      {lastInvite.alreadyLinked} already linked
-                    </p>
-                  )}
-                </div>
-              </div>
-              <Button
-                type="button"
-                onClick={onInviteAll}
-                disabled={inviting}
-                className="bg-amber-500 hover:bg-amber-400 text-black font-black uppercase tracking-wider"
-              >
-                {inviting ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4 mr-2" />
-                )}
-                {inviting ? "Sending…" : "Send invites"}
-              </Button>
+      {/* Member outreach banner */}
+      <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-4">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 ring-1 ring-amber-500/20">
+            <Megaphone className="h-4 w-4 text-amber-400" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="font-semibold text-foreground">Invite members to connect Telegram</h2>
+              <Badge variant="outline" className="text-[10px] font-normal text-amber-400 border-amber-400/20">
+                Outreach
+              </Badge>
             </div>
+            <p className="mt-1 text-xs text-muted-foreground max-w-lg leading-relaxed">
+              Send an in-app prompt to every unlinked member with a one-tap link to grab their code at{" "}
+              <code className="text-foreground">/account/passes</code>.
+              Once linked, they can run <code>/me</code>, <code>/credits</code> and <code>/msg</code> from chat.
+            </p>
+            {lastInvite && (
+              <p className="mt-2 text-[11px] font-mono text-muted-foreground">
+                Last blast: {lastInvite.invited} invited · {lastInvite.alreadyLinked} already linked
+              </p>
+            )}
           </div>
+          <Button
+            type="button"
+            size="sm"
+            onClick={onInviteAll}
+            disabled={inviting}
+            className="shrink-0 bg-amber-500 hover:bg-amber-400 text-black font-semibold"
+          >
+            {inviting ? (
+              <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4 mr-1.5" />
+            )}
+            {inviting ? "Sending…" : "Send invites"}
+          </Button>
+        </div>
+      </div>
 
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground font-bold">
+      {/* Progress */}
+      <div className="rounded-xl border border-border bg-card/60 p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
               Progress
             </p>
-            <p className="text-xs font-mono text-foreground">
-              {completed} / {STEPS.length} · {pct}%
-            </p>
+            {allDone && (
+              <Badge variant="outline" className="text-[10px] gap-1 font-normal text-emerald-400 border-emerald-400/20">
+                <CheckCircle2 className="h-3 w-3" />
+                All done
+              </Badge>
+            )}
           </div>
-          <div
-            className="h-2 w-full rounded-full bg-white/5 overflow-hidden"
-            role="progressbar"
-            aria-valuenow={pct}
-            aria-valuemin={0}
-            aria-valuemax={100}
-          >
-            <div
-              className="h-full bg-gradient-to-r from-sky-500 to-emerald-400 transition-[width]"
-              style={{ width: pct + "%" }}
-            />
-          </div>
+          <p className="text-xs font-mono text-foreground">
+            {completed} / {STEPS.length} · {pct}%
+          </p>
         </div>
+        <div
+          className="h-2 w-full rounded-full bg-muted overflow-hidden"
+          role="progressbar"
+          aria-valuenow={pct}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <div
+            className="h-full bg-gradient-to-r from-sky-500 to-emerald-400 transition-[width] duration-500"
+            style={{ width: pct + "%" }}
+          />
+        </div>
+      </div>
 
-        <ol className="space-y-3" aria-label="BotFather setup steps">
-          {STEPS.map((step, i) => {
-            const isDone = !!done[step.id];
-            const Icon = step.Icon;
-            return (
-              <li
-                key={step.id}
-                className={`rounded-2xl border p-4 transition-colors ${
-                  isDone
-                    ? "border-emerald-500/40 bg-emerald-950/20"
-                    : "border-border bg-card/60"
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <button
-                    type="button"
-                    onClick={() => toggle(step.id)}
-                    aria-pressed={isDone}
-                    aria-label={isDone ? "Mark step incomplete" : "Mark step complete"}
-                    className={`mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                      isDone
-                        ? "border-emerald-400/60 bg-emerald-500/25 text-emerald-200"
-                        : "border-border bg-white/5 text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {isDone ? (
-                      <CheckCircle2 className="h-4 w-4" />
-                    ) : (
-                      <Circle className="h-4 w-4" />
-                    )}
-                  </button>
+      {/* Steps */}
+      <ol className="space-y-2" aria-label="BotFather setup steps">
+        {STEPS.map((step, i) => {
+          const isDone = !!done[step.id];
+          const Icon = step.Icon;
+          return (
+            <li
+              key={step.id}
+              className={`rounded-xl border transition-colors ${
+                isDone
+                  ? "border-emerald-500/20 bg-emerald-500/[0.03]"
+                  : "border-border bg-card/60"
+              }`}
+            >
+              <div className="flex items-start gap-3 p-4">
+                <button
+                  type="button"
+                  onClick={() => toggle(step.id)}
+                  aria-pressed={isDone}
+                  aria-label={isDone ? "Mark step incomplete" : "Mark step complete"}
+                  className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                    isDone
+                      ? "border-emerald-400/50 bg-emerald-500/15 text-emerald-400"
+                      : "border-border bg-muted text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {isDone ? (
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  ) : (
+                    <Circle className="h-3.5 w-3.5" />
+                  )}
+                </button>
 
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] uppercase tracking-[0.25em] font-black text-muted-foreground">
+                <div className="min-w-0 flex-1">
+                  {/* Step identity */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
                       Step {i + 1} of {STEPS.length}
                     </p>
-                    <h2
-                      className={`mt-0.5 text-base font-bold leading-tight ${
-                        isDone ? "text-emerald-100" : "text-foreground"
-                      }`}
-                    >
-                      <Icon className="inline h-4 w-4 mr-1.5 -mt-0.5 text-sky-300" />
-                      {step.title}
-                    </h2>
-                    <p className="mt-1 text-sm text-muted-foreground leading-snug">
-                      {step.desc}
-                    </p>
+                    {isDone && (
+                      <Badge variant="outline" className="text-[10px] font-normal text-emerald-400 border-emerald-400/20">
+                        Done
+                      </Badge>
+                    )}
+                  </div>
+                  <h3 className={`mt-0.5 text-sm font-semibold leading-tight ${isDone ? "text-emerald-100" : "text-foreground"}`}>
+                    <Icon className="inline h-3.5 w-3.5 mr-1 -mt-0.5 text-sky-400" />
+                    {step.title}
+                  </h3>
+                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                    {step.desc}
+                  </p>
 
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <code className="font-mono text-xs bg-background/60 border border-border rounded px-2 py-1 select-all">
-                        {step.command}
-                      </code>
-                      <CopyButton text={step.command} label={step.command} />
-                    </div>
+                  {/* Command */}
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <code className="font-mono text-xs bg-background/80 border border-border rounded-md px-2.5 py-1 select-all">
+                      {step.command}
+                    </code>
+                    <CopyButton text={step.command} label={step.command} />
+                  </div>
 
-                    {step.answer && (
-                      <div className="mt-2">
-                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">
-                          Then paste this back to BotFather
-                        </p>
-                        <div className="flex items-start gap-2">
-                          <pre className="flex-1 max-w-full whitespace-pre-wrap break-all font-mono text-xs bg-background/60 border border-border rounded px-2 py-1.5 select-all">
-                            {step.answer}
-                          </pre>
+                  {/* Answer */}
+                  {step.answer && (
+                    <div className="mt-2">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">
+                        Paste this reply into BotFather
+                      </p>
+                      <div className="flex items-start gap-2">
+                        <pre className="flex-1 max-w-full whitespace-pre-wrap break-all font-mono text-[11px] bg-background/80 border border-border rounded-md px-2.5 py-1.5 select-all">
+                          {step.answer}
+                        </pre>
+                        <div className="shrink-0 pt-0.5">
                           <CopyButton text={step.answer} label="Reply" />
                         </div>
                       </div>
-                    )}
+                    </div>
+                  )}
 
-                    <p className="mt-2 text-[11px] text-muted-foreground/80 italic">
-                      Why: {step.why}
-                    </p>
-                  </div>
+                  {/* Why */}
+                  <p className="mt-2 flex items-start gap-1.5 text-[11px] text-muted-foreground/80">
+                    <Info className="h-3 w-3 shrink-0 mt-0.5 opacity-60" />
+                    <span>{step.why}</span>
+                  </p>
                 </div>
-              </li>
-            );
-          })}
-        </ol>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
 
-        <p className="mt-6 text-[11px] text-muted-foreground/70 leading-relaxed">
-          Tick state is stored locally in this browser only — it's a memory
-          aid, not a server-side audit trail. Re-run any step at any time;
-          BotFather always overwrites the previous value.
-        </p>
+      <p className="text-[11px] text-muted-foreground/60 leading-relaxed">
+        Tick state is stored locally in this browser only — it's a memory aid, not a server-side audit trail.
+        Re-run any step at any time; BotFather always overwrites the previous value.
+      </p>
     </div>
   );
 }
