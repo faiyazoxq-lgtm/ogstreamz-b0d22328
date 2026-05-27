@@ -466,7 +466,8 @@ export function BossTodoNotepad() {
             onSync={syncNow}
           />
           <Link
-            to="/boss/todo"
+            to="/boss/ops"
+            hash="todo"
             className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-white/60 hover:text-white"
           >
             Full board <ArrowUpRight className="h-3 w-3" />

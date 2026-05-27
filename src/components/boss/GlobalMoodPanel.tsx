@@ -202,13 +202,15 @@ function CivilityDefaultRow() {
 
       <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] text-white/55">
         <Link
-          to="/boss/civility"
+          to="/boss/content"
+          hash="civility"
           className="inline-flex items-center gap-1 underline decoration-dotted underline-offset-2 hover:text-white/85"
         >
           <Link2 className="h-3 w-3" /> Per-item overrides
         </Link>
         <Link
-          to="/boss/lexicon"
+          to="/boss/content"
+          hash="lexicon"
           className="inline-flex items-center gap-1 underline decoration-dotted underline-offset-2 hover:text-white/85"
         >
           <Link2 className="h-3 w-3" /> Edit swear lexicon

@@ -38,6 +38,7 @@ type Panel = {
   label: string;
   desc: string;
   to: string;
+  hash?: string;
 };
 
 type Group = {
@@ -54,7 +55,7 @@ const GROUPS: Group[] = [
     id: "hub", label: "Hub controls", desc: "Built-in & custom hubs",
     Icon: Boxes, tint: "#a78bfa",
     panels: [
-      { id: "hubs", label: "Hubs roster", desc: "Enable / order / customise hubs", to: "/boss/hubs" },
+      { id: "hubs", label: "Hubs roster", desc: "Enable / order / customise hubs", to: "/boss/content", hash: "hubs" },
       { id: "hubs-new", label: "New hub", desc: "Create a custom hub", to: "/boss/hubs/new" },
     ],
   },
@@ -62,9 +63,9 @@ const GROUPS: Group[] = [
     id: "portal", label: "Portal controls", desc: "Portals, costs, usage",
     Icon: Grid3x3, tint: "#3ad6ff",
     panels: [
-      { id: "portals", label: "Portals", desc: "Manage individual portals", to: "/boss/portals" },
-      { id: "portal-costs", label: "Coin costs", desc: "Per-hub & per-portal pricing", to: "/boss/portal-costs" },
-      { id: "portal-usage", label: "Usage stats", desc: "Live portal traffic & spend", to: "/boss/portal-usage" },
+      { id: "portals", label: "Portals", desc: "Manage individual portals", to: "/boss/content", hash: "portals" },
+      { id: "portal-costs", label: "Coin costs", desc: "Per-hub & per-portal pricing", to: "/boss/content", hash: "coin-costs" },
+      { id: "portal-usage", label: "Usage stats", desc: "Live portal traffic & spend", to: "/boss/content", hash: "usage" },
       { id: "stream-queue", label: "Stream queue", desc: "Pending stream verifications", to: "/boss/stream-queue" },
     ],
   },
@@ -72,14 +73,14 @@ const GROUPS: Group[] = [
     id: "user", label: "User controls", desc: "Roster, ranks, contacts, moderation",
     Icon: Users, tint: "#00e08a",
     panels: [
-      { id: "users", label: "Roster", desc: "Ranks, credits, bans, OG passes", to: "/boss/users" },
+      { id: "users", label: "Roster", desc: "Ranks, credits, bans, OG passes", to: "/boss/members", hash: "roster" },
       { id: "contacts", label: "Contacts", desc: "Phone numbers & spares", to: "/boss/contacts" },
-      { id: "civility", label: "Civility", desc: "Default tone for the site", to: "/boss/civility" },
-      { id: "lexicon", label: "Lexicon", desc: "Allow / deny word lists", to: "/boss/lexicon" },
-      { id: "domain-denylist", label: "Domain denylist", desc: "Block sign-up domains", to: "/boss/domain-denylist" },
-      { id: "denylist-audit", label: "Denylist audit", desc: "Recent denylist hits", to: "/boss/denylist-audit" },
-      { id: "telegram-setup", label: "Telegram setup", desc: "Wire user link bot", to: "/boss/telegram-setup" },
-      { id: "telegram-test", label: "Telegram test", desc: "Send test messages", to: "/boss/telegram-test" },
+      { id: "civility", label: "Civility", desc: "Default tone for the site", to: "/boss/content", hash: "civility" },
+      { id: "lexicon", label: "Lexicon", desc: "Allow / deny word lists", to: "/boss/content", hash: "lexicon" },
+      { id: "domain-denylist", label: "Domain denylist", desc: "Block sign-up domains", to: "/boss/infrastructure", hash: "domain-denylist" },
+      { id: "denylist-audit", label: "Denylist audit", desc: "Recent denylist hits", to: "/boss/infrastructure", hash: "denylist-audit" },
+      { id: "telegram-setup", label: "Telegram setup", desc: "Wire user link bot", to: "/boss/infrastructure", hash: "telegram-setup" },
+      { id: "telegram-test", label: "Telegram test", desc: "Send test messages", to: "/boss/infrastructure", hash: "telegram-test" },
     ],
   },
   {
@@ -87,21 +88,21 @@ const GROUPS: Group[] = [
     Icon: Globe2, tint: "#ffd166",
     panels: [
       { id: "overview", label: "Power bar", desc: "Master toggles & reverse tool", to: "/boss/overview" },
-      { id: "settings", label: "Site settings", desc: "Tunables", to: "/boss/settings" },
-      { id: "pricing", label: "Pricing", desc: "Coin packs & products", to: "/boss/pricing" },
+      { id: "settings", label: "Site settings", desc: "Tunables", to: "/boss/infrastructure", hash: "settings" },
+      { id: "pricing", label: "Pricing", desc: "Coin packs & products", to: "/boss/content", hash: "pricing" },
       { id: "promotions", label: "Promotions", desc: "Sign-up bonus & promos", to: "/boss/promotions" },
-      { id: "alerts", label: "Alerts", desc: "Live incident inbox", to: "/boss/alerts" },
-      { id: "publish-check", label: "Publish check", desc: "Pre-publish validation", to: "/boss/publish-check" },
-      { id: "analytics", label: "Analytics", desc: "Portal & site metrics", to: "/boss/analytics" },
+      { id: "alerts", label: "Alerts", desc: "Live incident inbox", to: "/boss/ops", hash: "alerts" },
+      { id: "publish-check", label: "Publish check", desc: "Pre-publish validation", to: "/boss/ops", hash: "publish" },
+      { id: "analytics", label: "Analytics", desc: "Portal & site metrics", to: "/boss/ops", hash: "analytics" },
       { id: "analytics-setup", label: "Analytics setup", desc: "GA / events config", to: "/boss/analytics-setup" },
-      { id: "todo", label: "Boss todo", desc: "Full notepad board", to: "/boss/todo" },
+      { id: "todo", label: "Boss todo", desc: "Full notepad board", to: "/boss/ops", hash: "todo" },
     ],
   },
   {
     id: "security", label: "Security & secrets", desc: "Keys, grants, audit",
     Icon: ShieldCheck, tint: "#ff5577",
     panels: [
-      { id: "api-keys", label: "Agent keys", desc: "Encrypted API key vault", to: "/boss/api-keys" },
+      { id: "api-keys", label: "Agent keys", desc: "Encrypted API key vault", to: "/boss/infrastructure", hash: "agent-keys" },
       { id: "secrets-inventory", label: "Secrets inventory", desc: "Platform secrets list", to: "/boss/secrets-inventory" },
       { id: "function-audit", label: "Function audit", desc: "Exposed DB functions", to: "/boss/function-audit" },
       { id: "function-grants", label: "Function grants", desc: "Revoke EXECUTE w/ restore log", to: "/boss/function-grants" },
@@ -226,6 +227,7 @@ function BossControlCentre() {
               <Link
                 key={panel.id}
                 to={panel.to}
+                hash={panel.hash}
                 className="group flex items-start gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5 hover:bg-secondary hover:border-border transition"
                 style={{ borderColor: `${group.tint}22` }}
               >

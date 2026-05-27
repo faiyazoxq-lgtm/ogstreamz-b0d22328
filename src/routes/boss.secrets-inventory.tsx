@@ -171,7 +171,7 @@ function SecretsInventoryPage() {
           <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0" />
           <span>
             For per-agent keys you rotate yourself, use{" "}
-            <a href="/boss/api-keys" className="underline decoration-dotted underline-offset-2 hover:text-amber-100">
+            <a href="/boss/infrastructure#agent-keys" className="underline decoration-dotted underline-offset-2 hover:text-amber-100">
               Agent API Keys
             </a>
             . To edit a runtime secret listed here, open Lovable Cloud → Backend → Secrets.
@@ -179,7 +179,8 @@ function SecretsInventoryPage() {
         </div>
 
         <Link
-          to="/boss/api-keys"
+          to="/boss/infrastructure"
+          hash="agent-keys"
           className="mt-3 flex items-start gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/5 px-3 py-2 text-xs text-emerald-200 hover:bg-emerald-500/10 transition"
         >
           <ShieldCheck className="h-4 w-4 mt-0.5 shrink-0" />

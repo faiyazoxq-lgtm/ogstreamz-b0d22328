@@ -46,6 +46,7 @@ const AGENT_PRESETS: { label: string; system: string; placeholder: string }[] = 
 
 type SettingTile = {
   to: string;
+  hash?: string;
   label: string;
   blurb: string;
   Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
@@ -53,10 +54,10 @@ type SettingTile = {
 };
 
 const SETTING_TILES: SettingTile[] = [
-  { to: "/boss/og-bot-memory", label: "Bot Memory", blurb: "Persistent facts the 0G Bot remembers between sessions.", Icon: MemoryStick, tint: "#a78bfa" },
-  { to: "/boss/civility",      label: "Civility & Tone", blurb: "Per-portal swear-chat toggle and global default tone.", Icon: ShieldCheck, tint: "#3ad6ff" },
-  { to: "/boss/lexicon",       label: "Swear Lexicon", blurb: "HEAVY/MID/SOFT lists, refusals, openers, fillers.", Icon: Skull, tint: "#ff5577" },
-  { to: "/boss/api-keys",      label: "Agent Keys", blurb: "Encrypted vault for OpenAI/Gemini/Lovable AI keys.", Icon: KeyRound, tint: "#ffd166" },
+  { to: "/boss/infrastructure", hash: "og-bot-memory", label: "Bot Memory", blurb: "Persistent facts the 0G Bot remembers between sessions.", Icon: MemoryStick, tint: "#a78bfa" },
+  { to: "/boss/content",        hash: "civility",      label: "Civility & Tone", blurb: "Per-portal swear-chat toggle and global default tone.", Icon: ShieldCheck, tint: "#3ad6ff" },
+  { to: "/boss/content",        hash: "lexicon",       label: "Swear Lexicon", blurb: "HEAVY/MID/SOFT lists, refusals, openers, fillers.", Icon: Skull, tint: "#ff5577" },
+  { to: "/boss/infrastructure", hash: "agent-keys",    label: "Agent Keys", blurb: "Encrypted vault for OpenAI/Gemini/Lovable AI keys.", Icon: KeyRound, tint: "#ffd166" },
   { to: "/console",            label: "Live Telemetry", blurb: "Realtime ai_logs feed + hub controls overview.", Icon: Sparkles, tint: "#00e08a" },
 ];
 
@@ -97,8 +98,9 @@ function BossAiAgentPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {SETTING_TILES.map((t) => (
             <Link
-              key={t.to}
+              key={t.to + (t.hash ? "#" + t.hash : "")}
               to={t.to}
+              hash={t.hash}
               className="group rounded-2xl border bg-card/60 p-4 transition hover:-translate-y-0.5 hover:bg-card/80"
               style={{ borderColor: `${t.tint}55` }}
             >

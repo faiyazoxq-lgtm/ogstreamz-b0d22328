@@ -4,13 +4,13 @@ import {
 } from "lucide-react";
 
 const SHORTCUTS = [
-  { to: "/boss",            label: "Boss Deck",  Icon: Crown },
-  { to: "/boss/alerts",     label: "Alerts",     Icon: Bell },
-  { to: "/boss/users",      label: "Users",      Icon: Users },
-  { to: "/boss/analytics",  label: "Analytics",  Icon: BarChart3 },
-  { to: "/boss/portals",    label: "Portals",    Icon: Activity },
-  { to: "/boss/civility",   label: "Civility",   Icon: ShieldAlert },
-  { to: "/admin",           label: "Admin",      Icon: MessageSquare },
+  { to: "/boss/overview",                       label: "Boss Deck", Icon: Crown },
+  { to: "/boss/ops",            hash: "alerts", label: "Alerts",    Icon: Bell },
+  { to: "/boss/members",        hash: "roster", label: "Members",   Icon: Users },
+  { to: "/boss/ops",         hash: "analytics", label: "Analytics", Icon: BarChart3 },
+  { to: "/boss/content",       hash: "portals", label: "Portals",   Icon: Activity },
+  { to: "/boss/content",      hash: "civility", label: "Civility",  Icon: ShieldAlert },
+  { to: "/admin",                               label: "Admin",     Icon: MessageSquare },
 ] as const;
 
 /**
@@ -35,14 +35,15 @@ export function BossOpsStrip() {
           </span>
         </div>
         <ul className="flex flex-1 items-center gap-1.5">
-          {SHORTCUTS.map(({ to, label, Icon }) => (
-            <li key={to} className="flex-shrink-0">
+          {SHORTCUTS.map((s) => (
+            <li key={s.to + ("hash" in s ? "#" + s.hash : "")} className="flex-shrink-0">
               <Link
-                to={to as never}
+                to={s.to as never}
+                hash={"hash" in s ? s.hash : undefined}
                 className="group inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-semibold text-white/75 transition hover:bg-white/5 hover:text-white"
               >
-                <Icon aria-hidden="true" className="h-3.5 w-3.5" />
-                <span className="whitespace-nowrap">{label}</span>
+                <s.Icon aria-hidden="true" className="h-3.5 w-3.5" />
+                <span className="whitespace-nowrap">{s.label}</span>
                 <ArrowUpRight className="h-3 w-3 opacity-0 transition group-hover:opacity-100" />
               </Link>
             </li>
