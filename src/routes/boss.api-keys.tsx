@@ -22,10 +22,6 @@ export const Route = createFileRoute("/boss/api-keys")({
     to: "/boss/infrastructure",
     hash: "agent-keys",
   })),
-    if (location.pathname.replace(/\/$/, "") === "/boss/api-keys") {
-      throw redirect({ to: "/boss/infrastructure", hash: "agent-keys", replace: true });
-    }
-  },
   component: () => null,
 });
 
