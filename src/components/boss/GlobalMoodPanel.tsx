@@ -214,7 +214,8 @@ function CivilityDefaultRow() {
           <Link2 className="h-3 w-3" /> Edit swear lexicon
         </Link>
         <Link
-          to="/boss/power"
+          to="/boss/overview"
+          hash="power"
           className="inline-flex items-center gap-1 underline decoration-dotted underline-offset-2 hover:text-white/85"
         >
           <Link2 className="h-3 w-3" /> Power bar mirror
