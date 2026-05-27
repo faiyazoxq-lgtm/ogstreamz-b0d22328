@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { exactPathRedirect } from "@/lib/boss-redirects";
 import { useEffect, useState } from "react";
 import { Brain, Loader2, Plus, Save, Trash2, X } from "lucide-react";
