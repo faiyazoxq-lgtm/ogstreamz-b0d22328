@@ -113,14 +113,28 @@ No markdown. No commentary.`;
 
     // sanitize formula: only allow safe chars
     if (parsed.kind === "calculator" && parsed.formula) {
-      const safe = /^[\sA-Za-z0-9_+\-*/().,**Math]+$/;
+      const safe = /^[\sA-Za-z0-9_+\-*/().,]+$/;
       if (!safe.test(parsed.formula)) throw new Error("Generated formula failed safety check");
-      // Sandbox validation: run the formula 3x with sample inputs to make
-      // sure it parses, doesn't reference unknown identifiers, and produces
-      // finite numbers. Reject the spawn if validation fails.
       const inputKeys: string[] = (Array.isArray(parsed.inputs) ? parsed.inputs : [])
         .map((i: any) => String(i?.key || ""))
         .filter(Boolean);
+      // Identifier allowlist: only `Math`, declared input keys, and Math's
+      // own properties (sin/cos/PI/...) may appear as bare identifiers.
+      // This blocks prompt-injected formulas from reaching Node globals like
+      // `process`, `require`, `global`, or `globalThis`.
+      const allowedIdents = new Set<string>([
+        "Math",
+        ...inputKeys,
+        ...Object.getOwnPropertyNames(Math),
+      ]);
+      const idents = parsed.formula.match(/[A-Za-z_][A-Za-z0-9_]*/g) ?? [];
+      for (const id of idents) {
+        if (!allowedIdents.has(id)) {
+          throw new Error(`Disallowed identifier in formula: ${id}`);
+        }
+      }
+      // Sandbox validation: run the formula 3x with sample inputs to make
+      // sure it parses and produces finite numbers.
       try {
         // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
         const fn = new Function("Math", ...inputKeys, `"use strict"; return (${parsed.formula});`);
