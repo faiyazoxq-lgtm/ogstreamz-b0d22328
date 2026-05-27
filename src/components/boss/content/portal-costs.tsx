@@ -275,16 +275,27 @@ export function PortalCostsPanel() {
               </div>
             </div>
             {filteredPortals.length === 0 ? (
-              <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-                {portals.length === 0 ? "No portals yet." : "No portals match your search."}
+              <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+                <Boxes className="h-5 w-5 mx-auto mb-2 opacity-60" />
+                {portals.length === 0 ? (
+                  <>
+                    <p>No portals yet.</p>
+                    <p className="text-xs mt-1 opacity-80">Once users (or you) create portals, set their per-use coin cost here.</p>
+                  </>
+                ) : (
+                  <>
+                    <p>No portals match "{q}".</p>
+                    <button onClick={() => setQ("")} className="text-xs mt-2 underline opacity-80 hover:opacity-100">Clear search</button>
+                  </>
+                )}
               </div>
             ) : (
               <div className="rounded-xl border bg-card overflow-hidden">
-                <div className="hidden md:grid md:grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-3 px-3 py-2 text-[10px] uppercase tracking-wider text-muted-foreground border-b">
+                <div className="hidden md:grid md:grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-3 px-3 py-2 text-[10px] uppercase tracking-wider text-muted-foreground border-b bg-muted/30">
                   <div>Portal</div>
                   <div>Kind</div>
-                  <div className="text-right w-44">Cost (instant save)</div>
-                  <div className="w-44 text-right">Test / Preview</div>
+                  <div className="text-right w-44">Coins per use · auto-saves</div>
+                  <div className="w-44 text-right">Verify</div>
                 </div>
                 <div className="divide-y">
                   {filteredPortals.map((p) => {
