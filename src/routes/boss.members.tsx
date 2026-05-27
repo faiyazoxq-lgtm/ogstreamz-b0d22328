@@ -10,6 +10,7 @@ import { BossResellerAuditPage } from "@/routes/boss.reseller-audit";
 import { BossTodoPage } from "@/components/boss/ops/todo";
 import { TopUpRequestsPanel } from "@/components/TopUpRequestsPanel";
 import { VipPassPoolAdmin } from "@/components/boss/VipPassPoolAdmin";
+import { PassShareCardPanel } from "@/components/overlord/PassShareCardPanel";
 
 export const Route = createFileRoute("/boss/members")({
   beforeLoad: requireBoss,
