@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ScrollText, RefreshCw, Filter, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { ScrollText, RefreshCw, Filter, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowUpDown, UserPlus, Coins, Archive, Radio, X } from "lucide-react";
 import { listResellerAudit, type ResellerAuditRow } from "@/lib/reseller-audit.functions";
 import { requireBoss } from "@/lib/route-guards";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -27,26 +27,32 @@ function fmtTime(iso: string): string {
 }
 
 function ActionBadge({ action }: { action: string }) {
-  const tint: Record<string, string> = { create: "#3ad6ff", topup: "#ffd166" };
-  const c = tint[action] ?? "#64748b";
+  const meta: Record<string, { c: string; Icon: typeof UserPlus; label: string }> = {
+    create: { c: "#3ad6ff", Icon: UserPlus, label: "New reseller" },
+    topup:  { c: "#ffd166", Icon: Coins,    label: "Top-up"      },
+  };
+  const m = meta[action] ?? { c: "#64748b", Icon: ScrollText, label: action || "—" };
+  const Icon = m.Icon;
   return (
     <span
-      className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.18em]"
-      style={{ color: c, border: `1px solid ${c}55`, background: `${c}14` }}
+      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.18em]"
+      style={{ color: m.c, border: `1px solid ${m.c}55`, background: `${m.c}14` }}
     >
-      {action}
+      <Icon className="h-3 w-3" /> {m.label}
     </span>
   );
 }
 
 function SourceBadge({ source }: { source: "live" | "archive" }) {
   const c = source === "live" ? "#22c55e" : "#94a3b8";
+  const Icon = source === "live" ? Radio : Archive;
   return (
     <span
-      className="inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em]"
+      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em]"
       style={{ color: c, border: `1px solid ${c}55`, background: `${c}14` }}
+      title={source === "live" ? "Recent entry (last 90 days)" : "Older than 90 days (from archive)"}
     >
-      {source}
+      <Icon className="h-2.5 w-2.5" /> {source}
     </span>
   );
 }
@@ -212,29 +218,46 @@ export function BossResellerAuditPage() {
   return (
     <div className="px-4 py-6 sm:px-6">
       <header className="flex items-start justify-between gap-3 mb-5">
-        <div>
-          <p className="text-xs uppercase tracking-[0.32em] font-semibold" style={{ color: "var(--neon-blue-bright)" }}>
-            Boss Console
-          </p>
-          <h1 className="mt-1 font-[Montserrat] font-black text-2xl sm:text-3xl text-foreground inline-flex items-center gap-2">
-            <ScrollText className="h-6 w-6" /> Reseller Audit
+        <div className="min-w-0">
+          <h1 className="font-[Montserrat] font-black text-xl sm:text-2xl text-foreground inline-flex items-center gap-2">
+            <ScrollText className="h-5 w-5" /> Reseller Audit
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Every <code>bossCreateReseller</code> and <code>bossTopupReseller</code> call. Live entries (last 90 days) plus archive.
+          <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
+            Append-only ledger of every reseller created and every credit top-up issued by boss accounts. Read-only — nothing in this view changes data.
           </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-emerald-300">
+              <Radio className="h-3 w-3" /> Live = last 90 days
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5">
+              <Archive className="h-3 w-3" /> Archive = older
+            </span>
+          </div>
         </div>
         <button
           type="button"
           onClick={applyFilters}
-          className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em] hover:bg-secondary"
+          disabled={loading}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em] hover:bg-secondary disabled:opacity-50"
         >
-          <RefreshCw className="h-3.5 w-3.5" /> Refresh
+          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
         </button>
       </header>
 
       <div className="rounded-xl border border-border bg-card p-3 mb-4">
-        <div className="flex items-center gap-2 mb-3 text-xs text-muted-foreground">
-          <Filter className="h-3.5 w-3.5" /> Filters
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Filter className="h-3.5 w-3.5" /> Filters
+          </div>
+          {(action || resellerId || actorUserId || targetUserId || from || to || !includeArchive || limit !== 100) && (
+            <button
+              type="button"
+              onClick={() => { clearFilters(); void applyFilters(); }}
+              className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3 w-3" /> Reset
+            </button>
+          )}
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 text-xs">
           <label className="flex flex-col gap-1">
@@ -305,14 +328,16 @@ export function BossResellerAuditPage() {
               className="rounded-md border border-border bg-background px-2 py-1.5"
             />
           </label>
-          <label className="flex items-end gap-2">
+          <label className="flex items-end gap-2 cursor-pointer">
             <input
               id="include-archive"
               type="checkbox"
               checked={includeArchive}
               onChange={(e) => setIncludeArchive(e.target.checked)}
             />
-            <span className="text-muted-foreground">Include archive (&gt; 90 days)</span>
+            <span className="text-muted-foreground inline-flex items-center gap-1">
+              <Archive className="h-3 w-3" /> Include archive (&gt; 90 days)
+            </span>
           </label>
         </div>
         <div className="mt-3 flex items-center justify-between gap-2">
@@ -350,7 +375,11 @@ export function BossResellerAuditPage() {
           <SortHeader label="Delta" col="delta" sortBy={sortBy} sortDir={sortDir} onSort={onSort} align="right" />
         </div>
         {rows.length === 0 && !loading ? (
-          <p className="p-6 text-sm text-muted-foreground">No entries match the current filters.</p>
+          <div className="p-8 text-center text-sm text-muted-foreground">
+            <ScrollText className="h-5 w-5 mx-auto mb-2 opacity-60" />
+            <p>No audit entries match the current filters.</p>
+            <p className="text-xs mt-1 opacity-80">Try clearing the action filter, widening the date range, or enabling the archive.</p>
+          </div>
         ) : (
           rows.map((r) => (
             <button
@@ -381,9 +410,9 @@ export function BossResellerAuditPage() {
       </div>
 
       {rows.length > 0 && (
-        <div className="mt-4 flex items-center justify-between gap-3 text-xs">
+        <div className="mt-4 flex items-center justify-between gap-3 text-xs flex-wrap">
           <p className="text-[11px] text-muted-foreground">
-            Hover any row to see the audit <code>reason</code>. Use the SQL editor for full JSON detail.
+            Click a row for full detail · hover for the audit reason.
           </p>
           <div className="flex items-center gap-2">
             <button
