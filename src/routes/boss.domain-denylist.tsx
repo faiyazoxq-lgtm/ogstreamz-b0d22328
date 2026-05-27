@@ -1,10 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ShieldOff, Plus, Trash2, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { requireBoss } from "@/lib/route-guards";
 
 type Row = {
   id: string;
@@ -14,14 +13,12 @@ type Row = {
 };
 
 export const Route = createFileRoute("/boss/domain-denylist")({
-  beforeLoad: requireBoss,
-  head: () => ({
-    meta: [
-      { title: "Domain Denylist · Boss · 0G-STREAMZ" },
-      { name: "description", content: "Block specific domains from appearing anywhere on the site." },
-    ],
-  }),
-  component: DomainDenylistPage,
+  beforeLoad: ({ location }) => {
+    if (location.pathname.replace(/\/$/, "") === "/boss/domain-denylist") {
+      throw redirect({ to: "/boss/infrastructure", hash: "domain-denylist", replace: true });
+    }
+  },
+  component: () => null,
 });
 
 export function DomainDenylistPage() {
