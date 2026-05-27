@@ -1,10 +1,10 @@
-import { createFileRoute, redirect, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { exactPathRedirect } from "@/lib/boss-redirects";
 
 export const Route = createFileRoute("/boss/hubs")({
-  beforeLoad: ({ location }) => {
-    if (location.pathname.replace(/\/$/, "") === "/boss/hubs") {
-      throw redirect({ to: "/boss/content", hash: "hubs", replace: true });
-    }
-  },
+  beforeLoad: exactPathRedirect("/boss/hubs", () => ({
+    to: "/boss/content",
+    hash: "hubs",
+  })),
   component: () => <Outlet />,
 });
