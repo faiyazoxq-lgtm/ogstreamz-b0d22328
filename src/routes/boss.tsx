@@ -4,7 +4,7 @@ import {
   Crown, LayoutDashboard, ShieldCheck, BarChart3, Skull, Users, ChevronLeft,
   ShieldAlert, Tv, Tags, Bell, Sparkles, Settings, Boxes, Grid3x3,
   Coins, Power, Rocket, KeyRound, Wallet, SlidersHorizontal, Lock, ScrollText,
-  ShieldOff, Lightbulb, Megaphone, Phone, LayoutGrid, Brain,
+  ShieldOff, Lightbulb, Megaphone, Phone, LayoutGrid, Brain, FileText,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { BossSearch } from "@/components/BossSearch";
@@ -51,10 +51,11 @@ const GROUPS: RailGroup[] = [
     tint: "#ffd166",
     items: [
       CONTROL_CENTRE,
-      { to: "/boss/alerts", label: "Alerts", Icon: Bell, desc: "Live incidents" },
-      { to: "/boss/publish-check", label: "Publish", Icon: Rocket, desc: "Pre-publish validation" },
-      { to: "/boss/analytics", label: "Analytics", Icon: BarChart3, desc: "Portal metrics" },
-      { to: "/syndicate-overlord", label: "Overlord", Icon: LayoutDashboard, desc: "Syndicate deck" },
+      { to: "/boss/ops", hash: "alerts", label: "Alerts", Icon: Bell, desc: "Live incidents" },
+      { to: "/boss/ops", hash: "publish", label: "Publish", Icon: Rocket, desc: "Pre-publish validation" },
+      { to: "/boss/ops", hash: "analytics", label: "Analytics", Icon: BarChart3, desc: "Portal metrics" },
+      { to: "/boss/ops", hash: "overlord", label: "Overlord", Icon: LayoutDashboard, desc: "Syndicate deck" },
+      { to: "/boss/ops", hash: "todo", label: "Boss To-Do", Icon: FileText, desc: "Boss task list" },
     ],
   },
   {
