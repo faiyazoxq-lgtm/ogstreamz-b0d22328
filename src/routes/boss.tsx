@@ -213,7 +213,6 @@ function BossLayout() {
           </div>
           <Link
             to="/boss/overview"
-            hash="power"
             className="hidden sm:inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/40 hover:text-gold transition shrink-0"
           >
             Power Bar →
