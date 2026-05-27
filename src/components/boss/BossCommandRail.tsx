@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Crown } from "lucide-react";
 
 export type RailItem = {
   to: string;
+  hash?: string;
   label: string;
   Icon: React.ComponentType<{ className?: string }>;
   exact?: boolean;
@@ -105,12 +106,13 @@ export function BossCommandRail({ top, groups, alertsUnread, alertsTo }: Props) 
       {activeGroup && (
         <ScrollRow className="px-3 sm:px-6 pb-2 pt-1.5">
           {activeGroup.items.map((n) => {
-            const active = isActive(n);
+            const active = isActive(n) && (!n.hash || (typeof window !== "undefined" && window.location.hash.replace(/^#/, "") === n.hash));
             const showBadge = n.to === alertsTo && alertsUnread > 0;
             return (
               <Link
-                key={n.to}
+                key={n.to + (n.hash ? "#" + n.hash : "")}
                 to={n.to}
+                hash={n.hash}
                 aria-current={active ? "page" : undefined}
                 title={n.desc}
                 className={[
