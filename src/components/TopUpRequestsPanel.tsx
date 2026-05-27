@@ -268,7 +268,7 @@ export function TopUpRequestsPanel() {
         </button>
 
         {ffOpen && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="space-y-4">
             <div className="flex gap-2">
               <Input
                 placeholder="member@email.com"
