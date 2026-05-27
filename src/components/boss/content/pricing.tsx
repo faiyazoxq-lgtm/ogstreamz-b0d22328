@@ -637,8 +637,10 @@ export function PricingPanel() {
             Loading products…
           </div>
         ) : rows.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card/50 p-6 text-center text-sm text-muted-foreground">
-            No products yet. Create one above.
+          <div className="rounded-2xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground">
+            <Package className="h-5 w-5 mx-auto mb-2 opacity-60" />
+            <p>No products in the catalog yet.</p>
+            <p className="text-xs mt-1 opacity-80">Use the form above to add your first VIP pass, Streams pass, digital item, or NFT.</p>
           </div>
         ) : (
           <>
