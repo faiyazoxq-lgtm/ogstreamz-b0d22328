@@ -1,13 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ListChecks, Plus, ArrowUpRight, Loader2, CheckCircle2, Circle, Pause, PlayCircle } from "lucide-react";
-
-export const Route = createFileRoute("/boss/todo")({
-  head: () => ({ meta: [{ title: "Boss To-Do · 0G-STREAMZ" }] }),
-  component: BossTodoPage,
-});
 
 type Todo = {
   id: string;
