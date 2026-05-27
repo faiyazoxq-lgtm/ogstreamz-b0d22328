@@ -1,4 +1,5 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { exactPathRedirect } from "@/lib/boss-redirects";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
@@ -8,11 +9,10 @@ import { Button } from "@/components/ui/button";
 import { runDenylistAudit, type AuditHit, type AuditReport } from "@/lib/denylist-audit.functions";
 
 export const Route = createFileRoute("/boss/denylist-audit")({
-  beforeLoad: ({ location }) => {
-    if (location.pathname.replace(/\/$/, "") === "/boss/denylist-audit") {
-      throw redirect({ to: "/boss/infrastructure", hash: "denylist-audit", replace: true });
-    }
-  },
+  beforeLoad: exactPathRedirect("/boss/denylist-audit", () => ({
+    to: "/boss/infrastructure",
+    hash: "denylist-audit",
+  })),
   component: () => null,
 });
 

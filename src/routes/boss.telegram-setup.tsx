@@ -1,4 +1,5 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { exactPathRedirect } from "@/lib/boss-redirects";
 import { useEffect, useMemo, useState } from "react";
 import {
   Send,
@@ -128,11 +129,10 @@ function loadDone(): Record<string, boolean> {
 }
 
 export const Route = createFileRoute("/boss/telegram-setup")({
-  beforeLoad: ({ location }) => {
-    if (location.pathname.replace(/\/$/, "") === "/boss/telegram-setup") {
-      throw redirect({ to: "/boss/infrastructure", hash: "telegram-setup", replace: true });
-    }
-  },
+  beforeLoad: exactPathRedirect("/boss/telegram-setup", () => ({
+    to: "/boss/infrastructure",
+    hash: "telegram-setup",
+  })),
   component: () => null,
 });
 
