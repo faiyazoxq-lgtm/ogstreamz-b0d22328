@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, RefreshCw, ShieldAlert, Sparkles, Inbox, Filter } from "lucide-react";
@@ -8,16 +7,6 @@ import {
   acknowledgeAlert,
   acknowledgeAllAlerts,
 } from "@/lib/system-alerts.functions";
-
-export const Route = createFileRoute("/boss/alerts")({
-  head: () => ({
-    meta: [
-      { title: "System Alerts · 0G Boss" },
-      { name: "description", content: "Live API errors and Perplexity fallback activity." },
-    ],
-  }),
-  component: BossAlertsPage,
-});
 
 type Alert = {
   id: string;
@@ -39,7 +28,7 @@ const sevTint: Record<Alert["severity"], string> = {
   error: "#ff5577",
 };
 
-function BossAlertsPage() {
+export function AlertsPanel() {
   const list = useServerFn(listSystemAlerts);
   const ack = useServerFn(acknowledgeAlert);
   const ackAll = useServerFn(acknowledgeAllAlerts);

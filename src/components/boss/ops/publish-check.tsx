@@ -1,22 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { CheckCircle2, AlertTriangle, XCircle, Loader2, ShieldCheck, Rocket, ChevronRight } from "lucide-react";
 import { runPublishChecks, type CheckResult } from "@/lib/publish-check.functions";
 import { requireBoss } from "@/lib/route-guards";
-
-export const Route = createFileRoute("/boss/publish-check")({
-  beforeLoad: requireBoss,
-  component: PublishCheckPage,
-  head: () => ({
-    meta: [
-      { title: "Publish Readiness — Boss" },
-      { name: "description", content: "Pre-publish validation: permissions, links, exposed data." },
-      { name: "robots", content: "noindex, nofollow" },
-    ],
-  }),
-});
 
 const STATIC_CHECKLIST: Array<{ label: string; detail: string }> = [
   { label: "Replace placeholder home page content", detail: "Verify /, /portals, and key landing pages render real copy and imagery." },
@@ -34,7 +21,7 @@ function statusPill(status: CheckResult["status"]) {
   return { Icon: XCircle, cls: "text-rose-300 bg-rose-500/10 ring-rose-500/40", label: "Fail" };
 }
 
-function PublishCheckPage() {
+export function PublishCheckPanel() {
   const fetchChecks = useServerFn(runPublishChecks);
   const [lastRun, setLastRun] = useState<Date | null>(null);
 

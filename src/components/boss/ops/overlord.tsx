@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Skull, Loader2, Search, Sparkles, Plus, Minus, Ticket, Users, Wallet, Crown, X,
@@ -102,13 +102,7 @@ const FIELD_INPUT = "h-11 bg-black/70 border-2 border-emerald-800/50 focus-visib
 const FIELD_SELECT = "h-11 bg-black/70 border-2 border-emerald-800/50 text-emerald-100 text-base font-bold tracking-tight";
 const PRIMARY_BTN = "h-11 text-base font-black tracking-wider uppercase shadow-lg";
 
-export const Route = createFileRoute("/syndicate-overlord")({
-  beforeLoad: requireBossHub,
-  head: () => ({ meta: [{ title: "Boss Control Center · 0G-PORTAL" }] }),
-  component: OverlordPage,
-});
-
-function OverlordPage() {
+export function OverlordPanel() {
   const { user, profile, loading } = useAuth();
   const navigate = useNavigate();
   const [rows, setRows] = useState<Row[]>([]);

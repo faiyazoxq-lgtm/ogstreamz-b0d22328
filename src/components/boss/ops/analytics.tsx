@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { BarChart3, ArrowLeft, RefreshCw, Eye, Users, Globe, Trash2, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,16 +16,6 @@ function isBotEvent(e: { user_agent: string | null }): boolean {
   if (!ua) return true; // no UA = almost certainly a script
   return BOT_UA_RE.test(ua);
 }
-
-export const Route = createFileRoute("/boss/analytics")({
-  head: () => ({
-    meta: [
-      { title: "Public View Analytics · Boss" },
-      { name: "description", content: "Anonymous public view counts for every portal and battle." },
-    ],
-  }),
-  component: AnalyticsPage,
-});
 
 type Event = {
   id: string;
@@ -54,7 +44,7 @@ function hostnameOf(ref: string | null): string {
   try { return new URL(ref).hostname || "direct"; } catch { return "direct"; }
 }
 
-function AnalyticsPage() {
+export function AnalyticsPanel() {
   const bossPurgeViewEventsFn = useServerFn(bossPurgeViewEvents);
   const { user, profile, isAdmin, loading: authLoading } = useAuth();
   const isBoss = profile?.rank === "boss" || isAdmin;
