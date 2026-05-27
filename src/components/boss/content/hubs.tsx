@@ -1,0 +1,335 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Plus, Pencil, Trash2, Eye, EyeOff, ArrowUpRight, Sparkles, Music2, Smile, Wrench, TrendingUp, Rocket, Radio, Bot, Brain, Zap, Star, Megaphone, Disc3, Satellite, Radar, Lock, Loader2, GripVertical, ArrowUpDown } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { validateHubForm, HUB_TITLE_MAX, HUB_TAGLINE_MAX, HUB_ICON_KEYS, type HubFieldErrors } from "@/lib/hub-style";
+import { CostTierControl } from "@/components/CostTierControl";
+import { summarizeCosts, TIER_RANK } from "@/lib/cost-registry";
+
+const ICONS: Record<string, any> = {
+  Sparkles, Music2, Smile, Wrench, TrendingUp, Rocket, Radio, Bot, Brain,
+  Zap, Star, Megaphone, Disc3, Satellite, Radar,
+};
+const ICON_KEYS = HUB_ICON_KEYS;
+
+const BUILTINS = [
+  { title: "MusicHUB",   tagline: "Stream. Own. Repeat.",       href: "/music",   icon: "Music2",     accent: "oklch(0.72 0.22 245)" },
+  { title: "JokesHUB",   tagline: "Fast wit. Zero filler.",     href: "/jokes",   icon: "Smile",      accent: "oklch(0.78 0.18 85)"  },
+  { title: "TradeHUB",   tagline: "Live signals. Bias meters.", href: "/trade",   icon: "TrendingUp", accent: "oklch(0.70 0.20 145)" },
+  { title: "ConnectHUB", tagline: "Scout. Enrich. Outreach.",   href: "/connect", icon: "Rocket",     accent: "oklch(0.65 0.22 295)" },
+  { title: "BattleHUB",  tagline: "Every choice is a loss.",    href: "/battle",  icon: "Sparkles",   accent: "oklch(0.65 0.24 25)"  },
+  { title: "ToolHUB",    tagline: "Sharp utilities, fast.",     href: "/tools",   icon: "Wrench",     accent: "oklch(0.70 0.18 180)" },
+];
+
+type Hub = {
+  id: string; title: string; tagline: string; href: string;
+  icon: string; accent: string; sort_order: number; published: boolean;
+  paid_services: Record<string, boolean>;
+  visibility?: "public" | "signed_in" | "boss_only";
+  slug?: string | null;
+};
+
+export const Route = createFileRoute("/boss/hubs")({
+  component: HubsManager,
+});
+
+function HubsManager() {
+  const [hubs, setHubs] = useState<Hub[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [draft, setDraft] = useState<Partial<Hub>>({});
+  const [editErrors, setEditErrors] = useState<HubFieldErrors>({});
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [costSort, setCostSort] = useState<"none" | "asc" | "desc">("none");
+
+  async function load() {
+    setLoading(true);
+    const { data } = await supabase.from("custom_hubs").select("*").order("sort_order").order("created_at");
+    setHubs(((data ?? []) as any[]).map((h) => ({ ...h, paid_services: h.paid_services ?? {} })) as Hub[]);
+    setLoading(false);
+  }
+  useEffect(() => { load(); }, []);
+
+  async function save(id: string) {
+    const errs = validateHubForm({
+      title: draft.title ?? "",
+      tagline: draft.tagline ?? "",
+      href: draft.href ?? "",
+      icon: draft.icon ?? "",
+      accent: draft.accent ?? "",
+    });
+    setEditErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      toast.error("Fix the highlighted fields");
+      return;
+    }
+    const { error } = await supabase.from("custom_hubs").update({
+      title: draft.title, tagline: draft.tagline, href: draft.href,
+      icon: draft.icon, accent: draft.accent,
+      sort_order: draft.sort_order, published: draft.published,
+    }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Saved");
+    setEditing(null); setDraft({}); setEditErrors({}); load();
+  }
+
+  async function togglePublished(h: Hub) {
+    const { error } = await supabase.from("custom_hubs").update({ published: !h.published }).eq("id", h.id);
+    if (error) return toast.error(error.message);
+    load();
+  }
+
+  async function remove(h: Hub) {
+    if (!confirm(`Delete "${h.title}" hub?`)) return;
+    const { error } = await supabase.from("custom_hubs").delete().eq("id", h.id);
+    if (error) return toast.error(error.message);
+    toast.success("Deleted"); load();
+  }
+
+  async function persistOrder(next: Hub[]) {
+    setSavingOrder(true);
+    const updates = next.map((h, i) =>
+      supabase.from("custom_hubs").update({ sort_order: i }).eq("id", h.id)
+    );
+    const results = await Promise.all(updates);
+    setSavingOrder(false);
+    const failed = results.find((r) => r.error);
+    if (failed?.error) { toast.error(failed.error.message); load(); return; }
+    toast.success("Order saved");
+  }
+
+  function handleDrop(targetId: string) {
+    if (!dragId || dragId === targetId) { setDragId(null); setOverId(null); return; }
+    const from = hubs.findIndex((h) => h.id === dragId);
+    const to = hubs.findIndex((h) => h.id === targetId);
+    if (from < 0 || to < 0) return;
+    const next = hubs.slice();
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    const reindexed = next.map((h, i) => ({ ...h, sort_order: i }));
+    setHubs(reindexed);
+    setDragId(null);
+    setOverId(null);
+    persistOrder(reindexed);
+  }
+
+  async function setHubServices(h: Hub, next: Record<string, boolean>) {
+    setHubs((hs) => hs.map((x) => (x.id === h.id ? { ...x, paid_services: next } : x)));
+    const { error } = await supabase.from("custom_hubs").update({ paid_services: next }).eq("id", h.id);
+    if (error) { toast.error(error.message); load(); }
+  }
+
+  const sortedHubs = costSort === "none"
+    ? hubs
+    : hubs.slice().sort((a, b) => {
+        const ra = TIER_RANK[summarizeCosts(a.paid_services).tier];
+        const rb = TIER_RANK[summarizeCosts(b.paid_services).tier];
+        return costSort === "asc" ? ra - rb : rb - ra;
+      });
+  const dragEnabled = costSort === "none";
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="font-[Montserrat] font-black text-2xl text-metallic">Hubs</h1>
+          <p className="text-sm text-muted-foreground">{BUILTINS.length} built-in · {hubs.length} custom</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setCostSort((s) => (s === "none" ? "asc" : s === "asc" ? "desc" : "none"))}
+            className={`inline-flex items-center gap-1.5 border rounded-md px-3 py-2 text-sm transition-colors ${costSort !== "none" ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-muted"}`}
+            title="Sort by cost tier (Free → Live $). Disables drag while sorted."
+          >
+            <ArrowUpDown className="h-3.5 w-3.5" />
+            Cost {costSort === "asc" ? "↑" : costSort === "desc" ? "↓" : ""}
+          </button>
+          <Button asChild><Link to="/boss/hubs/new"><Plus className="h-4 w-4 mr-1" /> New Hub</Link></Button>
+        </div>
+      </div>
+
+      {/* Built-in hubs */}
+      <div>
+        <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Built-in (locked)</h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {BUILTINS.map((h) => {
+            const Icon = ICONS[h.icon] ?? Sparkles;
+            return (
+              <div key={h.title} className="rounded-xl border bg-card p-4 flex items-center gap-3"
+                style={{ borderColor: `${h.accent}55` }}>
+                <div className="h-10 w-10 rounded-lg flex items-center justify-center"
+                  style={{ background: `${h.accent}1f`, color: h.accent }}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-sm truncate">{h.title}</p>
+                  <p className="text-xs text-muted-foreground truncate">{h.tagline}</p>
+                </div>
+                <Lock className="h-4 w-4 text-muted-foreground shrink-0" />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Custom hubs */}
+      <div>
+        <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Custom</h2>
+        {loading ? (
+          <div className="flex items-center gap-2 text-muted-foreground text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
+        ) : hubs.length === 0 ? (
+          <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+            No custom hubs yet. <Link to="/boss/hubs/new" className="underline">Create one</Link>.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {sortedHubs.map((h) => {
+              const Icon = ICONS[h.icon] ?? Sparkles;
+              const isEdit = editing === h.id;
+              return (
+                <div
+                  key={h.id}
+                  draggable={!isEdit && dragEnabled}
+                  onDragStart={(e) => { setDragId(h.id); e.dataTransfer.effectAllowed = "move"; }}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (overId !== h.id) setOverId(h.id); }}
+                  onDragLeave={() => { if (overId === h.id) setOverId(null); }}
+                  onDrop={(e) => { e.preventDefault(); handleDrop(h.id); }}
+                  onDragEnd={() => { setDragId(null); setOverId(null); }}
+                  className={`rounded-xl border bg-card p-4 transition-all ${dragId === h.id ? "opacity-50" : ""} ${overId === h.id && dragId && dragId !== h.id ? "ring-2 ring-primary" : ""}`}
+                  style={{ borderColor: `${h.accent}55` }}
+                >
+                  {isEdit ? (
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Input
+                            value={draft.title ?? ""}
+                            maxLength={HUB_TITLE_MAX}
+                            onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+                            placeholder="Title (PascalCase + HUB)"
+                            aria-invalid={!!editErrors.title}
+                            className={editErrors.title ? "border-destructive focus-visible:ring-destructive" : ""}
+                          />
+                          {editErrors.title && <p className="mt-1 text-[11px] text-destructive">{editErrors.title}</p>}
+                        </div>
+                        <div>
+                          <Input
+                            value={draft.href ?? ""}
+                            onChange={(e) => setDraft({ ...draft, href: e.target.value })}
+                            placeholder="Link"
+                            aria-invalid={!!editErrors.href}
+                            className={editErrors.href ? "border-destructive focus-visible:ring-destructive" : ""}
+                          />
+                          {editErrors.href && <p className="mt-1 text-[11px] text-destructive">{editErrors.href}</p>}
+                        </div>
+                      </div>
+                      <div>
+                        <Input
+                          value={draft.tagline ?? ""}
+                          maxLength={HUB_TAGLINE_MAX}
+                          onChange={(e) => setDraft({ ...draft, tagline: e.target.value })}
+                          placeholder="Tagline"
+                          aria-invalid={!!editErrors.tagline}
+                          className={editErrors.tagline ? "border-destructive focus-visible:ring-destructive" : ""}
+                        />
+                        <div className="mt-1 flex items-center justify-between text-[11px]">
+                          {editErrors.tagline
+                            ? <span className="text-destructive">{editErrors.tagline}</span>
+                            : <span />}
+                          <span className="text-muted-foreground tabular-nums">{(draft.tagline ?? "").length}/{HUB_TAGLINE_MAX}</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <select
+                            className={`w-full border rounded-md bg-background px-2 py-2 text-sm ${editErrors.icon ? "border-destructive" : ""}`}
+                            value={draft.icon}
+                            onChange={(e) => setDraft({ ...draft, icon: e.target.value })}
+                          >
+                            {ICON_KEYS.map((k) => <option key={k} value={k}>{k}</option>)}
+                          </select>
+                          {editErrors.icon && <p className="mt-1 text-[11px] text-destructive">{editErrors.icon}</p>}
+                        </div>
+                        <div>
+                          <Input
+                            value={draft.accent ?? ""}
+                            onChange={(e) => setDraft({ ...draft, accent: e.target.value })}
+                            placeholder="oklch(0.7 0.2 245)"
+                            aria-invalid={!!editErrors.accent}
+                            className={editErrors.accent ? "border-destructive focus-visible:ring-destructive" : ""}
+                          />
+                          {editErrors.accent && <p className="mt-1 text-[11px] text-destructive">{editErrors.accent}</p>}
+                        </div>
+                        <Input type="number" value={draft.sort_order ?? 0} onChange={(e) => setDraft({ ...draft, sort_order: Number(e.target.value) || 0 })} />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => { setEditing(null); setDraft({}); setEditErrors({}); }}>Cancel</Button>
+                        <Button size="sm" onClick={() => save(h.id)}>Save</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <span className={`text-muted-foreground touch-none ${dragEnabled ? "cursor-grab active:cursor-grabbing" : "opacity-30"}`} title={dragEnabled ? "Drag to reorder" : "Disable cost sort to drag"}>
+                        <GripVertical className="h-4 w-4" />
+                      </span>
+                      <div className="h-10 w-10 rounded-lg flex items-center justify-center"
+                        style={{ background: `${h.accent}1f`, color: h.accent }}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-sm truncate">{h.title}</p>
+                          {!h.published && <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Hidden</span>}
+                          {h.visibility && h.visibility !== "public" && (
+                            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-amber-300/40 bg-amber-300/10 text-amber-200">
+                              {h.visibility === "signed_in" ? "Members" : "Boss"}
+                            </span>
+                          )}
+                          <CostTierControl
+                            flags={h.paid_services}
+                            onChange={(next) => setHubServices(h, next)}
+                            compact
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {h.tagline} · → {h.slug ? `/hub/${h.slug}` : h.href}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" title={h.published ? "Hide" : "Publish"} onClick={() => togglePublished(h)}>
+                          {h.published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        </Button>
+                        <Link to="/boss/hubs/$id/edit" params={{ id: h.id }}>
+                          <Button variant="ghost" size="icon" title="Edit hub & sections">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <a href={h.href} target={/^https?:/.test(h.href) ? "_blank" : undefined} rel="noopener noreferrer">
+                          <Button variant="ghost" size="icon" title="Open"><ArrowUpRight className="h-4 w-4" /></Button>
+                        </a>
+                        <Button variant="ghost" size="icon" title="Delete" onClick={() => remove(h)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      {savingOrder && (
+        <div className="fixed bottom-4 right-4 inline-flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-xs text-muted-foreground shadow">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving order…
+        </div>
+      )}
+    </div>
+  );
+}
