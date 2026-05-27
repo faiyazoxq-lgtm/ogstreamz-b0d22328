@@ -257,7 +257,7 @@ export function AnalyticsPanel() {
           <Stat label="Tracked pages" value={rows.length} icon={<Globe className="h-4 w-4" />} />
           <Stat label="Top referrer" value={totals.topRefs[0]?.[0] ?? "—"} icon={<Globe className="h-4 w-4" />} />
         </div>
-      </header>
+      </div>
 
       <section className="glass-obsidian-cmd rounded-2xl p-4 md:p-5">
         <div className="flex flex-wrap items-center gap-2 mb-3">
