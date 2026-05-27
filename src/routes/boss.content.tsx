@@ -1,26 +1,53 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Boxes, Grid3x3, Tv, Megaphone } from "lucide-react";
+import { createFileRoute, useLocation, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo } from "react";
+import { Grid3x3, Boxes, Tags, Coins, BarChart3, ShieldCheck, Skull } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { requireBoss } from "@/lib/route-guards";
+import { PortalsPanel } from "@/components/boss/content/portals";
+import { HubsPanel } from "@/components/boss/content/hubs";
+import { PricingPanel } from "@/components/boss/content/pricing";
+import { PortalCostsPanel } from "@/components/boss/content/portal-costs";
+import { PortalUsagePanel } from "@/components/boss/content/portal-usage";
+import { LexiconPanel } from "@/components/boss/content/lexicon";
+import { CivilityPanel } from "@/components/boss/CivilityPanel";
 
 export const Route = createFileRoute("/boss/content")({
   beforeLoad: requireBoss,
   head: () => ({
     meta: [
       { title: "Content · Boss · 0G-STREAMZ" },
-      { name: "description", content: "Hubs, portals, stream queue and promotions — content surface of the syndicate." },
+      { name: "description", content: "Portals, hubs, pricing, coin costs, usage, civility and lexicon — unified content surface." },
     ],
   }),
   component: BossContentPage,
 });
 
-const SECTIONS = [
-  { id: "hubs",        label: "Hubs",         blurb: "Built-in & custom hubs.",       Icon: Boxes,    tint: "#a78bfa" },
-  { id: "portals",     label: "Portals",      blurb: "Manage portals & visibility.",  Icon: Grid3x3,  tint: "#3ad6ff" },
-  { id: "stream",      label: "Stream Queue", blurb: "Pending stream verifications.", Icon: Tv,       tint: "#ff5577" },
-  { id: "promotions",  label: "Promotions",   blurb: "Sign-up bonuses & promos.",     Icon: Megaphone, tint: "#ffd166" },
+const TABS = [
+  { id: "portals",     label: "Portals",      Icon: Grid3x3,     tint: "#3ad6ff" },
+  { id: "hubs",        label: "Hubs",         Icon: Boxes,       tint: "#a78bfa" },
+  { id: "pricing",     label: "Pricing",      Icon: Tags,        tint: "#00e08a" },
+  { id: "coin-costs",  label: "Coin Costs",   Icon: Coins,       tint: "#ffd166" },
+  { id: "usage",       label: "Portal Usage", Icon: BarChart3,   tint: "#7dd3fc" },
+  { id: "civility",    label: "Civility",     Icon: ShieldCheck, tint: "#ff5577" },
+  { id: "lexicon",     label: "Swear Lexicon", Icon: Skull,      tint: "#ff7a1a" },
 ] as const;
 
+type TabId = typeof TABS[number]["id"];
+
 function BossContentPage() {
+  const loc = useLocation();
+  const navigate = useNavigate();
+  const active = useMemo<TabId>(() => {
+    const h = (loc.hash || "").replace(/^#/, "");
+    return (TABS.find((t) => t.id === h)?.id ?? "portals") as TabId;
+  }, [loc.hash]);
+
+  useEffect(() => {
+    if (!loc.hash) {
+      void navigate({ to: "/boss/content", hash: "portals", replace: true });
+    }
+  }, [loc.hash, navigate]);
+
   return (
     <div className="space-y-5">
       <header className="glass-obsidian-cmd rounded-3xl p-5 md:p-6">
@@ -31,27 +58,35 @@ function BossContentPage() {
           Content Dashboard
         </h1>
         <p className="mt-2 text-sm text-white/60 max-w-2xl">
-          Future home for hubs, portals, stream queue and promotional surfaces.
+          Portals, hubs, pricing, coin costs, usage and moderation in one place.
         </p>
       </header>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {SECTIONS.map((s) => (
-          <div
-            key={s.id}
-            className="glass-obsidian-cmd rounded-2xl p-4 border border-white/5"
-          >
-            <div className="flex items-center gap-2">
-              <s.Icon className="h-4 w-4" style={{ color: s.tint }} />
-              <span className="text-sm font-semibold text-white/90">{s.label}</span>
-            </div>
-            <p className="mt-2 text-xs text-white/50">{s.blurb}</p>
-            <p className="mt-3 text-[10px] uppercase tracking-[0.25em] text-white/30">
-              Coming soon
-            </p>
-          </div>
-        ))}
-      </div>
+      <Tabs
+        value={active}
+        onValueChange={(v) => navigate({ to: "/boss/content", hash: v, replace: false })}
+      >
+        <TabsList className="flex flex-wrap gap-1 bg-white/5 p-1 rounded-xl">
+          {TABS.map((t) => (
+            <TabsTrigger
+              key={t.id}
+              value={t.id}
+              className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60 gap-1.5"
+            >
+              <t.Icon className="h-3.5 w-3.5" style={{ color: t.tint }} />
+              {t.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        <TabsContent value="portals" className="mt-5"><PortalsPanel /></TabsContent>
+        <TabsContent value="hubs" className="mt-5"><HubsPanel /></TabsContent>
+        <TabsContent value="pricing" className="mt-5"><PricingPanel /></TabsContent>
+        <TabsContent value="coin-costs" className="mt-5"><PortalCostsPanel /></TabsContent>
+        <TabsContent value="usage" className="mt-5"><PortalUsagePanel /></TabsContent>
+        <TabsContent value="civility" className="mt-5"><CivilityPanel /></TabsContent>
+        <TabsContent value="lexicon" className="mt-5"><LexiconPanel /></TabsContent>
+      </Tabs>
     </div>
   );
 }
