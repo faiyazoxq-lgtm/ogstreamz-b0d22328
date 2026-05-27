@@ -287,8 +287,13 @@ export const spawnPortal = createServerFn({ method: "POST" })
     const { supabase, userId } = context as { supabase: any; userId: string };
     if (!data.name || !data.niche) throw new Error("Name and niche required");
 
-    // Members pay 1 credit per spawn; admins spawn free.
     const admin = await isAdmin(supabase, userId);
+    if (!admin) {
+      // Server-side enforcement: spawning is admin/boss only. The UI hides
+      // this for everyone else, but the server fn must reject direct calls
+      // before any paid AI provider (Perplexity / Firecrawl / Lovable) runs.
+      throw new Response("Admin only", { status: 403 });
+    }
     let charged = 0;
     if (!admin) {
       const { error: spendErr } = await supabase.rpc("spend_credits", {
