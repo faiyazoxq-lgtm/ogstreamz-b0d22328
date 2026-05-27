@@ -28,7 +28,7 @@ function HubEditPage() {
   useEffect(() => {
     void supabase.from("custom_hubs").select("*").eq("id", id).maybeSingle()
       .then(({ data }) => {
-        if (!data) { toast.error("Hub not found"); nav({ to: "/boss/hubs" }); return; }
+        if (!data) { toast.error("Hub not found"); nav({ to: "/boss/content", hash: "hubs" }); return; }
         setHub(data);
         const parsed = HubSectionsZ.safeParse(data.sections ?? []);
         setSections(parsed.success ? parsed.data : []);
