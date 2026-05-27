@@ -10,6 +10,7 @@ import { BossResellerAuditPage } from "@/routes/boss.reseller-audit";
 import { BossTodoPage } from "@/components/boss/ops/todo";
 import { TopUpRequestsPanel } from "@/components/TopUpRequestsPanel";
 import { VipPassPoolAdmin } from "@/components/boss/VipPassPoolAdmin";
+import { PassShareCardPanel } from "@/components/overlord/PassShareCardPanel";
 
 export const Route = createFileRoute("/boss/members")({
   beforeLoad: requireBoss,
@@ -240,30 +241,32 @@ function CodesPanel() {
 
 function SharePanel() {
   return (
-    <div className="glass-obsidian-cmd rounded-2xl p-5 space-y-3">
-      <h2 className="syndicate-header text-base text-white/90 flex items-center gap-2">
-        <Share2 className="h-4 w-4" style={{ color: "#ff7a1a" }} />
-        Public Share &amp; Referrals
-      </h2>
-      <p className="text-sm text-white/60">
-        Referral and share-link controls live here. Hook the existing referral
-        tracking surfaces into this panel as they land.
-      </p>
-      <div className="flex gap-2">
-        <Link
-          to="/boss/promotions"
-          className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-bold text-white/90 hover:bg-white/10"
-        >
-          Promotions
-        </Link>
-        <Link
-          to="/boss/ops"
-          hash="analytics"
-          className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-bold text-white/90 hover:bg-white/10"
-        >
-          Analytics
-        </Link>
+    <div className="space-y-3">
+      <div className="glass-obsidian-cmd rounded-2xl p-5 space-y-2">
+        <h2 className="syndicate-header text-base text-white/90 flex items-center gap-2">
+          <Share2 className="h-4 w-4" style={{ color: "#ff7a1a" }} />
+          Public Share &amp; Referrals
+        </h2>
+        <p className="text-sm text-white/60">
+          Mint shareable passes with QR codes, links, and vCards for events, promos, or direct invites.
+        </p>
+        <div className="flex gap-2">
+          <Link
+            to="/boss/promotions"
+            className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-bold text-white/90 hover:bg-white/10"
+          >
+            Promotions
+          </Link>
+          <Link
+            to="/boss/ops"
+            hash="analytics"
+            className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-bold text-white/90 hover:bg-white/10"
+          >
+            Analytics
+          </Link>
+        </div>
       </div>
+      <PassShareCardPanel />
     </div>
   );
 }
