@@ -25,18 +25,25 @@ export const Route = createFileRoute("/boss/members")({
 
 const TABS = [
   { id: "roster",    label: "Roster",    Icon: Users,     tint: "#3ad6ff",
+    group: "People",
     purpose: "Browse every member, open a profile, run per-user actions." },
   { id: "topups",    label: "Top-Ups",   Icon: Inbox,     tint: "#ff5577",
+    group: "Queue",
     purpose: "Approve or reject pending credit top-up requests." },
   { id: "passes",    label: "Passes",    Icon: Ticket,    tint: "#ffd166",
+    group: "Access",
     purpose: "Mint OG Passes and manage the shared VIP pass pool." },
   { id: "codes",     label: "Codes",     Icon: KeyRound,  tint: "#a78bfa",
+    group: "Access",
     purpose: "Sign-up bonus codes, promo codes, and per-user invites." },
   { id: "resellers", label: "Resellers", Icon: Handshake, tint: "#00e08a",
+    group: "Partners",
     purpose: "Audit reseller activity and reconcile commission." },
   { id: "share",     label: "Share",     Icon: Share2,    tint: "#ff7a1a",
+    group: "Outreach",
     purpose: "Public share links and referral controls." },
   { id: "notes",     label: "Notes",     Icon: FileText,  tint: "#7dd3fc",
+    group: "Workflow",
     purpose: "Boss-only scratchpad and follow-up to-do list." },
 ] as const;
 
@@ -163,6 +170,7 @@ function TabIntroFor({ tab, children }: { tab: TabId; children?: React.ReactNode
       label={meta.label}
       purpose={meta.purpose}
       tint={meta.tint}
+      group={meta.group}
     >
       {children}
     </BossTabIntro>

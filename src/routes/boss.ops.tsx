@@ -22,11 +22,16 @@ export const Route = createFileRoute("/boss/ops")({
 });
 
 const TABS = [
-  { id: "alerts",    label: "Alerts",        Icon: Bell,            tint: "#ff5577", purpose: "Live system alerts and upstream API errors." },
-  { id: "publish",   label: "Publish Check", Icon: Rocket,          tint: "#ffd166", purpose: "Validate readiness before going live." },
-  { id: "analytics", label: "Analytics",     Icon: BarChart3,       tint: "#a78bfa", purpose: "Anonymous visit stats across portals and battles." },
-  { id: "overlord",  label: "Overlord",      Icon: LayoutDashboard, tint: "#3ad6ff", purpose: "Command-deck tools for users, passes, and codes." },
-  { id: "todo",      label: "Boss To-Do",    Icon: FileText,        tint: "#00e08a", purpose: "Priority-tracked ops workflow board." },
+  { id: "alerts",    label: "Alerts",        Icon: Bell,            tint: "#ff5577",
+    group: "Monitor",  purpose: "Live system alerts and upstream API errors." },
+  { id: "publish",   label: "Publish Check", Icon: Rocket,          tint: "#ffd166",
+    group: "Validate", purpose: "Pre-flight readiness check before going live." },
+  { id: "analytics", label: "Analytics",     Icon: BarChart3,       tint: "#a78bfa",
+    group: "Review",   purpose: "Anonymous visit stats across portals and battles." },
+  { id: "overlord",  label: "Overlord",      Icon: LayoutDashboard, tint: "#3ad6ff",
+    group: "Command",  purpose: "Command-deck tools for users, passes, and codes." },
+  { id: "todo",      label: "Boss To-Do",    Icon: FileText,        tint: "#00e08a",
+    group: "Workflow", purpose: "Priority-tracked operational notes and to-dos." },
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
@@ -52,10 +57,13 @@ function BossOpsPage() {
           0G · Ops
         </p>
         <h1 className="syndicate-header text-2xl md:text-3xl text-white/95 mt-1">
-          Operations Dashboard
+          Operations
         </h1>
         <p className="mt-2 text-sm text-white/60 max-w-2xl">
-          Monitoring, validation, analytics, command tools, and workflow — everything needed to keep the syndicate running.
+          Everything that keeps the syndicate running — <span className="text-white/80">Monitor</span> alerts,
+          <span className="text-white/80"> Validate</span> readiness,
+          <span className="text-white/80"> Review</span> analytics,
+          and work the <span className="text-white/80">Command</span> deck and ops <span className="text-white/80">Workflow</span> board.
         </p>
       </header>
 
@@ -79,7 +87,7 @@ function BossOpsPage() {
 
         {TABS.map((t) => (
           <TabsContent key={t.id} value={t.id} className="mt-5 space-y-4">
-            <BossTabIntro icon={t.Icon} label={t.label} purpose={t.purpose} tint={t.tint} />
+            <BossTabIntro icon={t.Icon} label={t.label} purpose={t.purpose} tint={t.tint} group={t.group} />
             {t.id === "alerts"    && <AlertsPanel />}
             {t.id === "publish"   && <PublishCheckPanel />}
             {t.id === "analytics" && <AnalyticsPanel />}
