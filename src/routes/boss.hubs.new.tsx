@@ -106,7 +106,7 @@ function NewHubPage() {
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Hub created");
-    nav({ to: "/boss/hubs" });
+    nav({ to: "/boss/content", hash: "hubs" });
   }
 
   function field<T>(setter: (v: T) => void) {
