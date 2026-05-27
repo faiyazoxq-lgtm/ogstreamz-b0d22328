@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -14,19 +14,15 @@ import {
   type AgentKeyPreset,
   type AgentKeyRow,
 } from "@/lib/agent-keys.functions";
-import { requireBoss } from "@/lib/route-guards";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/boss/api-keys")({
-  beforeLoad: requireBoss,
-  component: ApiKeysPage,
-  head: () => ({
-    meta: [
-      { title: "Agent API Keys — Boss" },
-      { name: "description", content: "Encrypted Boss-only vault for AI agent and integration API keys." },
-      { name: "robots", content: "noindex, nofollow" },
-    ],
-  }),
+  beforeLoad: ({ location }) => {
+    if (location.pathname.replace(/\/$/, "") === "/boss/api-keys") {
+      throw redirect({ to: "/boss/infrastructure", hash: "agent-keys", replace: true });
+    }
+  },
+  component: () => null,
 });
 
 // Preset suggestions and the input placeholder are loaded from the server
