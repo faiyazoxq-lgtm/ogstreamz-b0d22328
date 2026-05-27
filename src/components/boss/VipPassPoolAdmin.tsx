@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Crown, Plus, Trash2, Save, Loader2, Eye, EyeOff, Power, PowerOff, KeyRound, Upload, FileSpreadsheet, X } from "lucide-react";
+import { Crown, Plus, Trash2, Save, Loader2, Eye, EyeOff, Power, PowerOff, KeyRound, Upload, FileSpreadsheet, X, Sparkles, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -309,20 +309,55 @@ export function VipPassPoolAdmin() {
     }
   };
 
+  const total = rows.length;
+  const active = rows.filter((r) => r.active).length;
+  const inactive = total - active;
+  const credentialCount = rows.filter((r) => r.username && r.password).length;
+  const codeCount = rows.filter((r) => r.code && !(r.username && r.password)).length;
+
   return (
     <div className="space-y-6">
-      <header className="flex items-center gap-3">
-        <Crown className="h-5 w-5 text-cyan-300" />
-        <div>
-          <h2 className="font-[Montserrat] font-black text-xl text-foreground">VIP Pass Pool</h2>
-          <p className="text-xs text-muted-foreground">
-            OGs press Reveal on their dashboard to be assigned a random pass — either a code, or a username + password — from this list. Each reveal lasts 15 minutes.
+      <header className="flex items-start gap-3">
+        <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-400/30 bg-cyan-400/10 text-cyan-300">
+          <Crown className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="font-[Montserrat] font-black text-xl text-foreground">VIP Pass Pool</h2>
+            <span className="inline-flex items-center gap-1 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-cyan-200">
+              <Sparkles className="h-2.5 w-2.5" /> Shared pool
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1 max-w-2xl">
+            When an OG taps <strong>Reveal</strong>, they're randomly assigned an active pass from this list — either a code, or a username + password. Each reveal lasts 15 minutes; credentials are encrypted at rest.
           </p>
+          {!loading && total > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+              <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5">
+                <Crown className="h-3 w-3" /> {total} total
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-emerald-300">
+                <Power className="h-3 w-3" /> {active} active
+              </span>
+              {inactive > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-rose-400/30 bg-rose-500/10 px-2 py-0.5 text-rose-300">
+                  <PowerOff className="h-3 w-3" /> {inactive} disabled
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5">
+                <ShieldCheck className="h-3 w-3" /> {credentialCount} cred · {codeCount} code-only
+              </span>
+            </div>
+          )}
         </div>
       </header>
 
       {/* Add single */}
       <section className="rounded-xl border border-cyan-400/30 bg-card/70 p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <h3 className="text-[10px] uppercase tracking-[0.3em] font-bold text-cyan-300">Add a single pass</h3>
+          <span className="rounded-full border border-cyan-400/30 bg-cyan-400/5 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-cyan-200/80">One at a time</span>
+        </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Label</label>
@@ -375,16 +410,24 @@ export function VipPassPoolAdmin() {
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="h-4 w-4 mr-1" />{draft.id ? "Save" : "Add pass"}</>}
           </Button>
         </div>
-        <p className="text-[10px] text-muted-foreground">
-          Provide a username + password (recommended), or just a code, or both. Credentials are encrypted at rest.
+        <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+          <ShieldCheck className="h-3 w-3" /> Provide a username + password (recommended), or just a code — or both. Credentials are encrypted at rest.
         </p>
       </section>
 
       {/* Bulk paste */}
       <section className="rounded-xl border border-cyan-400/20 bg-card/50 p-4">
-        <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-cyan-300 mb-2">
-          <KeyRound className="h-3 w-3 inline mr-1" /> Bulk add — one per line. Formats: <code>label | username | password</code>, <code>username | password</code>, or <code>code</code>
-        </p>
+        <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <h3 className="text-[10px] uppercase tracking-[0.3em] font-bold text-cyan-300 inline-flex items-center gap-1">
+              <KeyRound className="h-3 w-3" /> Bulk paste
+            </h3>
+            <span className="rounded-full border border-cyan-400/20 bg-cyan-400/5 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-cyan-200/80">Quick add</span>
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            One per line · <code className="px-1 rounded bg-background/60">label | username | password</code> · <code className="px-1 rounded bg-background/60">username | password</code> · <code className="px-1 rounded bg-background/60">code</code>
+          </p>
+        </div>
         <textarea
           value={bulk}
           onChange={(e) => setBulk(e.target.value)}
@@ -403,9 +446,12 @@ export function VipPassPoolAdmin() {
       <section className="rounded-xl border border-cyan-400/30 bg-card/60 p-4 space-y-3">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-cyan-300">
-              <FileSpreadsheet className="h-3 w-3 inline mr-1" /> CSV import
-            </p>
+            <div className="flex items-center gap-2">
+              <h3 className="text-[10px] uppercase tracking-[0.3em] font-bold text-cyan-300 inline-flex items-center gap-1">
+                <FileSpreadsheet className="h-3 w-3" /> CSV import
+              </h3>
+              <span className="rounded-full border border-cyan-400/30 bg-cyan-400/5 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-cyan-200/80">Bulk · with preview</span>
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
               Columns: <code>label, username, password, code, active, sort_order</code>. Header row optional. Comma or semicolon delimiter.
             </p>
@@ -537,10 +583,22 @@ export function VipPassPoolAdmin() {
 
       {/* Existing list */}
       <section className="rounded-xl border border-border bg-card/60 overflow-hidden">
+        <div className="px-4 py-2 border-b border-border bg-muted/20 flex items-center justify-between gap-2">
+          <h3 className="text-[10px] uppercase tracking-[0.3em] font-bold text-muted-foreground inline-flex items-center gap-1">
+            <Crown className="h-3 w-3" /> Current pool
+          </h3>
+          {!loading && total > 0 && (
+            <span className="text-[10px] text-muted-foreground">{active} active · {inactive} disabled</span>
+          )}
+        </div>
         {loading ? (
           <p className="text-center py-10 text-muted-foreground"><Loader2 className="h-4 w-4 inline animate-spin mr-2" />Loading pool…</p>
         ) : rows.length === 0 ? (
-          <p className="text-center py-10 text-muted-foreground text-sm">No pass codes yet — add some above.</p>
+          <div className="text-center py-10 px-4 text-muted-foreground text-sm">
+            <Crown className="h-5 w-5 mx-auto mb-2 opacity-60" />
+            <p>The pool is empty.</p>
+            <p className="text-xs mt-1 opacity-80">Add a pass above, paste in bulk, or import a CSV — OGs won't see anything until at least one active pass exists here.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[560px]">

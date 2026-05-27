@@ -169,30 +169,70 @@ function TabIntroFor({ tab, children }: { tab: TabId; children?: React.ReactNode
 }
 
 function CodesPanel() {
+  const cards = [
+    {
+      label: "Per-user invites",
+      tint: "#a78bfa",
+      scope: "Per member",
+      desc: "Mint a single-use VIP or credit code targeted at one member. Issued from the Roster row action menu so the code is tied to that user.",
+      cta: { to: "/boss/members", hash: "roster", label: "Open Roster" },
+    },
+    {
+      label: "Sign-up bonus & promos",
+      tint: "#ffd166",
+      scope: "Platform-wide",
+      desc: "Public promo codes and the default sign-up bonus that anyone can redeem during onboarding or from the wallet.",
+      cta: { to: "/boss/promotions", label: "Open Promotions" },
+    },
+    {
+      label: "VIP Pass Pool codes",
+      tint: "#67e8f9",
+      scope: "Shared pool",
+      desc: "Pre-minted VIP codes or stream credentials that auto-assign when an OG presses Reveal. Manage them in the Passes tab.",
+      cta: { to: "/boss/members", hash: "passes", label: "Open Passes" },
+    },
+  ] as const;
+
   return (
-    <div className="glass-obsidian-cmd rounded-2xl p-5 space-y-3">
-      <h2 className="syndicate-header text-base text-white/90 flex items-center gap-2">
-        <KeyRound className="h-4 w-4" style={{ color: "#a78bfa" }} />
-        Promo &amp; Invite Codes
-      </h2>
-      <p className="text-sm text-white/60">
-        Mint single-use VIP or credit codes per-user from the Roster tab’s row action
-        menu. Bulk minting and code analytics will land here.
-      </p>
-      <div className="flex gap-2">
-        <Link
-          to="/boss/members"
-          hash="roster"
-          className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-bold text-white/90 hover:bg-white/10"
-        >
-          Open Roster
-        </Link>
-        <Link
-          to="/boss/promotions"
-          className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-bold text-white/90 hover:bg-white/10"
-        >
-          Sign-up Bonus &amp; Promos
-        </Link>
+    <div className="space-y-3">
+      <div className="glass-obsidian-cmd rounded-2xl p-5 space-y-2">
+        <h2 className="syndicate-header text-base text-white/90 flex items-center gap-2">
+          <KeyRound className="h-4 w-4" style={{ color: "#a78bfa" }} />
+          Codes &amp; Redemptions
+        </h2>
+        <p className="text-sm text-white/60">
+          Three flavours of code live in 0G. Pick the right surface for the kind you want to issue or audit.
+        </p>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        {cards.map((c) => (
+          <div
+            key={c.label}
+            className="glass-obsidian-cmd rounded-2xl p-4 flex flex-col gap-3"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <KeyRound className="h-4 w-4" style={{ color: c.tint }} />
+                <h3 className="text-sm font-bold text-white/90">{c.label}</h3>
+              </div>
+              <span
+                className="rounded-full border px-1.5 py-0.5 text-[10px] uppercase tracking-wider whitespace-nowrap"
+                style={{ borderColor: `${c.tint}55`, color: c.tint, background: `${c.tint}1a` }}
+              >
+                {c.scope}
+              </span>
+            </div>
+            <p className="text-xs text-white/60 leading-relaxed flex-1">{c.desc}</p>
+            <Link
+              to={c.cta.to}
+              hash={"hash" in c.cta ? c.cta.hash : undefined}
+              className="inline-flex items-center justify-center gap-1.5 rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-bold text-white/90 hover:bg-white/10"
+            >
+              {c.cta.label}
+            </Link>
+          </div>
+        ))}
       </div>
     </div>
   );
