@@ -35,7 +35,7 @@ export const Route = createFileRoute("/boss/api-keys")({
 // process.env.AGENT_KEY_PRESETS_JSON / AGENT_KEY_NAME_PLACEHOLDER.
 const EMPTY_PRESETS: AgentKeyPreset[] = [];
 
-function ApiKeysPage() {
+export function ApiKeysPage() {
   const fetchList = useServerFn(listAgentKeys);
   const upsertFn = useServerFn(upsertAgentKey);
   const deleteFn = useServerFn(deleteAgentKey);
