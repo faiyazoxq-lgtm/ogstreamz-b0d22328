@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Search, Pencil, Trash2, ArrowUpRight, Loader2, Eye, ArrowUpDown, ImageIcon, Power, PowerOff, ChevronDown, ChevronRight } from "lucide-react";
+import { Search, Pencil, Trash2, ArrowUpRight, Loader2, Eye, ArrowUpDown, ImageIcon, Power, PowerOff, ChevronDown, ChevronRight, IdCard, Shield, Palette, Image as ImageLucide, Search as SearchIcon, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { bossSetPortalPublished } from "@/lib/boss-admin-misc.functions";
@@ -60,6 +60,34 @@ function hubLabel(kind: string) {
 }
 
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
+
+/** Compact section header for the inline portal editor — gives each cluster
+ * (Identity, Access & pricing, …) a clear visual anchor and a one-line hint
+ * so operators can scan the form top-to-bottom. */
+function EditorSection({
+  icon: Icon,
+  label,
+  hint,
+  tint = "#94a3b8",
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  label: string;
+  hint?: string;
+  tint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-lg border border-border/60 bg-background/40 p-3 space-y-2.5" style={{ borderLeft: `2px solid ${tint}55` }}>
+      <header className="flex items-center gap-2">
+        <Icon className="h-3.5 w-3.5" style={{ color: tint }} />
+        <span className="text-[10px] uppercase tracking-[0.14em] font-bold text-foreground/90">{label}</span>
+        {hint && <span className="text-[10px] text-muted-foreground truncate">· {hint}</span>}
+      </header>
+      {children}
+    </section>
+  );
+}
 
 export function PortalsPanel() {
   const setPortalPublishedFn = useServerFn(bossSetPortalPublished);
