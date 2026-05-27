@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { exactPathRedirect } from "@/lib/boss-redirects";
 import { useEffect, useState } from "react";
-import { Coins, Save, Loader2 } from "lucide-react";
+import { Coins, Save, Loader2, Globe, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/boss/settings")({
   beforeLoad: exactPathRedirect("/boss/settings", () => ({
@@ -44,7 +47,7 @@ export function SettingsPage() {
   const save = async () => {
     const n = Math.trunc(Number(bonus));
     if (!Number.isFinite(n) || n < 0 || n > 1000) {
-      toast.error("Enter a whole number between 0 and 1000");
+      toast.error("Enter a whole number between 0 and 1,000");
       return;
     }
     setSaving(true);
@@ -59,55 +62,94 @@ export function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="syndicate-header text-2xl text-foreground">Settings</h1>
-        <p className="text-sm text-muted-foreground mt-1">Tunable platform values. Changes apply instantly.</p>
-      </header>
+      {/* Page header */}
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Platform Settings</h1>
+        <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+          Review and adjust platform-wide values. Changes take effect immediately for all new activity.
+        </p>
+      </div>
 
-      <section className="rounded-2xl border border-border bg-card p-5 max-w-xl">
-        <div className="flex items-start gap-3 mb-4">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gold/10 ring-1 ring-gold/30">
-            <Coins className="h-4 w-4 text-gold" />
+      {/* Signup bonus card */}
+      <section className="rounded-xl border border-border bg-card p-5 max-w-xl">
+        {/* Card header */}
+        <div className="flex items-start gap-3">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 ring-1 ring-amber-500/25">
+            <Coins className="h-4 w-4 text-amber-400" />
           </span>
-          <div className="min-w-0">
-            <h2 className="font-semibold text-foreground">Signup bonus credits</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Coins granted automatically when a new account is created.
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="font-semibold text-foreground">Signup bonus credits</h2>
+              <Badge variant="outline" className="text-[10px] gap-1 font-medium text-amber-400 border-amber-400/25">
+                <Globe className="h-3 w-3" />
+                Platform-wide
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              Coins granted automatically to every new account at registration.
+              Increasing this raises acquisition cost; lowering it tightens the funnel.
             </p>
           </div>
         </div>
 
-        <label className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-bold mb-1.5">
-          Coins on signup
-        </label>
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            min={0}
-            max={1000}
-            step={1}
-            disabled={loading || saving}
-            value={bonus}
-            onChange={(e) => setBonus(e.target.value)}
-            className="w-32 rounded-md border border-border bg-background px-3 py-2 text-sm font-bold tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          />
-          <span className="text-sm text-muted-foreground">🪙</span>
-          <button
-            type="button"
+        {/* Control row */}
+        <div className="mt-5 flex flex-col sm:flex-row sm:items-end gap-3">
+          <div className="flex-1 min-w-0">
+            <label className="block text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5">
+              Coins on signup
+            </label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={0}
+                max={1000}
+                step={1}
+                disabled={loading || saving}
+                value={bonus}
+                onChange={(e) => setBonus(e.target.value)}
+                className="w-32 text-sm font-semibold tabular-nums"
+              />
+              <span className="text-sm text-muted-foreground">🪙</span>
+            </div>
+          </div>
+
+          <Button
+            size="sm"
             onClick={save}
             disabled={!dirty || saving || loading}
-            className="ml-auto inline-flex items-center gap-1.5 rounded-md bg-gold px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-black disabled:opacity-50 hover:bg-gold/90"
+            className="shrink-0"
           >
-            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            {saving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+            ) : (
+              <Save className="h-3.5 w-3.5 mr-1.5" />
+            )}
             Save
-          </button>
+          </Button>
         </div>
+
+        {/* Current value & impact hint */}
         {initial !== null && (
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            Current live value: <span className="font-bold text-foreground tabular-nums">{initial}</span> 🪙
-          </p>
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pt-4 border-t border-border/50">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Live value:</span>
+              <span className="font-bold text-foreground tabular-nums">{initial}</span>
+              <span className="text-muted-foreground">🪙</span>
+            </div>
+            {dirty && (
+              <div className="flex items-center gap-1.5 text-xs text-amber-400">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                <span>Unsaved change — review before saving.</span>
+              </div>
+            )}
+          </div>
         )}
       </section>
+
+      {/* Hint footer */}
+      <p className="text-xs text-muted-foreground max-w-xl">
+        Only whole numbers between 0 and 1,000 are accepted. This value is read at runtime and does not require a restart.
+      </p>
     </div>
   );
 }
