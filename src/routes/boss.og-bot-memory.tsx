@@ -1,7 +1,7 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { exactPathRedirect } from "@/lib/boss-redirects";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Brain, Loader2, Plus, Save, Trash2, X } from "lucide-react";
+import { Brain, Loader2, Plus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -116,23 +116,11 @@ export function OGBotMemoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        <Link to="/boss/overview" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6">
-          <ArrowLeft className="w-4 h-4" /> Boss Portal
-        </Link>
-
-        <div className="flex items-start justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Brain className="w-6 h-6" style={{ color: "#a78bfa" }} />
-              OG Bot Memory
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Persistent facts OG Bot remembers about you across every surface. Edit anything, add notes, or wipe the lot.
-            </p>
-          </div>
-        </div>
+    <div className="text-foreground">
+      <div className="max-w-3xl">
+        <p className="text-sm text-muted-foreground mb-4">
+          Persistent facts OG Bot remembers about you across every surface. Edit anything, add notes, or wipe the lot.
+        </p>
 
         <div className="grid grid-cols-3 gap-3 mb-6">
           <Stat label="Facts stored" value={String(facts.length)} />

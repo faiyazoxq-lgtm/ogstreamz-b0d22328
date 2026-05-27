@@ -71,14 +71,11 @@ export function TelegramTestPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Telegram test send</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Sends a message via @Ogstreamzbot to any chat_id the bot can reach.
-          Member chat_ids appear in the inbox or via /me in Telegram.
-        </p>
-      </header>
+    <div className="space-y-6 max-w-2xl">
+      <p className="text-sm text-muted-foreground">
+        Send a message via @Ogstreamzbot to any chat_id the bot can reach.
+        Member chat_ids appear in the inbox or via /me in Telegram.
+      </p>
 
       <form
         onSubmit={handleSend}

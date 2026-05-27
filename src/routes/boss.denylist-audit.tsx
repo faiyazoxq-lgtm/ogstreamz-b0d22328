@@ -46,24 +46,11 @@ export function DenylistAuditPage() {
     : [];
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10 text-foreground">
-      <header className="mb-8 flex items-start gap-3">
-        <div
-          className="flex h-12 w-12 items-center justify-center rounded-xl"
-          style={{ background: "color-mix(in oklab, #00e08a 18%, transparent)", color: "#00e08a" }}
-        >
-          <ScanSearch className="h-6 w-6" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Denylist Audit</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Scans every Boss-managed denylist domain against (1) stored database fields,
-            (2) the HTML of public pages on the live site, and (3) redirect targets.
-            The runtime guard already hides matches from visitors — this finds anywhere
-            they live so you can clean them up at the source.
-          </p>
-        </div>
-      </header>
+    <div className="space-y-6 max-w-4xl text-foreground">
+      <p className="text-sm text-muted-foreground">
+        Scans every blocked domain against stored database fields, rendered public pages, and redirect targets.
+        The runtime guard already hides matches from visitors — this finds anywhere they live so you can clean them up.
+      </p>
 
       <section className="rounded-2xl border border-border bg-card/60 p-5 backdrop-blur">
         <Button onClick={() => m.mutate()} disabled={m.isPending} className="gap-2">

@@ -413,6 +413,6 @@ export function TelegramSetupPage() {
           BotFather always overwrites the previous value.
         </p>
       </div>
-    </main>
+    </div>
   );
 }

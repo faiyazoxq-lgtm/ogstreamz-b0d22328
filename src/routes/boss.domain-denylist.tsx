@@ -74,25 +74,13 @@ export function DomainDenylistPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 text-foreground">
-      <header className="mb-8 flex items-start gap-3">
-        <div
-          className="flex h-12 w-12 items-center justify-center rounded-xl"
-          style={{ background: "color-mix(in oklab, #ff5577 18%, transparent)", color: "#ff5577" }}
-        >
-          <ShieldOff className="h-6 w-6" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Domain Denylist</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Any domain added here is scrubbed from every page for every visitor — members, anonymous, and bots.
-            Links are removed, embedded media is hidden, and the domain text is replaced with{" "}
-            <code className="rounded bg-muted px-1.5 py-0.5">[hidden]</code>.
-            Subdomains (e.g. <code className="rounded bg-muted px-1.5 py-0.5">x.example.com</code>) are blocked
-            automatically when you block <code className="rounded bg-muted px-1.5 py-0.5">example.com</code>.
-          </p>
-        </div>
-      </header>
+    <div className="space-y-6 max-w-3xl text-foreground">
+      <p className="text-sm text-muted-foreground">
+        Any domain added here is scrubbed from every page for every visitor — members, anonymous, and bots.
+        Links are removed, embedded media is hidden, and the domain text is replaced with{" "}
+        <code className="rounded bg-muted px-1.5 py-0.5">[hidden]</code>.
+        Subdomains are blocked automatically when you block the root domain.
+      </p>
 
       <section className="rounded-2xl border border-border bg-card/60 p-5 backdrop-blur">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
