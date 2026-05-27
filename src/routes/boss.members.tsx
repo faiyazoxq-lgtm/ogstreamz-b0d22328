@@ -177,7 +177,8 @@ function SharePanel() {
           Promotions
         </Link>
         <Link
-          to="/boss/analytics"
+          to="/boss/ops"
+          hash="analytics"
           className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-bold text-white/90 hover:bg-white/10"
         >
           Analytics
