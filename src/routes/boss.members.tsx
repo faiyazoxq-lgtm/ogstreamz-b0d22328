@@ -3,6 +3,7 @@ import { useEffect, useMemo } from "react";
 import { Users, Inbox, Ticket, KeyRound, Handshake, Share2, FileText, MousePointerClick } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { requireBoss } from "@/lib/route-guards";
+import { BossTabIntro } from "@/components/boss/tab-intro";
 import { BossUsers } from "@/routes/boss.users";
 import { BossOgPasses } from "@/routes/boss.og-passes";
 import { BossResellerAuditPage } from "@/routes/boss.reseller-audit";
@@ -98,21 +99,21 @@ function BossMembersPage() {
         </TabsList>
 
         <TabsContent value="roster" className="mt-5 space-y-4">
-          <TabIntro tab="roster">
+          <TabIntroFor tab="roster">
             <span className="inline-flex items-center gap-1 text-white/70">
               <MousePointerClick className="h-3 w-3" /> Click any card to open the member drawer for per-user actions.
             </span>
-          </TabIntro>
+          </TabIntroFor>
           <BossUsers />
         </TabsContent>
 
         <TabsContent value="topups" className="mt-5 space-y-4">
-          <TabIntro tab="topups" />
+          <TabIntroFor tab="topups" />
           <TopUpRequestsPanel />
         </TabsContent>
 
         <TabsContent value="passes" className="mt-5 space-y-6">
-          <TabIntro tab="passes" />
+          <TabIntroFor tab="passes" />
           <BossOgPasses />
           <section className="space-y-2">
             <h2 className="syndicate-header text-sm text-white/80 flex items-center gap-2">
@@ -127,25 +128,25 @@ function BossMembersPage() {
         </TabsContent>
 
         <TabsContent value="codes" className="mt-5 space-y-4">
-          <TabIntro tab="codes" />
+          <TabIntroFor tab="codes" />
           <CodesPanel />
         </TabsContent>
 
         <TabsContent value="resellers" className="mt-5 space-y-4">
-          <TabIntro tab="resellers">
+          <TabIntroFor tab="resellers">
             For reseller signups &amp; top-ups use the public{" "}
             <Link to="/reseller" className="underline text-gold">/reseller</Link> portal.
-          </TabIntro>
+          </TabIntroFor>
           <BossResellerAuditPage />
         </TabsContent>
 
         <TabsContent value="share" className="mt-5 space-y-4">
-          <TabIntro tab="share" />
+          <TabIntroFor tab="share" />
           <SharePanel />
         </TabsContent>
 
         <TabsContent value="notes" className="mt-5 space-y-4">
-          <TabIntro tab="notes" />
+          <TabIntroFor tab="notes" />
           <BossTodoPage />
         </TabsContent>
       </Tabs>
@@ -153,20 +154,17 @@ function BossMembersPage() {
   );
 }
 
-function TabIntro({ tab, children }: { tab: TabId; children?: React.ReactNode }) {
+function TabIntroFor({ tab, children }: { tab: TabId; children?: React.ReactNode }) {
   const meta = TABS.find((t) => t.id === tab)!;
   return (
-    <div
-      className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2 text-xs text-white/55"
-      style={{ borderLeft: `2px solid ${meta.tint}` }}
+    <BossTabIntro
+      icon={meta.Icon}
+      label={meta.label}
+      purpose={meta.purpose}
+      tint={meta.tint}
     >
-      <span className="inline-flex items-center gap-1.5 font-semibold text-white/80">
-        <meta.Icon className="h-3.5 w-3.5" style={{ color: meta.tint }} />
-        {meta.label}
-      </span>
-      <span>{meta.purpose}</span>
       {children}
-    </div>
+    </BossTabIntro>
   );
 }
 
