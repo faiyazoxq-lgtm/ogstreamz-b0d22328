@@ -4,6 +4,19 @@ import { callClaude } from "@/lib/claude.server";
 
 type Kind = "jokes" | "music" | "trade" | "connect" | "tools";
 
+async function isAdminOrBoss(supabase: any, userId: string): Promise<boolean> {
+  const [{ data: roleRow }, { data: bossRow }] = await Promise.all([
+    supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle(),
+    supabase.rpc("is_boss", { _uid: userId }),
+  ]);
+  return !!roleRow || !!bossRow;
+}
+
 const KIND_BRIEF: Record<Kind, string> = {
   jokes: "an AI jokes portal — a themed page that hosts 5 freshly-generated short comedy bits in a specific style/voice",
   music: "a music landing portal — a themed page promoting a sound, artist or release with mood-driven visuals",
@@ -53,7 +66,11 @@ export const describePortal = createServerFn({ method: "POST" })
     vibe: String(data.vibe ?? "").trim().slice(0, 200),
     language: String(data.language ?? "English").trim().slice(0, 40) || "English",
   }))
-  .handler(async ({ data }): Promise<{ description: string }> => {
+  .handler(async ({ data, context }): Promise<{ description: string }> => {
+    const { supabase, userId } = context as { supabase: any; userId: string };
+    if (!(await isAdminOrBoss(supabase, userId))) {
+      throw new Response("Admin only", { status: 403 });
+    }
     const seed = [data.name && `Name: ${data.name}`, data.niche && `Keywords: ${data.niche}`, data.vibe && `Vibe: ${data.vibe}`]
       .filter(Boolean)
       .join("\n");
