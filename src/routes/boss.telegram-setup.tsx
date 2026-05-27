@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Send,
@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { requireBoss } from "@/lib/route-guards";
 import { useServerFn } from "@tanstack/react-start";
 import { requestMembersConnectTelegram } from "@/lib/telegram-invites.functions";
 import { Megaphone, Loader2 } from "lucide-react";
@@ -129,19 +128,12 @@ function loadDone(): Record<string, boolean> {
 }
 
 export const Route = createFileRoute("/boss/telegram-setup")({
-  beforeLoad: requireBoss,
-  component: TelegramSetupPage,
-  head: () => ({
-    meta: [
-      { title: "Telegram Bot Setup — Boss · 0G-STREAMZ" },
-      {
-        name: "description",
-        content:
-          "Step-by-step BotFather checklist: /setdomain for ogstreamz.lovable.app and www.ogstreamz.co.uk, privacy, group join, slash commands.",
-      },
-      { name: "robots", content: "noindex, nofollow" },
-    ],
-  }),
+  beforeLoad: ({ location }) => {
+    if (location.pathname.replace(/\/$/, "") === "/boss/telegram-setup") {
+      throw redirect({ to: "/boss/infrastructure", hash: "telegram-setup", replace: true });
+    }
+  },
+  component: () => null,
 });
 
 function CopyButton({ text, label }: { text: string; label: string }) {
