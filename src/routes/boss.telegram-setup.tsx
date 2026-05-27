@@ -217,46 +217,28 @@ export function TelegramSetupPage() {
   };
 
   return (
-    <main className="min-h-screen px-4 py-8">
-      <div className="mx-auto max-w-3xl">
-        <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span
-              aria-hidden
-              className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-sky-400/40 bg-sky-500/15"
-            >
-              <Send className="h-6 w-6 text-sky-300" />
-            </span>
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.3em] font-black text-sky-300">
-                Boss · Telegram
-              </p>
-              <h1 className="font-[Montserrat] font-black text-2xl sm:text-3xl tracking-tight text-foreground">
-                BotFather setup checklist
-              </h1>
-              <p className="mt-1 text-sm text-muted-foreground max-w-xl">
-                One-time configuration for <strong>@{BOT_USERNAME}</strong>.
-                Open BotFather, then walk through every step. Each command is
-                copy-able and we remember which ones you've ticked.
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <Button asChild className="bg-sky-500 hover:bg-sky-400 text-black font-black uppercase tracking-wider">
-              <a href={BOTFATHER_URL} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Open BotFather
-              </a>
-            </Button>
-            <button
-              type="button"
-              onClick={reset}
-              className="text-[11px] uppercase tracking-widest text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-            >
-              <RotateCcw className="h-3 w-3" /> Reset checklist
-            </button>
-          </div>
-        </header>
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground max-w-xl">
+          One-time configuration for <strong>@{BOT_USERNAME}</strong>.
+          Open BotFather, then tick off each step. Commands are copy-ready.
+        </p>
+        <div className="flex items-center gap-2">
+          <Button asChild className="bg-sky-500 hover:bg-sky-400 text-black font-black uppercase tracking-wider">
+            <a href={BOTFATHER_URL} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Open BotFather
+            </a>
+          </Button>
+          <button
+            type="button"
+            onClick={reset}
+            className="text-[11px] uppercase tracking-widest text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+          >
+            <RotateCcw className="h-3 w-3" /> Reset
+          </button>
+        </div>
+      </div>
 
         <div className="mb-6 rounded-xl border border-border bg-card/60 p-4">
           <div className="mb-4 rounded-2xl border border-amber-400/30 bg-amber-500/[0.06] p-4">
@@ -412,7 +394,6 @@ export function TelegramSetupPage() {
           aid, not a server-side audit trail. Re-run any step at any time;
           BotFather always overwrites the previous value.
         </p>
-      </div>
-    </main>
+    </div>
   );
 }
