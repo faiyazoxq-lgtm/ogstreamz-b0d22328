@@ -506,11 +506,18 @@ function KeyRow({
       </div>
 
       {editing && (
-        <div className="mt-3 flex flex-col sm:flex-row gap-2">
-          <input
+        <div className="mt-3 rounded-lg border border-gold/30 bg-gold/5 p-3 space-y-2">
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-gold font-bold">
+            <RotateCcw className="h-3 w-3" /> Replace stored value
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Paste the new secret. It is encrypted on save and overwrites the previous value — there is no version history.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
             value={newValue}
             onChange={(e) => setNewValue(e.target.value)}
-            placeholder="Paste new value"
+            placeholder="Paste new secret value"
             className="flex-1 rounded-md border border-border bg-secondary/40 px-3 py-2 text-sm font-mono outline-none focus:border-gold/50"
           />
           <button
@@ -528,10 +535,26 @@ function KeyRow({
             className="inline-flex items-center gap-2 rounded-md border border-gold/40 bg-gold/15 px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-gold hover:bg-gold/25 disabled:opacity-60"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Save
+            Save new value
           </button>
+          </div>
         </div>
       )}
+
+      {/* Danger zone — visually separated */}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-dashed border-rose-500/20 pt-3">
+        <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.25em] text-rose-300/80 font-bold">
+          <ShieldAlert className="h-3 w-3" /> Danger zone
+        </span>
+        <button
+          type="button"
+          onClick={onDelete}
+          title="Permanently remove this key from the vault"
+          className="inline-flex items-center gap-1 rounded-md border border-rose-500/40 bg-rose-500/10 px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.15em] text-rose-300 hover:bg-rose-500/20"
+        >
+          <Trash2 className="h-3.5 w-3.5" /> Delete key
+        </button>
+      </div>
     </li>
   );
 }
