@@ -446,6 +446,11 @@ function Index() {
       <VaultLoginModal open={vaultOpen} onClose={() => setVaultOpen(false)} />
       </>
       )}
+
+      {/* Direct Line — visible to everyone; form handles its own sign-in state */}
+      <section className="relative max-w-xl mx-auto px-4 sm:px-8 pb-10 sm:pb-16">
+        <MessageBossForm />
+      </section>
     </main>
   );
 }
