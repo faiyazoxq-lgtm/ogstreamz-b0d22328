@@ -118,7 +118,7 @@ function NewHubPage() {
   return (
     <div className="space-y-6">
       <div>
-        <Link to="/boss/hubs" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+        <Link to="/boss/content" hash="hubs" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-3 w-3" /> Back to hubs
         </Link>
         <h1 className="mt-1 font-[Montserrat] font-black text-2xl text-metallic">Create New Hub</h1>
