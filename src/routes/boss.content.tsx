@@ -23,13 +23,20 @@ export const Route = createFileRoute("/boss/content")({
 });
 
 const TABS = [
-  { id: "portals",     label: "Portals",      Icon: Grid3x3,     tint: "#3ad6ff" },
-  { id: "hubs",        label: "Hubs",         Icon: Boxes,       tint: "#a78bfa" },
-  { id: "pricing",     label: "Pricing",      Icon: Tags,        tint: "#00e08a" },
-  { id: "coin-costs",  label: "Coin Costs",   Icon: Coins,       tint: "#ffd166" },
-  { id: "usage",       label: "Portal Usage", Icon: BarChart3,   tint: "#7dd3fc" },
-  { id: "civility",    label: "Civility",     Icon: ShieldCheck, tint: "#ff5577" },
-  { id: "lexicon",     label: "Swear Lexicon", Icon: Skull,      tint: "#ff7a1a" },
+  { id: "portals",    label: "Portals",   Icon: Grid3x3,     tint: "#3ad6ff",
+    group: "Build",   purpose: "Create, edit, and organize public portal pages." },
+  { id: "hubs",       label: "Hubs",      Icon: Boxes,       tint: "#a78bfa",
+    group: "Build",   purpose: "Group portals into hubs and curate their landing pages." },
+  { id: "pricing",    label: "Pricing",   Icon: Tags,        tint: "#00e08a",
+    group: "Money",   purpose: "Set GBP prices, packs, and tier-level pricing." },
+  { id: "coin-costs", label: "Coin Costs", Icon: Coins,      tint: "#ffd166",
+    group: "Money",   purpose: "Per-portal coin cost overrides and defaults." },
+  { id: "usage",      label: "Usage",     Icon: BarChart3,   tint: "#7dd3fc",
+    group: "Review",  purpose: "See which portals members are actually using." },
+  { id: "civility",   label: "Civility",  Icon: ShieldCheck, tint: "#ff5577",
+    group: "Moderate", purpose: "Default tone, swearing toggle, and moderation policy." },
+  { id: "lexicon",    label: "Lexicon",   Icon: Skull,       tint: "#ff7a1a",
+    group: "Moderate", purpose: "Custom swear words and severity levels." },
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
@@ -55,10 +62,13 @@ function BossContentPage() {
           0G · Content
         </p>
         <h1 className="syndicate-header text-2xl md:text-3xl text-white/95 mt-1">
-          Content Dashboard
+          Content
         </h1>
         <p className="mt-2 text-sm text-white/60 max-w-2xl">
-          Portals, hubs, pricing, coin costs, usage and moderation in one place.
+          Everything members see and pay for — <span className="text-white/80">Build</span> portals
+          and hubs, set <span className="text-white/80">Money</span> (pricing &amp; coin costs),
+          <span className="text-white/80"> Review</span> usage, and tune
+          <span className="text-white/80"> Moderation</span> policy.
         </p>
       </header>
 
@@ -66,11 +76,12 @@ function BossContentPage() {
         value={active}
         onValueChange={(v) => navigate({ to: "/boss/content", hash: v, replace: false })}
       >
-        <TabsList className="flex flex-wrap gap-1 bg-white/5 p-1 rounded-xl">
+        <TabsList className="flex flex-wrap gap-1 bg-white/5 p-1 rounded-xl h-auto">
           {TABS.map((t) => (
             <TabsTrigger
               key={t.id}
               value={t.id}
+              title={`${t.group} · ${t.purpose}`}
               className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60 gap-1.5"
             >
               <t.Icon className="h-3.5 w-3.5" style={{ color: t.tint }} />
@@ -79,14 +90,41 @@ function BossContentPage() {
           ))}
         </TabsList>
 
-        <TabsContent value="portals" className="mt-5"><PortalsPanel /></TabsContent>
-        <TabsContent value="hubs" className="mt-5"><HubsPanel /></TabsContent>
-        <TabsContent value="pricing" className="mt-5"><PricingPanel /></TabsContent>
-        <TabsContent value="coin-costs" className="mt-5"><PortalCostsPanel /></TabsContent>
-        <TabsContent value="usage" className="mt-5"><PortalUsagePanel /></TabsContent>
-        <TabsContent value="civility" className="mt-5"><CivilityPanel /></TabsContent>
-        <TabsContent value="lexicon" className="mt-5"><LexiconPanel /></TabsContent>
+        {TABS.map((t) => (
+          <TabsContent key={t.id} value={t.id} className="mt-5 space-y-4">
+            <TabIntro tab={t.id} />
+            {t.id === "portals"    && <PortalsPanel />}
+            {t.id === "hubs"       && <HubsPanel />}
+            {t.id === "pricing"    && <PricingPanel />}
+            {t.id === "coin-costs" && <PortalCostsPanel />}
+            {t.id === "usage"      && <PortalUsagePanel />}
+            {t.id === "civility"   && <CivilityPanel />}
+            {t.id === "lexicon"    && <LexiconPanel />}
+          </TabsContent>
+        ))}
       </Tabs>
+    </div>
+  );
+}
+
+function TabIntro({ tab }: { tab: TabId }) {
+  const meta = TABS.find((t) => t.id === tab)!;
+  return (
+    <div
+      className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2 text-xs text-white/55"
+      style={{ borderLeft: `2px solid ${meta.tint}` }}
+    >
+      <span className="inline-flex items-center gap-1.5 font-semibold text-white/80">
+        <meta.Icon className="h-3.5 w-3.5" style={{ color: meta.tint }} />
+        {meta.label}
+      </span>
+      <span
+        className="text-[10px] uppercase tracking-[0.2em] font-bold"
+        style={{ color: meta.tint }}
+      >
+        {meta.group}
+      </span>
+      <span>{meta.purpose}</span>
     </div>
   );
 }
