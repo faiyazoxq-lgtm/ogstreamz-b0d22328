@@ -181,7 +181,7 @@ function BossOverview() {
     { key: "credits", label: "Credits in Circulation", value: loading ? null : stats.creditsTotal, Icon: Coins, tint: "#ffd166", format: fmtNum },
     { key: "products", label: "Active Products", value: loading ? null : stats.activeProducts, Icon: Tags, tint: "#00e08a", to: "/boss/content", hash: "pricing", format: fmtNum },
     { key: "portals", label: "Portals Live", value: loading ? null : stats.portals, Icon: Radio, tint: "#ff7a1a", format: fmtNum },
-    { key: "queue", label: "Pending Actions", value: loading ? null : stats.topupPending + stats.streamVerifyPending + stats.customTrackPending + stats.pendingCreditGrants, Icon: Inbox, tint: "#ff5577", format: fmtNum },
+    { key: "queue", label: "Open Queue", value: loading ? null : stats.topupPending + stats.streamVerifyPending + stats.customTrackPending + stats.pendingCreditGrants, Icon: Inbox, tint: "#ff5577", format: fmtNum },
   ];
 
   const totalQueue =
@@ -229,9 +229,9 @@ function BossOverview() {
             </button>
           </div>
         </div>
-        <p className="mt-3 text-sm text-white/65 max-w-2xl">
-          Live status across members, credits, passes, portals & queues. Auto-syncs every 60s.
-          For AI agents, hub controls, or model tuning open the{" "}
+        <p className="mt-3 text-sm text-white/55 max-w-2xl">
+          Power controls, queues, and shortcuts for the whole syndicate. Auto-syncs every 60s ·
+          for AI agents and model tuning use the{" "}
           <Link to="/console" className="underline" style={{ color: "var(--syndicate-glow)" }}>0G-Console</Link>.
         </p>
         {error && (
@@ -239,13 +239,15 @@ function BossOverview() {
         )}
       </header>
 
+      <SectionHeading label="Status" tint="#3ad6ff" hint="Live snapshot · refreshes every 60s" />
+
       {/* Live metric strip */}
       <CollapsiblePanel
         id="metrics"
         title="Live Metrics"
         Icon={Gauge}
         tint="#3ad6ff"
-        subtitle="Snapshot across members, credits, products, portals & queues"
+        subtitle="Members, credits, products, portals & open queue"
         badge={
           <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.25em] terminal-mono text-white/55">
             {metrics.length} cards
@@ -276,14 +278,17 @@ function BossOverview() {
       </div>
       </CollapsiblePanel>
 
-      {/* Canonical global power controls (single source of truth) */}
-      <GlobalPowerPanel />
+      <SectionHeading label="Action Required" tint="#ff5577" hint="Requests waiting on a Boss decision" />
 
       {/* Canonical pending-action queue (single source of truth) */}
       <PendingQueuesPanel />
 
-      {/* Canonical reverse-purchases tool + recent reversals (single source of truth) */}
-      <ReversePurchasesPanel />
+      <SectionHeading label="Global Controls" tint="#ffd166" hint="Network-wide power switches" />
+
+      {/* Canonical global power controls (single source of truth) */}
+      <GlobalPowerPanel />
+
+      <SectionHeading label="Communications" tint="#3ad6ff" hint="Outbound channels & bot inboxes" />
 
       <CollapsiblePanel
         id="telegram-inbox"
@@ -299,12 +304,14 @@ function BossOverview() {
         </div>
       </CollapsiblePanel>
 
+      <SectionHeading label="Navigate" tint="#a78bfa" hint="Every Boss surface, grouped by domain" />
+
       <CollapsiblePanel
         id="modules"
         title="Modules"
         Icon={Boxes}
         tint="#a78bfa"
-        subtitle="Every Boss surface, grouped by domain"
+        subtitle="Jump to any Boss surface"
         defaultOpen={false}
       >
       <div className="space-y-5">
@@ -351,6 +358,39 @@ function BossOverview() {
       })}
       </div>
       </CollapsiblePanel>
+
+      <SectionHeading
+        label="Danger Zone"
+        tint="#ff2e55"
+        hint="Destructive · reverse recent purchases & refund credits"
+      />
+
+      {/* Canonical reverse-purchases tool + recent reversals (single source of truth) */}
+      <ReversePurchasesPanel />
+    </div>
+  );
+}
+
+function SectionHeading({ label, tint, hint }: { label: string; tint: string; hint?: string }) {
+  return (
+    <div className="flex items-center gap-3 pt-2 pl-1">
+      <span
+        className="inline-block h-2 w-2 rounded-full shrink-0"
+        style={{ background: tint, boxShadow: `0 0 10px ${tint}` }}
+      />
+      <h2
+        className="syndicate-header text-[11px] uppercase tracking-[0.35em] terminal-mono"
+        style={{ color: tint }}
+      >
+        {label}
+      </h2>
+      {hint && (
+        <span className="text-[11px] text-white/35 truncate">{hint}</span>
+      )}
+      <span
+        className="flex-1 h-px"
+        style={{ background: `linear-gradient(to right, ${tint}33, transparent)` }}
+      />
     </div>
   );
 }
