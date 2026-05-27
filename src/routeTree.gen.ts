@@ -72,6 +72,7 @@ import { Route as BossRealtimeDenialsRouteImport } from './routes/boss.realtime-
 import { Route as BossPublishCheckRouteImport } from './routes/boss.publish-check'
 import { Route as BossPromotionsRouteImport } from './routes/boss.promotions'
 import { Route as BossPricingRouteImport } from './routes/boss.pricing'
+import { Route as BossPowerRouteImport } from './routes/boss.power'
 import { Route as BossPortalsRouteImport } from './routes/boss.portals'
 import { Route as BossPortalUsageRouteImport } from './routes/boss.portal-usage'
 import { Route as BossPortalCostsRouteImport } from './routes/boss.portal-costs'
@@ -431,6 +432,11 @@ const BossPricingRoute = BossPricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => BossRoute,
 } as any)
+const BossPowerRoute = BossPowerRouteImport.update({
+  id: '/power',
+  path: '/power',
+  getParentRoute: () => BossRoute,
+} as any)
 const BossPortalsRoute = BossPortalsRouteImport.update({
   id: '/portals',
   path: '/portals',
@@ -722,6 +728,7 @@ export interface FileRoutesByFullPath {
   '/boss/portal-costs': typeof BossPortalCostsRoute
   '/boss/portal-usage': typeof BossPortalUsageRoute
   '/boss/portals': typeof BossPortalsRoute
+  '/boss/power': typeof BossPowerRoute
   '/boss/pricing': typeof BossPricingRoute
   '/boss/promotions': typeof BossPromotionsRoute
   '/boss/publish-check': typeof BossPublishCheckRoute
@@ -829,6 +836,7 @@ export interface FileRoutesByTo {
   '/boss/portal-costs': typeof BossPortalCostsRoute
   '/boss/portal-usage': typeof BossPortalUsageRoute
   '/boss/portals': typeof BossPortalsRoute
+  '/boss/power': typeof BossPowerRoute
   '/boss/pricing': typeof BossPricingRoute
   '/boss/promotions': typeof BossPromotionsRoute
   '/boss/publish-check': typeof BossPublishCheckRoute
@@ -938,6 +946,7 @@ export interface FileRoutesById {
   '/boss/portal-costs': typeof BossPortalCostsRoute
   '/boss/portal-usage': typeof BossPortalUsageRoute
   '/boss/portals': typeof BossPortalsRoute
+  '/boss/power': typeof BossPowerRoute
   '/boss/pricing': typeof BossPricingRoute
   '/boss/promotions': typeof BossPromotionsRoute
   '/boss/publish-check': typeof BossPublishCheckRoute
@@ -1048,6 +1057,7 @@ export interface FileRouteTypes {
     | '/boss/portal-costs'
     | '/boss/portal-usage'
     | '/boss/portals'
+    | '/boss/power'
     | '/boss/pricing'
     | '/boss/promotions'
     | '/boss/publish-check'
@@ -1155,6 +1165,7 @@ export interface FileRouteTypes {
     | '/boss/portal-costs'
     | '/boss/portal-usage'
     | '/boss/portals'
+    | '/boss/power'
     | '/boss/pricing'
     | '/boss/promotions'
     | '/boss/publish-check'
@@ -1263,6 +1274,7 @@ export interface FileRouteTypes {
     | '/boss/portal-costs'
     | '/boss/portal-usage'
     | '/boss/portals'
+    | '/boss/power'
     | '/boss/pricing'
     | '/boss/promotions'
     | '/boss/publish-check'
@@ -1805,6 +1817,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BossPricingRouteImport
       parentRoute: typeof BossRoute
     }
+    '/boss/power': {
+      id: '/boss/power'
+      path: '/power'
+      fullPath: '/boss/power'
+      preLoaderRoute: typeof BossPowerRouteImport
+      parentRoute: typeof BossRoute
+    }
     '/boss/portals': {
       id: '/boss/portals'
       path: '/portals'
@@ -2153,6 +2172,7 @@ interface BossRouteChildren {
   BossPortalCostsRoute: typeof BossPortalCostsRoute
   BossPortalUsageRoute: typeof BossPortalUsageRoute
   BossPortalsRoute: typeof BossPortalsRoute
+  BossPowerRoute: typeof BossPowerRoute
   BossPricingRoute: typeof BossPricingRoute
   BossPromotionsRoute: typeof BossPromotionsRoute
   BossPublishCheckRoute: typeof BossPublishCheckRoute
@@ -2199,6 +2219,7 @@ const BossRouteChildren: BossRouteChildren = {
   BossPortalCostsRoute: BossPortalCostsRoute,
   BossPortalUsageRoute: BossPortalUsageRoute,
   BossPortalsRoute: BossPortalsRoute,
+  BossPowerRoute: BossPowerRoute,
   BossPricingRoute: BossPricingRoute,
   BossPromotionsRoute: BossPromotionsRoute,
   BossPublishCheckRoute: BossPublishCheckRoute,
