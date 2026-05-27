@@ -8,13 +8,14 @@ import {
 
 type VaultLink = {
   to: string;
+  hash?: string;
   title: string;
   desc: string;
   Icon: React.ComponentType<{ className?: string }>;
 };
 
 const vipLinks: ReadonlyArray<VaultLink> = [
-  { to: "/boss/api-keys",    title: "Member Vault",      desc: "Your profile, credits & passes", Icon: ShieldCheck },
+  { to: "/boss/infrastructure", hash: "agent-keys", title: "Member Vault", desc: "Your profile, credits & passes", Icon: ShieldCheck },
   { to: "/vip",              title: "VIP Lounge",        desc: "Premium-only frequencies",        Icon: Crown },
   { to: "/account/passes",   title: "Real OG Passes",    desc: "Manage active passes",            Icon: KeyRound },
   { to: "/wallet",           title: "Coin Wallet",       desc: "Balance, top-ups & history",      Icon: Coins },
@@ -23,11 +24,11 @@ const vipLinks: ReadonlyArray<VaultLink> = [
 ];
 
 const bossLinks: ReadonlyArray<VaultLink> = [
-  { to: "/boss",             title: "Boss Command Deck", desc: "Full control surface",            Icon: Crown },
-  { to: "/admin",            title: "Member Roster",     desc: "Manage members & credits",        Icon: Users },
-  { to: "/boss/analytics",   title: "Royalty Ledger",    desc: "Portal payouts & spend",          Icon: BarChart3 },
-  { to: "/boss/api-keys",    title: "Vault Credentials", desc: "Stream creds & API keys",         Icon: Vault },
-  { to: "/boss/civility",    title: "Civility & Lexicon",desc: "Swear chat & moderation",         Icon: MessageSquareWarning },
+  { to: "/boss/overview",                                title: "Boss Command Deck", desc: "Full control surface",            Icon: Crown },
+  { to: "/boss/members",        hash: "roster",          title: "Member Roster",     desc: "Manage members & credits",        Icon: Users },
+  { to: "/boss/ops",            hash: "analytics",       title: "Royalty Ledger",    desc: "Portal payouts & spend",          Icon: BarChart3 },
+  { to: "/boss/infrastructure", hash: "agent-keys",      title: "Vault Credentials", desc: "Stream creds & API keys",         Icon: Vault },
+  { to: "/boss/content",        hash: "civility",        title: "Civility & Lexicon",desc: "Swear chat & moderation",         Icon: MessageSquareWarning },
   { to: "/connect-telegram", title: "Telegram Inbox",    desc: "Member DMs & alerts",             Icon: Inbox },
 ];
 
@@ -73,10 +74,11 @@ export function OgVaultAccessSection({ isBoss = false }: { isBoss?: boolean }) {
         >
           <div className="overflow-hidden">
             <div className="px-4 sm:px-6 pb-5 pt-1 grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {links.map(({ to, title, desc, Icon }) => (
+              {links.map(({ to, hash, title, desc, Icon }) => (
                 <Link
-                  key={to}
+                  key={to + (hash ? "#" + hash : "")}
                   to={to}
+                  hash={hash}
                   className="group relative flex items-start gap-3 rounded-xl border border-gold/25 bg-background/40 hover:bg-gold/[0.08] hover:border-gold/60 px-4 py-3 transition-all hover:shadow-[0_0_22px_-6px_var(--gold)] outline-none focus-visible:ring-[3px] focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   <Icon className="h-5 w-5 mt-0.5 text-gold/80 group-hover:text-gold shrink-0" aria-hidden />
