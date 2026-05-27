@@ -80,7 +80,7 @@ export const sendBossMessage = createServerFn({ method: "POST" })
       const { data: prof } = await supabaseAdmin
         .from("profiles")
         .select("display_name, email")
-        .eq("user_id", userId)
+        .eq("id", userId)
         .maybeSingle();
       if (prof) {
         displayName = (prof as { display_name?: string | null }).display_name ?? null;
