@@ -21,11 +21,11 @@ export const Route = createFileRoute("/boss/ops")({
 });
 
 const TABS = [
-  { id: "alerts",   label: "Alerts",        Icon: Bell,            tint: "#ff5577" },
-  { id: "publish",  label: "Publish Check", Icon: Rocket,          tint: "#ffd166" },
-  { id: "analytics",label: "Analytics",     Icon: BarChart3,       tint: "#a78bfa" },
-  { id: "overlord", label: "Overlord",      Icon: LayoutDashboard, tint: "#3ad6ff" },
-  { id: "todo",     label: "Boss To-Do",    Icon: FileText,        tint: "#00e08a" },
+  { id: "alerts",    label: "Alerts",        Icon: Bell,            tint: "#ff5577", purpose: "Live system alerts and upstream API errors." },
+  { id: "publish",   label: "Publish Check", Icon: Rocket,          tint: "#ffd166", purpose: "Validate readiness before going live." },
+  { id: "analytics", label: "Analytics",     Icon: BarChart3,       tint: "#a78bfa", purpose: "Anonymous visit stats across portals and battles." },
+  { id: "overlord",  label: "Overlord",      Icon: LayoutDashboard, tint: "#3ad6ff", purpose: "Command-deck tools for users, passes, and codes." },
+  { id: "todo",      label: "Boss To-Do",    Icon: FileText,        tint: "#00e08a", purpose: "Priority-tracked ops workflow board." },
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
@@ -44,6 +44,8 @@ function BossOpsPage() {
     }
   }, [loc.hash, navigate]);
 
+  const activeTab = TABS.find((t) => t.id === active)!;
+
   return (
     <div className="space-y-5">
       <header className="glass-obsidian-cmd rounded-3xl p-5 md:p-6">
@@ -54,7 +56,7 @@ function BossOpsPage() {
           Operations Dashboard
         </h1>
         <p className="mt-2 text-sm text-white/60 max-w-2xl">
-          Alerts, publish validation, analytics, overlord deck and the boss to-do list in one place.
+          Monitoring, validation, analytics, command tools, and workflow — everything needed to keep the syndicate running.
         </p>
       </header>
 
@@ -67,6 +69,7 @@ function BossOpsPage() {
             <TabsTrigger
               key={t.id}
               value={t.id}
+              title={t.purpose}
               className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60 gap-1.5"
             >
               <t.Icon className="h-3.5 w-3.5" style={{ color: t.tint }} />
@@ -75,12 +78,25 @@ function BossOpsPage() {
           ))}
         </TabsList>
 
-        <TabsContent value="alerts" className="mt-5"><AlertsPanel /></TabsContent>
-        <TabsContent value="publish" className="mt-5"><PublishCheckPanel /></TabsContent>
-        <TabsContent value="analytics" className="mt-5"><AnalyticsPanel /></TabsContent>
-        <TabsContent value="overlord" className="mt-5"><OverlordPanel /></TabsContent>
-        <TabsContent value="todo" className="mt-5"><BossTodoPage /></TabsContent>
+        <TabIntro icon={activeTab.Icon} label={activeTab.label} purpose={activeTab.purpose} tint={activeTab.tint} />
+
+        <TabsContent value="alerts" className="mt-4 space-y-4"><AlertsPanel /></TabsContent>
+        <TabsContent value="publish" className="mt-4 space-y-4"><PublishCheckPanel /></TabsContent>
+        <TabsContent value="analytics" className="mt-4 space-y-4"><AnalyticsPanel /></TabsContent>
+        <TabsContent value="overlord" className="mt-4 space-y-4"><OverlordPanel /></TabsContent>
+        <TabsContent value="todo" className="mt-4 space-y-4"><BossTodoPage /></TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function TabIntro({ icon: Icon, label, purpose, tint }: { icon: typeof Bell; label: string; purpose: string; tint: string }) {
+  return (
+    <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-white/60">
+      <Icon className="h-3.5 w-3.5" style={{ color: tint }} />
+      <span className="font-medium text-white/80">{label}</span>
+      <span className="text-white/40">·</span>
+      <span>{purpose}</span>
     </div>
   );
 }

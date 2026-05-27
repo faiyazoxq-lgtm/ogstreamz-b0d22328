@@ -1,6 +1,6 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { BarChart3, ArrowLeft, RefreshCw, Eye, Users, Globe, Trash2, Save } from "lucide-react";
+import { BarChart3, RefreshCw, Eye, Users, Globe, Trash2, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { bossPurgeViewEvents } from "@/lib/boss-admin-misc.functions";
@@ -194,20 +194,13 @@ export function AnalyticsPanel() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 sm:px-6 pt-6 pb-28 md:pb-12 space-y-6">
-      <header className="glass-obsidian-cmd rounded-3xl p-5 md:p-6">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-3">
-            <BarChart3 className="h-6 w-6" style={{ color: "#3ad6ff" }} />
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.4em] terminal-mono" style={{ color: "#3ad6ff" }}>0G · Public View Analytics</p>
-              <h1 className="syndicate-header text-2xl md:text-3xl text-white/95">Anonymous Visits</h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link to="/boss" className="text-xs text-white/60 hover:text-white inline-flex items-center gap-1">
-              <ArrowLeft className="h-3 w-3" /> Boss
-            </Link>
+    <div className="space-y-6">
+      <div className="glass-obsidian-cmd rounded-3xl p-5 md:p-6">
+        <div className="flex items-center gap-3">
+          <BarChart3 className="h-6 w-6" style={{ color: "#3ad6ff" }} />
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.4em] terminal-mono" style={{ color: "#3ad6ff" }}>0G · Public View Analytics</p>
+            <h1 className="syndicate-header text-2xl md:text-3xl text-white/95">Anonymous Visits</h1>
           </div>
         </div>
         <p className="mt-3 text-sm text-white/65 max-w-2xl">
@@ -344,7 +337,7 @@ export function AnalyticsPanel() {
           </ul>
         </section>
       )}
-    </main>
+    </div>
   );
 }
 

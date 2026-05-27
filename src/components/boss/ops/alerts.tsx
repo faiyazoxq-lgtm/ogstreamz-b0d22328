@@ -1,6 +1,6 @@
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, RefreshCw, ShieldAlert, Sparkles, Inbox, Filter } from "lucide-react";
+import { AlertTriangle, CheckCircle2, RefreshCw, Sparkles, Inbox, Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listSystemAlerts,
@@ -77,51 +77,40 @@ export function AlertsPanel() {
 
   return (
     <div className="space-y-4">
-      <header className="glass-obsidian-cmd rounded-3xl p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <ShieldAlert className="h-6 w-6" style={{ color: "#ff5577" }} />
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.4em] terminal-mono" style={{ color: "#ff8aa3" }}>
-                0G · Command Centre
-              </p>
-              <h1 className="syndicate-header text-2xl text-white/95">System Alerts</h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span
-              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] uppercase tracking-[0.25em] terminal-mono"
-              style={{
-                background: unread ? "rgba(255,85,119,0.10)" : "rgba(0,224,138,0.10)",
-                border: `1px solid ${unread ? "#ff557755" : "#00e08a55"}`,
-                color: unread ? "#ff8aa3" : "#00e08a",
-              }}
-            >
-              {unread ? <AlertTriangle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-              {unread ? `${unread} unread` : "All clear"}
-            </span>
-            <button
-              type="button"
-              onClick={() => load()}
-              disabled={loading}
-              className="inline-flex items-center gap-1.5 rounded-md border border-gold/40 bg-gold/10 px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-gold hover:bg-gold/15 disabled:opacity-50"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
-            </button>
-            <button
-              type="button"
-              onClick={onAckAll}
-              disabled={!unread || busy === "__all"}
-              className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-40"
-            >
-              <CheckCircle2 className="h-3.5 w-3.5" /> Ack all
-            </button>
-          </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] uppercase tracking-[0.25em] terminal-mono"
+            style={{
+              background: unread ? "rgba(255,85,119,0.10)" : "rgba(0,224,138,0.10)",
+              border: `1px solid ${unread ? "#ff557755" : "#00e08a55"}`,
+              color: unread ? "#ff8aa3" : "#00e08a",
+            }}
+          >
+            {unread ? <AlertTriangle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+            {unread ? `${unread} unread` : "All clear"}
+          </span>
+          <span className="text-xs text-white/50">Realtime feed — no refresh needed.</span>
         </div>
-        <p className="mt-3 text-sm text-white/65 max-w-2xl">
-          Live feed of upstream API errors and Perplexity-powered fallback activity. Realtime — no refresh needed.
-        </p>
-      </header>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => load()}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 rounded-md border border-gold/40 bg-gold/10 px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-gold hover:bg-gold/15 disabled:opacity-50"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+          </button>
+          <button
+            type="button"
+            onClick={onAckAll}
+            disabled={!unread || busy === "__all"}
+            className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-40"
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" /> Ack all
+          </button>
+        </div>
+      </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.25em] text-white/50 mr-1">

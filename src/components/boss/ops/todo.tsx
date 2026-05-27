@@ -97,17 +97,14 @@ export function BossTodoPage() {
   const openP0P1 = items.filter(i => i.status !== "done" && (i.priority === "P0" || i.priority === "P1")).length;
 
   return (
-    <div className="min-h-screen text-foreground">
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        <header className="mb-6 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <ListChecks className="h-6 w-6" style={{ color: "#ffd166" }} />
-            <div>
-              <h1 className="text-2xl font-bold">Boss To-Do</h1>
-              <p className="text-sm text-muted-foreground">{openP0P1} open P0/P1 · {items.filter(i => i.status !== "done").length} open total</p>
-            </div>
+    <div className="text-foreground">
+      <div className="mx-auto max-w-6xl px-4">
+        <header className="mb-6 flex items-center gap-3">
+          <ListChecks className="h-6 w-6" style={{ color: "#ffd166" }} />
+          <div>
+            <h1 className="text-2xl font-bold">Boss To-Do</h1>
+            <p className="text-sm text-muted-foreground">{openP0P1} open P0/P1 · {items.filter(i => i.status !== "done").length} open total</p>
           </div>
-          <Link to="/boss/overview" className="text-sm text-muted-foreground hover:text-foreground">← Boss overview</Link>
         </header>
 
         {/* Filters */}

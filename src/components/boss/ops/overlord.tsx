@@ -192,29 +192,20 @@ export function OverlordPanel() {
   }
 
   return (
-    <main className="relative min-h-screen text-emerald-200 font-mono">
+    <div className="relative text-emerald-200 font-mono">
       <TerminalGrid />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-8 py-8">
-        {/* Header */}
-        <header className="mb-6 flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.5em] text-cyan-400 flex items-center gap-2">
-              <Skull className="h-3.5 w-3.5" /> BOSS CONTROL CENTER
-            </p>
-            <h1 className="mt-1 text-3xl sm:text-4xl font-black tracking-tight text-cyan-300 drop-shadow-[0_0_18px_rgba(58,214,255,0.4)]">
-              Ultimate Control
-            </h1>
-            <p className="mt-1 text-xs text-emerald-600/80 normal-case tracking-normal">
-              One command deck — users, credits, ranks, VIP passes, codes, resellers, and private notes.
-            </p>
-          </div>
+        <div className="mb-4 flex items-center justify-between flex-wrap gap-3">
+          <p className="text-xs text-emerald-600/80 normal-case tracking-normal">
+            Users, credits, ranks, VIP passes, codes, resellers, and private notes.
+          </p>
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest">
             <span className="px-2 py-1 rounded border border-emerald-700/50 text-emerald-300 flex items-center gap-1.5">
               <Activity className="h-3 w-3 text-emerald-400 animate-pulse" /> live data
             </span>
             <BossAnnouncementButton />
           </div>
-        </header>
+        </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
@@ -486,7 +477,7 @@ export function OverlordPanel() {
           <TabsContent value="comms" className="mt-4"><VipNotificationsAdmin rows={rows} /></TabsContent>
         </Tabs>
       </div>
-    </main>
+    </div>
   );
 }
 
