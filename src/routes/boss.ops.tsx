@@ -3,6 +3,7 @@ import { useEffect, useMemo } from "react";
 import { Bell, Rocket, BarChart3, LayoutDashboard, FileText } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { requireBoss } from "@/lib/route-guards";
+import { BossTabIntro } from "@/components/boss/tab-intro";
 import { AlertsPanel } from "@/components/boss/ops/alerts";
 import { PublishCheckPanel } from "@/components/boss/ops/publish-check";
 import { AnalyticsPanel } from "@/components/boss/ops/analytics";
@@ -44,8 +45,6 @@ function BossOpsPage() {
     }
   }, [loc.hash, navigate]);
 
-  const activeTab = TABS.find((t) => t.id === active)!;
-
   return (
     <div className="space-y-5">
       <header className="glass-obsidian-cmd rounded-3xl p-5 md:p-6">
@@ -64,7 +63,7 @@ function BossOpsPage() {
         value={active}
         onValueChange={(v) => navigate({ to: "/boss/ops", hash: v, replace: false })}
       >
-        <TabsList className="flex flex-wrap gap-1 bg-white/5 p-1 rounded-xl">
+        <TabsList className="flex flex-wrap gap-1 bg-white/5 p-1 rounded-xl h-auto">
           {TABS.map((t) => (
             <TabsTrigger
               key={t.id}
@@ -78,25 +77,17 @@ function BossOpsPage() {
           ))}
         </TabsList>
 
-        <TabIntro icon={activeTab.Icon} label={activeTab.label} purpose={activeTab.purpose} tint={activeTab.tint} />
-
-        <TabsContent value="alerts" className="mt-4 space-y-4"><AlertsPanel /></TabsContent>
-        <TabsContent value="publish" className="mt-4 space-y-4"><PublishCheckPanel /></TabsContent>
-        <TabsContent value="analytics" className="mt-4 space-y-4"><AnalyticsPanel /></TabsContent>
-        <TabsContent value="overlord" className="mt-4 space-y-4"><OverlordPanel /></TabsContent>
-        <TabsContent value="todo" className="mt-4 space-y-4"><BossTodoPage /></TabsContent>
+        {TABS.map((t) => (
+          <TabsContent key={t.id} value={t.id} className="mt-5 space-y-4">
+            <BossTabIntro icon={t.Icon} label={t.label} purpose={t.purpose} tint={t.tint} />
+            {t.id === "alerts"    && <AlertsPanel />}
+            {t.id === "publish"   && <PublishCheckPanel />}
+            {t.id === "analytics" && <AnalyticsPanel />}
+            {t.id === "overlord"  && <OverlordPanel />}
+            {t.id === "todo"      && <BossTodoPage />}
+          </TabsContent>
+        ))}
       </Tabs>
-    </div>
-  );
-}
-
-function TabIntro({ icon: Icon, label, purpose, tint }: { icon: typeof Bell; label: string; purpose: string; tint: string }) {
-  return (
-    <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-white/60">
-      <Icon className="h-3.5 w-3.5" style={{ color: tint }} />
-      <span className="font-medium text-white/80">{label}</span>
-      <span className="text-white/40">·</span>
-      <span>{purpose}</span>
     </div>
   );
 }
