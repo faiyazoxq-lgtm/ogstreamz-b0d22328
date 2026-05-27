@@ -170,7 +170,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   );
 }
 
-function TelegramSetupPage() {
+export function TelegramSetupPage() {
   const [done, setDone] = useState<Record<string, boolean>>({});
 
   useEffect(() => {

@@ -24,7 +24,7 @@ export const Route = createFileRoute("/boss/domain-denylist")({
   component: DomainDenylistPage,
 });
 
-function DomainDenylistPage() {
+export function DomainDenylistPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [domain, setDomain] = useState("");

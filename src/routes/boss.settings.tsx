@@ -11,7 +11,7 @@ export const Route = createFileRoute("/boss/settings")({
   component: SettingsPage,
 });
 
-function SettingsPage() {
+export function SettingsPage() {
   const { user } = useAuth();
   const [bonus, setBonus] = useState<string>("");
   const [initial, setInitial] = useState<number | null>(null);

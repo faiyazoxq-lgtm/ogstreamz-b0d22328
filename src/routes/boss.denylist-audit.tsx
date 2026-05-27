@@ -25,7 +25,7 @@ const SOURCE_META: Record<AuditHit["source"], { label: string; Icon: typeof Data
   redirect: { label: "Redirect target",  Icon: ArrowRightLeft, tint: "#ffd166" },
 };
 
-function DenylistAuditPage() {
+export function DenylistAuditPage() {
   const audit = useServerFn(runDenylistAudit);
   const [report, setReport] = useState<AuditReport | null>(null);
 

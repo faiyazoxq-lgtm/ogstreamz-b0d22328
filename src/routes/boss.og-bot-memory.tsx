@@ -21,7 +21,7 @@ type MemoryRow = {
   updated_at: string | null;
 };
 
-function OGBotMemoryPage() {
+export function OGBotMemoryPage() {
   const { user, profile, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const isBoss = profile?.rank === "boss" || isAdmin;

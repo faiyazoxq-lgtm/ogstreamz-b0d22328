@@ -20,7 +20,7 @@ export const Route = createFileRoute("/boss/telegram-test")({
   component: TelegramTestPage,
 });
 
-function TelegramTestPage() {
+export function TelegramTestPage() {
   const sendFn = useServerFn(sendTelegramReply);
   const healthFn = useServerFn(bossBotHealthCheck);
   const [chatId, setChatId] = useState("");
