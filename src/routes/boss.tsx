@@ -76,8 +76,8 @@ const GROUPS: RailGroup[] = [
     tint: "#00e08a",
     items: [
       { to: "/boss/overview", label: "Power Bar", Icon: Power, exact: false, desc: "Master toggles & reverse tool" },
-      { to: "/boss/pricing", label: "Pricing", Icon: Tags, desc: "Coin packs & products" },
-      { to: "/boss/portal-costs", label: "Coin Costs", Icon: Coins, desc: "Per-hub & per-portal" },
+      { to: "/boss/content", hash: "pricing", label: "Pricing", Icon: Tags, desc: "Coin packs & products" },
+      { to: "/boss/content", hash: "coin-costs", label: "Coin Costs", Icon: Coins, desc: "Per-hub & per-portal" },
       { to: "/boss/promotions", label: "Promotions", Icon: Megaphone, desc: "Sign-up bonus & promos" },
       { to: "/admin", label: "Admin Console", Icon: Sparkles, desc: "Top-ups, passes, vault" },
     ],
@@ -88,8 +88,9 @@ const GROUPS: RailGroup[] = [
     Icon: Boxes,
     tint: "#a78bfa",
     items: [
-      { to: "/boss/hubs", label: "Hubs", Icon: Boxes, desc: "Built-in & custom hubs" },
-      { to: "/boss/portals", label: "Portals", Icon: Grid3x3, desc: "Manage portals" },
+      { to: "/boss/content", hash: "hubs", label: "Hubs", Icon: Boxes, desc: "Built-in & custom hubs" },
+      { to: "/boss/content", hash: "portals", label: "Portals", Icon: Grid3x3, desc: "Manage portals" },
+      { to: "/boss/content", hash: "usage", label: "Portal Usage", Icon: Boxes, desc: "Per-portal spend & visits" },
     ],
   },
   {
@@ -98,8 +99,8 @@ const GROUPS: RailGroup[] = [
     Icon: ShieldCheck,
     tint: "#ff5577",
     items: [
-      { to: "/boss/civility", label: "Civility", Icon: ShieldCheck, desc: "Default site tone" },
-      { to: "/boss/lexicon", label: "Lexicon", Icon: Skull, desc: "Word lists" },
+      { to: "/boss/content", hash: "civility", label: "Civility", Icon: ShieldCheck, desc: "Default site tone" },
+      { to: "/boss/content", hash: "lexicon", label: "Lexicon", Icon: Skull, desc: "Word lists" },
       { to: "/boss/ai-agent", label: "0G Bot · AI Agent", Icon: Brain, desc: "All bot settings in one place" },
     ],
   },
