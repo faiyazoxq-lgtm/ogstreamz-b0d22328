@@ -319,155 +319,190 @@ export function PortalsPanel() {
               <div key={p.id} className="rounded-xl border bg-card p-4">
                 {isEdit ? (
                   <div className="space-y-3">
-                    {/* Basic identity */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <label className="space-y-1">
-                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Name</span>
-                        <Input value={draft.name ?? ""} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Portal name" />
-                      </label>
-                      <label className="space-y-1">
-                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Slug (URL)</span>
-                        <Input
-                          value={draft.slug ?? ""}
-                          onChange={(e) => setDraft({ ...draft, slug: e.target.value.toLowerCase() })}
-                          placeholder="lower-case-slug"
-                        />
-                      </label>
-                    </div>
-                    <label className="block space-y-1">
-                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Niche / description</span>
-                      <Textarea
-                        value={draft.niche ?? ""}
-                        onChange={(e) => setDraft({ ...draft, niche: e.target.value })}
-                        placeholder="What this portal is about"
-                        rows={2}
-                      />
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <label className="space-y-1">
-                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Vibe</span>
-                        <Input value={draft.vibe ?? ""} onChange={(e) => setDraft({ ...draft, vibe: e.target.value })} placeholder="e.g. dark, comedic" />
-                      </label>
-                      <label className="space-y-1">
-                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Language</span>
-                        <Input value={draft.language ?? ""} onChange={(e) => setDraft({ ...draft, language: e.target.value })} placeholder="English" />
-                      </label>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
-                      <label className="space-y-1">
-                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Theme</span>
-                        <Input value={draft.theme ?? ""} onChange={(e) => setDraft({ ...draft, theme: e.target.value })} placeholder="street" />
-                      </label>
-                      <label className="space-y-1">
-                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Use cost (credits)</span>
-                        <Input
-                          type="number"
-                          min={0}
-                          value={String(draft.use_credit_cost ?? 0)}
-                          onChange={(e) => setDraft({ ...draft, use_credit_cost: Math.max(0, Number(e.target.value) || 0) })}
-                        />
-                      </label>
-                      <div className="flex flex-col gap-1 text-sm">
-                        <label className="flex items-center gap-2 px-2 py-1.5 rounded border bg-background">
-                          <input type="checkbox" checked={!!draft.vip} onChange={(e) => setDraft({ ...draft, vip: e.target.checked })} />
-                          VIP only
-                        </label>
-                        <label className="flex items-center gap-2 px-2 py-1.5 rounded border bg-background">
-                          <input type="checkbox" checked={!!draft.swear_chat_enabled} onChange={(e) => setDraft({ ...draft, swear_chat_enabled: e.target.checked })} />
-                          Swear chat
-                        </label>
+                    {/* Editor header — name + live status chips so operators
+                        always know what they're editing and its current state. */}
+                    <div className="flex items-center justify-between gap-2 flex-wrap pb-1 border-b border-border/40">
+                      <div className="min-w-0 flex items-center gap-2 flex-wrap">
+                        <p className="font-bold text-sm truncate">{p.name}</p>
+                        <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{p.kind}</span>
+                        {p.vip && <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">VIP</span>}
+                        {!p.published && <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">Hidden</span>}
                       </div>
+                      <span className="text-[10px] text-muted-foreground font-mono truncate">{viewPath(p)}</span>
                     </div>
 
-                    {/* Advanced section */}
+                    {/* 1. Identity — what & where it lives */}
+                    <EditorSection icon={IdCard} label="Identity" hint="Name, URL slug, and short description" tint="#3ad6ff">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <label className="space-y-1">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Name</span>
+                          <Input value={draft.name ?? ""} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Portal name" />
+                        </label>
+                        <label className="space-y-1">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Slug · /{p.kind === "music" ? "m" : p.kind === "trade" ? "td" : "p"}/…</span>
+                          <Input
+                            value={draft.slug ?? ""}
+                            onChange={(e) => setDraft({ ...draft, slug: e.target.value.toLowerCase() })}
+                            placeholder="lower-case-slug"
+                          />
+                        </label>
+                      </div>
+                      <label className="block space-y-1">
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Niche / description</span>
+                        <Textarea
+                          value={draft.niche ?? ""}
+                          onChange={(e) => setDraft({ ...draft, niche: e.target.value })}
+                          placeholder="What this portal is about"
+                          rows={2}
+                        />
+                      </label>
+                    </EditorSection>
+
+                    {/* 2. Access & pricing — who can use it and what it costs */}
+                    <EditorSection icon={Shield} label="Access & pricing" hint="Visibility, VIP gating, per-use cost" tint="#ffd166">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-stretch">
+                        <label className="space-y-1">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Use cost (credits)</span>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={String(draft.use_credit_cost ?? 0)}
+                            onChange={(e) => setDraft({ ...draft, use_credit_cost: Math.max(0, Number(e.target.value) || 0) })}
+                          />
+                          <span className="text-[10px] text-muted-foreground">0 = free for members</span>
+                        </label>
+                        <label className="flex items-start gap-2 px-2.5 py-2 rounded border bg-background text-sm cursor-pointer">
+                          <input type="checkbox" className="mt-0.5" checked={!!draft.vip} onChange={(e) => setDraft({ ...draft, vip: e.target.checked })} />
+                          <span className="flex-1">
+                            <span className="block font-medium">VIP only</span>
+                            <span className="block text-[10px] text-muted-foreground">Hide from free members</span>
+                          </span>
+                        </label>
+                        <label className="flex items-start gap-2 px-2.5 py-2 rounded border bg-background text-sm cursor-pointer">
+                          <input type="checkbox" className="mt-0.5" checked={!!draft.swear_chat_enabled} onChange={(e) => setDraft({ ...draft, swear_chat_enabled: e.target.checked })} />
+                          <span className="flex-1">
+                            <span className="block font-medium">Swear chat</span>
+                            <span className="block text-[10px] text-muted-foreground">Allow uncensored chat on this portal</span>
+                          </span>
+                        </label>
+                      </div>
+                    </EditorSection>
+
+                    {/* 3. Style & language — surface presentation */}
+                    <EditorSection icon={Palette} label="Style & language" hint="Vibe, theme key, primary language" tint="#a78bfa">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <label className="space-y-1">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Vibe</span>
+                          <Input value={draft.vibe ?? ""} onChange={(e) => setDraft({ ...draft, vibe: e.target.value })} placeholder="e.g. dark, comedic" />
+                        </label>
+                        <label className="space-y-1">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Theme</span>
+                          <Input value={draft.theme ?? ""} onChange={(e) => setDraft({ ...draft, theme: e.target.value })} placeholder="street" />
+                        </label>
+                        <label className="space-y-1">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Language</span>
+                          <Input value={draft.language ?? ""} onChange={(e) => setDraft({ ...draft, language: e.target.value })} placeholder="English" />
+                        </label>
+                      </div>
+                    </EditorSection>
+
+                    {/* Advanced — collapsed by default. Contains media, SEO,
+                        and style hint; these are rarely edited after first setup. */}
                     <button
                       type="button"
                       onClick={() => setShowAdvanced((v) => !v)}
                       className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground"
                     >
                       {showAdvanced ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                      Advanced (media, SEO, style)
+                      Advanced — media, SEO, style hint
                     </button>
 
                     {showAdvanced && (
-                      <div className="space-y-2 rounded-lg border border-dashed border-border/60 bg-background/40 p-3">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <label className="space-y-1">
-                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Style hint</span>
-                            <Input value={draft.style ?? ""} onChange={(e) => setDraft({ ...draft, style: e.target.value })} placeholder="e.g. neon-noir" />
-                          </label>
-                          <label className="space-y-1">
-                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">BG video aspect</span>
-                            <Input value={draft.bg_video_aspect ?? "16:9"} onChange={(e) => setDraft({ ...draft, bg_video_aspect: e.target.value })} placeholder="16:9" />
-                          </label>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <label className="space-y-1">
-                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Wallpaper URL</span>
-                            <Input value={draft.wallpaper_url ?? ""} onChange={(e) => setDraft({ ...draft, wallpaper_url: e.target.value })} placeholder="https://…" />
-                          </label>
-                          <label className="space-y-1">
-                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Wallpaper prompt</span>
-                            <Input value={draft.wallpaper_prompt ?? ""} onChange={(e) => setDraft({ ...draft, wallpaper_prompt: e.target.value })} placeholder="Image generation prompt" />
-                          </label>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <label className="space-y-1">
-                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">BG video URL</span>
-                            <Input value={draft.bg_video_url ?? ""} onChange={(e) => setDraft({ ...draft, bg_video_url: e.target.value })} placeholder="https://…" />
-                          </label>
-                          <label className="space-y-1">
+                      <div className="space-y-3">
+                        <EditorSection icon={ImageLucide} label="Media" hint="Wallpaper, background video, audio" tint="#7dd3fc">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <label className="space-y-1">
+                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Wallpaper URL</span>
+                              <Input value={draft.wallpaper_url ?? ""} onChange={(e) => setDraft({ ...draft, wallpaper_url: e.target.value })} placeholder="https://…" />
+                            </label>
+                            <label className="space-y-1">
+                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Wallpaper prompt</span>
+                              <Input value={draft.wallpaper_prompt ?? ""} onChange={(e) => setDraft({ ...draft, wallpaper_prompt: e.target.value })} placeholder="Image generation prompt" />
+                            </label>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <label className="space-y-1 sm:col-span-2">
+                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">BG video URL</span>
+                              <Input value={draft.bg_video_url ?? ""} onChange={(e) => setDraft({ ...draft, bg_video_url: e.target.value })} placeholder="https://…" />
+                            </label>
+                            <label className="space-y-1">
+                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Aspect</span>
+                              <Input value={draft.bg_video_aspect ?? "16:9"} onChange={(e) => setDraft({ ...draft, bg_video_aspect: e.target.value })} placeholder="16:9" />
+                            </label>
+                          </div>
+                          <label className="block space-y-1">
                             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">BG video prompt</span>
                             <Input value={draft.bg_video_prompt ?? ""} onChange={(e) => setDraft({ ...draft, bg_video_prompt: e.target.value })} placeholder="Video generation prompt" />
                           </label>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <label className="space-y-1">
-                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Audio URL</span>
-                            <Input value={draft.audio_url ?? ""} onChange={(e) => setDraft({ ...draft, audio_url: e.target.value })} placeholder="https://…" />
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <label className="space-y-1">
+                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Audio URL</span>
+                              <Input value={draft.audio_url ?? ""} onChange={(e) => setDraft({ ...draft, audio_url: e.target.value })} placeholder="https://…" />
+                            </label>
+                            <label className="space-y-1">
+                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Audio snippet URL</span>
+                              <Input value={draft.audio_snippet_url ?? ""} onChange={(e) => setDraft({ ...draft, audio_snippet_url: e.target.value })} placeholder="https://…" />
+                            </label>
+                          </div>
+                          <label className="block space-y-1">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Lyric / hero text</span>
+                            <Textarea
+                              value={draft.lyric_text ?? ""}
+                              onChange={(e) => setDraft({ ...draft, lyric_text: e.target.value })}
+                              rows={3}
+                              placeholder="Optional lyric or hero copy"
+                            />
                           </label>
-                          <label className="space-y-1">
-                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Audio snippet URL</span>
-                            <Input value={draft.audio_snippet_url ?? ""} onChange={(e) => setDraft({ ...draft, audio_snippet_url: e.target.value })} placeholder="https://…" />
+                        </EditorSection>
+
+                        <EditorSection icon={SearchIcon} label="SEO" hint="Title ≤60 chars · description ≤160 chars" tint="#34d399">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <label className="space-y-1">
+                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">SEO title</span>
+                              <Input value={draft.seo_title ?? ""} onChange={(e) => setDraft({ ...draft, seo_title: e.target.value })} placeholder="≤60 chars" maxLength={70} />
+                            </label>
+                            <label className="space-y-1">
+                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">SEO image URL</span>
+                              <Input value={draft.seo_image_url ?? ""} onChange={(e) => setDraft({ ...draft, seo_image_url: e.target.value })} placeholder="https://…" />
+                            </label>
+                          </div>
+                          <label className="block space-y-1">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">SEO description</span>
+                            <Textarea
+                              value={draft.seo_description ?? ""}
+                              onChange={(e) => setDraft({ ...draft, seo_description: e.target.value })}
+                              rows={2}
+                              placeholder="≤160 chars"
+                              maxLength={200}
+                            />
                           </label>
-                        </div>
-                        <label className="block space-y-1">
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Lyric / hero text</span>
-                          <Textarea
-                            value={draft.lyric_text ?? ""}
-                            onChange={(e) => setDraft({ ...draft, lyric_text: e.target.value })}
-                            rows={3}
-                            placeholder="Optional lyric or hero copy"
-                          />
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <label className="space-y-1">
-                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">SEO title</span>
-                            <Input value={draft.seo_title ?? ""} onChange={(e) => setDraft({ ...draft, seo_title: e.target.value })} placeholder="≤60 chars" maxLength={70} />
-                          </label>
-                          <label className="space-y-1">
-                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">SEO image URL</span>
-                            <Input value={draft.seo_image_url ?? ""} onChange={(e) => setDraft({ ...draft, seo_image_url: e.target.value })} placeholder="https://…" />
-                          </label>
-                        </div>
-                        <label className="block space-y-1">
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">SEO description</span>
-                          <Textarea
-                            value={draft.seo_description ?? ""}
-                            onChange={(e) => setDraft({ ...draft, seo_description: e.target.value })}
-                            rows={2}
-                            placeholder="≤160 chars"
-                            maxLength={200}
-                          />
-                        </label>
+                        </EditorSection>
+
+                        <EditorSection icon={Sparkles} label="Style hint" hint="Free-form tag used by generators" tint="#f472b6">
+                          <Input value={draft.style ?? ""} onChange={(e) => setDraft({ ...draft, style: e.target.value })} placeholder="e.g. neon-noir" />
+                        </EditorSection>
                       </div>
                     )}
 
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={saving}>Cancel</Button>
-                      <Button size="sm" onClick={() => save(p.id)} disabled={saving}>
-                        {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save"}
-                      </Button>
+                    {/* Sticky save bar — primary action obvious, cancel clearly secondary. */}
+                    <div className="sticky bottom-0 -mx-4 -mb-4 px-4 py-2.5 mt-2 bg-card/95 backdrop-blur border-t border-border/60 flex items-center justify-between gap-2">
+                      <span className="text-[10px] text-muted-foreground">Edits save to the live portal immediately.</span>
+                      <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={saving}>Cancel</Button>
+                        <Button size="sm" onClick={() => save(p.id)} disabled={saving}>
+                          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save changes"}
+                        </Button>
+                      </div>
                     </div>
 
                     <PortalDraftPreview draft={{ ...draft, kind: draft.kind ?? p.kind }} />
