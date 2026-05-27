@@ -24,13 +24,20 @@ export const Route = createFileRoute("/boss/infrastructure")({
 });
 
 const TABS = [
-  { id: "agent-keys",      label: "Agent Keys",      Icon: KeyRound,      tint: "#ffd166", purpose: "Encrypted vault for AI agent and integration secrets." },
-  { id: "telegram-setup",  label: "Telegram Setup",  Icon: MessageSquare, tint: "#3ad6ff", purpose: "BotFather configuration checklist and member outreach." },
-  { id: "telegram-test",   label: "Telegram Test",   Icon: Send,          tint: "#7dd3fc", purpose: "Live-send test messages and bot health diagnostics." },
-  { id: "domain-denylist", label: "Domain Denylist", Icon: Ban,           tint: "#ff5577", purpose: "Block domains sitewide — links, embeds, and text." },
-  { id: "denylist-audit",  label: "Denylist Audit",  Icon: ScrollText,    tint: "#a78bfa", purpose: "Scan for blocked-domain leaks across DB and pages." },
-  { id: "og-bot-memory",   label: "OG Bot Memory",   Icon: Brain,         tint: "#00e08a", purpose: "View and edit persistent facts OG Bot remembers." },
-  { id: "settings",        label: "Settings",        Icon: Settings,      tint: "#94a3b8", purpose: "Tunable platform values like signup bonus credits." },
+  { id: "agent-keys",      label: "Agent Keys",      Icon: KeyRound,      tint: "#ffd166",
+    group: "Secrets",      purpose: "Encrypted vault for AI agent and integration secrets." },
+  { id: "telegram-setup",  label: "Telegram Setup",  Icon: MessageSquare, tint: "#3ad6ff",
+    group: "Integrations", purpose: "BotFather configuration checklist and member outreach." },
+  { id: "telegram-test",   label: "Telegram Test",   Icon: Send,          tint: "#7dd3fc",
+    group: "Integrations", purpose: "Live-send test messages and bot health diagnostics." },
+  { id: "domain-denylist", label: "Domain Denylist", Icon: Ban,           tint: "#ff5577",
+    group: "Safety",       purpose: "Block domains sitewide — links, embeds, and text." },
+  { id: "denylist-audit",  label: "Denylist Audit",  Icon: ScrollText,    tint: "#a78bfa",
+    group: "Safety",       purpose: "Scan for blocked-domain leaks across DB and pages." },
+  { id: "og-bot-memory",   label: "OG Bot Memory",   Icon: Brain,         tint: "#00e08a",
+    group: "Brain",        purpose: "View and edit persistent facts OG Bot remembers." },
+  { id: "settings",        label: "Settings",        Icon: Settings,      tint: "#94a3b8",
+    group: "Platform",     purpose: "Tunable platform values like signup bonus credits." },
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
@@ -56,10 +63,14 @@ function BossInfrastructurePage() {
           0G · Infrastructure
         </p>
         <h1 className="syndicate-header text-2xl md:text-3xl text-white/95 mt-1">
-          Infrastructure Dashboard
+          Infrastructure
         </h1>
         <p className="mt-2 text-sm text-white/60 max-w-2xl">
-          Secrets, integrations, domain filtering, bot memory, and platform settings — the wiring behind the syndicate.
+          The wiring behind the syndicate — <span className="text-white/80">Secrets</span>,
+          <span className="text-white/80"> Integrations</span>,
+          <span className="text-white/80"> Safety</span> filters,
+          OG Bot <span className="text-white/80">Brain</span>,
+          and <span className="text-white/80">Platform</span> tunables.
         </p>
       </header>
 
@@ -83,7 +94,7 @@ function BossInfrastructurePage() {
 
         {TABS.map((t) => (
           <TabsContent key={t.id} value={t.id} className="mt-5 space-y-4">
-            <BossTabIntro icon={t.Icon} label={t.label} purpose={t.purpose} tint={t.tint} />
+            <BossTabIntro icon={t.Icon} label={t.label} purpose={t.purpose} tint={t.tint} group={t.group} />
             {t.id === "agent-keys"      && <ApiKeysPage />}
             {t.id === "telegram-setup"  && <TelegramSetupPage />}
             {t.id === "telegram-test"   && <TelegramTestPage />}
