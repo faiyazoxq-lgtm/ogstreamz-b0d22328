@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -21,11 +20,6 @@ import {
 } from "@/lib/store-products.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { checkUrlReachable } from "@/lib/url-check.functions";
-
-export const Route = createFileRoute("/boss/pricing")({
-  head: () => ({ meta: [{ title: "Pricing — Boss" }] }),
-  component: PricingPage,
-});
 
 const KINDS = [
   { value: "vip_pass", label: "VIP Pass" },
@@ -76,7 +70,7 @@ function fmt(amount: number, currency: string) {
   }
 }
 
-function PricingPage() {
+export function PricingPanel() {
   const list = useServerFn(listStoreProducts);
   const upsert = useServerFn(upsertStoreProduct);
   const toggle = useServerFn(setStoreProductActive);

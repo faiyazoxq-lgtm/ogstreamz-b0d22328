@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Coins, Search, Save, Loader2, Lock, Sparkles, Minus, Plus, ExternalLink, Zap, Gift } from "lucide-react";
@@ -7,10 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useServerFn } from "@tanstack/react-start";
 import { chargePortalUse } from "@/lib/portal-use.functions";
-
-export const Route = createFileRoute("/boss/portal-costs")({
-  component: PortalCosts,
-});
 
 const BUILTIN_HUBS: Array<{ key: string; label: string; href: string }> = [
   { key: "music",   label: "MusicHUB",   href: "/music" },
@@ -24,7 +19,7 @@ const BUILTIN_HUBS: Array<{ key: string; label: string; href: string }> = [
 type CustomHub = { id: string; title: string; href: string; create_portal_cost: number };
 type Portal = { id: string; slug: string; name: string; kind: string; vip: boolean; use_credit_cost: number };
 
-function PortalCosts() {
+export function PortalCostsPanel() {
   // Built-in hub costs (app_settings.hub_create_costs)
   const [builtIn, setBuiltIn] = useState<Record<string, number>>({});
   const [savingBuiltIn, setSavingBuiltIn] = useState(false);

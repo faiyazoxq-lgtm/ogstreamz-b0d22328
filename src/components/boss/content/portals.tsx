@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Search, Pencil, Trash2, ArrowUpRight, Loader2, Eye, ArrowUpDown, ImageIcon, Power, PowerOff, ChevronDown, ChevronRight } from "lucide-react";
@@ -62,11 +61,7 @@ function hubLabel(kind: string) {
 
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
 
-export const Route = createFileRoute("/boss/portals")({
-  component: PortalsManager,
-});
-
-function PortalsManager() {
+export function PortalsPanel() {
   const setPortalPublishedFn = useServerFn(bossSetPortalPublished);
   const [rows, setRows] = useState<Portal[]>([]);
   const [loading, setLoading] = useState(true);

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Crown, Loader2, Plus, RotateCcw, Save, X, ShieldAlert, GripVertical, Pencil, Check } from "lucide-react";
@@ -22,16 +22,6 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useAuth } from "@/hooks/use-auth";
 import { getLexicon, setLexiconCategory, resetLexiconCategory } from "@/lib/lexicon.functions";
-
-export const Route = createFileRoute("/boss/lexicon")({
-  head: () => ({
-    meta: [
-      { title: "Swear Lexicon · Boss Portal" },
-      { name: "description", content: "Edit the HEAVY/MID/SOFT swear lists, refusal patterns, openers and fillers without touching code." },
-    ],
-  }),
-  component: LexiconPage,
-});
 
 type Cat = "heavy" | "mid" | "soft" | "refusal_patterns" | "brutal_openers" | "fillers_heavy" | "fillers_mid";
 
@@ -161,7 +151,7 @@ function SortableTag({
   );
 }
 
-function LexiconPage() {
+export function LexiconPanel() {
   const { user, profile, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
   const isBoss = profile?.rank === "boss" || isAdmin;

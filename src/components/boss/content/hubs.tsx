@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Eye, EyeOff, ArrowUpRight, Sparkles, Music2, Smile, Wrench, TrendingUp, Rocket, Radio, Bot, Brain, Zap, Star, Megaphone, Disc3, Satellite, Radar, Lock, Loader2, GripVertical, ArrowUpDown } from "lucide-react";
@@ -32,11 +32,7 @@ type Hub = {
   slug?: string | null;
 };
 
-export const Route = createFileRoute("/boss/hubs")({
-  component: HubsManager,
-});
-
-function HubsManager() {
+export function HubsPanel() {
   const [hubs, setHubs] = useState<Hub[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<string | null>(null);

@@ -1,14 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Coins, RefreshCw, Search, Download, Gift } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-export const Route = createFileRoute("/boss/portal-usage")({
-  component: PortalUsage,
-});
 
 type AuditRow = {
   id: string;
@@ -21,7 +17,7 @@ type AuditRow = {
 };
 type ProfileLite = { id: string; email: string | null };
 
-function PortalUsage() {
+export function PortalUsagePanel() {
   const [rows, setRows] = useState<AuditRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileLite>>({});
   const [loading, setLoading] = useState(true);
