@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { coinChip } from "@/lib/coins";
-import { Loader2, Plus, Save, Trash2, Tags, Coins, Power, Tv, GripVertical, X, Wifi } from "lucide-react";
+import { Loader2, Plus, Save, Trash2, Tags, Coins, Power, Tv, GripVertical, X, Wifi, Globe, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -392,73 +392,96 @@ export function PricingPanel() {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-center gap-3">
+      <header className="flex items-start gap-3">
         <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card">
           <Tags className="h-5 w-5" />
         </span>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Pricing</h1>
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight">Pricing &amp; Store</h1>
           <p className="text-sm text-muted-foreground">
-            Manage store products, prices, and credit-spend rates.
+            Global spend rates and per-product catalog entries for the store. Changes apply immediately on save.
           </p>
         </div>
       </header>
 
-      {/* Settings card */}
-      <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
-        <div className="flex items-center gap-2 text-sm font-semibold">
-          <Coins className="h-4 w-4" />
-          Credit-spend rates
+      {/* Global settings group */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <h2 className="text-xs uppercase tracking-wider text-muted-foreground">Global settings</h2>
+          <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-amber-300">
+            <Globe className="h-2.5 w-2.5" /> Platform-wide
+          </span>
         </div>
-        <div className="mt-3 flex flex-wrap items-end gap-3">
-          <div className="flex-1 min-w-[180px]">
-            <Label htmlFor="cps">Credits per song</Label>
-            <Input
-              id="cps"
-              type="number"
-              min={1}
-              value={creditsPerSong}
-              onChange={(e) => setCreditsPerSong(Number(e.target.value))}
-            />
+
+        <div className="grid gap-3 md:grid-cols-2">
+          {/* Credit-spend rates */}
+          <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Coins className="h-4 w-4" />
+              Credits per song
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              How many coins are debited each time a user plays a song.
+            </p>
+            <div className="mt-3 flex flex-wrap items-end gap-3">
+              <div className="flex-1 min-w-[140px]">
+                <Label htmlFor="cps" className="sr-only">Credits per song</Label>
+                <Input
+                  id="cps"
+                  type="number"
+                  min={1}
+                  value={creditsPerSong}
+                  onChange={(e) => setCreditsPerSong(Number(e.target.value))}
+                />
+              </div>
+              <Button onClick={saveCreditsPerSong} disabled={savingCredits}>
+                {savingCredits ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Save
+              </Button>
+            </div>
           </div>
-          <Button onClick={saveCreditsPerSong} disabled={savingCredits}>
-            {savingCredits ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Save
-          </Button>
+
+          {/* Stream portal domain */}
+          <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Tv className="h-4 w-4" />
+              0G STREAMZ portal domain
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Destination for the “0G STREAMZ Profile” card on /welcome.
+            </p>
+            <div className="mt-3 flex flex-wrap items-end gap-2">
+              <div className="flex-1 min-w-[200px]">
+                <Label htmlFor="streamurl" className="sr-only">Stream portal URL</Label>
+                <Input
+                  id="streamurl"
+                  type="url"
+                  inputMode="url"
+                  placeholder="https://ogstreamz.co.uk"
+                  value={streamUrl}
+                  onChange={(e) => setStreamUrl(e.target.value)}
+                />
+              </div>
+              <Button variant="outline" onClick={testStreamUrl} disabled={testingStream || savingStream}>
+                {testingStream ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wifi className="h-4 w-4" />}
+                Test
+              </Button>
+              <Button onClick={saveStreamUrl} disabled={savingStream || testingStream}>
+                {savingStream ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Save
+              </Button>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Stream portal domain card */}
-      <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
-        <div className="flex items-center gap-2 text-sm font-semibold">
-          <Tv className="h-4 w-4" />
-          0G STREAMZ portal domain
-        </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Where the “0G STREAMZ Profile” card on /welcome sends people to sign in.
-        </p>
-        <div className="mt-3 flex flex-wrap items-end gap-3">
-          <div className="flex-1 min-w-[240px]">
-            <Label htmlFor="streamurl">Stream portal URL</Label>
-            <Input
-              id="streamurl"
-              type="url"
-              inputMode="url"
-              placeholder="https://ogstreamz.co.uk"
-              value={streamUrl}
-              onChange={(e) => setStreamUrl(e.target.value)}
-            />
-          </div>
-          <Button variant="outline" onClick={testStreamUrl} disabled={testingStream || savingStream}>
-            {testingStream ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wifi className="h-4 w-4" />}
-            Test link
-          </Button>
-          <Button onClick={saveStreamUrl} disabled={savingStream || testingStream}>
-            {savingStream ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Save
-          </Button>
-        </div>
-      </section>
+      {/* Catalog section header */}
+      <div className="flex items-center gap-2 pt-2">
+        <h2 className="text-xs uppercase tracking-wider text-muted-foreground">Store catalog</h2>
+        <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/30 bg-sky-500/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-sky-300">
+          <Package className="h-2.5 w-2.5" /> Per product
+        </span>
+      </div>
 
       {/* Editor */}
       <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
@@ -622,7 +645,7 @@ export function PricingPanel() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground flex items-center gap-2">
               <GripVertical className="h-3.5 w-3.5" />
-              Drag rows to reorder within each section.
+              Drag rows to reorder within a kind. Order controls how products appear in the store.
               {reordering && <Loader2 className="h-3 w-3 animate-spin" />}
             </p>
             {selected.size > 0 && (
