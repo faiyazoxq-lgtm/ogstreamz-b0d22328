@@ -41,7 +41,7 @@ const GROUPS: RailGroup[] = [
       { to: "/boss/members",        label: "Members",        Icon: Users,         desc: "Roster · Top-ups · Passes · Codes" },
       { to: "/boss/content",        label: "Content",        Icon: Boxes,         desc: "Hubs · Portals · Promotions" },
       { to: "/boss/ops",            label: "Ops",            Icon: Power,         desc: "Power bar · Alerts · Publish · Analytics" },
-      { to: "/boss/infrastructure", label: "Infrastructure", Icon: SlidersHorizontal, desc: "Keys · Secrets · Functions · Settings" },
+      { to: "/boss/infrastructure", label: "Infrastructure", Icon: SlidersHorizontal, desc: "Keys · Telegram · Denylist · Bot memory · Settings" },
     ],
   },
   {
@@ -111,7 +111,7 @@ const GROUPS: RailGroup[] = [
     Icon: SlidersHorizontal,
     tint: "#94a3b8",
     items: [
-      { to: "/boss/api-keys", label: "Agent Keys", Icon: KeyRound, desc: "Encrypted vault" },
+      { to: "/boss/infrastructure", hash: "agent-keys", label: "Agent Keys", Icon: KeyRound, desc: "Encrypted vault" },
       { to: "/boss/secrets-inventory", label: "Secrets Inventory", Icon: Lock, desc: "Platform secrets list" },
       { to: "/boss/function-audit", label: "Function Audit", Icon: ScrollText, desc: "Exposed DB functions" },
       { to: "/boss/audit-log", label: "Audit Log", Icon: ScrollText, desc: "Boss action history" },
@@ -119,7 +119,7 @@ const GROUPS: RailGroup[] = [
       { to: "/boss/function-grants", label: "Function Grants", Icon: ShieldOff, desc: "Revoke EXECUTE w/ restore log" },
       { to: "/boss/function-ideas", label: "Function Ideas", Icon: Lightbulb, desc: "Plug-in & feature backlog" },
       { to: "/boss/realtime-denials", label: "Realtime Denials", Icon: ShieldAlert, desc: "Audit denied subscriptions" },
-      { to: "/boss/settings", label: "Settings", Icon: Settings, desc: "Tunables" },
+      { to: "/boss/infrastructure", hash: "settings", label: "Settings", Icon: Settings, desc: "Tunables" },
     ],
   },
 ];
