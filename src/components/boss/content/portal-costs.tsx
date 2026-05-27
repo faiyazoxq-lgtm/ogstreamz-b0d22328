@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Coins, Search, Save, Loader2, Lock, Sparkles, Minus, Plus, ExternalLink, Zap, Gift } from "lucide-react";
+import { Coins, Search, Save, Loader2, Lock, Sparkles, Minus, Plus, ExternalLink, Zap, Gift, Globe, Layers, Boxes } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -133,17 +133,31 @@ export function PortalCostsPanel() {
     );
   }, [portals, q]);
 
+  const totalPortals = portals.length;
+  const freePortals = portals.filter((p) => p.use_credit_cost === 0).length;
+
   return (
     <div className="space-y-8">
       <div className="flex items-start gap-3">
         <div className="h-10 w-10 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center">
           <Coins className="h-5 w-5" />
         </div>
-        <div>
-          <h1 className="font-[Montserrat] font-black text-2xl text-metallic">Portal & Hub Coin Costs</h1>
+        <div className="min-w-0">
+          <h1 className="font-[Montserrat] font-black text-2xl text-metallic">Portal &amp; Hub Coin Costs</h1>
           <p className="text-sm text-muted-foreground">
-            Set how many coins it takes to <strong>create</strong> a portal in each hub, and how many coins each portal charges per <strong>use</strong>.
+            Two cost types: what users pay to <strong>create</strong> a portal inside a hub, and what they pay each time they <strong>use</strong> a portal.
           </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5">
+              <Layers className="h-3 w-3" /> {BUILTIN_HUBS.length} built-in hubs
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5">
+              <Sparkles className="h-3 w-3" /> {hubs.length} custom hubs
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5">
+              <Boxes className="h-3 w-3" /> {totalPortals} portals · {freePortals} free
+            </span>
+          </div>
         </div>
       </div>
 
@@ -155,14 +169,19 @@ export function PortalCostsPanel() {
         <>
           {/* Built-in hubs */}
           <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xs uppercase tracking-wider text-muted-foreground">Built-in hubs · Create cost</h2>
-                <p className="text-xs text-muted-foreground/80">Coins charged when a user spawns a portal inside one of the core hubs.</p>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xs uppercase tracking-wider text-muted-foreground">Built-in hubs · Create cost</h2>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/30 bg-sky-500/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-sky-300">
+                    <Globe className="h-2.5 w-2.5" /> Per hub
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground/80">Charged once when a user spawns a new portal inside one of the core hubs.</p>
               </div>
               <Button size="sm" onClick={saveBuiltIn} disabled={savingBuiltIn}>
                 {savingBuiltIn ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
-                Save built-in
+                Save all
               </Button>
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -191,12 +210,19 @@ export function PortalCostsPanel() {
           {/* Custom hubs */}
           <section className="space-y-3">
             <div>
-              <h2 className="text-xs uppercase tracking-wider text-muted-foreground">Custom hubs · Create cost</h2>
-              <p className="text-xs text-muted-foreground/80">Coins charged when a user spawns a portal inside a custom hub.</p>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xs uppercase tracking-wider text-muted-foreground">Custom hubs · Create cost</h2>
+                <span className="inline-flex items-center gap-1 rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-fuchsia-300">
+                  <Sparkles className="h-2.5 w-2.5" /> Per hub
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground/80">Same idea as above, but for hubs you've created yourself. Each hub saves independently.</p>
             </div>
             {hubs.length === 0 ? (
-              <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-                No custom hubs yet.
+              <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+                <Sparkles className="h-5 w-5 mx-auto mb-2 opacity-60" />
+                <p>No custom hubs yet.</p>
+                <p className="text-xs mt-1 opacity-80">Custom hubs you create will show up here with their own create-cost control.</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -228,10 +254,15 @@ export function PortalCostsPanel() {
 
           {/* Portals */}
           <section className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-xs uppercase tracking-wider text-muted-foreground">Portals · Use cost</h2>
-                <p className="text-xs text-muted-foreground/80">Coins charged each time a user actively uses the portal. <code>0</code> = free.</p>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xs uppercase tracking-wider text-muted-foreground">Portals · Use cost</h2>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-amber-300">
+                    <Boxes className="h-2.5 w-2.5" /> Per portal
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground/80">Charged each time a user actively uses a portal. Edits save instantly. <code className="px-1 rounded bg-muted">0</code> means free.</p>
               </div>
               <div className="relative w-64 max-w-full">
                 <Search className="h-4 w-4 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -244,16 +275,27 @@ export function PortalCostsPanel() {
               </div>
             </div>
             {filteredPortals.length === 0 ? (
-              <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-                {portals.length === 0 ? "No portals yet." : "No portals match your search."}
+              <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+                <Boxes className="h-5 w-5 mx-auto mb-2 opacity-60" />
+                {portals.length === 0 ? (
+                  <>
+                    <p>No portals yet.</p>
+                    <p className="text-xs mt-1 opacity-80">Once users (or you) create portals, set their per-use coin cost here.</p>
+                  </>
+                ) : (
+                  <>
+                    <p>No portals match "{q}".</p>
+                    <button onClick={() => setQ("")} className="text-xs mt-2 underline opacity-80 hover:opacity-100">Clear search</button>
+                  </>
+                )}
               </div>
             ) : (
               <div className="rounded-xl border bg-card overflow-hidden">
-                <div className="hidden md:grid md:grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-3 px-3 py-2 text-[10px] uppercase tracking-wider text-muted-foreground border-b">
+                <div className="hidden md:grid md:grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-3 px-3 py-2 text-[10px] uppercase tracking-wider text-muted-foreground border-b bg-muted/30">
                   <div>Portal</div>
                   <div>Kind</div>
-                  <div className="text-right w-44">Cost (instant save)</div>
-                  <div className="w-44 text-right">Test / Preview</div>
+                  <div className="text-right w-44">Coins per use · auto-saves</div>
+                  <div className="w-44 text-right">Verify</div>
                 </div>
                 <div className="divide-y">
                   {filteredPortals.map((p) => {
