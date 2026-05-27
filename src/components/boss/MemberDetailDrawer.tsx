@@ -6,13 +6,20 @@ import { PassStatusRow } from "@/components/PassStatusRow";
 import { socialToUrl, socialDisplay } from "@/lib/social-handles";
 import type { RosterRow } from "@/lib/boss-users.functions";
 import { effectiveSwearing, effectiveIntensity } from "@/lib/swearing";
-import { Mail, Calendar, Coins, Tv, ShieldOff, ShieldCheck, Flame, ExternalLink, Hash } from "lucide-react";
+import {
+  Mail, Calendar, Coins, Tv, ShieldOff, ShieldCheck, Flame, ExternalLink, Hash,
+  IdCard, KeyRound, Gavel, Link2, Wrench,
+} from "lucide-react";
 
 type Props = {
   row: RosterRow | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Optional action buttons rendered at the bottom of the drawer. */
+  /**
+   * Optional action buttons rendered inside a clearly separated "Boss actions"
+   * zone at the bottom of the drawer. Treat each button as operating on THIS
+   * member only — use destructive styling for irreversible actions.
+   */
   actions?: React.ReactNode;
 };
 
@@ -41,20 +48,25 @@ export function MemberDetailDrawer({ row, open, onOpenChange, actions }: Props) 
       >
         {row && (
           <>
-            <SheetHeader className="space-y-1 text-left">
+            <SheetHeader className="sticky top-0 z-10 -mx-6 -mt-6 px-6 pt-6 pb-4 bg-[oklch(0.13_0.03_240)]/95 backdrop-blur border-b border-white/5 space-y-1 text-left">
               <SheetTitle className="text-white flex items-center gap-2 flex-wrap">
                 <span>{row.display_name?.trim() || row.email}</span>
                 <CoinChip credits={row.credits} />
+                {row.banned ? (
+                  <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] uppercase tracking-[0.18em] font-bold bg-destructive/20 text-destructive border border-destructive/50">
+                    <ShieldOff className="h-3 w-3" /> Banned
+                  </span>
+                ) : null}
               </SheetTitle>
-              <SheetDescription className="text-white/60">
-                Full member profile, contact, and pass status.
+              <SheetDescription className="text-white/55 text-xs">
+                Read-only member profile. Per-user actions appear at the bottom when available.
               </SheetDescription>
             </SheetHeader>
 
-            <div className="mt-4 space-y-4">
+            <div className="mt-5 space-y-5">
               <BossOgPassCard row={row} />
 
-              <Section label="Contact">
+              <Section label="Identity" Icon={IdCard} tint="#3ad6ff">
                 <Field icon={<Mail className="h-3.5 w-3.5" />} label="Email">
                   <a href={`mailto:${row.email}`} className="text-sky-300 hover:underline break-all">
                     {row.email}
@@ -72,21 +84,21 @@ export function MemberDetailDrawer({ row, open, onOpenChange, actions }: Props) 
                 )}
               </Section>
 
-              <Section label="Pass / Chip Status">
-                {row.og_pass_no != null ? (
-                  <PassStatusRow profile={row as any} size="md" />
-                ) : (
-                  <p className="text-[12px] italic text-white/50">No OG Pass # assigned yet.</p>
-                )}
-                <div className="grid grid-cols-2 gap-2 mt-2 text-[11px]">
+              <Section
+                label="Access & Credits"
+                Icon={KeyRound}
+                tint="#ffd166"
+                hint="Rank, tier, coin balance, and stream entitlement."
+              >
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
                   <Stat label="Rank" value={row.rank} />
-                  <Stat label="Status" value={row.status} />
+                  <Stat label="Tier" value={row.member_tier ?? "—"} />
                   <Stat
                     label="Coins"
                     value={`${(row.credits ?? 0).toLocaleString("en-GB")} 🪙 (${formatGbp((row.credits ?? 0) * 100)})`}
                     icon={<Coins className="h-3 w-3 text-gold" />}
                   />
-                  <Stat label="Tier" value={row.member_tier ?? "—"} />
+                  <Stat label="Account status" value={row.status} />
                   <Stat
                     label="Stream"
                     value={row.stream_status ?? "none"}
@@ -96,6 +108,16 @@ export function MemberDetailDrawer({ row, open, onOpenChange, actions }: Props) 
                     label="Stream expiry"
                     value={row.stream_expires_at ? new Date(row.stream_expires_at).toLocaleDateString() : "—"}
                   />
+                </div>
+              </Section>
+
+              <Section
+                label="Moderation"
+                Icon={Gavel}
+                tint={row.banned ? "#ff5577" : "#94a3b8"}
+                hint="Ban state and per-member swearing override."
+              >
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
                   <Stat
                     label="Swearing"
                     value={`${effectiveSwearing(row) ? "On" : "Safe"} · ${effectiveIntensity(row)}`}
@@ -114,20 +136,48 @@ export function MemberDetailDrawer({ row, open, onOpenChange, actions }: Props) 
                   />
                 </div>
                 {row.banned && row.banned_reason && (
-                  <p className="mt-2 text-[11px] text-destructive/80">
-                    Ban reason: {row.banned_reason}
-                  </p>
+                  <div className="mt-2 rounded-md border border-destructive/40 bg-destructive/10 px-2.5 py-1.5 text-[11px] text-destructive">
+                    <span className="font-bold uppercase tracking-[0.18em] text-[10px] mr-1.5">Ban reason</span>
+                    {row.banned_reason}
+                  </div>
                 )}
               </Section>
 
-              <Section label="Socials & Handles">
+              <Section
+                label="Pass status"
+                Icon={ShieldCheck}
+                tint="#a78bfa"
+                hint="Live OG Pass / chip state."
+              >
+                {row.og_pass_no != null ? (
+                  <PassStatusRow profile={row as any} size="md" />
+                ) : (
+                  <p className="text-[12px] italic text-white/50">No OG Pass # assigned yet.</p>
+                )}
+              </Section>
+
+              <Section label="Socials & handles" Icon={Link2} tint="#7dd3fc">
                 <SocialsList contact={row.contact_card} />
               </Section>
 
               {actions && (
-                <Section label="Actions">
-                  <div className="space-y-2">{actions}</div>
-                </Section>
+                <section aria-label="Boss actions" className="pt-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Wrench className="h-3.5 w-3.5" style={{ color: "#ff7a1a" }} />
+                    <p className="text-[10px] uppercase tracking-[0.25em] text-white/70 font-bold">
+                      Boss actions
+                    </p>
+                    <span className="text-[10px] text-white/40">
+                      · affect this member only
+                    </span>
+                  </div>
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/[0.04] p-3 space-y-2">
+                    <p className="text-[11px] text-white/55">
+                      Review the action label before clicking. Destructive actions are styled in red and cannot be undone.
+                    </p>
+                    <div className="space-y-2">{actions}</div>
+                  </div>
+                </section>
               )}
             </div>
           </>
@@ -137,11 +187,34 @@ export function MemberDetailDrawer({ row, open, onOpenChange, actions }: Props) 
   );
 }
 
-function Section({ label, children }: { label: string; children: React.ReactNode }) {
+function Section({
+  label,
+  children,
+  Icon,
+  tint = "#94a3b8",
+  hint,
+}: {
+  label: string;
+  children: React.ReactNode;
+  Icon?: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  tint?: string;
+  hint?: string;
+}) {
   return (
     <section>
-      <p className="text-[10px] uppercase tracking-[0.25em] text-white/45 font-bold mb-2">{label}</p>
-      <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-2">{children}</div>
+      <div className="flex items-baseline gap-2 mb-2">
+        {Icon && (
+          <Icon className="h-3 w-3 translate-y-0.5 shrink-0" style={{ color: tint }} />
+        )}
+        <p className="text-[10px] uppercase tracking-[0.25em] text-white/55 font-bold">{label}</p>
+        {hint && <p className="text-[10px] text-white/35 normal-case tracking-normal">{hint}</p>}
+      </div>
+      <div
+        className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-2"
+        style={{ borderLeft: `2px solid ${tint}55` }}
+      >
+        {children}
+      </div>
     </section>
   );
 }
