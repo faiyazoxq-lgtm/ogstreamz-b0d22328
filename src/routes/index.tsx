@@ -33,6 +33,7 @@ import { ConnectionsStatusBanner } from "@/components/ConnectionsStatusBanner";
 import { BossOpsStrip } from "@/components/BossOpsStrip";
 import { BossTodoNotepad } from "@/components/BossTodoNotepad";
 import { LockupOverflowDebug } from "@/components/LockupOverflowDebug";
+import { MessageBossForm } from "@/components/MessageBossForm";
 
 const ICONS: Record<string, any> = {
   Music2, Smile, Wrench, TrendingUp, Rocket, Sparkles, Radio, Bot, Brain,
