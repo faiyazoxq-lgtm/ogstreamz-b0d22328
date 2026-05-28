@@ -1,9 +1,10 @@
 import { createFileRoute, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import { Bell, Rocket, BarChart3, LayoutDashboard, FileText } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { requireBoss } from "@/lib/route-guards";
 import { BossTabIntro } from "@/components/boss/tab-intro";
+import { ResponsiveTabsList } from "@/components/boss/responsive-tabs-list";
 import { AlertsPanel } from "@/components/boss/ops/alerts";
 import { PublishCheckPanel } from "@/components/boss/ops/publish-check";
 import { AnalyticsPanel } from "@/components/boss/ops/analytics";
@@ -71,19 +72,11 @@ function BossOpsPage() {
         value={active}
         onValueChange={(v) => navigate({ to: "/boss/ops", hash: v, replace: false })}
       >
-        <TabsList className="flex flex-wrap gap-1 bg-white/5 p-1 rounded-xl h-auto">
-          {TABS.map((t) => (
-            <TabsTrigger
-              key={t.id}
-              value={t.id}
-              title={t.purpose}
-              className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60 gap-1.5"
-            >
-              <t.Icon className="h-3.5 w-3.5" style={{ color: t.tint }} />
-              {t.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <ResponsiveTabsList
+          items={TABS}
+          value={active}
+          onChange={(v) => navigate({ to: "/boss/ops", hash: v, replace: false })}
+        />
 
         {TABS.map((t) => (
           <TabsContent key={t.id} value={t.id} className="mt-5 space-y-4">
