@@ -30,7 +30,7 @@ const SHORTCUTS = [
 export function BossOpsStrip() {
   const listRef = useRef<HTMLUListElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
-  const [visibleCount, setVisibleCount] = useState(SHORTCUTS.length);
+  const [visibleCount, setVisibleCount] = useState<number>(SHORTCUTS.length);
 
   const useIso = typeof window !== "undefined" ? useLayoutEffect : useEffect;
   useIso(() => {
