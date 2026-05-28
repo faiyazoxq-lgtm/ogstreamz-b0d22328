@@ -4,6 +4,7 @@ import { KeyRound, MessageSquare, Send, Ban, ScrollText, Brain, Settings } from 
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { requireBoss } from "@/lib/route-guards";
 import { BossTabIntro } from "@/components/boss/tab-intro";
+import { ResponsiveTabsList } from "@/components/boss/responsive-tabs-list";
 import { ApiKeysPage } from "@/routes/boss.api-keys";
 import { TelegramSetupPage } from "@/routes/boss.telegram-setup";
 import { TelegramTestPage } from "@/routes/boss.telegram-test";
